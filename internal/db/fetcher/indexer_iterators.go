@@ -517,6 +517,8 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 								break jsonPathLoop
 							}
 							jsonPath = jsonPath.AppendProperty(prop.Name)
+							// if key is ObjectProperty it's safe to cast filterVal to map[connor.FilterKey]any
+							// containing either another nested ObjectProperty or Operator
 							condMap = filterVal.(map[connor.FilterKey]any)
 						}
 					}

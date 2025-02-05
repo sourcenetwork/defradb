@@ -37,25 +37,26 @@ func TraverseFields(conditions map[string]any, f func([]string, any) bool) {
 
 func traverseFields(path []string, key string, value any, f func([]string, any) bool) bool {
 	isKeyOp := func(k string) bool { return len(k) > 0 && k[0] == '_' && k != request.DocIDFieldName }
-	canOpBeScalar := func(k string) bool {
+	isOpComplex := func(k string) bool {
 		switch k {
+		// all these ops should have a map or an array as value and can not have a single value
 		case request.AliasFieldName, request.FilterOpOr, request.FilterOpAnd, request.FilterOpNot:
-			return false
+			return true
 		}
-		return true
+		return false
 	}
 	switch t := value.(type) {
 	case map[string]any:
-		for k, v := range t {
-			if !isKeyOp(k) {
-				newPath := make([]string, len(path), len(path)+1)
-				copy(newPath, path)
-				newPath = append(newPath, k)
-				if !traverseFields(newPath, k, v, f) {
+		for key, value := range t {
+			if isKeyOp(key) {
+				if !traverseFields(path, key, value, f) {
 					return false
 				}
 			} else {
-				if !traverseFields(path, k, v, f) {
+				newPath := make([]string, len(path), len(path)+1)
+				copy(newPath, path)
+				newPath = append(newPath, key)
+				if !traverseFields(newPath, key, value, f) {
 					return false
 				}
 			}
@@ -67,7 +68,7 @@ func traverseFields(path []string, key string, value any, f func([]string, any) 
 			}
 		}
 	default:
-		if isKeyOp(key) && !canOpBeScalar(key) {
+		if isKeyOp(key) && isOpComplex(key) {
 			return false
 		}
 		return f(path, value)

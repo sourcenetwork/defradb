@@ -44,6 +44,7 @@ type indexFetcher struct {
 var _ fetcher = (*indexFetcher)(nil)
 
 // newIndexFetcher creates a new IndexFetcher.
+// It can return nil, if there is no efficient way to fetch indexes with given filter conditions.
 func newIndexFetcher(
 	ctx context.Context,
 	txn datastore.Txn,
