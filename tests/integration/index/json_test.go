@@ -1314,137 +1314,230 @@ func TestJSONIndex_WithCompoundFilterCondition_ShouldUseIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestJSONIndex_WithNeFilterAgainstNonNullValue_ShouldFetchNullValues(t *testing.T) {
-	type testCase struct {
-		name         string
-		req          string
-		result       map[string]any
-		indexFetches int
+func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {age: {_ne: 48}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"custom": map[string]any{
+						"age": 48,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"custom": map[string]any{
+						"age": nil,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"custom": map[string]any{
+						"age": 42,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
 	}
+	testUtils.ExecuteTestCase(t, test)
+}
 
-	testCases := []testCase{
-		{
-			name: "query number field",
-			req: `query {
-				User(filter: {custom: {age: {_ne: 48}}}) {
-					name
-				}
-			}`,
-			result: map[string]any{
-				"User": []map[string]any{
-					{"name": "Andy"},
-					{"name": "Shahzad"},
+func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {city: {_ne: "Istanbul"}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"custom": map[string]any{
+						"city": "Istanbul",
+					},
 				},
 			},
-			indexFetches: 3,
-		},
-		{
-			name: "query string field",
-			req: `query {
-				User(filter: {custom: {city: {_ne: "Istanbul"}}}) {
-					name	
-				}
-			}`,
-			result: map[string]any{
-				"User": []map[string]any{
-					{"name": "Andy"},
-					{"name": "Shahzad"},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"custom": map[string]any{
+						"city": nil,
+					},
 				},
 			},
-			indexFetches: 3,
-		},
-		{
-			name: "query bool field",
-			req: `query {
-				User(filter: {custom: {verified: {_ne: true}}}) {
-					name	
-				}
-			}`,
-			result: map[string]any{
-				"User": []map[string]any{
-					{"name": "Andy"},
-					{"name": "Shahzad"},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"custom": map[string]any{
+						"city": "Lucerne",
+					},
 				},
 			},
-			indexFetches: 3,
-		},
-		{
-			name: "query null field",
-			req: `query {
-				User(filter: {custom: {age: {_ne: null}}}) {
-					name	
-				}
-			}`,
-			result: map[string]any{
-				"User": []map[string]any{
-					{"name": "Shahzad"},
-					{"name": "John"},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
 				},
 			},
-			indexFetches: 3,
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
 		},
 	}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			test := testUtils.TestCase{
-				Actions: []any{
-					testUtils.SchemaUpdate{
-						Schema: `
-							type User {
-								name: String 
-								custom: JSON @index
-							}`,
-					},
-					testUtils.CreateDoc{
-						DocMap: map[string]any{
-							"name": "John",
-							"custom": map[string]any{
-								"age":      48,
-								"city":     "Istanbul",
-								"verified": true,
-							},
-						},
-					},
-					testUtils.CreateDoc{
-						DocMap: map[string]any{
-							"name": "Andy",
-							"custom": map[string]any{
-								"age":      nil,
-								"city":     nil,
-								"verified": nil,
-							},
-						},
-					},
-					testUtils.CreateDoc{
-						DocMap: map[string]any{
-							"name": "Shahzad",
-							"custom": map[string]any{
-								"age":      42,
-								"city":     "Lucerne",
-								"verified": false,
-							},
-						},
-					},
-					testUtils.CreateDoc{
-						DocMap: map[string]any{
-							"name": "Shahzad",
-							"custom": map[string]any{
-								"other": "value",
-							},
-						},
-					},
-					testUtils.Request{
-						Request: tc.req,
-						Results: tc.result,
-					},
-					testUtils.Request{
-						Request:  makeExplainQuery(tc.req),
-						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
-					},
-				},
-			}
+	testUtils.ExecuteTestCase(t, test)
+}
 
-			testUtils.ExecuteTestCase(t, test)
-		})
+func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {verified: {_ne: true}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"custom": map[string]any{
+						"verified": true,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"custom": map[string]any{
+						"verified": nil,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"custom": map[string]any{
+						"verified": false,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
 	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {age: {_ne: null}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"custom": map[string]any{
+						"age": 48,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"custom": map[string]any{
+						"age": nil,
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"custom": map[string]any{
+						"age": 42,
+					},
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
 }

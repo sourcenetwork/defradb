@@ -122,7 +122,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t *testing.T) {
+func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
 		User(filter: {numbers: {_none: {_ge: 33}}}) {
 			name
