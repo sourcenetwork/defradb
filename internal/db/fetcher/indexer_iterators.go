@@ -491,7 +491,6 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 	for i := range f.indexDesc.Fields {
 		indexedField := f.indexedFields[i]
 		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
-		found := false
 		var err error
 
 		filter.TraverseProperties(
@@ -501,35 +500,11 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					return true
 				}
 
-				jsonPath := client.JSONPath{}
-				if indexedField.Kind == client.FieldKind_NILLABLE_JSON {
-				jsonPathLoop:
-					for {
-						for key, filterVal := range condMap {
-							prop, ok := key.(*mapper.ObjectProperty)
-							if !ok {
-								// if filter contains an array condition, we need to append index 0 to the json path
-								// to limit the search only to array elements
-								op, ok := key.(*mapper.Operator)
-								if ok && isArrayCondition(op.Operation) {
-									jsonPath = jsonPath.AppendIndex(0)
-								}
-								break jsonPathLoop
-							}
-							jsonPath = jsonPath.AppendProperty(prop.Name)
-							// if key is ObjectProperty it's safe to cast filterVal to map[connor.FilterKey]any
-							// containing either another nested ObjectProperty or Operator
-							condMap = filterVal.(map[connor.FilterKey]any)
-						}
-					}
-				}
+				var jsonPath client.JSONPath
+				condMap, jsonPath = getNestedOperatorConditionIfJSON(indexedField, condMap)
 
 				for key, filterVal := range condMap {
-					cond := fieldFilterCond{
-						op:       key.(*mapper.Operator).Operation,
-						jsonPath: jsonPath,
-						kind:     indexedField.Kind,
-					}
+					op := key.(*mapper.Operator).Operation
 
 					// if the array condition is _none it doesn't make sense to use index  because
 					// values picked by the index is random guessing. For example if we have doc1
@@ -538,38 +513,15 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
 					// so on until it exhaust all prefixes in ascending order.
 					// It might be even less effective than just scanning all documents.
-					if cond.op == compOpNone {
+					if op == compOpNone {
 						return true
 					}
 
-					var err error
-					if len(jsonPath) > 0 {
-						err = setJSONFilterCondition(&cond, filterVal, jsonPath)
-					} else if filterVal == nil {
-						cond.val, err = client.NewNormalNil(cond.kind)
-					} else if !f.indexedFields[i].Kind.IsArray() {
-						cond.val, err = client.NewNormalValue(filterVal)
-					} else {
-						subCondMap := filterVal.(map[connor.FilterKey]any)
-						for subKey, subVal := range subCondMap {
-							if subVal == nil {
-								arrKind := cond.kind.(client.ScalarArrayKind)
-								cond.val, err = client.NewNormalNil(arrKind.SubKind())
-							} else {
-								cond.val, err = client.NewNormalValue(subVal)
-							}
-							cond.arrOp = cond.op
-							cond.op = subKey.(*mapper.Operator).Operation
-							// the sub condition is supposed to have only 1 record
-							break
-						}
-					}
+					cond, err := makeFieldFilterCondition(op, jsonPath, indexedField, filterVal)
 
 					if err != nil {
 						return false
 					}
-
-					found = true
 
 					result = append(result, cond)
 					break
@@ -579,13 +531,18 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 			// if the filter contains _not operator, we ignore the entire branch because in this
 			// case index will do more harm. For example if we have _not: {_eq: 5} and the index
 			// fetches value 5, it will skip all documents with value 5, but we need to return them.
-			opNot)
+			opNot,
+		)
 
+		// if after traversing the filter for the first field we didn't find any condition that can
+		// be used with the index, we return nil indicating that the index can't be used.
 		if len(result) == 0 {
 			return nil, err
 		}
 
-		if !found {
+		// if traversing for the current (not first) field of the composite index didn't find any
+		// condition, we add a dummy that will match any value for this field.
+		if len(result) == i {
 			result = append(result, fieldFilterCond{
 				op:   opAny,
 				val:  client.NormalVoid{},
@@ -594,6 +551,78 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 		}
 	}
 	return result, nil
+}
+
+// makeFieldFilterCondition creates a fieldFilterCond based on the given operator and filter value on
+// the given indexed field.
+// If jsonPath is not empty, it means that the indexed field is a JSON field and the filter value
+// should be treated as a JSON value.
+func makeFieldFilterCondition(
+	op string,
+	jsonPath client.JSONPath,
+	indexedField client.FieldDefinition,
+	filterVal any,
+) (fieldFilterCond, error) {
+	cond := fieldFilterCond{
+		op:       op,
+		jsonPath: jsonPath,
+		kind:     indexedField.Kind,
+	}
+
+	var err error
+	if len(jsonPath) > 0 {
+		err = setJSONFilterCondition(&cond, filterVal, jsonPath)
+	} else if filterVal == nil {
+		cond.val, err = client.NewNormalNil(cond.kind)
+	} else if !indexedField.Kind.IsArray() {
+		cond.val, err = client.NewNormalValue(filterVal)
+	} else {
+		subCondMap := filterVal.(map[connor.FilterKey]any)
+		for subKey, subVal := range subCondMap {
+			if subVal == nil {
+				arrKind := cond.kind.(client.ScalarArrayKind)
+				cond.val, err = client.NewNormalNil(arrKind.SubKind())
+			} else {
+				cond.val, err = client.NewNormalValue(subVal)
+			}
+			cond.arrOp = cond.op
+			cond.op = subKey.(*mapper.Operator).Operation
+			// the sub condition is supposed to have only 1 record
+			break
+		}
+	}
+	return cond, err
+}
+
+// getNestedOperatorConditionIfJSON traverses the filter map if the indexed field is JSON to find the
+// nested operator condition and returns it along with the JSON path to the nested field.
+// If the indexed field is not JSON, it returns the original condition map.
+func getNestedOperatorConditionIfJSON(
+	indexedField client.FieldDefinition,
+	condMap map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, client.JSONPath) {
+	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {
+		return condMap, client.JSONPath{}
+	}
+	var jsonPath client.JSONPath
+	for {
+		for key, filterVal := range condMap {
+			prop, ok := key.(*mapper.ObjectProperty)
+			if !ok {
+				// if filter contains an array condition, we need to append index 0 to the json path
+				// to limit the search only to array elements
+				op, ok := key.(*mapper.Operator)
+				if ok && isArrayCondition(op.Operation) {
+					jsonPath = jsonPath.AppendIndex(0)
+				}
+				return condMap, jsonPath
+			}
+			jsonPath = jsonPath.AppendProperty(prop.Name)
+			// if key is ObjectProperty it's safe to cast filterVal to map[connor.FilterKey]any
+			// containing either another nested ObjectProperty or Operator
+			condMap = filterVal.(map[connor.FilterKey]any)
+		}
+	}
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that
