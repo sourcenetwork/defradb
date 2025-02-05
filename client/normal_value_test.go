@@ -1992,10 +1992,12 @@ func TestArrayValue_IsNillable(t *testing.T) {
 	fieldKinds := []FieldKind{
 		FieldKind_BOOL_ARRAY,
 		FieldKind_INT_ARRAY,
+		FieldKind_FLOAT32_ARRAY,
 		FieldKind_FLOAT64_ARRAY,
 		FieldKind_STRING_ARRAY,
 		FieldKind_NILLABLE_BOOL_ARRAY,
 		FieldKind_NILLABLE_INT_ARRAY,
+		FieldKind_NILLABLE_FLOAT32_ARRAY,
 		FieldKind_NILLABLE_FLOAT64_ARRAY,
 		FieldKind_NILLABLE_STRING_ARRAY,
 	}

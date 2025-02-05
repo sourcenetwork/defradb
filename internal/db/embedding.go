@@ -51,7 +51,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 	for _, embedding := range c.Description().Embeddings {
 		vecValue, err := doc.GetValue(embedding.FieldName)
 		if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
-			return errors.Wrap("failed getting vector embedding field", err)
+			return NewErrGetEmbeddingField(err)
 		}
 		if vecValue != nil && vecValue.IsDirty() {
 			// If the vector has been explicitly set, no need to generate the embedding.
@@ -71,7 +71,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 				} else {
 					fieldDef, ok := c.def.GetFieldByName(embedField)
 					if !ok {
-						return errors.New("field not found", errors.NewKV("field", embedField))
+						return NewErrEmbeddingFieldNotFound(embedField)
 					}
 					missingFieldsForGeneration = append(missingFieldsForGeneration, fieldDef)
 				}
@@ -92,7 +92,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 				false,
 			)
 			if err != nil {
-				return errors.Wrap("failed to get previous document for embedding generation", err)
+				return NewErrGetDocForEmbedding(err)
 			}
 			for _, embedField := range missingFieldsForGeneration {
 				if docField, ok := oldDoc.Fields()[embedField.Name]; ok {
@@ -107,7 +107,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 			embedding.URL,
 		)
 		if err != nil {
-			return errors.Wrap("failed to get embedding function", err)
+			return NewErrGetEmbeddingFunc(err)
 		}
 		var text strings.Builder
 		for _, fieldName := range embedding.Fields {

@@ -537,11 +537,6 @@ func (c *collection) update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	err := c.setEmbedding(ctx, doc, false)
-	if err != nil {
-		return err
-	}
-
 	// Stop the update if the correct permissions aren't there.
 	canUpdate, err := c.checkAccessOfDocWithACP(
 		ctx,
@@ -553,6 +548,11 @@ func (c *collection) update(
 	}
 	if !canUpdate {
 		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+
+	err = c.setEmbedding(ctx, doc, false)
+	if err != nil {
+		return err
 	}
 
 	err = c.save(ctx, doc, false)

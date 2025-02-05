@@ -138,34 +138,39 @@
             },
             "collection": {
                 "properties": {
+                    "Embeddings": {
+                        "items": {
+                            "properties": {
+                                "FieldName": {
+                                    "type": "string"
+                                },
+                                "Fields": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "Model": {
+                                    "type": "string"
+                                },
+                                "Provider": {
+                                    "type": "string"
+                                },
+                                "Template": {
+                                    "type": "string"
+                                },
+                                "URL": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
                                 "DefaultValue": {},
-                                "Embedding": {
-                                    "nullable": true,
-                                    "properties": {
-                                        "Fields": {
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "type": "array"
-                                        },
-                                        "Model": {
-                                            "type": "string"
-                                        },
-                                        "Provider": {
-                                            "type": "string"
-                                        },
-                                        "Template": {
-                                            "type": "string"
-                                        },
-                                        "URL": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
                                 "ID": {
                                     "maximum": 4294967295,
                                     "minimum": 0,
@@ -249,34 +254,39 @@
                 "properties": {
                     "description": {
                         "properties": {
+                            "Embeddings": {
+                                "items": {
+                                    "properties": {
+                                        "FieldName": {
+                                            "type": "string"
+                                        },
+                                        "Fields": {
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "Model": {
+                                            "type": "string"
+                                        },
+                                        "Provider": {
+                                            "type": "string"
+                                        },
+                                        "Template": {
+                                            "type": "string"
+                                        },
+                                        "URL": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
                             "Fields": {
                                 "items": {
                                     "properties": {
                                         "DefaultValue": {},
-                                        "Embedding": {
-                                            "nullable": true,
-                                            "properties": {
-                                                "Fields": {
-                                                    "items": {
-                                                        "type": "string"
-                                                    },
-                                                    "type": "array"
-                                                },
-                                                "Model": {
-                                                    "type": "string"
-                                                },
-                                                "Provider": {
-                                                    "type": "string"
-                                                },
-                                                "Template": {
-                                                    "type": "string"
-                                                },
-                                                "URL": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
                                         "ID": {
                                             "maximum": 4294967295,
                                             "minimum": 0,

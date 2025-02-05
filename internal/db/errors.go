@@ -110,6 +110,10 @@ const (
 	errDocIDNotFound                            string = "docID not found"
 	errCollectionWithSchemaRootNotFound         string = "collection with schema root not found"
 	errUnknownEmbeddingProvider                 string = "unknown embedding provider"
+	errGetEmbeddingFunc                         string = "failed to get embedding function"
+	errGetEmbeddingField                        string = "failed getting vector embedding field"
+	errFieldNotFound                            string = "field not found"
+	errGetDocForEmbedding                       string = "failed to get previous document for embedding generation"
 )
 
 var (
@@ -160,6 +164,10 @@ var (
 	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
 	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
 	ErrUnknownEmbeddingProvider                 = errors.New(errUnknownEmbeddingProvider)
+	ErrGetEmbeddingField                        = errors.New(errGetEmbeddingField)
+	ErrFieldNotFound                            = errors.New(errFieldNotFound)
+	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
+	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -716,4 +724,20 @@ func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
 
 func NewErrUnknownEmbeddingProvider(provider string) error {
 	return errors.New(errUnknownEmbeddingProvider, errors.NewKV("Provider", provider))
+}
+
+func NewErrGetEmbeddingField(inner error) error {
+	return errors.Wrap(errGetEmbeddingField, inner)
+}
+
+func NewErrGetEmbeddingFunc(inner error) error {
+	return errors.Wrap(errGetEmbeddingFunc, inner)
+}
+
+func NewErrEmbeddingFieldNotFound(field string) error {
+	return errors.New(errFieldNotFound, errors.NewKV("Embedding field", field))
+}
+
+func NewErrGetDocForEmbedding(inner error) error {
+	return errors.Wrap(errGetDocForEmbedding, inner)
 }

@@ -53,7 +53,12 @@ func TestField_ScalarArray_HasSubKind(t *testing.T) {
 			subKind: FieldKind_NILLABLE_INT,
 		},
 		{
-			name:    "nillable float array",
+			name:    "nillable float32 array",
+			arrKind: FieldKind_NILLABLE_FLOAT32_ARRAY,
+			subKind: FieldKind_NILLABLE_FLOAT32,
+		},
+		{
+			name:    "nillable float64 array",
 			arrKind: FieldKind_NILLABLE_FLOAT64_ARRAY,
 			subKind: FieldKind_NILLABLE_FLOAT64,
 		},
