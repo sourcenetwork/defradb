@@ -12,6 +12,7 @@ package planner
 
 import (
 	"slices"
+	"strings"
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
@@ -327,17 +328,11 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 		return true
 	})
 	if len(indexCandidates) == 0 {
-		return immutable.Option[client.IndexDescription]{}
+		return immutable.None[client.IndexDescription]()
 	}
+
 	slices.SortFunc(indexCandidates, func(a, b client.IndexDescription) int {
-		switch {
-		case a.Name < b.Name:
-			return -1
-		case a.Name > b.Name:
-			return 1
-		default:
-			return 0
-		}
+		return strings.Compare(a.Name, b.Name)
 	})
 	// we return the first found index. We will optimize it later.
 	// https://github.com/sourcenetwork/defradb/issues/2680

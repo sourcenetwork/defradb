@@ -377,10 +377,9 @@ func (p *Planner) newInvertableTypeJoin(
 		parentSide: parentSide,
 		childSide:  childSide,
 		skipChild:  skipChild,
+		// we store child's own filter in case an index kicks in and replaces it with it's own filter
+		subFilter: getScanNode(childSide.plan).filter,
 	}
-
-	// we store child's own filter in case an index kicks in and replaces it with it's own filter
-	join.subFilter = getScanNode(childSide.plan).filter
 
 	return join, nil
 }
@@ -742,7 +741,6 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
 	}
 
-	//secondaryDocOpt, err := fetchDocWithID(secondSide.plan, secondaryDocID)
 	secondaryDocOpt, err := fetchDocWithIDAndItsSubDocs(secondSide.plan, secondaryDocID)
 
 	if err != nil {
