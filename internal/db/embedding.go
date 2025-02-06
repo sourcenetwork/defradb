@@ -60,7 +60,7 @@ func getEmbeddingFunc(provider, model, url string) chromem.EmbeddingFunc {
 // However, if the vector field itself has been set, it will not be overwritten by a new embedding generation.
 func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isCreate bool) error {
 	embeddingGenerated := false
-	for _, embedding := range c.Description().Embeddings {
+	for _, embedding := range c.Description().VectorEmbeddings {
 		vecValue, err := doc.GetValue(embedding.FieldName)
 		if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
 			return NewErrGetEmbeddingField(err)

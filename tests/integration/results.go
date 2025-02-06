@@ -308,8 +308,8 @@ func assertCollectionDescriptions(
 			require.Equal(s.t, expected.Fields, actual.Fields)
 		}
 
-		if expected.Embeddings != nil {
-			require.Equal(s.t, expected.Embeddings, actual.Embeddings)
+		if expected.VectorEmbeddings != nil {
+			require.Equal(s.t, expected.VectorEmbeddings, actual.VectorEmbeddings)
 		}
 	}
 }

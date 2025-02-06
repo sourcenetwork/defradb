@@ -104,7 +104,7 @@ type CollectionDescription struct {
 	// that will change in the future.
 	IsBranchable bool
 
-	// Embedding contains the configuration for generating embedding vectors.
+	// VectorEmbeddings contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
 	//
@@ -112,7 +112,7 @@ type CollectionDescription struct {
 	// This may cause increase latency in the completion of the mutation requests.
 	// This is necessary to ensure that the generated docID is representative of the
 	// content of the document.
-	Embeddings []EmbeddingDescription
+	VectorEmbeddings []VectorEmbeddingDescription
 }
 
 // QuerySource represents a collection data source from a query.
@@ -209,16 +209,16 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 // of json to a [CollectionDescription].
 type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
-	Name            immutable.Option[string]
-	ID              uint32
-	RootID          uint32
-	SchemaVersionID string
-	IsMaterialized  bool
-	IsBranchable    bool
-	Policy          immutable.Option[PolicyDescription]
-	Indexes         []IndexDescription
-	Fields          []CollectionFieldDescription
-	Embeddings      []EmbeddingDescription
+	Name             immutable.Option[string]
+	ID               uint32
+	RootID           uint32
+	SchemaVersionID  string
+	IsMaterialized   bool
+	IsBranchable     bool
+	Policy           immutable.Option[PolicyDescription]
+	Indexes          []IndexDescription
+	Fields           []CollectionFieldDescription
+	VectorEmbeddings []VectorEmbeddingDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Sources []map[string]json.RawMessage
@@ -241,7 +241,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))
 	c.Policy = descMap.Policy
-	c.Embeddings = descMap.Embeddings
+	c.VectorEmbeddings = descMap.VectorEmbeddings
 
 	for i, source := range descMap.Sources {
 		sourceJson, err := json.Marshal(source)
@@ -285,7 +285,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 //
 // Embeddings are AI/ML specific vector representations of some content.
 // In the case of Defra, that content is one or multiple fields, optionaly added to a template.
-type EmbeddingDescription struct {
+type VectorEmbeddingDescription struct {
 	// FieldName is the name of the field on the collection that this embedding description applies to.
 	FieldName string
 	// Fields are the fields in the parent schema that will be used as the basis of the

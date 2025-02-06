@@ -122,7 +122,7 @@ func collectionFromAstDefinition(
 	policyDescription := immutable.None[client.PolicyDescription]()
 
 	indexDescriptions := []client.IndexDescription{}
-	embeddings := []client.EmbeddingDescription{}
+	vectorEmbeddings := []client.VectorEmbeddingDescription{}
 	for _, field := range def.Fields {
 		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -145,12 +145,12 @@ func collectionFromAstDefinition(
 					return client.CollectionDefinition{}, err
 				}
 				indexDescriptions = append(indexDescriptions, index)
-			case types.EmbeddingDirectiveLabel:
+			case types.VectorEmbeddingDirectiveLabel:
 				embedding, err := embeddingFromAST(directive, field)
 				if err != nil {
 					return client.CollectionDefinition{}, err
 				}
-				embeddings = append(embeddings, embedding)
+				vectorEmbeddings = append(vectorEmbeddings, embedding)
 			}
 		}
 	}
@@ -232,13 +232,13 @@ func collectionFromAstDefinition(
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
-			Name:           immutable.Some(def.Name.Value),
-			Indexes:        indexDescriptions,
-			Policy:         policyDescription,
-			Fields:         collectionFieldDescriptions,
-			IsMaterialized: !isMaterialized.HasValue() || isMaterialized.Value(),
-			IsBranchable:   isBranchable,
-			Embeddings:     embeddings,
+			Name:             immutable.Some(def.Name.Value),
+			Indexes:          indexDescriptions,
+			Policy:           policyDescription,
+			Fields:           collectionFieldDescriptions,
+			IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
+			IsBranchable:     isBranchable,
+			VectorEmbeddings: vectorEmbeddings,
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
@@ -622,26 +622,26 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 	return policyDesc, nil
 }
 
-func embeddingFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.EmbeddingDescription, error) {
-	embedding := client.EmbeddingDescription{
+func embeddingFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.VectorEmbeddingDescription, error) {
+	embedding := client.VectorEmbeddingDescription{
 		FieldName: fieldDef.Name.Value,
 	}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
-		case types.EmbeddingDirectivePropFields:
+		case types.VectorEmbeddingDirectivePropFields:
 			val := arg.Value.(*ast.ListValue)
 			fields := make([]string, len(val.Values))
 			for i, untypedField := range val.Values {
 				fields[i] = untypedField.(*ast.StringValue).Value
 			}
 			embedding.Fields = fields
-		case types.EmbeddingDirectivePropModel:
+		case types.VectorEmbeddingDirectivePropModel:
 			embedding.Model = arg.Value.(*ast.StringValue).Value
-		case types.EmbeddingDirectivePropProvider:
+		case types.VectorEmbeddingDirectivePropProvider:
 			embedding.Provider = arg.Value.(*ast.StringValue).Value
-		case types.EmbeddingDirectivePropTemplate:
+		case types.VectorEmbeddingDirectivePropTemplate:
 			embedding.Template = arg.Value.(*ast.StringValue).Value
-		case types.EmbeddingDirectivePropURL:
+		case types.VectorEmbeddingDirectivePropURL:
 			embedding.URL = arg.Value.(*ast.StringValue).Value
 		}
 	}

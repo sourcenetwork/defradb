@@ -41,9 +41,9 @@ func TestColDescrUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
-						IsMaterialized: true,
-						Embeddings:     []client.EmbeddingDescription{},
+						Name:             immutable.Some("Users"),
+						IsMaterialized:   true,
+						VectorEmbeddings: []client.VectorEmbeddingDescription{},
 					},
 				},
 			},

@@ -734,7 +734,7 @@ func validateEmbeddingAndKindCompatible(
 	oldState *definitionState,
 ) error {
 	for _, colDef := range newState.definitionsByName {
-		for _, embedding := range colDef.Description.Embeddings {
+		for _, embedding := range colDef.Description.VectorEmbeddings {
 			if embedding.FieldName == "" {
 				return client.ErrEmptyFieldNameForEmbedding
 			}
@@ -757,7 +757,7 @@ func validateEmbeddingFieldsForGeneration(
 	oldState *definitionState,
 ) error {
 	for _, colDef := range newState.definitionsByName {
-		for _, embedding := range colDef.Description.Embeddings {
+		for _, embedding := range colDef.Description.VectorEmbeddings {
 			if len(embedding.Fields) == 0 {
 				return client.ErrEmptyFieldsForEmbedding
 			}
@@ -782,7 +782,7 @@ func validateEmbeddingProviderAndModel(
 	oldState *definitionState,
 ) error {
 	for _, colDef := range newState.definitionsByName {
-		for _, embedding := range colDef.Description.Embeddings {
+		for _, embedding := range colDef.Description.VectorEmbeddings {
 			if embedding.Provider == "" {
 				return client.ErrEmptyProviderForEmbedding
 			}

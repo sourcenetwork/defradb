@@ -118,7 +118,7 @@ func TestColDescrUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 					{
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
-						Embeddings: []client.EmbeddingDescription{
+						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",
 								Fields:    []string{"name", "about"},
@@ -284,7 +284,7 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *testin
 					{
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
-						Embeddings: []client.EmbeddingDescription{
+						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",
 								Fields:    []string{"name", "about"},

@@ -121,7 +121,7 @@ func TestColDescrUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T)
 					{
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
-						Embeddings: []client.EmbeddingDescription{
+						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",
 								Fields:    []string{"about"},

@@ -32,12 +32,12 @@ const (
 	ConstraintsDirectiveLabel    = "constraints"
 	ConstraintsDirectivePropSize = "size"
 
-	EmbeddingDirectiveLabel        = "embedding"
-	EmbeddingDirectivePropProvider = "provider"
-	EmbeddingDirectivePropModel    = "model"
-	EmbeddingDirectivePropURL      = "url"
-	EmbeddingDirectivePropFields   = "fields"
-	EmbeddingDirectivePropTemplate = "template"
+	VectorEmbeddingDirectiveLabel        = "embedding"
+	VectorEmbeddingDirectivePropProvider = "provider"
+	VectorEmbeddingDirectivePropModel    = "model"
+	VectorEmbeddingDirectivePropURL      = "url"
+	VectorEmbeddingDirectivePropFields   = "fields"
+	VectorEmbeddingDirectivePropTemplate = "template"
 
 	PolicySchemaDirectiveLabel        = "policy"
 	PolicySchemaDirectivePropID       = "id"
@@ -347,32 +347,32 @@ func ConstraintsDirective() *gql.Directive {
 	})
 }
 
-// EmbeddingDirective @embedding is used to configure the generation of embedding vectors.
-func EmbeddingDirective() *gql.Directive {
+// VectorEmbeddingDirective @embedding is used to configure the generation of embedding vectors.
+func VectorEmbeddingDirective() *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        EmbeddingDirectiveLabel,
+		Name:        VectorEmbeddingDirectiveLabel,
 		Description: embeddingDirectiveDescription,
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
 		},
 		Args: gql.FieldConfigArgument{
-			EmbeddingDirectivePropProvider: &gql.ArgumentConfig{
+			VectorEmbeddingDirectivePropProvider: &gql.ArgumentConfig{
 				Type:        gql.String,
 				Description: "The provider to use for embedding. (ollama, openAI, etc.)",
 			},
-			EmbeddingDirectivePropModel: &gql.ArgumentConfig{
+			VectorEmbeddingDirectivePropModel: &gql.ArgumentConfig{
 				Type:        gql.String,
 				Description: "The model to use for embedding. (nomic-embed-text, etc.)",
 			},
-			EmbeddingDirectivePropURL: &gql.ArgumentConfig{
+			VectorEmbeddingDirectivePropURL: &gql.ArgumentConfig{
 				Type:        gql.String,
 				Description: "The URL of the provider API.",
 			},
-			EmbeddingDirectivePropFields: &gql.ArgumentConfig{
+			VectorEmbeddingDirectivePropFields: &gql.ArgumentConfig{
 				Type:        gql.NewList(gql.String),
 				Description: "The fields to pass to the model.",
 			},
-			EmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
+			VectorEmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
 				Type:        gql.String,
 				Description: "The template to use with the fields to create the content to feed the model.",
 			},
