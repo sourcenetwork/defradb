@@ -279,25 +279,25 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
-					"Raw":  []byte{21},
+					"Raw":  "21",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Bob",
-					"Raw":  []byte{32},
+					"Raw":  "32",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Carlo",
-					"Raw":  []byte{55},
+					"Raw":  "55",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Alice",
-					"Raw":  []byte{19},
+					"Raw":  "19",
 				},
 			},
 			testUtils.Request{
@@ -311,19 +311,19 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"Name": "Alice",
-							"Raw":  []byte{19},
+							"Raw":  "19",
 						},
 						{
 							"Name": "John",
-							"Raw":  []byte{21},
+							"Raw":  "21",
 						},
 						{
 							"Name": "Bob",
-							"Raw":  []byte{32},
+							"Raw":  "32",
 						},
 						{
 							"Name": "Carlo",
-							"Raw":  []byte{55},
+							"Raw":  "55",
 						},
 					},
 				},
@@ -611,25 +611,25 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
-					"Raw":  []byte{21},
+					"Raw":  "21",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Bob",
-					"Raw":  []byte{32},
+					"Raw":  "32",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Carlo",
-					"Raw":  []byte{55},
+					"Raw":  "55",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Alice",
-					"Raw":  []byte{19},
+					"Raw":  "19",
 				},
 			},
 			testUtils.Request{
@@ -643,19 +643,19 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"Name": "Carlo",
-							"Raw":  []byte{55},
+							"Raw":  "55",
 						},
 						{
 							"Name": "Bob",
-							"Raw":  []byte{32},
+							"Raw":  "32",
 						},
 						{
 							"Name": "John",
-							"Raw":  []byte{21},
+							"Raw":  "21",
 						},
 						{
 							"Name": "Alice",
-							"Raw":  []byte{19},
+							"Raw":  "19",
 						},
 					},
 				},
