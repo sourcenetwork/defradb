@@ -474,6 +474,7 @@ type invertibleTypeJoin struct {
 	parentSide joinSide
 	childSide  joinSide
 
+	// the filter of the subnode to store in case it's replaced by an index filter
 	subFilter *mapper.Filter
 
 	secondaryFetchLimit uint

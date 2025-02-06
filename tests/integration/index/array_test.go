@@ -167,6 +167,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testi
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
+				// index is not used for _none operator as it might be even less optimal than full scan
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
