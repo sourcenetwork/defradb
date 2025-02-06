@@ -281,10 +281,10 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// EmbeddingDescription hold the relevant information to generate embeddings.
+// VectorEmbeddingDescription hold the relevant information to generate embeddings.
 //
 // Embeddings are AI/ML specific vector representations of some content.
-// In the case of Defra, that content is one or multiple fields, optionaly added to a template.
+// In the case of DefraDB, that content is one or multiple fields, optionally added to a template.
 type VectorEmbeddingDescription struct {
 	// FieldName is the name of the field on the collection that this embedding description applies to.
 	FieldName string
