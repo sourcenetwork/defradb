@@ -49,7 +49,7 @@ func newDefinitionState(
 		schemasByID[def.Schema.VersionID] = def.Schema
 		schemaByName[def.Schema.Name] = def.Schema
 
-		if len(def.Description.Fields) != 0 {
+		if def.Description.ID != 0 {
 			collectionsByID[def.Description.ID] = def.Description
 			collections = append(collections, def.Description)
 		}

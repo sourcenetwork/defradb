@@ -200,8 +200,8 @@ ollama:
 # run ollama in the background
 	nohup ollama serve > ollama.log 2>&1 &
 
-.PHONY: ollama:nomic
-ollama:nomic:
+.PHONY: ollama\:nomic
+ollama\:nomic:
 # make sure ollama is running before continuing
 	time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
 	ollama pull nomic-embed-text

@@ -74,7 +74,7 @@ func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Dogs"} }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "adding collections via patch is not supported. ID: 2",
 			},
 		},
 	}
