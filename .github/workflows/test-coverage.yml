@@ -42,7 +42,7 @@ env:
   DEFRA_ACP_TYPE: local
   DEFRA_VIEW_TYPE: cacheless
 
-  DEFRA_VECTOR_EMBEDDINGS: false
+  DEFRA_VECTOR_EMBEDDING: false
 
 
 # We run all runners via the bash shell to provide us with a consistent set of env variables and commands
@@ -74,7 +74,7 @@ jobs:
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'file' }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
-      DEFRA_VECTOR_EMBEDDINGS: true
+      DEFRA_VECTOR_EMBEDDING: true
 
     steps:
       - name: Checkout code into the directory
