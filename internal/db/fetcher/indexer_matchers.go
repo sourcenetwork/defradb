@@ -438,8 +438,10 @@ func createJSONComparingMatcher(val client.JSON, op string) valueMatcher {
 func createScalarComparingMatcher(condition *fieldFilterCond) valueMatcher {
 	if v, ok := condition.val.Int(); ok {
 		return &intMatcher{value: v, evalFunc: getCompareValsFunc[int64](condition.op)}
-	} else if v, ok := condition.val.Float(); ok {
-		return &floatMatcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}
+	} else if v, ok := condition.val.Float32(); ok {
+		return &float32Matcher{value: v, evalFunc: getCompareValsFunc[float32](condition.op)}
+	} else if v, ok := condition.val.Float64(); ok {
+		return &float64Matcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}
 	} else if v, ok := condition.val.String(); ok {
 		return &stringMatcher{value: v, evalFunc: getCompareValsFunc[string](condition.op)}
 	} else if v, ok := condition.val.Time(); ok {

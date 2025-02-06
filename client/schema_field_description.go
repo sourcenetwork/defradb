@@ -32,9 +32,6 @@ type FieldKind interface {
 	// IsArray returns true if this FieldKind is an array type which includes inline arrays as well
 	// as relation arrays.
 	IsArray() bool
-
-	// IsNumericArray returns true if the FieldKind is an array that contains numerical scalars.
-	IsNumericArray() bool
 }
 
 // SchemaFieldDescription describes a field on a Schema and its associated metadata.
@@ -156,10 +153,6 @@ func (k ScalarKind) IsArray() bool {
 	return false
 }
 
-func (k ScalarKind) IsNumericArray() bool {
-	return false
-}
-
 func (k ScalarArrayKind) String() string {
 	switch k {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
@@ -197,15 +190,6 @@ func (k ScalarArrayKind) IsObject() bool {
 
 func (k ScalarArrayKind) IsArray() bool {
 	return true
-}
-
-func (k ScalarArrayKind) IsNumericArray() bool {
-	switch k {
-	case FieldKind_INT_ARRAY, FieldKind_FLOAT64_ARRAY, FieldKind_FLOAT32_ARRAY:
-		return true
-	default:
-		return false
-	}
 }
 
 func (k ScalarArrayKind) SubKind() FieldKind {
@@ -261,10 +245,6 @@ func (k *CollectionKind) IsArray() bool {
 	return k.Array
 }
 
-func (k *CollectionKind) IsNumericArray() bool {
-	return false
-}
-
 func NewSchemaKind(root string, isArray bool) *SchemaKind {
 	return &SchemaKind{
 		Root:  root,
@@ -289,10 +269,6 @@ func (k *SchemaKind) IsObject() bool {
 
 func (k *SchemaKind) IsArray() bool {
 	return k.Array
-}
-
-func (k *SchemaKind) IsNumericArray() bool {
-	return false
 }
 
 func NewSelfKind(relativeID string, isArray bool) *SelfKind {
@@ -328,10 +304,6 @@ func (k *SelfKind) IsArray() bool {
 	return k.Array
 }
 
-func (k *SelfKind) IsNumericArray() bool {
-	return false
-}
-
 func NewNamedKind(name string, isArray bool) *NamedKind {
 	return &NamedKind{
 		Name:  name,
@@ -356,10 +328,6 @@ func (k *NamedKind) IsObject() bool {
 
 func (k *NamedKind) IsArray() bool {
 	return k.Array
-}
-
-func (k *NamedKind) IsNumericArray() bool {
-	return false
 }
 
 // Note: These values are serialized and persisted in the database, avoid modifying existing values.
@@ -528,4 +496,20 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 	// This is used by patch schema/collection, where new fields added
 	// by users will be initially added as [NamedKind]s.
 	return NewNamedKind(strKind, isArray), nil
+}
+
+// IsNumericArray returns true if the FieldKind is an array that contains numerical scalars.
+func IsNumericArray(kind FieldKind) bool {
+	if !kind.IsArray() {
+		return false
+	}
+	if arrKind, ok := kind.(ScalarArrayKind); ok {
+		switch arrKind.SubKind() {
+		case FieldKind_INT_ARRAY, FieldKind_FLOAT64_ARRAY, FieldKind_FLOAT32_ARRAY:
+			return true
+		default:
+			return false
+		}
+	}
+	return false
 }
