@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/metric"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
@@ -156,7 +156,7 @@ func MakeStartCommand() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				err = metric.ConfigureTelemetry(cmd.Context(), ver.String())
+				err = telemetry.ConfigureTelemetry(cmd.Context(), ver.String())
 				if err != nil {
 					log.ErrorContextE(cmd.Context(), "failed to configure telemetry", err)
 				}

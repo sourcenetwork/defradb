@@ -23,14 +23,14 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/metric"
 	defrap "github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
 var _ core.Parser = (*parser)(nil)
 
-var tracer = metric.NewTracer()
+var tracer = telemetry.NewTracer()
 
 type parser struct {
 	schemaManager *schema.SchemaManager

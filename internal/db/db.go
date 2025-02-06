@@ -34,13 +34,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/metric"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
 var (
 	log    = corelog.NewLogger("db")
-	tracer = metric.NewTracer()
+	tracer = telemetry.NewTracer()
 )
 
 // make sure we match our client interface

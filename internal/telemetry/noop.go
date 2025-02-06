@@ -10,7 +10,7 @@
 
 //go:build !telemetry
 
-package metric
+package telemetry
 
 import (
 	"context"
