@@ -314,6 +314,7 @@ func (c *collection) iterateAllDocs(
 		identity.FromContext(ctx),
 		txn,
 		c.db.acp,
+		immutable.None[client.IndexDescription](),
 		c,
 		fields,
 		nil,

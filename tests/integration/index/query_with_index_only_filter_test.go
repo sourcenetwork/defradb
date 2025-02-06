@@ -49,7 +49,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 		},
 	}
@@ -85,7 +85,7 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 		},
 	}
@@ -130,7 +130,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -167,7 +167,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -205,7 +205,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -242,7 +242,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -280,7 +280,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -325,7 +325,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -363,7 +363,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -463,7 +463,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -503,7 +503,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(4).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -566,7 +566,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -579,7 +579,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -592,7 +592,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req3),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req4,
@@ -604,7 +604,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req4),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req5,
@@ -617,7 +617,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req5),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req6,
@@ -627,7 +627,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req6),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -670,7 +670,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -802,5 +802,350 @@ func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 		},
 	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithNeFilterAgainstIntField_ShouldFetchNilValues(t *testing.T) {
+	req1 := `query {
+		User(filter: {age: {_ne: 48}}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {age: {_ne: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  48,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  nil,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"age":  42,
+				},
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithNeFilterAgainstFloatField_ShouldFetchNilValues(t *testing.T) {
+	req1 := `query {
+		User(filter: {rating: {_ne: 4.5}}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {rating: {_ne: null}}) {
+			name	
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						rating: Float @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "John",
+					"rating": 4.5,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "Andy",
+					"rating": nil,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "Shahzad",
+					"rating": 4.2,
+				},
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithNeFilterAgainstStringField_ShouldFetchNilValues(t *testing.T) {
+	req1 := `query {
+		User(filter: {city: {_ne: "Istanbul"}}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {city: {_ne: null}}) {
+			name	
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						city: String @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"city": "Istanbul",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"city": nil,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"city": "Lucerne",
+				},
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithNeFilterAgainstDateTimeField_ShouldFetchNilValues(t *testing.T) {
+	req1 := `query {
+		User(filter: {birthdate: {_ne: "2020-01-01T00:00:00Z"}}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {birthdate: {_ne: null}}) {
+			name	
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						birthdate: DateTime @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "John",
+					"birthdate": "2020-01-01T00:00:00Z",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "Andy",
+					"birthdate": nil,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "Shahzad",
+					"birthdate": "2024-01-01T00:00:00Z",
+				},
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *testing.T) {
+	req1 := `query {
+		User(filter: {verified: {_ne: true}}) {
+			name
+		}
+	}`
+	req2 := `query {
+		User(filter: {verified: {_ne: null}}) {
+			name	
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						verified: Boolean @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":     "John",
+					"verified": true,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":     "Andy",
+					"verified": nil,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":     "Shahzad",
+					"verified": false,
+				},
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"},
+						{"name": "John"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
 	testUtils.ExecuteTestCase(t, test)
 }

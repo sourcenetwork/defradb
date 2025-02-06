@@ -14,13 +14,13 @@ import (
 	"context"
 
 	ds "github.com/ipfs/go-datastore"
-	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	"github.com/ipfs/go-datastore/query"
@@ -42,6 +42,7 @@ const (
 	compOpAny  = "_any"
 	compOpAll  = "_all"
 	compOpNone = "_none"
+	opNot      = "_not"
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have
@@ -309,7 +310,7 @@ func (iter *memorizingIndexIterator) Close() error {
 
 // newPrefixIteratorFromConditions creates a new eqPrefixIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *IndexFetcher) newPrefixIteratorFromConditions(
+func (f *indexFetcher) newPrefixIteratorFromConditions(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*indexPrefixIterator, error) {
@@ -339,11 +340,10 @@ func (f *IndexFetcher) newPrefixIteratorFromConditions(
 	}
 
 	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-
-	return f.newPrefixIterator(key, matchers, &f.execInfo), nil
+	return f.newPrefixIterator(key, matchers, f.execInfo), nil
 }
 
-func (f *IndexFetcher) newPrefixIterator(
+func (f *indexFetcher) newPrefixIterator(
 	indexKey keys.IndexDataStoreKey,
 	matchers []valueMatcher,
 	execInfo *ExecInfo,
@@ -359,7 +359,7 @@ func (f *IndexFetcher) newPrefixIterator(
 
 // newInIndexIterator creates a new inIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *IndexFetcher) newInIndexIterator(
+func (f *indexFetcher) newInIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*inIndexIterator, error) {
@@ -382,28 +382,21 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 
 		key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-
-		iter = &eqSingleIndexIterator{
-			indexKey: key,
-			execInfo: &f.execInfo,
-		}
+		iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
 		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
-		iter = f.newPrefixIterator(indexKey, matchers, &f.execInfo)
+		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo)
 	}
-	return &inIndexIterator{
-		indexIterator: iter,
-		inValues:      inValues,
-	}, nil
+	return &inIndexIterator{indexIterator: iter, inValues: inValues}, nil
 }
 
-func (f *IndexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
+func (f *indexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
 	return keys.IndexDataStoreKey{CollectionID: f.col.Description().RootID, IndexID: f.indexDesc.ID}
 }
 
-func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
+func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
@@ -412,13 +405,13 @@ func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	return keys.NewIndexDataStoreKey(f.col.Description().RootID, f.indexDesc.ID, fields)
 }
 
-func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
+func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions, err := f.determineFieldFilterConditions()
 	if err != nil {
 		return nil, err
 	}
 
-	// this can happen if a query contains an empty condition like User(filter: {name: {}})
+	// fieldConditions might be empty if a query contains an empty condition like User(filter: {name: {}})
 	if len(fieldConditions) == 0 {
 		return nil, nil
 	}
@@ -426,24 +419,6 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
 		return nil, err
-	}
-
-	hasArray := false
-	for i := range fieldConditions {
-		if len(fieldConditions[i].arrOp) > 0 {
-			hasArray = true
-			if fieldConditions[i].arrOp == compOpNone {
-				matchers[i] = &invertedMatcher{matcher: matchers[i]}
-			}
-		}
-	}
-
-	hasJSON := false
-	for i := range fieldConditions {
-		if fieldConditions[i].kind == client.FieldKind_NILLABLE_JSON {
-			hasJSON = true
-			break
-		}
 	}
 
 	var iter indexIterator
@@ -456,7 +431,7 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			}
 
 			key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-			iter = &eqSingleIndexIterator{indexKey: key, execInfo: &f.execInfo}
+			iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 		} else {
 			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
 		}
@@ -464,13 +439,14 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
 	} else {
 		key := f.newIndexDataStoreKey()
+		// if the first field is JSON, we want to add the JSON path prefix to scope the search
 		if fieldConditions[0].kind == client.FieldKind_NILLABLE_JSON {
 			key.Fields = []keys.IndexedField{{
 				Descending: f.indexDesc.Fields[0].Descending,
 				Value:      client.NewNormalJSON(client.MakeVoidJSON(fieldConditions[0].jsonPath)),
 			}}
 		}
-		iter, err = f.newPrefixIterator(key, matchers, &f.execInfo), nil
+		iter, err = f.newPrefixIterator(key, matchers, f.execInfo), nil
 	}
 
 	if err != nil {
@@ -481,11 +457,21 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 	}
 
-	if hasJSON || hasArray {
+	if doConditionsHaveArrayOrJSON(fieldConditions) {
 		iter = &memorizingIndexIterator{inner: iter}
 	}
 
 	return iter, nil
+}
+
+func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
+	hasArray := false
+	hasJSON := false
+	for i := range conditions {
+		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON
+		hasArray = hasArray || conditions[i].kind.IsArray()
+	}
+	return hasArray || hasJSON
 }
 
 type fieldFilterCond struct {
@@ -499,104 +485,144 @@ type fieldFilterCond struct {
 // determineFieldFilterConditions determines the conditions and their corresponding operation
 // for each indexed field.
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
-func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
+func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
-	for i := range f.indexedFields {
-		fieldInd := f.mapping.FirstIndexOfName(f.indexedFields[i].Name)
-		found := false
-		// iterate through conditions and find the one that matches the current field
-		for filterKey, indexFilterCond := range f.indexFilter.Conditions {
-			propKey, ok := filterKey.(*mapper.PropertyIndex)
-			if !ok || fieldInd != propKey.Index {
-				continue
-			}
+	// we process first the conditions that match composite index fields starting from the first one
+	for i := range f.indexDesc.Fields {
+		indexedField := f.indexedFields[i]
+		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
+		var err error
 
-			found = true
+		filter.TraverseProperties(
+			f.indexFilter.Conditions,
+			func(prop *mapper.PropertyIndex, condMap map[connor.FilterKey]any) bool {
+				if fieldInd != prop.Index {
+					return true
+				}
 
-			fieldDef := f.indexedFields[slices.IndexFunc(f.indexedFields, func(f client.FieldDefinition) bool {
-				return int(f.ID) == fieldInd
-			})]
+				var jsonPath client.JSONPath
+				condMap, jsonPath = getNestedOperatorConditionIfJSON(indexedField, condMap)
 
-			condMap := indexFilterCond.(map[connor.FilterKey]any)
+				for key, filterVal := range condMap {
+					op := key.(*mapper.Operator).Operation
 
-			jsonPath := client.JSONPath{}
-			if fieldDef.Kind == client.FieldKind_NILLABLE_JSON {
-			jsonPathLoop:
-				for {
-					for key, filterVal := range condMap {
-						prop, ok := key.(*mapper.ObjectProperty)
-						if !ok {
-							// if filter contains an array condition, we need to append index 0 to the json path
-							// to limit the search only to array elements
-							op, ok := key.(*mapper.Operator)
-							if ok && isArrayCondition(op.Operation) {
-								if op.Operation == compOpNone {
-									// if the array condition is _none it doesn't make sense to use index  because
-									// values picked by the index is random guessing. For example if we have doc1
-									// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
-									// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
-									// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
-									// so on until it exhaust all prefixes in ascending order.
-									// It might be even less effective than just scanning all documents.
-									return nil, nil
-								}
-								jsonPath = jsonPath.AppendIndex(0)
-							}
-							break jsonPathLoop
-						}
-						jsonPath = jsonPath.AppendProperty(prop.Name)
-						condMap = filterVal.(map[connor.FilterKey]any)
+					// if the array condition is _none it doesn't make sense to use index  because
+					// values picked by the index is random guessing. For example if we have doc1
+					// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
+					// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
+					// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
+					// so on until it exhaust all prefixes in ascending order.
+					// It might be even less effective than just scanning all documents.
+					if op == compOpNone {
+						return true
 					}
-				}
-			}
 
-			for key, filterVal := range condMap {
-				cond := fieldFilterCond{
-					op:       key.(*mapper.Operator).Operation,
-					jsonPath: jsonPath,
-					kind:     f.indexedFields[i].Kind,
-				}
+					cond, err := makeFieldFilterCondition(op, jsonPath, indexedField, filterVal)
 
-				var err error
-				if len(jsonPath) > 0 {
-					err = setJSONFilterCondition(&cond, filterVal, jsonPath)
-				} else if filterVal == nil {
-					cond.val, err = client.NewNormalNil(cond.kind)
-				} else if !f.indexedFields[i].Kind.IsArray() {
-					cond.val, err = client.NewNormalValue(filterVal)
-				} else {
-					subCondMap := filterVal.(map[connor.FilterKey]any)
-					for subKey, subVal := range subCondMap {
-						if subVal == nil {
-							arrKind := cond.kind.(client.ScalarArrayKind)
-							cond.val, err = client.NewNormalNil(arrKind.SubKind())
-						} else {
-							cond.val, err = client.NewNormalValue(subVal)
-						}
-						cond.arrOp = cond.op
-						cond.op = subKey.(*mapper.Operator).Operation
-						// the sub condition is supposed to have only 1 record
-						break
+					if err != nil {
+						return false
 					}
-				}
 
-				if err != nil {
-					return nil, err
+					result = append(result, cond)
+					break
 				}
-				result = append(result, cond)
-				break
-			}
-			break
+				return false
+			},
+			// if the filter contains _not operator, we ignore the entire branch because in this
+			// case index will do more harm. For example if we have _not: {_eq: 5} and the index
+			// fetches value 5, it will skip all documents with value 5, but we need to return them.
+			opNot,
+		)
+
+		// if after traversing the filter for the first field we didn't find any condition that can
+		// be used with the index, we return nil indicating that the index can't be used.
+		if len(result) == 0 {
+			return nil, err
 		}
-		if !found {
+
+		// if traversing for the current (not first) field of the composite index didn't find any
+		// condition, we add a dummy that will match any value for this field.
+		if len(result) == i {
 			result = append(result, fieldFilterCond{
 				op:   opAny,
 				val:  client.NormalVoid{},
-				kind: f.indexedFields[i].Kind,
+				kind: indexedField.Kind,
 			})
 		}
 	}
 	return result, nil
+}
+
+// makeFieldFilterCondition creates a fieldFilterCond based on the given operator and filter value on
+// the given indexed field.
+// If jsonPath is not empty, it means that the indexed field is a JSON field and the filter value
+// should be treated as a JSON value.
+func makeFieldFilterCondition(
+	op string,
+	jsonPath client.JSONPath,
+	indexedField client.FieldDefinition,
+	filterVal any,
+) (fieldFilterCond, error) {
+	cond := fieldFilterCond{
+		op:       op,
+		jsonPath: jsonPath,
+		kind:     indexedField.Kind,
+	}
+
+	var err error
+	if len(jsonPath) > 0 {
+		err = setJSONFilterCondition(&cond, filterVal, jsonPath)
+	} else if filterVal == nil {
+		cond.val, err = client.NewNormalNil(cond.kind)
+	} else if !indexedField.Kind.IsArray() {
+		cond.val, err = client.NewNormalValue(filterVal)
+	} else {
+		subCondMap := filterVal.(map[connor.FilterKey]any)
+		for subKey, subVal := range subCondMap {
+			if subVal == nil {
+				arrKind := cond.kind.(client.ScalarArrayKind)
+				cond.val, err = client.NewNormalNil(arrKind.SubKind())
+			} else {
+				cond.val, err = client.NewNormalValue(subVal)
+			}
+			cond.arrOp = cond.op
+			cond.op = subKey.(*mapper.Operator).Operation
+			// the sub condition is supposed to have only 1 record
+			break
+		}
+	}
+	return cond, err
+}
+
+// getNestedOperatorConditionIfJSON traverses the filter map if the indexed field is JSON to find the
+// nested operator condition and returns it along with the JSON path to the nested field.
+// If the indexed field is not JSON, it returns the original condition map.
+func getNestedOperatorConditionIfJSON(
+	indexedField client.FieldDefinition,
+	condMap map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, client.JSONPath) {
+	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {
+		return condMap, client.JSONPath{}
+	}
+	var jsonPath client.JSONPath
+	for {
+		for key, filterVal := range condMap {
+			prop, ok := key.(*mapper.ObjectProperty)
+			if !ok {
+				// if filter contains an array condition, we need to append index 0 to the json path
+				// to limit the search only to array elements
+				op, ok := key.(*mapper.Operator)
+				if ok && isArrayCondition(op.Operation) {
+					jsonPath = jsonPath.AppendIndex(0)
+				}
+				return condMap, jsonPath
+			}
+			jsonPath = jsonPath.AppendProperty(prop.Name)
+			// if key is ObjectProperty it's safe to cast filterVal to map[connor.FilterKey]any
+			// containing either another nested ObjectProperty or Operator
+			condMap = filterVal.(map[connor.FilterKey]any)
+		}
+	}
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that

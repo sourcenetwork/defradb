@@ -56,6 +56,7 @@ type Fetcher interface {
 		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
 		acp immutable.Option[acp.ACP],
+		index immutable.Option[client.IndexDescription],
 		col client.Collection,
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,

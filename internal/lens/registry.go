@@ -144,7 +144,7 @@ func (r *lensRegistry) getCtx(txn datastore.Txn, readonly bool) *txnContext {
 }
 
 func (r *lensRegistry) setMigration(
-	ctx context.Context,
+	_ context.Context,
 	txnCtx *txnContext,
 	collectionID uint32,
 	cfg model.Lens,
@@ -182,7 +182,7 @@ func (r *lensRegistry) setMigration(
 }
 
 func (r *lensRegistry) cachePool(
-	txn datastore.Txn,
+	_ datastore.Txn,
 	target map[uint32]*lensPool,
 	cfg model.Lens,
 	collectionID uint32,

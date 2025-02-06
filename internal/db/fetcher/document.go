@@ -135,6 +135,9 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 
 	for {
 		res, ok := f.kvResultsIter.NextSync()
+		if res.Error != nil {
+			return immutable.None[EncodedDocument](), res.Error
+		}
 		if !ok {
 			break
 		}
@@ -179,12 +182,15 @@ func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 		return err
 	}
 
+	// we count the fields fetched here instead of after checking if the field was requested
+	// because we need to count all fields fetched to see more accurate picture of the performance
+	// of the query
+	f.execInfo.FieldsFetched++
+
 	fieldDesc, ok := f.fieldsByID[fieldID]
 	if !ok {
 		return nil
 	}
-
-	f.execInfo.FieldsFetched++
 
 	doc.properties[fieldDesc] = &encProperty{
 		Desc: fieldDesc,

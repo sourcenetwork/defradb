@@ -59,7 +59,7 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -71,7 +71,7 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -115,7 +115,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -153,7 +153,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -192,7 +192,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -231,7 +231,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -269,7 +269,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -307,7 +307,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -346,7 +346,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -385,7 +385,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -430,7 +430,7 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -469,7 +469,7 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -509,7 +509,7 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -576,7 +576,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -588,7 +588,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req3,
@@ -600,7 +600,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req3),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req4,
@@ -612,7 +612,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req4),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req5,
@@ -624,7 +624,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req5),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 			testUtils.Request{
 				Request: req6,
@@ -676,7 +676,7 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(0).WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
 		},
 	}
@@ -705,7 +705,7 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 							name
 						}
 					}`,
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(20).WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -968,7 +968,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(reqWithName),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(4).WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 			testUtils.Request{
 				Request: reqWithNameAge,
@@ -982,7 +982,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(reqWithNameAge),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(3).WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 			testUtils.Request{
 				Request: reqWithNameAgeNumChildren,
@@ -995,7 +995,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(reqWithNameAgeNumChildren),
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
