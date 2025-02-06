@@ -513,3 +513,212 @@ func TestSchemaSimple_WithFloatField_CreatesSchemaGivenType(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// This test helps to ensure we cover all supported types.
+//
+// It also documents a bug with graphql-go introspection.
+// TODO: https://github.com/sourcenetwork/defradb/issues/3429
+func TestSchemaSimple_WithAllTypes_CreatesSchemaGivenTypes(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						tBool: Boolean
+						tNBoolA: [Boolean]
+						tBoolA: [Boolean!]
+						tInt: Int
+						tNIntA: [Int]
+						tIntA: [Int!]
+						tDateTime: DateTime
+						tFloat: Float
+						tNFloatA: [Float]
+						tFloatA: [Float!]
+						tFloat64: Float64
+						tNFloat64A: [Float64]
+						tFloat64A: [Float64!]
+						tFloat32: Float32
+						tNFloat32A: [Float32]
+						tFloat32A: [Float32!]
+						tString: String
+						tNStringA: [String]
+						tStringA: [String!]
+						tBlob: Blob
+						tJSON: JSON
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+									name
+									kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users",
+						"fields": DefaultFields.Append(
+							Field{
+								"name": "tBlob",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Blob"},
+							},
+						).Append(
+							Field{
+								"name": "tBool",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Boolean"},
+							},
+						).Append(
+							Field{
+								"name": "tBoolA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tDateTime",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "DateTime"},
+							},
+						).Append(
+							Field{
+								"name": "tFloat",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Float64"},
+							},
+						).Append(
+							Field{
+								"name": "tFloat32",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Float32"},
+							},
+						).Append(
+							Field{
+								"name": "tFloat32A",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tFloat64",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Float64"},
+							},
+						).Append(
+							Field{
+								"name": "tFloat64A",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tFloatA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tInt",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int"},
+							},
+						).Append(
+							Field{
+								"name": "tIntA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tJSON",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "JSON"},
+							},
+						).Append(
+							Field{
+								"name": "tNBoolA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tNFloat32A",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tNFloat64A",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tNFloatA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tNIntA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tNStringA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Append(
+							Field{
+								"name": "tString",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String"},
+							},
+						).Append(
+							Field{
+								"name": "tStringA",
+								"type": map[string]any{
+									"kind": "LIST",
+									"name": any(nil)},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
