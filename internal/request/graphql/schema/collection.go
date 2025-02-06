@@ -629,52 +629,20 @@ func embeddingFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.EmbeddingDirectivePropFields:
-			val, ok := arg.Value.(*ast.ListValue)
-			if !ok {
-				return client.EmbeddingDescription{},
-					NewErrEmbeddingInvalidProp[[]string](types.ConstraintsDirectivePropSize, arg.Value.GetValue())
-			}
+			val := arg.Value.(*ast.ListValue)
 			fields := make([]string, len(val.Values))
 			for i, untypedField := range val.Values {
-				field, ok := untypedField.(*ast.StringValue)
-				if !ok {
-					return client.EmbeddingDescription{},
-						NewErrEmbeddingInvalidProp[[]string](types.ConstraintsDirectivePropSize, field.GetValue())
-				}
-				fields[i] = field.Value
+				fields[i] = untypedField.(*ast.StringValue).Value
 			}
 			embedding.Fields = fields
 		case types.EmbeddingDirectivePropModel:
-			val, ok := arg.Value.(*ast.StringValue)
-			if !ok {
-				return client.EmbeddingDescription{},
-					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropModel, arg.Value.GetValue())
-			}
-			embedding.Model = val.Value
+			embedding.Model = arg.Value.(*ast.StringValue).Value
 		case types.EmbeddingDirectivePropProvider:
-			val, ok := arg.Value.(*ast.StringValue)
-			if !ok {
-				return client.EmbeddingDescription{},
-					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropProvider, arg.Value.GetValue())
-			}
-			embedding.Provider = val.Value
+			embedding.Provider = arg.Value.(*ast.StringValue).Value
 		case types.EmbeddingDirectivePropTemplate:
-			val, ok := arg.Value.(*ast.StringValue)
-			if !ok {
-				return client.EmbeddingDescription{},
-					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropTemplate, arg.Value.GetValue())
-			}
-			embedding.Template = val.Value
+			embedding.Template = arg.Value.(*ast.StringValue).Value
 		case types.EmbeddingDirectivePropURL:
-			val, ok := arg.Value.(*ast.StringValue)
-			if !ok {
-				return client.EmbeddingDescription{},
-					NewErrEmbeddingInvalidProp[string](types.EmbeddingDirectivePropURL, arg.Value.GetValue())
-			}
-			embedding.URL = val.Value
-		default:
-			return client.EmbeddingDescription{},
-				NewErrDirectiveWithUnknownArg(types.ConstraintsDirectiveLabel, arg.Name.Value)
+			embedding.URL = arg.Value.(*ast.StringValue).Value
 		}
 	}
 	return embedding, nil
@@ -692,19 +660,11 @@ func contraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constra
 			if !kind.IsArray() {
 				return constraintDescription{}, NewErrInvalidTypeForContraint(kind)
 			}
-			val, ok := arg.Value.(*ast.IntValue)
-			if !ok {
-				return constraintDescription{},
-					NewErrContraintsInvalidProp[int](types.ConstraintsDirectivePropSize, arg.Value.GetValue())
-			}
-			size, err := strconv.Atoi(val.Value)
+			size, err := strconv.Atoi(arg.Value.(*ast.IntValue).Value)
 			if err != nil {
 				return constraintDescription{}, err
 			}
 			constraints.Size = size
-		default:
-			return constraintDescription{},
-				NewErrDirectiveWithUnknownArg(types.ConstraintsDirectiveLabel, arg.Name.Value)
 		}
 	}
 	return constraints, nil
