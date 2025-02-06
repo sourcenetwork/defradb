@@ -412,8 +412,6 @@ func createComparingMatcher(condition *fieldFilterCond) valueMatcher {
 		matcher = &timeMatcher{value: v, op: condition.op}
 	} else if v, ok := condition.val.Bool(); ok {
 		matcher = &boolMatcher{value: v, isEq: condition.op == opEq}
-	} else {
-		return nil
 	}
 
 	// for _ne filter on regular (non-JSON) fields the index should also accept nil values
