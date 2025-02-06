@@ -48,7 +48,7 @@ func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(2),
 												"docFetches":   uint64(1),
-												"fieldFetches": uint64(1),
+												"fieldFetches": uint64(3),
 												"indexFetches": uint64(0),
 											},
 										},

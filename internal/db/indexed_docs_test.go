@@ -630,8 +630,10 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
+					mock.Anything,
 				).Unset()
 				f.EXPECT().Init(
+					mock.Anything,
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
@@ -861,8 +863,10 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
+					mock.Anything,
 				).Unset()
 				f.EXPECT().Init(
+					mock.Anything,
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
@@ -980,8 +984,10 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
+			mock.Anything,
 		).Unset()
 		f.EXPECT().Init(
+			mock.Anything,
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
@@ -997,6 +1003,7 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 				identity immutable.Option[acpIdentity.Identity],
 				txn datastore.Txn,
 				acp immutable.Option[acp.ACP],
+				index immutable.Option[client.IndexDescription],
 				col client.Collection,
 				fields []client.FieldDefinition,
 				filter *mapper.Filter,

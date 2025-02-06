@@ -43,7 +43,7 @@ func anyOp(condition, data any) (bool, error) {
 
 func anySlice[T any](condition any, data []T) (bool, error) {
 	for _, c := range data {
-		m, err := eq(condition, c)
+		m, err := eq(condition, c, true)
 		if err != nil {
 			return false, err
 		} else if m {

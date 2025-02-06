@@ -54,13 +54,13 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(3),
 												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
+												"fieldFetches": uint64(8),
 												"indexFetches": uint64(0),
 											},
 											"subTypeScanNode": dataMap{
 												"iterations":   uint64(2),
 												"docFetches":   uint64(2),
-												"fieldFetches": uint64(2),
+												"fieldFetches": uint64(6),
 												"indexFetches": uint64(0),
 											},
 										},
@@ -120,13 +120,13 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 													"scanNode": dataMap{
 														"iterations":   uint64(3),
 														"docFetches":   uint64(2),
-														"fieldFetches": uint64(2),
+														"fieldFetches": uint64(8),
 														"indexFetches": uint64(0),
 													},
 													"subTypeScanNode": dataMap{
 														"iterations":   uint64(2),
 														"docFetches":   uint64(2),
-														"fieldFetches": uint64(2),
+														"fieldFetches": uint64(6),
 														"indexFetches": uint64(0),
 													},
 												},
@@ -137,13 +137,13 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 													"scanNode": dataMap{
 														"iterations":   uint64(3),
 														"docFetches":   uint64(2),
-														"fieldFetches": uint64(2),
+														"fieldFetches": uint64(8),
 														"indexFetches": uint64(0),
 													},
 													"subTypeScanNode": dataMap{
 														"iterations":   uint64(2),
 														"docFetches":   uint64(2),
-														"fieldFetches": uint64(4),
+														"fieldFetches": uint64(6),
 														"indexFetches": uint64(0),
 													},
 												},
@@ -203,13 +203,13 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(3),
 												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
+												"fieldFetches": uint64(8),
 												"indexFetches": uint64(0),
 											},
 											"subTypeScanNode": dataMap{
 												"iterations":   uint64(2),
 												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
+												"fieldFetches": uint64(6),
 												"indexFetches": uint64(0),
 											},
 										},
