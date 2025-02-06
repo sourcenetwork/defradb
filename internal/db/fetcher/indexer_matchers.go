@@ -357,62 +357,35 @@ func createComparingMatcher(condition *fieldFilterCond) valueMatcher {
 	// JSON type needs a special handling if the op is _ne, because _ne should check also
 	// difference of types
 	if v, ok := condition.val.JSON(); ok {
-		var matcher valueMatcher
 		// we have a separate branch for null matcher because default matching behavior
 		// is what we need: for filter `_ne: null` it will match all non-null values
 		if v.IsNull() {
-			matcher = &jsonNullMatcher{matchNull: condition.op == opEq}
-		} else {
-			if jsonVal, ok := v.Number(); ok {
-				matcher = &jsonComparingMatcher[float64]{
-					value:        jsonVal,
-					getValueFunc: func(j client.JSON) (float64, bool) { return j.Number() },
-					evalFunc:     getCompareValsFunc[float64](condition.op),
-				}
-			} else if jsonVal, ok := v.String(); ok {
-				matcher = &jsonComparingMatcher[string]{
-					value:        jsonVal,
-					getValueFunc: func(j client.JSON) (string, bool) { return j.String() },
-					evalFunc:     getCompareValsFunc[string](condition.op),
-				}
-			} else if jsonVal, ok := v.Bool(); ok {
-				matcher = &jsonBoolMatcher{value: jsonVal, isEq: condition.op == opEq}
-			}
+			return &jsonNullMatcher{matchNull: condition.op == opEq}
+		}
 
-			// _ne filter on JSON fields should also accept values of different types
-			if condition.op == opNe {
-				var typeMatcher valueMatcher
-				if _, ok := v.Number(); ok {
-					typeMatcher = &jsonTypeMatcher[float64]{
-						getValueFunc: func(j client.JSON) (float64, bool) { return j.Number() },
-					}
-				} else if _, ok := v.String(); ok {
-					typeMatcher = &jsonTypeMatcher[string]{
-						getValueFunc: func(j client.JSON) (string, bool) { return j.String() },
-					}
-				} else if _, ok := v.Bool(); ok {
-					typeMatcher = &jsonTypeMatcher[bool]{
-						getValueFunc: func(j client.JSON) (bool, bool) { return j.Bool() },
-					}
-				}
-				matcher = newCompositeMatcher(typeMatcher, matcher)
+		if condition.op != opNe {
+			return createJSONComparingMatcher(v, condition.op)
+		}
+
+		// _ne filter on JSON fields should also accept values of different types
+		var typeMatcher valueMatcher
+		if _, ok := v.Number(); ok {
+			typeMatcher = &jsonTypeMatcher[float64]{
+				getValueFunc: func(j client.JSON) (float64, bool) { return j.Number() },
+			}
+		} else if _, ok := v.String(); ok {
+			typeMatcher = &jsonTypeMatcher[string]{
+				getValueFunc: func(j client.JSON) (string, bool) { return j.String() },
+			}
+		} else if _, ok := v.Bool(); ok {
+			typeMatcher = &jsonTypeMatcher[bool]{
+				getValueFunc: func(j client.JSON) (bool, bool) { return j.Bool() },
 			}
 		}
-		return matcher
+		return newCompositeMatcher(typeMatcher, createJSONComparingMatcher(v, condition.op))
 	}
 
-	var matcher valueMatcher
-	if v, ok := condition.val.Int(); ok {
-		matcher = &intMatcher{value: v, evalFunc: getCompareValsFunc[int64](condition.op)}
-	} else if v, ok := condition.val.Float(); ok {
-		matcher = &floatMatcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}
-	} else if v, ok := condition.val.String(); ok {
-		matcher = &stringMatcher{value: v, evalFunc: getCompareValsFunc[string](condition.op)}
-	} else if v, ok := condition.val.Time(); ok {
-		matcher = &timeMatcher{value: v, op: condition.op}
-	} else if v, ok := condition.val.Bool(); ok {
-		matcher = &boolMatcher{value: v, isEq: condition.op == opEq}
-	}
+	matcher := createScalarComparingMatcher(condition)
 
 	// for _ne filter on regular (non-JSON) fields the index should also accept nil values
 	// there won't be `_ne: null` because nil check is done before this function is called
@@ -421,6 +394,42 @@ func createComparingMatcher(condition *fieldFilterCond) valueMatcher {
 	}
 
 	return matcher
+}
+
+// createJSONComparingMatcher creates a matcher for JSON values
+func createJSONComparingMatcher(val client.JSON, op string) valueMatcher {
+	if jsonVal, ok := val.Number(); ok {
+		return &jsonComparingMatcher[float64]{
+			value:        jsonVal,
+			getValueFunc: func(j client.JSON) (float64, bool) { return j.Number() },
+			evalFunc:     getCompareValsFunc[float64](op),
+		}
+	} else if jsonVal, ok := val.String(); ok {
+		return &jsonComparingMatcher[string]{
+			value:        jsonVal,
+			getValueFunc: func(j client.JSON) (string, bool) { return j.String() },
+			evalFunc:     getCompareValsFunc[string](op),
+		}
+	} else if jsonVal, ok := val.Bool(); ok {
+		return &jsonBoolMatcher{value: jsonVal, isEq: op == opEq}
+	}
+	return nil
+}
+
+// createScalarComparingMatcher creates a matcher for scalar values (int, float, string, time, bool)
+func createScalarComparingMatcher(condition *fieldFilterCond) valueMatcher {
+	if v, ok := condition.val.Int(); ok {
+		return &intMatcher{value: v, evalFunc: getCompareValsFunc[int64](condition.op)}
+	} else if v, ok := condition.val.Float(); ok {
+		return &floatMatcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}
+	} else if v, ok := condition.val.String(); ok {
+		return &stringMatcher{value: v, evalFunc: getCompareValsFunc[string](condition.op)}
+	} else if v, ok := condition.val.Time(); ok {
+		return &timeMatcher{value: v, op: condition.op}
+	} else if v, ok := condition.val.Bool(); ok {
+		return &boolMatcher{value: v, isEq: condition.op == opEq}
+	}
+	return nil
 }
 
 func extractStringFromNormalValue(val client.NormalValue) (string, error) {
