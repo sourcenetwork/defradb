@@ -50,7 +50,7 @@ func NewParser() (*parser, error) {
 }
 
 func (p *parser) BuildRequestAST(ctx context.Context, request string) (*ast.Document, error) {
-	ctx, span := tracer.Start(ctx) //nolint:ineffassign,staticcheck
+	_, span := tracer.Start(ctx)
 	defer span.End()
 
 	source := source.NewSource(&source.Source{
@@ -72,7 +72,7 @@ func (p *parser) IsIntrospection(ast *ast.Document) bool {
 }
 
 func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *client.RequestResult {
-	ctx, span := tracer.Start(ctx) //nolint:ineffassign,staticcheck
+	_, span := tracer.Start(ctx)
 	defer span.End()
 
 	schema := p.schemaManager.Schema()
@@ -93,7 +93,7 @@ func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *clie
 }
 
 func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
-	ctx, span := tracer.Start(ctx) //nolint:ineffassign,staticcheck
+	_, span := tracer.Start(ctx)
 	defer span.End()
 
 	schema := p.schemaManager.Schema()
@@ -110,7 +110,7 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 }
 
 func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error) {
-	ctx, span := tracer.Start(ctx) //nolint:ineffassign,staticcheck
+	_, span := tracer.Start(ctx)
 	defer span.End()
 
 	return p.schemaManager.ParseSDL(sdl)
