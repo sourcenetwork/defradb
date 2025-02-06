@@ -11,7 +11,6 @@
 package base
 
 import (
-	"bytes"
 	"strings"
 	"time"
 )
@@ -75,14 +74,6 @@ func compareInt(a, b int64) int {
 	}
 	return -1
 }
-func compareUint(a, b uint64) int {
-	if a == b {
-		return 0
-	} else if a > b {
-		return 1
-	}
-	return -1
-}
 func compareFloat[T float32 | float64](a, b T) int {
 	if a == b {
 		return 0
@@ -101,7 +92,4 @@ func compareTime(a, b time.Time) int {
 }
 func compareString(a, b string) int {
 	return strings.Compare(a, b)
-}
-func compareBytes(a, b []byte) int {
-	return bytes.Compare(a, b)
 }
