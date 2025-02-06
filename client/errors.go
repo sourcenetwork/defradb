@@ -38,6 +38,11 @@ const (
 	errArraySizeMismatch                   string = "array size mismatch"
 	errInvalidTypeForEmbedding             string = "invalid type for vector embedding"
 	errInvalidTypeForEmbeddingGeneration   string = "invalid field type for vector embedding generation"
+	errEmptyFieldNameForEmbedding          string = "embedding FieldName cannot be empty"
+	errEmptyFieldsForEmbedding             string = "embedding Fields cannot be empty"
+	errEmptyProviderForEmbedding           string = "embedding Provider cannot be empty"
+	errEmptyModelForEmbedding              string = "embedding Model cannot be empty"
+	errUnknownEmbeddingProvider            string = "unknown embedding provider"
 )
 
 // Errors returnable from this package.
@@ -68,6 +73,11 @@ var (
 	ErrArraySizeMismatch                    = errors.New(errArraySizeMismatch)
 	ErrInvalidTypeForEmbedding              = errors.New(errInvalidTypeForEmbedding)
 	ErrInvalidTypeForEmbeddingGeneration    = errors.New(errInvalidTypeForEmbeddingGeneration)
+	ErrEmptyFieldNameForEmbedding           = errors.New(errEmptyFieldNameForEmbedding)
+	ErrEmptyFieldsForEmbedding              = errors.New(errEmptyFieldsForEmbedding)
+	ErrEmptyProviderForEmbedding            = errors.New(errEmptyProviderForEmbedding)
+	ErrEmptyModelForEmbedding               = errors.New(errEmptyModelForEmbedding)
+	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -220,4 +230,8 @@ func NewErrVectorFieldDoesNotExist(fieldName string) error {
 
 func NewErrInvalidTypeForEmbeddingGeneration(actual FieldKind) error {
 	return errors.New(errInvalidTypeForEmbeddingGeneration, errors.NewKV("Actual", actual.String()))
+}
+
+func NewErrUnknownEmbeddingProvider(provider string) error {
+	return errors.New(errUnknownEmbeddingProvider, errors.NewKV("Provider", provider))
 }

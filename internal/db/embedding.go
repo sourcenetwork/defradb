@@ -23,25 +23,37 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func getEmbeddingFunc(provider, model, url string) (chromem.EmbeddingFunc, error) {
+const (
+	ollama string = "ollama"
+	openai string = "openai"
+)
+
+var supportedEmbeddingProviders = map[string]struct{}{
+	ollama: {},
+	openai: {},
+}
+
+func getEmbeddingFunc(provider, model, url string) chromem.EmbeddingFunc {
+	var embedFunc chromem.EmbeddingFunc
+	// No need to defend against unknown providers as it will have been
+	// validated when creating/updating the embedding config.
 	switch provider {
-	case "ollama":
-		return chromem.NewEmbeddingFuncOllama(model, url), nil
-	case "openai":
+	case ollama:
+		embedFunc = chromem.NewEmbeddingFuncOllama(model, url)
+	case openai:
 		normalized := true
 		apiURL := url
 		if apiURL == "" {
 			apiURL = chromem.BaseURLOpenAI
 		}
-		return chromem.NewEmbeddingFuncOpenAICompat(
+		embedFunc = chromem.NewEmbeddingFuncOpenAICompat(
 			apiURL,
 			os.Getenv("OPENAI_API_KEY"),
 			model,
 			&normalized,
-		), nil
-	default:
-		return nil, NewErrUnknownEmbeddingProvider(provider)
+		)
 	}
+	return embedFunc
 }
 
 // setEmbedding sets the embedding fields on the document if the related fields are dirty.
@@ -101,14 +113,12 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 			}
 		}
 
-		embeddingFunc, err := getEmbeddingFunc(
+		embeddingFunc := getEmbeddingFunc(
 			embedding.Provider,
 			embedding.Model,
 			embedding.URL,
 		)
-		if err != nil {
-			return NewErrGetEmbeddingFunc(err)
-		}
+
 		var text strings.Builder
 		for _, fieldName := range embedding.Fields {
 			if val, ok := fieldsVal[fieldName]; ok {

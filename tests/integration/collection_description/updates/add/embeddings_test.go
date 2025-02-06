@@ -134,3 +134,171 @@ func TestColDescrUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/Embeddings/-", "value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding FieldName cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/Embeddings/-", "value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding Fields cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/Embeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding Provider cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedgProvider_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/Embeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "unknown embedding provider",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/Embeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding Model cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/Embeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text"} }
+					]
+				`,
+			},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionDescription{
+					{
+						Name:           immutable.Some("Users"),
+						IsMaterialized: true,
+						Embeddings: []client.EmbeddingDescription{
+							{
+								FieldName: "name_v",
+								Fields:    []string{"name", "about"},
+								Provider:  "ollama",
+								Model:     "nomic-embed-text",
+								// URL is not a required parameted. If not provided, the default for
+								// the provider will be used.
+								URL: "",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

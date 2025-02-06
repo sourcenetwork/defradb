@@ -109,7 +109,6 @@ const (
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 	errDocIDNotFound                            string = "docID not found"
 	errCollectionWithSchemaRootNotFound         string = "collection with schema root not found"
-	errUnknownEmbeddingProvider                 string = "unknown embedding provider"
 	errGetEmbeddingFunc                         string = "failed to get embedding function"
 	errGetEmbeddingField                        string = "failed getting vector embedding field"
 	errFieldNotFound                            string = "field not found"
@@ -163,7 +162,6 @@ var (
 	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
 	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
 	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
-	ErrUnknownEmbeddingProvider                 = errors.New(errUnknownEmbeddingProvider)
 	ErrGetEmbeddingField                        = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                            = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
@@ -720,10 +718,6 @@ func NewErrDocIDNotFound(docID string) error {
 
 func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
 	return errors.New(errCollectionWithSchemaRootNotFound, errors.NewKV("SchemaRoot", schemaRoot))
-}
-
-func NewErrUnknownEmbeddingProvider(provider string) error {
-	return errors.New(errUnknownEmbeddingProvider, errors.NewKV("Provider", provider))
 }
 
 func NewErrGetEmbeddingField(inner error) error {

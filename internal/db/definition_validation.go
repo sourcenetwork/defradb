@@ -136,6 +136,7 @@ var globalValidators = []definitionValidator{
 	validateCollectionFieldDefaultValue,
 	validateEmbeddingAndKindCompatible,
 	validateEmbeddingFieldsForGeneration,
+	validateEmbeddingProviderAndModel,
 }
 
 var createValidators = append(
@@ -734,6 +735,9 @@ func validateEmbeddingAndKindCompatible(
 ) error {
 	for _, colDef := range newState.definitionsByName {
 		for _, embedding := range colDef.Description.Embeddings {
+			if embedding.FieldName == "" {
+				return client.ErrEmptyFieldNameForEmbedding
+			}
 			field, fieldExists := colDef.GetFieldByName(embedding.FieldName)
 			if !fieldExists {
 				return client.NewErrVectorFieldDoesNotExist(embedding.FieldName)
@@ -754,6 +758,9 @@ func validateEmbeddingFieldsForGeneration(
 ) error {
 	for _, colDef := range newState.definitionsByName {
 		for _, embedding := range colDef.Description.Embeddings {
+			if len(embedding.Fields) == 0 {
+				return client.ErrEmptyFieldsForEmbedding
+			}
 			for _, fieldName := range embedding.Fields {
 				field, fieldExists := colDef.GetFieldByName(fieldName)
 				if !fieldExists {
@@ -762,6 +769,28 @@ func validateEmbeddingFieldsForGeneration(
 				if !client.IsSupportedVectorEmbeddingSourceKind(field.Kind) {
 					return client.NewErrInvalidTypeForEmbeddingGeneration(field.Kind)
 				}
+			}
+		}
+	}
+	return nil
+}
+
+func validateEmbeddingProviderAndModel(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	for _, colDef := range newState.definitionsByName {
+		for _, embedding := range colDef.Description.Embeddings {
+			if embedding.Provider == "" {
+				return client.ErrEmptyProviderForEmbedding
+			}
+			if embedding.Model == "" {
+				return client.ErrEmptyModelForEmbedding
+			}
+			if _, supported := supportedEmbeddingProviders[embedding.Provider]; !supported {
+				return client.NewErrUnknownEmbeddingProvider(embedding.Provider)
 			}
 		}
 	}
