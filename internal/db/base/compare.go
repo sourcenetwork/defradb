@@ -11,6 +11,7 @@
 package base
 
 import (
+	"bytes"
 	"strings"
 	"time"
 )
@@ -44,6 +45,8 @@ func Compare(a, b any) int {
 		return compareTime(v, b.(time.Time))
 	case string:
 		return compareString(v, b.(string))
+	case []byte:
+		return compareBytes(v, b.([]byte))
 	default:
 		return 0
 	}
@@ -92,4 +95,7 @@ func compareTime(a, b time.Time) int {
 }
 func compareString(a, b string) int {
 	return strings.Compare(a, b)
+}
+func compareBytes(a, b []byte) int {
+	return bytes.Compare(a, b)
 }

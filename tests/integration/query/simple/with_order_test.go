@@ -48,12 +48,12 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(32),
-						},
-						{
 							"Name": "Carlo",
 							"Age":  int64(55),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(32),
 						},
 						{
 							"Name": "John",
@@ -134,6 +134,12 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order ASC",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					Points: Float32
+				}`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
@@ -189,13 +195,19 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order ASC",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					HeightM: Float
+				}`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
@@ -251,13 +263,19 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order ASC",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					Raw: Blob
+				}`,
+			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
@@ -313,7 +331,7 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
@@ -448,6 +466,12 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order DESC",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					Points: Float32
+				}`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
@@ -503,13 +527,19 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order DESC",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					HeightM: Float
+				}`,
+			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
@@ -565,13 +595,19 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order DESC",
 		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					Name: String
+					Raw: Blob
+				}`,
+			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
@@ -627,7 +663,7 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 		},
 	}
 
-	executeTestCase(t, test)
+	testUtils.ExecuteTestCase(t, test)
 }
 
 func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
@@ -1072,20 +1108,20 @@ func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(32),
-						},
-						{
-							"Name": "Alice",
-							"Age":  int64(19),
-						},
-						{
 							"Name": "Carlo",
 							"Age":  int64(55),
 						},
 						{
+							"Name": "Bob",
+							"Age":  int64(32),
+						},
+						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 					},
 				},
@@ -1134,20 +1170,20 @@ func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(32),
-						},
-						{
-							"Name": "Alice",
-							"Age":  int64(19),
-						},
-						{
 							"Name": "Carlo",
 							"Age":  int64(55),
 						},
 						{
+							"Name": "Bob",
+							"Age":  int64(32),
+						},
+						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 					},
 				},
