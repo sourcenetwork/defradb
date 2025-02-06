@@ -90,8 +90,8 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 						name: String @default(string: "Bob")
 						age: Int @default(int: 40)
 						points: Float @default(float: 10)
-						points32: Float @default(float: 11)
-						points64: Float @default(float: 12)
+						points32: Float32 @default(float32: 11)
+						points64: Float64 @default(float64: 12)
 						metadata: JSON @default(json: "{\"one\":1}")
 						image: Blob @default(blob: "ff0099")
 					}

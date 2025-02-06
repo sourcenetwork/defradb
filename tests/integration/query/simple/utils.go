@@ -22,6 +22,8 @@ var userCollectionGQLSchema = (`
 		Email: String
 		Age: Int
 		HeightM: Float
+		Points: Float32
+		Raw: Blob
 		Verified: Boolean
 		CreatedAt: DateTime
 	}

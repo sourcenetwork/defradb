@@ -48,12 +48,12 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 						{
 							"Name": "John",
@@ -120,6 +120,192 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 						{
 							"Name": "Carlo",
 							"Age":  int64(55),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic order ASC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Points": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Points": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Points": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Points": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {Points: ASC}) {
+						Name
+						Points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":   "Alice",
+							"Points": float32(19),
+						},
+						{
+							"Name":   "John",
+							"Points": float32(21),
+						},
+						{
+							"Name":   "Bob",
+							"Points": float32(32),
+						},
+						{
+							"Name":   "Carlo",
+							"Points": float32(55),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic order ASC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"HeightM": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"HeightM": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {HeightM: ASC}) {
+						Name
+						HeightM
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":    "Alice",
+							"HeightM": float64(19),
+						},
+						{
+							"Name":    "John",
+							"HeightM": float64(21),
+						},
+						{
+							"Name":    "Bob",
+							"HeightM": float64(32),
+						},
+						{
+							"Name":    "Carlo",
+							"HeightM": float64(55),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic order ASC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "John",
+					"Raw":  []byte{21},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Bob",
+					"Raw":  []byte{32},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Carlo",
+					"Raw":  []byte{55},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Alice",
+					"Raw":  []byte{19},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {Raw: ASC}) {
+						Name
+						Raw
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Alice",
+							"Raw":  []byte{19},
+						},
+						{
+							"Name": "John",
+							"Raw":  []byte{21},
+						},
+						{
+							"Name": "Bob",
+							"Raw":  []byte{32},
+						},
+						{
+							"Name": "Carlo",
+							"Raw":  []byte{55},
 						},
 					},
 				},
@@ -248,6 +434,192 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic order DESC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Points": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Points": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"Points": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Points": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {Points: DESC}) {
+						Name
+						Points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":   "Carlo",
+							"Points": float32(55),
+						},
+						{
+							"Name":   "Bob",
+							"Points": float32(32),
+						},
+						{
+							"Name":   "John",
+							"Points": float32(21),
+						},
+						{
+							"Name":   "Alice",
+							"Points": float32(19),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic order DESC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 32
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Carlo",
+					"HeightM": 55
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"HeightM": 19
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {HeightM: DESC}) {
+						Name
+						HeightM
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":    "Carlo",
+							"HeightM": float64(55),
+						},
+						{
+							"Name":    "Bob",
+							"HeightM": float64(32),
+						},
+						{
+							"Name":    "John",
+							"HeightM": float64(21),
+						},
+						{
+							"Name":    "Alice",
+							"HeightM": float64(19),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query with basic order DESC",
+		Actions: []any{
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "John",
+					"Raw":  []byte{21},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Bob",
+					"Raw":  []byte{32},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Carlo",
+					"Raw":  []byte{55},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Alice",
+					"Raw":  []byte{19},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: {Raw: DESC}) {
+						Name
+						Raw
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Carlo",
+							"Raw":  []byte{55},
+						},
+						{
+							"Name": "Bob",
+							"Raw":  []byte{32},
+						},
+						{
+							"Name": "John",
+							"Raw":  []byte{21},
+						},
+						{
+							"Name": "Alice",
+							"Raw":  []byte{19},
 						},
 					},
 				},
@@ -700,20 +1072,20 @@ func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},
@@ -762,20 +1134,20 @@ func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},
