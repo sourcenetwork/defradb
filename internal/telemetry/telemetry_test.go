@@ -19,5 +19,5 @@ import (
 func TestCallerInfo(t *testing.T) {
 	pkg, fn := callerInfo(1)
 	assert.Equal(t, "TestCallerInfo", fn)
-	assert.Equal(t, "github.com/sourcenetwork/defradb/internal/metric", pkg)
+	assert.Equal(t, "github.com/sourcenetwork/defradb/internal/telemetry", pkg)
 }
