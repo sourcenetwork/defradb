@@ -128,3 +128,53 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple update mutation with manually defined vector embedding",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						about: String
+						age: Int
+						name_v: [Float32!] @embedding(fields: ["name", "about"], provider: "ollama", model: "nomic-embed-text",  url: "http://localhost:11434/api")
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// Doc with both embedding fields
+				Doc: `{
+					"name": "John",
+					"about": "He loves fajitas.",
+					"name_v": [1, 2, 3]
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"age": 30
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User {
+							name_v
+						}
+					}
+				`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name_v": []float32{1, 2, 3},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
