@@ -146,7 +146,7 @@ func collectionFromAstDefinition(
 				}
 				indexDescriptions = append(indexDescriptions, index)
 			case types.VectorEmbeddingDirectiveLabel:
-				embedding, err := embeddingFromAST(directive, field)
+				embedding, err := vectorEmbeddingFromAST(directive, field)
 				if err != nil {
 					return client.CollectionDefinition{}, err
 				}
@@ -622,7 +622,10 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 	return policyDesc, nil
 }
 
-func embeddingFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.VectorEmbeddingDescription, error) {
+func vectorEmbeddingFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.VectorEmbeddingDescription, error) {
 	embedding := client.VectorEmbeddingDescription{
 		FieldName: fieldDef.Name.Value,
 	}

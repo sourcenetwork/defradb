@@ -34,7 +34,7 @@ func TestColDescrUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/1/Embeddings/0"}
+						{ "op": "remove", "path": "/1/VectorEmbeddings/0"}
 					]
 				`,
 			},

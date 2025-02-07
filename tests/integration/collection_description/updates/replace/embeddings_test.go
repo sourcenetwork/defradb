@@ -34,7 +34,7 @@ func TestColDescrUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError(t
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Embeddings/0/FieldName", "value": "foo" }
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/FieldName", "value": "foo" }
 					]
 				`,
 				ExpectedError: "the given field does not exist. Vector field: foo",
@@ -59,7 +59,7 @@ func TestColDescrUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFiel
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Embeddings/0/Fields", "value": ["name", "foo"] }
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/Fields", "value": ["name", "foo"] }
 					]
 				`,
 				ExpectedError: "the given field does not exist. Embedding generation field: foo",
@@ -84,7 +84,7 @@ func TestColDescrUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFiel
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Embeddings/0/Fields", "value": ["name", "custom"] }
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/Fields", "value": ["name", "custom"] }
 					]
 				`,
 				ExpectedError: "invalid field type for vector embedding generation. Actual: JSON",
@@ -109,10 +109,10 @@ func TestColDescrUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T)
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Embeddings/0/Fields", "value": ["about"] },
-						{ "op": "replace", "path": "/1/Embeddings/0/Provider", "value": "ollama" },
-						{ "op": "replace", "path": "/1/Embeddings/0/Model", "value": "nomic-embed-text" },
-						{ "op": "replace", "path": "/1/Embeddings/0/URL", "value": "http://localhost:11434/api" }
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/Fields", "value": ["about"] },
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/Provider", "value": "ollama" },
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/Model", "value": "nomic-embed-text" },
+						{ "op": "replace", "path": "/1/VectorEmbeddings/0/URL", "value": "http://localhost:11434/api" }
 					]
 				`,
 			},

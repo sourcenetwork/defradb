@@ -743,7 +743,7 @@ func validateEmbeddingAndKindCompatible(
 				return client.NewErrVectorFieldDoesNotExist(embedding.FieldName)
 			}
 			if !client.IsNumericArray(field.Kind) {
-				client.NewErrInvalidTypeForEmbedding(field.Kind)
+				return client.NewErrInvalidTypeForEmbedding(field.Kind)
 			}
 		}
 	}
@@ -762,10 +762,18 @@ func validateEmbeddingFieldsForGeneration(
 				return client.ErrEmptyFieldsForEmbedding
 			}
 			for _, fieldName := range embedding.Fields {
+				// Check that no fields used for embedding generation refers to self of another embedding field.
+				for _, embedding := range colDef.Description.VectorEmbeddings {
+					if embedding.FieldName == fieldName {
+						return client.NewErrEmbeddingFieldEmbedding(fieldName)
+					}
+				}
+				// Check that the field exists.
 				field, fieldExists := colDef.GetFieldByName(fieldName)
 				if !fieldExists {
 					return client.NewErrFieldForEmbeddingGenerationDoesNotExist(fieldName)
 				}
+				// Check that the field is of a supperted kind.
 				if !client.IsSupportedVectorEmbeddingSourceKind(field.Kind) {
 					return client.NewErrInvalidTypeForEmbeddingGeneration(field.Kind)
 				}

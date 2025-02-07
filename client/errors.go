@@ -43,6 +43,7 @@ const (
 	errEmptyProviderForEmbedding           string = "embedding Provider cannot be empty"
 	errEmptyModelForEmbedding              string = "embedding Model cannot be empty"
 	errUnknownEmbeddingProvider            string = "unknown embedding provider"
+	errEmbeddingFieldEmbedding             string = "embedding fields cannot refer to self or another embedding field"
 )
 
 // Errors returnable from this package.
@@ -78,6 +79,7 @@ var (
 	ErrEmptyProviderForEmbedding            = errors.New(errEmptyProviderForEmbedding)
 	ErrEmptyModelForEmbedding               = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
+	ErrEmbeddingFieldEmbedding              = errors.New(errEmbeddingFieldEmbedding)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -234,4 +236,8 @@ func NewErrInvalidTypeForEmbeddingGeneration(actual FieldKind) error {
 
 func NewErrUnknownEmbeddingProvider(provider string) error {
 	return errors.New(errUnknownEmbeddingProvider, errors.NewKV("Provider", provider))
+}
+
+func NewErrEmbeddingFieldEmbedding(fieldName string) error {
+	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
 }

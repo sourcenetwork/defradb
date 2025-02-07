@@ -500,11 +500,8 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 
 // IsNumericArray returns true if the FieldKind is an array that contains numerical scalars.
 func IsNumericArray(kind FieldKind) bool {
-	if !kind.IsArray() {
-		return false
-	}
 	if arrKind, ok := kind.(ScalarArrayKind); ok {
-		switch arrKind.SubKind() {
+		switch arrKind {
 		case FieldKind_INT_ARRAY, FieldKind_FLOAT64_ARRAY, FieldKind_FLOAT32_ARRAY:
 			return true
 		default:
