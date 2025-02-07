@@ -64,7 +64,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 					}`,
 					bookID,
 				),
-				ExpectedError: "The given field does not exist. Name: published_id",
+				ExpectedError: "the given field does not exist. Name: published_id",
 			},
 		},
 	}
@@ -157,7 +157,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 					}`,
 					author2ID,
 				),
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "the given field does not exist. Name: notName",
 			},
 		},
 	}

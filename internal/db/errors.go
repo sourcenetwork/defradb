@@ -109,6 +109,10 @@ const (
 	errInvalidDefaultFieldValue                 string = "default field value is invalid"
 	errDocIDNotFound                            string = "docID not found"
 	errCollectionWithSchemaRootNotFound         string = "collection with schema root not found"
+	errGetEmbeddingFunc                         string = "failed to get embedding function"
+	errGetEmbeddingField                        string = "failed getting vector embedding field"
+	errFieldNotFound                            string = "field not found"
+	errGetDocForEmbedding                       string = "failed to get previous document for embedding generation"
 )
 
 var (
@@ -158,6 +162,10 @@ var (
 	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
 	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
 	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
+	ErrGetEmbeddingField                        = errors.New(errGetEmbeddingField)
+	ErrFieldNotFound                            = errors.New(errFieldNotFound)
+	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
+	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -710,4 +718,20 @@ func NewErrDocIDNotFound(docID string) error {
 
 func NewErrCollectionWithSchemaRootNotFound(schemaRoot string) error {
 	return errors.New(errCollectionWithSchemaRootNotFound, errors.NewKV("SchemaRoot", schemaRoot))
+}
+
+func NewErrGetEmbeddingField(inner error) error {
+	return errors.Wrap(errGetEmbeddingField, inner)
+}
+
+func NewErrGetEmbeddingFunc(inner error) error {
+	return errors.Wrap(errGetEmbeddingFunc, inner)
+}
+
+func NewErrEmbeddingFieldNotFound(field string) error {
+	return errors.New(errFieldNotFound, errors.NewKV("Embedding field", field))
+}
+
+func NewErrGetDocForEmbedding(inner error) error {
+	return errors.Wrap(errGetDocForEmbedding, inner)
 }

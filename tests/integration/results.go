@@ -165,7 +165,17 @@ func areResultsEqual(expected any, actual any) bool {
 			return false
 		}
 		return assert.ObjectsAreEqualValues(expected, actualVal)
-	case float32, float64:
+	case float32:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		actualVal, err := jsonNum.Float64()
+		if err != nil {
+			return false
+		}
+		return assert.ObjectsAreEqualValues(expected, float32(actualVal))
+	case float64:
 		jsonNum, ok := actual.(json.Number)
 		if !ok {
 			return assert.ObjectsAreEqualValues(expected, actual)
@@ -175,6 +185,8 @@ func areResultsEqual(expected any, actual any) bool {
 			return false
 		}
 		return assert.ObjectsAreEqualValues(expected, actualVal)
+	case immutable.Option[float32]:
+		return areResultOptionsEqual(expectedVal, actual)
 	case immutable.Option[float64]:
 		return areResultOptionsEqual(expectedVal, actual)
 	case immutable.Option[uint64]:
@@ -191,6 +203,8 @@ func areResultsEqual(expected any, actual any) bool {
 		return areResultArraysEqual(expectedVal, actual)
 	case []uint64:
 		return areResultArraysEqual(expectedVal, actual)
+	case []float32:
+		return areResultArraysEqual(expectedVal, actual)
 	case []float64:
 		return areResultArraysEqual(expectedVal, actual)
 	case []string:
@@ -200,6 +214,8 @@ func areResultsEqual(expected any, actual any) bool {
 	case []any:
 		return areResultArraysEqual(expectedVal, actual)
 	case []map[string]any:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[float32]:
 		return areResultArraysEqual(expectedVal, actual)
 	case []immutable.Option[float64]:
 		return areResultArraysEqual(expectedVal, actual)
@@ -290,6 +306,10 @@ func assertCollectionDescriptions(
 
 		if expected.Fields != nil {
 			require.Equal(s.t, expected.Fields, actual.Fields)
+		}
+
+		if expected.VectorEmbeddings != nil {
+			require.Equal(s.t, expected.VectorEmbeddings, actual.VectorEmbeddings)
 		}
 	}
 }

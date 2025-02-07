@@ -123,12 +123,12 @@ func TestJSONDecoding_MalformedData(t *testing.T) {
 		},
 		{
 			name:      "malformed json num",
-			input:     []byte{jsonMarker, term, jsonPathEnd, floatPos, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, float64Pos, 0xFF, 0xFF, 0xFF},
 			ascending: true,
 		},
 		{
 			name:      "malformed json num",
-			input:     []byte{jsonMarker, term, jsonPathEnd, floatPos, 0xFF, 0xFF, 0xFF},
+			input:     []byte{jsonMarker, term, jsonPathEnd, float64Pos, 0xFF, 0xFF, 0xFF},
 			ascending: false,
 		},
 		{

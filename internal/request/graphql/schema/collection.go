@@ -13,6 +13,7 @@ package schema
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -29,6 +30,8 @@ const (
 	typeBoolean  string = "Boolean"
 	typeInt      string = "Int"
 	typeFloat    string = "Float"
+	typeFloat32  string = "Float32"
+	typeFloat64  string = "Float64"
 	typeDateTime string = "DateTime"
 	typeString   string = "String"
 	typeBlob     string = "Blob"
@@ -42,6 +45,8 @@ var TypeToDefaultPropName = map[string]string{
 	typeBoolean:  types.DefaultDirectivePropBool,
 	typeInt:      types.DefaultDirectivePropInt,
 	typeFloat:    types.DefaultDirectivePropFloat,
+	typeFloat32:  types.DefaultDirectivePropFloat32,
+	typeFloat64:  types.DefaultDirectivePropFloat64,
 	typeDateTime: types.DefaultDirectivePropDateTime,
 	typeJSON:     types.DefaultDirectivePropJSON,
 	typeBlob:     types.DefaultDirectivePropBlob,
@@ -117,6 +122,7 @@ func collectionFromAstDefinition(
 	policyDescription := immutable.None[client.PolicyDescription]()
 
 	indexDescriptions := []client.IndexDescription{}
+	vectorEmbeddings := []client.VectorEmbeddingDescription{}
 	for _, field := range def.Fields {
 		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -132,12 +138,19 @@ func collectionFromAstDefinition(
 		collectionFieldDescriptions = append(collectionFieldDescriptions, tmpCollectionFieldDescriptions...)
 
 		for _, directive := range field.Directives {
-			if directive.Name.Value == types.IndexDirectiveLabel {
+			switch directive.Name.Value {
+			case types.IndexDirectiveLabel:
 				index, err := indexFromAST(directive, field)
 				if err != nil {
 					return client.CollectionDefinition{}, err
 				}
 				indexDescriptions = append(indexDescriptions, index)
+			case types.VectorEmbeddingDirectiveLabel:
+				embedding, err := vectorEmbeddingFromAST(directive, field)
+				if err != nil {
+					return client.CollectionDefinition{}, err
+				}
+				vectorEmbeddings = append(vectorEmbeddings, embedding)
 			}
 		}
 	}
@@ -219,12 +232,13 @@ func collectionFromAstDefinition(
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
-			Name:           immutable.Some(def.Name.Value),
-			Indexes:        indexDescriptions,
-			Policy:         policyDescription,
-			Fields:         collectionFieldDescriptions,
-			IsMaterialized: !isMaterialized.HasValue() || isMaterialized.Value(),
-			IsBranchable:   isBranchable,
+			Name:             immutable.Some(def.Name.Value),
+			Indexes:          indexDescriptions,
+			Policy:           policyDescription,
+			Fields:           collectionFieldDescriptions,
+			IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
+			IsBranchable:     isBranchable,
+			VectorEmbeddings: vectorEmbeddings,
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
@@ -434,6 +448,10 @@ func defaultFromAST(
 		value = gql.Int.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropFloat:
 		value = gql.Float.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropFloat32:
+		value = types.Float32.ParseLiteral(arg.Value, nil)
+	case types.DefaultDirectivePropFloat64:
+		value = types.Float64.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropBool:
 		value = gql.Boolean.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropString:
@@ -478,9 +496,16 @@ func fieldsFromAST(
 	hostMap[field.Name.Value] = cType
 
 	var defaultValue any
+	var constraints constraintDescription
 	for _, directive := range field.Directives {
-		if directive.Name.Value == types.DefaultDirectiveLabel {
+		switch directive.Name.Value {
+		case types.DefaultDirectiveLabel:
 			defaultValue, err = defaultFromAST(field, directive)
+			if err != nil {
+				return nil, nil, err
+			}
+		case types.ConstraintsDirectiveLabel:
+			constraints, err = contraintsFromAST(kind, directive)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -564,6 +589,7 @@ func fieldsFromAST(
 			client.CollectionFieldDescription{
 				Name:         field.Name.Value,
 				DefaultValue: defaultValue,
+				Size:         constraints.Size,
 			},
 		)
 	}
@@ -594,6 +620,57 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 		}
 	}
 	return policyDesc, nil
+}
+
+func vectorEmbeddingFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.VectorEmbeddingDescription, error) {
+	embedding := client.VectorEmbeddingDescription{
+		FieldName: fieldDef.Name.Value,
+	}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.VectorEmbeddingDirectivePropFields:
+			val := arg.Value.(*ast.ListValue)
+			fields := make([]string, len(val.Values))
+			for i, untypedField := range val.Values {
+				fields[i] = untypedField.(*ast.StringValue).Value
+			}
+			embedding.Fields = fields
+		case types.VectorEmbeddingDirectivePropModel:
+			embedding.Model = arg.Value.(*ast.StringValue).Value
+		case types.VectorEmbeddingDirectivePropProvider:
+			embedding.Provider = arg.Value.(*ast.StringValue).Value
+		case types.VectorEmbeddingDirectivePropTemplate:
+			embedding.Template = arg.Value.(*ast.StringValue).Value
+		case types.VectorEmbeddingDirectivePropURL:
+			embedding.URL = arg.Value.(*ast.StringValue).Value
+		}
+	}
+	return embedding, nil
+}
+
+type constraintDescription struct {
+	Size int
+}
+
+func contraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
+	constraints := constraintDescription{}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.ConstraintsDirectivePropSize:
+			if !kind.IsArray() {
+				return constraintDescription{}, NewErrInvalidTypeForContraint(kind)
+			}
+			size, err := strconv.Atoi(arg.Value.(*ast.IntValue).Value)
+			if err != nil {
+				return constraintDescription{}, err
+			}
+			constraints.Size = size
+		}
+	}
+	return constraints, nil
 }
 
 func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CType, error) {
@@ -637,8 +714,10 @@ func astTypeToKind(
 				return client.FieldKind_BOOL_ARRAY, nil
 			case typeInt:
 				return client.FieldKind_INT_ARRAY, nil
-			case typeFloat:
-				return client.FieldKind_FLOAT_ARRAY, nil
+			case typeFloat, typeFloat64:
+				return client.FieldKind_FLOAT64_ARRAY, nil
+			case typeFloat32:
+				return client.FieldKind_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_STRING_ARRAY, nil
 			default:
@@ -651,8 +730,10 @@ func astTypeToKind(
 				return client.FieldKind_NILLABLE_BOOL_ARRAY, nil
 			case typeInt:
 				return client.FieldKind_NILLABLE_INT_ARRAY, nil
-			case typeFloat:
-				return client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
+			case typeFloat, typeFloat64:
+				return client.FieldKind_NILLABLE_FLOAT64_ARRAY, nil
+			case typeFloat32:
+				return client.FieldKind_NILLABLE_FLOAT32_ARRAY, nil
 			case typeString:
 				return client.FieldKind_NILLABLE_STRING_ARRAY, nil
 			default:
@@ -668,8 +749,10 @@ func astTypeToKind(
 			return client.FieldKind_NILLABLE_BOOL, nil
 		case typeInt:
 			return client.FieldKind_NILLABLE_INT, nil
-		case typeFloat:
-			return client.FieldKind_NILLABLE_FLOAT, nil
+		case typeFloat, typeFloat64:
+			return client.FieldKind_NILLABLE_FLOAT64, nil
+		case typeFloat32:
+			return client.FieldKind_NILLABLE_FLOAT32, nil
 		case typeDateTime:
 			return client.FieldKind_NILLABLE_DATETIME, nil
 		case typeString:

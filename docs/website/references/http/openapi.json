@@ -151,7 +151,10 @@
                                 "Name": {
                                     "type": "string"
                                 },
-                                "RelationName": {}
+                                "RelationName": {},
+                                "Size": {
+                                    "type": "integer"
+                                }
                             },
                             "type": "object"
                         },
@@ -214,6 +217,35 @@
                     "Sources": {
                         "items": {},
                         "type": "array"
+                    },
+                    "VectorEmbeddings": {
+                        "items": {
+                            "properties": {
+                                "FieldName": {
+                                    "type": "string"
+                                },
+                                "Fields": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "Model": {
+                                    "type": "string"
+                                },
+                                "Provider": {
+                                    "type": "string"
+                                },
+                                "Template": {
+                                    "type": "string"
+                                },
+                                "URL": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -235,7 +267,10 @@
                                         "Name": {
                                             "type": "string"
                                         },
-                                        "RelationName": {}
+                                        "RelationName": {},
+                                        "Size": {
+                                            "type": "integer"
+                                        }
                                     },
                                     "type": "object"
                                 },
@@ -297,6 +332,35 @@
                             },
                             "Sources": {
                                 "items": {},
+                                "type": "array"
+                            },
+                            "VectorEmbeddings": {
+                                "items": {
+                                    "properties": {
+                                        "FieldName": {
+                                            "type": "string"
+                                        },
+                                        "Fields": {
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "Model": {
+                                            "type": "string"
+                                        },
+                                        "Provider": {
+                                            "type": "string"
+                                        },
+                                        "Template": {
+                                            "type": "string"
+                                        },
+                                        "URL": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
                                 "type": "array"
                             }
                         },

@@ -148,12 +148,20 @@ These are the set of filter operators available for use when filtering on Boolea
 These are the set of filter operators available for use when filtering on DateTime
  values.
 `
-	floatOperatorBlockDescription string = `
-These are the set of filter operators available for use when filtering on Float
+	float32OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float32
  values.
 `
-	notNullFloatOperatorBlockDescription string = `
-These are the set of filter operators available for use when filtering on Float!
+	notNullFloat32OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float32!
+ values.
+`
+	float64OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float64
+ values.
+`
+	notNullFloat64OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float64!
  values.
 `
 	intOperatorBlockDescription string = `
@@ -251,6 +259,11 @@ Sort the results in descending order, e.g. c,b,a,3,2,1,null.
 `
 	crdtDirectiveDescription string = `
 Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister.
+`
+	constraintsDirectiveDescription string = `
+Set constrains on a field.`
+	embeddingDirectiveDescription string = `
+Indicate that a [float!] type is used to store embeddings.
 `
 	primaryDirectiveDescription string = `
 Indicate the primary side of a one-to-one relationship.

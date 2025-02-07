@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	errFieldNotExist                       string = "The given field does not exist"
+	errFieldNotExist                       string = "the given field does not exist"
 	errUnexpectedType                      string = "unexpected type"
 	errParsingFailed                       string = "failed to parse argument"
 	errUninitializeProperty                string = "invalid state, required property is uninitialized"
@@ -35,6 +35,15 @@ const (
 	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
 	errFailedToParseKind                   string = "failed to parse kind"
 	errCannotSetRelationFromSecondarySide  string = "cannot set relation from secondary side"
+	errArraySizeMismatch                   string = "array size mismatch"
+	errInvalidTypeForEmbedding             string = "invalid type for vector embedding"
+	errInvalidTypeForEmbeddingGeneration   string = "invalid field type for vector embedding generation"
+	errEmptyFieldNameForEmbedding          string = "embedding FieldName cannot be empty"
+	errEmptyFieldsForEmbedding             string = "embedding Fields cannot be empty"
+	errEmptyProviderForEmbedding           string = "embedding Provider cannot be empty"
+	errEmptyModelForEmbedding              string = "embedding Model cannot be empty"
+	errUnknownEmbeddingProvider            string = "unknown embedding provider"
+	errEmbeddingFieldEmbedding             string = "embedding fields cannot refer to self or another embedding field"
 )
 
 // Errors returnable from this package.
@@ -62,6 +71,15 @@ var (
 	ErrCanNotMakeNormalNilFromFieldKind     = errors.New(errCanNotMakeNormalNilFromFieldKind)
 	ErrCollectionNotFound                   = errors.New(errCollectionNotFound)
 	ErrFailedToParseKind                    = errors.New(errFailedToParseKind)
+	ErrArraySizeMismatch                    = errors.New(errArraySizeMismatch)
+	ErrInvalidTypeForEmbedding              = errors.New(errInvalidTypeForEmbedding)
+	ErrInvalidTypeForEmbeddingGeneration    = errors.New(errInvalidTypeForEmbeddingGeneration)
+	ErrEmptyFieldNameForEmbedding           = errors.New(errEmptyFieldNameForEmbedding)
+	ErrEmptyFieldsForEmbedding              = errors.New(errEmptyFieldsForEmbedding)
+	ErrEmptyProviderForEmbedding            = errors.New(errEmptyProviderForEmbedding)
+	ErrEmptyModelForEmbedding               = errors.New(errEmptyModelForEmbedding)
+	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
+	ErrEmbeddingFieldEmbedding              = errors.New(errEmbeddingFieldEmbedding)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -194,4 +212,32 @@ func ReviveError(message string) error {
 
 func NewErrCannotSetRelationFromSecondarySide(name string) error {
 	return errors.New(errCannotSetRelationFromSecondarySide, errors.NewKV("Name", name))
+}
+
+func NewErrArraySizeMismatch[T any](array []T, expected int) error {
+	return errors.New(errArraySizeMismatch, errors.NewKV("Actual", len(array)), errors.NewKV("Expected", expected))
+}
+
+func NewErrInvalidTypeForEmbedding(actual FieldKind) error {
+	return errors.New(errInvalidTypeForEmbedding, errors.NewKV("Actual", actual.String()))
+}
+
+func NewErrFieldForEmbeddingGenerationDoesNotExist(fieldName string) error {
+	return errors.New(errFieldNotExist, errors.NewKV("Embedding generation field", fieldName))
+}
+
+func NewErrVectorFieldDoesNotExist(fieldName string) error {
+	return errors.New(errFieldNotExist, errors.NewKV("Vector field", fieldName))
+}
+
+func NewErrInvalidTypeForEmbeddingGeneration(actual FieldKind) error {
+	return errors.New(errInvalidTypeForEmbeddingGeneration, errors.NewKV("Actual", actual.String()))
+}
+
+func NewErrUnknownEmbeddingProvider(provider string) error {
+	return errors.New(errUnknownEmbeddingProvider, errors.NewKV("Provider", provider))
+}
+
+func NewErrEmbeddingFieldEmbedding(fieldName string) error {
+	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
 }

@@ -37,6 +37,8 @@ env:
 
   DEFRA_BADGER_ENCRYPTION: false
 
+  DEFRA_VECTOR_EMBEDDING: false
+
   DEFRA_MUTATION_TYPE: collection-save
   DEFRA_LENS_TYPE: wasm-time
   DEFRA_ACP_TYPE: local
@@ -72,6 +74,7 @@ jobs:
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'file' }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
+      DEFRA_VECTOR_EMBEDDING: true
 
     steps:
       - name: Checkout code into the directory
@@ -79,6 +82,15 @@ jobs:
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
+
+      - name: Install Ollama
+        run: make deps:ollama
+
+      - name: Run Ollama
+        run: make ollama
+
+      - name: Pull LLM model
+        run: make ollama:nomic
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact

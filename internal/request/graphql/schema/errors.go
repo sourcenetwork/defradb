@@ -10,7 +10,10 @@
 
 package schema
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 const (
 	errDuplicateField                string = "duplicate field"
@@ -35,6 +38,7 @@ const (
 	errDefaultValueInvalid           string = "default value is invalid"
 	errDefaultValueOneArg            string = "default value must specify one argument"
 	errFieldTypeNotSpecified         string = "field type not specified"
+	errInvalidTypeForContraint       string = "size constraint can only be applied to array fields"
 )
 
 var (
@@ -62,6 +66,7 @@ var (
 	ErrPolicyInvalidIDProp       = errors.New(errPolicyInvalidIDProp)
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
+	ErrInvalidTypeForContraint   = errors.New(errInvalidTypeForContraint)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -181,4 +186,8 @@ func NewErrFieldTypeNotSpecified(objectName, fieldName string) error {
 		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
 	)
+}
+
+func NewErrInvalidTypeForContraint(actual client.FieldKind) error {
+	return errors.New(errInvalidTypeForContraint, errors.NewKV("Actual", actual.String()))
 }

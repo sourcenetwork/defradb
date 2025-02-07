@@ -62,7 +62,7 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 				return nil, err
 			}
 
-		case client.FieldKind_FLOAT_ARRAY:
+		case client.FieldKind_FLOAT64_ARRAY:
 			floatArray := make([]float64, len(array))
 			for i, untypedValue := range array {
 				floatArray[i], ok = untypedValue.(float64)
@@ -72,8 +72,26 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 			}
 			val = floatArray
 
-		case client.FieldKind_NILLABLE_FLOAT_ARRAY:
+		case client.FieldKind_NILLABLE_FLOAT64_ARRAY:
 			val, err = convertNillableArray[float64](fieldDesc.Name, array)
+			if err != nil {
+				return nil, err
+			}
+
+		case client.FieldKind_FLOAT32_ARRAY:
+			floatArray := make([]float32, len(array))
+			for i, untypedValue := range array {
+				// CBOR decodes floats as float64, so we need to convert them to float32
+				f64, ok := untypedValue.(float64)
+				if !ok {
+					return nil, client.NewErrUnexpectedType[float64](fieldDesc.Name, untypedValue)
+				}
+				floatArray[i] = float32(f64)
+			}
+			val = floatArray
+
+		case client.FieldKind_NILLABLE_FLOAT32_ARRAY:
+			val, err = convertNillableArrayWithConverter(fieldDesc.Name, array, convertToFloat32)
 			if err != nil {
 				return nil, err
 			}
@@ -99,7 +117,7 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 		}
 	} else { // CBOR often encodes values typed as floats as ints
 		switch fieldDesc.Kind {
-		case client.FieldKind_NILLABLE_FLOAT:
+		case client.FieldKind_NILLABLE_FLOAT64:
 			switch v := val.(type) {
 			case int64:
 				return float64(v), nil
@@ -109,6 +127,19 @@ func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error)
 				return float64(v), nil
 			case uint:
 				return float64(v), nil
+			}
+		case client.FieldKind_NILLABLE_FLOAT32:
+			switch v := val.(type) {
+			case int64:
+				return float32(v), nil
+			case int:
+				return float32(v), nil
+			case uint64:
+				return float32(v), nil
+			case uint:
+				return float32(v), nil
+			case float64:
+				return float32(v), nil
 			}
 		case client.FieldKind_NILLABLE_INT:
 			switch v := val.(type) {
@@ -190,6 +221,21 @@ func convertToInt(propertyName string, untypedValue any) (int64, error) {
 		return value, nil
 	case float64:
 		return int64(value), nil
+	default:
+		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
+	}
+}
+
+func convertToFloat32(propertyName string, untypedValue any) (float32, error) {
+	switch value := untypedValue.(type) {
+	case uint64:
+		return float32(value), nil
+	case int64:
+		return float32(value), nil
+	case float32:
+		return value, nil
+	case float64:
+		return float32(value), nil
 	default:
 		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
 	}

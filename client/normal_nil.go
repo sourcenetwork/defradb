@@ -26,8 +26,10 @@ func NewNormalNil(kind FieldKind) (NormalValue, error) {
 		return NewNormalNillableBool(immutable.None[bool]()), nil
 	case FieldKind_NILLABLE_INT:
 		return NewNormalNillableInt(immutable.None[int64]()), nil
-	case FieldKind_NILLABLE_FLOAT:
-		return NewNormalNillableFloat(immutable.None[float64]()), nil
+	case FieldKind_NILLABLE_FLOAT64:
+		return NewNormalNillableFloat64(immutable.None[float64]()), nil
+	case FieldKind_NILLABLE_FLOAT32:
+		return NewNormalNillableFloat32(immutable.None[float32]()), nil
 	case FieldKind_NILLABLE_DATETIME:
 		return NewNormalNillableTime(immutable.None[time.Time]()), nil
 	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_JSON, FieldKind_DocID:
@@ -38,16 +40,20 @@ func NewNormalNil(kind FieldKind) (NormalValue, error) {
 		return NewNormalBoolNillableArray(immutable.None[[]bool]()), nil
 	case FieldKind_INT_ARRAY:
 		return NewNormalIntNillableArray(immutable.None[[]int64]()), nil
-	case FieldKind_FLOAT_ARRAY:
-		return NewNormalFloatNillableArray(immutable.None[[]float64]()), nil
+	case FieldKind_FLOAT64_ARRAY:
+		return NewNormalFloat64NillableArray(immutable.None[[]float64]()), nil
+	case FieldKind_FLOAT32_ARRAY:
+		return NewNormalFloat32NillableArray(immutable.None[[]float32]()), nil
 	case FieldKind_STRING_ARRAY:
 		return NewNormalStringNillableArray(immutable.None[[]string]()), nil
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return NewNormalNillableBoolNillableArray(immutable.None[[]immutable.Option[bool]]()), nil
 	case FieldKind_NILLABLE_INT_ARRAY:
 		return NewNormalNillableIntNillableArray(immutable.None[[]immutable.Option[int]]()), nil
-	case FieldKind_NILLABLE_FLOAT_ARRAY:
-		return NewNormalNillableFloatNillableArray(immutable.None[[]immutable.Option[float64]]()), nil
+	case FieldKind_NILLABLE_FLOAT64_ARRAY:
+		return NewNormalNillableFloat64NillableArray(immutable.None[[]immutable.Option[float64]]()), nil
+	case FieldKind_NILLABLE_FLOAT32_ARRAY:
+		return NewNormalNillableFloat32NillableArray(immutable.None[[]immutable.Option[float32]]()), nil
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return NewNormalNillableStringNillableArray(immutable.None[[]immutable.Option[string]]()), nil
 	default:

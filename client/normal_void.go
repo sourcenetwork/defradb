@@ -45,7 +45,11 @@ func (NormalVoid) Int() (int64, bool) {
 	return 0, false
 }
 
-func (NormalVoid) Float() (float64, bool) {
+func (NormalVoid) Float64() (float64, bool) {
+	return 0, false
+}
+
+func (NormalVoid) Float32() (float32, bool) {
 	return 0, false
 }
 
@@ -77,8 +81,12 @@ func (NormalVoid) NillableInt() (immutable.Option[int64], bool) {
 	return immutable.None[int64](), false
 }
 
-func (NormalVoid) NillableFloat() (immutable.Option[float64], bool) {
+func (NormalVoid) NillableFloat64() (immutable.Option[float64], bool) {
 	return immutable.None[float64](), false
+}
+
+func (NormalVoid) NillableFloat32() (immutable.Option[float32], bool) {
+	return immutable.None[float32](), false
 }
 
 func (NormalVoid) NillableString() (immutable.Option[string], bool) {
@@ -109,7 +117,11 @@ func (NormalVoid) IntArray() ([]int64, bool) {
 	return nil, false
 }
 
-func (NormalVoid) FloatArray() ([]float64, bool) {
+func (NormalVoid) Float64Array() ([]float64, bool) {
+	return nil, false
+}
+
+func (NormalVoid) Float32Array() ([]float32, bool) {
 	return nil, false
 }
 
@@ -141,7 +153,11 @@ func (NormalVoid) NillableIntArray() ([]immutable.Option[int64], bool) {
 	return nil, false
 }
 
-func (NormalVoid) NillableFloatArray() ([]immutable.Option[float64], bool) {
+func (NormalVoid) NillableFloat64Array() ([]immutable.Option[float64], bool) {
+	return nil, false
+}
+
+func (NormalVoid) NillableFloat32Array() ([]immutable.Option[float32], bool) {
 	return nil, false
 }
 
@@ -169,8 +185,12 @@ func (NormalVoid) IntNillableArray() (immutable.Option[[]int64], bool) {
 	return immutable.None[[]int64](), false
 }
 
-func (NormalVoid) FloatNillableArray() (immutable.Option[[]float64], bool) {
+func (NormalVoid) Float64NillableArray() (immutable.Option[[]float64], bool) {
 	return immutable.None[[]float64](), false
+}
+
+func (NormalVoid) Float32NillableArray() (immutable.Option[[]float32], bool) {
+	return immutable.None[[]float32](), false
 }
 
 func (NormalVoid) StringNillableArray() (immutable.Option[[]string], bool) {
@@ -197,8 +217,12 @@ func (NormalVoid) NillableIntNillableArray() (immutable.Option[[]immutable.Optio
 	return immutable.None[[]immutable.Option[int64]](), false
 }
 
-func (NormalVoid) NillableFloatNillableArray() (immutable.Option[[]immutable.Option[float64]], bool) {
+func (NormalVoid) NillableFloat64NillableArray() (immutable.Option[[]immutable.Option[float64]], bool) {
 	return immutable.None[[]immutable.Option[float64]](), false
+}
+
+func (NormalVoid) NillableFloat32NillableArray() (immutable.Option[[]immutable.Option[float32]], bool) {
+	return immutable.None[[]immutable.Option[float32]](), false
 }
 
 func (NormalVoid) NillableStringNillableArray() (immutable.Option[[]immutable.Option[string]], bool) {
