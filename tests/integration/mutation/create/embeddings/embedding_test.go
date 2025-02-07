@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,6 +12,8 @@ package constraints
 
 import (
 	"testing"
+
+	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -34,7 +36,7 @@ func TestMutationCreate_WithStringForEmbedding_ShouldError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithIntForEmbedding_ShouldSucceed(t *testing.T) {
+func TestMutationCreate_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
@@ -44,6 +46,7 @@ func TestMutationCreate_WithIntForEmbedding_ShouldSucceed(t *testing.T) {
 						name_v: [Int!] @embedding
 					}
 				`,
+				ExpectedError: "invalid type for vector embedding",
 			},
 		},
 	}
@@ -51,7 +54,7 @@ func TestMutationCreate_WithIntForEmbedding_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithFloatForEmbedding_ShouldSucceed(t *testing.T) {
+func TestMutationCreate_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
@@ -61,6 +64,7 @@ func TestMutationCreate_WithFloatForEmbedding_ShouldSucceed(t *testing.T) {
 						name_v: [Float!] @embedding
 					}
 				`,
+				ExpectedError: "invalid type for vector embedding",
 			},
 		},
 	}
@@ -68,7 +72,7 @@ func TestMutationCreate_WithFloatForEmbedding_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithFloat64ForEmbedding_ShouldSucceed(t *testing.T) {
+func TestMutationCreate_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
@@ -78,6 +82,7 @@ func TestMutationCreate_WithFloat64ForEmbedding_ShouldSucceed(t *testing.T) {
 						name_v: [Float64!] @embedding
 					}
 				`,
+				ExpectedError: "invalid type for vector embedding",
 			},
 		},
 	}
@@ -110,7 +115,8 @@ func TestMutationCreate_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						name_v: [Float32!] @embedding
+						name: String
+						name_v: [Float32!] @embedding(fields: ["name"], provider: "ollama", model: "nomic-embed-text",  url: "http://localhost:11434/api")
 					}
 				`,
 			},
@@ -162,6 +168,14 @@ func TestMutationCreate_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *t
 func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with multiple embedding fields",
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+			// Embedding test with mutations are currently only compatible with the Go client.
+			// The docID is updated by collection.Create after vector embedding generation and
+			// the HTTP and CLI clients don't receive that updated docID. This causes the waitForUpdateEvents
+			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
+			// and update the test accordingly.
+			testUtils.GoClientType,
+		}),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

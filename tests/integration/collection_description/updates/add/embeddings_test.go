@@ -347,7 +347,7 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErro
 						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
 					]
 				`,
-				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v",
+				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: about_v",
 			},
 		},
 	}

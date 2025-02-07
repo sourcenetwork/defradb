@@ -498,11 +498,12 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 	return NewNamedKind(strKind, isArray), nil
 }
 
-// IsNumericArray returns true if the FieldKind is an array that contains numerical scalars.
-func IsNumericArray(kind FieldKind) bool {
+// IsVectorEmbeddingCompatible returns true if the FieldKind is an array that contains
+// a supported scalar type for vector embeddings.
+func IsVectorEmbeddingCompatible(kind FieldKind) bool {
 	if arrKind, ok := kind.(ScalarArrayKind); ok {
 		switch arrKind {
-		case FieldKind_INT_ARRAY, FieldKind_FLOAT64_ARRAY, FieldKind_FLOAT32_ARRAY:
+		case FieldKind_FLOAT32_ARRAY:
 			return true
 		default:
 			return false

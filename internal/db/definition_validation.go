@@ -742,7 +742,7 @@ func validateEmbeddingAndKindCompatible(
 			if !fieldExists {
 				return client.NewErrVectorFieldDoesNotExist(embedding.FieldName)
 			}
-			if !client.IsNumericArray(field.Kind) {
+			if !client.IsVectorEmbeddingCompatible(field.Kind) {
 				return client.NewErrInvalidTypeForEmbedding(field.Kind)
 			}
 		}
