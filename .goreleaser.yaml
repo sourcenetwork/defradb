@@ -59,7 +59,7 @@ archives:
   - id: defradb_playground
     builds:
       - defradb_playground
-    format: binary
+    formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_playground_{{ .Version }}_{{ .Os }}_
@@ -69,7 +69,7 @@ archives:
   - id: defradb
     builds:
       - defradb
-    format: binary
+    formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_
@@ -79,7 +79,7 @@ archives:
   - id: defradb_telemetry
     builds:
       - defradb_telemetry
-    format: binary
+    formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_telemetry_{{ .Version }}_{{ .Os }}_
@@ -89,7 +89,7 @@ archives:
   - id: defradb_playground_telemetry
     builds:
       - defradb_playground_telemetry
-    format: binary
+    formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_playground_telemetry_{{ .Version }}_{{ .Os }}_
