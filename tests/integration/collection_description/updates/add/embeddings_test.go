@@ -210,7 +210,7 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedgProvider_ShouldError(t *testing.T) {
+func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{

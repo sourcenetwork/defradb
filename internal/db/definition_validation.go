@@ -794,11 +794,11 @@ func validateEmbeddingProviderAndModel(
 			if embedding.Provider == "" {
 				return client.ErrEmptyProviderForEmbedding
 			}
-			if embedding.Model == "" {
-				return client.ErrEmptyModelForEmbedding
-			}
 			if _, supported := supportedEmbeddingProviders[embedding.Provider]; !supported {
 				return client.NewErrUnknownEmbeddingProvider(embedding.Provider)
+			}
+			if embedding.Model == "" {
+				return client.ErrEmptyModelForEmbedding
 			}
 		}
 	}
