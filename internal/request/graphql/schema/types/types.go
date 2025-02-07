@@ -29,6 +29,16 @@ const (
 	CRDTDirectiveLabel    = "crdt"
 	CRDTDirectivePropType = "type"
 
+	ConstraintsDirectiveLabel    = "constraints"
+	ConstraintsDirectivePropSize = "size"
+
+	VectorEmbeddingDirectiveLabel        = "embedding"
+	VectorEmbeddingDirectivePropProvider = "provider"
+	VectorEmbeddingDirectivePropModel    = "model"
+	VectorEmbeddingDirectivePropURL      = "url"
+	VectorEmbeddingDirectivePropFields   = "fields"
+	VectorEmbeddingDirectivePropTemplate = "template"
+
 	PolicySchemaDirectiveLabel        = "policy"
 	PolicySchemaDirectivePropID       = "id"
 	PolicySchemaDirectivePropResource = "resource"
@@ -47,6 +57,8 @@ const (
 	DefaultDirectivePropBool     = "bool"
 	DefaultDirectivePropInt      = "int"
 	DefaultDirectivePropFloat    = "float"
+	DefaultDirectivePropFloat32  = "float32"
+	DefaultDirectivePropFloat64  = "float64"
 	DefaultDirectivePropDateTime = "dateTime"
 	DefaultDirectivePropJSON     = "json"
 	DefaultDirectivePropBlob     = "blob"
@@ -119,6 +131,12 @@ func DefaultDirective() *gql.Directive {
 			},
 			DefaultDirectivePropFloat: &gql.ArgumentConfig{
 				Type: gql.Float,
+			},
+			DefaultDirectivePropFloat32: &gql.ArgumentConfig{
+				Type: Float32,
+			},
+			DefaultDirectivePropFloat64: &gql.ArgumentConfig{
+				Type: Float64,
 			},
 			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
 				Type: gql.DateTime,
@@ -308,6 +326,56 @@ func CRDTFieldDirective(crdtEnum *gql.Enum) *gql.Directive {
 		},
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
+// ConstraintsDirective @constraints is used to define various constraints on a field.
+func ConstraintsDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        ConstraintsDirectiveLabel,
+		Description: constraintsDirectiveDescription,
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+		Args: gql.FieldConfigArgument{
+			ConstraintsDirectivePropSize: &gql.ArgumentConfig{
+				Type:        gql.Int,
+				Description: "The size constraint for array fields.",
+			},
+		},
+	})
+}
+
+// VectorEmbeddingDirective @embedding is used to configure the generation of embedding vectors.
+func VectorEmbeddingDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        VectorEmbeddingDirectiveLabel,
+		Description: embeddingDirectiveDescription,
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+		Args: gql.FieldConfigArgument{
+			VectorEmbeddingDirectivePropProvider: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The provider to use for embedding. (ollama, openAI, etc.)",
+			},
+			VectorEmbeddingDirectivePropModel: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The model to use for embedding. (nomic-embed-text, etc.)",
+			},
+			VectorEmbeddingDirectivePropURL: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The URL of the provider API.",
+			},
+			VectorEmbeddingDirectivePropFields: &gql.ArgumentConfig{
+				Type:        gql.NewList(gql.String),
+				Description: "The fields to pass to the model.",
+			},
+			VectorEmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "The template to use with the fields to create the content to feed the model.",
+			},
 		},
 	})
 }

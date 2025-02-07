@@ -19,7 +19,7 @@ import (
 )
 
 type number interface {
-	int64 | float64
+	int64 | float64 | float32
 }
 
 func lessN[T number](a T, b T) bool {

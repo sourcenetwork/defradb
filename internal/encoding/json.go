@@ -23,7 +23,7 @@ func EncodeJSONAscending(b []byte, v client.JSON) []byte {
 	if str, ok := v.String(); ok {
 		b = EncodeStringAscending(b, str)
 	} else if num, ok := v.Number(); ok {
-		b = EncodeFloatAscending(b, num)
+		b = EncodeFloat64Ascending(b, num)
 	} else if boolVal, ok := v.Bool(); ok {
 		b = EncodeBoolAscending(b, boolVal)
 	} else if v.IsNull() {
@@ -42,7 +42,7 @@ func EncodeJSONDescending(b []byte, v client.JSON) []byte {
 	if str, ok := v.String(); ok {
 		b = EncodeStringDescending(b, str)
 	} else if num, ok := v.Number(); ok {
-		b = EncodeFloatDescending(b, num)
+		b = EncodeFloat64Descending(b, num)
 	} else if boolVal, ok := v.Bool(); ok {
 		b = EncodeBoolDescending(b, boolVal)
 	} else if v.IsNull() {
@@ -89,11 +89,11 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 			return nil, nil, err
 		}
 		jsonValue = string(v)
-	case Float:
+	case Float64:
 		if ascending {
-			b, jsonValue, err = DecodeFloatAscending(b)
+			b, jsonValue, err = DecodeFloat64Ascending(b)
 		} else {
-			b, jsonValue, err = DecodeFloatDescending(b)
+			b, jsonValue, err = DecodeFloat64Descending(b)
 		}
 	case Bool:
 		if ascending {

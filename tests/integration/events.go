@@ -333,28 +333,6 @@ func getEventsForUpdateDoc(s *state, action UpdateDoc) map[string]struct{} {
 	}
 }
 
-// getEventsForCreateDoc returns a map of docIDs that should be
-// published to the local event bus after a CreateDoc action.
-func getEventsForCreateDoc(s *state, action CreateDoc) map[string]struct{} {
-	var collection client.Collection
-	if action.NodeID.HasValue() {
-		collection = s.nodes[action.NodeID.Value()].collections[action.CollectionID]
-	} else {
-		collection = s.nodes[0].collections[action.CollectionID]
-	}
-
-	docs, err := parseCreateDocs(action, collection)
-	require.NoError(s.t, err)
-
-	expect := make(map[string]struct{}, action.CollectionID+1)
-
-	for _, doc := range docs {
-		expect[doc.ID().String()] = struct{}{}
-	}
-
-	return expect
-}
-
 func waitForSync(s *state, action WaitForSync) {
 	waitForMergeEvents(s, action)
 }

@@ -50,17 +50,29 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 		return EncodeVarintAscending(b, v.Value())
 	}
-	if v, ok := val.Float(); ok {
+	if v, ok := val.Float32(); ok {
 		if descending {
-			return EncodeFloatDescending(b, v)
+			return EncodeFloat32Descending(b, v)
 		}
-		return EncodeFloatAscending(b, v)
+		return EncodeFloat32Ascending(b, v)
 	}
-	if v, ok := val.NillableFloat(); ok {
+	if v, ok := val.NillableFloat32(); ok {
 		if descending {
-			return EncodeFloatDescending(b, v.Value())
+			return EncodeFloat32Descending(b, v.Value())
 		}
-		return EncodeFloatAscending(b, v.Value())
+		return EncodeFloat32Ascending(b, v.Value())
+	}
+	if v, ok := val.Float64(); ok {
+		if descending {
+			return EncodeFloat64Descending(b, v)
+		}
+		return EncodeFloat64Ascending(b, v)
+	}
+	if v, ok := val.NillableFloat64(); ok {
+		if descending {
+			return EncodeFloat64Descending(b, v.Value())
+		}
+		return EncodeFloat64Ascending(b, v.Value())
 	}
 	if v, ok := val.String(); ok {
 		if descending {
@@ -129,18 +141,30 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalInt(v), nil
-	case Float:
-		var v float64
+	case Float32:
+		var v float32
 		var err error
 		if descending {
-			b, v, err = DecodeFloatDescending(b)
+			b, v, err = DecodeFloat32Descending(b)
 		} else {
-			b, v, err = DecodeFloatAscending(b)
+			b, v, err = DecodeFloat32Ascending(b)
 		}
 		if err != nil {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
-		return b, client.NewNormalFloat(v), nil
+		return b, client.NewNormalFloat32(v), nil
+	case Float64:
+		var v float64
+		var err error
+		if descending {
+			b, v, err = DecodeFloat64Descending(b)
+		} else {
+			b, v, err = DecodeFloat64Ascending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalFloat64(v), nil
 	case Bytes, BytesDesc:
 		var v []byte
 		var err error

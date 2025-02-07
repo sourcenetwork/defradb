@@ -194,7 +194,7 @@ func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 					{"INVALID":31,"name":"Smith"},
 					{"age":32,"name":"Bob"}
 				]}`,
-				ExpectedError: "The given field does not exist. Name: INVALID",
+				ExpectedError: "the given field does not exist. Name: INVALID",
 			},
 			testUtils.Request{
 				Request: `

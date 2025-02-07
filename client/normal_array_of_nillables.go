@@ -42,16 +42,28 @@ func (v normalNillableIntArray) Equal(other NormalValue) bool {
 	return areNormalArraysOfNillablesEqual(v.val, other.NillableIntArray)
 }
 
-type normalNillableFloatArray struct {
+type normalNillableFloat64Array struct {
 	baseArrayNormalValue[[]immutable.Option[float64]]
 }
 
-func (v normalNillableFloatArray) NillableFloatArray() ([]immutable.Option[float64], bool) {
+func (v normalNillableFloat64Array) NillableFloat64Array() ([]immutable.Option[float64], bool) {
 	return v.val, true
 }
 
-func (v normalNillableFloatArray) Equal(other NormalValue) bool {
-	return areNormalArraysOfNillablesEqual(v.val, other.NillableFloatArray)
+func (v normalNillableFloat64Array) Equal(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableFloat64Array)
+}
+
+type normalNillableFloat32Array struct {
+	baseArrayNormalValue[[]immutable.Option[float32]]
+}
+
+func (v normalNillableFloat32Array) NillableFloat32Array() ([]immutable.Option[float32], bool) {
+	return v.val, true
+}
+
+func (v normalNillableFloat32Array) Equal(other NormalValue) bool {
+	return areNormalArraysOfNillablesEqual(v.val, other.NillableFloat32Array)
 }
 
 type normalNillableStringArray struct {
@@ -116,11 +128,18 @@ func NewNormalNillableIntArray[T constraints.Integer | constraints.Float](val []
 	return normalNillableIntArray{newBaseArrayNormalValue(normalizeNillableNumArr[int64](val))}
 }
 
-// NewNormalNillableFloatArray creates a new NormalValue that represents a `[]immutable.Option[float64]` value.
-func NewNormalNillableFloatArray[T constraints.Integer | constraints.Float](
+// NewNormalNillableFloat64Array creates a new NormalValue that represents a `[]immutable.Option[float64]` value.
+func NewNormalNillableFloat64Array[T constraints.Integer | constraints.Float](
 	val []immutable.Option[T],
 ) NormalValue {
-	return normalNillableFloatArray{newBaseArrayNormalValue(normalizeNillableNumArr[float64](val))}
+	return normalNillableFloat64Array{newBaseArrayNormalValue(normalizeNillableNumArr[float64](val))}
+}
+
+// NewNormalNillableFloat32Array creates a new NormalValue that represents a `[]immutable.Option[float32]` value.
+func NewNormalNillableFloat32Array[T constraints.Integer | constraints.Float](
+	val []immutable.Option[T],
+) NormalValue {
+	return normalNillableFloat32Array{newBaseArrayNormalValue(normalizeNillableNumArr[float32](val))}
 }
 
 // NewNormalNillableStringArray creates a new NormalValue that represents a `[]immutable.Option[string]` value.
@@ -143,7 +162,7 @@ func NewNormalNillableDocumentArray(val []immutable.Option[*Document]) NormalVal
 	return normalNillableDocumentArray{newBaseArrayNormalValue(val)}
 }
 
-func normalizeNillableNumArr[R int64 | float64, T constraints.Integer | constraints.Float](
+func normalizeNillableNumArr[R int64 | float64 | float32, T constraints.Integer | constraints.Float](
 	val []immutable.Option[T],
 ) []immutable.Option[R] {
 	var v any = val

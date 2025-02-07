@@ -446,6 +446,11 @@ func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	err := c.setEmbedding(ctx, doc, true)
+	if err != nil {
+		return err
+	}
+
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err
@@ -543,6 +548,11 @@ func (c *collection) update(
 	}
 	if !canUpdate {
 		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+
+	err = c.setEmbedding(ctx, doc, false)
+	if err != nil {
+		return err
 	}
 
 	err = c.save(ctx, doc, false)

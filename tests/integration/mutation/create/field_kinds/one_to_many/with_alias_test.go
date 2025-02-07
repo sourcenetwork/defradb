@@ -33,7 +33,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *te
 					"notName": "Painted House",
 					"author": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "the given field does not exist. Name: notName",
 			},
 		},
 	}
@@ -56,7 +56,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSid
 					"name": "John Grisham",
 					"published": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 				}`,
-				ExpectedError: "The given field does not exist. Name: published",
+				ExpectedError: "the given field does not exist. Name: published",
 			},
 		},
 	}

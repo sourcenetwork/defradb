@@ -206,7 +206,10 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 			ratio = prop.(float64)
 		}
 		return func() any { return g.random.Float64() < ratio }
-	case client.FieldKind_NILLABLE_FLOAT:
+	case client.FieldKind_NILLABLE_FLOAT32:
+		min, max := getMinMaxOrDefault(fieldConfig, float32(0.0), float32(1.0))
+		return func() any { return min + g.random.Float32()*(max-min) }
+	case client.FieldKind_NILLABLE_FLOAT64:
 		min, max := getMinMaxOrDefault(fieldConfig, 0.0, 1.0)
 		return func() any { return min + g.random.Float64()*(max-min) }
 	}

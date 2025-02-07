@@ -25,7 +25,8 @@ type nType string
 const (
 	BoolType     nType = "Bool"
 	IntType      nType = "Int"
-	FloatType    nType = "Float"
+	Float64Type  nType = "Float64"
+	Float32Type  nType = "Float32"
 	StringType   nType = "String"
 	BytesType    nType = "Bytes"
 	TimeType     nType = "Time"
@@ -34,7 +35,8 @@ const (
 
 	NillableBoolType     nType = "NillableBool"
 	NillableIntType      nType = "NillableInt"
-	NillableFloatType    nType = "NillableFloat"
+	NillableFloat64Type  nType = "NillableFloat64"
+	NillableFloat32Type  nType = "NillableFloat32"
 	NillableStringType   nType = "NillableString"
 	NillableBytesType    nType = "NillableBytes"
 	NillableTimeType     nType = "NillableTime"
@@ -42,7 +44,8 @@ const (
 
 	BoolArray     nType = "BoolArray"
 	IntArray      nType = "IntArray"
-	FloatArray    nType = "FloatArray"
+	Float64Array  nType = "Float64Array"
+	Float32Array  nType = "Float32Array"
 	StringArray   nType = "StringArray"
 	BytesArray    nType = "BytesArray"
 	TimeArray     nType = "TimeArray"
@@ -51,7 +54,8 @@ const (
 
 	NillableBoolArray     nType = "NillableBoolArray"
 	NillableIntArray      nType = "NillableIntArray"
-	NillableFloatArray    nType = "NillableFloatArray"
+	NillableFloat64Array  nType = "NillableFloat64Array"
+	NillableFloat32Array  nType = "NillableFloat32Array"
 	NillableStringArray   nType = "NillableStringArray"
 	NillableBytesArray    nType = "NillableBytesArray"
 	NillableTimeArray     nType = "NillableTimeArray"
@@ -59,7 +63,8 @@ const (
 
 	BoolNillableArray     nType = "BoolNillableArray"
 	IntNillableArray      nType = "IntNillableArray"
-	FloatNillableArray    nType = "FloatNillableArray"
+	Float64NillableArray  nType = "Float64NillableArray"
+	Float32NillableArray  nType = "Float32NillableArray"
 	StringNillableArray   nType = "StringNillableArray"
 	BytesNillableArray    nType = "BytesNillableArray"
 	TimeNillableArray     nType = "TimeNillableArray"
@@ -67,7 +72,8 @@ const (
 
 	NillableBoolNillableArray     nType = "NillableBoolNillableArray"
 	NillableIntNillableArray      nType = "NillableIntNillableArray"
-	NillableFloatNillableArray    nType = "NillableFloatNillableArray"
+	NillableFloat64NillableArray  nType = "NillableFloat64NillableArray"
+	NillableFloat32NillableArray  nType = "NillableFloat32NillableArray"
 	NillableStringNillableArray   nType = "NillableStringNillableArray"
 	NillableBytesNillableArray    nType = "NillableBytesNillableArray"
 	NillableTimeNillableArray     nType = "NillableTimeNillableArray"
@@ -114,7 +120,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 	typeAssertMap := map[nType]func(NormalValue) (any, bool){
 		BoolType:     func(v NormalValue) (any, bool) { return v.Bool() },
 		IntType:      func(v NormalValue) (any, bool) { return v.Int() },
-		FloatType:    func(v NormalValue) (any, bool) { return v.Float() },
+		Float64Type:  func(v NormalValue) (any, bool) { return v.Float64() },
+		Float32Type:  func(v NormalValue) (any, bool) { return v.Float32() },
 		StringType:   func(v NormalValue) (any, bool) { return v.String() },
 		BytesType:    func(v NormalValue) (any, bool) { return v.Bytes() },
 		TimeType:     func(v NormalValue) (any, bool) { return v.Time() },
@@ -123,7 +130,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 
 		NillableBoolType:     func(v NormalValue) (any, bool) { return v.NillableBool() },
 		NillableIntType:      func(v NormalValue) (any, bool) { return v.NillableInt() },
-		NillableFloatType:    func(v NormalValue) (any, bool) { return v.NillableFloat() },
+		NillableFloat64Type:  func(v NormalValue) (any, bool) { return v.NillableFloat64() },
+		NillableFloat32Type:  func(v NormalValue) (any, bool) { return v.NillableFloat32() },
 		NillableStringType:   func(v NormalValue) (any, bool) { return v.NillableString() },
 		NillableBytesType:    func(v NormalValue) (any, bool) { return v.NillableBytes() },
 		NillableTimeType:     func(v NormalValue) (any, bool) { return v.NillableTime() },
@@ -131,7 +139,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 
 		BoolArray:     func(v NormalValue) (any, bool) { return v.BoolArray() },
 		IntArray:      func(v NormalValue) (any, bool) { return v.IntArray() },
-		FloatArray:    func(v NormalValue) (any, bool) { return v.FloatArray() },
+		Float64Array:  func(v NormalValue) (any, bool) { return v.Float64Array() },
+		Float32Array:  func(v NormalValue) (any, bool) { return v.Float32Array() },
 		StringArray:   func(v NormalValue) (any, bool) { return v.StringArray() },
 		BytesArray:    func(v NormalValue) (any, bool) { return v.BytesArray() },
 		TimeArray:     func(v NormalValue) (any, bool) { return v.TimeArray() },
@@ -140,7 +149,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 
 		BoolNillableArray:     func(v NormalValue) (any, bool) { return v.BoolNillableArray() },
 		IntNillableArray:      func(v NormalValue) (any, bool) { return v.IntNillableArray() },
-		FloatNillableArray:    func(v NormalValue) (any, bool) { return v.FloatNillableArray() },
+		Float64NillableArray:  func(v NormalValue) (any, bool) { return v.Float64NillableArray() },
+		Float32NillableArray:  func(v NormalValue) (any, bool) { return v.Float32NillableArray() },
 		StringNillableArray:   func(v NormalValue) (any, bool) { return v.StringNillableArray() },
 		BytesNillableArray:    func(v NormalValue) (any, bool) { return v.BytesNillableArray() },
 		TimeNillableArray:     func(v NormalValue) (any, bool) { return v.TimeNillableArray() },
@@ -148,18 +158,20 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 
 		NillableBoolArray:     func(v NormalValue) (any, bool) { return v.NillableBoolArray() },
 		NillableIntArray:      func(v NormalValue) (any, bool) { return v.NillableIntArray() },
-		NillableFloatArray:    func(v NormalValue) (any, bool) { return v.NillableFloatArray() },
+		NillableFloat64Array:  func(v NormalValue) (any, bool) { return v.NillableFloat64Array() },
+		NillableFloat32Array:  func(v NormalValue) (any, bool) { return v.NillableFloat32Array() },
 		NillableStringArray:   func(v NormalValue) (any, bool) { return v.NillableStringArray() },
 		NillableBytesArray:    func(v NormalValue) (any, bool) { return v.NillableBytesArray() },
 		NillableTimeArray:     func(v NormalValue) (any, bool) { return v.NillableTimeArray() },
 		NillableDocumentArray: func(v NormalValue) (any, bool) { return v.NillableDocumentArray() },
 
-		NillableBoolNillableArray:   func(v NormalValue) (any, bool) { return v.NillableBoolNillableArray() },
-		NillableIntNillableArray:    func(v NormalValue) (any, bool) { return v.NillableIntNillableArray() },
-		NillableFloatNillableArray:  func(v NormalValue) (any, bool) { return v.NillableFloatNillableArray() },
-		NillableStringNillableArray: func(v NormalValue) (any, bool) { return v.NillableStringNillableArray() },
-		NillableBytesNillableArray:  func(v NormalValue) (any, bool) { return v.NillableBytesNillableArray() },
-		NillableTimeNillableArray:   func(v NormalValue) (any, bool) { return v.NillableTimeNillableArray() },
+		NillableBoolNillableArray:    func(v NormalValue) (any, bool) { return v.NillableBoolNillableArray() },
+		NillableIntNillableArray:     func(v NormalValue) (any, bool) { return v.NillableIntNillableArray() },
+		NillableFloat64NillableArray: func(v NormalValue) (any, bool) { return v.NillableFloat64NillableArray() },
+		NillableFloat32NillableArray: func(v NormalValue) (any, bool) { return v.NillableFloat32NillableArray() },
+		NillableStringNillableArray:  func(v NormalValue) (any, bool) { return v.NillableStringNillableArray() },
+		NillableBytesNillableArray:   func(v NormalValue) (any, bool) { return v.NillableBytesNillableArray() },
+		NillableTimeNillableArray:    func(v NormalValue) (any, bool) { return v.NillableTimeNillableArray() },
 		NillableDocumentNillableArray: func(v NormalValue) (any, bool) {
 			return v.NillableDocumentNillableArray()
 		},
@@ -168,7 +180,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 	newMap := map[nType]func(any) NormalValue{
 		BoolType:     func(v any) NormalValue { return NewNormalBool(v.(bool)) },
 		IntType:      func(v any) NormalValue { return NewNormalInt(v.(int64)) },
-		FloatType:    func(v any) NormalValue { return NewNormalFloat(v.(float64)) },
+		Float64Type:  func(v any) NormalValue { return NewNormalFloat64(v.(float64)) },
+		Float32Type:  func(v any) NormalValue { return NewNormalFloat32(v.(float32)) },
 		StringType:   func(v any) NormalValue { return NewNormalString(v.(string)) },
 		BytesType:    func(v any) NormalValue { return NewNormalBytes(v.([]byte)) },
 		TimeType:     func(v any) NormalValue { return NewNormalTime(v.(time.Time)) },
@@ -177,7 +190,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 
 		NillableBoolType:     func(v any) NormalValue { return NewNormalNillableBool(v.(immutable.Option[bool])) },
 		NillableIntType:      func(v any) NormalValue { return NewNormalNillableInt(v.(immutable.Option[int64])) },
-		NillableFloatType:    func(v any) NormalValue { return NewNormalNillableFloat(v.(immutable.Option[float64])) },
+		NillableFloat64Type:  func(v any) NormalValue { return NewNormalNillableFloat64(v.(immutable.Option[float64])) },
+		NillableFloat32Type:  func(v any) NormalValue { return NewNormalNillableFloat32(v.(immutable.Option[float32])) },
 		NillableStringType:   func(v any) NormalValue { return NewNormalNillableString(v.(immutable.Option[string])) },
 		NillableBytesType:    func(v any) NormalValue { return NewNormalNillableBytes(v.(immutable.Option[[]byte])) },
 		NillableTimeType:     func(v any) NormalValue { return NewNormalNillableTime(v.(immutable.Option[time.Time])) },
@@ -185,7 +199,8 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 
 		BoolArray:     func(v any) NormalValue { return NewNormalBoolArray(v.([]bool)) },
 		IntArray:      func(v any) NormalValue { return NewNormalIntArray(v.([]int64)) },
-		FloatArray:    func(v any) NormalValue { return NewNormalFloatArray(v.([]float64)) },
+		Float64Array:  func(v any) NormalValue { return NewNormalFloat64Array(v.([]float64)) },
+		Float32Array:  func(v any) NormalValue { return NewNormalFloat32Array(v.([]float32)) },
 		StringArray:   func(v any) NormalValue { return NewNormalStringArray(v.([]string)) },
 		BytesArray:    func(v any) NormalValue { return NewNormalBytesArray(v.([][]byte)) },
 		TimeArray:     func(v any) NormalValue { return NewNormalTimeArray(v.([]time.Time)) },
@@ -198,8 +213,11 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		NillableIntArray: func(v any) NormalValue {
 			return NewNormalNillableIntArray(v.([]immutable.Option[int64]))
 		},
-		NillableFloatArray: func(v any) NormalValue {
-			return NewNormalNillableFloatArray(v.([]immutable.Option[float64]))
+		NillableFloat64Array: func(v any) NormalValue {
+			return NewNormalNillableFloat64Array(v.([]immutable.Option[float64]))
+		},
+		NillableFloat32Array: func(v any) NormalValue {
+			return NewNormalNillableFloat32Array(v.([]immutable.Option[float32]))
 		},
 		NillableStringArray: func(v any) NormalValue {
 			return NewNormalNillableStringArray(v.([]immutable.Option[string]))
@@ -220,8 +238,11 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		IntNillableArray: func(v any) NormalValue {
 			return NewNormalIntNillableArray(v.(immutable.Option[[]int64]))
 		},
-		FloatNillableArray: func(v any) NormalValue {
-			return NewNormalFloatNillableArray(v.(immutable.Option[[]float64]))
+		Float64NillableArray: func(v any) NormalValue {
+			return NewNormalFloat64NillableArray(v.(immutable.Option[[]float64]))
+		},
+		Float32NillableArray: func(v any) NormalValue {
+			return NewNormalFloat32NillableArray(v.(immutable.Option[[]float32]))
 		},
 		StringNillableArray: func(v any) NormalValue {
 			return NewNormalStringNillableArray(v.(immutable.Option[[]string]))
@@ -242,8 +263,11 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 		NillableIntNillableArray: func(v any) NormalValue {
 			return NewNormalNillableIntNillableArray(v.(immutable.Option[[]immutable.Option[int64]]))
 		},
-		NillableFloatNillableArray: func(v any) NormalValue {
-			return NewNormalNillableFloatNillableArray(v.(immutable.Option[[]immutable.Option[float64]]))
+		NillableFloat64NillableArray: func(v any) NormalValue {
+			return NewNormalNillableFloat64NillableArray(v.(immutable.Option[[]immutable.Option[float64]]))
+		},
+		NillableFloat32NillableArray: func(v any) NormalValue {
+			return NewNormalNillableFloat32NillableArray(v.(immutable.Option[[]immutable.Option[float32]]))
 		},
 		NillableStringNillableArray: func(v any) NormalValue {
 			return NewNormalNillableStringNillableArray(v.(immutable.Option[[]immutable.Option[string]]))
@@ -275,8 +299,12 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 			input: int64(1),
 		},
 		{
-			nType: FloatType,
+			nType: Float64Type,
 			input: float64(1),
+		},
+		{
+			nType: Float32Type,
+			input: float32(1),
 		},
 		{
 			nType: StringType,
@@ -321,13 +349,24 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 			isNillable: true,
 		},
 		{
-			nType:      NillableFloatType,
+			nType:      NillableFloat64Type,
 			input:      immutable.Some(float64(1)),
 			isNillable: true,
 		},
 		{
-			nType:      NillableFloatType,
+			nType:      NillableFloat64Type,
 			input:      immutable.None[float64](),
+			isNil:      true,
+			isNillable: true,
+		},
+		{
+			nType:      NillableFloat32Type,
+			input:      immutable.Some(float32(1)),
+			isNillable: true,
+		},
+		{
+			nType:      NillableFloat32Type,
+			input:      immutable.None[float32](),
 			isNil:      true,
 			isNillable: true,
 		},
@@ -386,8 +425,13 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 			isArray: true,
 		},
 		{
-			nType:   FloatArray,
+			nType:   Float64Array,
 			input:   []float64{1, 2, 3},
+			isArray: true,
+		},
+		{
+			nType:   Float32Array,
+			input:   []float32{1, 2, 3},
 			isArray: true,
 		},
 		{
@@ -426,8 +470,13 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 			isArray: true,
 		},
 		{
-			nType:   NillableFloatArray,
+			nType:   NillableFloat64Array,
 			input:   []immutable.Option[float64]{immutable.Some(float64(1))},
+			isArray: true,
+		},
+		{
+			nType:   NillableFloat32Array,
+			input:   []immutable.Option[float32]{immutable.Some(float32(1))},
 			isArray: true,
 		},
 		{
@@ -477,14 +526,27 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 			isArray:    true,
 		},
 		{
-			nType:      FloatNillableArray,
+			nType:      Float64NillableArray,
 			input:      immutable.Some([]float64{1, 2, 3}),
 			isNillable: true,
 			isArray:    true,
 		},
 		{
-			nType:      FloatNillableArray,
+			nType:      Float64NillableArray,
 			input:      immutable.None[[]float64](),
+			isNillable: true,
+			isNil:      true,
+			isArray:    true,
+		},
+		{
+			nType:      Float32NillableArray,
+			input:      immutable.Some([]float32{1, 2, 3}),
+			isNillable: true,
+			isArray:    true,
+		},
+		{
+			nType:      Float32NillableArray,
+			input:      immutable.None[[]float32](),
 			isNillable: true,
 			isNil:      true,
 			isArray:    true,
@@ -568,14 +630,27 @@ func TestNormalValue_NewValueAndTypeAssertion(t *testing.T) {
 			isArray:    true,
 		},
 		{
-			nType:      NillableFloatNillableArray,
+			nType:      NillableFloat64NillableArray,
 			input:      immutable.Some([]immutable.Option[float64]{immutable.Some(float64(1))}),
 			isNillable: true,
 			isArray:    true,
 		},
 		{
-			nType:      NillableFloatNillableArray,
+			nType:      NillableFloat64NillableArray,
 			input:      immutable.None[[]immutable.Option[float64]](),
+			isNillable: true,
+			isNil:      true,
+			isArray:    true,
+		},
+		{
+			nType:      NillableFloat32NillableArray,
+			input:      immutable.Some([]immutable.Option[float32]{immutable.Some(float32(1))}),
+			isNillable: true,
+			isArray:    true,
+		},
+		{
+			nType:      NillableFloat32NillableArray,
+			input:      immutable.None[[]immutable.Option[float32]](),
 			isNillable: true,
 			isNil:      true,
 			isArray:    true,
@@ -710,9 +785,14 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 			expected: NewNormalIntArray([]int64{1, 2}),
 		},
 		{
-			name:     "float elements",
+			name:     "float32 elements",
+			input:    []any{float32(1), float32(2)},
+			expected: NewNormalFloat32Array([]float32{1, 2}),
+		},
+		{
+			name:     "float64 elements",
 			input:    []any{float64(1), float64(2)},
-			expected: NewNormalFloatArray([]float64{1, 2}),
+			expected: NewNormalFloat64Array([]float64{1, 2}),
 		},
 		{
 			name:     "string elements",
@@ -749,9 +829,20 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 			),
 		},
 		{
-			name:  "float and nil elements",
+			name:  "float32 and nil elements",
 			input: []any{1.0, nil, 2.0},
-			expected: NewNormalNillableFloatArray(
+			expected: NewNormalNillableFloat64Array(
+				[]immutable.Option[float32]{
+					immutable.Some[float32](1.0),
+					immutable.None[float32](),
+					immutable.Some[float32](2.0),
+				},
+			),
+		},
+		{
+			name:  "float64 and nil elements",
+			input: []any{1.0, nil, 2.0},
+			expected: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64](), immutable.Some(2.0)},
 			),
 		},
@@ -796,13 +887,13 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 		{
 			name:     "mixed float elements",
 			input:    []any{float32(1.5), float64(2.2)},
-			expected: NewNormalFloatArray([]float64{1.5, 2.2}),
+			expected: NewNormalFloat64Array([]float64{1.5, 2.2}),
 		},
 		{
 			name: "mixed number elements",
 			input: []any{int8(1), int16(2), int32(3), int64(4), int(5), uint8(6), uint16(7), uint32(8),
 				uint64(9), uint(10), float32(1.5), float64(2.2)},
-			expected: NewNormalFloatArray([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1.5, 2.2}),
+			expected: NewNormalFloat64Array([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1.5, 2.2}),
 		},
 		{
 			name: "mixed int and nil elements",
@@ -818,7 +909,7 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 		{
 			name:  "mixed float and nil elements",
 			input: []any{float32(1.5), nil, float64(2.2)},
-			expected: NewNormalNillableFloatArray(
+			expected: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.5), immutable.None[float64](), immutable.Some(2.2)},
 			),
 		},
@@ -826,7 +917,7 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 			name: "mixed number and nil elements",
 			input: []any{int8(1), nil, int16(2), int32(3), int64(4), int(5), uint8(6), uint16(7), uint32(8),
 				uint64(9), nil, uint(10), float32(1.5), nil, float64(2.2)},
-			expected: NewNormalNillableFloatArray(
+			expected: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{
 					immutable.Some(1.0), immutable.None[float64](), immutable.Some(2.0), immutable.Some(3.0),
 					immutable.Some(4.0), immutable.Some(5.0), immutable.Some(6.0), immutable.Some(7.0),
@@ -891,47 +982,90 @@ func TestNormalValue_NewNormalInt(t *testing.T) {
 	assert.Equal(t, i64, getInt(v))
 }
 
-func TestNormalValue_NewNormalFloat(t *testing.T) {
+func TestNormalValue_NewNormalFloat64(t *testing.T) {
 	f64Frac := float64(2.5)
 	f64 := float64(2)
 
-	getFloat := func(v NormalValue) float64 { f, _ := v.Float(); return f }
+	getFloat := func(v NormalValue) float64 { f, _ := v.Float64(); return f }
 
-	v := NewNormalFloat(f64Frac)
+	v := NewNormalFloat64(f64Frac)
 	assert.Equal(t, f64Frac, getFloat(v))
 
-	v = NewNormalFloat(float32(2.5))
+	v = NewNormalFloat64(float32(2.5))
 	assert.Equal(t, f64Frac, getFloat(v))
 
-	v = NewNormalFloat(int8(2))
+	v = NewNormalFloat64(int8(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(int16(2))
+	v = NewNormalFloat64(int16(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(int32(2))
+	v = NewNormalFloat64(int32(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(int64(2))
+	v = NewNormalFloat64(int64(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(int(2))
+	v = NewNormalFloat64(int(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(uint8(2))
+	v = NewNormalFloat64(uint8(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(uint16(2))
+	v = NewNormalFloat64(uint16(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(uint32(2))
+	v = NewNormalFloat64(uint32(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(uint64(2))
+	v = NewNormalFloat64(uint64(2))
 	assert.Equal(t, f64, getFloat(v))
 
-	v = NewNormalFloat(uint(2))
+	v = NewNormalFloat64(uint(2))
 	assert.Equal(t, f64, getFloat(v))
+}
+
+func TestNormalValue_NewNormalFloat32(t *testing.T) {
+	f32Frac := float32(2.5)
+	f32 := float32(2)
+
+	getFloat := func(v NormalValue) float32 { f, _ := v.Float32(); return f }
+
+	v := NewNormalFloat32(f32Frac)
+	assert.Equal(t, f32Frac, getFloat(v))
+
+	v = NewNormalFloat32(float64(2.5))
+	assert.Equal(t, f32Frac, getFloat(v))
+
+	v = NewNormalFloat32(int8(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(int16(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(int32(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(int64(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(int(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(uint8(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(uint16(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(uint32(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(uint64(2))
+	assert.Equal(t, f32, getFloat(v))
+
+	v = NewNormalFloat32(uint(2))
+	assert.Equal(t, f32, getFloat(v))
 }
 
 func TestNormalValue_NewNormalString(t *testing.T) {
@@ -1000,47 +1134,90 @@ func TestNormalValue_NewNormalIntArray(t *testing.T) {
 	assert.Equal(t, i64Input, getIntArray(v))
 }
 
-func TestNormalValue_NewNormalFloatArray(t *testing.T) {
+func TestNormalValue_NewNormalFloat64Array(t *testing.T) {
 	f64InputFrac := []float64{2.5}
 	f64Input := []float64{2.0}
 
-	getFloatArray := func(v NormalValue) []float64 { f, _ := v.FloatArray(); return f }
+	getFloat64Array := func(v NormalValue) []float64 { f, _ := v.Float64Array(); return f }
 
-	v := NewNormalFloatArray(f64InputFrac)
-	assert.Equal(t, f64InputFrac, getFloatArray(v))
+	v := NewNormalFloat64Array(f64InputFrac)
+	assert.Equal(t, f64InputFrac, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]float32{2.5})
-	assert.Equal(t, f64InputFrac, getFloatArray(v))
+	v = NewNormalFloat64Array([]float32{2.5})
+	assert.Equal(t, f64InputFrac, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]int8{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]int8{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]int16{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]int16{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]int32{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]int32{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]int64{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]int64{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]int{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]int{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]uint8{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]uint8{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]uint16{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]uint16{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]uint32{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]uint32{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]uint64{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]uint64{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
 
-	v = NewNormalFloatArray([]uint{2})
-	assert.Equal(t, f64Input, getFloatArray(v))
+	v = NewNormalFloat64Array([]uint{2})
+	assert.Equal(t, f64Input, getFloat64Array(v))
+}
+
+func TestNormalValue_NewNormalFloat32Array(t *testing.T) {
+	f32InputFrac := []float32{2.5}
+	f32Input := []float32{2.0}
+
+	getFloat64Array := func(v NormalValue) []float32 { f, _ := v.Float32Array(); return f }
+
+	v := NewNormalFloat32Array(f32InputFrac)
+	assert.Equal(t, f32InputFrac, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]float64{2.5})
+	assert.Equal(t, f32InputFrac, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]int8{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]int16{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]int32{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]int64{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]int{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]uint8{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]uint16{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]uint32{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]uint64{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
+
+	v = NewNormalFloat32Array([]uint{2})
+	assert.Equal(t, f32Input, getFloat64Array(v))
 }
 
 func TestNormalValue_NewNormalStringArray(t *testing.T) {
@@ -1067,47 +1244,90 @@ func TestNormalValue_NewNormalBytesArray(t *testing.T) {
 	assert.Equal(t, bytesInput, getBytesArray(v))
 }
 
-func TestNormalValue_NewNormalNillableFloatArray(t *testing.T) {
+func TestNormalValue_NewNormalNillableFloat64Array(t *testing.T) {
 	f64InputFrac := []immutable.Option[float64]{immutable.Some(2.5)}
 	f64Input := []immutable.Option[float64]{immutable.Some(2.0)}
 
-	getNillableFloatArray := func(v NormalValue) []immutable.Option[float64] { f, _ := v.NillableFloatArray(); return f }
+	getNillableFloat64Array := func(v NormalValue) []immutable.Option[float64] { f, _ := v.NillableFloat64Array(); return f }
 
-	v := NewNormalNillableFloatArray(f64InputFrac)
-	assert.Equal(t, f64InputFrac, getNillableFloatArray(v))
+	v := NewNormalNillableFloat64Array(f64InputFrac)
+	assert.Equal(t, f64InputFrac, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[float32]{immutable.Some[float32](2.5)})
-	assert.Equal(t, f64InputFrac, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[float32]{immutable.Some[float32](2.5)})
+	assert.Equal(t, f64InputFrac, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[int8]{immutable.Some[int8](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[int8]{immutable.Some[int8](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[int16]{immutable.Some[int16](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[int16]{immutable.Some[int16](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[int32]{immutable.Some[int32](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[int32]{immutable.Some[int32](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[int64]{immutable.Some[int64](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[int64]{immutable.Some[int64](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[int]{immutable.Some[int](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[int]{immutable.Some[int](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[uint8]{immutable.Some[uint8](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[uint8]{immutable.Some[uint8](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[uint16]{immutable.Some[uint16](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[uint16]{immutable.Some[uint16](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[uint32]{immutable.Some[uint32](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[uint32]{immutable.Some[uint32](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[uint64]{immutable.Some[uint64](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[uint64]{immutable.Some[uint64](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
 
-	v = NewNormalNillableFloatArray([]immutable.Option[uint]{immutable.Some[uint](2)})
-	assert.Equal(t, f64Input, getNillableFloatArray(v))
+	v = NewNormalNillableFloat64Array([]immutable.Option[uint]{immutable.Some[uint](2)})
+	assert.Equal(t, f64Input, getNillableFloat64Array(v))
+}
+
+func TestNormalValue_NewNormalNillableFloat32Array(t *testing.T) {
+	f32InputFrac := []immutable.Option[float32]{immutable.Some[float32](2.5)}
+	f32Input := []immutable.Option[float32]{immutable.Some[float32](2.0)}
+
+	getNillableFloat64Array := func(v NormalValue) []immutable.Option[float32] { f, _ := v.NillableFloat32Array(); return f }
+
+	v := NewNormalNillableFloat32Array(f32InputFrac)
+	assert.Equal(t, f32InputFrac, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[float64]{immutable.Some(2.5)})
+	assert.Equal(t, f32InputFrac, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[int8]{immutable.Some[int8](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[int16]{immutable.Some[int16](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[int32]{immutable.Some[int32](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[int64]{immutable.Some[int64](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[int]{immutable.Some[int](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[uint8]{immutable.Some[uint8](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[uint16]{immutable.Some[uint16](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[uint32]{immutable.Some[uint32](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[uint64]{immutable.Some[uint64](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
+
+	v = NewNormalNillableFloat32Array([]immutable.Option[uint]{immutable.Some[uint](2)})
+	assert.Equal(t, f32Input, getNillableFloat64Array(v))
 }
 
 func TestNormalValue_NewNormalNillableIntArray(t *testing.T) {
@@ -1218,47 +1438,90 @@ func TestNormalValue_NewNormalIntArrayNillable(t *testing.T) {
 	assert.Equal(t, i64Input, getIntNillableArray(v))
 }
 
-func TestNormalValue_NewNormalFloatNillableArray(t *testing.T) {
+func TestNormalValue_NewNormalFloat64NillableArray(t *testing.T) {
 	f64InputFrac := immutable.Some([]float64{2.5})
 	f64Input := immutable.Some([]float64{2.0})
 
-	getFloatNillableArray := func(v NormalValue) immutable.Option[[]float64] { f, _ := v.FloatNillableArray(); return f }
+	getFloat64NillableArray := func(v NormalValue) immutable.Option[[]float64] { f, _ := v.Float64NillableArray(); return f }
 
-	v := NewNormalFloatNillableArray(f64InputFrac)
-	assert.Equal(t, f64InputFrac, getFloatNillableArray(v))
+	v := NewNormalFloat64NillableArray(f64InputFrac)
+	assert.Equal(t, f64InputFrac, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]float32{2.5}))
-	assert.Equal(t, f64InputFrac, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]float32{2.5}))
+	assert.Equal(t, f64InputFrac, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]int8{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]int8{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]int16{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]int16{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]int32{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]int32{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]int64{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]int64{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]int{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]int{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]uint8{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]uint8{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]uint16{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]uint16{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]uint32{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]uint32{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]uint64{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]uint64{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
 
-	v = NewNormalFloatNillableArray(immutable.Some([]uint{2}))
-	assert.Equal(t, f64Input, getFloatNillableArray(v))
+	v = NewNormalFloat64NillableArray(immutable.Some([]uint{2}))
+	assert.Equal(t, f64Input, getFloat64NillableArray(v))
+}
+
+func TestNormalValue_NewNormalFloat32NillableArray(t *testing.T) {
+	f32InputFrac := immutable.Some([]float32{2.5})
+	f32Input := immutable.Some([]float32{2.0})
+
+	getFloat64NillableArray := func(v NormalValue) immutable.Option[[]float32] { f, _ := v.Float32NillableArray(); return f }
+
+	v := NewNormalFloat32NillableArray(f32InputFrac)
+	assert.Equal(t, f32InputFrac, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]float64{2.5}))
+	assert.Equal(t, f32InputFrac, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]int8{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]int16{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]int32{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]int64{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]int{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]uint8{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]uint16{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]uint32{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]uint64{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
+
+	v = NewNormalFloat32NillableArray(immutable.Some([]uint{2}))
+	assert.Equal(t, f32Input, getFloat64NillableArray(v))
 }
 
 func TestNormalValue_NewNormalStringNillableArray(t *testing.T) {
@@ -1330,50 +1593,96 @@ func TestNormalValue_NewNormalNillableIntNillableArray(t *testing.T) {
 	assert.Equal(t, i64Input, getNillableIntNillableArray(v))
 }
 
-func TestNormalValue_NewNormalNillableFloatNillableArray(t *testing.T) {
+func TestNormalValue_NewNormalNillableFloat64NillableArray(t *testing.T) {
 	f64InputFrac := immutable.Some([]immutable.Option[float64]{immutable.Some(2.5)})
 	f64Input := immutable.Some([]immutable.Option[float64]{immutable.Some(2.0)})
 
-	getNillableFloatNillableArray := func(v NormalValue) immutable.Option[[]immutable.Option[float64]] {
-		f, _ := v.NillableFloatNillableArray()
+	getNillableFloat64NillableArray := func(v NormalValue) immutable.Option[[]immutable.Option[float64]] {
+		f, _ := v.NillableFloat64NillableArray()
 		return f
 	}
 
-	v := NewNormalNillableFloatNillableArray(f64InputFrac)
-	assert.Equal(t, f64InputFrac, getNillableFloatNillableArray(v))
+	v := NewNormalNillableFloat64NillableArray(f64InputFrac)
+	assert.Equal(t, f64InputFrac, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[float32]{immutable.Some(float32(2.5))}))
-	assert.Equal(t, f64InputFrac, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[float32]{immutable.Some(float32(2.5))}))
+	assert.Equal(t, f64InputFrac, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[int8]{immutable.Some(int8(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[int8]{immutable.Some(int8(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[int16]{immutable.Some(int16(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[int16]{immutable.Some(int16(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[int32]{immutable.Some(int32(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[int32]{immutable.Some(int32(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[int64]{immutable.Some(int64(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[int64]{immutable.Some(int64(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[int]{immutable.Some(2)}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[int]{immutable.Some(2)}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[uint8]{immutable.Some(uint8(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[uint8]{immutable.Some(uint8(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[uint16]{immutable.Some(uint16(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[uint16]{immutable.Some(uint16(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[uint32]{immutable.Some(uint32(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[uint32]{immutable.Some(uint32(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[uint64]{immutable.Some(uint64(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[uint64]{immutable.Some(uint64(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
 
-	v = NewNormalNillableFloatNillableArray(immutable.Some([]immutable.Option[uint]{immutable.Some(uint(2))}))
-	assert.Equal(t, f64Input, getNillableFloatNillableArray(v))
+	v = NewNormalNillableFloat64NillableArray(immutable.Some([]immutable.Option[uint]{immutable.Some(uint(2))}))
+	assert.Equal(t, f64Input, getNillableFloat64NillableArray(v))
+}
+
+func TestNormalValue_NewNormalNillableFloat32NillableArray(t *testing.T) {
+	f32InputFrac := immutable.Some([]immutable.Option[float32]{immutable.Some[float32](2.5)})
+	f32Input := immutable.Some([]immutable.Option[float32]{immutable.Some[float32](2.0)})
+
+	getNillableFloat64NillableArray := func(v NormalValue) immutable.Option[[]immutable.Option[float32]] {
+		f, _ := v.NillableFloat32NillableArray()
+		return f
+	}
+
+	v := NewNormalNillableFloat32NillableArray(f32InputFrac)
+	assert.Equal(t, f32InputFrac, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[float64]{immutable.Some(float64(2.5))}))
+	assert.Equal(t, f32InputFrac, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[int8]{immutable.Some(int8(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[int16]{immutable.Some(int16(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[int32]{immutable.Some(int32(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[int64]{immutable.Some(int64(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[int]{immutable.Some(2)}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[uint8]{immutable.Some(uint8(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[uint16]{immutable.Some(uint16(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[uint32]{immutable.Some(uint32(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[uint64]{immutable.Some(uint64(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
+
+	v = NewNormalNillableFloat32NillableArray(immutable.Some([]immutable.Option[uint]{immutable.Some(uint(2))}))
+	assert.Equal(t, f32Input, getNillableFloat64NillableArray(v))
 }
 
 func TestNormalValue_NewNormalNillableStringNillableArray(t *testing.T) {
@@ -1463,9 +1772,14 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 			expected: []NormalValue{NewNormalInt(1), NewNormalInt(2)},
 		},
 		{
-			name:     "float elements",
-			input:    NewNormalFloatArray([]float64{1.0, 2.0}),
-			expected: []NormalValue{NewNormalFloat(1.0), NewNormalFloat(2.0)},
+			name:     "float64 elements",
+			input:    NewNormalFloat64Array([]float64{1.0, 2.0}),
+			expected: []NormalValue{NewNormalFloat64(1.0), NewNormalFloat64(2.0)},
+		},
+		{
+			name:     "float32 elements",
+			input:    NewNormalFloat32Array([]float32{1.0, 2.0}),
+			expected: []NormalValue{NewNormalFloat32(1.0), NewNormalFloat32(2.0)},
 		},
 		{
 			name:     "string elements",
@@ -1514,12 +1828,21 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 			},
 		},
 		{
-			name: "nillable float elements",
-			input: NewNormalNillableFloatArray([]immutable.Option[float64]{
+			name: "nillable float64 elements",
+			input: NewNormalNillableFloat64Array([]immutable.Option[float64]{
 				immutable.Some(1.0), immutable.Some(2.0)}),
 			expected: []NormalValue{
-				NewNormalNillableFloat(immutable.Some(1.0)),
-				NewNormalNillableFloat(immutable.Some(2.0)),
+				NewNormalNillableFloat64(immutable.Some(1.0)),
+				NewNormalNillableFloat64(immutable.Some(2.0)),
+			},
+		},
+		{
+			name: "nillable float32 elements",
+			input: NewNormalNillableFloat32Array([]immutable.Option[float32]{
+				immutable.Some[float32](1.0), immutable.Some[float32](2.0)}),
+			expected: []NormalValue{
+				NewNormalNillableFloat32(immutable.Some[float32](1.0)),
+				NewNormalNillableFloat32(immutable.Some[float32](2.0)),
 			},
 		},
 		{
@@ -1569,9 +1892,14 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 			expected: []NormalValue{NewNormalInt(1)},
 		},
 		{
-			name:     "nillable array of float elements",
-			input:    NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
-			expected: []NormalValue{NewNormalFloat(1.0)},
+			name:     "nillable array of float64 elements",
+			input:    NewNormalFloat64NillableArray(immutable.Some([]float64{1.0})),
+			expected: []NormalValue{NewNormalFloat64(1.0)},
+		},
+		{
+			name:     "nillable array of float32 elements",
+			input:    NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			expected: []NormalValue{NewNormalFloat32(1.0)},
 		},
 		{
 			name:     "nillable array of string elements",
@@ -1606,10 +1934,16 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 			expected: []NormalValue{NewNormalNillableInt(immutable.Some(int64(1)))},
 		},
 		{
-			name: "nillable array of nillable float elements",
-			input: NewNormalNillableFloatNillableArray(
+			name: "nillable array of nillable float64 elements",
+			input: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
-			expected: []NormalValue{NewNormalNillableFloat(immutable.Some(1.0))},
+			expected: []NormalValue{NewNormalNillableFloat64(immutable.Some(1.0))},
+		},
+		{
+			name: "nillable array of nillable float32 elements",
+			input: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			expected: []NormalValue{NewNormalNillableFloat32(immutable.Some[float32](1.0))},
 		},
 		{
 			name: "nillable array of nillable string elements",
@@ -1658,11 +1992,13 @@ func TestArrayValue_IsNillable(t *testing.T) {
 	fieldKinds := []FieldKind{
 		FieldKind_BOOL_ARRAY,
 		FieldKind_INT_ARRAY,
-		FieldKind_FLOAT_ARRAY,
+		FieldKind_FLOAT32_ARRAY,
+		FieldKind_FLOAT64_ARRAY,
 		FieldKind_STRING_ARRAY,
 		FieldKind_NILLABLE_BOOL_ARRAY,
 		FieldKind_NILLABLE_INT_ARRAY,
-		FieldKind_NILLABLE_FLOAT_ARRAY,
+		FieldKind_NILLABLE_FLOAT32_ARRAY,
+		FieldKind_NILLABLE_FLOAT64_ARRAY,
 		FieldKind_NILLABLE_STRING_ARRAY,
 	}
 
@@ -1735,24 +2071,42 @@ func TestNormalValue_IsEqual(t *testing.T) {
 		{
 			name:     "int different type",
 			v1:       NewNormalInt(1),
-			v2:       NewNormalFloat(1.0),
+			v2:       NewNormalFloat64(1.0),
 			expected: false,
 		},
 		{
-			name:     "float",
-			v1:       NewNormalFloat(1.0),
-			v2:       NewNormalFloat(1.0),
+			name:     "float32",
+			v1:       NewNormalFloat32(1.0),
+			v2:       NewNormalFloat32(1.0),
 			expected: true,
 		},
 		{
-			name:     "float not equal",
-			v1:       NewNormalFloat(1.0),
-			v2:       NewNormalFloat(1.1),
+			name:     "float32 not equal",
+			v1:       NewNormalFloat32(1.0),
+			v2:       NewNormalFloat32(1.1),
 			expected: false,
 		},
 		{
-			name:     "float different type",
-			v1:       NewNormalFloat(1.0),
+			name:     "float32 different type",
+			v1:       NewNormalFloat32(1.0),
+			v2:       NewNormalString("1.0"),
+			expected: false,
+		},
+		{
+			name:     "float64",
+			v1:       NewNormalFloat64(1.0),
+			v2:       NewNormalFloat64(1.0),
+			expected: true,
+		},
+		{
+			name:     "float64 not equal",
+			v1:       NewNormalFloat64(1.0),
+			v2:       NewNormalFloat64(1.1),
+			expected: false,
+		},
+		{
+			name:     "float64 different type",
+			v1:       NewNormalFloat64(1.0),
 			v2:       NewNormalString("1.0"),
 			expected: false,
 		},
@@ -1884,27 +2238,51 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "float nillable",
-			v1:       NewNormalNillableFloat(immutable.Some(1.0)),
-			v2:       NewNormalNillableFloat(immutable.Some(1.0)),
+			name:     "float32 nillable",
+			v1:       NewNormalNillableFloat32(immutable.Some(1.0)),
+			v2:       NewNormalNillableFloat32(immutable.Some(1.0)),
 			expected: true,
 		},
 		{
-			name:     "float nillable not equal",
-			v1:       NewNormalNillableFloat(immutable.Some(1.0)),
-			v2:       NewNormalNillableFloat(immutable.Some(2.0)),
+			name:     "float32 nillable not equal",
+			v1:       NewNormalNillableFloat32(immutable.Some(1.0)),
+			v2:       NewNormalNillableFloat32(immutable.Some(2.0)),
 			expected: false,
 		},
 		{
-			name:     "float nillable one nil",
-			v1:       NewNormalNillableFloat(immutable.Some(1.0)),
-			v2:       NewNormalNillableFloat(immutable.None[float64]()),
+			name:     "float32 nillable one nil",
+			v1:       NewNormalNillableFloat32(immutable.Some(1.0)),
+			v2:       NewNormalNillableFloat32(immutable.None[float32]()),
 			expected: false,
 		},
 		{
-			name:     "float nillable different type",
-			v1:       NewNormalNillableFloat(immutable.Some(1.0)),
-			v2:       NewNormalFloat(1.0),
+			name:     "float32 nillable different type",
+			v1:       NewNormalNillableFloat32(immutable.Some(1.0)),
+			v2:       NewNormalFloat32(1.0),
+			expected: false,
+		},
+		{
+			name:     "float64 nillable",
+			v1:       NewNormalNillableFloat64(immutable.Some(1.0)),
+			v2:       NewNormalNillableFloat64(immutable.Some(1.0)),
+			expected: true,
+		},
+		{
+			name:     "float64 nillable not equal",
+			v1:       NewNormalNillableFloat64(immutable.Some(1.0)),
+			v2:       NewNormalNillableFloat64(immutable.Some(2.0)),
+			expected: false,
+		},
+		{
+			name:     "float64 nillable one nil",
+			v1:       NewNormalNillableFloat64(immutable.Some(1.0)),
+			v2:       NewNormalNillableFloat64(immutable.None[float64]()),
+			expected: false,
+		},
+		{
+			name:     "float64 nillable different type",
+			v1:       NewNormalNillableFloat64(immutable.Some(1.0)),
+			v2:       NewNormalFloat64(1.0),
 			expected: false,
 		},
 		{
@@ -2055,30 +2433,54 @@ func TestNormalValue_IsEqual(t *testing.T) {
 		{
 			name:     "int array different type",
 			v1:       NewNormalIntArray([]int64{1, 2}),
-			v2:       NewNormalFloatArray([]float64{1.0, 2.0}),
+			v2:       NewNormalFloat64Array([]float64{1.0, 2.0}),
 			expected: false,
 		},
 		{
-			name:     "float array",
-			v1:       NewNormalFloatArray([]float64{1.0, 2.0}),
-			v2:       NewNormalFloatArray([]float64{1.0, 2.0}),
+			name:     "float32 array",
+			v1:       NewNormalFloat32Array([]float32{1.0, 2.0}),
+			v2:       NewNormalFloat32Array([]float32{1.0, 2.0}),
 			expected: true,
 		},
 		{
-			name:     "float array not equal",
-			v1:       NewNormalFloatArray([]float64{1.0, 2.0}),
-			v2:       NewNormalFloatArray([]float64{1.0, 3.0}),
+			name:     "float32 array not equal",
+			v1:       NewNormalFloat32Array([]float32{1.0, 2.0}),
+			v2:       NewNormalFloat32Array([]float32{1.0, 3.0}),
 			expected: false,
 		},
 		{
-			name:     "float array different length",
-			v1:       NewNormalFloatArray([]float64{1.0, 2.0}),
-			v2:       NewNormalFloatArray([]float64{1.0}),
+			name:     "float32 array different length",
+			v1:       NewNormalFloat32Array([]float32{1.0, 2.0}),
+			v2:       NewNormalFloat32Array([]float32{1.0}),
 			expected: false,
 		},
 		{
-			name:     "float array different type",
-			v1:       NewNormalFloatArray([]float64{1.0, 2.0}),
+			name:     "float32 array different type",
+			v1:       NewNormalFloat32Array([]float32{1.0, 2.0}),
+			v2:       NewNormalStringArray([]string{"1.0", "2.0"}),
+			expected: false,
+		},
+		{
+			name:     "float64 array",
+			v1:       NewNormalFloat64Array([]float64{1.0, 2.0}),
+			v2:       NewNormalFloat64Array([]float64{1.0, 2.0}),
+			expected: true,
+		},
+		{
+			name:     "float64 array not equal",
+			v1:       NewNormalFloat64Array([]float64{1.0, 2.0}),
+			v2:       NewNormalFloat64Array([]float64{1.0, 3.0}),
+			expected: false,
+		},
+		{
+			name:     "float64 array different length",
+			v1:       NewNormalFloat64Array([]float64{1.0, 2.0}),
+			v2:       NewNormalFloat64Array([]float64{1.0}),
+			expected: false,
+		},
+		{
+			name:     "float64 array different type",
+			v1:       NewNormalFloat64Array([]float64{1.0, 2.0}),
 			v2:       NewNormalStringArray([]string{"1.0", "2.0"}),
 			expected: false,
 		},
@@ -2268,49 +2670,95 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "float nillable array equal",
-			v1: NewNormalNillableFloatArray(
+			name: "float32 nillable array equal",
+			v1: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.Some[float32](2.0)}),
+			v2: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.Some[float32](2.0)}),
+			expected: true,
+		},
+		{
+			name: "float32 nillable array not equal",
+			v1: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.Some[float32](2.0)}),
+			v2: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](2.0), immutable.Some[float32](1.0)}),
+			expected: false,
+		},
+		{
+			name: "float32 nillable array with nil values equal",
+			v1: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.None[float32]()}),
+			v2: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.None[float32]()}),
+			expected: true,
+		},
+		{
+			name: "float32 nillable array with nil values not equal",
+			v1: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.None[float32]()}),
+			v2: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.None[float32](), immutable.Some[float32](1.0)}),
+			expected: false,
+		},
+		{
+			name: "float32 nillable array different lengths",
+			v1: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.Some[float32](2.0)}),
+			v2:       NewNormalNillableFloat32Array([]immutable.Option[float32]{immutable.Some[float32](1.0)}),
+			expected: false,
+		},
+		{
+			name: "float32 nillable array vs non-nillable array",
+			v1: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.Some[float32](2.0)}),
+			v2:       NewNormalFloat32Array([]float32{1.0, 2.0}),
+			expected: false,
+		},
+		{
+			name: "float64 nillable array equal",
+			v1: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
-			v2: NewNormalNillableFloatArray(
+			v2: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
 			expected: true,
 		},
 		{
-			name: "float nillable array not equal",
-			v1: NewNormalNillableFloatArray(
+			name: "float64 nillable array not equal",
+			v1: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
-			v2: NewNormalNillableFloatArray(
+			v2: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(2.0), immutable.Some(1.0)}),
 			expected: false,
 		},
 		{
-			name: "float nillable array with nil values equal",
-			v1: NewNormalNillableFloatArray(
+			name: "float64 nillable array with nil values equal",
+			v1: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64]()}),
-			v2: NewNormalNillableFloatArray(
+			v2: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64]()}),
 			expected: true,
 		},
 		{
-			name: "float nillable array with nil values not equal",
-			v1: NewNormalNillableFloatArray(
+			name: "float64 nillable array with nil values not equal",
+			v1: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64]()}),
-			v2: NewNormalNillableFloatArray(
+			v2: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.None[float64](), immutable.Some(1.0)}),
 			expected: false,
 		},
 		{
-			name: "float nillable array different lengths",
-			v1: NewNormalNillableFloatArray(
+			name: "float64 nillable array different lengths",
+			v1: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
-			v2:       NewNormalNillableFloatArray([]immutable.Option[float64]{immutable.Some(1.0)}),
+			v2:       NewNormalNillableFloat64Array([]immutable.Option[float64]{immutable.Some(1.0)}),
 			expected: false,
 		},
 		{
-			name: "float nillable array vs non-nillable array",
-			v1: NewNormalNillableFloatArray(
+			name: "float64 nillable array vs non-nillable array",
+			v1: NewNormalNillableFloat64Array(
 				[]immutable.Option[float64]{immutable.Some(1.0), immutable.Some(2.0)}),
-			v2:       NewNormalFloatArray([]float64{1.0, 2.0}),
+			v2:       NewNormalFloat64Array([]float64{1.0, 2.0}),
 			expected: false,
 		},
 		{
@@ -2560,39 +3008,75 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "float nillable array equal",
-			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
-			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			name:     "float32 nillable array equal",
+			v1:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			v2:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
 			expected: true,
 		},
 		{
-			name:     "float nillable array not equal",
-			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
-			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{2.0})),
+			name:     "float32 nillable array not equal",
+			v1:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			v2:       NewNormalFloat32NillableArray(immutable.Some([]float32{2.0})),
 			expected: false,
 		},
 		{
-			name:     "float nillable array nil vs non-nil",
-			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
-			v2:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
+			name:     "float32 nillable array nil vs non-nil",
+			v1:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			v2:       NewNormalFloat32NillableArray(immutable.None[[]float32]()),
 			expected: false,
 		},
 		{
-			name:     "float nillable array different lengths",
-			v1:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0, 2.0})),
-			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			name:     "float32 nillable array different lengths",
+			v1:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0, 2.0})),
+			v2:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
 			expected: false,
 		},
 		{
-			name:     "float nillable array nil array equal",
-			v1:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
-			v2:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
+			name:     "float32 nillable array nil array equal",
+			v1:       NewNormalFloat32NillableArray(immutable.None[[]float32]()),
+			v2:       NewNormalFloat32NillableArray(immutable.None[[]float32]()),
 			expected: true,
 		},
 		{
-			name:     "float nillable array nil array not equal",
-			v1:       NewNormalFloatNillableArray(immutable.None[[]float64]()),
-			v2:       NewNormalFloatNillableArray(immutable.Some([]float64{1.0})),
+			name:     "float32 nillable array nil array not equal",
+			v1:       NewNormalFloat32NillableArray(immutable.None[[]float32]()),
+			v2:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			expected: false,
+		},
+		{
+			name:     "float32 nillable array equal",
+			v1:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			v2:       NewNormalFloat32NillableArray(immutable.Some([]float32{1.0})),
+			expected: true,
+		},
+		{
+			name:     "float64 nillable array not equal",
+			v1:       NewNormalFloat64NillableArray(immutable.Some([]float64{1.0})),
+			v2:       NewNormalFloat64NillableArray(immutable.Some([]float64{2.0})),
+			expected: false,
+		},
+		{
+			name:     "float64 nillable array nil vs non-nil",
+			v1:       NewNormalFloat64NillableArray(immutable.Some([]float64{1.0})),
+			v2:       NewNormalFloat64NillableArray(immutable.None[[]float64]()),
+			expected: false,
+		},
+		{
+			name:     "float64 nillable array different lengths",
+			v1:       NewNormalFloat64NillableArray(immutable.Some([]float64{1.0, 2.0})),
+			v2:       NewNormalFloat64NillableArray(immutable.Some([]float64{1.0})),
+			expected: false,
+		},
+		{
+			name:     "float64 nillable array nil array equal",
+			v1:       NewNormalFloat64NillableArray(immutable.None[[]float64]()),
+			v2:       NewNormalFloat64NillableArray(immutable.None[[]float64]()),
+			expected: true,
+		},
+		{
+			name:     "float64 nillable array nil array not equal",
+			v1:       NewNormalFloat64NillableArray(immutable.None[[]float64]()),
+			v2:       NewNormalFloat64NillableArray(immutable.Some([]float64{1.0})),
 			expected: false,
 		},
 		{
@@ -2821,49 +3305,101 @@ func TestNormalValue_IsEqual(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "nillable float nillable array",
-			v1: NewNormalNillableFloatNillableArray(
+			name: "nillable float32 nillable array",
+			v1: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			v2: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			expected: true,
+		},
+		{
+			name: "nillable float32 nillable array equal",
+			v1: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			v2: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			expected: true,
+		},
+		{
+			name: "nillable float32 nillable array not equal",
+			v1: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			v2: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](2.0)})),
+			expected: false,
+		},
+		{
+			name: "nillable float32 nillable array outer nil",
+			v1: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)})),
+			v2:       NewNormalNillableFloat32NillableArray(immutable.None[[]immutable.Option[float32]]()),
+			expected: false,
+		},
+		{
+			name: "nillable float32 nillable array inner nil",
+			v1: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.None[float32]()})),
+			v2: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0), immutable.None[float32]()})),
+			expected: true,
+		},
+		{
+			name: "nillable float32 nillable array different type",
+			v1: NewNormalNillableFloat32NillableArray(
+				immutable.Some([]immutable.Option[float32]{immutable.Some[float32](1.0)}),
+			),
+			v2: NewNormalNillableFloat32Array(
+				[]immutable.Option[float32]{immutable.Some[float32](1.0)},
+			),
+			expected: false,
+		},
+		{
+			name: "nillable float64 nillable array",
+			v1: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
-			v2: NewNormalNillableFloatNillableArray(
+			v2: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
 			expected: true,
 		},
 		{
-			name: "nillable float nillable array equal",
-			v1: NewNormalNillableFloatNillableArray(
+			name: "nillable float64 nillable array equal",
+			v1: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
-			v2: NewNormalNillableFloatNillableArray(
+			v2: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
 			expected: true,
 		},
 		{
-			name: "nillable float nillable array not equal",
-			v1: NewNormalNillableFloatNillableArray(
+			name: "nillable float64 nillable array not equal",
+			v1: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
-			v2: NewNormalNillableFloatNillableArray(
+			v2: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(2.0)})),
 			expected: false,
 		},
 		{
-			name: "nillable float nillable array outer nil",
-			v1: NewNormalNillableFloatNillableArray(
+			name: "nillable float64 nillable array outer nil",
+			v1: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
-			v2:       NewNormalNillableFloatNillableArray(immutable.None[[]immutable.Option[float64]]()),
+			v2:       NewNormalNillableFloat64NillableArray(immutable.None[[]immutable.Option[float64]]()),
 			expected: false,
 		},
 		{
-			name: "nillable float nillable array inner nil",
-			v1: NewNormalNillableFloatNillableArray(
+			name: "nillable float64 nillable array inner nil",
+			v1: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64]()})),
-			v2: NewNormalNillableFloatNillableArray(
+			v2: NewNormalNillableFloat64NillableArray(
 				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0), immutable.None[float64]()})),
 			expected: true,
 		},
 		{
-			name: "nillable float nillable array different type",
-			v1: NewNormalNillableFloatNillableArray(
-				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)})),
-			v2:       NewNormalNillableFloatArray([]immutable.Option[float64]{immutable.Some(1.0)}),
+			name: "nillable float64 nillable array different type",
+			v1: NewNormalNillableFloat64NillableArray(
+				immutable.Some([]immutable.Option[float64]{immutable.Some(1.0)}),
+			),
+			v2: NewNormalNillableFloat64Array(
+				[]immutable.Option[float64]{immutable.Some(1.0)},
+			),
 			expected: false,
 		},
 		{

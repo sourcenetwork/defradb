@@ -226,6 +226,111 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a P Counter with Float32 type. Note the lack of precision",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float32 @crdt(type: pcounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 0
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10.1
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10.2
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": float32(20.3),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Positive increments of a P Counter with Float64 type. Note the lack of precision",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float64 @crdt(type: pcounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 0
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10.1
+				}`,
+			},
+			testUtils.UpdateDoc{
+				DocID: 0,
+				Doc: `{
+					"points": 10.2
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							// Note the lack of precision of float64 types.
+							"points": 20.299999999999997,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // This test documents what happens when an overflow occurs in a P Counter with Float type.
 // In this case it is the same as a no-op.
 func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {

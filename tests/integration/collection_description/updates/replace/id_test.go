@@ -30,7 +30,7 @@ func TestColDescrUpdateReplaceID_WithZero_Errors(t *testing.T) {
 						{ "op": "replace", "path": "/1/ID", "value": 0 }
 					]
 				`,
-				ExpectedError: "collection ID cannot be zero",
+				ExpectedError: "collections cannot be deleted. CollectionID: 1",
 			},
 		},
 	}

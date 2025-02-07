@@ -48,6 +48,7 @@ const (
 	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
 	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
+	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
 )
 
 // The MutationType that tests will run using.
@@ -90,6 +91,8 @@ var (
 	viewType     ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
+	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
+	runVectorEmbeddingTests = false
 )
 
 const (
@@ -122,6 +125,10 @@ func init() {
 
 	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
 		skipNetworkTests, _ = strconv.ParseBool(value)
+	}
+
+	if value, ok := os.LookupEnv(vectorEmbeddingEnvName); ok {
+		runVectorEmbeddingTests, _ = strconv.ParseBool(value)
 	}
 }
 
@@ -162,6 +169,7 @@ func ExecuteTestCase(
 	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
+	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []ClientType
 	if httpClient {
@@ -1223,14 +1231,13 @@ func createDoc(
 	}
 	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
 
+	docIDMap := make(map[string]struct{})
+	for _, docID := range docIDs {
+		docIDMap[docID.String()] = struct{}{}
+	}
+
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(
-			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForCreateDoc(s, action),
-			action.Identity,
-		)
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, docIDMap, action.Identity)
 	}
 }
 
@@ -2327,6 +2334,21 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 	if skipNetworkTests && hasNetworkAction {
 		t.Skip("test involves network actions")
+	}
+}
+
+// skipVectorEmbeddingTest skips the current test if the given actions
+// contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
+func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
+	hasVectorEmbedding := false
+	for _, act := range actions {
+		switch a := act.(type) {
+		case SchemaUpdate:
+			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
+		}
+	}
+	if !runVectorEmbeddingTests && hasVectorEmbedding {
+		t.Skip("test involves vector embedding generation")
 	}
 }
 

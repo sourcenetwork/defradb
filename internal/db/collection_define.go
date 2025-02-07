@@ -120,15 +120,19 @@ func (db *DB) patchCollection(
 	if err != nil {
 		return err
 	}
-	txn := mustGetContextTxn(ctx)
-	cols, err := description.GetCollections(ctx, txn)
+	existingCols, err := db.getCollections(
+		ctx,
+		client.CollectionFetchOptions{IncludeInactive: immutable.Some(true)},
+	)
 	if err != nil {
 		return err
 	}
 
 	existingColsByID := map[uint32]client.CollectionDescription{}
-	for _, col := range cols {
-		existingColsByID[col.ID] = col
+	existingDefinitions := make([]client.CollectionDefinition, len(existingCols))
+	for _, col := range existingCols {
+		existingColsByID[col.ID()] = col.Description()
+		existingDefinitions = append(existingDefinitions, col.Definition())
 	}
 
 	existingDescriptionJson, err := json.Marshal(existingColsByID)
@@ -148,12 +152,27 @@ func (db *DB) patchCollection(
 	if err != nil {
 		return err
 	}
+	newDefinitions := make([]client.CollectionDefinition, len(existingCols))
+	updatedColsByID := make(map[uint32]struct{})
+	for i, col := range existingCols {
+		newDefinitions[i].Schema = col.Schema()
+		newDefinitions[i].Description = newColsByID[col.ID()]
+		updatedColsByID[col.ID()] = struct{}{}
+	}
+	// append new cols
+	for id, col := range newColsByID {
+		if _, ok := updatedColsByID[id]; ok {
+			continue
+		}
+		newDefinitions = append(newDefinitions, client.CollectionDefinition{Description: col})
+	}
 
-	err = db.validateCollectionChanges(ctx, cols, newColsByID)
+	err = db.validateCollectionChanges(ctx, existingDefinitions, newDefinitions)
 	if err != nil {
 		return err
 	}
 
+	txn := mustGetContextTxn(ctx)
 	for _, col := range newColsByID {
 		_, err := description.SaveCollection(ctx, txn, col)
 		if err != nil {

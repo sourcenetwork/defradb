@@ -152,53 +152,53 @@ func DateTimeOperatorBlock() *gql.InputObject {
 	})
 }
 
-// FloatOperatorBlock filter block for Float types.
-func FloatOperatorBlock() *gql.InputObject {
+// Float64OperatorBlock filter block for Float types.
+func Float64OperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "FloatOperatorBlock",
-		Description: floatOperatorBlockDescription,
+		Name:        "Float64OperatorBlock",
+		Description: float64OperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
 			"_eq": &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_ne": &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_gt": &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_ge": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_lt": &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_le": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_in": &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
-				Type:        gql.NewList(gql.Float),
+				Type:        gql.NewList(Float64),
 			},
 			"_nin": &gql.InputObjectFieldConfig{
 				Description: ninOperatorDescription,
-				Type:        gql.NewList(gql.Float),
+				Type:        gql.NewList(Float64),
 			},
 		},
 	})
 }
 
-// FloatListOperatorBlock filter block for [Float] types.
-func FloatListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+// Float64ListOperatorBlock filter block for [Float] types.
+func Float64ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "FloatListOperatorBlock",
-		Description: "These are the set of filter operators available for use when filtering on [Float] values.",
+		Name:        "Float64ListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Float64] values.",
 		Fields: gql.InputObjectConfigFieldMap{
 			"_any": &gql.InputObjectFieldConfig{
 				Description: anyOperatorDescription,
@@ -216,53 +216,181 @@ func FloatListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 	})
 }
 
-// NotNullFloatOperatorBlock filter block for Float! types.
-func NotNullFloatOperatorBlock() *gql.InputObject {
+// NotNullFloat64OperatorBlock filter block for Float! types.
+func NotNullFloat64OperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "NotNullFloatOperatorBlock",
-		Description: notNullFloatOperatorBlockDescription,
+		Name:        "NotNullFloat64OperatorBlock",
+		Description: notNullFloat64OperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
 			"_eq": &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_ne": &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_gt": &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_ge": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_lt": &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_le": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        gql.Float,
+				Type:        Float64,
 			},
 			"_in": &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
-				Type:        gql.NewList(gql.NewNonNull(gql.Float)),
+				Type:        gql.NewList(gql.NewNonNull(Float64)),
 			},
 			"_nin": &gql.InputObjectFieldConfig{
 				Description: ninOperatorDescription,
-				Type:        gql.NewList(gql.NewNonNull(gql.Float)),
+				Type:        gql.NewList(gql.NewNonNull(Float64)),
 			},
 		},
 	})
 }
 
-// NotNullFloatListOperatorBlock filter block for [NotNullFloat] types.
-func NotNullFloatListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+// NotNullFloat64ListOperatorBlock filter block for [NotNullFloat] types.
+func NotNullFloat64ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "NotNullFloatListOperatorBlock",
-		Description: "These are the set of filter operators available for use when filtering on [Float!] values.",
+		Name:        "NotNullFloat64ListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Float64!] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
+// Float32OperatorBlock filter block for Float32 types.
+func Float32OperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "Float32OperatorBlock",
+		Description: float32OperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        Float32,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        Float32,
+			},
+			"_gt": &gql.InputObjectFieldConfig{
+				Description: gtOperatorDescription,
+				Type:        Float32,
+			},
+			"_ge": &gql.InputObjectFieldConfig{
+				Description: geOperatorDescription,
+				Type:        Float32,
+			},
+			"_lt": &gql.InputObjectFieldConfig{
+				Description: ltOperatorDescription,
+				Type:        Float32,
+			},
+			"_le": &gql.InputObjectFieldConfig{
+				Description: leOperatorDescription,
+				Type:        Float32,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(Float32),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(Float32),
+			},
+		},
+	})
+}
+
+// Float32ListOperatorBlock filter block for [Float32] types.
+func Float32ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "Float32ListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Float32] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
+// NotNullFloat32OperatorBlock filter block for Float32! types.
+func NotNullFloat32OperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullFloat32OperatorBlock",
+		Description: notNullFloat32OperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        Float32,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        Float32,
+			},
+			"_gt": &gql.InputObjectFieldConfig{
+				Description: gtOperatorDescription,
+				Type:        Float32,
+			},
+			"_ge": &gql.InputObjectFieldConfig{
+				Description: geOperatorDescription,
+				Type:        Float32,
+			},
+			"_lt": &gql.InputObjectFieldConfig{
+				Description: ltOperatorDescription,
+				Type:        Float32,
+			},
+			"_le": &gql.InputObjectFieldConfig{
+				Description: leOperatorDescription,
+				Type:        Float32,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(Float32)),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(Float32)),
+			},
+		},
+	})
+}
+
+// NotNullFloat32ListOperatorBlock filter block for [NotNullFloat32] types.
+func NotNullFloat32ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullFloat32ListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [Float32!] values.",
 		Fields: gql.InputObjectConfigFieldMap{
 			"_any": &gql.InputObjectFieldConfig{
 				Description: anyOperatorDescription,

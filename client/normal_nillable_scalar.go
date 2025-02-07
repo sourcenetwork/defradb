@@ -64,16 +64,28 @@ func (v normalNillableInt) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.NillableInt)
 }
 
-type normalNillableFloat struct {
+type normalNillableFloat64 struct {
 	baseNillableNormalValue[float64]
 }
 
-func (v normalNillableFloat) NillableFloat() (immutable.Option[float64], bool) {
+func (v normalNillableFloat64) NillableFloat64() (immutable.Option[float64], bool) {
 	return v.val, true
 }
 
-func (v normalNillableFloat) Equal(other NormalValue) bool {
-	return areNormalScalarsEqual(v.val, other.NillableFloat)
+func (v normalNillableFloat64) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableFloat64)
+}
+
+type normalNillableFloat32 struct {
+	baseNillableNormalValue[float32]
+}
+
+func (v normalNillableFloat32) NillableFloat32() (immutable.Option[float32], bool) {
+	return v.val, true
+}
+
+func (v normalNillableFloat32) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.NillableFloat32)
 }
 
 type normalNillableString struct {
@@ -134,9 +146,14 @@ func NewNormalNillableInt[T constraints.Integer | constraints.Float](val immutab
 	return normalNillableInt{newBaseNillableNormalValue(normalizeNillableNum[int64](val))}
 }
 
-// NewNormalNillableFloat creates a new NormalValue that represents a `immutable.Option[float64]` value.
-func NewNormalNillableFloat[T constraints.Integer | constraints.Float](val immutable.Option[T]) NormalValue {
-	return normalNillableFloat{newBaseNillableNormalValue(normalizeNillableNum[float64](val))}
+// NewNormalNillableFloat64 creates a new NormalValue that represents a `immutable.Option[float64]` value.
+func NewNormalNillableFloat64[T constraints.Integer | constraints.Float](val immutable.Option[T]) NormalValue {
+	return normalNillableFloat64{newBaseNillableNormalValue(normalizeNillableNum[float64](val))}
+}
+
+// NewNormalNillableFloat32 creates a new NormalValue that represents a `immutable.Option[float32]` value.
+func NewNormalNillableFloat32[T constraints.Integer | constraints.Float](val immutable.Option[T]) NormalValue {
+	return normalNillableFloat32{newBaseNillableNormalValue(normalizeNillableNum[float32](val))}
 }
 
 // NewNormalNillableString creates a new NormalValue that represents a `immutable.Option[string]` value.
@@ -159,7 +176,7 @@ func NewNormalNillableDocument(val immutable.Option[*Document]) NormalValue {
 	return normalNillableDocument{newBaseNillableNormalValue(val)}
 }
 
-func normalizeNillableNum[R int64 | float64, T constraints.Integer | constraints.Float](
+func normalizeNillableNum[R int64 | float64 | float32, T constraints.Integer | constraints.Float](
 	val immutable.Option[T],
 ) immutable.Option[R] {
 	if val.HasValue() {
