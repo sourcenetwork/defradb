@@ -40,17 +40,17 @@ func (db *DB) addView(
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
 	query := fmt.Sprintf(`query { %s }`, inputQuery)
 
-	newDefinitions, err := db.parser.ParseSDL(sdl)
+	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
 
-	ast, err := db.parser.BuildRequestAST(query)
+	ast, err := db.parser.BuildRequestAST(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	req, errs := db.parser.Parse(ast, &client.GQLOptions{})
+	req, errs := db.parser.Parse(ctx, ast, &client.GQLOptions{})
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)
 	}

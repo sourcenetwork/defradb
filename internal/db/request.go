@@ -21,16 +21,16 @@ import (
 // execRequest executes a request against the database.
 func (db *DB) execRequest(ctx context.Context, request string, options *client.GQLOptions) *client.RequestResult {
 	res := &client.RequestResult{}
-	ast, err := db.parser.BuildRequestAST(request)
+	ast, err := db.parser.BuildRequestAST(ctx, request)
 	if err != nil {
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
 	if db.parser.IsIntrospection(ast) {
-		return db.parser.ExecuteIntrospection(request)
+		return db.parser.ExecuteIntrospection(ctx, request)
 	}
 
-	parsedRequest, errors := db.parser.Parse(ast, options)
+	parsedRequest, errors := db.parser.Parse(ctx, ast, options)
 	if len(errors) > 0 {
 		res.GQL.Errors = append(res.GQL.Errors, errors...)
 		return res
@@ -56,9 +56,4 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 	}
 	res.GQL.Data = results
 	return res
-}
-
-// ExecIntrospection executes an introspection request against the database.
-func (db *DB) ExecIntrospection(request string) *client.RequestResult {
-	return db.parser.ExecuteIntrospection(request)
 }

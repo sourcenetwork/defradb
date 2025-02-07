@@ -70,4 +70,5 @@ func TestLoadConfigNotExist(t *testing.T) {
 	assert.Equal(t, "file", cfg.GetString("keyring.backend"))
 
 	assert.Equal(t, false, cfg.GetBool("development"))
+	assert.Equal(t, false, cfg.GetBool("telemetry.disabled"))
 }
