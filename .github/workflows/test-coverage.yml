@@ -85,10 +85,10 @@ jobs:
 
       - name: Install Ollama
         run: make deps:ollama
-      
+
       - name: Run Ollama
         run: make ollama
-      
+
       - name: Pull LLM model
         run: make ollama:nomic
 

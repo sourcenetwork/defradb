@@ -138,35 +138,6 @@
             },
             "collection": {
                 "properties": {
-                    "Embeddings": {
-                        "items": {
-                            "properties": {
-                                "FieldName": {
-                                    "type": "string"
-                                },
-                                "Fields": {
-                                    "items": {
-                                        "type": "string"
-                                    },
-                                    "type": "array"
-                                },
-                                "Model": {
-                                    "type": "string"
-                                },
-                                "Provider": {
-                                    "type": "string"
-                                },
-                                "Template": {
-                                    "type": "string"
-                                },
-                                "URL": {
-                                    "type": "string"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "type": "array"
-                    },
                     "Fields": {
                         "items": {
                             "properties": {
@@ -246,6 +217,35 @@
                     "Sources": {
                         "items": {},
                         "type": "array"
+                    },
+                    "VectorEmbeddings": {
+                        "items": {
+                            "properties": {
+                                "FieldName": {
+                                    "type": "string"
+                                },
+                                "Fields": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                },
+                                "Model": {
+                                    "type": "string"
+                                },
+                                "Provider": {
+                                    "type": "string"
+                                },
+                                "Template": {
+                                    "type": "string"
+                                },
+                                "URL": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -254,35 +254,6 @@
                 "properties": {
                     "description": {
                         "properties": {
-                            "Embeddings": {
-                                "items": {
-                                    "properties": {
-                                        "FieldName": {
-                                            "type": "string"
-                                        },
-                                        "Fields": {
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "type": "array"
-                                        },
-                                        "Model": {
-                                            "type": "string"
-                                        },
-                                        "Provider": {
-                                            "type": "string"
-                                        },
-                                        "Template": {
-                                            "type": "string"
-                                        },
-                                        "URL": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
                             "Fields": {
                                 "items": {
                                     "properties": {
@@ -361,6 +332,35 @@
                             },
                             "Sources": {
                                 "items": {},
+                                "type": "array"
+                            },
+                            "VectorEmbeddings": {
+                                "items": {
+                                    "properties": {
+                                        "FieldName": {
+                                            "type": "string"
+                                        },
+                                        "Fields": {
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "Model": {
+                                            "type": "string"
+                                        },
+                                        "Provider": {
+                                            "type": "string"
+                                        },
+                                        "Template": {
+                                            "type": "string"
+                                        },
+                                        "URL": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
                                 "type": "array"
                             }
                         },
