@@ -22,7 +22,6 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
-
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -36,10 +35,12 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
 var (
-	log = corelog.NewLogger("db")
+	log    = corelog.NewLogger("db")
+	tracer = telemetry.NewTracer()
 )
 
 // make sure we match our client interface
@@ -212,6 +213,9 @@ func (db *DB) AddPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -264,6 +268,9 @@ func (db *DB) AddDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddDocActorRelationshipResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -309,6 +316,9 @@ func (db *DB) DeleteDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteDocActorRelationshipResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}

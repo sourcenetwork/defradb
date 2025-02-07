@@ -26,6 +26,9 @@ import (
 const marker = byte(0xff)
 
 func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -93,6 +96,9 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 }
 
 func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -152,6 +158,9 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 }
 
 func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err

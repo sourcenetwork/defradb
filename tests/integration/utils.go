@@ -36,7 +36,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
@@ -2329,22 +2328,6 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	if skipNetworkTests && hasNetworkAction {
 		t.Skip("test involves network actions")
 	}
-}
-
-func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
-	parser, err := graphql.NewParser()
-	if err != nil {
-		return nil, err
-	}
-	cols, err := parser.ParseSDL(gqlSDL)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[string]client.CollectionDefinition)
-	for _, col := range cols {
-		result[col.Description.Name.Value()] = col
-	}
-	return result, nil
 }
 
 func MustParseTime(timeString string) time.Time {

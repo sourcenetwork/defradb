@@ -36,16 +36,16 @@ type SchemaDefinition struct {
 // This includes schema and request parsing, and introspection.
 type Parser interface {
 	// BuildRequestAST builds and return AST for the given request.
-	BuildRequestAST(request string) (*ast.Document, error)
+	BuildRequestAST(ctx context.Context, request string) (*ast.Document, error)
 
 	// Returns true if the given request ast is an introspection request.
 	IsIntrospection(*ast.Document) bool
 
 	// Executes the given introspection request.
-	ExecuteIntrospection(request string) *client.RequestResult
+	ExecuteIntrospection(ctx context.Context, request string) *client.RequestResult
 
 	// Parses the given request, returning a strongly typed model of that request.
-	Parse(*ast.Document, *client.GQLOptions) (*request.Request, []error)
+	Parse(context.Context, *ast.Document, *client.GQLOptions) (*request.Request, []error)
 
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
@@ -55,7 +55,7 @@ type Parser interface {
 	// The parsing should validate the syntax, but not validate what that syntax expresses
 	// is valid or not, i.e. we don't want the parser to make remote calls to verify the
 	// policy description is valid or not (that is the callers responsiblity).
-	ParseSDL(sdl string) ([]client.CollectionDefinition, error)
+	ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error)
 
 	// Adds the given schema to this parser's model.
 	//

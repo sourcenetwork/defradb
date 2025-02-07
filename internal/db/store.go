@@ -22,6 +22,9 @@ import (
 
 // ExecRequest executes a request against the database.
 func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}
@@ -50,6 +53,9 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 
 // GetCollectionByName returns an existing collection within the database.
 func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -64,6 +70,9 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -78,6 +87,9 @@ func (db *DB) GetCollections(
 //
 // Will return an error if it is not found.
 func (db *DB) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return client.SchemaDescription{}, err
@@ -93,6 +105,9 @@ func (db *DB) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -106,6 +121,9 @@ func (db *DB) GetSchemas(
 func (db *DB) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -121,6 +139,9 @@ func (db *DB) GetAllIndexes(
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
 func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -155,6 +176,9 @@ func (db *DB) PatchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -173,6 +197,9 @@ func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -188,6 +215,9 @@ func (db *DB) PatchCollection(
 }
 
 func (db *DB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -203,6 +233,9 @@ func (db *DB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string
 }
 
 func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -223,6 +256,9 @@ func (db *DB) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -243,6 +279,9 @@ func (db *DB) AddView(
 }
 
 func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -265,6 +304,9 @@ func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptio
 // BasicImport imports a json dataset.
 // filepath must be accessible to the node.
 func (db *DB) BasicImport(ctx context.Context, filepath string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -281,6 +323,9 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 
 // BasicExport exports the current data or subset of data to file in json format.
 func (db *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return err
