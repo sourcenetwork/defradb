@@ -1385,8 +1385,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:Udh
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/acp_core v0.0.0-20250119220233-a3579dc36a39 h1:8uDvZs1LKYhLTE9Xv7C/chgV8uoWT/kviYJoUeYxUxQ=
-github.com/sourcenetwork/acp_core v0.0.0-20250119220233-a3579dc36a39/go.mod h1:Z5UEfZqix3/TPUoP00HU4wiWaS+17+odoA/Ws/DCmJg=
+github.com/sourcenetwork/acp_core v0.4.0 h1:0rZix3SRFi2xkt/2GE+9OBoyoamlqocPRDjSSUtqz00=
+github.com/sourcenetwork/acp_core v0.4.0/go.mod h1:lzxkAEyyRhAeBSJhPhGHaSV0ddpLuAWwwVXUXJt9034=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276 h1:TpQDDPfucDgCNH0NVqVUk6SSq6T6G8p9HIocmwZh9Tg=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276/go.mod h1:lxiZTDBw0vheFMqSwX2OvB6RTDI1+/UtVCSU4rpThFM=
 github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
@@ -1397,8 +1397,8 @@ github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a h1:wF7
 github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
-github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234 h1:8dA9bVC1A0ChJygtsUfNsek3oR0GnwpLoYpmEo4t2mk=
-github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234/go.mod h1:JvZ+G3QTmv7zto3tUBxnV0+fPoev0DkObSwczTm9VJE=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 h1:d0jNogSYqMt+dC05tnd+x7lmzEcBHpKoIU5woZSSHFM=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
 github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274 h1:llH2tge8H5aw2gT6bCFnXK2ZAYuUS6PjIsZg4nikWc8=
 github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274/go.mod h1:spQwqm6P+KB8MsR9rPkWkncIHGFtqUqPWwjkv1nhfdA=
 github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030 h1:MV+7W7HyJyyyKqPGk6A858xOw3ixXHyFW/nuHIXiJT4=
