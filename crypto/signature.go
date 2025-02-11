@@ -29,8 +29,27 @@ const (
 )
 
 // Sign signs the provided message using the specified signature type and private key.
-// For ECDSA, it uses secp256k1 curve and returns the signature in R || S format (64 bytes).
-// For Ed25519, it uses standard Ed25519 signing.
+//
+// For ECDSA (secp256k1):
+// - Returns signature in DER format
+// - Accepts private key as either:
+//   - *secp256k1.PrivateKey: Direct private key object
+//   - []byte: Raw private key bytes that will be parsed into secp256k1.PrivateKey
+//
+// For Ed25519:
+// - Returns standard Ed25519 signature
+// - Accepts private key as either:
+//   - ed25519.PrivateKey: Direct private key object
+//   - []byte: Raw private key bytes (must be ed25519.PrivateKeySize bytes)
+//
+// Parameters:
+//   - sigType: The type of signature algorithm to use (ECDSA or Ed25519)
+//   - privKey: The private key to sign with (see above for accepted types)
+//   - message: The message to sign
+//
+// Returns:
+//   - []byte: The signature in the format appropriate for the chosen algorithm
+//   - error: Any error encountered during signing, including invalid key types
 func Sign(sigType SignatureType, privKey interface{}, message []byte) ([]byte, error) {
 	switch sigType {
 	case SignatureTypeECDSA:

@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -640,6 +641,12 @@ func (c *collection) save(
 		}
 	}
 	txn := mustGetContextTxn(ctx)
+
+	// TODO: think if it's the best place to set the identity
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
 
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
