@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -33,6 +33,8 @@ var (
 	SchemaPrototype           ipld.NodePrototype
 	EncryptionSchema          schema.Type
 	EncryptionSchemaPrototype ipld.NodePrototype
+	SignatureSchema           schema.Type
+	SignatureSchemaPrototype  ipld.NodePrototype
 )
 
 func init() {
@@ -50,6 +52,11 @@ func init() {
 	EncryptionSchema, EncryptionSchemaPrototype = mustSetSchema(
 		"Encryption",
 		&Encryption{},
+	)
+
+	SignatureSchema, SignatureSchemaPrototype = mustSetSchema(
+		"Signature",
+		&Signature{},
 	)
 }
 
@@ -111,18 +118,6 @@ func NewDAGLink(name string, link cidlink.Link) DAGLink {
 	}
 }
 
-// Encryption contains the encryption information for the block's delta.
-type Encryption struct {
-	// DocID is the ID of the document that is encrypted with the associated encryption key.
-	DocID []byte
-	// FieldName is the name of the field that is encrypted with the associated encryption key.
-	// It is set if encryption is applied to a field instead of the whole doc.
-	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
-	FieldName *string
-	// Encryption key.
-	Key []byte
-}
-
 // Block is a block that contains a CRDT delta and links to other blocks.
 type Block struct {
 	// Delta is the CRDT delta that is stored in the block.
@@ -145,6 +140,10 @@ type Block struct {
 	// Encryption contains the encryption information for the block's delta.
 	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
 	Encryption *cidlink.Link
+
+	// Signature contains the block's signature.
+	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
+	Signature *cidlink.Link
 }
 
 // IsEncrypted returns true if the block is encrypted.
@@ -187,19 +186,6 @@ func (block *Block) IPLDSchemaBytes() []byte {
 			heads       optional [Link]
 			links       optional [DAGLink]
 			encryption  optional Link
-		}
-	`)
-}
-
-// IPLDSchemaBytes returns the IPLD schema representation for the encryption block.
-//
-// This needs to match the [Encryption] struct or [mustSetSchema] will panic on init.
-func (enc *Encryption) IPLDSchemaBytes() []byte {
-	return []byte(`
-		type Encryption struct {
-			docID     Bytes
-			fieldName optional String
-			key       Bytes
 		}
 	`)
 }
@@ -253,16 +239,6 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 }
 
 // GetFromBytes returns a block from encoded bytes.
-func GetEncryptionBlockFromBytes(b []byte) (*Encryption, error) {
-	enc := &Encryption{}
-	err := enc.Unmarshal(b)
-	if err != nil {
-		return nil, err
-	}
-	return enc, nil
-}
-
-// GetFromBytes returns a block from encoded bytes.
 func GetFromBytes(b []byte) (*Block, error) {
 	block := &Block{}
 	err := block.Unmarshal(b)
@@ -281,49 +257,14 @@ func GetFromNode(node ipld.Node) (*Block, error) {
 	return block, nil
 }
 
-// GetFromNode returns a block from a node.
-func GetEncryptionBlockFromNode(node ipld.Node) (*Encryption, error) {
-	encBlock, ok := bindnode.Unwrap(node).(*Encryption)
-	if !ok {
-		return nil, NewErrNodeToBlock(node)
-	}
-	return encBlock, nil
-}
-
 // Marshal encodes the delta using CBOR encoding.
 func (block *Block) Marshal() ([]byte, error) {
-	b, err := ipld.Marshal(dagcbor.Encode, block, Schema)
-	if err != nil {
-		return nil, NewErrEncodingBlock(err)
-	}
-	return b, nil
+	return marshalNode(block, Schema)
 }
 
 // Unmarshal decodes the delta from CBOR encoding.
 func (block *Block) Unmarshal(b []byte) error {
-	_, err := ipld.Unmarshal(b, dagcbor.Decode, block, Schema)
-	if err != nil {
-		return NewErrUnmarshallingBlock(err)
-	}
-	return nil
-}
-
-// Marshal encodes the delta using CBOR encoding.
-func (enc *Encryption) Marshal() ([]byte, error) {
-	b, err := ipld.Marshal(dagcbor.Encode, enc, EncryptionSchema)
-	if err != nil {
-		return nil, NewErrEncodingBlock(err)
-	}
-	return b, nil
-}
-
-// Unmarshal decodes the delta from CBOR encoding.
-func (enc *Encryption) Unmarshal(b []byte) error {
-	_, err := ipld.Unmarshal(b, dagcbor.Decode, enc, EncryptionSchema)
-	if err != nil {
-		return NewErrUnmarshallingBlock(err)
-	}
-	return nil
+	return unmarshalNode(b, block, Schema)
 }
 
 // GenerateNode generates an IPLD node from the block in its representation form.
@@ -332,10 +273,6 @@ func (block *Block) GenerateNode() ipld.Node {
 }
 
 // GenerateNode generates an IPLD node from the encryption block in its representation form.
-func (enc *Encryption) GenerateNode() ipld.Node {
-	return bindnode.Wrap(enc, EncryptionSchema).Representation()
-}
-
 // GetLinkByName returns the link by name. It will return false if the link does not exist.
 func (block *Block) GetLinkByName(name string) (cidlink.Link, bool) {
 	for _, link := range block.Links {
@@ -373,4 +310,22 @@ func GetLinkPrototype() cidlink.LinkPrototype {
 		MhType:   uint64(multicodec.Sha2_256),
 		MhLength: 32,
 	}}
+}
+
+// marshalNode encodes a ipld node using CBOR encoding.
+func marshalNode(node any, schema schema.Type) ([]byte, error) {
+	b, err := ipld.Marshal(dagcbor.Encode, node, schema)
+	if err != nil {
+		return nil, NewErrEncodingBlock(err)
+	}
+	return b, nil
+}
+
+// unmarshalNode decodes the delta from CBOR encoding.
+func unmarshalNode(b []byte, node any, schema schema.Type) error {
+	_, err := ipld.Unmarshal(b, dagcbor.Decode, node, schema)
+	if err != nil {
+		return NewErrUnmarshallingBlock(err)
+	}
+	return nil
 }
