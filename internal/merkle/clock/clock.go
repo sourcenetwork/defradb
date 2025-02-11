@@ -17,12 +17,15 @@ import (
 	"context"
 
 	cid "github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -62,25 +65,11 @@ func NewMerkleClock(
 
 func (mc *MerkleClock) putBlock(
 	ctx context.Context,
-	block *coreblock.Block,
+	block interface{ GenerateNode() ipld.Node },
 ) (cidlink.Link, error) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(mc.blockstore.AsIPLDStorage())
 	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
-	if err != nil {
-		return cidlink.Link{}, NewErrWritingBlock(err)
-	}
-
-	return link.(cidlink.Link), nil
-}
-
-func (mc *MerkleClock) putEncBlock(
-	ctx context.Context,
-	encBlock *coreblock.Encryption,
-) (cidlink.Link, error) {
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(mc.encstore.AsIPLDStorage())
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), encBlock.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
@@ -120,6 +109,11 @@ func (mc *MerkleClock) AddDelta(
 			return cidlink.Link{}, nil, err
 		}
 		dagBlock.Encryption = &encLink
+	}
+
+	err = mc.signBlock(ctx, dagBlock)
+	if err != nil {
+		return cidlink.Link{}, nil, err
 	}
 
 	link, err := mc.putBlock(ctx, dagBlock)
@@ -164,7 +158,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 				encBlock.Key = encKey
 			}
 
-			link, err := mc.putEncBlock(ctx, encBlock)
+			link, err := mc.putBlock(ctx, encBlock)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
@@ -219,6 +213,47 @@ func encryptBlock(
 	}
 	clonedCRDT.SetData(bytes)
 	return &coreblock.Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
+}
+
+func (mc *MerkleClock) signBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+) error {
+	if !block.Delta.IsComposite() {
+		return nil
+	}
+
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() {
+		return nil
+	}
+
+	blockBytes, err := block.Marshal()
+	if err != nil {
+		return err
+	}
+
+	sigBytes, err := crypto.Sign(crypto.SignatureTypeECDSA, ident.Value().PrivateKey, blockBytes)
+	if err != nil {
+		return err
+	}
+
+	sig := &coreblock.Signature{
+		Header: coreblock.SignatureHeader{
+			Type:     "ECDSA",
+			Identity: []byte(ident.Value().DID),
+		},
+		Value: sigBytes,
+	}
+
+	sigBlockLink, err := mc.putBlock(ctx, sig)
+	if err != nil {
+		return err
+	}
+
+	block.Signature = &sigBlockLink
+
+	return nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.

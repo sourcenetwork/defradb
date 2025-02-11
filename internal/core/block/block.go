@@ -57,6 +57,7 @@ func init() {
 	SignatureSchema, SignatureSchemaPrototype = mustSetSchema(
 		"Signature",
 		&Signature{},
+		&SignatureHeader{},
 	)
 }
 
@@ -182,10 +183,11 @@ func (block *Block) AllLinks() []cidlink.Link {
 func (block *Block) IPLDSchemaBytes() []byte {
 	return []byte(`
 		type Block struct {
-			delta       CRDT
-			heads       optional [Link]
-			links       optional [DAGLink]
-			encryption  optional Link
+			delta      CRDT
+			heads      optional [Link]
+			links      optional [DAGLink]
+			encryption optional Link
+			signature  optional Link
 		}
 	`)
 }
