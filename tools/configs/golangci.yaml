@@ -327,9 +327,6 @@ linters-settings:
     #   instead of using fmt.Print(fmt.Sprintf(...)), one can use fmt.Printf(...).
 
   govet:
-    # report about shadowed variables
-    check-shadowing: false
-
     # settings per analyzer
     settings:
       printf: # analyzer name, run `go tool vet help` to see all analyzers
@@ -339,18 +336,14 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
 
-    # enable or disable analyzers by name
-    # run `go tool vet help` to see all analyzers
+    enable-all: true
     enable:
-      - atomicalign
-      - nilness
-
-    enable-all: false
-
-    disable:
-      - shadow
 
     disable-all: false
+    disable:
+      - shadow
+      - fieldalignment
+
 
   lll:
     # max line length, lines longer will be reported.
