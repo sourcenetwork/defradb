@@ -68,9 +68,6 @@ output:
   # print linter name in the end of issue text.
   print-linter-name: true
 
-  # make issues output unique by line.
-  uniq-by-line: true
-
   # add a prefix to the output file references.
   path-prefix: ""
 
@@ -127,6 +124,9 @@ linters:
 
 #====================================================[ Tweaks To Fix Issues or Exclude linter(s) on Select Locations ]
 issues:
+  # Make issues output unique by line.
+  uniq-by-line: true
+
   # List of regexps of issue texts to exclude, empty list by default.
   # But independently from this option we use default exclude patterns,
   # it can be disabled by `exclude-use-default: false`. To list all
