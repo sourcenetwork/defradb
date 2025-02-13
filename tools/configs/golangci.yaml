@@ -57,7 +57,7 @@ run:
 
   # Define the Go version limit.
   # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`.
-  go: "1.22"
+  go: "1.23"
 
 #=====================================================================================[ Output Configuration Options ]
 output:
@@ -420,7 +420,7 @@ linters-settings:
 
   unused:
     # Select the Go version to target.
-    go: "1.22"
+    go: "1.23"
 
   whitespace:
     # Enforces newlines (or comments) after every multi-line if statement.
