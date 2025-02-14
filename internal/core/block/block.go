@@ -27,18 +27,20 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
-// Schema is the IPLD schema type that represents a `Block`.
 var (
-	Schema                    schema.Type
-	SchemaPrototype           ipld.NodePrototype
+	// BlockSchema is the IPLD schema type that represents a `Block`.
+	BlockSchema          schema.Type
+	BlockSchemaPrototype ipld.NodePrototype
+	// EncryptionSchema is the IPLD schema type that represents an `Encryption`.
 	EncryptionSchema          schema.Type
 	EncryptionSchemaPrototype ipld.NodePrototype
-	SignatureSchema           schema.Type
-	SignatureSchemaPrototype  ipld.NodePrototype
+	// SignatureSchema is the IPLD schema type that represents a `Signature`.
+	SignatureSchema          schema.Type
+	SignatureSchemaPrototype ipld.NodePrototype
 )
 
 func init() {
-	Schema, SchemaPrototype = mustSetSchema(
+	BlockSchema, BlockSchemaPrototype = mustSetSchema(
 		"Block",
 		&Block{},
 		&DAGLink{},
@@ -76,14 +78,14 @@ func mustSetSchema(schemaName string, schemas ...schemaDefinition) (schema.Type,
 	if err != nil {
 		panic(err)
 	}
-	blockSchemaType := ts.TypeByName(schemaName)
+	schemaType := ts.TypeByName(schemaName)
 
 	// Calling bindnode.Prototype here ensure that [Block] and all the types it contains
 	// are compatible with the IPLD schema defined by blockSchemaType.
 	// If [Block] and `blockSchematype` do not match, this will panic.
-	proto := bindnode.Prototype(schemas[0], blockSchemaType)
+	proto := bindnode.Prototype(schemas[0], schemaType)
 
-	return blockSchemaType, proto.Representation()
+	return schemaType, proto.Representation()
 }
 
 // DAGLink represents a link to another object in a DAG.
@@ -262,17 +264,17 @@ func GetFromNode(node ipld.Node) (*Block, error) {
 
 // Marshal encodes the delta using CBOR encoding.
 func (block *Block) Marshal() ([]byte, error) {
-	return marshalNode(block, Schema)
+	return marshalNode(block, BlockSchema)
 }
 
 // Unmarshal decodes the delta from CBOR encoding.
 func (block *Block) Unmarshal(b []byte) error {
-	return unmarshalNode(b, block, Schema)
+	return unmarshalNode(b, block, BlockSchema)
 }
 
 // GenerateNode generates an IPLD node from the block in its representation form.
 func (block *Block) GenerateNode() ipld.Node {
-	return bindnode.Wrap(block, Schema).Representation()
+	return bindnode.Wrap(block, BlockSchema).Representation()
 }
 
 // GenerateNode generates an IPLD node from the encryption block in its representation form.
@@ -288,7 +290,7 @@ func (block *Block) GetLinkByName(name string) (cidlink.Link, bool) {
 
 // GenerateLink generates a cid link for the block.
 func (block *Block) GenerateLink() (cidlink.Link, error) {
-	node := bindnode.Wrap(block, Schema)
+	node := bindnode.Wrap(block, BlockSchema)
 	return GetLinkFromNode(node.Representation())
 }
 

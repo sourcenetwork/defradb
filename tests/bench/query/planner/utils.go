@@ -135,6 +135,7 @@ type dummyTxn struct{}
 func (*dummyTxn) Rootstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Datastore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Encstore() datastore.Blockstore        { return nil }
+func (*dummyTxn) Sigstore() datastore.Blockstore        { return nil }
 func (*dummyTxn) Headstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Peerstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Blockstore() datastore.Blockstore      { return nil }

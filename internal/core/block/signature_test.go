@@ -135,7 +135,7 @@ func TestBlockMarshal_IfSignatureNotSet_ShouldNotContainSignatureField(t *testin
 	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
 	require.NoError(t, err)
 
-	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	loadedBlock, err := GetFromNode(nd)
@@ -197,7 +197,7 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
 	require.NoError(t, err)
 
-	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	loadedBlock, err := GetFromNode(nd)

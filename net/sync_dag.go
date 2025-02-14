@@ -12,6 +12,7 @@ package net
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,28 +28,36 @@ import (
 // to wait for a block link to be fetched.
 var syncBlockLinkTimeout = 5 * time.Second
 
+func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
+	blockStore := &bsrvadapter.Adapter{Wrapped: blockService}
+
+	linkSys := cidlink.DefaultLinkSystem()
+	linkSys.SetWriteStorage(blockStore)
+	linkSys.SetReadStorage(blockStore)
+	linkSys.TrustedStorage = true
+
+	return linkSys
+}
+
 // syncDAG synchronizes the DAG starting with the given block
 // using the blockservice to fetch remote blocks.
 //
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *coreblock.Block) error {
+func syncDAG(ctx context.Context, blockService, sigBlockService blockservice.BlockService, block *coreblock.Block) error {
 	// use a session to make remote fetches more efficient
-	ctx = blockservice.ContextWithSession(ctx, bserv)
-	store := &bsrvadapter.Adapter{Wrapped: bserv}
+	ctx = blockservice.ContextWithSession(ctx, blockService)
 
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(store)
-	lsys.SetReadStorage(store)
-	lsys.TrustedStorage = true
+	linkSys := makeLinkSystem(blockService)
+	sigLinkSys := makeLinkSystem(sigBlockService)
 
 	// Store the block in the DAG store
-	_, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	_, err := linkSys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return err
 	}
 
-	err = loadBlockLinks(ctx, lsys, block)
+	err = loadBlockLinks(ctx, &linkSys, &sigLinkSys, block)
 	if err != nil {
 		return err
 	}
@@ -59,12 +68,21 @@ func syncDAG(ctx context.Context, bserv blockservice.BlockService, block *corebl
 //
 // If it encounters errors in the concurrent loading of links, it will return
 // the first error it encountered.
-func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblock.Block) error {
+func loadBlockLinks(ctx context.Context, linkSys, sigLinkSys *linking.LinkSystem, block *coreblock.Block) error {
 	ctxWithCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
 	var wg sync.WaitGroup
 	var asyncErr error
 	var asyncErrOnce sync.Once
+
+	if block.Signature != nil {
+		fmt.Printf(">>>>> Verifying block signature\n")
+		err := coreblock.VerifyBlockSignature(block, sigLinkSys)
+		fmt.Printf(">>>>> Block signature verified\n")
+		if err != nil {
+			return err
+		}
+	}
 
 	setAsyncErr := func(err error) {
 		asyncErr = err
@@ -80,7 +98,7 @@ func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblo
 			}
 			ctxWithTimeout, cancel := context.WithTimeout(ctx, syncBlockLinkTimeout)
 			defer cancel()
-			nd, err := lsys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.SchemaPrototype)
+			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
@@ -90,7 +108,8 @@ func loadBlockLinks(ctx context.Context, lsys linking.LinkSystem, block *coreblo
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
-			err = loadBlockLinks(ctx, lsys, linkBlock)
+
+			err = loadBlockLinks(ctx, linkSys, sigLinkSys, linkBlock)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
