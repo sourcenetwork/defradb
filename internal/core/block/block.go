@@ -159,6 +159,7 @@ func (block *Block) Clone() *Block {
 		Heads:      block.Heads,
 		Links:      block.Links,
 		Encryption: block.Encryption,
+		Signature:  block.Signature,
 	}
 }
 

@@ -12,7 +12,14 @@ package coreblock
 
 import (
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/linking"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
+	"github.com/sourcenetwork/defradb/crypto"
+)
+
+const (
+	SignatureTypeECDSA   = "ECDSA"
+	SignatureTypeEd25519 = "Ed25519"
 )
 
 // SignatureHeader contains the header of the signature.
@@ -89,4 +96,51 @@ func (sig *Signature) Unmarshal(b []byte) error {
 // GenerateNode generates an IPLD node from the encryption block in its representation form.
 func (sig *Signature) GenerateNode() ipld.Node {
 	return bindnode.Wrap(sig, SignatureSchema).Representation()
+}
+
+// VerifyBlockSignature verifies the signature of a block.
+// It returns nil if:
+// - The block has no signature (optional signature)
+// - The signature is valid
+// It returns an error if:
+// - The signature block cannot be loaded
+// - The signature verification fails
+func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
+	if block.Signature == nil {
+		return nil
+	}
+
+	// Load the signature block
+	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
+	if err != nil {
+		return ErrSignatureNotFound
+	}
+
+	sigBlock, err := GetSignatureBlockFromNode(nd)
+	if err != nil {
+		return ErrSignatureNotFound
+	}
+
+	// Generate a new node from the block without the signature field
+	// This is what was originally signed
+	blockToVerify := *block
+	blockToVerify.Signature = nil
+
+	// Marshal the node to get the bytes that were signed
+	signedBytes, err := marshalNode(&blockToVerify, Schema)
+	if err != nil {
+		return err
+	}
+
+	var sigType crypto.SignatureType
+	switch sigBlock.Header.Type {
+	case SignatureTypeEd25519:
+		sigType = crypto.SignatureTypeEd25519
+	case SignatureTypeECDSA:
+		sigType = crypto.SignatureTypeECDSA
+	default:
+		return crypto.ErrUnsupportedSignatureType
+	}
+
+	return crypto.Verify(sigType, sigBlock.Header.Identity, signedBytes, sigBlock.Value)
 }
