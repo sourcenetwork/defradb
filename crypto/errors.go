@@ -30,6 +30,7 @@ const (
 	errUnsupportedECDSAPrivKeyType     string = "unsupported ECDSA private key type"
 	errInvalidEd25519PrivKeyLength     string = "invalid Ed25519 private key length"
 	errUnsupportedEd25519PrivKeyType   string = "unsupported Ed25519 private key type"
+	errSignatureVerification           string = "signature verification failed"
 )
 
 var (
@@ -41,6 +42,7 @@ var (
 	ErrUnsupportedECDSAPrivKeyType   = errors.New(errUnsupportedECDSAPrivKeyType)
 	ErrInvalidEd25519PrivKeyLength   = errors.New(errInvalidEd25519PrivKeyLength)
 	ErrUnsupportedEd25519PrivKeyType = errors.New(errUnsupportedEd25519PrivKeyType)
+	ErrSignatureVerification         = errors.New(errSignatureVerification)
 )
 
 func NewErrFailedToGenerateEphemeralKey(inner error) error {
