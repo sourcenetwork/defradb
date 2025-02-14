@@ -90,3 +90,77 @@ func Sign(sigType SignatureType, privKey interface{}, message []byte) ([]byte, e
 		return nil, ErrUnsupportedSignatureType
 	}
 }
+
+// Verify verifies a signature against a message using the specified signature algorithm.
+//
+// For ECDSA (secp256k1):
+// - Expects signature in DER format
+// - Accepts public key as either:
+//   - *secp256k1.PublicKey: Direct public key object
+//   - []byte: Raw public key bytes that will be parsed
+//
+// For Ed25519:
+// - Expects standard Ed25519 signature
+// - Accepts public key as either:
+//   - ed25519.PublicKey: Direct public key object
+//   - []byte: Raw public key bytes (must be ed25519.PublicKeySize bytes)
+//
+// Parameters:
+//   - sigType: The type of signature algorithm (ECDSA or Ed25519)
+//   - pubKey: The public key to verify with (see above for accepted types)
+//   - message: The original message that was signed
+//   - signature: The signature to verify
+//
+// Returns:
+//   - error: nil if verification succeeds, appropriate error otherwise
+func Verify(sigType SignatureType, pubKey interface{}, message, signature []byte) error {
+	switch sigType {
+	case SignatureTypeECDSA:
+		var publicKey *secp256k1.PublicKey
+		switch k := pubKey.(type) {
+		case *secp256k1.PublicKey:
+			publicKey = k
+		case []byte:
+			var err error
+			publicKey, err = secp256k1.ParsePubKey(k)
+			if err != nil {
+				return err
+			}
+		default:
+			return ErrUnsupportedECDSAPrivKeyType
+		}
+
+		sig, err := ecdsa.ParseDERSignature(signature)
+		if err != nil {
+			return err
+		}
+
+		hash := sha256.Sum256(message)
+		if !sig.Verify(hash[:], publicKey) {
+			return ErrSignatureVerification
+		}
+		return nil
+
+	case SignatureTypeEd25519:
+		switch k := pubKey.(type) {
+		case ed25519.PublicKey:
+			if !ed25519.Verify(k, message, signature) {
+				return ErrSignatureVerification
+			}
+			return nil
+		case []byte:
+			if len(k) != ed25519.PublicKeySize {
+				return ErrInvalidEd25519PrivKeyLength
+			}
+			if !ed25519.Verify(ed25519.PublicKey(k), message, signature) {
+				return ErrSignatureVerification
+			}
+			return nil
+		default:
+			return ErrUnsupportedEd25519PrivKeyType
+		}
+
+	default:
+		return ErrUnsupportedSignatureType
+	}
+}
