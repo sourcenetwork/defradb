@@ -324,10 +324,22 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
-	prio := block.Delta.GetPriority()
-
 	schemaVersionId := block.Delta.GetSchemaVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
+
+	cols, err := n.planner.db.GetCollections(
+		n.planner.ctx,
+		client.CollectionFetchOptions{
+			IncludeInactive: immutable.Some(true),
+			SchemaVersionID: immutable.Some(schemaVersionId),
+		},
+	)
+	if err != nil {
+		return core.Doc{}, err
+	}
+	if len(cols) == 0 {
+		return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+	}
 
 	var fieldName any
 	var fieldID any
@@ -340,19 +352,6 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	} else {
 		fName := block.Delta.GetFieldName()
 		fieldName = fName
-		cols, err := n.planner.db.GetCollections(
-			n.planner.ctx,
-			client.CollectionFetchOptions{
-				IncludeInactive: immutable.Some(true),
-				SchemaVersionID: immutable.Some(schemaVersionId),
-			},
-		)
-		if err != nil {
-			return core.Doc{}, err
-		}
-		if len(cols) == 0 {
-			return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
-		}
 
 		// Because we only care about the schema, we can safely take the first - the schema is the same
 		// for all in the set.
@@ -370,6 +369,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	} else {
 		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
 	}
+
+	prio := block.Delta.GetPriority()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
@@ -381,20 +382,6 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 			request.DocIDArgName,
 			string(docID),
 		)
-	}
-
-	cols, err := n.planner.db.GetCollections(
-		n.planner.ctx,
-		client.CollectionFetchOptions{
-			IncludeInactive: immutable.Some(true),
-			SchemaVersionID: immutable.Some(schemaVersionId),
-		},
-	)
-	if err != nil {
-		return core.Doc{}, err
-	}
-	if len(cols) == 0 {
-		return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
 	}
 
 	// WARNING: This will become incorrect once we allow multiple collections to share the same schema,

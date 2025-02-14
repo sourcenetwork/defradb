@@ -140,7 +140,7 @@ func (s *server) processPushlog(
 		corelog.Any("Creator", byPeer.String()),
 		corelog.Any("DocID", req.DocID))
 
-	err = syncDAG(ctx, s.peer.bserv, block)
+	err = syncDAG(ctx, s.peer.blockService, s.peer.sigBlockService, block)
 	if err != nil {
 		return nil, err
 	}

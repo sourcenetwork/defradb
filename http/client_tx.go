@@ -95,6 +95,10 @@ func (c *Transaction) Encstore() datastore.Blockstore {
 	panic("client side transaction")
 }
 
+func (c *Transaction) Sigstore() datastore.Blockstore {
+	panic("client side transaction")
+}
+
 func (c *Transaction) Headstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }

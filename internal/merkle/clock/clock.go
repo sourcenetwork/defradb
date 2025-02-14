@@ -42,6 +42,7 @@ type MerkleClock struct {
 	headstore  datastore.DSReaderWriter
 	blockstore datastore.Blockstore
 	encstore   datastore.Blockstore
+	sigstore   datastore.Blockstore
 	headset    *heads
 	crdt       core.ReplicatedData
 }
@@ -51,6 +52,7 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
+	sigstore datastore.Blockstore,
 	namespace keys.HeadstoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
@@ -58,17 +60,19 @@ func NewMerkleClock(
 		headstore:  headstore,
 		blockstore: blockstore,
 		encstore:   encstore,
+		sigstore:   sigstore,
 		headset:    NewHeadSet(headstore, namespace),
 		crdt:       crdt,
 	}
 }
 
-func (mc *MerkleClock) putBlock(
+func putBlock(
 	ctx context.Context,
+	blockstore datastore.Blockstore,
 	block interface{ GenerateNode() ipld.Node },
 ) (cidlink.Link, error) {
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(mc.blockstore.AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.AsIPLDStorage())
 	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
@@ -116,7 +120,7 @@ func (mc *MerkleClock) AddDelta(
 		return cidlink.Link{}, nil, err
 	}
 
-	link, err := mc.putBlock(ctx, dagBlock)
+	link, err := putBlock(ctx, mc.blockstore, dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -158,7 +162,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 				encBlock.Key = encKey
 			}
 
-			link, err := mc.putBlock(ctx, encBlock)
+			link, err := putBlock(ctx, mc.encstore, encBlock)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
@@ -241,12 +245,12 @@ func (mc *MerkleClock) signBlock(
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
 			Type:     coreblock.SignatureTypeECDSA,
-			Identity: []byte(ident.Value().DID),
+			Identity: []byte(ident.Value().PublicKey.SerializeCompressed()),
 		},
 		Value: sigBytes,
 	}
 
-	sigBlockLink, err := mc.putBlock(ctx, sig)
+	sigBlockLink, err := putBlock(ctx, mc.sigstore, sig)
 	if err != nil {
 		return err
 	}

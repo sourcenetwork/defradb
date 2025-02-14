@@ -112,7 +112,7 @@ func TestBlock(t *testing.T) {
 
 	rootLink := storeBlock(t, &lsys, makeCompositeBlock(t, &lsys))
 
-	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	block, err := GetFromNode(nd)
@@ -126,7 +126,7 @@ func TestBlock(t *testing.T) {
 
 	require.Equal(t, block, newBlock)
 
-	newNode := bindnode.Wrap(block, Schema)
+	newNode := bindnode.Wrap(block, BlockSchema)
 	require.Equal(t, nd, newNode)
 
 	link, err := block.GenerateLink()
@@ -151,7 +151,7 @@ func TestBlockDeltaPriority(t *testing.T) {
 
 	rootLink := storeBlock(t, &lsys, makeCompositeBlock(t, &lsys))
 
-	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	block, err := GetFromNode(nd)
@@ -194,7 +194,7 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
 	require.NoError(t, err)
 
-	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	loadedBlock, err := GetFromNode(nd)
@@ -231,7 +231,7 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	fieldBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), fieldBlock.GenerateNode())
 	require.NoError(t, err)
 
-	nd, err := lsys.Load(ipld.LinkContext{}, fieldBlockLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, fieldBlockLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 	_, err = GetFromNode(nd)
 	require.NoError(t, err)

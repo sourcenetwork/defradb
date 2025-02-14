@@ -127,7 +127,7 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
 	blockToVerify.Signature = nil
 
 	// Marshal the node to get the bytes that were signed
-	signedBytes, err := marshalNode(&blockToVerify, Schema)
+	signedBytes, err := marshalNode(&blockToVerify, BlockSchema)
 	if err != nil {
 		return err
 	}

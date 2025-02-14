@@ -195,6 +195,11 @@ func (db *DB) Encstore() datastore.Blockstore {
 	return db.multistore.Encstore()
 }
 
+// Sigstore returns the internal sig store which contains signatures for documents and their fields.
+func (db *DB) Sigstore() datastore.Blockstore {
+	return db.multistore.Sigstore()
+}
+
 // Peerstore returns the internal DAG store which contains IPLD blocks.
 func (db *DB) Peerstore() datastore.DSReaderWriter {
 	return db.multistore.Peerstore()
