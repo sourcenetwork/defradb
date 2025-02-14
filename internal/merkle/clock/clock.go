@@ -240,7 +240,7 @@ func (mc *MerkleClock) signBlock(
 
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
-			Type:     "ECDSA",
+			Type:     coreblock.SignatureTypeECDSA,
 			Identity: []byte(ident.Value().DID),
 		},
 		Value: sigBytes,
