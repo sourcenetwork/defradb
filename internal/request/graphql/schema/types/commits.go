@@ -26,7 +26,14 @@ import (
 //		SchemaVersionID: String
 //		Delta: String
 //		Previous: [Commit]
-//	 Links: [Commit]
+//		Links: [Commit]
+//		Signature: Signature
+//	}
+//
+//	type Signature {
+//		Type: String
+//		Identity: String
+//		Value: String
 //	}
 //
 // Any self referential type needs to be initialized
@@ -71,6 +78,27 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
 				Type:        gql.NewList(commitLinkObject),
+			},
+			request.SignatureFieldName: &gql.Field{
+				Description: signatureDescription,
+				Type: gql.NewObject(gql.ObjectConfig{
+					Name:        request.SignatureTypeName,
+					Description: signatureDescription,
+					Fields: gql.Fields{
+						request.SignatureTypeFieldName: &gql.Field{
+							Description: signatureTypeFieldDescription,
+							Type:        gql.String,
+						},
+						request.SignatureIdentityFieldName: &gql.Field{
+							Description: signatureIdentityFieldDescription,
+							Type:        gql.String,
+						},
+						request.SignatureValueFieldName: &gql.Field{
+							Description: signatureValueFieldDescription,
+							Type:        gql.String,
+						},
+					}},
+				),
 			},
 			request.CountFieldName: &gql.Field{
 				Description: CountFieldDescription,

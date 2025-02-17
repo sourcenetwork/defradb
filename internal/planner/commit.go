@@ -12,6 +12,7 @@ package planner
 
 import (
 	cid "github.com/ipfs/go-cid"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -361,13 +362,20 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		}
 		fieldID = field.ID.String()
 	}
-	// We need to explicitely set delta to an untyped nil otherwise it will be marshalled
+	// We need to explicitly set delta to an untyped nil otherwise it will be marshalled
 	// as an empty slice in the JSON response of the HTTP client.
 	d := block.Delta.GetData()
 	if d != nil {
 		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)
 	} else {
 		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
+	}
+
+	if block.Signature != nil {
+		err := n.addSignatureFieldToDoc(*block.Signature, &commit)
+		if err != nil {
+			return core.Doc{}, err
+		}
 	}
 
 	prio := block.Delta.GetPriority()
@@ -422,4 +430,28 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 
 	return commit, nil
+}
+
+func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
+	store := n.planner.txn.Sigstore()
+	sigIPLDBlock, err := store.Get(n.planner.ctx, link.Cid)
+	if err != nil {
+		return err
+	}
+
+	sigBlock, err := coreblock.GetSignatureBlockFromBytes(sigIPLDBlock.RawData())
+	if err != nil {
+		return err
+	}
+	sigFieldIndex := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName][0]
+	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndex]
+
+	sigDoc := sigMapping.NewDoc()
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, sigBlock.Header.Identity)
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureValueFieldName, sigBlock.Value)
+
+	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
+
+	return nil
 }
