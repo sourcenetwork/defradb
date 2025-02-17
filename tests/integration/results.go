@@ -123,8 +123,12 @@ func (ucid *UniqueCid) Validate(s *state, actualValue any, msgAndArgs ...any) {
 
 	if isNew {
 		require.IsType(s.t, "", actualValue)
+		value, ok := actualValue.(string)
+		if !ok {
+			require.Fail(s.t, "UniqueCid actualValue string cast failed")
+		}
 
-		cid, err := cid.Decode(actualValue.(string))
+		cid, err := cid.Decode(value)
 		if err != nil {
 			require.NoError(s.t, err)
 		}
