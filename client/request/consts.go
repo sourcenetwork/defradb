@@ -62,6 +62,8 @@ const (
 
 	CommitTypeName           = "Commit"
 	LinksFieldName           = "links"
+	SignatureFieldName       = "signature"
+	SignatureTypeName        = "Signature"
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
 	CollectionIDFieldName    = "collectionID"
@@ -84,6 +86,10 @@ const (
 
 	LinksNameFieldName = "name"
 	LinksCidFieldName  = "cid"
+
+	SignatureTypeFieldName     = "type"
+	SignatureIdentityFieldName = "identity"
+	SignatureValueFieldName    = "value"
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
@@ -145,5 +151,11 @@ var (
 	LinksFields = []string{
 		LinksNameFieldName,
 		LinksCidFieldName,
+	}
+
+	SignatureFields = []string{
+		SignatureTypeFieldName,
+		SignatureIdentityFieldName,
+		SignatureValueFieldName,
 	}
 )
