@@ -16,20 +16,8 @@ builds:
     goarch:
       - amd64
       - arm64
-  # Default build with playground
-  - id: "defradb"
-    main: ./cmd/defradb
-    flags:
-      - -tags=playground
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
   # Default build with playground and telemetry
-  - id: "defradb_telemetry"
+  - id: "defradb"
     main: ./cmd/defradb
     flags:
       - -tags=playground,telemetry
@@ -62,16 +50,6 @@ archives:
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-  - id: defradb_telemetry
-    builds:
-      - defradb_telemetry
-    formats: [binary]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: >-
-      {{ .Binary }}_telemetry_{{ .Version }}_{{ .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
