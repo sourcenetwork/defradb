@@ -77,12 +77,12 @@ func TestSchemaInstrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 													"name": "vector",
 													"type": map[string]any{
 														"kind": "NON_NULL",
-														"name": any(nil),
+														"name": nil,
 														"ofType": map[string]any{
 															"kind": "LIST",
-															"name": any(nil),
+															"name": nil,
 															"ofType": map[string]any{
-																"name": any(nil),
+																"name": nil,
 																"kind": "NON_NULL",
 																"ofType": map[string]any{
 																	"name": "Int",
@@ -169,12 +169,12 @@ func TestSchemaInstrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 													"name": "vector",
 													"type": map[string]any{
 														"kind": "NON_NULL",
-														"name": any(nil),
+														"name": nil,
 														"ofType": map[string]any{
 															"kind": "LIST",
-															"name": any(nil),
+															"name": nil,
 															"ofType": map[string]any{
-																"name": any(nil),
+																"name": nil,
 																"kind": "NON_NULL",
 																"ofType": map[string]any{
 																	"name": "Float32",
@@ -263,12 +263,12 @@ func TestSchemaInstrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *
 													"name": "vector",
 													"type": map[string]any{
 														"kind": "NON_NULL",
-														"name": any(nil),
+														"name": nil,
 														"ofType": map[string]any{
 															"kind": "LIST",
-															"name": any(nil),
+															"name": nil,
 															"ofType": map[string]any{
-																"name": any(nil),
+																"name": nil,
 																"kind": "NON_NULL",
 																"ofType": map[string]any{
 																	"name": "Float32",
@@ -290,12 +290,12 @@ func TestSchemaInstrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *
 													"name": "vector",
 													"type": map[string]any{
 														"kind": "NON_NULL",
-														"name": any(nil),
+														"name": nil,
 														"ofType": map[string]any{
 															"kind": "LIST",
-															"name": any(nil),
+															"name": nil,
 															"ofType": map[string]any{
-																"name": any(nil),
+																"name": nil,
 																"kind": "NON_NULL",
 																"ofType": map[string]any{
 																	"name": "Int",
