@@ -76,6 +76,7 @@ var DefaultFields = concat(
 var DefaultViewObjFields = concat(
 	fields{
 		groupField,
+		similarityField,
 	},
 	aggregateFields,
 )
