@@ -16,11 +16,11 @@ type Similarity struct {
 	Field
 	// Vector contains the vector to compare the target field to.
 	//
-	// It will be of type Int, Float32 or Float64.
+	// It will be of type Int, Float32 or Float64. It must be the same type and length as Target.
 	Vector any
 
 	// Target is the field in the host object that we will compare the the vector to.
 	//
-	// It must be a field of type Int, Float32 or Float64.
+	// It must be a field of type Int, Float32 or Float64. It must be the same type and length as Vector.
 	Target string
 }

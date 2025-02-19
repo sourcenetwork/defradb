@@ -66,6 +66,7 @@ var DefaultFields = concat(
 		versionField,
 		groupField,
 		deletedField,
+		similarityField,
 	},
 	aggregateFields,
 )
@@ -146,6 +147,14 @@ var aggregateFields = fields{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
+	},
+}
+
+var similarityField = Field{
+	"name": "_similarity",
+	"type": map[string]any{
+		"kind": "SCALAR",
+		"name": "Float",
 	},
 }
 

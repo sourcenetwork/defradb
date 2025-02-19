@@ -24,15 +24,3 @@ type Similarity struct {
 	// The vector to compare the target field to.
 	Vector any
 }
-
-func (a *Similarity) CloneTo(index int) Requestable {
-	return a.cloneTo(index)
-}
-
-func (a *Similarity) cloneTo(index int) *Similarity {
-	return &Similarity{
-		Field:            *a.Field.cloneTo(index),
-		DocumentMapping:  a.DocumentMapping,
-		SimilarityTarget: a.SimilarityTarget,
-	}
-}

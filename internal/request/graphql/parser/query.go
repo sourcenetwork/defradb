@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 // parseQueryOperationDefinition parses the individual GraphQL
@@ -235,7 +236,7 @@ func parseSimilarity(
 	for _, argument := range field.Arguments {
 		target = argument.Name.Value
 		v := arguments[target].(map[string]any)
-		vector = v["vector"]
+		vector = v[types.SimilarityArgVector]
 	}
 
 	return &request.Similarity{

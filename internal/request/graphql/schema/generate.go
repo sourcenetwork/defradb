@@ -874,7 +874,7 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 			Name:        genSimilaritySelectorName(obj.Name(), objectField.Name),
 			Description: objectField.Description,
 			Fields: gql.InputObjectConfigFieldMap{
-				"vector": &gql.InputObjectFieldConfig{
+				schemaTypes.SimilarityArgVector: &gql.InputObjectFieldConfig{
 					Type:        gql.NewNonNull(gql.NewList(listType.OfType)),
 					Description: "A vector of the same type as the field to compute the cosine similarity with.",
 				},

@@ -87,6 +87,31 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, similarity on empty",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type User {
+					name: String
+					pets: [String!]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User{
+						_similarity(pets: {vector: [1.1, 1.2, 0.9]})
+					}
+				}`,
+				// Not found on _similarity because it's not a supported type.
+				ExpectedError: "Unknown argument \"pets\" on field \"_similarity\" of type \"User\".",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query, similarity on empty",
@@ -151,6 +176,37 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, similarity on empty",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type User {
+					name: String
+					pointsList: [Int!]
+				}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "John",
+					"pointsList": []int64{2, 4, 1},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User{
+						name
+						_similarity(pointsList: {vector: [1, 2, 0, 1]})
+					}
+				}`,
+				ExpectedError: "source and vector must be of the same length. Source: 3, Vector: 4",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query, similarity on empty",
@@ -204,6 +260,44 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 					"name":       "John",
 					"pointsList": []float64{2, 4, 1},
 				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User{
+						name
+						_similarity(pointsList: {vector: [1, 2, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name":        "John",
+							"_similarity": float64(10),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple query, similarity on empty",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type User {
+					name: String
+					pointsList: [Float64!]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"pointsList": [2, 4, 1]
+				}`,
 			},
 			testUtils.Request{
 				Request: `query {

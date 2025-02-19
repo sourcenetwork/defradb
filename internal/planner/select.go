@@ -61,6 +61,8 @@ type selectTopNode struct {
 	// selectNode is used pre-wiring of the plan (before expansion and all).
 	selectNode *selectNode
 
+	// This is added temporarity until Planner is refactored
+	// https://github.com/sourcenetwork/defradb/issues/3467
 	similarity []*similarityNode
 
 	// plan is the top of the plan graph (the wired and finalized plan graph).

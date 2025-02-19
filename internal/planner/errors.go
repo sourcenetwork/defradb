@@ -35,6 +35,7 @@ var (
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
 	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
 	ErrUpsertMultipleDocuments             = errors.New("cannot upsert multiple matching documents")
+	ErrMismatchLengthOnSimilarity          = errors.New("source and vector must be of the same length")
 )
 
 func NewErrUnknownDependency(name string) error {
@@ -51,4 +52,12 @@ func NewErrFailedToCollectExecExplainInfo(inner error) error {
 
 func NewErrSubTypeInit(inner error) error {
 	return errors.Wrap(errSubTypeInit, inner)
+}
+
+func NewErrMismatchLengthOnSimilarity(source, vector int) error {
+	return errors.WithStack(
+		ErrMismatchLengthOnSimilarity,
+		errors.NewKV("Source", source),
+		errors.NewKV("Vector", vector),
+	)
 }

@@ -110,15 +110,24 @@ func (n *similarityNode) Next() (bool, error) {
 		switch childCollection := child.(type) {
 		case []int64:
 			vector := convertArray[int64](n.vector)
-			result := cosineSimilarity(childCollection, vector)
+			result, err := cosineSimilarity(childCollection, vector)
+			if err != nil {
+				return false, err
+			}
 			similarity = float64(result)
 		case []float32:
 			vector := convertArray[float32](n.vector)
-			result := cosineSimilarity(childCollection, vector)
+			result, err := cosineSimilarity(childCollection, vector)
+			if err != nil {
+				return false, err
+			}
 			similarity = float64(result)
 		case []float64:
 			vector := convertArray[float64](n.vector)
-			result := cosineSimilarity(childCollection, vector)
+			result, err := cosineSimilarity(childCollection, vector)
+			if err != nil {
+				return false, err
+			}
 			similarity = float64(result)
 		}
 
@@ -140,12 +149,15 @@ func (n *similarityNode) SetPlan(p planNode) { n.plan = p }
 func cosineSimilarity[T number](
 	source []T,
 	vector []T,
-) T {
+) (T, error) {
 	var value T
+	if len(source) != len(vector) {
+		return value, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
+	}
 	for i := range source {
 		value += vector[i] * source[i]
 	}
-	return value
+	return value, nil
 }
 
 func convertArray[T int64 | float32 | float64](val any) []T {
