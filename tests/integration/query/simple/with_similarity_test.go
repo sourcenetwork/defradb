@@ -429,6 +429,7 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 
 // This test documents a bug where having two aliases in a logical _or operator
 // return no results even though in the tests bellow 1 should be returned.
+// https://github.com/sourcenetwork/defradb/issues/3468
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query, similarity on empty",
