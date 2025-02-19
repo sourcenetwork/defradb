@@ -18,7 +18,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -115,9 +114,11 @@ func MakeStartCommand() *cobra.Command {
 					return err
 				}
 
-				opts, err = getOrCreateEncryptionKey(kr, cfg, opts)
-				if err != nil {
-					return err
+				if !cfg.GetBool("datastore.noencryption") {
+					opts, err = getOrCreateEncryptionKey(kr, opts)
+					if err != nil {
+						return err
+					}
 				}
 
 				opts, err = getOrCreateIdentity(kr, opts)
@@ -271,9 +272,12 @@ func MakeStartCommand() *cobra.Command {
 	return cmd
 }
 
-func getOrCreateEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.Option) ([]node.Option, error) {
+func getOrCreateEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 	encryptionKey, err := kr.Get(encryptionKeyName)
-	if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
+	if err != nil {
+		if !errors.Is(err, keyring.ErrNotFound) {
+			return nil, err
+		}
 		encryptionKey, err = crypto.GenerateAES256()
 		if err != nil {
 			return nil, err
@@ -283,8 +287,6 @@ func getOrCreateEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.
 			return nil, err
 		}
 		log.Info("generated encryption key")
-	} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
-		return nil, err
 	}
 	opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	return opts, nil
