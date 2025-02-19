@@ -121,6 +121,8 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 					n.tryAddFieldWithName(target.Field.Name)
 				}
 			}
+		case *mapper.Similarity:
+			n.tryAddFieldWithName(requestable.SimilarityTarget.Name)
 		}
 	}
 	return nil

@@ -231,6 +231,8 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		p.expandLimitPlan(plan, parentPlan)
 	}
 
+	p.expandSimilarityPlans(plan)
+
 	return nil
 }
 
@@ -246,6 +248,13 @@ func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
 		aggregate := plan.aggregates[i]
 		aggregate.SetPlan(plan.planNode)
 		plan.planNode = aggregate
+	}
+}
+
+func (p *Planner) expandSimilarityPlans(plan *selectTopNode) {
+	for _, sim := range plan.similarity {
+		sim.SetPlan(plan.planNode)
+		plan.planNode = sim
 	}
 }
 

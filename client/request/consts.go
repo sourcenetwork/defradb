@@ -39,16 +39,17 @@ const (
 
 	DocIDArgName = "docID"
 
-	AverageFieldName = "_avg"
-	CountFieldName   = "_count"
-	DocIDFieldName   = "_docID"
-	GroupFieldName   = "_group"
-	DeletedFieldName = "_deleted"
-	SumFieldName     = "_sum"
-	VersionFieldName = "_version"
-	MaxFieldName     = "_max"
-	MinFieldName     = "_min"
-	AliasFieldName   = "_alias"
+	AverageFieldName    = "_avg"
+	CountFieldName      = "_count"
+	DocIDFieldName      = "_docID"
+	GroupFieldName      = "_group"
+	DeletedFieldName    = "_deleted"
+	SumFieldName        = "_sum"
+	VersionFieldName    = "_version"
+	MaxFieldName        = "_max"
+	MinFieldName        = "_min"
+	AliasFieldName      = "_alias"
+	SimilarityFieldName = "_similarity"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.
@@ -104,16 +105,17 @@ var (
 	}
 
 	ReservedFields = map[string]struct{}{
-		TypeNameFieldName: {},
-		VersionFieldName:  {},
-		GroupFieldName:    {},
-		CountFieldName:    {},
-		SumFieldName:      {},
-		AverageFieldName:  {},
-		DocIDFieldName:    {},
-		DeletedFieldName:  {},
-		MaxFieldName:      {},
-		MinFieldName:      {},
+		TypeNameFieldName:   {},
+		VersionFieldName:    {},
+		GroupFieldName:      {},
+		CountFieldName:      {},
+		SumFieldName:        {},
+		AverageFieldName:    {},
+		DocIDFieldName:      {},
+		DeletedFieldName:    {},
+		MaxFieldName:        {},
+		MinFieldName:        {},
+		SimilarityFieldName: {},
 	}
 
 	Aggregates = map[string]struct{}{

@@ -207,6 +207,12 @@ func parseSelectFields(
 					return nil, err
 				}
 				selection = s
+			} else if node.Name.Value == request.SimilarityFieldName {
+				s, err := parseSimilarity(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
 			} else if node.SelectionSet == nil { // regular field
 				selection = parseField(node)
 			} else { // sub type with extra fields

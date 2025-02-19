@@ -223,6 +223,31 @@ func parseAggregate(
 	}, nil
 }
 
+func parseSimilarity(
+	exe *gql.ExecutionContext,
+	parent *gql.Object,
+	field *ast.Field,
+) (*request.Similarity, error) {
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
+	var target string
+	var vector any
+	for _, argument := range field.Arguments {
+		target = argument.Name.Value
+		v := arguments[target].(map[string]any)
+		vector = v["vector"]
+	}
+
+	return &request.Similarity{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
+		Target: target,
+		Vector: vector,
+	}, nil
+}
+
 func parseAggregateTarget(
 	hostName string,
 	arguments map[string]any,

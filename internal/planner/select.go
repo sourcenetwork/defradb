@@ -61,6 +61,8 @@ type selectTopNode struct {
 	// selectNode is used pre-wiring of the plan (before expansion and all).
 	selectNode *selectNode
 
+	similarity []*similarityNode
+
 	// plan is the top of the plan graph (the wired and finalized plan graph).
 	planNode planNode
 }
@@ -236,14 +238,14 @@ func (n *selectNode) Explain(explainType request.ExplainType) (map[string]any, e
 // creating scanNodes, typeIndexJoinNodes, and splitting
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
-func (n *selectNode) initSource() ([]aggregateNode, error) {
+func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	if n.selectReq.CollectionName == "" {
 		n.selectReq.CollectionName = n.selectReq.Name
 	}
 
 	sourcePlan, err := n.planner.getSource(n.selectReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	n.source = sourcePlan.plan
 	n.origSource = sourcePlan.plan
@@ -264,7 +266,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		if n.selectReq.Cid.HasValue() {
 			c, err := cid.Decode(n.selectReq.Cid.Value())
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
@@ -293,9 +295,9 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		}
 	}
 
-	aggregates, err := n.initFields(n.selectReq)
+	aggregates, similarity, err := n.initFields(n.selectReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if isScanNode {
@@ -303,7 +305,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		origScan.initFetcher(n.selectReq.Cid)
 	}
 
-	return aggregates, nil
+	return aggregates, similarity, nil
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
@@ -354,8 +356,9 @@ func findIndexByFieldName(col client.Collection, fieldName string) immutable.Opt
 	return immutable.None[client.IndexDescription]()
 }
 
-func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
+func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
 	aggregates := []aggregateNode{}
+	similarity := []*similarityNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, field := range selectReq.Fields {
@@ -381,7 +384,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 			}
 
 			if aggregateError != nil {
-				return nil, aggregateError
+				return nil, nil, aggregateError
 			}
 
 			if plan != nil {
@@ -408,11 +411,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				commitPlan := n.planner.DAGScan(commitSlct)
 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			} else if f.Name == request.GroupFieldName {
 				if selectReq.GroupBy == nil {
-					return nil, ErrGroupOutsideOfGroupBy
+					return nil, nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
 			} else if f.Name == request.LinksFieldName &&
@@ -427,13 +430,17 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
+		case *mapper.Similarity:
+			var simFilter *mapper.Filter
+			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
+			similarity = append(similarity, n.planner.Similarity(f, simFilter))
 		}
 	}
 
-	return aggregates, nil
+	return aggregates, similarity, nil
 }
 
 func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
@@ -482,7 +489,7 @@ func (p *Planner) SelectFromSource(
 		s.collection = col
 	}
 
-	aggregates, err := s.initFields(selectReq)
+	aggregates, similarity, err := s.initFields(selectReq)
 	if err != nil {
 		return nil, err
 	}
@@ -508,6 +515,7 @@ func (p *Planner) SelectFromSource(
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		similarity: similarity,
 		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil
@@ -526,7 +534,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	orderBy := selectReq.OrderBy
 	groupBy := selectReq.GroupBy
 
-	aggregates, err := s.initSource()
+	aggregates, similarity, err := s.initSource()
 	if err != nil {
 		return nil, err
 	}
@@ -552,6 +560,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		similarity: similarity,
 		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil
