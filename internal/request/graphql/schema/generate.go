@@ -145,6 +145,16 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	if err := g.genAggregateFields(); err != nil {
 		return nil, err
 	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
+	if err := g.genVectorOpsFields(); err != nil {
+		return nil, err
+	}
+
 	// resolve types
 	if err := g.manager.ResolveTypes(); err != nil {
 		return nil, err
@@ -846,6 +856,40 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 	return field, nil
 }
 
+func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error) {
+	field := gql.Field{
+		Name:        request.SimilarityFieldName,
+		Description: "Returns the cosine similarity between the specified field and the provided vector.",
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
+
+	for _, objectField := range obj.Fields() {
+		listType, isList := objectField.Type.(*gql.List)
+		if !isList || !isNumericArray(listType) {
+			continue
+		}
+
+		inputObject := gql.NewInputObject(gql.InputObjectConfig{
+			Name:        genSimilaritySelectorName(obj.Name(), objectField.Name),
+			Description: objectField.Description,
+			Fields: gql.InputObjectConfigFieldMap{
+				schemaTypes.SimilarityArgVector: &gql.InputObjectFieldConfig{
+					Type:        gql.NewNonNull(gql.NewList(listType.OfType)),
+					Description: "A vector of the same type as the field to compute the cosine similarity with.",
+				},
+			},
+		})
+		err := g.appendIfNotExists(inputObject)
+		if err != nil {
+			return gql.Field{}, err
+		}
+		field.Args[objectField.Name] = schemaTypes.NewArgConfig(inputObject, objectField.Description)
+	}
+
+	return field, nil
+}
+
 func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 	fieldTypes := map[string]gql.Type{}
 	for _, field := range obj.Fields() {
@@ -912,6 +956,10 @@ func genNumericObjectSelectorName(hostName string) string {
 
 func genNumericInlineArraySelectorName(hostName string, fieldName string) string {
 	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "NumericSelector")
+}
+
+func genSimilaritySelectorName(hostName string, fieldName string) string {
+	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "SimilaritySelector")
 }
 
 func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
@@ -1358,6 +1406,17 @@ func (g *Generator) genTypeQueryableFieldList(
 	}
 
 	return field
+}
+
+func (g *Generator) genVectorOpsFields() error {
+	for _, t := range g.typeDefs {
+		similarityField, err := g.genSimilarityFieldConfig(t)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(similarityField.Name, &similarityField)
+	}
+	return nil
 }
 
 func (g *Generator) appendIfNotExists(obj gql.Type) error {
