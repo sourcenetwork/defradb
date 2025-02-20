@@ -157,6 +157,8 @@ func (c *collection) makeSelectionPlan(
 		}
 	case immutable.Option[request.Filter]:
 		f = fval
+	case map[string]any:
+		f = immutable.Some(request.Filter{Conditions: fval})
 	default:
 		return nil, ErrInvalidFilter
 	}
