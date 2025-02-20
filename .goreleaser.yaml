@@ -6,41 +6,18 @@ before:
     - make deps:playground
 
 builds:
+  # Minimal build with no extras
+  - id: "defradb_lite"
+    main: ./cmd/defradb
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+  # Default build with playground and telemetry
   - id: "defradb"
-    main: ./cmd/defradb
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-  # A build with the playground included.
-  - id: "defradb_playground"
-    main: ./cmd/defradb
-    flags:
-      - -tags=playground
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-  # A build with telemetry included.
-  - id: "defradb_telemetry"
-    main: ./cmd/defradb
-    flags:
-      - -tags=telemetry
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-  # A build with the playground and telemetry included.
-  - id: "defradb_playground_telemetry"
     main: ./cmd/defradb
     flags:
       - -tags=playground,telemetry
@@ -56,13 +33,13 @@ partial:
   by: target
 
 archives:
-  - id: defradb_playground
+  - id: defradb_lite
     builds:
-      - defradb_playground
+      - defradb_lite
     formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
-      {{ .Binary }}_playground_{{ .Version }}_{{ .Os }}_
+      {{ .Binary }}_lite_{{ .Version }}_{{ .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
@@ -73,26 +50,6 @@ archives:
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-  - id: defradb_telemetry
-    builds:
-      - defradb_telemetry
-    formats: [binary]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: >-
-      {{ .Binary }}_telemetry_{{ .Version }}_{{ .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-  - id: defradb_playground_telemetry
-    builds:
-      - defradb_playground_telemetry
-    formats: [binary]
-    # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: >-
-      {{ .Binary }}_playground_telemetry_{{ .Version }}_{{ .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
