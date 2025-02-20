@@ -13,8 +13,9 @@ package update
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
