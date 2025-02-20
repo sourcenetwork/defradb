@@ -7,7 +7,7 @@ before:
 
 builds:
   # Minimal build with no extras
-  - id: "defradb_slim"
+  - id: "defradb_lite"
     main: ./cmd/defradb
     goos:
       - linux
@@ -33,13 +33,13 @@ partial:
   by: target
 
 archives:
-  - id: defradb_slim
+  - id: defradb_lite
     builds:
-      - defradb_slim
+      - defradb_lite
     formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
-      {{ .Binary }}_slim_{{ .Version }}_{{ .Os }}_
+      {{ .Binary }}_lite_{{ .Version }}_{{ .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
