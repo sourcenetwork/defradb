@@ -804,6 +804,26 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
+		case *request.Similarity:
+			index := mapping.GetNextIndex()
+			fields = append(fields, &Similarity{
+				Field: Field{
+					Index: index,
+					Name:  f.Name,
+				},
+				Vector: f.Vector,
+				SimilarityTarget: Targetable{
+					Field: Field{
+						Index: mapping.FirstIndexOfName(f.Target),
+						Name:  f.Target,
+					},
+				},
+			})
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
 		}
