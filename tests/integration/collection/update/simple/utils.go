@@ -26,18 +26,12 @@ var schema = `
 `
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		testUtils.TestCase{
-			Description: test.Description,
-			Actions: append(
-				[]any{
-					testUtils.SchemaUpdate{
-						Schema: schema,
-					},
-				},
-				test.Actions...,
-			),
+	test.Actions = append(
+		[]any{
+			testUtils.SchemaUpdate{
+				Schema: schema,
+			},
 		},
-	)
+		test.Actions...)
+	testUtils.ExecuteTestCase(t, test)
 }
