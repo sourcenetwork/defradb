@@ -20,7 +20,7 @@ import (
 // desired behaviour (should return all latest commits).
 func TestQueryLatestCommits(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query",
+		Description: "Simple latest commits querys",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

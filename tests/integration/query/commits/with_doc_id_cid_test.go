@@ -40,6 +40,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "missing cid",
 			},
 		},
 	}
@@ -70,7 +71,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 				Request: ` {
 						commits(
 							docID: "bae-not-this-doc",
-							cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
+							cid: "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4"
 						) {
 							cid
 						}
@@ -78,6 +79,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "cid does not belong to document",
 			},
 		},
 	}

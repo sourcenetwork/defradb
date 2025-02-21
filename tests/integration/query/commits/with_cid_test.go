@@ -115,6 +115,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "invalid cid",
 			},
 		},
 	}
@@ -145,6 +146,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "invalid cid",
 			},
 		},
 	}
@@ -175,6 +177,7 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "missing cid",
 			},
 		},
 	}

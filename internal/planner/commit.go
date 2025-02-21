@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -223,7 +224,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// clear the cid after
 	block, err := store.Get(n.planner.ctx, *currentCid)
 	if err != nil {
-		return false, err
+		return false, errors.Join(ErrMissingCID, err)
 	}
 
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
@@ -258,7 +259,13 @@ func (n *dagScanNode) Next() (bool, error) {
 	// HEAD paths.
 	n.depthVisited++
 	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
-	if !n.commitSelect.Depth.HasValue() || n.depthVisited < n.commitSelect.Depth.Value() {
+
+	// the default behavior for depth is:
+	// doc ID, max depth
+	// just doc ID + CID, 0 depth
+	// doc ID + CID + depth, use depth
+	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cid.HasValue()) ||
+		(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
 		n.queuedCids = append(make([]*cid.Cid, len(dagBlock.Heads)), n.queuedCids...)

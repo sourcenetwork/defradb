@@ -48,6 +48,7 @@ func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "cid does not belong to document",
 			},
 		},
 	}
