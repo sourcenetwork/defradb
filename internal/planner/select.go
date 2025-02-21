@@ -408,6 +408,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 					// a OneCommit subquery, with the supplied parameters.
 					commitSlct.DocID = immutable.Some(selectReq.DocIDs.Value()[0]) // @todo check length
 					commitSlct.Cid = selectReq.Cid
+					// commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
 				}
 
 				commitPlan := n.planner.DAGScan(commitSlct)

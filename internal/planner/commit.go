@@ -84,7 +84,11 @@ func (n *dagScanNode) Init() error {
 		}
 	}
 
-	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+	// only need the head fetcher for non cid specific queries
+	if !n.commitSelect.Cid.HasValue() {
+		return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+	}
+	return nil
 }
 
 func (n *dagScanNode) Start() error {
@@ -123,7 +127,10 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *dagScanNode) Close() error {
-	return n.fetcher.Close()
+	if !n.commitSelect.Cid.HasValue() {
+		return n.fetcher.Close()
+	}
+	return nil
 }
 
 func (n *dagScanNode) Source() planNode { return nil }
@@ -183,7 +190,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else {
+	} else if n.commitSelect.Cid.HasValue() && len(n.visitedNodes) == 0 {
+		cid, err := cid.Parse(n.commitSelect.Cid.Value())
+		if err != nil {
+			return false, err
+		}
+
+		currentCid = &cid
+	} else if !n.commitSelect.Cid.HasValue() {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
@@ -192,6 +206,8 @@ func (n *dagScanNode) Next() (bool, error) {
 		currentCid = cid
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
+	} else {
+		return false, nil
 	}
 
 	// skip already visited CIDs
@@ -220,6 +236,18 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
+	// if this is a time travel query or a latestCommits
+	// (cid + undefined depth + docId) then we need to make sure the
+	// target block actually belongs to the doc, since we are
+	// bypassing the HeadFetcher for the first cid
+	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
+	if n.commitSelect.Cid.HasValue() &&
+		len(n.visitedNodes) == 0 &&
+		n.commitSelect.DocID.HasValue() &&
+		currentDocID != n.commitSelect.DocID.Value() {
+		return false, ErrIncorrectCIDForDocId
+	}
+
 	// the dagscan node can traverse into the merkle dag
 	// based on the specified depth limit.
 	// The default query operation 'latestCommit' only cares about
@@ -240,11 +268,13 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 	}
 
-	if n.commitSelect.Cid.HasValue() && currentCid.String() != n.commitSelect.Cid.Value() {
-		// If a specific cid has been requested, and the current item does not
-		// match, keep searching.
-		return n.Next()
-	}
+	// // If a specific cid has been requested
+	// // 1) Depth is undefined: then we assume lastestCommit semantics (ie: depth 1)
+	// // 2) Depth is defined,
+	// if n.commitSelect.Cid.HasValue() &&
+	// (currentCid.String() != n.commitSelect.Cid.Value() ||  {
+	// 	return n.Next()
+	// }
 
 	n.currentValue = currentValue
 	return true, nil
