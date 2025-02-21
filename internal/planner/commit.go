@@ -275,14 +275,6 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 	}
 
-	// // If a specific cid has been requested
-	// // 1) Depth is undefined: then we assume lastestCommit semantics (ie: depth 1)
-	// // 2) Depth is defined,
-	// if n.commitSelect.Cid.HasValue() &&
-	// (currentCid.String() != n.commitSelect.Cid.Value() ||  {
-	// 	return n.Next()
-	// }
-
 	n.currentValue = currentValue
 	return true, nil
 }
