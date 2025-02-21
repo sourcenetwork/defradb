@@ -70,10 +70,15 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 						"age":	21
 					}`,
 			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnn"
+				}`,
+			},
 			testUtils.Request{
 				Request: `query {
 						commits(
-							cid: "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy"
+							cid: "bafyreiexx65zeu6rln4yiw7lav4up5bnfnbkti4kguw3vdencwddqhv45e"
 						) {
 							cid
 						}
@@ -81,7 +86,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiexx65zeu6rln4yiw7lav4up5bnfnbkti4kguw3vdencwddqhv45e",
 						},
 					},
 				},
@@ -115,6 +120,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "invalid cid",
 			},
 		},
 	}
@@ -145,6 +151,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "invalid cid",
 			},
 		},
 	}
@@ -175,6 +182,7 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
+				ExpectedError: "missing cid",
 			},
 		},
 	}

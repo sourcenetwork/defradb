@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"math"
 	"slices"
 	"strings"
 
@@ -405,9 +406,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 					// commit. Instead, _version references the CID
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
-					// a OneCommit subquery, with the supplied parameters.
+					// a commits query with max depth starting from the
+					// target CID version
 					commitSlct.DocID = immutable.Some(selectReq.DocIDs.Value()[0]) // @todo check length
 					commitSlct.Cid = selectReq.Cid
+					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
 				}
 
 				commitPlan := n.planner.DAGScan(commitSlct)
