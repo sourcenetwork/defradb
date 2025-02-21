@@ -13,16 +13,41 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
+	type invalidFilterType struct{ Number int }
 	test := testUtils.TestCase{
 		Description: "Test update users with invalid filter type",
+		// http and cli clients will pass the serialize filter into json which will result in
+		// the payload deserialized into map[string]any. With Go client the filter is passed as is.
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{testUtils.HTTPClientType, testUtils.CLIClientType}),
 		Actions: []any{
 			testUtils.UpdateWithFilter{
 				CollectionID:  0,
-				Filter:        t,
+				Filter:        invalidFilterType{Number: 1},
+				Updater:       `{"name": "Eric"}`,
+				ExpectedError: "type not found",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithInvalidFilterType_WithGoClient_ReturnsError(t *testing.T) {
+	type invalidFilterType struct{ Number int }
+	test := testUtils.TestCase{
+		Description:          "Test update users with invalid filter type (go client)",
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{testUtils.GoClientType}),
+		Actions: []any{
+			testUtils.UpdateWithFilter{
+				CollectionID:  0,
+				Filter:        invalidFilterType{Number: 1},
 				Updater:       `{"name": "Eric"}`,
 				ExpectedError: "invalid filter",
 			},

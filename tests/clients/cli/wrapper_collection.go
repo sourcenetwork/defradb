@@ -136,15 +136,15 @@ func (c *Collection) Update(
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}
 
-	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name.Value())
-	args = append(args, "--docID", doc.ID().String())
-
 	document, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}
-	args = append(args, string(document))
+
+	args := []string{"client", "collection", "update"}
+	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--docID", doc.ID().String())
+	args = append(args, "--updater", string(document))
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
