@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -84,7 +85,11 @@ func (n *dagScanNode) Init() error {
 		}
 	}
 
-	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+	// only need the head fetcher for non cid specific queries
+	if !n.commitSelect.Cid.HasValue() {
+		return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+	}
+	return nil
 }
 
 func (n *dagScanNode) Start() error {
@@ -123,7 +128,10 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *dagScanNode) Close() error {
-	return n.fetcher.Close()
+	if !n.commitSelect.Cid.HasValue() {
+		return n.fetcher.Close()
+	}
+	return nil
 }
 
 func (n *dagScanNode) Source() planNode { return nil }
@@ -183,7 +191,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else {
+	} else if n.commitSelect.Cid.HasValue() && len(n.visitedNodes) == 0 {
+		cid, err := cid.Parse(n.commitSelect.Cid.Value())
+		if err != nil {
+			return false, err
+		}
+
+		currentCid = &cid
+	} else if !n.commitSelect.Cid.HasValue() {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
@@ -192,6 +207,8 @@ func (n *dagScanNode) Next() (bool, error) {
 		currentCid = cid
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
+	} else {
+		return false, nil
 	}
 
 	// skip already visited CIDs
@@ -207,7 +224,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// clear the cid after
 	block, err := store.Get(n.planner.ctx, *currentCid)
 	if err != nil {
-		return false, err
+		return false, errors.Join(ErrMissingCID, err)
 	}
 
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
@@ -220,6 +237,18 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
+	// if this is a time travel query or a latestCommits
+	// (cid + undefined depth + docId) then we need to make sure the
+	// target block actually belongs to the doc, since we are
+	// bypassing the HeadFetcher for the first cid
+	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
+	if n.commitSelect.Cid.HasValue() &&
+		len(n.visitedNodes) == 0 &&
+		n.commitSelect.DocID.HasValue() &&
+		currentDocID != n.commitSelect.DocID.Value() {
+		return false, ErrIncorrectCIDForDocId
+	}
+
 	// the dagscan node can traverse into the merkle dag
 	// based on the specified depth limit.
 	// The default query operation 'latestCommit' only cares about
@@ -230,7 +259,13 @@ func (n *dagScanNode) Next() (bool, error) {
 	// HEAD paths.
 	n.depthVisited++
 	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
-	if !n.commitSelect.Depth.HasValue() || n.depthVisited < n.commitSelect.Depth.Value() {
+
+	// the default behavior for depth is:
+	// doc ID, max depth
+	// just doc ID + CID, 0 depth
+	// doc ID + CID + depth, use depth
+	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cid.HasValue()) ||
+		(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
 		n.queuedCids = append(make([]*cid.Cid, len(dagBlock.Heads)), n.queuedCids...)
@@ -238,12 +273,6 @@ func (n *dagScanNode) Next() (bool, error) {
 		for i, head := range dagBlock.Heads {
 			n.queuedCids[len(dagBlock.Heads)-i-1] = &head.Cid
 		}
-	}
-
-	if n.commitSelect.Cid.HasValue() && currentCid.String() != n.commitSelect.Cid.Value() {
-		// If a specific cid has been requested, and the current item does not
-		// match, keep searching.
-		return n.Next()
 	}
 
 	n.currentValue = currentValue

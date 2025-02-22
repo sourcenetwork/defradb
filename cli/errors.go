@@ -23,6 +23,7 @@ const (
 	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
 	errInvalidInxedFieldDescription string = "invalid or malformed field description"
 	errEmptySchemaString            string = "schema cannot be empty"
+	errMissingRequiredFlag          string = "missing required flag"
 )
 
 var (
@@ -78,4 +79,8 @@ func NewErrFailedToReadSchemaFromStdin(inner error) error {
 
 func NewErrFailedToAddSchema(inner error) error {
 	return errors.Wrap("failed to add schema", inner)
+}
+
+func NewErrMissingRequiredFlag(flag string) error {
+	return errors.New(errMissingRequiredFlag, errors.NewKV("Flag", flag))
 }

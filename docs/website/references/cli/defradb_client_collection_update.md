@@ -5,13 +5,10 @@ Update documents by docID or filter.
 ### Synopsis
 
 Update documents by docID or filter.
-		
-Example: update from string:
-  defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
 Example: update by filter:
   defradb client collection update --name User \
-  --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
+  --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'
 
 Example: update by docID:
   defradb client collection update --name User \
@@ -23,7 +20,7 @@ Example: update private docID, with identity:
 		
 
 ```
-defradb client collection update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
+defradb client collection update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater> [flags]
 ```
 
 ### Options
