@@ -1,3 +1,63 @@
+<a name="v0.16.0"></a>
+## [v0.16.0](https://github.com/sourcenetwork/defradb/compare/v0.15.0...v0.16.0)
+
+> 2025-02-21
+
+DefraDB v0.16 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.14.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Add cosine similarity query ([#3464](https://github.com/sourcenetwork/defradb/issues/3464))
+* Add contraints and embedding directives ([#3405](https://github.com/sourcenetwork/defradb/issues/3405))
+* Add open telemetry metrics and traces ([#3404](https://github.com/sourcenetwork/defradb/issues/3404))
+* Enable secondary index for compound filter conditions ([#3417](https://github.com/sourcenetwork/defradb/issues/3417))
+* Add special encoding of json array elements ([#3368](https://github.com/sourcenetwork/defradb/issues/3368))
+* P2P ACP ([#3317](https://github.com/sourcenetwork/defradb/issues/3317))
+* Multiple schema file support in schema add ([#3352](https://github.com/sourcenetwork/defradb/issues/3352))
+* Purge ACP state on DB purge ([#3363](https://github.com/sourcenetwork/defradb/issues/3363))
+* Sec. index on json ([#3330](https://github.com/sourcenetwork/defradb/issues/3330))
+* Add 'keyring list' command to CLI ([#3331](https://github.com/sourcenetwork/defradb/issues/3331))
+
+### Fixes
+
+* Consistent version query semantics ([#3477](https://github.com/sourcenetwork/defradb/issues/3477))
+* Updating of document via cli ([#3474](https://github.com/sourcenetwork/defradb/issues/3474))
+* Make --no-encryption flag work without keyring ([#3466](https://github.com/sourcenetwork/defradb/issues/3466))
+* Ensure no ACP doc check when action is node specific ([#3387](https://github.com/sourcenetwork/defradb/issues/3387))
+* Maintain indexes across schema versions ([#3367](https://github.com/sourcenetwork/defradb/issues/3367))
+* Maintain indexes across schema versions ([#3366](https://github.com/sourcenetwork/defradb/issues/3366))
+
+### Performance
+
+* Remove compound condition from 1-1 validation filter ([#3390](https://github.com/sourcenetwork/defradb/issues/3390))
+
+### Chore
+
+* Bump to GoLang v1.23 ([#3444](https://github.com/sourcenetwork/defradb/issues/3444))
+* Bump acp_core version ([#3392](https://github.com/sourcenetwork/defradb/issues/3392))
+* Import defradb/errors for Join ([#3343](https://github.com/sourcenetwork/defradb/issues/3343))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-02-17 ([#3458](https://github.com/sourcenetwork/defradb/issues/3458))
+* Update dependencies (bulk dependabot PRs) 2025-02-10 ([#3441](https://github.com/sourcenetwork/defradb/issues/3441))
+* Bump github.com/cometbft/cometbft from 0.38.12 to 0.38.17 ([#3423](https://github.com/sourcenetwork/defradb/issues/3423))
+* Bump github.com/getkin/kin-openapi from 0.128.0 to 0.129.0 ([#3418](https://github.com/sourcenetwork/defradb/issues/3418))
+* Bump github.com/golang/glog from 1.2.3 to 1.2.4 ([#3425](https://github.com/sourcenetwork/defradb/issues/3425))
+* Update dependencies (bulk dependabot PRs) 03-02-2025 ([#3424](https://github.com/sourcenetwork/defradb/issues/3424))
+* Update dependencies (bulk dependabot PRs) 27-01-2025 ([#3415](https://github.com/sourcenetwork/defradb/issues/3415))
+* Update dependencies (bulk dependabot PRs) 20-01-2025 ([#3397](https://github.com/sourcenetwork/defradb/issues/3397))
+* Update dependencies (bulk dependabot PRs) 14-01-2025 ([#3382](https://github.com/sourcenetwork/defradb/issues/3382))
+* Update dependencies (bulk dependabot PRs) 13-01-2025 ([#3379](https://github.com/sourcenetwork/defradb/issues/3379))
+* Bump vite from 6.0.6 to 6.0.7 in /playground ([#3355](https://github.com/sourcenetwork/defradb/issues/3355))
+* Bump github.com/ipfs/boxo from 0.24.3 to 0.26.0 ([#3336](https://github.com/sourcenetwork/defradb/issues/3336))
+* Bump google.golang.org/grpc from 1.68.1 to 1.69.2 ([#3339](https://github.com/sourcenetwork/defradb/issues/3339))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 8.18.2 to 8.19.0 in /playground ([#3348](https://github.com/sourcenetwork/defradb/issues/3348))
+* Update dependencies (bulk dependabot PRs) 30-12-2024 ([#3347](https://github.com/sourcenetwork/defradb/issues/3347))
+* Update dependencies (bulk dependabot PRs) 18-12-2024 ([#3333](https://github.com/sourcenetwork/defradb/issues/3333))
+
 <a name="v0.15.0"></a>
 ## [v0.15.0](https://github.com/sourcenetwork/defradb/compare/v0.14.0...v0.15.0)
 
