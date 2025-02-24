@@ -53,9 +53,9 @@ func NewNormalValue(val any) (NormalValue, error) {
 	case uint:
 		return newNormalInt(int64(v)), nil
 	case float32:
-		return newNormalFloat(float64(v)), nil
+		return newNormalFloat32(v), nil
 	case float64:
-		return newNormalFloat(v), nil
+		return newNormalFloat64(v), nil
 	case string:
 		return NewNormalString(v), nil
 	case []byte:
@@ -90,9 +90,9 @@ func NewNormalValue(val any) (NormalValue, error) {
 	case immutable.Option[uint]:
 		return NewNormalNillableInt(v), nil
 	case immutable.Option[float32]:
-		return NewNormalNillableFloat(v), nil
+		return NewNormalNillableFloat32(v), nil
 	case immutable.Option[float64]:
-		return NewNormalNillableFloat(v), nil
+		return NewNormalNillableFloat64(v), nil
 	case immutable.Option[string]:
 		return NewNormalNillableString(v), nil
 	case immutable.Option[[]byte]:
@@ -123,9 +123,9 @@ func NewNormalValue(val any) (NormalValue, error) {
 	case []uint:
 		return NewNormalIntArray(v), nil
 	case []float32:
-		return NewNormalFloatArray(v), nil
+		return NewNormalFloat32Array(v), nil
 	case []float64:
-		return NewNormalFloatArray(v), nil
+		return NewNormalFloat64Array(v), nil
 	case []string:
 		return NewNormalStringArray(v), nil
 	case [][]byte:
@@ -134,6 +134,8 @@ func NewNormalValue(val any) (NormalValue, error) {
 		return NewNormalTimeArray(v), nil
 	case []*Document:
 		return NewNormalDocumentArray(v), nil
+	case []JSON:
+		return NewNormalJSONArray(v), nil
 
 	case []immutable.Option[bool]:
 		return NewNormalNillableBoolArray(v), nil
@@ -158,9 +160,9 @@ func NewNormalValue(val any) (NormalValue, error) {
 	case []immutable.Option[uint]:
 		return NewNormalNillableIntArray(v), nil
 	case []immutable.Option[float32]:
-		return NewNormalNillableFloatArray(v), nil
+		return NewNormalNillableFloat32Array(v), nil
 	case []immutable.Option[float64]:
-		return NewNormalNillableFloatArray(v), nil
+		return NewNormalNillableFloat64Array(v), nil
 	case []immutable.Option[string]:
 		return NewNormalNillableStringArray(v), nil
 	case []immutable.Option[[]byte]:
@@ -191,9 +193,9 @@ func NewNormalValue(val any) (NormalValue, error) {
 	case immutable.Option[[]uint]:
 		return NewNormalIntNillableArray(v), nil
 	case immutable.Option[[]float32]:
-		return NewNormalFloatNillableArray(v), nil
+		return NewNormalFloat32NillableArray(v), nil
 	case immutable.Option[[]float64]:
-		return NewNormalFloatNillableArray(v), nil
+		return NewNormalFloat64NillableArray(v), nil
 	case immutable.Option[[]string]:
 		return NewNormalStringNillableArray(v), nil
 	case immutable.Option[[][]byte]:
@@ -226,9 +228,9 @@ func NewNormalValue(val any) (NormalValue, error) {
 	case immutable.Option[[]immutable.Option[uint]]:
 		return NewNormalNillableIntNillableArray(v), nil
 	case immutable.Option[[]immutable.Option[float32]]:
-		return NewNormalNillableFloatNillableArray(v), nil
+		return NewNormalNillableFloat32NillableArray(v), nil
 	case immutable.Option[[]immutable.Option[float64]]:
-		return NewNormalNillableFloatNillableArray(v), nil
+		return NewNormalNillableFloat64NillableArray(v), nil
 	case immutable.Option[[]immutable.Option[string]]:
 		return NewNormalNillableStringNillableArray(v), nil
 	case immutable.Option[[]immutable.Option[[]byte]]:
@@ -247,13 +249,16 @@ func NewNormalValue(val any) (NormalValue, error) {
 			return nil, err
 		}
 		if _, ok := first.Bool(); ok {
-			return convertAnyArrToTypedArr[bool](v, NewNormalBoolArray, NewNormalNillableBoolArray)
+			return convertAnyArrToTypedArr(v, NewNormalBoolArray, NewNormalNillableBoolArray)
 		}
 		if _, ok := first.Int(); ok {
-			return convertAnyArrToIntOrFloatArr(v)
+			return convertAnyArrToIntOrFloat64Arr(v)
 		}
-		if _, ok := first.Float(); ok {
-			return convertAnyArrToFloatArr(v)
+		if _, ok := first.Float64(); ok {
+			return convertAnyArrToFloat64Arr(v)
+		}
+		if _, ok := first.Float32(); ok {
+			return convertAnyArrToFloat32Arr(v)
 		}
 		if _, ok := first.String(); ok {
 			return convertAnyArrToTypedArr[string](v, NewNormalStringArray, NewNormalNillableStringArray)
@@ -262,16 +267,16 @@ func NewNormalValue(val any) (NormalValue, error) {
 			return convertAnyArrToTypedArr[[]byte](v, NewNormalBytesArray, NewNormalNillableBytesArray)
 		}
 		if _, ok := first.Time(); ok {
-			return convertAnyArrToTypedArr[time.Time](v, NewNormalTimeArray, NewNormalNillableTimeArray)
+			return convertAnyArrToTypedArr(v, NewNormalTimeArray, NewNormalNillableTimeArray)
 		}
 		if _, ok := first.Document(); ok {
-			return convertAnyArrToTypedArr[*Document](v, NewNormalDocumentArray, NewNormalNillableDocumentArray)
+			return convertAnyArrToTypedArr(v, NewNormalDocumentArray, NewNormalNillableDocumentArray)
 		}
 	}
 	return nil, NewCanNotNormalizeValue(val)
 }
 
-func convertAnyArrToIntOrFloatArr(arr []any) (NormalValue, error) {
+func convertAnyArrToIntOrFloat64Arr(arr []any) (NormalValue, error) {
 	result := make([]int64, len(arr))
 	for i := range arr {
 		if arr[i] == nil {
@@ -281,7 +286,7 @@ func convertAnyArrToIntOrFloatArr(arr []any) (NormalValue, error) {
 		case int64:
 			result[i] = v
 		case float64, float32:
-			return convertAnyArrToFloatArr(arr)
+			return convertAnyArrToFloat64Arr(arr)
 		case int8:
 			result[i] = int64(v)
 		case int16:
@@ -319,7 +324,7 @@ func convertAnyArrToNillableIntOrFloatArr(arr []any) (NormalValue, error) {
 		case int64:
 			intVal = v
 		case float64, float32:
-			return convertAnyArrToFloatArr(arr)
+			return convertAnyArrToFloat64Arr(arr)
 		case int8:
 			intVal = int64(v)
 		case int16:
@@ -346,11 +351,52 @@ func convertAnyArrToNillableIntOrFloatArr(arr []any) (NormalValue, error) {
 	return NewNormalNillableIntArray(result), nil
 }
 
-func convertAnyArrToFloatArr(arr []any) (NormalValue, error) {
+func convertAnyArrToFloat32Arr(arr []any) (NormalValue, error) {
+	result := make([]float32, len(arr))
+	for i := range arr {
+		if arr[i] == nil {
+			return convertAnyArrToNillableFloat32Arr(arr)
+		}
+
+		var floatVal float32
+		switch v := arr[i].(type) {
+		case float32:
+			floatVal = v
+		case float64:
+			return convertAnyArrToFloat64Arr(arr)
+		case int8:
+			floatVal = float32(v)
+		case int16:
+			floatVal = float32(v)
+		case int32:
+			floatVal = float32(v)
+		case int64:
+			floatVal = float32(v)
+		case int:
+			floatVal = float32(v)
+		case uint8:
+			floatVal = float32(v)
+		case uint16:
+			floatVal = float32(v)
+		case uint32:
+			floatVal = float32(v)
+		case uint64:
+			floatVal = float32(v)
+		case uint:
+			floatVal = float32(v)
+		default:
+			return nil, NewCanNotNormalizeValue(arr)
+		}
+		result[i] = floatVal
+	}
+	return NewNormalFloat32Array(result), nil
+}
+
+func convertAnyArrToFloat64Arr(arr []any) (NormalValue, error) {
 	result := make([]float64, len(arr))
 	for i := range arr {
 		if arr[i] == nil {
-			return convertAnyArrToNillableFloatArr(arr)
+			return convertAnyArrToNillableFloat64Arr(arr)
 		}
 
 		var floatVal float64
@@ -384,10 +430,51 @@ func convertAnyArrToFloatArr(arr []any) (NormalValue, error) {
 		}
 		result[i] = floatVal
 	}
-	return NewNormalFloatArray(result), nil
+	return NewNormalFloat64Array(result), nil
 }
 
-func convertAnyArrToNillableFloatArr(arr []any) (NormalValue, error) {
+func convertAnyArrToNillableFloat32Arr(arr []any) (NormalValue, error) {
+	result := make([]immutable.Option[float32], len(arr))
+	for i := range arr {
+		if arr[i] == nil {
+			result[i] = immutable.None[float32]()
+			continue
+		}
+		var floatVal float32
+		switch v := arr[i].(type) {
+		case float32:
+			floatVal = v
+		case float64:
+			return convertAnyArrToNillableFloat64Arr(arr)
+		case int8:
+			floatVal = float32(v)
+		case int16:
+			floatVal = float32(v)
+		case int32:
+			floatVal = float32(v)
+		case int64:
+			floatVal = float32(v)
+		case int:
+			floatVal = float32(v)
+		case uint8:
+			floatVal = float32(v)
+		case uint16:
+			floatVal = float32(v)
+		case uint32:
+			floatVal = float32(v)
+		case uint64:
+			floatVal = float32(v)
+		case uint:
+			floatVal = float32(v)
+		default:
+			return nil, NewCanNotNormalizeValue(arr)
+		}
+		result[i] = immutable.Some(floatVal)
+	}
+	return NewNormalNillableFloat32Array(result), nil
+}
+
+func convertAnyArrToNillableFloat64Arr(arr []any) (NormalValue, error) {
 	result := make([]immutable.Option[float64], len(arr))
 	for i := range arr {
 		if arr[i] == nil {
@@ -425,7 +512,7 @@ func convertAnyArrToNillableFloatArr(arr []any) (NormalValue, error) {
 		}
 		result[i] = immutable.Some(floatVal)
 	}
-	return NewNormalNillableFloatArray(result), nil
+	return NewNormalNillableFloat64Array(result), nil
 }
 
 func convertAnyArrToTypedArr[T any](

@@ -42,7 +42,7 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *db
+	db             *DB
 	def            client.CollectionDefinition
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
@@ -55,7 +55,7 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
+func (db *DB) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
 	return &collection{
 		db:  db,
 		def: client.CollectionDefinition{Description: desc, Schema: schema},
@@ -71,13 +71,13 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	if c.fetcherFactory != nil {
 		innerFetcher = c.fetcherFactory()
 	} else {
-		innerFetcher = new(fetcher.DocumentFetcher)
+		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
 }
 
-func (db *db) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
+func (db *DB) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
 	txn := mustGetContextTxn(ctx)
 
 	col, err := description.GetCollectionByID(ctx, txn, id)
@@ -101,7 +101,7 @@ func (db *db) getCollectionByID(ctx context.Context, id uint32) (client.Collecti
 }
 
 // getCollectionByName returns an existing collection within the database.
-func (db *db) getCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
 		return nil, ErrCollectionNameEmpty
 	}
@@ -120,7 +120,7 @@ func (db *db) getCollectionByName(ctx context.Context, name string) (client.Coll
 //
 // Inactive collections are not returned by default unless a specific schema version ID
 // is provided.
-func (db *db) getCollections(
+func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
@@ -219,7 +219,7 @@ func (db *db) getCollections(
 }
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
-func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
+func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
 	txn := mustGetContextTxn(ctx)
 
 	cols, err := description.GetActiveCollections(ctx, txn)
@@ -268,6 +268,9 @@ func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
@@ -382,6 +385,9 @@ func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -402,6 +408,9 @@ func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -437,6 +446,11 @@ func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	err := c.setEmbedding(ctx, doc, true)
+	if err != nil {
+		return err
+	}
+
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err
@@ -485,6 +499,9 @@ func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -533,6 +550,11 @@ func (c *collection) update(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
+	err = c.setEmbedding(ctx, doc, false)
+	if err != nil {
+		return err
+	}
+
 	err = c.save(ctx, doc, false)
 	if err != nil {
 		return err
@@ -546,6 +568,9 @@ func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -779,7 +804,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	}
 
 	filter := fmt.Sprintf(
-		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
+		`%s: {_ne: "%s"}, %s: {_eq: "%s"}`,
 		request.DocIDFieldName,
 		docID,
 		fieldDescription.Name,
@@ -841,6 +866,9 @@ func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
@@ -866,6 +894,9 @@ func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err

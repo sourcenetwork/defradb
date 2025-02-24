@@ -151,3 +151,85 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "One-to-many relation query from many side with sum alias on float32 field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Book {
+						name: String
+						rating: Float32
+						author: Author
+					}
+
+					type Author {
+						name: String
+						age: Int
+						verified: Boolean
+						published: [Book]
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "John Grisham",
+					"age": 65,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "Cornelia Funke",
+					"age": 62,
+					"verified": false
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"author_id": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Theif Lord",
+					"rating":    4.8,
+					"author_id": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
+						name
+						totalRating: _sum(published: {field: rating})
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":        "John Grisham",
+							"totalRating": 9.400000095367432,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

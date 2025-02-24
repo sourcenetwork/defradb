@@ -17,6 +17,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -24,7 +25,10 @@ import (
 
 const marker = byte(0xff)
 
-func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -72,6 +76,8 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		evt.ToAdd = append(evt.ToAdd, col.SchemaRoot())
 	}
 
+	// This is a node specific action which means the actor is the node itself.
+	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
@@ -89,7 +95,10 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	return txn.Commit(ctx)
 }
 
-func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -129,6 +138,8 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 		evt.ToRemove = append(evt.ToRemove, col.SchemaRoot())
 	}
 
+	// This is a node specific action which means the actor is the node itself.
+	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
@@ -146,7 +157,10 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	return txn.Commit(ctx)
 }
 
-func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
@@ -173,7 +187,7 @@ func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return collectionIDs, nil
 }
 
-func (db *db) PeerInfo() peer.AddrInfo {
+func (db *DB) PeerInfo() peer.AddrInfo {
 	peerInfo := db.peerInfo.Load()
 	if peerInfo != nil {
 		return peerInfo.(peer.AddrInfo)
@@ -181,7 +195,7 @@ func (db *db) PeerInfo() peer.AddrInfo {
 	return peer.AddrInfo{}
 }
 
-func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
+func (db *DB) loadAndPublishP2PCollections(ctx context.Context) error {
 	schemaRoots, err := db.GetAllP2PCollections(ctx)
 	if err != nil {
 		return err
@@ -202,6 +216,8 @@ func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
 		colMap[schemaRoot] = struct{}{}
 	}
 
+	// This is a node specific action which means the actor is the node itself.
+	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range cols {
 		// If we subscribed to the collection, we skip subscribing to the collection's docIDs.
 		if _, ok := colMap[col.SchemaRoot()]; ok {

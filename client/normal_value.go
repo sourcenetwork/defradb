@@ -47,9 +47,12 @@ type NormalValue interface {
 	// Int returns the value as an int64. The second return flag is true if the value is an int64.
 	// Otherwise it will return 0 and false.
 	Int() (int64, bool)
-	// Float returns the value as a float64. The second return flag is true if the value is a float64.
+	// Float64 returns the value as a float64. The second return flag is true if the value is a float64.
 	// Otherwise it will return 0 and false.
-	Float() (float64, bool)
+	Float64() (float64, bool)
+	// Float32 returns the value as a float32. The second return flag is true if the value is a float32.
+	// Otherwise it will return 0 and false.
+	Float32() (float32, bool)
 	// String returns the value as a string. The second return flag is true if the value is a string.
 	// Otherwise it will return "" and false.
 	String() (string, bool)
@@ -74,10 +77,14 @@ type NormalValue interface {
 	// The second return flag is true if the value is [immutable.Option[int64]].
 	// Otherwise it will return [immutable.None[int64]()] and false.
 	NillableInt() (immutable.Option[int64], bool)
-	// NillableFloat returns the value as a nillable float64.
+	// NillableFloat64 returns the value as a nillable float64.
 	// The second return flag is true if the value is [immutable.Option[float64]].
 	// Otherwise it will return [immutable.None[float64]()] and false.
-	NillableFloat() (immutable.Option[float64], bool)
+	NillableFloat64() (immutable.Option[float64], bool)
+	// NillableFloat32 returns the value as a nillable float32.
+	// The second return flag is true if the value is [immutable.Option[float32]].
+	// Otherwise it will return [immutable.None[float32]()] and false.
+	NillableFloat32() (immutable.Option[float32], bool)
 	// NillableString returns the value as a nillable string.
 	// The second return flag is true if the value is [immutable.Option[string]].
 	// Otherwise it will return [immutable.None[string]()] and false.
@@ -103,10 +110,14 @@ type NormalValue interface {
 	// The second return flag is true if the value is a []int64.
 	// Otherwise it will return nil and false.
 	IntArray() ([]int64, bool)
-	// FloatArray returns the value as a float64 array.
+	// Float64Array returns the value as a float64 array.
 	// The second return flag is true if the value is a []float64.
 	// Otherwise it will return nil and false.
-	FloatArray() ([]float64, bool)
+	Float64Array() ([]float64, bool)
+	// Float32Array returns the value as a float32 array.
+	// The second return flag is true if the value is a []float32.
+	// Otherwise it will return nil and false.
+	Float32Array() ([]float32, bool)
 	// StringArray returns the value as a string array.
 	// The second return flag is true if the value is a []string.
 	// Otherwise it will return nil and false.
@@ -123,32 +134,40 @@ type NormalValue interface {
 	// The second return flag is true if the value is a [[]*Document].
 	// Otherwise it will return nil and false.
 	DocumentArray() ([]*Document, bool)
+	// JSONArray returns the value as a JSON array.
+	// The second return flag is true if the value is a JSON array.
+	// Otherwise it will return nil and false.
+	JSONArray() ([]JSON, bool)
 
-	// NillableBoolArray returns the value as nillable array of bool elements.
+	// BoolNillableArray returns the value as nillable array of bool elements.
 	// The second return flag is true if the value is [immutable.Option[[]bool]].
 	// Otherwise it will return [immutable.None[[]bool]()] and false.
 	BoolNillableArray() (immutable.Option[[]bool], bool)
-	// NillableIntArray returns the value as nillable array of int64 elements.
+	// IntNillableArray returns the value as nillable array of int64 elements.
 	// The second return flag is true if the value is [immutable.Option[[]int64]].
 	// Otherwise it will return [immutable.None[[]int64]()] and false.
 	IntNillableArray() (immutable.Option[[]int64], bool)
-	// NillableFloatArray returns the value as nillable array of float64 elements.
+	// Float64NillableArray returns the value as nillable array of float64 elements.
 	// The second return flag is true if the value is [immutable.Option[[]float64]].
 	// Otherwise it will return [immutable.None[[]float64]()] and false.
-	FloatNillableArray() (immutable.Option[[]float64], bool)
-	// NillableStringArray returns the value as nillable array of string elements.
+	Float64NillableArray() (immutable.Option[[]float64], bool)
+	// Float32NillableArray returns the value as nillable array of float32 elements.
+	// The second return flag is true if the value is [immutable.Option[[]float32]].
+	// Otherwise it will return [immutable.None[[]float32]()] and false.
+	Float32NillableArray() (immutable.Option[[]float32], bool)
+	// StringNillableArray returns the value as nillable array of string elements.
 	// The second return flag is true if the value is [immutable.Option[[]string]].
 	// Otherwise it will return [immutable.None[[]string]()] and false.
 	StringNillableArray() (immutable.Option[[]string], bool)
-	// NillableBytesArray returns the value as nillable array of byte slice elements.
+	// BytesNillableArray returns the value as nillable array of byte slice elements.
 	// The second return flag is true if the value is [immutable.Option[[][]byte]].
 	// Otherwise it will return [immutable.None[[][]byte]()] and false.
 	BytesNillableArray() (immutable.Option[[][]byte], bool)
-	// NillableTimeArray returns the value as nillable array of [time.Time] elements.
+	// TimeNillableArray returns the value as nillable array of [time.Time] elements.
 	// The second return flag is true if the value is [immutable.Option[[]time.Time]].
 	// Otherwise it will return [immutable.None[[]time.Time]()] and false.
 	TimeNillableArray() (immutable.Option[[]time.Time], bool)
-	// NillableDocumentArray returns the value as nillable array of [*Document] elements.
+	// DocumentNillableArray returns the value as nillable array of [*Document] elements.
 	// The second return flag is true if the value is [immutable.Option[[]*Document]].
 	// Otherwise it will return [immutable.None[[]*Document]()] and false.
 	DocumentNillableArray() (immutable.Option[[]*Document], bool)
@@ -161,10 +180,14 @@ type NormalValue interface {
 	// The second return flag is true if the value is []immutable.Option[int64].
 	// Otherwise it will return nil and false.
 	NillableIntArray() ([]immutable.Option[int64], bool)
-	// NillableFloatArray returns the value as array of nillable float64 elements.
+	// NillableFloat64Array returns the value as array of nillable float64 elements.
 	// The second return flag is true if the value is []immutable.Option[float64].
 	// Otherwise it will return nil and false.
-	NillableFloatArray() ([]immutable.Option[float64], bool)
+	NillableFloat64Array() ([]immutable.Option[float64], bool)
+	// NillableFloat32Array returns the value as array of nillable float32 elements.
+	// The second return flag is true if the value is []immutable.Option[float32].
+	// Otherwise it will return nil and false.
+	NillableFloat32Array() ([]immutable.Option[float32], bool)
 	// NillableStringArray returns the value as array of nillable string elements.
 	// The second return flag is true if the value is []immutable.Option[string].
 	// Otherwise it will return nil and false.
@@ -190,10 +213,14 @@ type NormalValue interface {
 	// The second return flag is true if the value is [immutable.Option[[]immutable.Option[int64]]].
 	// Otherwise it will return [immutable.None[[]immutable.Option[int64]]()] and false.
 	NillableIntNillableArray() (immutable.Option[[]immutable.Option[int64]], bool)
-	// NillableFloatNillableArray returns the value as nillable array of nillable float64 elements.
+	// NillableFloat64NillableArray returns the value as nillable array of nillable float64 elements.
 	// The second return flag is true if the value is [immutable.Option[[]immutable.Option[float64]]].
 	// Otherwise it will return [immutable.None[[]immutable.Option[float64]]()] and false.
-	NillableFloatNillableArray() (immutable.Option[[]immutable.Option[float64]], bool)
+	NillableFloat64NillableArray() (immutable.Option[[]immutable.Option[float64]], bool)
+	// NillableFloat32NillableArray returns the value as nillable array of nillable float32 elements.
+	// The second return flag is true if the value is [immutable.Option[[]immutable.Option[float32]]].
+	// Otherwise it will return [immutable.None[[]immutable.Option[float32]]()] and false.
+	NillableFloat32NillableArray() (immutable.Option[[]immutable.Option[float32]], bool)
 	// NillableStringNillableArray returns the value as nillable array of nillable string elements.
 	// The second return flag is true if the value is [immutable.Option[[]immutable.Option[string]]].
 	// Otherwise it will return [immutable.None[[]immutable.Option[string]]()] and false.

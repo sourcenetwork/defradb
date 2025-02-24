@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,20 +8,16 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package telemetry
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 )
 
-func TestFetcherStartWithoutInit(t *testing.T) {
-	ctx := context.Background()
-	df := new(fetcher.DocumentFetcher)
-	err := df.Start(ctx)
-	assert.Error(t, err)
+func TestCallerInfo(t *testing.T) {
+	pkg, fn := callerInfo(1)
+	assert.Equal(t, "TestCallerInfo", fn)
+	assert.Equal(t, "github.com/sourcenetwork/defradb/internal/telemetry", pkg)
 }

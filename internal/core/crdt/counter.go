@@ -179,7 +179,12 @@ func (c Counter) incrementValue(
 		if err != nil {
 			return err
 		}
-	case client.FieldKind_NILLABLE_FLOAT:
+	case client.FieldKind_NILLABLE_FLOAT32:
+		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		if err != nil {
+			return err
+		}
+	case client.FieldKind_NILLABLE_FLOAT64:
 		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
 		if err != nil {
 			return err

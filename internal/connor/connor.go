@@ -49,13 +49,17 @@ func IsOpSimple(op string) bool {
 // Match is the default method used in Connor to match some data to a
 // set of conditions.
 func Match(conditions map[FilterKey]any, data any) (bool, error) {
-	return eq(conditions, data)
+	return eq(conditions, data, true)
 }
 
 // matchWith can be used to specify the exact operator to use when performing
 // a match operation. This is primarily used when building custom operators or
 // if you wish to override the behavior of another operator.
-func matchWith(op string, conditions, data any) (bool, error) {
+// It also takes a propExists boolean to indicate if the property exists in the data.
+// It's needed because the behavior of the operators can change if the property doesn't exist.
+// For example, _ne operator should return true if the property doesn't exist.
+// This can also be used in the future if we introduce operators line _has.
+func matchWith(op string, conditions, data any, propExists bool) (bool, error) {
 	switch op {
 	case AndOp:
 		return and(conditions, data)
@@ -64,7 +68,7 @@ func matchWith(op string, conditions, data any) (bool, error) {
 	case AllOp:
 		return all(conditions, data)
 	case EqualOp, AliasOp:
-		return eq(conditions, data)
+		return eq(conditions, data, propExists)
 	case GreaterOrEqualOp:
 		return ge(conditions, data)
 	case GreaterOp:
@@ -76,7 +80,7 @@ func matchWith(op string, conditions, data any) (bool, error) {
 	case LesserOp:
 		return lt(conditions, data)
 	case NotEqualOp:
-		return ne(conditions, data)
+		return ne(conditions, data, propExists)
 	case NotInOp:
 		return nin(conditions, data)
 	case OrOp:

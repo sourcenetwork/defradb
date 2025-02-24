@@ -20,14 +20,22 @@ package encoding
 
 const (
 	encodedNull = iota
-	floatNaN
-	floatNeg
-	floatZero
-	floatPos
-	floatNaNDesc
+	float64NaN
+	float64Neg
+	float64Zero
+	float64Pos
+	float64NaNDesc
 	bytesMarker
 	bytesDescMarker
 	timeMarker
+	falseMarker
+	trueMarker
+	jsonMarker
+	float32NaN
+	float32Neg
+	float32Zero
+	float32Pos
+	float32NaNDesc
 
 	// These constants define a range of values and are used to determine how many bytes are
 	// needed to represent the given uint64 value. The constants IntMin and IntMax define the

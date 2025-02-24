@@ -18,7 +18,6 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -26,9 +25,11 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/version"
 )
 
 const devModeBanner = `
@@ -113,9 +114,11 @@ func MakeStartCommand() *cobra.Command {
 					return err
 				}
 
-				opts, err = getOrCreateEncryptionKey(kr, cfg, opts)
-				if err != nil {
-					return err
+				if !cfg.GetBool("datastore.noencryption") {
+					opts, err = getOrCreateEncryptionKey(kr, opts)
+					if err != nil {
+						return err
+					}
 				}
 
 				opts, err = getOrCreateIdentity(kr, opts)
@@ -146,6 +149,17 @@ func MakeStartCommand() *cobra.Command {
 					if err != nil {
 						return err
 					}
+				}
+			}
+
+			if !cfg.GetBool("no-telemetry") {
+				ver, err := version.NewDefraVersion()
+				if err != nil {
+					return err
+				}
+				err = telemetry.ConfigureTelemetry(cmd.Context(), ver.String())
+				if err != nil {
+					log.ErrorContextE(cmd.Context(), "failed to configure telemetry", err)
 				}
 			}
 
@@ -250,12 +264,20 @@ func MakeStartCommand() *cobra.Command {
 		"no-encryption",
 		cfg.GetBool(configFlags["no-encryption"]),
 		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
+	cmd.PersistentFlags().Bool(
+		"no-telemetry",
+		cfg.GetBool(configFlags["no-telemetry"]),
+		"Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.",
+	)
 	return cmd
 }
 
-func getOrCreateEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.Option) ([]node.Option, error) {
+func getOrCreateEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
 	encryptionKey, err := kr.Get(encryptionKeyName)
-	if err != nil && errors.Is(err, keyring.ErrNotFound) && !cfg.GetBool("datastore.noencryption") {
+	if err != nil {
+		if !errors.Is(err, keyring.ErrNotFound) {
+			return nil, err
+		}
 		encryptionKey, err = crypto.GenerateAES256()
 		if err != nil {
 			return nil, err
@@ -265,8 +287,6 @@ func getOrCreateEncryptionKey(kr keyring.Keyring, cfg *viper.Viper, opts []node.
 			return nil, err
 		}
 		log.Info("generated encryption key")
-	} else if err != nil && !errors.Is(err, keyring.ErrNotFound) {
-		return nil, err
 	}
 	opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	return opts, nil

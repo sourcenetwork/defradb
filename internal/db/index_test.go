@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -42,20 +42,23 @@ const (
 	usersWeightFieldName  = "weight"
 	usersNumbersFieldName = "numbers"
 	usersHobbiesFieldName = "hobbies"
+	usersCustomFieldName  = "custom"
 
 	productsIDFieldName        = "id"
 	productsPriceFieldName     = "price"
 	productsCategoryFieldName  = "category"
 	productsAvailableFieldName = "available"
 
-	testUsersColIndexName   = "user_name"
-	testUsersColIndexAge    = "user_age"
-	testUsersColIndexWeight = "user_weight"
+	testUsersColIndexName    = "user_name_index"
+	testUsersColIndexAge     = "user_age_index"
+	testUsersColIndexWeight  = "user_weight_index"
+	testUsersColIndexNumbers = "user_numbers_index"
+	testUsersColIndexCustom  = "user_custom_index"
 )
 
 type indexTestFixture struct {
 	ctx   context.Context
-	db    *db
+	db    *DB
 	txn   datastore.Txn
 	users client.Collection
 	t     *testing.T
@@ -75,6 +78,7 @@ func (f *indexTestFixture) addUsersCollection() client.Collection {
 				%s: Float
 				%s: [Int!]
 				%s: [String!]
+				%s: JSON
 			}`,
 			usersColName,
 			usersNameFieldName,
@@ -82,6 +86,7 @@ func (f *indexTestFixture) addUsersCollection() client.Collection {
 			usersWeightFieldName,
 			usersNumbersFieldName,
 			usersHobbiesFieldName,
+			usersCustomFieldName,
 		),
 	)
 	require.NoError(f.t, err)
@@ -194,10 +199,25 @@ func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescrip
 
 func (f *indexTestFixture) createUserCollectionIndexOnNumbers() client.IndexDescription {
 	indexDesc := client.IndexDescriptionCreateRequest{
-		Name: "users_numbers_index",
+		Name: testUsersColIndexNumbers,
 		Fields: []client.IndexedFieldDescription{
 			{Name: usersNumbersFieldName},
 		},
+	}
+
+	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
+	require.NoError(f.t, err)
+
+	return newDesc
+}
+
+func (f *indexTestFixture) createUserCollectionIndexOnCustom(unique bool) client.IndexDescription {
+	indexDesc := client.IndexDescriptionCreateRequest{
+		Name: testUsersColIndexCustom,
+		Fields: []client.IndexedFieldDescription{
+			{Name: usersCustomFieldName},
+		},
+		Unique: unique,
 	}
 
 	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), indexDesc)
@@ -243,21 +263,54 @@ func (f *indexTestFixture) dropIndex(colName, indexName string) error {
 	return f.db.dropCollectionIndex(ctx, colName, indexName)
 }
 
-func (f *indexTestFixture) countIndexPrefixes(indexName string) int {
+// countSystemIndexPrefixes returns the number of prefixes in the systemstore that match the given index name.
+func (f *indexTestFixture) countSystemIndexPrefixes(indexName string) int {
 	prefix := keys.NewCollectionIndexKey(immutable.Some(f.users.ID()), indexName)
 	q, err := f.txn.Systemstore().Query(f.ctx, query.Query{
 		Prefix: prefix.ToString(),
 	})
-	assert.NoError(f.t, err)
+	require.NoError(f.t, err, "failed to query systemstore")
 	defer func() {
 		err := q.Close()
-		assert.NoError(f.t, err)
+		require.NoError(f.t, err, "failed to close query")
 	}()
 
 	count := 0
 	for res := range q.Next() {
 		if res.Error != nil {
-			assert.NoError(f.t, err)
+			require.NoError(f.t, err, "failed to get next result")
+		}
+		count++
+	}
+	return count
+}
+
+// countIndexPrefixes returns the number of prefixes in the datastore that match the given index name.
+func (f *indexTestFixture) countIndexPrefixes(indexName string) int {
+	indexes, err := f.users.GetIndexes(f.ctx)
+	require.NoError(f.t, err, "failed to get indexes")
+
+	key := keys.NewIndexDataStoreKey(f.users.ID(), 0, nil)
+
+	for _, index := range indexes {
+		if index.Name == indexName {
+			key.IndexID = index.ID
+		}
+	}
+
+	q, err := f.txn.Datastore().Query(f.ctx, query.Query{
+		Prefix: key.ToString(),
+	})
+	require.NoError(f.t, err, "failed to query systemstore")
+	defer func() {
+		err := q.Close()
+		require.NoError(f.t, err, "failed to close query")
+	}()
+
+	count := 0
+	for res := range q.Next() {
+		if res.Error != nil {
+			require.NoError(f.t, err, "failed to get next result")
 		}
 		count++
 	}
@@ -1129,13 +1182,13 @@ func TestDropAllIndexes_ShouldDeleteAllIndexes(t *testing.T) {
 	})
 	assert.NoError(f.t, err)
 
-	assert.Equal(t, 2, f.countIndexPrefixes(""))
+	assert.Equal(t, 2, f.countSystemIndexPrefixes(""))
 
 	ctx := SetContextTxn(f.ctx, f.txn)
 	err = f.users.(*collection).dropAllIndexes(ctx)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 0, f.countIndexPrefixes(""))
+	assert.Equal(t, 0, f.countSystemIndexPrefixes(""))
 }
 
 func TestDropAllIndexes_IfStorageFails_ReturnError(t *testing.T) {

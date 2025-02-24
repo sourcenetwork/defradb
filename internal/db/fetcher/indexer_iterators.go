@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,18 +11,16 @@
 package fetcher
 
 import (
-	"cmp"
 	"context"
-	"errors"
-	"strings"
-	"time"
 
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 
 	"github.com/ipfs/go-datastore/query"
@@ -44,6 +42,7 @@ const (
 	compOpAny  = "_any"
 	compOpAll  = "_all"
 	compOpNone = "_none"
+	opNot      = "_not"
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have
@@ -51,6 +50,10 @@ const (
 	// Then the "__any" matcher will be used for "age".
 	opAny = "__any"
 )
+
+func isArrayCondition(op string) bool {
+	return op == compOpAny || op == compOpAll || op == compOpNone
+}
 
 // indexIterator is an iterator over index keys.
 // It is used to iterate over the index keys that match a specific condition.
@@ -253,9 +256,9 @@ func (iter *inIndexIterator) Close() error {
 	return nil
 }
 
-// arrayIndexIterator is an iterator indexed array elements.
+// memorizingIndexIterator is an iterator for set of indexes that belong to the same document
 // It keeps track of the already fetched documents to avoid duplicates.
-type arrayIndexIterator struct {
+type memorizingIndexIterator struct {
 	inner indexIterator
 
 	fetchedDocs map[string]struct{}
@@ -264,16 +267,16 @@ type arrayIndexIterator struct {
 	store datastore.DSReaderWriter
 }
 
-var _ indexIterator = (*arrayIndexIterator)(nil)
+var _ indexIterator = (*memorizingIndexIterator)(nil)
 
-func (iter *arrayIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	iter.fetchedDocs = make(map[string]struct{})
 	return iter.inner.Init(ctx, store)
 }
 
-func (iter *arrayIndexIterator) Next() (indexIterResult, error) {
+func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 	for {
 		res, err := iter.inner.Next()
 		if err != nil {
@@ -301,263 +304,29 @@ func (iter *arrayIndexIterator) Next() (indexIterResult, error) {
 	}
 }
 
-func (iter *arrayIndexIterator) Close() error {
+func (iter *memorizingIndexIterator) Close() error {
 	return iter.inner.Close()
-}
-
-func executeValueMatchers(matchers []valueMatcher, fields []keys.IndexedField) (bool, error) {
-	for i := range matchers {
-		res, err := matchers[i].Match(fields[i].Value)
-		if err != nil {
-			return false, err
-		}
-		if !res {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-// checks if the value satisfies the condition
-type valueMatcher interface {
-	Match(client.NormalValue) (bool, error)
-}
-
-type intMatcher struct {
-	value    int64
-	evalFunc func(int64, int64) bool
-}
-
-func (m *intMatcher) Match(value client.NormalValue) (bool, error) {
-	if intVal, ok := value.Int(); ok {
-		return m.evalFunc(intVal, m.value), nil
-	}
-	if intOptVal, ok := value.NillableInt(); ok {
-		if !intOptVal.HasValue() {
-			return false, nil
-		}
-		return m.evalFunc(intOptVal.Value(), m.value), nil
-	}
-	return false, NewErrUnexpectedTypeValue[int64](value)
-}
-
-type floatMatcher struct {
-	value    float64
-	evalFunc func(float64, float64) bool
-}
-
-func (m *floatMatcher) Match(value client.NormalValue) (bool, error) {
-	if floatVal, ok := value.Float(); ok {
-		return m.evalFunc(floatVal, m.value), nil
-	}
-	if floatOptVal, ok := value.NillableFloat(); ok {
-		if !floatOptVal.HasValue() {
-			return false, nil
-		}
-		return m.evalFunc(floatOptVal.Value(), m.value), nil
-	}
-	return false, NewErrUnexpectedTypeValue[float64](value)
-}
-
-type stringMatcher struct {
-	value    string
-	evalFunc func(string, string) bool
-}
-
-func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
-	if strVal, ok := value.String(); ok {
-		return m.evalFunc(strVal, m.value), nil
-	}
-	if strOptVal, ok := value.NillableString(); ok {
-		if !strOptVal.HasValue() {
-			return false, nil
-		}
-		return m.evalFunc(strOptVal.Value(), m.value), nil
-	}
-	return false, NewErrUnexpectedTypeValue[string](value)
-}
-
-type timeMatcher struct {
-	op    string
-	value time.Time
-}
-
-func (m *timeMatcher) Match(value client.NormalValue) (bool, error) {
-	timeVal, ok := value.Time()
-	if !ok {
-		if timeOptVal, ok := value.NillableTime(); ok {
-			timeVal = timeOptVal.Value()
-		} else {
-			return false, NewErrUnexpectedTypeValue[time.Time](value)
-		}
-	}
-	switch m.op {
-	case opEq:
-		return timeVal.Equal(m.value), nil
-	case opGt:
-		return timeVal.After(m.value), nil
-	case opGe:
-		return !timeVal.Before(m.value), nil
-	case opLt:
-		return timeVal.Before(m.value), nil
-	case opLe:
-		return !timeVal.After(m.value), nil
-	case opNe:
-		return !timeVal.Equal(m.value), nil
-	}
-	return false, NewErrInvalidFilterOperator(m.op)
-}
-
-type boolMatcher struct {
-	value bool
-	isEq  bool
-}
-
-func (m *boolMatcher) Match(value client.NormalValue) (bool, error) {
-	boolVal, ok := value.Bool()
-	if !ok {
-		if boolOptVal, ok := value.NillableBool(); ok {
-			boolVal = boolOptVal.Value()
-		} else {
-			intVal, ok := value.Int()
-			if !ok {
-				if intOptVal, ok := value.NillableInt(); ok {
-					intVal = intOptVal.Value()
-				} else {
-					return false, NewErrUnexpectedTypeValue[bool](value)
-				}
-			}
-			boolVal = intVal != 0
-		}
-	}
-	return boolVal == m.value == m.isEq, nil
-}
-
-type nilMatcher struct {
-	matchNil bool
-}
-
-func (m *nilMatcher) Match(value client.NormalValue) (bool, error) {
-	return value.IsNil() == m.matchNil, nil
-}
-
-// checks if the index value is or is not in the given array
-type indexInArrayMatcher struct {
-	inValues []client.NormalValue
-	isIn     bool
-}
-
-func (m *indexInArrayMatcher) Match(value client.NormalValue) (bool, error) {
-	for _, inVal := range m.inValues {
-		if inVal.Unwrap() == value.Unwrap() {
-			return m.isIn, nil
-		}
-	}
-	return !m.isIn, nil
-}
-
-// checks if the index value satisfies the LIKE condition
-type indexLikeMatcher struct {
-	hasPrefix         bool
-	hasSuffix         bool
-	startAndEnd       []string
-	isLike            bool
-	isCaseInsensitive bool
-	value             string
-}
-
-func newLikeIndexCmp(filterValue string, isLike bool, isCaseInsensitive bool) (*indexLikeMatcher, error) {
-	matcher := &indexLikeMatcher{
-		isLike:            isLike,
-		isCaseInsensitive: isCaseInsensitive,
-	}
-	if len(filterValue) >= 2 {
-		if filterValue[0] == '%' {
-			matcher.hasPrefix = true
-			filterValue = strings.TrimPrefix(filterValue, "%")
-		}
-		if filterValue[len(filterValue)-1] == '%' {
-			matcher.hasSuffix = true
-			filterValue = strings.TrimSuffix(filterValue, "%")
-		}
-		if !matcher.hasPrefix && !matcher.hasSuffix {
-			matcher.startAndEnd = strings.Split(filterValue, "%")
-		}
-	}
-	if isCaseInsensitive {
-		matcher.value = strings.ToLower(filterValue)
-	} else {
-		matcher.value = filterValue
-	}
-
-	return matcher, nil
-}
-
-func (m *indexLikeMatcher) Match(value client.NormalValue) (bool, error) {
-	strVal, ok := value.String()
-	if !ok {
-		strOptVal, ok := value.NillableString()
-		if !ok {
-			return false, NewErrUnexpectedTypeValue[string](value)
-		}
-		if !strOptVal.HasValue() {
-			return false, nil
-		}
-		strVal = strOptVal.Value()
-	}
-	if m.isCaseInsensitive {
-		strVal = strings.ToLower(strVal)
-	}
-
-	return m.doesMatch(strVal) == m.isLike, nil
-}
-
-func (m *indexLikeMatcher) doesMatch(currentVal string) bool {
-	switch {
-	case m.hasPrefix && m.hasSuffix:
-		return strings.Contains(currentVal, m.value)
-	case m.hasPrefix:
-		return strings.HasSuffix(currentVal, m.value)
-	case m.hasSuffix:
-		return strings.HasPrefix(currentVal, m.value)
-	// there might be 2 ends only for LIKE with 1 % in the middle "ab%cd"
-	case len(m.startAndEnd) == 2:
-		return strings.HasPrefix(currentVal, m.startAndEnd[0]) &&
-			strings.HasSuffix(currentVal, m.startAndEnd[1])
-	default:
-		return m.value == currentVal
-	}
-}
-
-type anyMatcher struct{}
-
-func (m *anyMatcher) Match(client.NormalValue) (bool, error) { return true, nil }
-
-// invertedMatcher inverts the result of the inner matcher.
-type invertedMatcher struct {
-	matcher valueMatcher
-}
-
-func (m *invertedMatcher) Match(val client.NormalValue) (bool, error) {
-	res, err := m.matcher.Match(val)
-	if err != nil {
-		return false, err
-	}
-	return !res, nil
 }
 
 // newPrefixIteratorFromConditions creates a new eqPrefixIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *IndexFetcher) newPrefixIteratorFromConditions(
+func (f *indexFetcher) newPrefixIteratorFromConditions(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*indexPrefixIterator, error) {
 	keyFieldValues := make([]client.NormalValue, 0, len(fieldConditions))
 	for i := range fieldConditions {
 		c := &fieldConditions[i]
+		// prefix can be created only for subsequent _eq conditions. So we build the longest possible
+		// prefix until we hit a condition that is not _eq.
+		// The exception is when _eq is nested in _none.
 		if c.op != opEq || c.arrOp == compOpNone {
-			// prefix can be created only for subsequent _eq conditions
-			// if we encounter any other condition, we built the longest prefix we could
+			// if the field where we interrupt building of prefix is JSON, we still want to make sure
+			// that the JSON path is included in the key
+			if len(c.jsonPath) > 0 {
+				jsonVal, _ := fieldConditions[i].val.JSON()
+				keyFieldValues = append(keyFieldValues, client.NewNormalJSON(client.MakeVoidJSON(jsonVal.GetPath())))
+			}
 			break
 		}
 
@@ -571,11 +340,10 @@ func (f *IndexFetcher) newPrefixIteratorFromConditions(
 	}
 
 	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-
-	return f.newPrefixIterator(key, matchers, &f.execInfo), nil
+	return f.newPrefixIterator(key, matchers, f.execInfo), nil
 }
 
-func (f *IndexFetcher) newPrefixIterator(
+func (f *indexFetcher) newPrefixIterator(
 	indexKey keys.IndexDataStoreKey,
 	matchers []valueMatcher,
 	execInfo *ExecInfo,
@@ -591,16 +359,13 @@ func (f *IndexFetcher) newPrefixIterator(
 
 // newInIndexIterator creates a new inIndexIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *IndexFetcher) newInIndexIterator(
+func (f *indexFetcher) newInIndexIterator(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*inIndexIterator, error) {
-	if !fieldConditions[0].val.IsArray() {
-		return nil, ErrInvalidInOperatorValue
-	}
 	inValues, err := client.ToArrayOfNormalValues(fieldConditions[0].val)
 	if err != nil {
-		return nil, err
+		return nil, NewErrInvalidInOperatorValue(err)
 	}
 
 	// iterators for _in filter already iterate over keys with first field value
@@ -617,44 +382,36 @@ func (f *IndexFetcher) newInIndexIterator(
 		}
 
 		key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-
-		iter = &eqSingleIndexIterator{
-			indexKey: key,
-			execInfo: &f.execInfo,
-		}
+		iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 	} else {
 		indexKey := f.newIndexDataStoreKey()
 		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
-		iter = f.newPrefixIterator(indexKey, matchers, &f.execInfo)
+		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo)
 	}
-	return &inIndexIterator{
-		indexIterator: iter,
-		inValues:      inValues,
-	}, nil
+	return &inIndexIterator{indexIterator: iter, inValues: inValues}, nil
 }
 
-func (f *IndexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
-	key := keys.IndexDataStoreKey{CollectionID: f.col.ID(), IndexID: f.indexDesc.ID}
-	return key
+func (f *indexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
+	return keys.IndexDataStoreKey{CollectionID: f.col.Description().RootID, IndexID: f.indexDesc.ID}
 }
 
-func (f *IndexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
+func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
-	return keys.NewIndexDataStoreKey(f.col.ID(), f.indexDesc.ID, fields)
+	return keys.NewIndexDataStoreKey(f.col.Description().RootID, f.indexDesc.ID, fields)
 }
 
-func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
+func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions, err := f.determineFieldFilterConditions()
 	if err != nil {
 		return nil, err
 	}
 
-	// this can happen if a query contains an empty condition like User(filter: {name: {}})
+	// fieldConditions might be empty if a query contains an empty condition like User(filter: {name: {}})
 	if len(fieldConditions) == 0 {
 		return nil, nil
 	}
@@ -662,16 +419,6 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
 		return nil, err
-	}
-
-	hasArray := false
-	for i := range fieldConditions {
-		if len(fieldConditions[i].arrOp) > 0 {
-			hasArray = true
-			if fieldConditions[i].arrOp == compOpNone {
-				matchers[i] = &invertedMatcher{matcher: matchers[i]}
-			}
-		}
 	}
 
 	var iter indexIterator
@@ -684,14 +431,22 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 			}
 
 			key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-			iter = &eqSingleIndexIterator{indexKey: key, execInfo: &f.execInfo}
+			iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 		} else {
 			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
 		}
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
 	} else {
-		iter, err = f.newPrefixIterator(f.newIndexDataStoreKey(), matchers, &f.execInfo), nil
+		key := f.newIndexDataStoreKey()
+		// if the first field is JSON, we want to add the JSON path prefix to scope the search
+		if fieldConditions[0].kind == client.FieldKind_NILLABLE_JSON {
+			key.Fields = []keys.IndexedField{{
+				Descending: f.indexDesc.Fields[0].Descending,
+				Value:      client.NewNormalJSON(client.MakeVoidJSON(fieldConditions[0].jsonPath)),
+			}}
+		}
+		iter, err = f.newPrefixIterator(key, matchers, f.execInfo), nil
 	}
 
 	if err != nil {
@@ -702,145 +457,238 @@ func (f *IndexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
 	}
 
-	if hasArray {
-		iter = &arrayIndexIterator{inner: iter}
+	if doConditionsHaveArrayOrJSON(fieldConditions) {
+		iter = &memorizingIndexIterator{inner: iter}
 	}
 
 	return iter, nil
 }
 
-func createValueMatcher(condition *fieldFilterCond) (valueMatcher, error) {
-	if condition.op == "" {
-		return &anyMatcher{}, nil
-	}
-
-	if condition.val.IsNil() {
-		return &nilMatcher{matchNil: condition.op == opEq}, nil
-	}
-
-	switch condition.op {
-	case opEq, opGt, opGe, opLt, opLe, opNe:
-		if v, ok := condition.val.Int(); ok {
-			return &intMatcher{value: v, evalFunc: getCompareValsFunc[int64](condition.op)}, nil
-		}
-		if v, ok := condition.val.Float(); ok {
-			return &floatMatcher{value: v, evalFunc: getCompareValsFunc[float64](condition.op)}, nil
-		}
-		if v, ok := condition.val.String(); ok {
-			return &stringMatcher{value: v, evalFunc: getCompareValsFunc[string](condition.op)}, nil
-		}
-		if v, ok := condition.val.Time(); ok {
-			return &timeMatcher{value: v, op: condition.op}, nil
-		}
-		if v, ok := condition.val.Bool(); ok {
-			return &boolMatcher{value: v, isEq: condition.op == opEq}, nil
-		}
-	case opIn, opNin:
-		inVals, err := client.ToArrayOfNormalValues(condition.val)
-		if err != nil {
-			return nil, err
-		}
-		return &indexInArrayMatcher{inValues: inVals, isIn: condition.op == opIn}, nil
-	case opLike, opNlike, opILike, opNILike:
-		strVal, ok := condition.val.String()
-		if !ok {
-			strOptVal, ok := condition.val.NillableString()
-			if !ok {
-				return nil, NewErrUnexpectedTypeValue[string](condition.val)
-			}
-			strVal = strOptVal.Value()
-		}
-		isLike := condition.op == opLike || condition.op == opILike
-		isCaseInsensitive := condition.op == opILike || condition.op == opNILike
-		return newLikeIndexCmp(strVal, isLike, isCaseInsensitive)
-	case opAny:
-		return &anyMatcher{}, nil
-	}
-
-	return nil, NewErrInvalidFilterOperator(condition.op)
-}
-
-func createValueMatchers(conditions []fieldFilterCond) ([]valueMatcher, error) {
-	matchers := make([]valueMatcher, 0, len(conditions))
+func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
+	hasArray := false
+	hasJSON := false
 	for i := range conditions {
-		m, err := createValueMatcher(&conditions[i])
-		if err != nil {
-			return nil, err
-		}
-		matchers = append(matchers, m)
+		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON
+		hasArray = hasArray || conditions[i].kind.IsArray()
 	}
-	return matchers, nil
+	return hasArray || hasJSON
 }
 
 type fieldFilterCond struct {
-	op    string
-	arrOp string
-	val   client.NormalValue
-	kind  client.FieldKind
+	op       string
+	arrOp    string
+	jsonPath client.JSONPath
+	val      client.NormalValue
+	kind     client.FieldKind
 }
 
 // determineFieldFilterConditions determines the conditions and their corresponding operation
 // for each indexed field.
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
-func (f *IndexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
+func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
-	for i := range f.indexedFields {
-		fieldInd := f.mapping.FirstIndexOfName(f.indexedFields[i].Name)
-		found := false
-		// iterate through conditions and find the one that matches the current field
-		for filterKey, indexFilterCond := range f.indexFilter.Conditions {
-			propKey, ok := filterKey.(*mapper.PropertyIndex)
-			if !ok || fieldInd != propKey.Index {
-				continue
-			}
+	// we process first the conditions that match composite index fields starting from the first one
+	for i := range f.indexDesc.Fields {
+		indexedField := f.indexedFields[i]
+		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
+		var err error
 
-			found = true
-
-			condMap := indexFilterCond.(map[connor.FilterKey]any)
-			for key, filterVal := range condMap {
-				cond := fieldFilterCond{
-					op:   key.(*mapper.Operator).Operation,
-					kind: f.indexedFields[i].Kind,
+		filter.TraverseProperties(
+			f.indexFilter.Conditions,
+			func(prop *mapper.PropertyIndex, condMap map[connor.FilterKey]any) bool {
+				if fieldInd != prop.Index {
+					return true
 				}
 
-				var err error
-				if filterVal == nil {
-					cond.val, err = client.NewNormalNil(cond.kind)
-				} else if !f.indexedFields[i].Kind.IsArray() {
-					cond.val, err = client.NewNormalValue(filterVal)
-				} else {
-					subCondMap := filterVal.(map[connor.FilterKey]any)
-					for subKey, subVal := range subCondMap {
-						arrKind := cond.kind.(client.ScalarArrayKind)
-						if subVal == nil {
-							cond.val, err = client.NewNormalNil(arrKind.SubKind())
-						} else {
-							cond.val, err = client.NewNormalValue(subVal)
-						}
-						cond.arrOp = cond.op
-						cond.op = subKey.(*mapper.Operator).Operation
-						// the sub condition is supposed to have only 1 record
-						break
+				var jsonPath client.JSONPath
+				condMap, jsonPath = getNestedOperatorConditionIfJSON(indexedField, condMap)
+
+				for key, filterVal := range condMap {
+					op := key.(*mapper.Operator).Operation
+
+					// if the array condition is _none it doesn't make sense to use index  because
+					// values picked by the index is random guessing. For example if we have doc1
+					// with array of [3, 5, 1] and doc2 with [7, 4, 8] the index first fetches
+					// value 1 of doc1, let it go through the filter and then fetches value 3 of doc1
+					// again, skips it (because it cached doc1 id) and fetches value 4 of doc2, and
+					// so on until it exhaust all prefixes in ascending order.
+					// It might be even less effective than just scanning all documents.
+					if op == compOpNone {
+						return true
 					}
-				}
 
-				if err != nil {
-					return nil, err
+					cond, err := makeFieldFilterCondition(op, jsonPath, indexedField, filterVal)
+
+					if err != nil {
+						return false
+					}
+
+					result = append(result, cond)
+					break
 				}
-				result = append(result, cond)
-				break
-			}
-			break
+				return false
+			},
+			// if the filter contains _not operator, we ignore the entire branch because in this
+			// case index will do more harm. For example if we have _not: {_eq: 5} and the index
+			// fetches value 5, it will skip all documents with value 5, but we need to return them.
+			opNot,
+		)
+
+		// if after traversing the filter for the first field we didn't find any condition that can
+		// be used with the index, we return nil indicating that the index can't be used.
+		if len(result) == 0 {
+			return nil, err
 		}
-		if !found {
+
+		// if traversing for the current (not first) field of the composite index didn't find any
+		// condition, we add a dummy that will match any value for this field.
+		if len(result) == i {
 			result = append(result, fieldFilterCond{
 				op:   opAny,
 				val:  client.NormalVoid{},
-				kind: f.indexedFields[i].Kind,
+				kind: indexedField.Kind,
 			})
 		}
 	}
 	return result, nil
+}
+
+// makeFieldFilterCondition creates a fieldFilterCond based on the given operator and filter value on
+// the given indexed field.
+// If jsonPath is not empty, it means that the indexed field is a JSON field and the filter value
+// should be treated as a JSON value.
+func makeFieldFilterCondition(
+	op string,
+	jsonPath client.JSONPath,
+	indexedField client.FieldDefinition,
+	filterVal any,
+) (fieldFilterCond, error) {
+	cond := fieldFilterCond{
+		op:       op,
+		jsonPath: jsonPath,
+		kind:     indexedField.Kind,
+	}
+
+	var err error
+	if len(jsonPath) > 0 {
+		err = setJSONFilterCondition(&cond, filterVal, jsonPath)
+	} else if filterVal == nil {
+		cond.val, err = client.NewNormalNil(cond.kind)
+	} else if !indexedField.Kind.IsArray() {
+		cond.val, err = client.NewNormalValue(filterVal)
+	} else {
+		subCondMap := filterVal.(map[connor.FilterKey]any)
+		for subKey, subVal := range subCondMap {
+			if subVal == nil {
+				arrKind := cond.kind.(client.ScalarArrayKind)
+				cond.val, err = client.NewNormalNil(arrKind.SubKind())
+			} else {
+				cond.val, err = client.NewNormalValue(subVal)
+			}
+			cond.arrOp = cond.op
+			cond.op = subKey.(*mapper.Operator).Operation
+			// the sub condition is supposed to have only 1 record
+			break
+		}
+	}
+	return cond, err
+}
+
+// getNestedOperatorConditionIfJSON traverses the filter map if the indexed field is JSON to find the
+// nested operator condition and returns it along with the JSON path to the nested field.
+// If the indexed field is not JSON, it returns the original condition map.
+func getNestedOperatorConditionIfJSON(
+	indexedField client.FieldDefinition,
+	condMap map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, client.JSONPath) {
+	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {
+		return condMap, client.JSONPath{}
+	}
+	var jsonPath client.JSONPath
+	for {
+		for key, filterVal := range condMap {
+			prop, ok := key.(*mapper.ObjectProperty)
+			if !ok {
+				// if filter contains an array condition, we need to append index 0 to the json path
+				// to limit the search only to array elements
+				op, ok := key.(*mapper.Operator)
+				if ok && isArrayCondition(op.Operation) {
+					jsonPath = jsonPath.AppendIndex(0)
+				}
+				return condMap, jsonPath
+			}
+			jsonPath = jsonPath.AppendProperty(prop.Name)
+			// if key is ObjectProperty it's safe to cast filterVal to map[connor.FilterKey]any
+			// containing either another nested ObjectProperty or Operator
+			condMap = filterVal.(map[connor.FilterKey]any)
+		}
+	}
+}
+
+// setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that
+// it can be used to fetch the indexed data.
+func setJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath client.JSONPath) error {
+	if isArrayCondition(cond.op) {
+		subCondMap := filterVal.(map[connor.FilterKey]any)
+		for subKey, subVal := range subCondMap {
+			cond.arrOp = cond.op
+			cond.op = subKey.(*mapper.Operator).Operation
+			jsonVal, err := client.NewJSONWithPath(subVal, jsonPath)
+			if err != nil {
+				return err
+			}
+			cond.val = client.NewNormalJSON(jsonVal)
+			// the array sub condition (_any, _all or _none) is supposed to have only 1 record
+			break
+		}
+	} else if cond.op == opIn {
+		// values in _in operator should not be considered as array elements just because they happened
+		// to be written as an array in the filter. We need to convert them to normal values and
+		// treat them individually.
+		var jsonVals []client.JSON
+		if anyArr, ok := filterVal.([]any); ok {
+			// if filter value is []any we convert each value separately because JSON might have
+			// array elements of different types. That's why we can't just pass it directly to
+			// client.ToArrayOfNormalValues
+			jsonVals = make([]client.JSON, 0, len(anyArr))
+			for _, val := range anyArr {
+				jsonVal, err := client.NewJSONWithPath(val, jsonPath)
+				if err != nil {
+					return err
+				}
+				jsonVals = append(jsonVals, jsonVal)
+			}
+		} else {
+			normValue, err := client.NewNormalValue(filterVal)
+			if err != nil {
+				return err
+			}
+			normArr, err := client.ToArrayOfNormalValues(normValue)
+			if err != nil {
+				return err
+			}
+			jsonVals = make([]client.JSON, 0, len(normArr))
+			for _, val := range normArr {
+				jsonVal, err := client.NewJSONWithPath(val.Unwrap(), jsonPath)
+				if err != nil {
+					return err
+				}
+				jsonVals = append(jsonVals, jsonVal)
+			}
+		}
+		normJSONs, err := client.NewNormalValue(jsonVals)
+		if err != nil {
+			return err
+		}
+		cond.val = normJSONs
+	} else {
+		jsonVal, err := client.NewJSONWithPath(filterVal, jsonPath)
+		if err != nil {
+			return err
+		}
+		cond.val = client.NewNormalJSON(jsonVal)
+	}
+	return nil
 }
 
 // isUniqueFetchByFullKey checks if the only index key can be fetched by the full index key.
@@ -862,28 +710,3 @@ func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fie
 	}
 	return res
 }
-
-func getCompareValsFunc[T cmp.Ordered](op string) func(T, T) bool {
-	switch op {
-	case opGt:
-		return checkGT
-	case opGe:
-		return checkGE
-	case opLt:
-		return checkLT
-	case opLe:
-		return checkLE
-	case opEq:
-		return checkEQ
-	case opNe:
-		return checkNE
-	}
-	return nil
-}
-
-func checkGE[T cmp.Ordered](a, b T) bool { return a >= b }
-func checkGT[T cmp.Ordered](a, b T) bool { return a > b }
-func checkLE[T cmp.Ordered](a, b T) bool { return a <= b }
-func checkLT[T cmp.Ordered](a, b T) bool { return a < b }
-func checkEQ[T cmp.Ordered](a, b T) bool { return a == b }
-func checkNE[T cmp.Ordered](a, b T) bool { return a != b }

@@ -1349,7 +1349,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 					},
 					{
 						Name: "rating",
-						Kind: client.FieldKind_NILLABLE_FLOAT,
+						Kind: client.FieldKind_NILLABLE_FLOAT64,
 					},
 				},
 			},

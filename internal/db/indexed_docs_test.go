@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 
 	ipfsDatastore "github.com/ipfs/go-datastore"
@@ -28,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/datastore/mocks"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	fetcherMocks "github.com/sourcenetwork/defradb/internal/db/fetcher/mocks"
@@ -36,11 +36,12 @@ import (
 )
 
 type userDoc struct {
-	Name    string   `json:"name"`
-	Age     int      `json:"age"`
-	Weight  float64  `json:"weight"`
-	Numbers []int    `json:"numbers"`
-	Hobbies []string `json:"hobbies"`
+	Name    string      `json:"name"`
+	Age     int         `json:"age"`
+	Weight  float64     `json:"weight"`
+	Numbers []int       `json:"numbers"`
+	Hobbies []string    `json:"hobbies"`
+	Custom  client.JSON `json:"custom"`
 }
 
 type productDoc struct {
@@ -107,6 +108,7 @@ type indexKeyBuilder struct {
 	doc              *client.Document
 	isUnique         bool
 	arrayFieldValues map[string]any
+	values           []client.NormalValue
 }
 
 func newIndexKeyBuilder(f *indexTestFixture) *indexKeyBuilder {
@@ -131,6 +133,11 @@ func (b *indexKeyBuilder) Fields(fieldsNames ...string) *indexKeyBuilder {
 // If ArrayFieldVal is not set and index array field is present, it will take array first element as a value.
 func (b *indexKeyBuilder) ArrayFieldVal(fieldName string, val any) *indexKeyBuilder {
 	b.arrayFieldValues[fieldName] = val
+	return b
+}
+
+func (b *indexKeyBuilder) Values(values ...client.NormalValue) *indexKeyBuilder {
+	b.values = values
 	return b
 }
 
@@ -162,6 +169,7 @@ func (b *indexKeyBuilder) Build() keys.IndexDataStoreKey {
 		return key
 	}
 
+	// First find that collection
 	ctx := SetContextTxn(b.f.ctx, b.f.txn)
 	cols, err := b.f.db.getCollections(ctx, client.CollectionFetchOptions{})
 	require.NoError(b.f.t, err)
@@ -177,10 +185,12 @@ func (b *indexKeyBuilder) Build() keys.IndexDataStoreKey {
 	}
 	key.CollectionID = collection.ID()
 
+	// if no fields are set, return only key with the collection id
 	if len(b.fieldsNames) == 0 {
 		return key
 	}
 
+	// find an index with matching fields
 	indexes, err := collection.GetIndexes(b.f.ctx)
 	require.NoError(b.f.t, err)
 indexLoop:
@@ -198,48 +208,60 @@ indexLoop:
 
 	if b.doc != nil {
 		hasNilValue := false
-		for i, fieldName := range b.fieldsNames {
-			fieldValue, err := b.doc.GetValue(fieldName)
-			if err != nil {
-				if !errors.Is(err, client.ErrFieldNotExist) {
-					require.NoError(b.f.t, err)
-				}
+		// if values are passed manually, use them
+		if len(b.values) > 0 {
+			if len(b.fieldsNames) != len(b.values) {
+				panic(errors.New("fields names and values count mismatch"))
 			}
-			var val client.NormalValue
-			if fieldValue != nil {
-				val = fieldValue.NormalValue()
-			} else {
-				kind := client.FieldKind_NILLABLE_STRING
-				if fieldName == usersAgeFieldName {
-					kind = client.FieldKind_NILLABLE_INT
-				} else if fieldName == usersWeightFieldName {
-					kind = client.FieldKind_NILLABLE_FLOAT
-				}
-				val, err = client.NewNormalNil(kind)
-				require.NoError(b.f.t, err)
+			for _, val := range b.values {
+				key.Fields = append(key.Fields, keys.IndexedField{Value: val})
+				hasNilValue = hasNilValue || val.IsNil()
 			}
-			if val.IsNil() {
-				hasNilValue = true
-			} else if val.IsArray() {
-				if arrVal, ok := b.arrayFieldValues[fieldName]; ok {
-					if normVal, ok := arrVal.(client.NormalValue); ok {
-						val = normVal
-					} else {
-						val, err = client.NewNormalValue(arrVal)
-						require.NoError(b.f.t, err, "given value is not a normal value")
+		} else {
+			// otherwise if doc is given, we retrieve the field values from the document
+			for i, fieldName := range b.fieldsNames {
+				fieldValue, err := b.doc.GetValue(fieldName)
+				if err != nil {
+					if !errors.Is(err, client.ErrFieldNotExist) {
+						require.NoError(b.f.t, err)
 					}
-				} else {
-					arrVals, err := client.ToArrayOfNormalValues(val)
-					require.NoError(b.f.t, err)
-					require.Greater(b.f.t, len(arrVals), 0, "empty array can not be indexed")
-					val = arrVals[0]
 				}
+				var val client.NormalValue
+				if fieldValue != nil {
+					val = fieldValue.NormalValue()
+				} else {
+					kind := client.FieldKind_NILLABLE_STRING
+					if fieldName == usersAgeFieldName {
+						kind = client.FieldKind_NILLABLE_INT
+					} else if fieldName == usersWeightFieldName {
+						kind = client.FieldKind_NILLABLE_FLOAT64
+					}
+					val, err = client.NewNormalNil(kind)
+					require.NoError(b.f.t, err)
+				}
+				if val.IsNil() {
+					hasNilValue = true
+				} else if val.IsArray() {
+					if arrVal, ok := b.arrayFieldValues[fieldName]; ok {
+						if normVal, ok := arrVal.(client.NormalValue); ok {
+							val = normVal
+						} else {
+							val, err = client.NewNormalValue(arrVal)
+							require.NoError(b.f.t, err, "given value is not a normal value")
+						}
+					} else {
+						arrVals, err := client.ToArrayOfNormalValues(val)
+						require.NoError(b.f.t, err)
+						require.Greater(b.f.t, len(arrVals), 0, "empty array can not be indexed")
+						val = arrVals[0]
+					}
+				}
+				descending := false
+				if i < len(b.descendingFields) {
+					descending = b.descendingFields[i]
+				}
+				key.Fields = append(key.Fields, keys.IndexedField{Value: val, Descending: descending})
 			}
-			descending := false
-			if i < len(b.descendingFields) {
-				descending = b.descendingFields[i]
-			}
-			key.Fields = append(key.Fields, keys.IndexedField{Value: val, Descending: descending})
 		}
 
 		if !b.isUnique || hasNilValue {
@@ -348,8 +370,7 @@ func TestNonUnique_IfDocIsDeleted_ShouldRemoveIndex(t *testing.T) {
 	f.saveDocToCollection(doc, f.users)
 	f.deleteDocFromCollection(doc.ID(), f.users)
 
-	userNameKey := newIndexKeyBuilder(f).Col(usersColName).Fields(usersNameFieldName).Build()
-	assert.Len(t, f.getPrefixFromDataStore(userNameKey.ToString()), 0)
+	assert.Equal(t, 0, f.countIndexPrefixes(testUsersColIndexName), "index prefixes count")
 }
 
 func TestNonUnique_IfDocWithDescendingOrderIsAdded_ShouldBeIndexed(t *testing.T) {
@@ -388,9 +409,7 @@ func TestNonUnique_IfDocDoesNotHaveIndexedField_SkipIndex(t *testing.T) {
 	err = f.users.Create(f.ctx, doc)
 	require.NoError(f.t, err)
 
-	key := newIndexKeyBuilder(f).Col(usersColName).Build()
-	prefixes := f.getPrefixFromDataStore(key.ToString())
-	assert.Len(t, prefixes, 0)
+	assert.Equal(t, 0, f.countIndexPrefixes(testUsersColIndexName), "index prefixes count")
 }
 
 func TestNonUnique_IfIndexIntField_StoreIt(t *testing.T) {
@@ -984,11 +1003,12 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 				identity immutable.Option[acpIdentity.Identity],
 				txn datastore.Txn,
 				acp immutable.Option[acp.ACP],
+				index immutable.Option[client.IndexDescription],
 				col client.Collection,
 				fields []client.FieldDefinition,
 				filter *mapper.Filter,
 				mapping *core.DocumentMapping,
-				reverse, showDeleted bool,
+				showDeleted bool,
 			) error {
 				require.Equal(t, 2, len(fields))
 				require.ElementsMatch(t,
@@ -1596,4 +1616,191 @@ func TestArrayIndex_WithUniqueIndexIfDocIsDeleted_ShouldRemoveIndex(t *testing.T
 	f.deleteDocFromCollection(doc.ID(), f.users)
 
 	assert.Len(t, f.getPrefixFromDataStore(userNumbersKey.ToString()), 0)
+}
+
+func TestJSONIndex_IfDocIsAdded_ShouldIndexAllJSONLeaves(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnCustom(false)
+
+	obj, err := client.NewJSONFromMap(map[string]any{"height": 180, "address": map[string]any{"city": "Munich"}})
+	require.NoError(f.t, err)
+
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Custom: obj}, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	err = client.TraverseJSON(obj, func(val client.JSON) error {
+		key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
+			Values(client.NewNormalJSON(val)).Doc(doc).Build()
+
+		data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+		require.NoError(t, err)
+		assert.Len(t, data, 0)
+		return nil
+	}, client.TraverseJSONOnlyLeaves())
+
+	require.NoError(f.t, err)
+
+	require.Equal(t, 2, f.countIndexPrefixes(testUsersColIndexCustom), "Index prefixes count")
+}
+
+func TestJSONIndex_IfDocIsDeleted_ShouldRemoveAllRelatedIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnCustom(false)
+
+	obj1, err := client.NewJSONFromMap(map[string]any{"height": 180, "address": map[string]any{"city": "Munich"}})
+	require.NoError(f.t, err)
+
+	obj2, err := client.NewJSONFromMap(map[string]any{"height": 178})
+	require.NoError(f.t, err)
+
+	doc1 := f.newCustomUserDoc(userDoc{Name: "John", Custom: obj1}, f.users)
+	f.saveDocToCollection(doc1, f.users)
+
+	doc2 := f.newCustomUserDoc(userDoc{Name: "Andy", Custom: obj2}, f.users)
+	f.saveDocToCollection(doc2, f.users)
+
+	require.Equal(t, 3, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes before delete")
+
+	f.deleteDocFromCollection(doc1.ID(), f.users)
+
+	require.Equal(t, 1, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes after delete")
+
+	// make sure the second doc is still indexed
+	obj2Height, err := client.NewJSONWithPath(178, client.JSONPath{}.AppendProperty("height"))
+	require.NoError(t, err, "Failed to create JSON with path")
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
+		Values(client.NewNormalJSON(obj2Height)).Doc(doc2).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	assert.NoError(t, err, "The index for the second doc should still exist")
+	assert.Len(t, data, 0, "The value pointed to by the index should be empty")
+}
+
+func TestJSONIndex_IfDocIsUpdated_ShouldCreateNewAndRemoveOldIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnCustom(false)
+
+	obj1, err := client.NewJSONFromMap(map[string]any{
+		"weight":  70,
+		"address": map[string]any{"city": "Munich", "country": "Germany"},
+	})
+	require.NoError(f.t, err)
+
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Custom: obj1}, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	require.Equal(t, 3, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes before update")
+
+	obj2, err := client.NewJSONFromMap(map[string]any{
+		"height":  178,
+		"BMI":     22,
+		"address": map[string]any{"city": "Berlin", "country": "Germany"},
+	})
+	require.NoError(f.t, err)
+
+	err = doc.Set(usersCustomFieldName, obj2.Unwrap())
+	require.NoError(t, err)
+
+	err = f.users.Update(f.ctx, doc)
+	require.NoError(t, err)
+
+	f.commitTxn()
+
+	require.Equal(t, 4, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes after update")
+
+	_ = client.TraverseJSON(obj2, func(val client.JSON) error {
+		key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
+			Values(client.NewNormalJSON(val)).Doc(doc).Build()
+
+		data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+		require.NoError(t, err, "Failed to get index data for JSON with path %s", val.GetPath())
+		assert.Len(t, data, 0, "The value pointed to by the index should be empty")
+		return nil
+	}, client.TraverseJSONOnlyLeaves())
+}
+
+func TestJSONUniqueIndex_IfDocIsDeleted_ShouldRemoveAllRelatedIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnCustom(true)
+
+	obj1, err := client.NewJSONFromMap(map[string]any{"height": 180, "address": map[string]any{"city": "Munich"}})
+	require.NoError(f.t, err)
+
+	obj2, err := client.NewJSONFromMap(map[string]any{"height": 178})
+	require.NoError(f.t, err)
+
+	doc1 := f.newCustomUserDoc(userDoc{Name: "John", Custom: obj1}, f.users)
+	f.saveDocToCollection(doc1, f.users)
+
+	doc2 := f.newCustomUserDoc(userDoc{Name: "Andy", Custom: obj2}, f.users)
+	f.saveDocToCollection(doc2, f.users)
+
+	require.Equal(t, 3, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes before delete")
+
+	f.deleteDocFromCollection(doc1.ID(), f.users)
+
+	require.Equal(t, 1, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes after delete")
+
+	// make sure the second doc is still indexed
+	obj2Height, err := client.NewJSONWithPath(178, client.JSONPath{}.AppendProperty("height"))
+	require.NoError(t, err, "Failed to create JSON with path")
+	key2 := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
+		Values(client.NewNormalJSON(obj2Height)).Unique().Doc(doc2).Build()
+
+	data, err := f.txn.Datastore().Get(f.ctx, key2.ToDS())
+	assert.NoError(t, err, "The index for the second doc should still exist")
+	assert.Equal(t, doc2.ID().String(), string(data), "The value pointed to by the index should be empty")
+}
+
+func TestJSONUniqueIndex_IfDocIsUpdated_ShouldCreateNewAndRemoveOldIndexes(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	f.createUserCollectionIndexOnCustom(true)
+
+	obj1, err := client.NewJSONFromMap(map[string]any{
+		"weight":  70,
+		"address": map[string]any{"city": "Munich", "country": "Germany"},
+	})
+	require.NoError(f.t, err)
+
+	doc := f.newCustomUserDoc(userDoc{Name: "John", Custom: obj1}, f.users)
+	f.saveDocToCollection(doc, f.users)
+
+	require.Equal(t, 3, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes before update")
+
+	obj2, err := client.NewJSONFromMap(map[string]any{
+		"height":  178,
+		"BMI":     22,
+		"address": map[string]any{"city": "Berlin", "country": "Germany"},
+	})
+	require.NoError(f.t, err)
+
+	err = doc.Set(usersCustomFieldName, obj2.Unwrap())
+	require.NoError(t, err)
+
+	err = f.users.Update(f.ctx, doc)
+	require.NoError(t, err)
+
+	f.commitTxn()
+
+	require.Equal(t, 4, f.countIndexPrefixes(testUsersColIndexCustom), "Unexpected num of indexes after update")
+
+	_ = client.TraverseJSON(obj2, func(val client.JSON) error {
+		key := newIndexKeyBuilder(f).Col(usersColName).Fields(usersCustomFieldName).
+			Values(client.NewNormalJSON(val)).Unique().Doc(doc).Build()
+
+		data, err := f.txn.Datastore().Get(f.ctx, key.ToDS())
+		require.NoError(t, err, "Failed to get index data for JSON with path %s", val.GetPath())
+		assert.Equal(t, doc.ID().String(), string(data), "The value pointed to by the index should be empty")
+		return nil
+	}, client.TraverseJSONOnlyLeaves())
 }

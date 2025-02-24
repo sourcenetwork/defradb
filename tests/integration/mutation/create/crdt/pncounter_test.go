@@ -37,7 +37,6 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users {
-						_docID
 						name
 						points
 					}
@@ -45,9 +44,88 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-bc5464e4-26a6-5307-b516-aada0abeb089",
 							"name":   "John",
 							"points": int64(10),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Document creation with float32 PN Counter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float32 @crdt(type: pncounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10.1
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": float32(10.1),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPNCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Document creation with float64 PN Counter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float64 @crdt(type: pncounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 10.1
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						points
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"points": float64(10.1),
 						},
 					},
 				},

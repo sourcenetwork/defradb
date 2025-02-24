@@ -13,11 +13,12 @@ package datastore
 import (
 	"context"
 	"encoding/json"
-	"errors"
 
 	ds "github.com/ipfs/go-datastore"
 
 	"github.com/ipfs/go-datastore/query"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // DeserializePrefix deserializes all elements with the given prefix from the given storage.

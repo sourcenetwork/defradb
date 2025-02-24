@@ -190,7 +190,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "NotNullFloatFilterArg",
+														"name": "NotNullFloat64FilterArg",
 													},
 												},
 												map[string]any{
@@ -1086,7 +1086,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "FloatFilterArg",
+														"name": "Float64FilterArg",
 														"inputFields": []any{
 															map[string]any{
 																"name": "_and",
@@ -1097,19 +1097,19 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_ge",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_gt",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
@@ -1121,19 +1121,19 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 															map[string]any{
 																"name": "_le",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_lt",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_ne",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
@@ -1168,7 +1168,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 											},
 										},
 									},
-									aggregateGroupArg("Float"),
+									aggregateGroupArg("Float64"),
 									aggregateVersionArg,
 								},
 							},
@@ -1236,7 +1236,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 												map[string]any{
 													"name": "filter",
 													"type": map[string]any{
-														"name": "NotNullFloatFilterArg",
+														"name": "NotNullFloat64FilterArg",
 														"inputFields": []any{
 															map[string]any{
 																"name": "_and",
@@ -1247,19 +1247,19 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_ge",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_gt",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
@@ -1271,19 +1271,19 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 															map[string]any{
 																"name": "_le",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_lt",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
 																"name": "_ne",
 																"type": map[string]any{
-																	"name": "Float",
+																	"name": "Float64",
 																},
 															},
 															map[string]any{
@@ -1318,7 +1318,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 											},
 										},
 									},
-									aggregateGroupArg("NotNullFloat"),
+									aggregateGroupArg("NotNullFloat64"),
 									aggregateVersionArg,
 								},
 							},

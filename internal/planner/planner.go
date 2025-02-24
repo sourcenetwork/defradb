@@ -231,6 +231,8 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		p.expandLimitPlan(plan, parentPlan)
 	}
 
+	p.expandSimilarityPlans(plan)
+
 	return nil
 }
 
@@ -246,6 +248,13 @@ func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
 		aggregate := plan.aggregates[i]
 		aggregate.SetPlan(plan.planNode)
 		plan.planNode = aggregate
+	}
+}
+
+func (p *Planner) expandSimilarityPlans(plan *selectTopNode) {
+	for _, sim := range plan.similarity {
+		sim.SetPlan(plan.planNode)
+		plan.planNode = sim
 	}
 }
 
@@ -309,11 +318,9 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
 			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
 			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
-			fieldFilter := filter.UnwrapRelation(filter.CopyField(
-				parentPlan.selectNode.filter,
-				relatedField,
-				mapper.Field{Name: subFieldName, Index: subFieldInd},
-			), relatedField)
+			relevantFilter := filter.CopyField(parentPlan.selectNode.filter, relatedField,
+				mapper.Field{Name: subFieldName, Index: subFieldInd})
+			fieldFilter := extractRelatedSubFilter(relevantFilter, node.parentSide.plan.DocumentMap(), relatedField)
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
 			err := node.invertJoinDirectionWithIndex(fieldFilter, indexes[0])
@@ -325,6 +332,13 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 	}
 
 	return nil
+}
+
+func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
+	subInd := docMap.FirstIndexOfName(relField.Name)
+	relatedField := mapper.Field{Name: relField.Name, Index: subInd}
+	subFilter := filter.UnwrapRelation(f, relatedField)
+	return subFilter
 }
 
 // expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.

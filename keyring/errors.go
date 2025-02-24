@@ -10,7 +10,14 @@
 
 package keyring
 
-import "github.com/zalando/go-keyring"
+import (
+	"github.com/zalando/go-keyring"
 
-// ErrNotFound is returned when a keyring item is not found.
-var ErrNotFound = keyring.ErrNotFound
+	"github.com/sourcenetwork/defradb/errors"
+)
+
+var (
+	// ErrNotFound is returned when a keyring item is not found.
+	ErrNotFound                 = keyring.ErrNotFound
+	ErrSystemKeyringListInvoked = errors.New("listing keys is not supported by OS keyring")
+)

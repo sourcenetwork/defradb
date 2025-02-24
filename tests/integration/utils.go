@@ -36,7 +36,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
@@ -49,6 +48,7 @@ const (
 	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
 	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
+	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
 )
 
 // The MutationType that tests will run using.
@@ -91,6 +91,8 @@ var (
 	viewType     ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
+	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
+	runVectorEmbeddingTests = false
 )
 
 const (
@@ -123,6 +125,10 @@ func init() {
 
 	if value, ok := os.LookupEnv(skipNetworkTestsEnvName); ok {
 		skipNetworkTests, _ = strconv.ParseBool(value)
+	}
+
+	if value, ok := os.LookupEnv(vectorEmbeddingEnvName); ok {
+		runVectorEmbeddingTests, _ = strconv.ParseBool(value)
 	}
 }
 
@@ -163,6 +169,7 @@ func ExecuteTestCase(
 	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
+	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []ClientType
 	if httpClient {
@@ -1224,8 +1231,13 @@ func createDoc(
 	}
 	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
 
+	docIDMap := make(map[string]struct{})
+	for _, docID := range docIDs {
+		docIDMap[docID.String()] = struct{}{}
+	}
+
 	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, getEventsForCreateDoc(s, action))
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, docIDMap, action.Identity)
 	}
 }
 
@@ -1407,7 +1419,7 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect)
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[identity]())
 	}
 }
 
@@ -1452,7 +1464,13 @@ func updateDoc(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, getEventsForUpdateDoc(s, action))
+		waitForUpdateEvents(
+			s,
+			action.NodeID,
+			action.CollectionID,
+			getEventsForUpdateDoc(s, action),
+			immutable.None[identity](),
+		)
 	}
 }
 
@@ -1552,7 +1570,13 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, getEventsForUpdateWithFilter(s, action, res))
+		waitForUpdateEvents(
+			s,
+			action.NodeID,
+			action.CollectionID,
+			getEventsForUpdateWithFilter(s, action, res),
+			immutable.None[identity](),
+		)
 	}
 }
 
@@ -2313,20 +2337,19 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 }
 
-func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
-	parser, err := graphql.NewParser()
-	if err != nil {
-		return nil, err
+// skipVectorEmbeddingTest skips the current test if the given actions
+// contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
+func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
+	hasVectorEmbedding := false
+	for _, act := range actions {
+		switch a := act.(type) {
+		case SchemaUpdate:
+			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
+		}
 	}
-	cols, err := parser.ParseSDL(gqlSDL)
-	if err != nil {
-		return nil, err
+	if !runVectorEmbeddingTests && hasVectorEmbedding {
+		t.Skip("test involves vector embedding generation")
 	}
-	result := make(map[string]client.CollectionDefinition)
-	for _, col := range cols {
-		result[col.Description.Name.Value()] = col
-	}
-	return result, nil
 }
 
 func MustParseTime(timeString string) time.Time {

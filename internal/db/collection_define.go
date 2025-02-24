@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-func (db *db) createCollections(
+func (db *DB) createCollections(
 	ctx context.Context,
 	newDefinitions []client.CollectionDefinition,
 ) ([]client.CollectionDefinition, error) {
@@ -112,7 +112,7 @@ func (db *db) createCollections(
 	return returnDescriptions, nil
 }
 
-func (db *db) patchCollection(
+func (db *DB) patchCollection(
 	ctx context.Context,
 	patchString string,
 ) error {
@@ -120,15 +120,19 @@ func (db *db) patchCollection(
 	if err != nil {
 		return err
 	}
-	txn := mustGetContextTxn(ctx)
-	cols, err := description.GetCollections(ctx, txn)
+	existingCols, err := db.getCollections(
+		ctx,
+		client.CollectionFetchOptions{IncludeInactive: immutable.Some(true)},
+	)
 	if err != nil {
 		return err
 	}
 
 	existingColsByID := map[uint32]client.CollectionDescription{}
-	for _, col := range cols {
-		existingColsByID[col.ID] = col
+	existingDefinitions := make([]client.CollectionDefinition, len(existingCols))
+	for _, col := range existingCols {
+		existingColsByID[col.ID()] = col.Description()
+		existingDefinitions = append(existingDefinitions, col.Definition())
 	}
 
 	existingDescriptionJson, err := json.Marshal(existingColsByID)
@@ -148,12 +152,27 @@ func (db *db) patchCollection(
 	if err != nil {
 		return err
 	}
+	newDefinitions := make([]client.CollectionDefinition, len(existingCols))
+	updatedColsByID := make(map[uint32]struct{})
+	for i, col := range existingCols {
+		newDefinitions[i].Schema = col.Schema()
+		newDefinitions[i].Description = newColsByID[col.ID()]
+		updatedColsByID[col.ID()] = struct{}{}
+	}
+	// append new cols
+	for id, col := range newColsByID {
+		if _, ok := updatedColsByID[id]; ok {
+			continue
+		}
+		newDefinitions = append(newDefinitions, client.CollectionDefinition{Description: col})
+	}
 
-	err = db.validateCollectionChanges(ctx, cols, newColsByID)
+	err = db.validateCollectionChanges(ctx, existingDefinitions, newDefinitions)
 	if err != nil {
 		return err
 	}
 
+	txn := mustGetContextTxn(ctx)
 	for _, col := range newColsByID {
 		_, err := description.SaveCollection(ctx, txn, col)
 		if err != nil {
@@ -224,7 +243,7 @@ func (db *db) patchCollection(
 // provided.  This includes GQL queries and Collection operations.
 //
 // It will return an error if the provided schema version ID does not exist.
-func (db *db) setActiveSchemaVersion(
+func (db *DB) setActiveSchemaVersion(
 	ctx context.Context,
 	schemaVersionID string,
 ) error {
@@ -311,7 +330,7 @@ func (db *db) setActiveSchemaVersion(
 	return db.loadSchema(ctx)
 }
 
-func (db *db) getActiveCollectionDown(
+func (db *DB) getActiveCollectionDown(
 	ctx context.Context,
 	colsByID map[uint32]client.CollectionDescription,
 	id uint32,
@@ -338,7 +357,7 @@ func (db *db) getActiveCollectionDown(
 	return db.getActiveCollectionDown(ctx, colsByID, sources[0].SourceCollectionID)
 }
 
-func (db *db) getActiveCollectionUp(
+func (db *DB) getActiveCollectionUp(
 	ctx context.Context,
 	colsBySourceID map[uint32][]client.CollectionDescription,
 	id uint32,

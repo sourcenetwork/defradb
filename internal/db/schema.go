@@ -34,11 +34,11 @@ const (
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
 // and creates the necessary collections, request types, etc.
-func (db *db) addSchema(
+func (db *DB) addSchema(
 	ctx context.Context,
 	schemaString string,
 ) ([]client.CollectionDescription, error) {
-	newDefinitions, err := db.parser.ParseSDL(schemaString)
+	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (db *db) addSchema(
 	return returnDescriptions, nil
 }
 
-func (db *db) loadSchema(ctx context.Context) error {
+func (db *DB) loadSchema(ctx context.Context) error {
 	txn := mustGetContextTxn(ctx)
 
 	definitions, err := db.getAllActiveDefinitions(ctx)
@@ -83,7 +83,7 @@ func (db *db) loadSchema(ctx context.Context) error {
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *db) patchSchema(
+func (db *DB) patchSchema(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
@@ -236,7 +236,7 @@ func substituteSchemaPatch(
 	return patch, nil
 }
 
-func (db *db) getSchemaByVersionID(
+func (db *DB) getSchemaByVersionID(
 	ctx context.Context,
 	versionID string,
 ) (client.SchemaDescription, error) {
@@ -249,7 +249,7 @@ func (db *db) getSchemaByVersionID(
 	return schemas[0], nil
 }
 
-func (db *db) getSchemas(
+func (db *DB) getSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
@@ -324,7 +324,7 @@ func containsLetter(s string) bool {
 // The schema (including the schema version ID) will only be updated if any changes have actually
 // been made, if the given description matches the current persisted description then no changes will be
 // applied.
-func (db *db) updateSchema(
+func (db *DB) updateSchema(
 	ctx context.Context,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,

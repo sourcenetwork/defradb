@@ -16,54 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesAddFieldKind8(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind deprecated (8)",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 8} }
-					]
-				`,
-				ExpectedError: "no type found for given name. Type: 8",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesAddFieldKind9(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind deprecated (9)",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 9} }
-					]
-				`,
-				ExpectedError: "no type found for given name. Type: 9",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind deprecated (15)",
@@ -90,7 +42,7 @@ func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
 
 // This test is currently the first unsupported value, if it becomes supported
 // please update this test to be the newly lowest unsupported value.
-func TestSchemaUpdatesAddFieldKind22(t *testing.T) {
+func TestSchemaUpdatesAddFieldKind25(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind unsupported (22)",
 		Actions: []any{
@@ -104,10 +56,10 @@ func TestSchemaUpdatesAddFieldKind22(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 23} }
 					]
 				`,
-				ExpectedError: "no type found for given name. Type: 22",
+				ExpectedError: "no type found for given name. Type: 23",
 			},
 		},
 	}

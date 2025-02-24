@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -24,6 +24,8 @@ const (
 	errUnknownEscapeSequence     = "unknown escape sequence"
 	errInvalidUvarintLength      = "invalid length for uvarint"
 	errVarintOverflow            = "varint overflows a 64-bit integer"
+	errInvalidJSONPayload        = "invalid JSON payload"
+	errInvalidJSONPath           = "invalid JSON path"
 )
 
 var (
@@ -35,6 +37,8 @@ var (
 	ErrUnknownEscapeSequence     = errors.New(errUnknownEscapeSequence)
 	ErrInvalidUvarintLength      = errors.New(errInvalidUvarintLength)
 	ErrVarintOverflow            = errors.New(errVarintOverflow)
+	ErrInvalidJSONPayload        = errors.New(errInvalidJSONPayload)
+	ErrInvalidJSONPath           = errors.New(errInvalidJSONPath)
 )
 
 // NewErrInsufficientBytesToDecode returns a new error indicating that the provided
@@ -88,4 +92,18 @@ func NewErrInvalidUvarintLength(b []byte, length int) error {
 // contains a varint that overflows a 64-bit integer.
 func NewErrVarintOverflow(b []byte, value uint64) error {
 	return errors.New(errVarintOverflow, errors.NewKV("Buffer", b), errors.NewKV("Value", value))
+}
+
+// NewErrInvalidJSONPayload returns a new error indicating that the buffer
+func NewErrInvalidJSONPayload(b []byte, path string, err ...error) error {
+	kvs := []errors.KV{errors.NewKV("Buffer", b), errors.NewKV("Path", path)}
+	if len(err) > 0 {
+		kvs = append(kvs, errors.NewKV("Error", err[0]))
+	}
+	return errors.New(errInvalidJSONPayload, kvs...)
+}
+
+// NewErrInvalidJSONPath returns a new error indicating that the buffer contains invalid JSON path.
+func NewErrInvalidJSONPath(b []byte, err error) error {
+	return errors.New(errInvalidJSONPath, errors.NewKV("Buffer", b), errors.NewKV("Error", err))
 }

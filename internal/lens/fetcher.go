@@ -66,11 +66,11 @@ func (f *lensedFetcher) Init(
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
+	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
 	docmapper *core.DocumentMapping,
-	reverse bool,
 	showDeleted bool,
 ) error {
 	f.col = col
@@ -118,11 +118,11 @@ historyLoop:
 		identity,
 		txn,
 		acp,
+		index,
 		col,
 		innerFetcherFields,
 		filter,
 		docmapper,
-		reverse,
 		showDeleted,
 	)
 }

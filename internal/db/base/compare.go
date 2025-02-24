@@ -37,8 +37,8 @@ func Compare(a, b any) int {
 		return compareInt(int64(v), int64(b.(int)))
 	case int64:
 		return compareInt(v, b.(int64))
-	case uint64:
-		return compareUint(v, b.(uint64))
+	case float32:
+		return compareFloat(v, b.(float32))
 	case float64:
 		return compareFloat(v, b.(float64))
 	case time.Time:
@@ -77,15 +77,7 @@ func compareInt(a, b int64) int {
 	}
 	return -1
 }
-func compareUint(a, b uint64) int {
-	if a == b {
-		return 0
-	} else if a > b {
-		return 1
-	}
-	return -1
-}
-func compareFloat(a, b float64) int {
+func compareFloat[T float32 | float64](a, b T) int {
 	if a == b {
 		return 0
 	} else if a > b {

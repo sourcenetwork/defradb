@@ -53,4 +53,5 @@ To learn more about the available options:
 * [defradb keyring export](defradb_keyring_export.md)	 - Export a private key
 * [defradb keyring generate](defradb_keyring_generate.md)	 - Generate private keys
 * [defradb keyring import](defradb_keyring_import.md)	 - Import a private key
+* [defradb keyring list](defradb_keyring_list.md)	 - List all keys in the keyring
 
