@@ -115,9 +115,11 @@ func (mc *MerkleClock) AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	err = mc.signBlock(ctx, dagBlock)
-	if err != nil {
-		return cidlink.Link{}, nil, err
+	if IsSigningContext(ctx) {
+		err = mc.signBlock(ctx, dagBlock)
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
 	}
 
 	link, err := putBlock(ctx, mc.blockstore, dagBlock)
@@ -334,4 +336,17 @@ func (mc *MerkleClock) updateHeads(
 // Heads returns the current heads of the MerkleClock.
 func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
+}
+
+type signingContextKey struct{}
+
+// ContextWithSigning returns a new context with the signing context key set to true.
+func ContextWithSigning(ctx context.Context) context.Context {
+	return context.WithValue(ctx, signingContextKey{}, true)
+}
+
+// IsSigningContext returns true if the context is a signing context.
+func IsSigningContext(ctx context.Context) bool {
+	_, ok := ctx.Value(signingContextKey{}).(bool)
+	return ok
 }

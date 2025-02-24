@@ -54,6 +54,7 @@ var configFlags = map[string]string{
 	"max-txn-retries":    "datastore.maxtxnretries",
 	"store":              "datastore.store",
 	"no-encryption":      "datastore.noencryption",
+	"no-signing":         "datastore.nosigning",
 	"valuelogfilesize":   "datastore.badger.valuelogfilesize",
 	"peers":              "net.peers",
 	"p2paddr":            "net.p2paddresses",
