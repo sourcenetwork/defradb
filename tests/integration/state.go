@@ -216,6 +216,9 @@ type state struct {
 
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool
+
+	// If set to true DAG blocks will be signed with a separate block that
+	enabledBlockSigning bool
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -244,5 +247,6 @@ func newState(
 		docIDs:                   [][]client.DocID{},
 		cids:                     map[any]string{},
 		isBench:                  false,
+		enabledBlockSigning:      testCase.EnabledBlockSigning,
 	}
 }

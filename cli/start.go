@@ -137,6 +137,8 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
+			opts = append(opts, db.WithBlockSigning(!cfg.GetBool("datastore.nosigning")))
+
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
 			if isDevMode {
@@ -269,6 +271,10 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetBool(configFlags["no-telemetry"]),
 		"Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.",
 	)
+	cmd.Flags().Bool(
+		"no-signing",
+		cfg.GetBool(configFlags["no-signing"]),
+		"Disable signing of commits.")
 	return cmd
 }
 

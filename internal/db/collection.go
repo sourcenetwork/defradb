@@ -35,6 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
@@ -656,6 +657,10 @@ func (c *collection) save(
 	txn.OnSuccess(func() {
 		doc.Clean()
 	})
+
+	if c.db.blockSigningEnabled {
+		ctx = clock.ContextWithSigning(ctx)
+	}
 
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker

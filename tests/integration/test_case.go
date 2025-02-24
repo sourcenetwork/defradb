@@ -70,6 +70,9 @@ type TestCase struct {
 
 	// Configuration for KMS to be used in the test
 	KMS KMS
+	
+	// If set to true DAG blocks will be signed with a separate block that 
+	EnabledBlockSigning bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
