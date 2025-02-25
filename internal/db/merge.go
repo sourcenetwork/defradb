@@ -358,7 +358,7 @@ func (mp *mergeProcessor) processEncryptedBlock(
 			return dagBlock, false, nil
 		}
 
-		plainTextBlock, err := decryptBlock(ctx, dagBlock, encBlock)
+		plainTextBlock, err := encryption.DecryptBlock(ctx, dagBlock, encBlock)
 		if err != nil {
 			return nil, false, err
 		}
@@ -415,30 +415,6 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	return nil
-}
-
-func decryptBlock(
-	ctx context.Context,
-	block *coreblock.Block,
-	encBlock *coreblock.Encryption,
-) (*coreblock.Block, error) {
-	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
-
-	if block.Delta.IsComposite() || block.Delta.IsCollection() {
-		// for composite blocks there is nothing to decrypt
-		return block, nil
-	}
-
-	bytes, err := encryptor.Decrypt(block.Delta.GetData(), encBlock.Key)
-	if err != nil {
-		return nil, err
-	}
-	if len(bytes) == 0 {
-		return nil, nil
-	}
-	newBlock := block.Clone()
-	newBlock.Delta.SetData(bytes)
-	return newBlock, nil
 }
 
 func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {

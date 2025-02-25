@@ -194,3 +194,18 @@ func (c CRDT) IsComposite() bool {
 func (c CRDT) IsCollection() bool {
 	return c.CollectionDelta != nil
 }
+
+// Type returns a string representing the type of CRDT.
+func (c CRDT) Type() string {
+	switch {
+	case c.LWWRegDelta != nil:
+		return "lww"
+	case c.CompositeDAGDelta != nil:
+		return "composite"
+	case c.CounterDelta != nil:
+		return "counter"
+	case c.CollectionDelta != nil:
+		return "collection"
+	}
+	return ""
+}

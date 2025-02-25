@@ -93,6 +93,14 @@ The id of the field that this commit was committed against. If this is a composi
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.
 `
+	commitDeltaDecodedFieldDescription string = `
+The decoded value that is saved as part of this commit. If the commit is encrypted
+ and the decryption key is not found or the requesting identity does not have 
+ permission to decrypt, then this field will be null.
+`
+	commitTypeFieldDescription string = `
+The type of CRDT this commit represents.	
+`
 	commitLinkNameFieldDescription string = `
 The Name of the field that this linked commit mutated.
 `

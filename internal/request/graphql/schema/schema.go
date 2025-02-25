@@ -136,8 +136,8 @@ func defaultTypes(
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 ) []gql.Type {
-	blobScalarType := types.BlobScalarType()
-	jsonScalarType := types.JSONScalarType()
+	blobScalarType := types.Blob
+	jsonScalarType := types.JSON
 
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()

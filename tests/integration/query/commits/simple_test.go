@@ -350,10 +350,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							cid
 							collectionID
 							delta
+							deltaDecoded
 							docID
 							fieldId
 							fieldName
 							height
+							type
 							links {
 								cid
 								name
@@ -367,10 +369,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"cid":          testUtils.NewUniqueCid("age update"),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(22),
+							"deltaDecoded": float64(22),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 							"fieldId":      "1",
 							"fieldName":    "age",
 							"height":       int64(2),
+							"type":         "lww",
 							"links": []map[string]any{
 								{
 									"cid":  testUtils.NewUniqueCid("age create"),
@@ -382,30 +386,36 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"cid":          testUtils.NewUniqueCid("age create"),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(21),
+							"deltaDecoded": float64(21),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 							"fieldId":      "1",
 							"fieldName":    "age",
 							"height":       int64(1),
+							"type":         "lww",
 							"links":        []map[string]any{},
 						},
 						{
 							"cid":          testUtils.NewUniqueCid("name create"),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue("John"),
+							"deltaDecoded": "John",
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 							"fieldId":      "2",
 							"fieldName":    "name",
 							"height":       int64(1),
+							"type":         "lww",
 							"links":        []map[string]any{},
 						},
 						{
 							"cid":          testUtils.NewUniqueCid("update composite"),
 							"collectionID": int64(1),
 							"delta":        nil,
+							"deltaDecoded": nil,
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 							"fieldId":      "C",
 							"fieldName":    nil,
 							"height":       int64(2),
+							"type":         "composite",
 							"links": []map[string]any{
 								{
 									"cid":  testUtils.NewUniqueCid("create composite"),
@@ -421,10 +431,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"cid":          testUtils.NewUniqueCid("create composite"),
 							"collectionID": int64(1),
 							"delta":        nil,
+							"deltaDecoded": nil,
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
 							"fieldId":      "C",
 							"fieldName":    nil,
 							"height":       int64(1),
+							"type":         "composite",
 							"links": []map[string]any{
 								{
 									"cid":  testUtils.NewUniqueCid("age create"),
