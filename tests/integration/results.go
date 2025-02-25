@@ -13,10 +13,14 @@ package tests
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/ipfs/go-cid"
+	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
+
+	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,38 +28,53 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// Validator instances can be substituted in place of concrete values
-// and will be asserted on using their [Validate] function instead of
-// asserting direct equality.
-//
-// They may mutate test state.
-//
-// Todo: This does not currently support chaining/nesting of Validators,
-// although we would like that long term:
-// https://github.com/sourcenetwork/defradb/issues/3189
-type Validator interface {
-	Validate(s *state, actualValue any, msgAndArgs ...any)
+type stateMatcher struct {
+	s *state
+}
+
+func (matcher *stateMatcher) SetState(s *state) {
+	matcher.s = s
 }
 
 // AnyOf may be used as `Results` field where the value may
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
-type AnyOf []any
+func AnyOf(values ...any) *anyOf {
+	return &anyOf{
+		Values: values,
+	}
+}
 
-var _ Validator = (AnyOf)(nil)
+type anyOf struct {
+	stateMatcher
+	Values []any
+}
 
-// Validate asserts that actual result is equal to at least one of the expected results.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func (a AnyOf) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	switch s.clientType {
+type StateMatcher interface {
+	types.GomegaMatcher
+	SetState(s *state)
+}
+
+var _ StateMatcher = (*anyOf)(nil)
+
+func (matcher *anyOf) Match(actual any) (success bool, err error) {
+	switch matcher.s.clientType {
 	case HTTPClientType, CLIClientType:
-		if !areResultsAnyOf(a, actualValue) {
-			assert.Contains(s.t, a, actualValue, msgAndArgs...)
+		if !areResultsAnyOf(matcher.Values, actual) {
+			return gomega.ContainElement(actual).Match(matcher.Values)
 		}
 	default:
-		assert.Contains(s.t, a, actualValue, msgAndArgs...)
+		return gomega.ContainElement(actual).Match(matcher.Values)
 	}
+	return true, nil
+}
+
+func (matcher *anyOf) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be one of\n\t%v", actual, matcher.Values)
+}
+
+func (matcher *anyOf) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be one of\n\t%v", actual, matcher.Values)
 }
 
 // assertResultsEqual asserts that actual result is equal to the expected result.
@@ -75,7 +94,7 @@ func assertResultsEqual(t testing.TB, client ClientType, expected any, actual an
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.
-func areResultsAnyOf(expected AnyOf, actual any) bool {
+func areResultsAnyOf(expected []any, actual any) bool {
 	for _, v := range expected {
 		if areResultsEqual(v, actual) {
 			return true
@@ -93,11 +112,18 @@ func areResultsAnyOf(expected AnyOf, actual any) bool {
 // It will also ensure that all Cids described by this [UniqueCid] have the same
 // valid, Cid value.
 type UniqueCid struct {
-	// ID is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
-	ID any
+	stateMatcher
+	// id is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
+	id any
+
+	valuesMismatch bool
+	duplicatedID   any
+	castFailed     bool
+	cidDecodeErr   error
 }
 
-var _ Validator = (*UniqueCid)(nil)
+// var _ Validator = (*UniqueCid)(nil)
+var _ StateMatcher = (*UniqueCid)(nil)
 
 // NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
 // id.
@@ -106,34 +132,62 @@ var _ Validator = (*UniqueCid)(nil)
 // No other [UniqueCid] ids may describe the same Cid value.
 func NewUniqueCid(id any) *UniqueCid {
 	return &UniqueCid{
-		ID: id,
+		id: id,
 	}
 }
 
-func (ucid *UniqueCid) Validate(s *state, actualValue any, msgAndArgs ...any) {
+func (matcher *UniqueCid) Match(actual any) (success bool, err error) {
 	isNew := true
-	for id, value := range s.cids {
-		if id == ucid.ID {
-			require.Equal(s.t, value, actualValue)
+	for id, value := range matcher.s.cids {
+		if id == matcher.id {
+			if value != actual {
+				matcher.valuesMismatch = true
+				return false, nil
+			}
 			isNew = false
 		} else {
-			require.NotEqual(s.t, value, actualValue, "UniqueCid must be unique!", msgAndArgs)
+			if value == actual {
+				matcher.duplicatedID = id
+				return false, nil
+			}
 		}
 	}
 
 	if isNew {
-		value, ok := actualValue.(string)
+		value, ok := actual.(string)
 		if !ok {
-			require.Fail(s.t, "UniqueCid actualValue string cast failed")
+			matcher.castFailed = true
+			return false, nil
 		}
 
 		cid, err := cid.Decode(value)
 		if err != nil {
-			require.NoError(s.t, err)
+			matcher.cidDecodeErr = err
+			return false, nil
 		}
 
-		s.cids[ucid.ID] = cid.String()
+		matcher.s.cids[matcher.id] = cid.String()
 	}
+
+	return true, nil
+}
+
+func (matcher *UniqueCid) FailureMessage(actual any) string {
+	if matcher.valuesMismatch {
+		return fmt.Sprintf("Expected Cids with the same id %v to match", matcher.id)
+	} else if matcher.duplicatedID != nil {
+		return fmt.Sprintf("Expected Cid value to be unique, but ids \"%v\" and \"%v\" point to the same cid: %v",
+			matcher.id, matcher.duplicatedID, actual)
+	} else if matcher.castFailed {
+		return fmt.Sprintf("Actual value is expected to be convertible to a string. Actual: %v", actual)
+	} else if matcher.cidDecodeErr != nil {
+		return fmt.Sprintf("Expected actual value to be a valid Cid. Error: %v", matcher.cidDecodeErr)
+	}
+	return ""
+}
+
+func (matcher *UniqueCid) NegatedFailureMessage(actual any) string {
+	panic("UniqueCid cannot be negated")
 }
 
 // areResultsEqual returns true if the expected and actual results are of equal value.

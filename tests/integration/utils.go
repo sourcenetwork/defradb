@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -1983,8 +1984,8 @@ func assertRequestResults(
 				stack,
 			)
 
-		case Validator:
-			exp.Validate(s, actual)
+		case gomega.OmegaMatcher:
+			execGomegaMatcher(exp, s, actual, stack)
 
 		default:
 			assertResultsEqual(
@@ -2029,11 +2030,10 @@ func assertRequestResultDocs(
 
 		for field, actualValue := range actualDoc {
 			stack.pushMap(field)
-			pathInfo := fmt.Sprintf("node: %v, path: %s", nodeID, stack)
 
 			switch expectedValue := expectedDoc[field].(type) {
-			case Validator:
-				expectedValue.Validate(s, actualValue, pathInfo)
+			case gomega.OmegaMatcher:
+				execGomegaMatcher(expectedValue, s, actualValue, stack)
 
 			case DocIndex:
 				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
@@ -2042,7 +2042,7 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedDocID,
 					actualValue,
-					pathInfo,
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			case []map[string]any:
 				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
@@ -2061,7 +2061,7 @@ func assertRequestResultDocs(
 					s.clientType,
 					expectedValue,
 					actualValue,
-					pathInfo,
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			}
 			stack.pop()
@@ -2070,6 +2070,20 @@ func assertRequestResultDocs(
 	}
 
 	return false
+}
+
+func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
+	if stateMatcher, ok := exp.(StateMatcher); ok {
+		stateMatcher.SetState(s)
+	}
+	success, err := exp.Match(actual)
+	if err != nil {
+		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
+	}
+
+	if !success {
+		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+	}
 }
 
 func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {

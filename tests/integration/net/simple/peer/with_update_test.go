@@ -175,7 +175,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": testUtils.AnyOf{int64(45), int64(60)},
+							"Age": testUtils.AnyOf(int64(45), int64(60)),
 						},
 					},
 				},
@@ -431,7 +431,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": testUtils.AnyOf{int64(47), int64(62)},
+							"Age": testUtils.AnyOf(int64(47), int64(62)),
 						},
 					},
 				},
@@ -614,7 +614,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": testUtils.AnyOf{int64(47), int64(62)},
+							"Age": testUtils.AnyOf(int64(47), int64(62)),
 						},
 						{
 							"Age": int64(60),
