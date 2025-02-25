@@ -68,6 +68,14 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
 			},
+			request.DeltaDecodedFieldName: &gql.Field{
+				Description: commitDeltaDecodedFieldDescription,
+				Type:        JSON,
+			},
+			request.TypeFieldName: &gql.Field{
+				Description: commitTypeFieldDescription,
+				Type:        gql.String,
+			},
 			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
 				Type:        gql.NewList(commitLinkObject),

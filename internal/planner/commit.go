@@ -11,8 +11,9 @@
 package planner
 
 import (
+	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
-
+	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -21,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -186,8 +188,6 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	var currentCid *cid.Cid
-	store := n.planner.txn.Blockstore()
-
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
@@ -222,17 +222,11 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
-	block, err := store.Get(n.planner.ctx, *currentCid)
-	if err != nil {
-		return false, errors.Join(ErrMissingCID, err)
-	}
-
-	dagBlock, err := coreblock.GetFromBytes(block.RawData())
+	dagBlock, decBlock, err := n.loadDagBlock(currentCid)
 	if err != nil {
 		return false, err
 	}
-
-	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
+	currentValue, err := n.dagBlockToNodeDoc(dagBlock, decBlock)
 	if err != nil {
 		return false, err
 	}
@@ -316,29 +310,29 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error) {
+func (n *dagScanNode) dagBlockToNodeDoc(dagBlock *coreblock.Block, decBlock *coreblock.Block) (core.Doc, error) {
 	commit := n.commitSelect.DocumentMapping.NewDoc()
-	link, err := block.GenerateLink()
+	link, err := dagBlock.GenerateLink()
 	if err != nil {
 		return core.Doc{}, err
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
-	prio := block.Delta.GetPriority()
+	prio := dagBlock.Delta.GetPriority()
 
-	schemaVersionId := block.Delta.GetSchemaVersionID()
+	schemaVersionId := dagBlock.Delta.GetSchemaVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
 
 	var fieldName any
 	var fieldID any
-	if block.Delta.CompositeDAGDelta != nil {
+	if dagBlock.Delta.CompositeDAGDelta != nil {
 		fieldID = core.COMPOSITE_NAMESPACE
 		fieldName = nil
-	} else if block.Delta.CollectionDelta != nil {
+	} else if dagBlock.Delta.CollectionDelta != nil {
 		fieldID = nil
 		fieldName = nil
 	} else {
-		fName := block.Delta.GetFieldName()
+		fName := dagBlock.Delta.GetFieldName()
 		fieldName = fName
 		cols, err := n.planner.db.GetCollections(
 			n.planner.ctx,
@@ -362,19 +356,37 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		}
 		fieldID = field.ID.String()
 	}
-	// We need to explicitely set delta to an untyped nil otherwise it will be marshalled
-	// as an empty slice in the JSON response of the HTTP client.
-	d := block.Delta.GetData()
-	if d != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)
+
+	if delta := dagBlock.Delta.GetData(); delta != nil {
+		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, delta)
 	} else {
+		// We need to explicitely set delta to an untyped nil otherwise it will be marshalled
+		// as an empty slice in the JSON response of the HTTP client.
 		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
 	}
+
+	var deltaBytes []byte
+	if !dagBlock.IsEncrypted() {
+		deltaBytes = dagBlock.Delta.GetData()
+	} else if decBlock != nil {
+		deltaBytes = decBlock.Delta.GetData()
+	}
+
+	var deltaDecoded any
+	if deltaBytes != nil {
+		err := cbor.Unmarshal(deltaBytes, &deltaDecoded)
+		if err != nil {
+			return core.Doc{}, err
+		}
+	}
+
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.TypeFieldName, dagBlock.Delta.Type())
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaDecodedFieldName, deltaDecoded)
 
-	docID := block.Delta.GetDocID()
+	docID := dagBlock.Delta.GetDocID()
 	if docID != nil {
 		n.commitSelect.DocumentMapping.SetFirstOfName(
 			&commit,
@@ -407,11 +419,11 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
 
 	for _, linksIndex := range linksIndexes {
-		links := make([]core.Doc, len(block.Heads)+len(block.Links))
+		links := make([]core.Doc, len(dagBlock.Heads)+len(dagBlock.Links))
 		linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
 
 		i := 0
-		for _, l := range block.Heads {
+		for _, l := range dagBlock.Heads {
 			link := linksMapping.NewDoc()
 			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, "_head")
 			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Cid.String())
@@ -420,7 +432,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 			i++
 		}
 
-		for _, l := range block.Links {
+		for _, l := range dagBlock.Links {
 			link := linksMapping.NewDoc()
 			if l.Name != "" {
 				linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
@@ -435,4 +447,37 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 
 	return commit, nil
+}
+
+func (n *dagScanNode) loadDagBlock(currentCid *cid.Cid) (*coreblock.Block, *coreblock.Block, error) {
+	store := n.planner.txn.Blockstore()
+	block, err := store.Get(n.planner.ctx, *currentCid)
+	if err != nil {
+		return nil, nil, errors.Join(ErrMissingCID, err)
+	}
+	dagBlock, err := coreblock.GetFromBytes(block.RawData())
+	if err != nil {
+		return nil, nil, err
+	}
+	if !dagBlock.IsEncrypted() {
+		return dagBlock, nil, nil
+	}
+	// attempt to decrypt the block if encryption data is available
+	store = n.planner.txn.Encstore()
+	block, err = store.Get(n.planner.ctx, dagBlock.Encryption.Cid)
+	if errors.Is(err, ipld.ErrNotFound{}) {
+		return dagBlock, nil, nil
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	encBlock, err := coreblock.GetEncryptionBlockFromBytes(block.RawData())
+	if err != nil {
+		return nil, nil, err
+	}
+	decBlock, err := encryption.DecryptBlock(n.planner.ctx, dagBlock, encBlock)
+	if err != nil {
+		return nil, nil, err
+	}
+	return dagBlock, decBlock, nil
 }

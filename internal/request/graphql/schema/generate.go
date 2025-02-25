@@ -1250,7 +1250,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			}
 			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
 				Description: "The alias operator allows filters to target aliased fields.",
-				Type:        schemaTypes.JSONScalarType(),
+				Type:        schemaTypes.JSON,
 			}
 
 			// generate basic filter operator blocks
@@ -1341,7 +1341,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
 				Description: "The alias field allows ordering by aliased fields.",
-				Type:        schemaTypes.JSONScalarType(),
+				Type:        schemaTypes.JSON,
 			}
 
 			for f, field := range obj.Fields() {
