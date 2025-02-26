@@ -76,9 +76,9 @@ func loadBlockLinks(ctx context.Context, linkSys, sigLinkSys *linking.LinkSystem
 	var asyncErrOnce sync.Once
 
 	if block.Signature != nil {
-		fmt.Printf(">>>>> Verifying block signature\n")
+		fmt.Printf(">>>>> loadBlockLinks: Verifying block signature %s\n", block.Signature)
 		err := coreblock.VerifyBlockSignature(block, sigLinkSys)
-		fmt.Printf(">>>>> Block signature verified\n")
+		fmt.Printf(">>>>> loadBlockLinks: Block signature verified\n")
 		if err != nil {
 			return err
 		}
@@ -91,29 +91,36 @@ func loadBlockLinks(ctx context.Context, linkSys, sigLinkSys *linking.LinkSystem
 
 	for _, lnk := range block.AllLinks() {
 		wg.Add(1)
+		fmt.Printf(">>>>> loadBlockLinks: Loading block link: %s\n", lnk)
 		go func(lnk cidlink.Link) {
+			fmt.Printf(">>>>> go loadBlockLinks: start %s\n", lnk)
 			defer wg.Done()
 			if ctxWithCancel.Err() != nil {
 				return
 			}
 			ctxWithTimeout, cancel := context.WithTimeout(ctx, syncBlockLinkTimeout)
 			defer cancel()
+			fmt.Printf(">>>>> go loadBlockLinks: Loading block link: %s\n", lnk)
 			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
 			if err != nil {
+				fmt.Printf(">>>>> go loadBlockLinks: Error loading block link: %s, error: %s\n", lnk, err)
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
+			fmt.Printf(">>>>> go loadBlockLinks: Deserialize block link: %s\n", lnk)
 			linkBlock, err := coreblock.GetFromNode(nd)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
 
+			fmt.Printf(">>>>> go loadBlockLinks: process parsed block: %s\n", lnk)
 			err = loadBlockLinks(ctx, linkSys, sigLinkSys, linkBlock)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
+			fmt.Printf(">>>>> go loadBlockLinks: successfully processed %s\n", lnk)
 		}(lnk)
 	}
 
