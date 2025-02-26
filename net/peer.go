@@ -168,7 +168,9 @@ func NewPeer(
 	bswapnet := network.NewFromIpfsHost(h)
 	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
 	p.blockService = blockservice.New(db.Blockstore(), bswap)
-	p.sigBlockService = blockservice.New(db.Sigstore(), bswap)
+
+	sigBswap := bitswap.New(ctx, bswapnet, ddht, db.Sigstore())
+	p.sigBlockService = blockservice.New(db.Sigstore(), sigBswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
