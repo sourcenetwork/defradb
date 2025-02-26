@@ -140,7 +140,7 @@ func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"Users": testUtils.AnyOf{
+					"Users": testUtils.AnyOf(
 						// The key-sync has not yet completed
 						[]map[string]any{},
 						// The key-sync has completed
@@ -149,7 +149,7 @@ func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 								"age": int64(21),
 							},
 						},
-					},
+					),
 				},
 			},
 		},
