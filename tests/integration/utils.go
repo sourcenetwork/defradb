@@ -2028,6 +2028,21 @@ func assertRequestResultDocs(
 			),
 		)
 
+		assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack)
+
+		stack.pop()
+	}
+
+	return false
+}
+
+func assertRequestResultDoc(
+	s *state,
+	nodeID int,
+	actualDoc map[string]any,
+	expectedDoc map[string]any,
+	stack *assertStack,
+) {
 		for field, actualValue := range actualDoc {
 			stack.pushMap(field)
 
@@ -2055,6 +2070,11 @@ func assertRequestResultDocs(
 					stack,
 				)
 
+		case map[string]any:
+			actualMap, ok := actualValue.(map[string]any)
+			require.True(s.t, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack)
+
 			default:
 				assertResultsEqual(
 					s.t,
@@ -2066,10 +2086,6 @@ func assertRequestResultDocs(
 			}
 			stack.pop()
 		}
-		stack.pop()
-	}
-
-	return false
 }
 
 func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
