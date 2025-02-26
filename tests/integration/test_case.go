@@ -16,7 +16,6 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/net"
@@ -813,29 +812,4 @@ type GetNodeIdentity struct {
 type Wait struct {
 	// Duration is the duration to wait.
 	Duration time.Duration
-}
-
-// ArrayDescription represents an array field.
-//
-// The test harness will call the Validate method to ensure that the returned array size and type
-// match what is described by this struct.
-type ArrayDescription[T any] struct {
-	// Size of the array
-	Size int
-}
-
-// NewArrayDescription creates a new [ArrayDescription] instance allowing validation of the array
-// characteristics instead of the content of the array itself.
-func NewArrayDescription[T any](size int) ArrayDescription[T] {
-	return ArrayDescription[T]{
-		Size: size,
-	}
-}
-
-func (d ArrayDescription[T]) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	var expT []T
-	require.IsType(s.t, expT, actualValue, msgAndArgs)
-	typedActualValue, ok := actualValue.([]T)
-	require.True(s.t, ok)
-	require.Equal(s.t, d.Size, len(typedActualValue), msgAndArgs)
 }

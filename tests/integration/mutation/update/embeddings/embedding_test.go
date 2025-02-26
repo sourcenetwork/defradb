@@ -13,6 +13,7 @@ package constraints
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -77,10 +78,16 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name_v": testUtils.NewArrayDescription[float32](768),
+							"name_v": gomega.And(
+								gomega.BeAssignableToTypeOf([]float32{}),
+								gomega.HaveLen(768),
+							),
 						},
 						{
-							"name_v": testUtils.NewArrayDescription[float32](768),
+							"name_v": gomega.And(
+								gomega.BeAssignableToTypeOf([]float32{}),
+								gomega.HaveLen(768),
+							),
 						},
 					},
 				},
