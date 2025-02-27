@@ -17,7 +17,7 @@ import (
 	"context"
 
 	cid "github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -225,7 +225,8 @@ func (mc *MerkleClock) signBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 ) error {
-	if !block.Delta.IsComposite() {
+	// sign only composite blocks and the first field blocks (e.g. with height = 1)
+	if !block.Delta.IsComposite() && (block.Delta.IsCollection() || block.Delta.GetPriority() > 1) {
 		return nil
 	}
 
