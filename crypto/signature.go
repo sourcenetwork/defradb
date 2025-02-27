@@ -14,7 +14,7 @@ import (
 	"crypto/ed25519"
 	"crypto/sha256"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
 
@@ -50,7 +50,7 @@ const (
 // Returns:
 //   - []byte: The signature in the format appropriate for the chosen algorithm
 //   - error: Any error encountered during signing, including invalid key types
-func Sign(sigType SignatureType, privKey interface{}, message []byte) ([]byte, error) {
+func Sign(sigType SignatureType, privKey any, message []byte) ([]byte, error) {
 	switch sigType {
 	case SignatureTypeECDSA:
 		var privateKey *secp256k1.PrivateKey
@@ -113,7 +113,7 @@ func Sign(sigType SignatureType, privKey interface{}, message []byte) ([]byte, e
 //
 // Returns:
 //   - error: nil if verification succeeds, appropriate error otherwise
-func Verify(sigType SignatureType, pubKey interface{}, message, signature []byte) error {
+func Verify(sigType SignatureType, pubKey any, message, signature []byte) error {
 	switch sigType {
 	case SignatureTypeECDSA:
 		var publicKey *secp256k1.PublicKey

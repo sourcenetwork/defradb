@@ -225,7 +225,9 @@ func (mc *MerkleClock) signBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 ) error {
-	// sign only composite blocks and the first field blocks (e.g. with height = 1)
+	// sign only composite blocks and the first field blocks (e.g. with height = 1).
+	// We sign only the first field blocks just to add entropy and prevent any collisions.
+	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
 	if !block.Delta.IsComposite() && (block.Delta.IsCollection() || block.Delta.GetPriority() > 1) {
 		return nil
 	}
