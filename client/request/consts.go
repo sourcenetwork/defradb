@@ -69,6 +69,8 @@ const (
 	FieldNameFieldName       = "fieldName"
 	FieldIDFieldName         = "fieldId"
 	DeltaFieldName           = "delta"
+	DeltaDecodedFieldName    = "deltaDecoded"
+	TypeFieldName            = "type"
 
 	DeltaArgFieldName       = "FieldName"
 	DeltaArgData            = "Data"
@@ -140,6 +142,8 @@ var (
 		FieldNameFieldName,
 		FieldIDFieldName,
 		DeltaFieldName,
+		DeltaDecodedFieldName,
+		TypeFieldName,
 	}
 
 	LinksFields = []string{
