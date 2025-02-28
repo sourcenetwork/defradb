@@ -142,7 +142,7 @@ func (s *server) processPushlog(
 		corelog.Any("Creator", byPeer.String()),
 		corelog.Any("DocID", req.DocID))
 
-	err = syncDAG(ctx, s.peer.blockService, s.peer.sigBlockService, block)
+	err = syncDAG(ctx, s.peer.blockService, block)
 	if err != nil {
 		return nil, err
 	}
@@ -478,6 +478,13 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		log.ErrorE("Failed to get block", err)
 		return false
 	}
+
+	_, err = coreblock.GetSignatureBlockFromBytes(rawblock.RawData())
+    if err == nil {
+        // If the block is a signature block, we can safely send it to the requesting peer.
+        return true
+    }
+
 	block, err := coreblock.GetFromBytes(rawblock.RawData())
 	if err != nil {
 		log.ErrorE("Failed to get doc from block", err)

@@ -37,8 +37,8 @@ func NewMerkleLWWRegister(
 	fieldName string,
 ) *MerkleLWWRegister {
 	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionKey, key, fieldName)
-	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), store.Sigstore(),
-		key.ToHeadStoreKey(), register)
+	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
+		register)
 
 	return &MerkleLWWRegister{
 		clock: clk,

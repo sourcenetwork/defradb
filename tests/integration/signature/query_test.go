@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func TestDocSignature_With_Should(t *testing.T) {
+func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
 		EnabledBlockSigning: true,
 		Actions: []any{
@@ -60,7 +60,7 @@ func TestDocSignature_With_Should(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDocSignature_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) {
+func TestDocSignature_WithPeers_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
 		EnabledBlockSigning: true,
 		Actions: []any{

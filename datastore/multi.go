@@ -66,11 +66,6 @@ func (ms multistore) Encstore() Blockstore {
 	return ms.enc
 }
 
-// Sigstore implements MultiStore.
-func (ms multistore) Sigstore() Blockstore {
-	return ms.sig
-}
-
 // Headstore implements MultiStore.
 func (ms multistore) Headstore() DSReaderWriter {
 	return ms.head

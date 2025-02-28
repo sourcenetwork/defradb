@@ -12,7 +12,6 @@ package net
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -44,12 +43,11 @@ func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
 //
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func syncDAG(ctx context.Context, blockService, sigBlockService blockservice.BlockService, block *coreblock.Block) error {
+func syncDAG(ctx context.Context, blockService blockservice.BlockService, block *coreblock.Block) error {
 	// use a session to make remote fetches more efficient
 	ctx = blockservice.ContextWithSession(ctx, blockService)
 
 	linkSys := makeLinkSystem(blockService)
-	sigLinkSys := makeLinkSystem(sigBlockService)
 
 	// Store the block in the DAG store
 	_, err := linkSys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
@@ -57,7 +55,7 @@ func syncDAG(ctx context.Context, blockService, sigBlockService blockservice.Blo
 		return err
 	}
 
-	err = loadBlockLinks(ctx, &linkSys, &sigLinkSys, block)
+	err = loadBlockLinks(ctx, &linkSys, block)
 	if err != nil {
 		return err
 	}
@@ -68,7 +66,7 @@ func syncDAG(ctx context.Context, blockService, sigBlockService blockservice.Blo
 //
 // If it encounters errors in the concurrent loading of links, it will return
 // the first error it encountered.
-func loadBlockLinks(ctx context.Context, linkSys, sigLinkSys *linking.LinkSystem, block *coreblock.Block) error {
+func loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
 	ctxWithCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
 	var wg sync.WaitGroup
@@ -76,9 +74,7 @@ func loadBlockLinks(ctx context.Context, linkSys, sigLinkSys *linking.LinkSystem
 	var asyncErrOnce sync.Once
 
 	if block.Signature != nil {
-		fmt.Printf(">>>>> loadBlockLinks: Verifying block signature %s\n", block.Signature)
-		err := coreblock.VerifyBlockSignature(block, sigLinkSys)
-		fmt.Printf(">>>>> loadBlockLinks: Block signature verified\n")
+		err := coreblock.VerifyBlockSignature(block, linkSys)
 		if err != nil {
 			return err
 		}
@@ -91,36 +87,29 @@ func loadBlockLinks(ctx context.Context, linkSys, sigLinkSys *linking.LinkSystem
 
 	for _, lnk := range block.AllLinks() {
 		wg.Add(1)
-		fmt.Printf(">>>>> loadBlockLinks: Loading block link: %s\n", lnk)
 		go func(lnk cidlink.Link) {
-			fmt.Printf(">>>>> go loadBlockLinks: start %s\n", lnk)
 			defer wg.Done()
 			if ctxWithCancel.Err() != nil {
 				return
 			}
 			ctxWithTimeout, cancel := context.WithTimeout(ctx, syncBlockLinkTimeout)
 			defer cancel()
-			fmt.Printf(">>>>> go loadBlockLinks: Loading block link: %s\n", lnk)
 			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
 			if err != nil {
-				fmt.Printf(">>>>> go loadBlockLinks: Error loading block link: %s, error: %s\n", lnk, err)
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
-			fmt.Printf(">>>>> go loadBlockLinks: Deserialize block link: %s\n", lnk)
 			linkBlock, err := coreblock.GetFromNode(nd)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
 
-			fmt.Printf(">>>>> go loadBlockLinks: process parsed block: %s\n", lnk)
-			err = loadBlockLinks(ctx, linkSys, sigLinkSys, linkBlock)
+			err = loadBlockLinks(ctx, linkSys, linkBlock)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
-			fmt.Printf(">>>>> go loadBlockLinks: successfully processed %s\n", lnk)
 		}(lnk)
 	}
 

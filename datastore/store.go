@@ -42,10 +42,6 @@ type MultiStore interface {
 	// The store keys are comprised of docID + field name.
 	Encstore() Blockstore
 
-	// Sigstore is a wrapped root DSReaderWriter under the /sig namespace
-	// This store is used for storing signatures for block.
-	Sigstore() Blockstore
-
 	// Headstore is a wrapped root DSReaderWriter under the /head namespace
 	Headstore() DSReaderWriter
 

@@ -48,8 +48,6 @@ type DB interface {
 	Blockstore() datastore.Blockstore
 	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
 	Encstore() datastore.Blockstore
-	// Sigstore returns the store, that contains all known signatures for documents and their fields.
-	Sigstore() datastore.Blockstore
 	// GetCollections returns the list of collections according to the given options.
 	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
@@ -75,8 +73,7 @@ type Peer struct {
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
-	blockService    blockservice.BlockService
-	sigBlockService blockservice.BlockService
+	blockService blockservice.BlockService
 
 	acp immutable.Option[acp.ACP]
 	db  DB
@@ -169,9 +166,6 @@ func NewPeer(
 	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
 	p.blockService = blockservice.New(db.Blockstore(), bswap)
 
-	sigBswap := bitswap.New(ctx, bswapnet, ddht, db.Sigstore())
-	p.sigBlockService = blockservice.New(db.Sigstore(), sigBswap)
-
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
 		return nil, err
@@ -227,10 +221,6 @@ func (p *Peer) Close() {
 
 	if err := p.blockService.Close(); err != nil {
 		log.ErrorE("Error closing block service", err)
-	}
-
-	if err := p.sigBlockService.Close(); err != nil {
-		log.ErrorE("Error closing signature block service", err)
 	}
 
 	if err := p.host.Close(); err != nil {

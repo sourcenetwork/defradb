@@ -42,7 +42,6 @@ type MerkleClock struct {
 	headstore  datastore.DSReaderWriter
 	blockstore datastore.Blockstore
 	encstore   datastore.Blockstore
-	sigstore   datastore.Blockstore
 	headset    *heads
 	crdt       core.ReplicatedData
 }
@@ -52,7 +51,6 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
-	sigstore datastore.Blockstore,
 	namespace keys.HeadstoreKey,
 	crdt core.ReplicatedData,
 ) *MerkleClock {
@@ -60,7 +58,6 @@ func NewMerkleClock(
 		headstore:  headstore,
 		blockstore: blockstore,
 		encstore:   encstore,
-		sigstore:   sigstore,
 		headset:    NewHeadSet(headstore, namespace),
 		crdt:       crdt,
 	}
@@ -255,7 +252,7 @@ func (mc *MerkleClock) signBlock(
 		Value: sigBytes,
 	}
 
-	sigBlockLink, err := putBlock(ctx, mc.sigstore, sig)
+	sigBlockLink, err := putBlock(ctx, mc.blockstore, sig)
 	if err != nil {
 		return err
 	}
