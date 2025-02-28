@@ -22,7 +22,7 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 	return &Txn_Expecter{mock: &_m.Mock}
 }
 
-// Blockstore provides a mock function with given fields:
+// Blockstore provides a mock function with no fields
 func (_m *Txn) Blockstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -115,7 +115,7 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func(context.Context) error) *Txn_Co
 	return _c
 }
 
-// Datastore provides a mock function with given fields:
+// Datastore provides a mock function with no fields
 func (_m *Txn) Datastore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -191,11 +191,11 @@ func (_c *Txn_Discard_Call) Return() *Txn_Discard_Call {
 }
 
 func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
-// Encstore provides a mock function with given fields:
+// Encstore provides a mock function with no fields
 func (_m *Txn) Encstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -242,7 +242,7 @@ func (_c *Txn_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_
 	return _c
 }
 
-// Headstore provides a mock function with given fields:
+// Headstore provides a mock function with no fields
 func (_m *Txn) Headstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -289,7 +289,7 @@ func (_c *Txn_Headstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
-// ID provides a mock function with given fields:
+// ID provides a mock function with no fields
 func (_m *Txn) ID() uint64 {
 	ret := _m.Called()
 
@@ -363,7 +363,7 @@ func (_c *Txn_OnDiscard_Call) Return() *Txn_OnDiscard_Call {
 }
 
 func (_c *Txn_OnDiscard_Call) RunAndReturn(run func(func())) *Txn_OnDiscard_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
@@ -396,7 +396,7 @@ func (_c *Txn_OnDiscardAsync_Call) Return() *Txn_OnDiscardAsync_Call {
 }
 
 func (_c *Txn_OnDiscardAsync_Call) RunAndReturn(run func(func())) *Txn_OnDiscardAsync_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
@@ -429,7 +429,7 @@ func (_c *Txn_OnError_Call) Return() *Txn_OnError_Call {
 }
 
 func (_c *Txn_OnError_Call) RunAndReturn(run func(func())) *Txn_OnError_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
@@ -462,7 +462,7 @@ func (_c *Txn_OnErrorAsync_Call) Return() *Txn_OnErrorAsync_Call {
 }
 
 func (_c *Txn_OnErrorAsync_Call) RunAndReturn(run func(func())) *Txn_OnErrorAsync_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
@@ -495,7 +495,7 @@ func (_c *Txn_OnSuccess_Call) Return() *Txn_OnSuccess_Call {
 }
 
 func (_c *Txn_OnSuccess_Call) RunAndReturn(run func(func())) *Txn_OnSuccess_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
@@ -528,11 +528,11 @@ func (_c *Txn_OnSuccessAsync_Call) Return() *Txn_OnSuccessAsync_Call {
 }
 
 func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccessAsync_Call {
-	_c.Call.Return(run)
+	_c.Run(run)
 	return _c
 }
 
-// Peerstore provides a mock function with given fields:
+// Peerstore provides a mock function with no fields
 func (_m *Txn) Peerstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -579,7 +579,7 @@ func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
-// Rootstore provides a mock function with given fields:
+// Rootstore provides a mock function with no fields
 func (_m *Txn) Rootstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -626,54 +626,7 @@ func (_c *Txn_Rootstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
-// Sigstore provides a mock function with given fields:
-func (_m *Txn) Sigstore() datastore.Blockstore {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Sigstore")
-	}
-
-	var r0 datastore.Blockstore
-	if rf, ok := ret.Get(0).(func() datastore.Blockstore); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.Blockstore)
-		}
-	}
-
-	return r0
-}
-
-// Txn_Sigstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Sigstore'
-type Txn_Sigstore_Call struct {
-	*mock.Call
-}
-
-// Sigstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Sigstore() *Txn_Sigstore_Call {
-	return &Txn_Sigstore_Call{Call: _e.mock.On("Sigstore")}
-}
-
-func (_c *Txn_Sigstore_Call) Run(run func()) *Txn_Sigstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Sigstore_Call) Return(_a0 datastore.Blockstore) *Txn_Sigstore_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Txn_Sigstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_Sigstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Systemstore provides a mock function with given fields:
+// Systemstore provides a mock function with no fields
 func (_m *Txn) Systemstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
