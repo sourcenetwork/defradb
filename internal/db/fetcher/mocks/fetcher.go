@@ -38,7 +38,7 @@ func (_m *Fetcher) EXPECT() *Fetcher_Expecter {
 	return &Fetcher_Expecter{mock: &_m.Mock}
 }
 
-// Close provides a mock function with given fields:
+// Close provides a mock function with no fields
 func (_m *Fetcher) Close() error {
 	ret := _m.Called()
 
