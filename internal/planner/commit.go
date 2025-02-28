@@ -433,7 +433,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 }
 
 func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
-	store := n.planner.txn.Sigstore()
+	store := n.planner.txn.Blockstore()
 	sigIPLDBlock, err := store.Get(n.planner.ctx, link.Cid)
 	if err != nil {
 		return err

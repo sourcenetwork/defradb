@@ -30,7 +30,6 @@ type Stores interface {
 	Datastore() datastore.DSReaderWriter
 	Blockstore() datastore.Blockstore
 	Encstore() datastore.Blockstore
-	Sigstore() datastore.Blockstore
 	Headstore() datastore.DSReaderWriter
 }
 

@@ -35,8 +35,7 @@ func NewMerkleCollection(
 ) *MerkleCollection {
 	register := crdt.NewCollection(schemaVersionKey)
 
-	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), store.Sigstore(),
-		key, register)
+	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key, register)
 
 	return &MerkleCollection{
 		clock: clk,

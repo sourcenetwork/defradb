@@ -79,10 +79,6 @@ func (w *Transaction) Encstore() datastore.Blockstore {
 	return w.tx.Encstore()
 }
 
-func (w *Transaction) Sigstore() datastore.Blockstore {
-	return w.tx.Sigstore()
-}
-
 func (w *Transaction) Headstore() datastore.DSReaderWriter {
 	return w.tx.Headstore()
 }

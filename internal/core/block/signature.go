@@ -26,8 +26,6 @@ const (
 type SignatureHeader struct {
 	// Type is the type of the signature.
 	Type string
-	// Params are the parameters of the signature.
-	//Params ipld.Node
 	// Identity is the identity of the signer.
 	Identity []byte
 }

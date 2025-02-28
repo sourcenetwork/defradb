@@ -38,7 +38,6 @@ func newTestMerkleClock() *MerkleClock {
 		multistore.Headstore(),
 		multistore.Blockstore(),
 		multistore.Encstore(),
-		multistore.Sigstore(),
 		keys.HeadstoreDocKey{DocID: request.DocIDArgName, FieldID: "1"},
 		reg,
 	)
@@ -48,7 +47,7 @@ func TestNewMerkleClock(t *testing.T) {
 	s := newDS()
 	m := datastore.MultiStoreFrom(s)
 	reg := crdt.NewLWWRegister(m.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
-	clk := NewMerkleClock(m.Headstore(), m.Blockstore(), m.Encstore(), m.Sigstore(), keys.HeadstoreDocKey{}, reg)
+	clk := NewMerkleClock(m.Headstore(), m.Blockstore(), m.Encstore(), keys.HeadstoreDocKey{}, reg)
 
 	if clk.headstore != m.Headstore() {
 		t.Error("MerkleClock store not correctly set")
