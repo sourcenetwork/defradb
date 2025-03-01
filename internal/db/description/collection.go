@@ -168,7 +168,7 @@ func GetCollectionsByRoot(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseCollectionQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		if !hasValue {
@@ -218,7 +218,7 @@ func GetCollectionsBySchemaVersionID(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		if !hasValue {

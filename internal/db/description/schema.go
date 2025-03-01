@@ -163,7 +163,7 @@ func GetSchemas(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		var desc client.SchemaDescription
@@ -221,7 +221,7 @@ func GetAllSchemas(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		var desc client.SchemaDescription
@@ -266,7 +266,7 @@ func GetSchemaVersionIDs(
 			if err := iter.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		if !hasValue {
