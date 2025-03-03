@@ -22,8 +22,8 @@ import (
 type SignatureType int
 
 const (
-	// SignatureTypeECDSA represents secp256k1 ECDSA signatures
-	SignatureTypeECDSA SignatureType = iota
+	// SignatureTypeECDSA256K represents secp256k1 ECDSA signatures using secp256k1 curve
+	SignatureTypeECDSA256K SignatureType = iota
 	// SignatureTypeEd25519 represents Ed25519 signatures
 	SignatureTypeEd25519
 )
@@ -52,7 +52,7 @@ const (
 //   - error: Any error encountered during signing, including invalid key types
 func Sign(sigType SignatureType, privKey any, message []byte) ([]byte, error) {
 	switch sigType {
-	case SignatureTypeECDSA:
+	case SignatureTypeECDSA256K:
 		var privateKey *secp256k1.PrivateKey
 		switch k := privKey.(type) {
 		case *secp256k1.PrivateKey:
@@ -115,7 +115,7 @@ func Sign(sigType SignatureType, privKey any, message []byte) ([]byte, error) {
 //   - error: nil if verification succeeds, appropriate error otherwise
 func Verify(sigType SignatureType, pubKey any, message, signature []byte) error {
 	switch sigType {
-	case SignatureTypeECDSA:
+	case SignatureTypeECDSA256K:
 		var publicKey *secp256k1.PublicKey
 		switch k := pubKey.(type) {
 		case *secp256k1.PublicKey:
