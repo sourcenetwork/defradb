@@ -17,7 +17,7 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.3.1
 	github.com/iancoleman/strcase v0.3.0
-	github.com/ipfs/boxo v0.27.4
+	github.com/ipfs/boxo v0.28.0
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipfs/go-datastore v0.7.0
