@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	SignatureTypeECDSA   = "ECDSA"
-	SignatureTypeEd25519 = "Ed25519"
+	SignatureTypeECDSA256K = "ES256K"
+	SignatureTypeEd25519   = "Ed25519"
 )
 
 // SignatureHeader contains the header of the signature.
@@ -134,8 +134,8 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
 	switch sigBlock.Header.Type {
 	case SignatureTypeEd25519:
 		sigType = crypto.SignatureTypeEd25519
-	case SignatureTypeECDSA:
-		sigType = crypto.SignatureTypeECDSA
+	case SignatureTypeECDSA256K:
+		sigType = crypto.SignatureTypeECDSA256K
 	default:
 		return crypto.ErrUnsupportedSignatureType
 	}

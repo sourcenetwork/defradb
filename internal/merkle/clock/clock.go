@@ -238,14 +238,14 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
-	sigBytes, err := crypto.Sign(crypto.SignatureTypeECDSA, ident.Value().PrivateKey, blockBytes)
+	sigBytes, err := crypto.Sign(crypto.SignatureTypeECDSA256K, ident.Value().PrivateKey, blockBytes)
 	if err != nil {
 		return err
 	}
 
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
-			Type:     coreblock.SignatureTypeECDSA,
+			Type:     coreblock.SignatureTypeECDSA256K,
 			Identity: []byte(ident.Value().PublicKey.SerializeCompressed()),
 		},
 		Value: sigBytes,

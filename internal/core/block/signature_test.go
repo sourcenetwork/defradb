@@ -48,12 +48,12 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 			},
 			Value: ed25519.Sign(keys.ed25519Priv, blockBytes),
 		}
-	case SignatureTypeECDSA:
-		sig, err := crypto.Sign(crypto.SignatureTypeECDSA, keys.ecdsaKey, blockBytes)
+	case SignatureTypeECDSA256K:
+		sig, err := crypto.Sign(crypto.SignatureTypeECDSA256K, keys.ecdsaKey, blockBytes)
 		require.NoError(t, err)
 		sigBlock = &Signature{
 			Header: SignatureHeader{
-				Type:     SignatureTypeECDSA,
+				Type:     SignatureTypeECDSA256K,
 				Identity: keys.ecdsaKey.PubKey().SerializeCompressed(),
 			},
 			Value: sig,
@@ -108,7 +108,7 @@ func TestBlockMarshal_IfSignatureNotSet_ShouldNotContainSignatureField(t *testin
 
 	sigBlock := Signature{
 		Header: SignatureHeader{
-			Type:     SignatureTypeECDSA,
+			Type:     SignatureTypeECDSA256K,
 			Identity: []byte("pubkey-bytes"),
 		},
 		Value: []byte("signature-bytes"),
@@ -242,7 +242,7 @@ func TestVerifyBlockSignature_ValidEd25519(t *testing.T) {
 func TestVerifyBlockSignature_ValidECDSA(t *testing.T) {
 	lsys, keys := setupTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
-	createSignedBlock(t, lsys, &block, SignatureTypeECDSA, keys)
+	createSignedBlock(t, lsys, &block, SignatureTypeECDSA256K, keys)
 	err := VerifyBlockSignature(&block, lsys)
 	require.NoError(t, err)
 }
