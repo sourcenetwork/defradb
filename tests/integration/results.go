@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -32,8 +33,22 @@ type stateMatcher struct {
 	s *state
 }
 
-func (matcher *stateMatcher) SetState(s *state) {
+func (matcher *stateMatcher) SetTestState(s *state) {
 	matcher.s = s
+}
+
+// TestStateMatcher is a matcher that requires access to the test state.
+type TestStateMatcher interface {
+	types.GomegaMatcher
+	// SetTestState sets the test state.
+	SetTestState(s *state)
+}
+
+// StatefulMatcher is a matcher that requires state to be reset between tests.
+type StatefulMatcher interface {
+	types.GomegaMatcher
+	// ResetMatcherState resets the state of the matcher.
+	ResetMatcherState()
 }
 
 // AnyOf may be used as `Results` field where the value may
@@ -50,14 +65,9 @@ type anyOf struct {
 	Values []any
 }
 
-type StateMatcher interface {
-	types.GomegaMatcher
-	SetState(s *state)
-}
+var _ TestStateMatcher = (*anyOf)(nil)
 
-var _ StateMatcher = (*anyOf)(nil)
-
-func (matcher *anyOf) Match(actual any) (success bool, err error) {
+func (matcher *anyOf) Match(actual any) (bool, error) {
 	switch matcher.s.clientType {
 	case HTTPClientType, CLIClientType:
 		if !areResultsAnyOf(matcher.Values, actual) {
@@ -75,6 +85,55 @@ func (matcher *anyOf) FailureMessage(actual any) string {
 
 func (matcher *anyOf) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected\n\t%v\nnot to be one of\n\t%v", actual, matcher.Values)
+}
+
+// UniqueValue ensures that values passed to Match are unique across all calls.
+// It fails if the same value is seen more than once.
+// An instance of this matcher should be given to at least 2 assert result places, otherwise
+// the matcher makes no sense.
+type UniqueValue struct {
+	seenValues       map[any]bool
+	invalidValueType any
+}
+
+var _ StatefulMatcher = (*UniqueValue)(nil)
+
+// NewUniqueValue creates a new matcher that verifies each value is unique.
+// This matcher will track values across all Match calls and fail if a duplicate is found.
+func NewUniqueValue() *UniqueValue {
+	return &UniqueValue{seenValues: make(map[any]bool)}
+}
+
+func (matcher *UniqueValue) ResetMatcherState() {
+	matcher.seenValues = make(map[any]bool)
+}
+
+func (matcher *UniqueValue) Match(actual any) (bool, error) {
+	var key any
+
+	if !reflect.TypeOf(actual).Comparable() {
+		key = fmt.Sprintf("%v", actual)
+	} else {
+		key = actual
+	}
+
+	if matcher.seenValues[key] {
+		return false, nil
+	}
+
+	matcher.seenValues[key] = true
+	return true, nil
+}
+
+func (matcher *UniqueValue) FailureMessage(actual any) string {
+	if matcher.invalidValueType != nil {
+		return fmt.Sprintf("Expected value to be of type %T, but received: %v", matcher.invalidValueType, actual)
+	}
+	return fmt.Sprintf("Expected unique value, but received duplicate: %v", actual)
+}
+
+func (matcher *UniqueValue) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be a duplicate, but was unique: %v", actual)
 }
 
 // assertResultsEqual asserts that actual result is equal to the expected result.
@@ -122,8 +181,7 @@ type UniqueCid struct {
 	cidDecodeErr   error
 }
 
-// var _ Validator = (*UniqueCid)(nil)
-var _ StateMatcher = (*UniqueCid)(nil)
+var _ TestStateMatcher = (*UniqueCid)(nil)
 
 // NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
 // id.
@@ -136,7 +194,7 @@ func NewUniqueCid(id any) *UniqueCid {
 	}
 }
 
-func (matcher *UniqueCid) Match(actual any) (success bool, err error) {
+func (matcher *UniqueCid) Match(actual any) (bool, error) {
 	isNew := true
 	for id, value := range matcher.s.cids {
 		if id == matcher.id {
