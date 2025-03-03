@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -51,7 +52,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 							"fieldName": nil,
 							"fieldId":   nil,
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.Not(gomega.BeEmpty()),
 								"value":    gomega.Not(gomega.BeEmpty()),
 							},
@@ -60,7 +61,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 							"fieldName": "name",
 							"fieldId":   "1",
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.Not(gomega.BeEmpty()),
 								"value":    gomega.Not(gomega.BeEmpty()),
 							},
@@ -69,7 +70,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 							"fieldName": nil,
 							"fieldId":   "C",
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.Not(gomega.BeEmpty()),
 								"value":    gomega.Not(gomega.BeEmpty()),
 							},

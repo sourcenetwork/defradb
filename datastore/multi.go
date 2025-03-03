@@ -23,14 +23,12 @@ var (
 	blockStoreKey  = rootStoreKey.ChildString("blocks")
 	peerStoreKey   = rootStoreKey.ChildString("ps")
 	encStoreKey    = rootStoreKey.ChildString("enc")
-	sigStoreKey    = rootStoreKey.ChildString("sig")
 )
 
 type multistore struct {
 	root   DSReaderWriter
 	data   DSReaderWriter
 	enc    Blockstore
-	sig    Blockstore
 	head   DSReaderWriter
 	peer   DSReaderWriter
 	system DSReaderWriter
@@ -46,7 +44,6 @@ func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
 		root:   rootRW,
 		data:   prefix(rootRW, dataStoreKey),
 		enc:    newBlockstore(prefix(rootRW, encStoreKey)),
-		sig:    newBlockstore(prefix(rootRW, sigStoreKey)),
 		head:   prefix(rootRW, headStoreKey),
 		peer:   prefix(rootRW, peerStoreKey),
 		system: prefix(rootRW, systemStoreKey),

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -55,7 +56,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						{
 							"fieldName": "age",
 							"signature": map[string]any{
-								"type": "ECDSA",
+								"type": coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.And(
 									gomega.Not(gomega.BeEmpty()),
 									sameIdentity,
@@ -66,7 +67,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						{
 							"fieldName": "name",
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
@@ -74,7 +75,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						{
 							"fieldName": nil,
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
@@ -141,7 +142,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"fieldName": nil,
 							"height":    3,
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
@@ -155,7 +156,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"fieldName": nil,
 							"height":    2,
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
@@ -164,7 +165,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"fieldName": "name",
 							"height":    1,
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
@@ -173,7 +174,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"fieldName": nil,
 							"height":    1,
 							"signature": map[string]any{
-								"type":     "ECDSA",
+								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
