@@ -64,7 +64,7 @@ func (db *DB) getAllIndexDescriptions(
 	prefix := keys.NewCollectionIndexKey(immutable.None[uint32](), "")
 
 	indexKeys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
-		prefix.ToString(), txn.Systemstore())
+		prefix.Bytes(), txn.Systemstore())
 
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (db *DB) getAllIndexDescriptions(
 	indexes := make(map[client.CollectionName][]client.IndexDescription)
 
 	for i := range indexKeys {
-		indexKey, err := keys.NewCollectionIndexKeyFromString(indexKeys[i])
+		indexKey, err := keys.NewCollectionIndexKeyFromString(string(indexKeys[i]))
 		if err != nil {
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
@@ -101,7 +101,7 @@ func (db *DB) fetchCollectionIndexDescriptions(
 	prefix := keys.NewCollectionIndexKey(immutable.Some(colID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
 		ctx,
-		prefix.ToString(),
+		prefix.Bytes(),
 		txn.Systemstore(),
 	)
 	if err != nil {
@@ -283,7 +283,7 @@ func (c *collection) createIndex(
 	}
 
 	txn := mustGetContextTxn(ctx)
-	err = txn.Systemstore().Put(ctx, indexKey.ToDS(), buf)
+	err = txn.Systemstore().Set(ctx, indexKey.Bytes(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -422,32 +422,12 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 		}
 	}
 	key := keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), indexName)
-	err = txn.Systemstore().Delete(ctx, key.ToDS())
+	err = txn.Systemstore().Delete(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (c *collection) dropAllIndexes(ctx context.Context) error {
-	// callers of this function must set a context transaction
-	txn := mustGetContextTxn(ctx)
-	prefix := keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), "")
-
-	keys, err := datastore.FetchKeysForPrefix(ctx, prefix.ToString(), txn.Systemstore())
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keys {
-		err = txn.Systemstore().Delete(ctx, key)
-		if err != nil {
-			return err
-		}
-	}
-
-	return err
 }
 
 func (c *collection) loadIndexes(ctx context.Context) error {
@@ -517,7 +497,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
 			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), desc.Name)
-			exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
+			exists, err := txn.Systemstore().Has(ctx, indexKey.Bytes())
 			if err != nil {
 				return keys.CollectionIndexKey{}, err
 			}
@@ -528,7 +508,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		}
 	} else {
 		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().RootID), desc.Name)
-		exists, err := txn.Systemstore().Has(ctx, indexKey.ToDS())
+		exists, err := txn.Systemstore().Has(ctx, indexKey.Bytes())
 		if err != nil {
 			return keys.CollectionIndexKey{}, err
 		}

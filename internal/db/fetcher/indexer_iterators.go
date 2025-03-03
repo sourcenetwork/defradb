@@ -13,7 +13,7 @@ package fetcher
 import (
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -22,8 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
-
-	"github.com/ipfs/go-datastore/query"
 )
 
 const (
@@ -77,7 +75,7 @@ type indexPrefixIterator struct {
 	indexKey      keys.IndexDataStoreKey
 	matchers      []valueMatcher
 	execInfo      *ExecInfo
-	resultIter    query.Results
+	resultIter    corekv.Iterator
 	ctx           context.Context
 	store         datastore.DSReaderWriter
 }
@@ -98,35 +96,39 @@ func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSRea
 
 func (iter *indexPrefixIterator) checkResultIterator() error {
 	if iter.resultIter == nil {
-		resultIter, err := iter.store.Query(iter.ctx, query.Query{
-			Prefix: iter.indexKey.ToString(),
+		iterator, err := iter.store.Iterator(iter.ctx, corekv.IterOptions{
+			Prefix: iter.indexKey.Bytes(),
 		})
 		if err != nil {
 			return err
 		}
-		iter.resultIter = resultIter
+		iter.resultIter = iterator
 	}
 	return nil
 }
 
 func (iter *indexPrefixIterator) nextResult() (indexIterResult, error) {
-	res, hasVal := iter.resultIter.NextSync()
-	if res.Error != nil {
-		return indexIterResult{}, res.Error
+	hasValue, err := iter.resultIter.Next()
+	if err != nil || !hasValue {
+		return indexIterResult{}, err
 	}
-	if !hasVal {
-		return indexIterResult{}, nil
-	}
-	key, err := keys.DecodeIndexDataStoreKey([]byte(res.Key), &iter.indexDesc, iter.indexedFields)
+
+	key, err := keys.DecodeIndexDataStoreKey(iter.resultIter.Key(), &iter.indexDesc, iter.indexedFields)
 	if err != nil {
 		return indexIterResult{}, err
 	}
 
-	return indexIterResult{key: key, value: res.Value, foundKey: true}, nil
+	value, err := iter.resultIter.Value()
+	if err != nil {
+		return indexIterResult{}, err
+	}
+
+	return indexIterResult{key: key, value: value, foundKey: true}, nil
 }
 
 func (iter *indexPrefixIterator) Next() (indexIterResult, error) {
-	if err := iter.checkResultIterator(); err != nil {
+	err := iter.checkResultIterator()
+	if err != nil {
 		return indexIterResult{}, err
 	}
 
@@ -173,9 +175,9 @@ func (iter *eqSingleIndexIterator) Next() (indexIterResult, error) {
 	if iter.store == nil {
 		return indexIterResult{}, nil
 	}
-	val, err := iter.store.Get(iter.ctx, iter.indexKey.ToDS())
+	val, err := iter.store.Get(iter.ctx, iter.indexKey.Bytes())
 	if err != nil {
-		if errors.Is(err, ds.ErrNotFound) {
+		if errors.Is(err, corekv.ErrNotFound) {
 			return indexIterResult{key: iter.indexKey}, nil
 		}
 		return indexIterResult{}, err

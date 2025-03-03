@@ -25,6 +25,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -1726,7 +1727,7 @@ func withRetryOnNode(
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
 		err := action()
-		if errors.Is(err, datastore.ErrTxnConflict) {
+		if errors.Is(err, corekv.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}

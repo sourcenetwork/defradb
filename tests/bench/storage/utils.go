@@ -13,14 +13,16 @@ package storage
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	mathRand "math/rand"
 	"sort"
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
@@ -46,8 +48,8 @@ func runStorageBenchGet(
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
 			positionInInterval := getSampledIndex(len(keys), opCount, j)
-			key := ds.NewKey(keys[positionInInterval])
-			_, err := db.Get(ctx, key)
+			key := keys[positionInInterval]
+			_, err := db.Get(ctx, []byte(key))
 			if err != nil {
 				return err
 			}
@@ -86,7 +88,7 @@ func runStorageBenchTxnGet(
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
 			positionInInterval := getSampledIndex(len(keys), opCount, j)
-			key := ds.NewKey(keys[positionInInterval])
+			key := []byte(keys[positionInInterval])
 			_, err := txn.Rootstore().Get(ctx, key)
 			if err != nil {
 				return err
@@ -125,32 +127,29 @@ func runStorageBenchTxnIterator(
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
-			iterator, err := txn.Rootstore().GetIterator(query.Query{})
-			if err != nil {
-				return err
-			}
 			for k := 0; k < pointCount; k++ {
 				positionInInterval := getSampledIndex(len(keys), pointCount, k)
 				startKey := ds.NewKey(keys[positionInInterval])
 
-				result, err := iterator.IteratePrefix(ctx, startKey, startKey)
+				iter, err := txn.Rootstore().Iterator(ctx, corekv.IterOptions{
+					Prefix: startKey.Bytes(),
+				})
 				if err != nil {
 					return err
 				}
 				for {
-					_, hasNextItem := result.NextSync()
+					hasNextItem, err := iter.Next()
+					if err != nil {
+						return errors.Join(err, iter.Close())
+					}
 					if !hasNextItem {
 						break
 					}
 				}
-				err = result.Close()
+				err = iter.Close()
 				if err != nil {
 					return err
 				}
-			}
-			err = iterator.Close()
-			if err != nil {
-				return err
 			}
 		}
 	}
@@ -180,72 +179,18 @@ func runStorageBenchPut(
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
-			keyBuf := make([]byte, 32)
+			key := make([]byte, 32)
 			value := make([]byte, valueSize)
 			if _, err := rand.Read(value); err != nil {
 				return err
 			}
-			if _, err := rand.Read(keyBuf); err != nil {
+			if _, err := rand.Read(key); err != nil {
 				return err
 			}
-			key := ds.NewKey(string(keyBuf))
 
-			if err := db.Put(ctx, key, value); err != nil {
+			if err := db.Set(ctx, key, value); err != nil {
 				return err
 			}
-		}
-	}
-	b.StopTimer()
-
-	return nil
-}
-
-func runStorageBenchPutMany(
-	b *testing.B,
-	ctx context.Context,
-	valueSize, objCount, opCount int,
-	doSync bool,
-) error {
-	db, err := benchutils.NewTestStorage(ctx, b)
-	if err != nil {
-		return err
-	}
-	defer db.Close() //nolint:errcheck
-
-	// backfill
-	_, err = backfillBenchmarkStorageDB(ctx, db, objCount, valueSize)
-	if err != nil {
-		return err
-	}
-
-	//shuffle keys
-	// rand.Shuffle(len(keys), func(i, j int) {
-	// 	keys[i], keys[j] = keys[j], keys[i]
-	// })
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		batch, err := db.Batch(ctx)
-		if err != nil {
-			return err
-		}
-		for j := 0; j < opCount; j++ {
-			keyBuf := make([]byte, 32)
-			value := make([]byte, valueSize)
-			if _, err := rand.Read(value); err != nil {
-				return err
-			}
-			if _, err := rand.Read(keyBuf); err != nil {
-				return err
-			}
-			key := ds.NewKey(string(keyBuf))
-
-			if err := batch.Put(ctx, key, value); err != nil {
-				return err
-			}
-		}
-		if err := batch.Commit(ctx); err != nil {
-			return err
 		}
 	}
 	b.StopTimer()
@@ -255,34 +200,29 @@ func runStorageBenchPutMany(
 
 func backfillBenchmarkStorageDB(
 	ctx context.Context,
-	db ds.Batching,
+	db datastore.Rootstore,
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
-	batch, err := db.Batch(ctx)
-	if err != nil {
-		return nil, err
-	}
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {
-		keyBuf := make([]byte, 32)
+		key := make([]byte, 32)
 		value := make([]byte, valueSize)
 		if _, err := rand.Read(value); err != nil {
 			return nil, err
 		}
-		if _, err := rand.Read(keyBuf); err != nil {
+		if _, err := rand.Read(key); err != nil {
 			return nil, err
 		}
-		key := ds.NewKey(string(keyBuf))
-		keys[i] = key.String()
+		keys[i] = string(key)
 
-		if err := batch.Put(ctx, key, value); err != nil {
+		if err := db.Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}
 
 	sort.Strings(keys)
-	return keys, batch.Commit(ctx)
+	return keys, nil
 }
 
 func backfillBenchmarkTxn(
@@ -299,18 +239,17 @@ func backfillBenchmarkTxn(
 
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {
-		keyBuf := make([]byte, 32)
+		key := make([]byte, 32)
 		value := make([]byte, valueSize)
 		if _, err := rand.Read(value); err != nil {
 			return nil, err
 		}
-		if _, err := rand.Read(keyBuf); err != nil {
+		if _, err := rand.Read(key); err != nil {
 			return nil, err
 		}
-		key := ds.NewKey(string(keyBuf))
-		keys[i] = string(keyBuf)
+		keys[i] = string(key)
 
-		if err := txn.Rootstore().Put(ctx, key, value); err != nil {
+		if err := txn.Rootstore().Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}

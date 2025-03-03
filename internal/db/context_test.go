@@ -21,7 +21,7 @@ import (
 func TestEnsureContextTxnExplicit(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	txn, err := db.NewTxn(ctx, true)
@@ -43,7 +43,7 @@ func TestEnsureContextTxnExplicit(t *testing.T) {
 func TestEnsureContextTxnImplicit(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)

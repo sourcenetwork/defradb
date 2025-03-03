@@ -11,22 +11,18 @@
 package crdt
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv/memory"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func newMockStore() datastore.DSReaderWriter {
-	return datastore.AsDSReaderWriter(ds.NewMapDatastore())
-}
-
 func setupLWWRegister() LWWRegister {
-	store := newMockStore()
+	store := memory.NewDatastore(context.TODO())
 	key := keys.DataStoreKey{DocID: "AAAA-BBBB"}
 	return NewLWWRegister(store, keys.CollectionSchemaVersionKey{}, key, "")
 }
