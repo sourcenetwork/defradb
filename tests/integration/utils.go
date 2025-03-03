@@ -25,6 +25,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/matchers"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -2087,26 +2088,6 @@ func assertRequestResultDoc(
 				)
 			}
 			stack.pop()
-		}
-}
-
-func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
-	if stateMatcher, ok := exp.(TestStateMatcher); ok {
-		stateMatcher.SetTestState(s)
-	}
-	success, err := exp.Match(actual)
-	if err != nil {
-		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
-	}
-
-	if !success {
-		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
-	}
-
-	if statefulMatcher, ok := exp.(StatefulMatcher); ok {
-		if !slices.Contains(s.statefulMatchers, statefulMatcher) {
-			s.statefulMatchers = append(s.statefulMatchers, statefulMatcher)
-		}
 	}
 }
 
@@ -2441,6 +2422,49 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
 
+// execGomegaMatcher executes the given gomega matcher and asserts the result.
+func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
+	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
+
+	success, err := exp.Match(actual)
+	if err != nil {
+		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
+	}
+
+	if !success {
+		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+	}
+
+	traverseGomegaMatchers(exp, s, func(m StatefulMatcher) {
+		if !slices.Contains(s.statefulMatchers, m) {
+			s.statefulMatchers = append(s.statefulMatchers, m)
+		}
+	})
+}
+
+// traverseGomegaMatchers traverses the given gomega matcher and calls the given function
+// for each matcher found with the type T.
+func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *state, f func(T)) {
+	if m, ok := exp.(T); ok {
+		f(m)
+		return
+	}
+
+	switch exp := exp.(type) {
+	case *matchers.AndMatcher:
+		for _, m := range exp.Matchers {
+			traverseGomegaMatchers(m, s, f)
+		}
+	case *matchers.OrMatcher:
+		for _, m := range exp.Matchers {
+			traverseGomegaMatchers(m, s, f)
+		}
+	case *matchers.NotMatcher:
+		traverseGomegaMatchers(exp.Matcher, s, f)
+	}
+}
+
+// resetMatchers resets the state of all stateful matchers.
 func resetMatchers(s *state) {
 	for _, matcher := range s.statefulMatchers {
 		matcher.ResetMatcherState()

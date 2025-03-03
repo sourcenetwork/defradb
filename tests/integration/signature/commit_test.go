@@ -19,6 +19,7 @@ import (
 
 func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	uniqueSignature := testUtils.NewUniqueValue()
+	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		EnabledBlockSigning: true,
@@ -54,16 +55,19 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						{
 							"fieldName": "age",
 							"signature": map[string]any{
-								"type":     "ECDSA",
-								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    uniqueSignature,
+								"type": "ECDSA",
+								"identity": gomega.And(
+									gomega.Not(gomega.BeEmpty()),
+									sameIdentity,
+								),
+								"value": uniqueSignature,
 							},
 						},
 						{
 							"fieldName": "name",
 							"signature": map[string]any{
 								"type":     "ECDSA",
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
 						},
@@ -71,7 +75,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"fieldName": nil,
 							"signature": map[string]any{
 								"type":     "ECDSA",
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
 						},
@@ -86,6 +90,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 
 func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(t *testing.T) {
 	uniqueSignature := testUtils.NewUniqueValue()
+	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		EnabledBlockSigning: true,
@@ -136,10 +141,8 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"fieldName": nil,
 							"height":    3,
 							"signature": map[string]any{
-								"type": "ECDSA",
-								// TODO: implement Same matcher that checks if the value is the same as the previous one
-								// The question is how to reset the matcher after each test case
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"type":     "ECDSA",
+								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
 						},
@@ -153,7 +156,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"height":    2,
 							"signature": map[string]any{
 								"type":     "ECDSA",
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
 						},
@@ -162,7 +165,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"height":    1,
 							"signature": map[string]any{
 								"type":     "ECDSA",
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
 						},
@@ -171,7 +174,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"height":    1,
 							"signature": map[string]any{
 								"type":     "ECDSA",
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": sameIdentity,
 								"value":    uniqueSignature,
 							},
 						},
