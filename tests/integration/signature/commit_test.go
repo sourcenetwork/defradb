@@ -18,6 +18,8 @@ import (
 )
 
 func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
+	uniqueSignature := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		EnabledBlockSigning: true,
 		Actions: []any{
@@ -54,7 +56,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     "ECDSA",
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 						{
@@ -62,7 +64,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     "ECDSA",
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 						{
@@ -70,7 +72,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     "ECDSA",
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 					},
@@ -83,6 +85,8 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 }
 
 func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(t *testing.T) {
+	uniqueSignature := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		EnabledBlockSigning: true,
 		Actions: []any{
@@ -136,8 +140,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 								// TODO: implement Same matcher that checks if the value is the same as the previous one
 								// The question is how to reset the matcher after each test case
 								"identity": gomega.Not(gomega.BeEmpty()),
-								// TODO: implement Unique matcher that checks if the value is unique
-								"value": gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 						{
@@ -151,7 +154,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"signature": map[string]any{
 								"type":     "ECDSA",
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 						{
@@ -160,7 +163,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"signature": map[string]any{
 								"type":     "ECDSA",
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 						{
@@ -169,7 +172,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"signature": map[string]any{
 								"type":     "ECDSA",
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    uniqueSignature,
 							},
 						},
 					},

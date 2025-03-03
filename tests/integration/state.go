@@ -219,6 +219,10 @@ type state struct {
 
 	// If set to true DAG blocks will be signed with a separate block that
 	enabledBlockSigning bool
+
+	// statefulMatchers contains all stateful matchers that have been executed during a single
+	// test run. After a single test run, the statefulMatchers are reset.
+	statefulMatchers []StatefulMatcher
 }
 
 // newState returns a new fresh state for the given testCase.

@@ -272,6 +272,8 @@ func executeTestCase(
 		performAction(s, i, testCase.Actions[i])
 	}
 
+	resetMatchers(s)
+
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.allActionsDone)
 
@@ -2089,8 +2091,8 @@ func assertRequestResultDoc(
 }
 
 func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
-	if stateMatcher, ok := exp.(StateMatcher); ok {
-		stateMatcher.SetState(s)
+	if stateMatcher, ok := exp.(TestStateMatcher); ok {
+		stateMatcher.SetTestState(s)
 	}
 	success, err := exp.Match(actual)
 	if err != nil {
@@ -2099,6 +2101,12 @@ func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *ass
 
 	if !success {
 		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+	}
+
+	if statefulMatcher, ok := exp.(StatefulMatcher); ok {
+		if !slices.Contains(s.statefulMatchers, statefulMatcher) {
+			s.statefulMatchers = append(s.statefulMatchers, statefulMatcher)
+		}
 	}
 }
 
@@ -2431,4 +2439,10 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
 	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+}
+
+func resetMatchers(s *state) {
+	for _, matcher := range s.statefulMatchers {
+		matcher.ResetMatcherState()
+	}
 }
