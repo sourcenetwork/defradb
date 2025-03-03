@@ -74,6 +74,7 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 		immutable.Some[acp.ACP](acpLocal),
 		nil,
 		db.WithRetryInterval([]time.Duration{time.Second}),
+		db.WithMaxRetries(20),
 	)
 	require.NoError(t, err)
 
