@@ -98,12 +98,10 @@ func (s *server) processPushlog(
 	req *pushLogRequest,
 	isReplicator bool,
 ) (*pushLogReply, error) {
-	fmt.Printf(">>> processPushlog: Processing push log request\n")
 	pid, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf(">>> processPushlog: Peer ID: %s\n", pid.String())
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return nil, err
@@ -154,14 +152,12 @@ func (s *server) processPushlog(
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// subscribed to the collection.
 	if !s.hasPubSubTopicAndSubscribed(req.SchemaRoot) && req.DocID != "" {
-		fmt.Printf(">>> processPushlog: Subscribing to DocID topic\n")
 		_, err = s.addPubSubTopic(req.DocID, true, nil)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	fmt.Printf(">>> processPushlog: Publishing log\n")
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:      req.DocID,
 		ByPeer:     byPeer,
@@ -480,10 +476,10 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 	}
 
 	_, err = coreblock.GetSignatureBlockFromBytes(rawblock.RawData())
-    if err == nil {
-        // If the block is a signature block, we can safely send it to the requesting peer.
-        return true
-    }
+	if err == nil {
+		// If the block is a signature block, we can safely send it to the requesting peer.
+		return true
+	}
 
 	block, err := coreblock.GetFromBytes(rawblock.RawData())
 	if err != nil {
