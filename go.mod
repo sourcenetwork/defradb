@@ -20,7 +20,7 @@ require (
 	github.com/ipfs/boxo v0.28.0
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.5.0
-	github.com/ipfs/go-datastore v0.8.1
+	github.com/ipfs/go-datastore v0.7.0
 	github.com/ipfs/go-ipld-format v0.6.0
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipld/go-ipld-prime v0.21.0
@@ -340,7 +340,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
+	github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234 // indirect
 	github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
