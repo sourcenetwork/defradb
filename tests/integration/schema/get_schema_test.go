@@ -24,7 +24,7 @@ func TestGetSchema_GivenNonExistantSchemaVersionID_Errors(t *testing.T) {
 		Actions: []any{
 			testUtils.GetSchema{
 				VersionID:     immutable.Some("does not exist"),
-				ExpectedError: "datastore: key not found",
+				ExpectedError: "key not found",
 			},
 		},
 	}

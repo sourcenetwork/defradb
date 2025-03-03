@@ -11,7 +11,7 @@
 package planner
 
 import (
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -175,7 +175,7 @@ type cachedViewFetcher struct {
 	def client.CollectionDefinition
 	p   *Planner
 
-	queryResults query.Results
+	queryResults corekv.Iterator
 }
 
 var _ planNode = (*cachedViewFetcher)(nil)
@@ -200,16 +200,14 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	prefix := keys.NewViewCacheColPrefix(n.def.Description.RootID)
-
-	var err error
-	n.queryResults, err = n.p.txn.Datastore().Query(n.p.ctx, query.Query{
-		Prefix: prefix.ToString(),
+	iter, err := n.p.txn.Datastore().Iterator(n.p.ctx, corekv.IterOptions{
+		Prefix: keys.NewViewCacheColPrefix(n.def.Description.RootID).Bytes(),
 	})
 	if err != nil {
 		return err
 	}
 
+	n.queryResults = iter
 	return nil
 }
 
@@ -222,13 +220,17 @@ func (n *cachedViewFetcher) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *cachedViewFetcher) Next() (bool, error) {
-	result, hasNext := n.queryResults.NextSync()
-	if !hasNext || result.Error != nil {
-		return false, result.Error
+	hasNext, err := n.queryResults.Next()
+	if !hasNext || err != nil {
+		return false, err
 	}
 
-	var err error
-	n.currentValue, err = core.UnmarshalViewItem(n.documentMapping, result.Value)
+	value, err := n.queryResults.Value()
+	if err != nil {
+		return false, err
+	}
+
+	n.currentValue, err = core.UnmarshalViewItem(n.documentMapping, value)
 	if err != nil {
 		return false, err
 	}
