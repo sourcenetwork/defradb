@@ -29,11 +29,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-type stateMatcher struct {
+type testStateMatcher struct {
 	s *state
 }
 
-func (matcher *stateMatcher) SetTestState(s *state) {
+func (matcher *testStateMatcher) SetTestState(s *state) {
 	matcher.s = s
 }
 
@@ -61,7 +61,7 @@ func AnyOf(values ...any) *anyOf {
 }
 
 type anyOf struct {
-	stateMatcher
+	testStateMatcher
 	Values []any
 }
 
@@ -136,6 +136,55 @@ func (matcher *UniqueValue) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected value to be a duplicate, but was unique: %v", actual)
 }
 
+// SameValue ensures that values passed to Match are the same as the previous value.
+// An instance of this matcher should be given to at least 2 assert result places, otherwise
+// the matcher makes no sense.
+type SameValue struct {
+	value any
+}
+
+var _ StatefulMatcher = (*SameValue)(nil)
+
+// NewSameValue creates a new matcher that verifies each value is the same as the previous value.
+func NewSameValue() *SameValue {
+	return &SameValue{}
+}
+
+func (matcher *SameValue) ResetMatcherState() {
+	matcher.value = nil
+}
+
+func (matcher *SameValue) Match(actual any) (bool, error) {
+	var newValue any
+
+	if !reflect.TypeOf(actual).Comparable() {
+		newValue = fmt.Sprintf("%v", actual)
+	} else {
+		newValue = actual
+	}
+
+	if matcher.value == nil {
+		matcher.value = newValue
+		return true, nil
+	}
+
+	if matcher.value != newValue {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (matcher *SameValue) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be the same as the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
+		matcher.value, actual)
+}
+
+func (matcher *SameValue) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be different from the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
+		matcher.value, actual)
+}
+
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.
@@ -171,7 +220,7 @@ func areResultsAnyOf(expected []any, actual any) bool {
 // It will also ensure that all Cids described by this [UniqueCid] have the same
 // valid, Cid value.
 type UniqueCid struct {
-	stateMatcher
+	testStateMatcher
 	// id is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
 	id any
 
