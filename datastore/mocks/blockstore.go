@@ -84,7 +84,7 @@ func (_c *Blockstore_AllKeysChan_Call) RunAndReturn(run func(context.Context) (<
 	return _c
 }
 
-// AsIPLDStorage provides a mock function with given fields
+// AsIPLDStorage provides a mock function with given fields:
 func (_m *Blockstore) AsIPLDStorage() datastore.IPLDStorage {
 	ret := _m.Called()
 

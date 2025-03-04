@@ -22,7 +22,7 @@ func (_m *Results) EXPECT() *Results_Expecter {
 	return &Results_Expecter{mock: &_m.Mock}
 }
 
-// Close provides a mock function with given fields
+// Close provides a mock function with given fields:
 func (_m *Results) Close() error {
 	ret := _m.Called()
 
@@ -67,7 +67,7 @@ func (_c *Results_Close_Call) RunAndReturn(run func() error) *Results_Close_Call
 	return _c
 }
 
-// Next provides a mock function with given fields
+// Next provides a mock function with given fields:
 func (_m *Results) Next() <-chan query.Result {
 	ret := _m.Called()
 
@@ -114,7 +114,7 @@ func (_c *Results_Next_Call) RunAndReturn(run func() <-chan query.Result) *Resul
 	return _c
 }
 
-// NextSync provides a mock function with given fields
+// NextSync provides a mock function with given fields:
 func (_m *Results) NextSync() (query.Result, bool) {
 	ret := _m.Called()
 
@@ -169,7 +169,7 @@ func (_c *Results_NextSync_Call) RunAndReturn(run func() (query.Result, bool)) *
 	return _c
 }
 
-// Process provides a mock function with given fields
+// Process provides a mock function with given fields:
 func (_m *Results) Process() goprocess.Process {
 	ret := _m.Called()
 
@@ -216,7 +216,7 @@ func (_c *Results_Process_Call) RunAndReturn(run func() goprocess.Process) *Resu
 	return _c
 }
 
-// Query provides a mock function with given fields
+// Query provides a mock function with given fields:
 func (_m *Results) Query() query.Query {
 	ret := _m.Called()
 
@@ -261,7 +261,7 @@ func (_c *Results_Query_Call) RunAndReturn(run func() query.Query) *Results_Quer
 	return _c
 }
 
-// Rest provides a mock function with given fields
+// Rest provides a mock function with given fields:
 func (_m *Results) Rest() ([]query.Entry, error) {
 	ret := _m.Called()
 

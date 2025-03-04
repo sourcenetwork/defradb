@@ -176,7 +176,7 @@ func (_c *Collection_CreateMany_Call) RunAndReturn(run func(context.Context, []*
 	return _c
 }
 
-// Definition provides a mock function with no fields
+// Definition provides a mock function with given fields:
 func (_m *Collection) Definition() client.CollectionDefinition {
 	ret := _m.Called()
 
@@ -337,7 +337,7 @@ func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
-// Description provides a mock function with no fields
+// Description provides a mock function with given fields:
 func (_m *Collection) Description() client.CollectionDescription {
 	ret := _m.Called()
 
@@ -662,7 +662,7 @@ func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(context.Context) ([]
 	return _c
 }
 
-// ID provides a mock function with given fields
+// ID provides a mock function with given fields:
 func (_m *Collection) ID() uint32 {
 	ret := _m.Called()
 
@@ -707,7 +707,7 @@ func (_c *Collection_ID_Call) RunAndReturn(run func() uint32) *Collection_ID_Cal
 	return _c
 }
 
-// Name provides a mock function with no fields
+// Name provides a mock function with given fields:
 func (_m *Collection) Name() immutable.Option[string] {
 	ret := _m.Called()
 
@@ -799,7 +799,7 @@ func (_c *Collection_Save_Call) RunAndReturn(run func(context.Context, *client.D
 	return _c
 }
 
-// Schema provides a mock function with no fields
+// Schema provides a mock function with given fields:
 func (_m *Collection) Schema() client.SchemaDescription {
 	ret := _m.Called()
 
@@ -844,7 +844,7 @@ func (_c *Collection_Schema_Call) RunAndReturn(run func() client.SchemaDescripti
 	return _c
 }
 
-// SchemaRoot provides a mock function with no fields
+// SchemaRoot provides a mock function with given fields:
 func (_m *Collection) SchemaRoot() string {
 	ret := _m.Called()
 

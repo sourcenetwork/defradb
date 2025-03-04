@@ -21,7 +21,7 @@ func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 	return &EncodedDocument_Expecter{mock: &_m.Mock}
 }
 
-// ID provides a mock function with given fields
+// ID provides a mock function with given fields:
 func (_m *EncodedDocument) ID() []byte {
 	ret := _m.Called()
 
@@ -126,7 +126,7 @@ func (_c *EncodedDocument_Properties_Call) RunAndReturn(run func(bool) (map[clie
 	return _c
 }
 
-// Reset provides a mock function with no fields
+// Reset provides a mock function with given fields:
 func (_m *EncodedDocument) Reset() {
 	_m.Called()
 }
@@ -154,11 +154,11 @@ func (_c *EncodedDocument_Reset_Call) Return() *EncodedDocument_Reset_Call {
 }
 
 func (_c *EncodedDocument_Reset_Call) RunAndReturn(run func()) *EncodedDocument_Reset_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
-// SchemaVersionID provides a mock function with given fields
+// SchemaVersionID provides a mock function with given fields:
 func (_m *EncodedDocument) SchemaVersionID() string {
 	ret := _m.Called()
 
@@ -203,7 +203,7 @@ func (_c *EncodedDocument_SchemaVersionID_Call) RunAndReturn(run func() string) 
 	return _c
 }
 
-// Status provides a mock function with no fields
+// Status provides a mock function with given fields:
 func (_m *EncodedDocument) Status() client.DocumentStatus {
 	ret := _m.Called()
 
