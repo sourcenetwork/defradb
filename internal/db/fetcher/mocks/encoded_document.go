@@ -21,7 +21,7 @@ func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 	return &EncodedDocument_Expecter{mock: &_m.Mock}
 }
 
-// ID provides a mock function with no fields
+// ID provides a mock function with given fields
 func (_m *EncodedDocument) ID() []byte {
 	ret := _m.Called()
 
@@ -158,7 +158,7 @@ func (_c *EncodedDocument_Reset_Call) RunAndReturn(run func()) *EncodedDocument_
 	return _c
 }
 
-// SchemaVersionID provides a mock function with no fields
+// SchemaVersionID provides a mock function with given fields
 func (_m *EncodedDocument) SchemaVersionID() string {
 	ret := _m.Called()
 
