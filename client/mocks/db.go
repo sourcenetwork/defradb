@@ -415,7 +415,7 @@ func (_c *DB_BasicImport_Call) RunAndReturn(run func(context.Context, string) er
 	return _c
 }
 
-// Blockstore provides a mock function with no fields
+// Blockstore provides a mock function with given fields
 func (_m *DB) Blockstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -462,7 +462,7 @@ func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_
 	return _c
 }
 
-// Close provides a mock function with no fields
+// Close provides a mock function with given fields
 func (_m *DB) Close() {
 	_m.Called()
 }
@@ -601,7 +601,7 @@ func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(context.Context, clien
 	return _c
 }
 
-// Encstore provides a mock function with no fields
+// Encstore provides a mock function with given fields
 func (_m *DB) Encstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -1223,7 +1223,7 @@ func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context.Context, client.Sche
 	return _c
 }
 
-// Headstore provides a mock function with no fields
+// Headstore provides a mock function with given fields
 func (_m *DB) Headstore() go_datastore.Read {
 	ret := _m.Called()
 
@@ -1621,7 +1621,7 @@ func (_c *DB_PeerInfo_Call) RunAndReturn(run func() peer.AddrInfo) *DB_PeerInfo_
 	return _c
 }
 
-// Peerstore provides a mock function with no fields
+// Peerstore provides a mock function with given fields
 func (_m *DB) Peerstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -1808,7 +1808,7 @@ func (_c *DB_RemoveP2PCollections_Call) RunAndReturn(run func(context.Context, [
 	return _c
 }
 
-// Rootstore provides a mock function with no fields
+// Rootstore provides a mock function with given fields
 func (_m *DB) Rootstore() datastore.Rootstore {
 	ret := _m.Called()
 

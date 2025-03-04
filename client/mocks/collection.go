@@ -662,7 +662,7 @@ func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(context.Context) ([]
 	return _c
 }
 
-// ID provides a mock function with no fields
+// ID provides a mock function with given fields
 func (_m *Collection) ID() uint32 {
 	ret := _m.Called()
 
