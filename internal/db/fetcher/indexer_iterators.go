@@ -94,12 +94,17 @@ func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSRea
 	return nil
 }
 
-func (iter *indexPrefixIterator) checkResultIterator() {
+func (iter *indexPrefixIterator) checkResultIterator() error {
 	if iter.resultIter == nil {
-		iter.resultIter = iter.store.Iterator(iter.ctx, corekv.IterOptions{
+		iterator, err := iter.store.Iterator(iter.ctx, corekv.IterOptions{
 			Prefix: iter.indexKey.Bytes(),
 		})
+		if err != nil {
+			return err
+		}
+		iter.resultIter = iterator
 	}
+	return nil
 }
 
 func (iter *indexPrefixIterator) nextResult() (indexIterResult, error) {

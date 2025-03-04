@@ -284,10 +284,13 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionRootID: c.Description().RootID,
 	}
-	iter := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	resCh := make(chan client.DocIDResult)
 	go func() {

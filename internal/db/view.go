@@ -228,10 +228,13 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
 
-	iter := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewViewCacheColPrefix(col.Description.RootID).Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return err
+	}
 
 	for {
 		hasNext, err := iter.Next()

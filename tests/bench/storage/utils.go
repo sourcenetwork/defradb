@@ -132,9 +132,12 @@ func runStorageBenchTxnIterator(
 				positionInInterval := getSampledIndex(len(keys), pointCount, k)
 				startKey := ds.NewKey(keys[positionInInterval])
 
-				iter := txn.Rootstore().Iterator(ctx, corekv.IterOptions{
+				iter, err := txn.Rootstore().Iterator(ctx, corekv.IterOptions{
 					Prefix: startKey.Bytes(),
 				})
+				if err != nil {
+					return err
+				}
 				for {
 					hasNextItem, err := iter.Next()
 					if err != nil {

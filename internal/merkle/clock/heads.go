@@ -79,9 +79,12 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
-	iter := hh.store.Iterator(ctx, corekv.IterOptions{
+	iter, err := hh.store.Iterator(ctx, corekv.IterOptions{
 		Prefix: hh.namespace.Bytes(),
 	})
+	if err != nil {
+		return nil, 0, err
+	}
 
 	heads := make([]cid.Cid, 0)
 	var maxHeight uint64

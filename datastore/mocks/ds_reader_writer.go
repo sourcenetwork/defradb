@@ -187,7 +187,7 @@ func (_c *DSReaderWriter_Has_Call) RunAndReturn(run func(context.Context, []byte
 }
 
 // Iterator provides a mock function with given fields: ctx, opts
-func (_m *DSReaderWriter) Iterator(ctx context.Context, opts corekv.IterOptions) corekv.Iterator {
+func (_m *DSReaderWriter) Iterator(ctx context.Context, opts corekv.IterOptions) (corekv.Iterator, error) {
 	ret := _m.Called(ctx, opts)
 
 	if len(ret) == 0 {
@@ -195,6 +195,10 @@ func (_m *DSReaderWriter) Iterator(ctx context.Context, opts corekv.IterOptions)
 	}
 
 	var r0 corekv.Iterator
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, corekv.IterOptions) (corekv.Iterator, error)); ok {
+		return rf(ctx, opts)
+	}
 	if rf, ok := ret.Get(0).(func(context.Context, corekv.IterOptions) corekv.Iterator); ok {
 		r0 = rf(ctx, opts)
 	} else {
@@ -203,7 +207,13 @@ func (_m *DSReaderWriter) Iterator(ctx context.Context, opts corekv.IterOptions)
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, corekv.IterOptions) error); ok {
+		r1 = rf(ctx, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // DSReaderWriter_Iterator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Iterator'
@@ -225,12 +235,12 @@ func (_c *DSReaderWriter_Iterator_Call) Run(run func(ctx context.Context, opts c
 	return _c
 }
 
-func (_c *DSReaderWriter_Iterator_Call) Return(_a0 corekv.Iterator) *DSReaderWriter_Iterator_Call {
-	_c.Call.Return(_a0)
+func (_c *DSReaderWriter_Iterator_Call) Return(_a0 corekv.Iterator, _a1 error) *DSReaderWriter_Iterator_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DSReaderWriter_Iterator_Call) RunAndReturn(run func(context.Context, corekv.IterOptions) corekv.Iterator) *DSReaderWriter_Iterator_Call {
+func (_c *DSReaderWriter_Iterator_Call) RunAndReturn(run func(context.Context, corekv.IterOptions) (corekv.Iterator, error)) *DSReaderWriter_Iterator_Call {
 	_c.Call.Return(run)
 	return _c
 }

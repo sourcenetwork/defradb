@@ -26,7 +26,10 @@ func DeserializePrefix[T any](
 	prefix []byte,
 	store corekv.Reader,
 ) ([][]byte, []T, error) {
-	iter := store.Iterator(ctx, corekv.IterOptions{Prefix: prefix})
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: prefix})
+	if err != nil {
+		return nil, nil, err
+	}
 
 	keys := make([][]byte, 0)
 	elements := make([]T, 0)
@@ -64,10 +67,13 @@ func FetchKeysForPrefix(
 	prefix []byte,
 	store corekv.Reader,
 ) ([][]byte, error) {
-	iter := store.Iterator(ctx, corekv.IterOptions{
+	iter, err := store.Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix,
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	keys := make([][]byte, 0)
 	for {

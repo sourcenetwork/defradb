@@ -79,13 +79,18 @@ func newPrefixFetcher(
 		})
 	}
 
+	fetcher, err := newDocumentFetcher(ctx, txn, fieldsByID, prefixes[0], status, execInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	return &prefixFetcher{
 		txn:        txn,
 		prefixes:   prefixes,
 		ctx:        ctx,
 		fieldsByID: fieldsByID,
 		status:     status,
-		fetcher:    newDocumentFetcher(ctx, txn, fieldsByID, prefixes[0], status, execInfo),
+		fetcher:    fetcher,
 		execInfo:   execInfo,
 	}, nil
 }
@@ -108,7 +113,11 @@ func (f *prefixFetcher) NextDoc() (immutable.Option[string], error) {
 		if len(f.prefixes) > f.currentPrefix {
 			prefix := f.prefixes[f.currentPrefix]
 
-			f.fetcher = newDocumentFetcher(f.ctx, f.txn, f.fieldsByID, prefix, f.status, f.execInfo)
+			fetcher, err := newDocumentFetcher(f.ctx, f.txn, f.fieldsByID, prefix, f.status, f.execInfo)
+			if err != nil {
+				return immutable.None[string](), err
+			}
+			f.fetcher = fetcher
 
 			return f.NextDoc()
 		}

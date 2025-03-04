@@ -464,7 +464,10 @@ func (db *DB) Close() {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	iter := store.Iterator(ctx, corekv.IterOptions{})
+	iter, err := store.Iterator(ctx, corekv.IterOptions{})
+	if err != nil {
+		return err
+	}
 
 	for {
 		hasNext, err := iter.Next()

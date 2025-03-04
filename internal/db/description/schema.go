@@ -137,9 +137,12 @@ func GetSchemas(
 	}
 
 	schemaVersionPrefix := keys.NewSchemaVersionKey("")
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: schemaVersionPrefix.Bytes(),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	descriptions := make([]client.SchemaDescription, 0)
 	for {
@@ -192,9 +195,12 @@ func GetAllSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewSchemaVersionKey("").Bytes(),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	schemas := make([]client.SchemaDescription, 0)
 	for {
@@ -246,10 +252,13 @@ func GetSchemaVersionIDs(
 	// It is not present in the history prefix.
 	schemaVersions := []string{schemaRoot}
 
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewSchemaRootKey(schemaRoot, "").Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		hasValue, err := iter.Next()

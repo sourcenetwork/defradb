@@ -491,9 +491,12 @@ func createIfNotExistsReplicatorRetry(
 }
 
 func (db *DB) retryReplicators(ctx context.Context) {
-	iter := db.Peerstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := db.Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.REPLICATOR_RETRY_ID),
 	})
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed iterate replicator retry ID keys", err)
+	}
 	defer closeQueryResults(iter)
 
 	now := time.Now()
@@ -612,10 +615,13 @@ func setReplicatorNextRetry(
 func (db *DB) retryReplicator(ctx context.Context, peerID string) {
 	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
 
-	iter := db.Peerstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := db.Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed iterate replicator retry docID keys", err)
+	}
 	defer closeQueryResults(iter)
 
 	for {
@@ -655,7 +661,7 @@ func (db *DB) retryReplicator(ctx context.Context, peerID string) {
 		}
 	}
 
-	err := db.handleCompletedReplicatorRetry(ctx, peerID, true)
+	err = db.handleCompletedReplicatorRetry(ctx, peerID, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
 	}
@@ -749,10 +755,13 @@ func (db *DB) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) e
 		return err
 	}
 
-	iter := db.Peerstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := db.Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return err
+	}
 
 	for {
 		hasNext, err := iter.Next()

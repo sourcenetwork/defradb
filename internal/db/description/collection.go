@@ -153,10 +153,13 @@ func GetCollectionsByRoot(
 	txn datastore.Txn,
 	root uint32,
 ) ([]client.CollectionDescription, error) {
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewCollectionRootKey(root, 0).Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	cols := []client.CollectionDescription{}
 	for {
@@ -200,10 +203,13 @@ func GetCollectionsBySchemaVersionID(
 	txn datastore.Txn,
 	schemaVersionID string,
 ) ([]client.CollectionDescription, error) {
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewCollectionSchemaVersionKey(schemaVersionID, 0).Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	colIDs := make([]uint32, 0)
 	for {
@@ -230,7 +236,7 @@ func GetCollectionsBySchemaVersionID(
 		colIDs = append(colIDs, colSchemaVersionKey.CollectionID)
 	}
 
-	err := iter.Close()
+	err = iter.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -289,9 +295,12 @@ func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.COLLECTION_ID),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	cols := make([]client.CollectionDescription, 0)
 	for {
@@ -335,9 +344,12 @@ func GetActiveCollections(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionDescription, error) {
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	cols := make([]client.CollectionDescription, 0)
 	for {

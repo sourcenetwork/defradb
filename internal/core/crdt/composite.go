@@ -160,9 +160,12 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 }
 
 func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
-	iter := c.store.Iterator(ctx, corekv.IterOptions{
+	iter, err := c.store.Iterator(ctx, corekv.IterOptions{
 		Prefix: key.Bytes(),
 	})
+	if err != nil {
+		return err
+	}
 
 	for {
 		hasNext, err := iter.Next()

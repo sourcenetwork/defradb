@@ -55,24 +55,27 @@ func newDocumentFetcher(
 	prefix keys.DataStoreKey,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
-) *documentFetcher {
+) (*documentFetcher, error) {
 	if status == client.Active {
 		prefix = prefix.WithValueFlag()
 	} else if status == client.Deleted {
 		prefix = prefix.WithDeletedFlag()
 	}
 
-	iter := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Start: prefix.Bytes(),
 		End:   prefix.PrefixEnd().Bytes(),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &documentFetcher{
 		fieldsByID: fieldsByID,
 		iter:       iter,
 		status:     status,
 		execInfo:   execInfo,
-	}
+	}, nil
 }
 
 // keyValue is a KV store response containing the resulting core.DataStoreKey and byte array value.

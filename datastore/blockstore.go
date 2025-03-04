@@ -160,9 +160,12 @@ func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
 // TODO this is very simplistic, in the future, take dsq.Query as a param?
 func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	// KeysOnly, because that would be _a lot_ of data.
-	iter := bs.store.Iterator(ctx, corekv.IterOptions{
+	iter, err := bs.store.Iterator(ctx, corekv.IterOptions{
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	output := make(chan cid.Cid, dsq.KeysOnlyBufSize)
 	go func() {

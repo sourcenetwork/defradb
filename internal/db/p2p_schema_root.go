@@ -168,10 +168,13 @@ func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	}
 	defer txn.Discard(ctx)
 
-	iter := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
 		KeysOnly: true,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	collectionIDs := []string{}
 	for {

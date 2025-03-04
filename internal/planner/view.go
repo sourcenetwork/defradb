@@ -199,10 +199,14 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	n.queryResults = n.p.txn.Datastore().Iterator(n.p.ctx, corekv.IterOptions{
+	iter, err := n.p.txn.Datastore().Iterator(n.p.ctx, corekv.IterOptions{
 		Prefix: keys.NewViewCacheColPrefix(n.def.Description.RootID).Bytes(),
 	})
+	if err != nil {
+		return err
+	}
 
+	n.queryResults = iter
 	return nil
 }
 

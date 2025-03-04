@@ -53,10 +53,14 @@ func (hf *HeadFetcher) Start(
 		}
 	}
 
-	hf.kvIter = txn.Headstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: prefixBytes,
 	})
+	if err != nil {
+		return err
+	}
 
+	hf.kvIter = iter
 	return nil
 }
 
