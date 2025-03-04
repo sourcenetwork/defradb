@@ -191,7 +191,7 @@ func (_c *Txn_Discard_Call) Return() *Txn_Discard_Call {
 }
 
 func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -363,7 +363,7 @@ func (_c *Txn_OnDiscard_Call) Return() *Txn_OnDiscard_Call {
 }
 
 func (_c *Txn_OnDiscard_Call) RunAndReturn(run func(func())) *Txn_OnDiscard_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -396,7 +396,7 @@ func (_c *Txn_OnDiscardAsync_Call) Return() *Txn_OnDiscardAsync_Call {
 }
 
 func (_c *Txn_OnDiscardAsync_Call) RunAndReturn(run func(func())) *Txn_OnDiscardAsync_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -429,7 +429,7 @@ func (_c *Txn_OnError_Call) Return() *Txn_OnError_Call {
 }
 
 func (_c *Txn_OnError_Call) RunAndReturn(run func(func())) *Txn_OnError_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -462,7 +462,7 @@ func (_c *Txn_OnErrorAsync_Call) Return() *Txn_OnErrorAsync_Call {
 }
 
 func (_c *Txn_OnErrorAsync_Call) RunAndReturn(run func(func())) *Txn_OnErrorAsync_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -495,7 +495,7 @@ func (_c *Txn_OnSuccess_Call) Return() *Txn_OnSuccess_Call {
 }
 
 func (_c *Txn_OnSuccess_Call) RunAndReturn(run func(func())) *Txn_OnSuccess_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -528,7 +528,7 @@ func (_c *Txn_OnSuccessAsync_Call) Return() *Txn_OnSuccessAsync_Call {
 }
 
 func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccessAsync_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
