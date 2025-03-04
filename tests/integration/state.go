@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,7 +14,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ipfs/go-cid"
+	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"

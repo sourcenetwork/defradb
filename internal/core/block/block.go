@@ -15,13 +15,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime"
+	cid "github.com/ipfs/go-cid"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
-	"github.com/multiformats/go-multicodec"
+	multicodec "github.com/multiformats/go-multicodec"
 
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -214,7 +214,7 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 	// Sort the links lexicographically by CID.
 	// We need to do this to ensure that the block is deterministic.
 	sort.Slice(links, func(i, j int) bool {
-		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
+		return strings.Compare(links[i].Link.Cid.String(), links[j].Link.Cid.String()) < 0
 	})
 
 	blockLinks := make([]DAGLink, 0, len(links))

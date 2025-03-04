@@ -15,7 +15,7 @@ import (
 	"math/rand"
 	"strconv"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 

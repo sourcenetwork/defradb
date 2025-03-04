@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
+
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )

@@ -11,9 +11,10 @@
 package coreblock
 
 import (
-	"github.com/ipld/go-ipld-prime"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
+
 	"github.com/sourcenetwork/defradb/crypto"
 )
 

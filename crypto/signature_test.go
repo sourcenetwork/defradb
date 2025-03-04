@@ -1,3 +1,13 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package crypto
 
 import (
@@ -5,7 +15,7 @@ import (
 	"crypto/sha256"
 	"testing"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -140,12 +150,12 @@ func TestVerify_TamperedMessage(t *testing.T) {
 	tests := []struct {
 		name      string
 		sigType   SignatureType
-		setupKeys func(t *testing.T) (pubKey, privKey interface{})
+		setupKeys func(t *testing.T) (pubKey, privKey any)
 	}{
 		{
 			name:    "ECDSA tampered message",
 			sigType: SignatureTypeECDSA256K,
-			setupKeys: func(t *testing.T) (pubKey, privKey interface{}) {
+			setupKeys: func(t *testing.T) (pubKey, privKey any) {
 				priv, err := GenerateSecp256k1()
 				require.NoError(t, err)
 				return priv.PubKey(), priv
@@ -154,7 +164,7 @@ func TestVerify_TamperedMessage(t *testing.T) {
 		{
 			name:    "Ed25519 tampered message",
 			sigType: SignatureTypeEd25519,
-			setupKeys: func(t *testing.T) (pubKey, privKey interface{}) {
+			setupKeys: func(t *testing.T) (pubKey, privKey any) {
 				pub, priv, err := ed25519.GenerateKey(nil)
 				require.NoError(t, err)
 				return pub, priv
@@ -181,12 +191,12 @@ func TestVerify_TamperedSignature(t *testing.T) {
 	tests := []struct {
 		name      string
 		sigType   SignatureType
-		setupKeys func(t *testing.T) (pubKey, privKey interface{})
+		setupKeys func(t *testing.T) (pubKey, privKey any)
 	}{
 		{
 			name:    "ECDSA tampered signature",
 			sigType: SignatureTypeECDSA256K,
-			setupKeys: func(t *testing.T) (pubKey, privKey interface{}) {
+			setupKeys: func(t *testing.T) (pubKey, privKey any) {
 				priv, err := GenerateSecp256k1()
 				require.NoError(t, err)
 				return priv.PubKey(), priv
@@ -195,7 +205,7 @@ func TestVerify_TamperedSignature(t *testing.T) {
 		{
 			name:    "Ed25519 tampered signature",
 			sigType: SignatureTypeEd25519,
-			setupKeys: func(t *testing.T) (pubKey, privKey interface{}) {
+			setupKeys: func(t *testing.T) (pubKey, privKey any) {
 				pub, priv, err := ed25519.GenerateKey(nil)
 				require.NoError(t, err)
 				return pub, priv
@@ -241,13 +251,13 @@ func TestVerify_WrongPublicKey(t *testing.T) {
 	tests := []struct {
 		name      string
 		sigType   SignatureType
-		setupKeys func(t *testing.T) (correctPub, correctPriv, wrongPub interface{})
+		setupKeys func(t *testing.T) (correctPub, correctPriv, wrongPub any)
 		expectErr error
 	}{
 		{
 			name:    "ECDSA wrong public key",
 			sigType: SignatureTypeECDSA256K,
-			setupKeys: func(t *testing.T) (correctPub, correctPriv, wrongPub interface{}) {
+			setupKeys: func(t *testing.T) (correctPub, correctPriv, wrongPub any) {
 				priv1, err := GenerateSecp256k1()
 				require.NoError(t, err)
 				priv2, err := GenerateSecp256k1()
@@ -259,7 +269,7 @@ func TestVerify_WrongPublicKey(t *testing.T) {
 		{
 			name:    "Ed25519 wrong public key",
 			sigType: SignatureTypeEd25519,
-			setupKeys: func(t *testing.T) (correctPub, correctPriv, wrongPub interface{}) {
+			setupKeys: func(t *testing.T) (correctPub, correctPriv, wrongPub any) {
 				pub1, priv1, err := ed25519.GenerateKey(nil)
 				require.NoError(t, err)
 				pub2, _, err := ed25519.GenerateKey(nil)
@@ -288,7 +298,7 @@ func TestVerify_InvalidInputs(t *testing.T) {
 	tests := []struct {
 		name      string
 		sigType   SignatureType
-		pubKey    interface{}
+		pubKey    any
 		message   []byte
 		signature []byte
 		expectErr error

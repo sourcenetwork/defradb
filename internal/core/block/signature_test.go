@@ -1,17 +1,28 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package coreblock
 
 import (
 	"crypto/ed25519"
 	"testing"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/ipld/go-ipld-prime"
+	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/stretchr/testify/require"
 )
 
 type signatureTestKeys struct {
@@ -62,7 +73,8 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 
 	sigBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), sigBlock.GenerateNode())
 	require.NoError(t, err)
-	sigLink := sigBlockLink.(cidlink.Link)
+	sigLink, ok := sigBlockLink.(cidlink.Link)
+	require.True(t, ok)
 	block.Signature = &sigLink
 }
 
@@ -117,7 +129,8 @@ func TestBlockMarshal_IfSignatureNotSet_ShouldNotContainSignatureField(t *testin
 	sigBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), sigBlock.GenerateNode())
 	require.NoError(t, err)
 
-	link := sigBlockLink.(cidlink.Link)
+	link, ok := sigBlockLink.(cidlink.Link)
+	require.True(t, ok)
 
 	block := Block{
 		Delta: crdt.CRDT{
@@ -165,7 +178,8 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 	}
 	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
 	require.NoError(t, err)
-	encLink := encBlockLink.(cidlink.Link)
+	encLink, ok := encBlockLink.(cidlink.Link)
+	require.True(t, ok)
 
 	// Create signature block
 	sigBlock := Signature{
@@ -177,7 +191,8 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 	}
 	sigBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), sigBlock.GenerateNode())
 	require.NoError(t, err)
-	sigLink := sigBlockLink.(cidlink.Link)
+	sigLink, ok := sigBlockLink.(cidlink.Link)
+	require.True(t, ok)
 
 	// Create block with both encryption and signature
 	block := Block{
@@ -282,7 +297,8 @@ func TestVerifyBlockSignature_UnsupportedType(t *testing.T) {
 
 	sigBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), sigBlock.GenerateNode())
 	require.NoError(t, err)
-	sigLink := sigBlockLink.(cidlink.Link)
+	sigLink, ok := sigBlockLink.(cidlink.Link)
+	require.True(t, ok)
 	block.Signature = &sigLink
 
 	err = VerifyBlockSignature(&block, lsys)
