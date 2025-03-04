@@ -170,7 +170,7 @@ func GetCollectionsByRoot(
 			if err := rootQuery.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		rootKey, err := keys.NewCollectionRootKeyFromString(string(res.Key))
@@ -217,7 +217,7 @@ func GetCollectionsBySchemaVersionID(
 			if err := schemaVersionQuery.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		colSchemaVersionKey, err := keys.NewCollectionSchemaVersionKeyFromString(string(res.Key))
