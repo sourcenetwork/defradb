@@ -11,7 +11,7 @@
 package coreblock
 
 import (
-	"github.com/ipld/go-ipld-prime"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 )
 

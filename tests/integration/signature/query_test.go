@@ -13,8 +13,9 @@ package signature
 import (
 	"testing"
 
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {

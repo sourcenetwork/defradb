@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -2046,48 +2046,48 @@ func assertRequestResultDoc(
 	expectedDoc map[string]any,
 	stack *assertStack,
 ) {
-		for field, actualValue := range actualDoc {
-			stack.pushMap(field)
+	for field, actualValue := range actualDoc {
+		stack.pushMap(field)
 
-			switch expectedValue := expectedDoc[field].(type) {
-			case gomega.OmegaMatcher:
-				execGomegaMatcher(expectedValue, s, actualValue, stack)
+		switch expectedValue := expectedDoc[field].(type) {
+		case gomega.OmegaMatcher:
+			execGomegaMatcher(expectedValue, s, actualValue, stack)
 
-			case DocIndex:
-				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					expectedDocID,
-					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-				)
-			case []map[string]any:
-				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
+		case DocIndex:
+			expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expectedDocID,
+				actualValue,
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+			)
+		case []map[string]any:
+			actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
 
-				assertRequestResultDocs(
-					s,
-					nodeID,
-					expectedValue,
-					actualValueMap,
-					stack,
-				)
+			assertRequestResultDocs(
+				s,
+				nodeID,
+				expectedValue,
+				actualValueMap,
+				stack,
+			)
 
 		case map[string]any:
 			actualMap, ok := actualValue.(map[string]any)
 			require.True(s.t, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
 			assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack)
 
-			default:
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					expectedValue,
-					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-				)
-			}
-			stack.pop()
+		default:
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expectedValue,
+				actualValue,
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+			)
+		}
+		stack.pop()
 	}
 }
 

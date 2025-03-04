@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -70,8 +70,8 @@ type TestCase struct {
 
 	// Configuration for KMS to be used in the test
 	KMS KMS
-	
-	// If set to true DAG blocks will be signed with a separate block that 
+
+	// If set to true DAG blocks will be signed with a separate block that
 	EnabledBlockSigning bool
 }
 
