@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,7 +14,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ipfs/go-cid"
+	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -216,6 +216,13 @@ type state struct {
 
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool
+
+	// If set to true DAG blocks will be signed with a separate block that
+	enabledBlockSigning bool
+
+	// statefulMatchers contains all stateful matchers that have been executed during a single
+	// test run. After a single test run, the statefulMatchers are reset.
+	statefulMatchers []StatefulMatcher
 }
 
 // newState returns a new fresh state for the given testCase.
@@ -244,5 +251,6 @@ func newState(
 		docIDs:                   [][]client.DocID{},
 		cids:                     map[any]string{},
 		isBench:                  false,
+		enabledBlockSigning:      testCase.EnabledBlockSigning,
 	}
 }

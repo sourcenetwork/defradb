@@ -15,7 +15,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
@@ -136,6 +136,8 @@ func MakeStartCommand() *cobra.Command {
 					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
+
+			opts = append(opts, db.WithBlockSigning(!cfg.GetBool("datastore.nosigning")))
 
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
@@ -269,6 +271,10 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetBool(configFlags["no-telemetry"]),
 		"Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.",
 	)
+	cmd.Flags().Bool(
+		"no-signing",
+		cfg.GetBool(configFlags["no-signing"]),
+		"Disable signing of commits.")
 	return cmd
 }
 

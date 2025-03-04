@@ -358,6 +358,9 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 								cid
 								name
 							}
+							signature {
+								type
+							}
 						}
 					}
 				`,
@@ -377,6 +380,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 									"name": "_head",
 								},
 							},
+							"signature": nil,
 						},
 						{
 							"cid":          testUtils.NewUniqueCid("age create"),
@@ -387,6 +391,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"fieldName":    "age",
 							"height":       int64(1),
 							"links":        []map[string]any{},
+							"signature":    nil,
 						},
 						{
 							"cid":          testUtils.NewUniqueCid("name create"),
@@ -397,6 +402,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"fieldName":    "name",
 							"height":       int64(1),
 							"links":        []map[string]any{},
+							"signature":    nil,
 						},
 						{
 							"cid":          testUtils.NewUniqueCid("update composite"),
@@ -416,6 +422,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 									"name": "age",
 								},
 							},
+							"signature": nil,
 						},
 						{
 							"cid":          testUtils.NewUniqueCid("create composite"),
@@ -435,6 +442,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 									"name": "name",
 								},
 							},
+							"signature": nil,
 						},
 					},
 				},
