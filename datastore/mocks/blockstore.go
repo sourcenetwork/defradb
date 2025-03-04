@@ -380,7 +380,7 @@ func (_c *Blockstore_HashOnRead_Call) Return() *Blockstore_HashOnRead_Call {
 }
 
 func (_c *Blockstore_HashOnRead_Call) RunAndReturn(run func(bool)) *Blockstore_HashOnRead_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
