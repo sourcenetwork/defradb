@@ -415,7 +415,7 @@ func (_c *DB_BasicImport_Call) RunAndReturn(run func(context.Context, string) er
 	return _c
 }
 
-// Blockstore provides a mock function with given fields
+// Blockstore provides a mock function with given fields:
 func (_m *DB) Blockstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -462,7 +462,7 @@ func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_
 	return _c
 }
 
-// Close provides a mock function with given fields
+// Close provides a mock function with given fields:
 func (_m *DB) Close() {
 	_m.Called()
 }
@@ -490,7 +490,7 @@ func (_c *DB_Close_Call) Return() *DB_Close_Call {
 }
 
 func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
-	_c.Run(run)
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -601,7 +601,7 @@ func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(context.Context, clien
 	return _c
 }
 
-// Encstore provides a mock function with given fields
+// Encstore provides a mock function with given fields:
 func (_m *DB) Encstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -648,7 +648,7 @@ func (_c *DB_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_En
 	return _c
 }
 
-// Events provides a mock function with no fields
+// Events provides a mock function with given fields:
 func (_m *DB) Events() *event.Bus {
 	ret := _m.Called()
 
@@ -1223,7 +1223,7 @@ func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context.Context, client.Sche
 	return _c
 }
 
-// Headstore provides a mock function with given fields
+// Headstore provides a mock function with given fields:
 func (_m *DB) Headstore() go_datastore.Read {
 	ret := _m.Called()
 
@@ -1270,7 +1270,7 @@ func (_c *DB_Headstore_Call) RunAndReturn(run func() go_datastore.Read) *DB_Head
 	return _c
 }
 
-// LensRegistry provides a mock function with no fields
+// LensRegistry provides a mock function with given fields:
 func (_m *DB) LensRegistry() client.LensRegistry {
 	ret := _m.Called()
 
@@ -1317,7 +1317,7 @@ func (_c *DB_LensRegistry_Call) RunAndReturn(run func() client.LensRegistry) *DB
 	return _c
 }
 
-// MaxTxnRetries provides a mock function with no fields
+// MaxTxnRetries provides a mock function with given fields:
 func (_m *DB) MaxTxnRetries() int {
 	ret := _m.Called()
 
@@ -1576,7 +1576,7 @@ func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context.Context, string, im
 	return _c
 }
 
-// PeerInfo provides a mock function with no fields
+// PeerInfo provides a mock function with given fields:
 func (_m *DB) PeerInfo() peer.AddrInfo {
 	ret := _m.Called()
 
@@ -1621,7 +1621,7 @@ func (_c *DB_PeerInfo_Call) RunAndReturn(run func() peer.AddrInfo) *DB_PeerInfo_
 	return _c
 }
 
-// Peerstore provides a mock function with given fields
+// Peerstore provides a mock function with given fields:
 func (_m *DB) Peerstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -1808,7 +1808,7 @@ func (_c *DB_RemoveP2PCollections_Call) RunAndReturn(run func(context.Context, [
 	return _c
 }
 
-// Rootstore provides a mock function with given fields
+// Rootstore provides a mock function with given fields:
 func (_m *DB) Rootstore() datastore.Rootstore {
 	ret := _m.Called()
 

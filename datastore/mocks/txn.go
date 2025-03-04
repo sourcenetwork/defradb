@@ -22,7 +22,7 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 	return &Txn_Expecter{mock: &_m.Mock}
 }
 
-// Blockstore provides a mock function with given fields
+// Blockstore provides a mock function with given fields:
 func (_m *Txn) Blockstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -115,7 +115,7 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func(context.Context) error) *Txn_Co
 	return _c
 }
 
-// Datastore provides a mock function with given fields
+// Datastore provides a mock function with given fields:
 func (_m *Txn) Datastore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -195,7 +195,7 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func(context.Context)) *Txn_Discard
 	return _c
 }
 
-// Encstore provides a mock function with given fields
+// Encstore provides a mock function with given fields:
 func (_m *Txn) Encstore() datastore.Blockstore {
 	ret := _m.Called()
 
@@ -242,7 +242,7 @@ func (_c *Txn_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_
 	return _c
 }
 
-// Headstore provides a mock function with given fields
+// Headstore provides a mock function with given fields:
 func (_m *Txn) Headstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -289,7 +289,7 @@ func (_c *Txn_Headstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
-// ID provides a mock function with given fields
+// ID provides a mock function with given fields:
 func (_m *Txn) ID() uint64 {
 	ret := _m.Called()
 
@@ -532,7 +532,7 @@ func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(func())) *Txn_OnSuccess
 	return _c
 }
 
-// Peerstore provides a mock function with given fields
+// Peerstore provides a mock function with given fields:
 func (_m *Txn) Peerstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -579,7 +579,7 @@ func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
-// Rootstore provides a mock function with given fields
+// Rootstore provides a mock function with given fields:
 func (_m *Txn) Rootstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
@@ -626,7 +626,7 @@ func (_c *Txn_Rootstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) 
 	return _c
 }
 
-// Systemstore provides a mock function with given fields
+// Systemstore provides a mock function with given fields:
 func (_m *Txn) Systemstore() datastore.DSReaderWriter {
 	ret := _m.Called()
 
