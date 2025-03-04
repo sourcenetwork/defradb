@@ -140,7 +140,7 @@ func (*dummyTxn) Peerstore() datastore.DSReaderWriter   { return nil }
 func (*dummyTxn) Blockstore() datastore.Blockstore      { return nil }
 func (*dummyTxn) Systemstore() datastore.DSReaderWriter { return nil }
 func (*dummyTxn) Commit(ctx context.Context) error      { return nil }
-func (*dummyTxn) Discard(ctx context.Context)           {}
+func (*dummyTxn) Discard(ctx context.Context) error     { return nil }
 func (*dummyTxn) OnSuccess(fn func())                   {}
 func (*dummyTxn) OnError(fn func())                     {}
 func (*dummyTxn) OnDiscard(fn func())                   {}

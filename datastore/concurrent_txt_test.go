@@ -14,86 +14,58 @@ import (
 	"context"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
-	badger "github.com/sourcenetwork/badger/v4"
-	"github.com/stretchr/testify/require"
+	badgerds "github.com/dgraph-io/badger/v4"
+	"github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/corekv/memory"
 
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
+	"github.com/stretchr/testify/require"
 )
+
+func getBadgerTxnDB(t *testing.T) *badger.Datastore {
+	opts := badgerds.DefaultOptions("").WithInMemory(true)
+	rootstore, err := badger.NewDatastore("", opts)
+	require.NoError(t, err)
+
+	return rootstore
+}
 
 func TestNewConcurrentTxnFrom(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t)
 
-	txn, err := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
-	require.NoError(t, err)
+	txn := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
 
-	err = txn.Commit(ctx)
+	err := txn.Commit(ctx)
 	require.NoError(t, err)
-}
-
-func TestNewConcurrentTxnFromWithStoreClosed(t *testing.T) {
-	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
-
-	err = rootstore.Close()
-	require.NoError(t, err)
-
-	_, err = NewConcurrentTxnFrom(ctx, rootstore, 0, false)
-	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn, err := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
+	txn := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
+
+	err := txn.Commit(ctx)
 	require.NoError(t, err)
-
-	err = txn.Commit(ctx)
-	require.NoError(t, err)
-}
-
-func TestNewConcurrentTxnFromNonIterableWithStoreClosed(t *testing.T) {
-	ctx := context.Background()
-	rootstore := memory.NewDatastore(ctx)
-
-	err := rootstore.Close()
-	require.NoError(t, err)
-
-	_, err = NewConcurrentTxnFrom(ctx, rootstore, 0, false)
-	require.ErrorIs(t, err, ErrClosed)
 }
 
 func TestConcurrentTxnSync(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t)
 
-	txn, err := rootstore.NewTransaction(ctx, false)
-	require.NoError(t, err)
+	txn := rootstore.NewTxn(false)
 
 	cTxn := &concurrentTxn{Txn: txn}
-	err = cTxn.Sync(ctx, ds.Key{})
+	err := cTxn.Sync(ctx)
 	require.NoError(t, err)
 }
 
 func TestConcurrentTxnClose(t *testing.T) {
-	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := getBadgerTxnDB(t)
 
-	txn, err := rootstore.NewTransaction(ctx, false)
-	require.NoError(t, err)
+	txn := rootstore.NewTxn(false)
 
 	cTxn := &concurrentTxn{Txn: txn}
-	err = cTxn.Close()
+	err := cTxn.Close()
 	require.NoError(t, err)
 }

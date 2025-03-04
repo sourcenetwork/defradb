@@ -19,16 +19,16 @@ import (
 
 func TestGetCollectionByNameReturnsErrorGivenNonExistantCollection(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = db.GetCollectionByName(ctx, "doesNotExist")
-	assert.EqualError(t, err, "datastore: key not found")
+	assert.EqualError(t, err, "key not found")
 }
 
 func TestGetCollectionByNameReturnsErrorGivenEmptyString(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	assert.NoError(t, err)
 
 	_, err = db.GetCollectionByName(ctx, "")

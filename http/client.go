@@ -20,10 +20,10 @@ import (
 	"strconv"
 	"strings"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	sse "github.com/vito/go-sse/sse"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -498,7 +498,7 @@ func (c *Client) Peerstore() datastore.DSReaderWriter {
 	panic("client side database")
 }
 
-func (c *Client) Headstore() ds.Read {
+func (c *Client) Headstore() corekv.Reader {
 	panic("client side database")
 }
 

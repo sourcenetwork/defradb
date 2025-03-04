@@ -49,14 +49,16 @@ func (c *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
-func (c *Transaction) Discard(ctx context.Context) {
+func (c *Transaction) Discard(ctx context.Context) error {
 	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
-		return
+		return err
 	}
-	c.http.request(req) //nolint:errcheck
+
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *Transaction) OnSuccess(fn func()) {

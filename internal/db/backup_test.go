@@ -25,7 +25,7 @@ import (
 
 func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -89,7 +89,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 
 func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -154,7 +154,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 
 func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -219,7 +219,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 
 func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -296,7 +296,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 
 func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -369,7 +369,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 
 func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -434,7 +434,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -470,7 +470,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 
 func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -506,7 +506,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 
 func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -543,7 +543,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 
 func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
