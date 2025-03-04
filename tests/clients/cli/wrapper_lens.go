@@ -31,7 +31,7 @@ type LensRegistry struct {
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
-	args := []string{"client", "schema", "migration", "set-registry"}
+	args := []string{"client", "lens", "set-registry"}
 
 	lenses, err := json.Marshal(config)
 	if err != nil {
@@ -45,7 +45,7 @@ func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, co
 }
 
 func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
-	args := []string{"client", "schema", "migration", "reload"}
+	args := []string{"client", "lens", "reload"}
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
@@ -56,7 +56,7 @@ func (w *LensRegistry) MigrateUp(
 	src enumerable.Enumerable[map[string]any],
 	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
-	args := []string{"client", "schema", "migration", "up"}
+	args := []string{"client", "lens", "up"}
 	args = append(args, "--collection", fmt.Sprint(collectionID))
 
 	var srcData []map[string]any
@@ -88,7 +88,7 @@ func (w *LensRegistry) MigrateDown(
 	src enumerable.Enumerable[map[string]any],
 	collectionID uint32,
 ) (enumerable.Enumerable[map[string]any], error) {
-	args := []string{"client", "schema", "migration", "down"}
+	args := []string{"client", "lens", "down"}
 	args = append(args, "--collection", fmt.Sprint(collectionID))
 
 	var srcData []map[string]any

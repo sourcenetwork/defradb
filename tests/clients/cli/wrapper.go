@@ -282,7 +282,7 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
-	args := []string{"client", "schema", "migration", "set"}
+	args := []string{"client", "migration", "set"}
 
 	lenses, err := json.Marshal(config.Lens)
 	if err != nil {

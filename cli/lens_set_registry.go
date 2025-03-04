@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaMigrationSetRegistryCommand() *cobra.Command {
+func MakeLensSetRegistryCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set-registry [collectionID] [cfg]",
 		Short: "Set a schema migration within the DefraDB LensRegistry",
@@ -27,7 +27,7 @@ func MakeSchemaMigrationSetRegistryCommand() *cobra.Command {
 Does not persist the migration after restart.
 
 Example: set from an argument string:
-  defradb client schema migration set-registry 2 '{"lenses": [...'
+  defradb client lens set-registry 2 '{"lenses": [...'
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.ExactArgs(2),

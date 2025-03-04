@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeSchemaMigrationSetCommand() *cobra.Command {
+func MakeLensSetCommand() *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",
@@ -31,13 +31,13 @@ func MakeSchemaMigrationSetCommand() *cobra.Command {
 all collections that are on the given source schema version within the local DefraDB node.
 
 Example: set from an argument string:
-  defradb client schema migration set bae123 bae456 '{"lenses": [...'
+  defradb client lens set bae123 bae456 '{"lenses": [...'
 
 Example: set from file:
-  defradb client schema migration set bae123 bae456 -f schema_migration.lens
+  defradb client lens set bae123 bae456 -f schema_migration.lens
 
 Example: add from stdin:
-  cat schema_migration.lens | defradb client schema migration set bae123 bae456 -
+  cat schema_migration.lens | defradb client lens set bae123 bae456 -
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 3),
