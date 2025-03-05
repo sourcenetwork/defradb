@@ -149,7 +149,7 @@ func GetSchemas(
 			if err := schemaVersionQuery.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		var desc client.SchemaDescription
@@ -195,7 +195,7 @@ func GetAllSchemas(
 			if err := q.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		var desc client.SchemaDescription
@@ -240,7 +240,7 @@ func GetSchemaVersionIDs(
 			if err := q.Close(); err != nil {
 				return nil, NewErrFailedToCloseSchemaQuery(err)
 			}
-			return nil, err
+			return nil, res.Error
 		}
 
 		key, err := keys.NewSchemaRootKeyFromString(res.Key)
