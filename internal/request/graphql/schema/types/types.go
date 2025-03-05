@@ -144,10 +144,10 @@ func DefaultDirective() *gql.Directive {
 				Type: gql.DateTime,
 			},
 			DefaultDirectivePropJSON: &gql.ArgumentConfig{
-				Type: JSONScalarType(),
+				Type: JSON,
 			},
 			DefaultDirectivePropBlob: &gql.ArgumentConfig{
-				Type: BlobScalarType(),
+				Type: Blob,
 			},
 		},
 		Locations: []string{

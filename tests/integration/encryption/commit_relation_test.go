@@ -57,6 +57,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 					query {
 						commits {
 							delta
+							deltaDecoded
 							docID
 							fieldName
 						}
@@ -65,34 +66,40 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
-							"docID":     deviceDocID,
-							"fieldName": "manufacturer",
+							"delta":        encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
+							"deltaDecoded": "Sony",
+							"docID":        deviceDocID,
+							"fieldName":    "manufacturer",
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue("Walkman"), deviceDocID, ""),
-							"docID":     deviceDocID,
-							"fieldName": "model",
+							"delta":        encrypt(testUtils.CBORValue("Walkman"), deviceDocID, ""),
+							"deltaDecoded": "Walkman",
+							"docID":        deviceDocID,
+							"fieldName":    "model",
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
-							"docID":     deviceDocID,
-							"fieldName": "owner_id",
+							"delta":        encrypt(testUtils.CBORValue(userDocID), deviceDocID, ""),
+							"deltaDecoded": userDocID,
+							"docID":        deviceDocID,
+							"fieldName":    "owner_id",
 						},
 						{
-							"delta":     nil,
-							"docID":     deviceDocID,
-							"fieldName": nil,
+							"delta":        nil,
+							"deltaDecoded": nil,
+							"docID":        deviceDocID,
+							"fieldName":    nil,
 						},
 						{
-							"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
-							"docID":     userDocID,
-							"fieldName": "name",
+							"delta":        encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
+							"deltaDecoded": "Chris",
+							"docID":        userDocID,
+							"fieldName":    "name",
 						},
 						{
-							"delta":     nil,
-							"docID":     userDocID,
-							"fieldName": nil,
+							"delta":        nil,
+							"deltaDecoded": nil,
+							"docID":        userDocID,
+							"fieldName":    nil,
 						},
 					},
 				},
