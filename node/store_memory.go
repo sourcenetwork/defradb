@@ -13,8 +13,9 @@ package node
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv/memory"
+
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
 // MemoryStore specifies the defradb in memory datastore

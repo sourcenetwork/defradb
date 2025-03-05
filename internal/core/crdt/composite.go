@@ -14,8 +14,7 @@ import (
 	"bytes"
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -116,7 +115,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	dagDelta, isDagDelta := delta.(*CompositeDAGDelta)
 
 	if isDagDelta && dagDelta.Status.IsDeleted() {
-		err := c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.DeletedObjectMarker})
+		err := c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -127,8 +126,8 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
 	versionKey := c.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
-	hasObjectMarker := !errors.Is(err, ds.ErrNotFound)
+	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
+	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
 		return err
 	}
@@ -147,45 +146,58 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 		schemaVersionId = c.schemaVersionKey.SchemaVersionID
 	}
 
-	err = c.store.Put(ctx, versionKey.ToDS(), []byte(schemaVersionId))
+	err = c.store.Set(ctx, versionKey.Bytes(), []byte(schemaVersionId))
 	if err != nil {
 		return err
 	}
 
 	if !hasObjectMarker {
 		// ensure object marker exists
-		return c.store.Put(ctx, c.key.ToPrimaryDataStoreKey().ToDS(), []byte{base.ObjectMarker})
+		return c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.ObjectMarker})
 	}
 
 	return nil
 }
 
 func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
-	q := query.Query{
-		Prefix: key.ToString(),
+	iter, err := c.store.Iterator(ctx, corekv.IterOptions{
+		Prefix: key.Bytes(),
+	})
+	if err != nil {
+		return err
 	}
-	res, err := c.store.Query(ctx, q)
-	for e := range res.Next() {
-		if e.Error != nil {
-			return err
-		}
-		dsKey, err := keys.NewDataStoreKey(e.Key)
+
+	for {
+		hasNext, err := iter.Next()
 		if err != nil {
-			return err
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		dsKey, err := keys.NewDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return errors.Join(err, iter.Close())
 		}
 
 		if dsKey.InstanceType == keys.ValueKey {
-			err = c.store.Put(ctx, dsKey.WithDeletedFlag().ToDS(), e.Value)
+			value, err := iter.Value()
 			if err != nil {
-				return err
+				return errors.Join(err, iter.Close())
+			}
+
+			err = c.store.Set(ctx, dsKey.WithDeletedFlag().Bytes(), value)
+			if err != nil {
+				return errors.Join(err, iter.Close())
 			}
 		}
 
-		err = c.store.Delete(ctx, dsKey.ToDS())
+		err = c.store.Delete(ctx, dsKey.Bytes())
 		if err != nil {
-			return err
+			return errors.Join(err, iter.Close())
 		}
 	}
 
-	return nil
+	return iter.Close()
 }

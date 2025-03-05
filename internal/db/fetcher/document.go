@@ -14,11 +14,11 @@ import (
 	"bytes"
 	"context"
 
-	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -34,7 +34,7 @@ type documentFetcher struct {
 	// Statistics on the actions of this instance.
 	execInfo *ExecInfo
 	// The iterable results that documents will be fetched from.
-	kvResultsIter dsq.Results
+	iter corekv.Iterator
 
 	// The most recently yielded item from kvResultsIter.
 	currentKV keyValue
@@ -50,8 +50,8 @@ var _ fetcher = (*documentFetcher)(nil)
 
 func newDocumentFetcher(
 	ctx context.Context,
+	txn datastore.Txn,
 	fieldsByID map[uint32]client.FieldDefinition,
-	kvIter iterable.Iterator,
 	prefix keys.DataStoreKey,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
@@ -62,16 +62,19 @@ func newDocumentFetcher(
 		prefix = prefix.WithDeletedFlag()
 	}
 
-	kvResultsIter, err := kvIter.IteratePrefix(ctx, prefix.ToDS(), prefix.PrefixEnd().ToDS())
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Start: prefix.Bytes(),
+		End:   prefix.PrefixEnd().Bytes(),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &documentFetcher{
-		fieldsByID:    fieldsByID,
-		kvResultsIter: kvResultsIter,
-		status:        status,
-		execInfo:      execInfo,
+		fieldsByID: fieldsByID,
+		iter:       iter,
+		status:     status,
+		execInfo:   execInfo,
 	}, nil
 }
 
@@ -93,15 +96,17 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 	}
 
 	for {
-		res, ok := f.kvResultsIter.NextSync()
-		if res.Error != nil {
-			return immutable.None[string](), res.Error
-		}
-		if !ok {
-			return immutable.None[string](), nil
+		hasValue, err := f.iter.Next()
+		if err != nil || !hasValue {
+			return immutable.None[string](), err
 		}
 
-		dsKey, err := keys.NewDataStoreKey(res.Key)
+		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
+		if err != nil {
+			return immutable.None[string](), err
+		}
+
+		value, err := f.iter.Value()
 		if err != nil {
 			return immutable.None[string](), err
 		}
@@ -109,7 +114,7 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		previousKV := f.currentKV
 		f.currentKV = keyValue{
 			Key:   dsKey,
-			Value: res.Value,
+			Value: value,
 		}
 
 		if dsKey.DocID != previousKV.Key.DocID {
@@ -134,22 +139,27 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	}
 
 	for {
-		res, ok := f.kvResultsIter.NextSync()
-		if res.Error != nil {
-			return immutable.None[EncodedDocument](), res.Error
+		hasValue, err := f.iter.Next()
+		if err != nil {
+			return immutable.None[EncodedDocument](), err
 		}
-		if !ok {
+		if !hasValue {
 			break
 		}
 
-		dsKey, err := keys.NewDataStoreKey(res.Key)
+		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
+		if err != nil {
+			return immutable.None[EncodedDocument](), err
+		}
+
+		value, err := f.iter.Value()
 		if err != nil {
 			return immutable.None[EncodedDocument](), err
 		}
 
 		kv := keyValue{
 			Key:   dsKey,
-			Value: res.Value,
+			Value: value,
 		}
 
 		if dsKey.DocID != f.currentKV.Key.DocID {
@@ -201,5 +211,5 @@ func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 }
 
 func (f *documentFetcher) Close() error {
-	return f.kvResultsIter.Close()
+	return f.iter.Close()
 }

@@ -14,11 +14,11 @@ import (
 	"context"
 	"sync"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 )
 
 type concurrentTxn struct {
-	ds.Txn
+	corekv.Txn
 
 	// Some datastore don't support concurrent operation within a single transaction. `concurrentTxn` with its
 	// mutex enable those concurrent operations. This was implemented for DefraDB's DAG sync process.
@@ -29,55 +29,43 @@ type concurrentTxn struct {
 }
 
 // NewConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
-func NewConcurrentTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
-	rootTxn, err := newTxnFrom(ctx, rootstore, readonly)
-	if err != nil {
-		return nil, err
-	}
+func NewConcurrentTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) Txn {
+	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
 	multistore := MultiStoreFrom(rootConcurentTxn)
+
 	return &txn{
 		t:          rootConcurentTxn,
 		MultiStore: multistore,
 		id:         id,
-	}, nil
+	}
 }
 
-// Delete implements ds.Delete
-func (t *concurrentTxn) Delete(ctx context.Context, key ds.Key) error {
+func (t *concurrentTxn) Delete(ctx context.Context, key []byte) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Delete(ctx, key)
 }
 
-// Get implements ds.Get
-func (t *concurrentTxn) Get(ctx context.Context, key ds.Key) ([]byte, error) {
+func (t *concurrentTxn) Get(ctx context.Context, key []byte) ([]byte, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Get(ctx, key)
 }
 
-// Has implements ds.Has
-func (t *concurrentTxn) Has(ctx context.Context, key ds.Key) (bool, error) {
+func (t *concurrentTxn) Has(ctx context.Context, key []byte) (bool, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.Txn.Has(ctx, key)
 }
 
-// Put implements ds.Put
-func (t *concurrentTxn) Put(ctx context.Context, key ds.Key, value []byte) error {
+func (t *concurrentTxn) Set(ctx context.Context, key []byte, value []byte) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return t.Txn.Put(ctx, key, value)
+	return t.Txn.Set(ctx, key, value)
 }
 
 // Sync executes the transaction.
-func (t *concurrentTxn) Sync(ctx context.Context, prefix ds.Key) error {
-	return t.Commit(ctx)
-}
-
-// Close discards the transaction.
-func (t *concurrentTxn) Close() error {
-	t.Discard(context.TODO())
-	return nil
+func (t *concurrentTxn) Sync(ctx context.Context) error {
+	return t.Commit()
 }

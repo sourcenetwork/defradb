@@ -69,7 +69,7 @@ func init() {
 		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
-		inMemoryStore = true
+		inMemoryStore = false
 	}
 }
 

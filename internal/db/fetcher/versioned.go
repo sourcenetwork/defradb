@@ -18,13 +18,13 @@ import (
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -118,17 +118,13 @@ func (vf *VersionedFetcher) Init(
 	root := memory.NewDatastore(ctx)
 	vf.root = root
 
-	var err error
-	vf.store, err = datastore.NewTxnFrom(
+	vf.store = datastore.NewTxnFrom(
 		ctx,
 		vf.root,
 		// We can take the parent txn id here
 		txn.ID(),
 		false,
 	) // were going to discard and nuke this later
-	if err != nil {
-		return err
-	}
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.Fetcher = NewDocumentFetcher()

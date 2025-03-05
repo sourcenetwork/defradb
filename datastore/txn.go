@@ -13,9 +13,7 @@ package datastore
 import (
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
-
-	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/corekv"
 )
 
 // Txn is a common interface to the db.Txn struct.
@@ -56,7 +54,7 @@ type Txn interface {
 
 type txn struct {
 	MultiStore
-	t  ds.Txn
+	t  corekv.Txn
 	id uint64
 
 	successFns []func()
@@ -70,29 +68,16 @@ type txn struct {
 
 var _ Txn = (*txn)(nil)
 
-func newTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, readonly bool) (ds.Txn, error) {
-	// check if our datastore natively supports iterable transaction, transactions or batching
-	switch t := rootstore.(type) {
-	case iterable.IterableTxnDatastore:
-		return t.NewIterableTransaction(ctx, readonly)
-
-	default:
-		return rootstore.NewTransaction(ctx, readonly)
-	}
-}
-
 // NewTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore ds.TxnDatastore, id uint64, readonly bool) (Txn, error) {
-	rootTxn, err := newTxnFrom(ctx, rootstore, readonly)
-	if err != nil {
-		return nil, err
-	}
-	multistore := MultiStoreFrom(ShimTxnStore{rootTxn})
+func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) Txn {
+	rootTxn := rootstore.NewTxn(readonly)
+	multistore := MultiStoreFrom(rootTxn)
+
 	return &txn{
 		t:          rootTxn,
 		MultiStore: multistore,
 		id:         id,
-	}, nil
+	}
 }
 
 func (t *txn) ID() uint64 {
@@ -103,7 +88,7 @@ func (t *txn) Commit(ctx context.Context) error {
 	var fns []func()
 	var asyncFns []func()
 
-	err := t.t.Commit(ctx)
+	err := t.t.Commit()
 	if err != nil {
 		fns = t.errorFns
 		asyncFns = t.errorAsyncFns
@@ -122,7 +107,8 @@ func (t *txn) Commit(ctx context.Context) error {
 }
 
 func (t *txn) Discard(ctx context.Context) {
-	t.t.Discard(ctx)
+	t.t.Discard()
+
 	for _, fn := range t.discardAsyncFns {
 		go fn()
 	}
@@ -153,20 +139,4 @@ func (t *txn) OnErrorAsync(fn func()) {
 
 func (t *txn) OnDiscardAsync(fn func()) {
 	t.discardAsyncFns = append(t.discardAsyncFns, fn)
-}
-
-// Shim to make ds.Txn support ds.Datastore.
-type ShimTxnStore struct {
-	ds.Txn
-}
-
-// Sync executes the transaction.
-func (ts ShimTxnStore) Sync(ctx context.Context, prefix ds.Key) error {
-	return ts.Txn.Commit(ctx)
-}
-
-// Close discards the transaction.
-func (ts ShimTxnStore) Close() error {
-	ts.Discard(context.TODO())
-	return nil
 }
