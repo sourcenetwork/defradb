@@ -14,15 +14,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaMigrationReloadCommand() *cobra.Command {
+func MakeLensCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "reload",
-		Short: "Reload the schema migrations within DefraDB",
-		Long:  `Reload the schema migrations within DefraDB`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
-			return store.LensRegistry().ReloadLenses(cmd.Context())
-		},
+		Use:   "lens",
+		Short: "Interact with the schema migration system of a running DefraDB instance",
+		Long:  `Make set or look for existing schema migrations on a DefraDB node.`,
 	}
+
 	return cmd
 }

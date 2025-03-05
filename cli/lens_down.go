@@ -19,23 +19,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaMigrationUpCommand() *cobra.Command {
+func MakeLensDownCommand() *cobra.Command {
 	var file string
 	var collectionID uint32
 	var cmd = &cobra.Command{
-		Use:   "up --collection <collectionID> <documents>",
-		Short: "Applies the migration to the specified collection version.",
-		Long: `Applies the migration to the specified collection version.
-Documents is a list of documents to apply the migration to.		
+		Use:   "down --collection <collectionID> <documents>",
+		Short: "Reverses the migration to the specified collection version.",
+		Long: `Reverses the migration to the specified collection version.
+Documents is a list of documents to reverse the migration from.
 
 Example: migrate from string
-  defradb client schema migration up --collection 2 '[{"name": "Bob"}]'
+  defradb client lens down --collection 2 '[{"name": "Bob"}]'
 
 Example: migrate from file
-  defradb client schema migration up --collection 2 -f documents.json
+  defradb client lens down --collection 2 -f documents.json
 
 Example: migrate from stdin
-  cat documents.json | defradb client schema migration up --collection 2 -
+  cat documents.json | defradb client lens down --collection 2 -
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -65,7 +65,7 @@ Example: migrate from stdin
 			if err := json.Unmarshal(srcData, &src); err != nil {
 				return err
 			}
-			out, err := store.LensRegistry().MigrateUp(cmd.Context(), enumerable.New(src), collectionID)
+			out, err := store.LensRegistry().MigrateDown(cmd.Context(), enumerable.New(src), collectionID)
 			if err != nil {
 				return err
 			}
