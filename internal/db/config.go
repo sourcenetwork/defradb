@@ -24,9 +24,10 @@ const (
 )
 
 type dbOptions struct {
-	maxTxnRetries  immutable.Option[int]
-	RetryIntervals []time.Duration
-	identity       immutable.Option[identity.Identity]
+	maxTxnRetries       immutable.Option[int]
+	RetryIntervals      []time.Duration
+	identity            immutable.Option[identity.Identity]
+	blockSigningEnabled bool
 }
 
 // defaultOptions returns the default db options.
@@ -66,5 +67,12 @@ func WithRetryInterval(interval []time.Duration) Option {
 func WithNodeIdentity(ident identity.Identity) Option {
 	return func(opts *dbOptions) {
 		opts.identity = immutable.Some(ident)
+	}
+}
+
+// WithBlockSigning enables or disables DAG blocks signing.
+func WithBlockSigning(enabled bool) Option {
+	return func(opts *dbOptions) {
+		opts.blockSigningEnabled = enabled
 	}
 }

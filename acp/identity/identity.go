@@ -16,7 +16,7 @@ import (
 
 	"github.com/cyware/ssi-sdk/crypto"
 	"github.com/cyware/ssi-sdk/did/key"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
