@@ -1,25 +1,15 @@
-## defradb client schema migration set-registry
+## defradb client lens
 
-Set a schema migration within the DefraDB LensRegistry
+Interact with the schema migration system of a running DefraDB instance
 
 ### Synopsis
 
-Set a migration to a collection within the LensRegistry of the local DefraDB node.
-Does not persist the migration after restart.
-
-Example: set from an argument string:
-  defradb client schema migration set-registry 2 '{"lenses": [...'
-
-Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
-
-```
-defradb client schema migration set-registry [collectionID] [cfg] [flags]
-```
+Make set or look for existing schema migrations on a DefraDB node.
 
 ### Options
 
 ```
-  -h, --help   help for set-registry
+  -h, --help   help for lens
 ```
 
 ### Options inherited from parent commands
@@ -46,5 +36,10 @@ defradb client schema migration set-registry [collectionID] [cfg] [flags]
 
 ### SEE ALSO
 
-* [defradb client schema migration](defradb_client_schema_migration.md)	 - Interact with the schema migration system of a running DefraDB instance
+* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client lens down](defradb_client_lens_down.md)	 - Reverses the migration to the specified collection version.
+* [defradb client lens reload](defradb_client_lens_reload.md)	 - Reload the schema migrations within DefraDB
+* [defradb client lens set](defradb_client_lens_set.md)	 - Set a schema migration within DefraDB
+* [defradb client lens set-registry](defradb_client_lens_set-registry.md)	 - Set a schema migration within the DefraDB LensRegistry
+* [defradb client lens up](defradb_client_lens_up.md)	 - Applies the migration to the specified collection version.
 

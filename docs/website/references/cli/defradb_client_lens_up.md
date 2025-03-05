@@ -1,15 +1,32 @@
-## defradb client schema migration
+## defradb client lens up
 
-Interact with the schema migration system of a running DefraDB instance
+Applies the migration to the specified collection version.
 
 ### Synopsis
 
-Make set or look for existing schema migrations on a DefraDB node.
+Applies the migration to the specified collection version.
+Documents is a list of documents to apply the migration to.		
+
+Example: migrate from string
+  defradb client lens up --collection 2 '[{"name": "Bob"}]'
+
+Example: migrate from file
+  defradb client lens up --collection 2 -f documents.json
+
+Example: migrate from stdin
+  cat documents.json | defradb client lens up --collection 2 -
+		
+
+```
+defradb client lens up --collection <collectionID> <documents> [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for migration
+      --collection uint32   Collection id
+  -f, --file string         File containing document(s)
+  -h, --help                help for up
 ```
 
 ### Options inherited from parent commands
@@ -36,10 +53,5 @@ Make set or look for existing schema migrations on a DefraDB node.
 
 ### SEE ALSO
 
-* [defradb client schema](defradb_client_schema.md)	 - Interact with the schema system of a DefraDB node
-* [defradb client schema migration down](defradb_client_schema_migration_down.md)	 - Reverses the migration to the specified collection version.
-* [defradb client schema migration reload](defradb_client_schema_migration_reload.md)	 - Reload the schema migrations within DefraDB
-* [defradb client schema migration set](defradb_client_schema_migration_set.md)	 - Set a schema migration within DefraDB
-* [defradb client schema migration set-registry](defradb_client_schema_migration_set-registry.md)	 - Set a schema migration within the DefraDB LensRegistry
-* [defradb client schema migration up](defradb_client_schema_migration_up.md)	 - Applies the migration to the specified collection version.
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
 

@@ -1,32 +1,32 @@
-## defradb client schema migration down
+## defradb client lens set
 
-Reverses the migration to the specified collection version.
+Set a schema migration within DefraDB
 
 ### Synopsis
 
-Reverses the migration to the specified collection version.
-Documents is a list of documents to reverse the migration from.
+Set a migration from a source schema version to a destination schema version for
+all collections that are on the given source schema version within the local DefraDB node.
 
-Example: migrate from string
-  defradb client schema migration down --collection 2 '[{"name": "Bob"}]'
+Example: set from an argument string:
+  defradb client lens set bae123 bae456 '{"lenses": [...'
 
-Example: migrate from file
-  defradb client schema migration down --collection 2 -f documents.json
+Example: set from file:
+  defradb client lens set bae123 bae456 -f schema_migration.lens
 
-Example: migrate from stdin
-  cat documents.json | defradb client schema migration down --collection 2 -
-		
+Example: add from stdin:
+  cat schema_migration.lens | defradb client lens set bae123 bae456 -
+
+Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client schema migration down --collection <collectionID> <documents> [flags]
+defradb client lens set [src] [dst] [cfg] [flags]
 ```
 
 ### Options
 
 ```
-      --collection uint32   Collection id
-  -f, --file string         File containing document(s)
-  -h, --help                help for down
+  -f, --file string   Lens configuration file
+  -h, --help          help for set
 ```
 
 ### Options inherited from parent commands
@@ -53,5 +53,5 @@ defradb client schema migration down --collection <collectionID> <documents> [fl
 
 ### SEE ALSO
 
-* [defradb client schema migration](defradb_client_schema_migration.md)	 - Interact with the schema migration system of a running DefraDB instance
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
 
