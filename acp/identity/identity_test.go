@@ -16,7 +16,7 @@ import (
 
 	"github.com/cyware/ssi-sdk/crypto"
 	"github.com/cyware/ssi-sdk/did/key"
-	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 )
 

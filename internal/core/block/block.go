@@ -81,8 +81,8 @@ func mustSetSchema(schemaName string, schemas ...schemaDefinition) (schema.Type,
 	schemaType := ts.TypeByName(schemaName)
 
 	// Calling bindnode.Prototype here ensure that [Block] and all the types it contains
-	// are compatible with the IPLD schema defined by blockSchemaType.
-	// If [Block] and `blockSchematype` do not match, this will panic.
+	// are compatible with the IPLD schema defined by [schemaDefinition].
+	// If [Block] and [schemaType] do not match, this will panic.
 	proto := bindnode.Prototype(schemas[0], schemaType)
 
 	return schemaType, proto.Representation()
@@ -144,7 +144,7 @@ type Block struct {
 	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
 	Encryption *cidlink.Link
 
-	// Signature contains the block's signature.
+	// Signature contains the link to the block's signature.
 	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
 	Signature *cidlink.Link
 }
@@ -214,7 +214,7 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 	// Sort the links lexicographically by CID.
 	// We need to do this to ensure that the block is deterministic.
 	sort.Slice(links, func(i, j int) bool {
-		return strings.Compare(links[i].Link.Cid.String(), links[j].Link.Cid.String()) < 0
+		return strings.Compare(links[i].Cid.String(), links[j].Cid.String()) < 0
 	})
 
 	blockLinks := make([]DAGLink, 0, len(links))

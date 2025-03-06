@@ -643,7 +643,6 @@ func (c *collection) save(
 	}
 	txn := mustGetContextTxn(ctx)
 
-	// TODO: think if it's the best place to set the identity
 	ident := identity.FromContext(ctx)
 	if !ident.HasValue() && c.db.nodeIdentity.HasValue() {
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)

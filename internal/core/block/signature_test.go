@@ -14,7 +14,7 @@ import (
 	"crypto/ed25519"
 	"testing"
 
-	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"

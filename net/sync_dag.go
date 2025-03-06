@@ -47,15 +47,15 @@ func syncDAG(ctx context.Context, blockService blockservice.BlockService, block 
 	// use a session to make remote fetches more efficient
 	ctx = blockservice.ContextWithSession(ctx, blockService)
 
-	linkSys := makeLinkSystem(blockService)
+	linkSystem := makeLinkSystem(blockService)
 
 	// Store the block in the DAG store
-	_, err := linkSys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	_, err := linkSystem.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return err
 	}
 
-	err = loadBlockLinks(ctx, &linkSys, block)
+	err = loadBlockLinks(ctx, &linkSystem, block)
 	if err != nil {
 		return err
 	}

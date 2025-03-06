@@ -13,7 +13,7 @@ package identity
 import (
 	"encoding/hex"
 
-	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // RawIdentity holds the raw bytes that make up an actor's identity.

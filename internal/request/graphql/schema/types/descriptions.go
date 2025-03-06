@@ -67,18 +67,6 @@ Child commits in the DAG that contribute to the composition of this commit.
 The signature of the commit, if one exists. This is used to verify the integrity
  of the commit and the data it contains.
 `
-	signatureTypeFieldDescription string = `
-The type of the signature, which is used to determine the algorithm used to
- generate the signature.
-`
-	signatureIdentityFieldDescription string = `
-The identity of the signer, which is used to determine the public key used to
- verify the signature.
-`
-	signatureValueFieldDescription string = `
-The value of the signature, which is used to verify the integrity of the commit
- and the data it contains.
-`
 	commitHeightFieldDescription string = `
 Height represents the location of the commit in the DAG. All commits (collection, composite,
  and field level) on create will have a height of '1', each subsequent local update

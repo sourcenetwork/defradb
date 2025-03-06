@@ -86,16 +86,19 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 					Description: signatureDescription,
 					Fields: gql.Fields{
 						request.SignatureTypeFieldName: &gql.Field{
-							Description: signatureTypeFieldDescription,
-							Type:        gql.String,
+							Description: "The type of the signature, which is used to determine the " +
+								"algorithm used to generate the signature.",
+							Type: gql.String,
 						},
 						request.SignatureIdentityFieldName: &gql.Field{
-							Description: signatureIdentityFieldDescription,
-							Type:        gql.String,
+							Description: "The identity of the signer, which is used to determine " +
+								"the public key used to verify the signature.ureIdentityFieldDescription",
+							Type: gql.String,
 						},
 						request.SignatureValueFieldName: &gql.Field{
-							Description: signatureValueFieldDescription,
-							Type:        gql.String,
+							Description: "The value of the signature, which is used to verify the integrity " +
+								"of the commit and the data it contains.",
+							Type: gql.String,
 						},
 					}},
 				),

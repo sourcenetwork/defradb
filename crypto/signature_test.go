@@ -15,7 +15,7 @@ import (
 	"crypto/sha256"
 	"testing"
 
-	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

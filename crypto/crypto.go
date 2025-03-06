@@ -14,7 +14,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 
-	secp256k1 "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // GenerateSecp256k1 generates a new secp256k1 private key.

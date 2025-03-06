@@ -75,11 +75,11 @@ func GetSignatureBlockFromBytes(b []byte) (*Signature, error) {
 
 // GetFromNode returns a block from a node.
 func GetSignatureBlockFromNode(node ipld.Node) (*Signature, error) {
-	encBlock, ok := bindnode.Unwrap(node).(*Signature)
+	sigBlock, ok := bindnode.Unwrap(node).(*Signature)
 	if !ok {
 		return nil, NewErrNodeToBlock(node)
 	}
-	return encBlock, nil
+	return sigBlock, nil
 }
 
 // Marshal encodes the delta using CBOR encoding.
