@@ -273,7 +273,7 @@ func executeTestCase(
 		performAction(s, i, testCase.Actions[i])
 	}
 
-	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope 
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
 	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
 	// by them. So the matchers need to be reset between the test runs.
 	resetMatchers(s)
