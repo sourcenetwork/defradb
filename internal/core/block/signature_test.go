@@ -60,7 +60,7 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 			Value: ed25519.Sign(keys.ed25519Priv, blockBytes),
 		}
 	case SignatureTypeECDSA256K:
-		sig, err := crypto.Sign(crypto.SignatureTypeECDSA256K, keys.ecdsaKey, blockBytes)
+		sig, err := crypto.Sign(keys.ecdsaKey, blockBytes)
 		require.NoError(t, err)
 		sigBlock = &Signature{
 			Header: SignatureHeader{
@@ -78,7 +78,7 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 	block.Signature = &sigLink
 }
 
-func setupTestEnv(t *testing.T) (*linking.LinkSystem, *signatureTestKeys) {
+func setupSignatureTestEnv(t *testing.T) (*linking.LinkSystem, *signatureTestKeys) {
 	lsys := cidlink.DefaultLinkSystem()
 	store := memstore.Store{}
 	lsys.SetReadStorage(&store)
@@ -238,7 +238,7 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 }
 
 func TestVerifyBlockSignature_NoSignature(t *testing.T) {
-	lsys, _ := setupTestEnv(t)
+	lsys, _ := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	storeBlock(t, lsys, block)
 	err := VerifyBlockSignature(&block, lsys)
@@ -246,7 +246,7 @@ func TestVerifyBlockSignature_NoSignature(t *testing.T) {
 }
 
 func TestVerifyBlockSignature_ValidEd25519(t *testing.T) {
-	lsys, keys := setupTestEnv(t)
+	lsys, keys := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	createSignedBlock(t, lsys, &block, SignatureTypeEd25519, keys)
 	storeBlock(t, lsys, block)
@@ -255,7 +255,7 @@ func TestVerifyBlockSignature_ValidEd25519(t *testing.T) {
 }
 
 func TestVerifyBlockSignature_ValidECDSA(t *testing.T) {
-	lsys, keys := setupTestEnv(t)
+	lsys, keys := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	createSignedBlock(t, lsys, &block, SignatureTypeECDSA256K, keys)
 	err := VerifyBlockSignature(&block, lsys)
@@ -263,7 +263,7 @@ func TestVerifyBlockSignature_ValidECDSA(t *testing.T) {
 }
 
 func TestVerifyBlockSignature_InvalidLink(t *testing.T) {
-	lsys, _ := setupTestEnv(t)
+	lsys, _ := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	block.Signature = &cidlink.Link{} // Invalid CID
 	err := VerifyBlockSignature(&block, lsys)
@@ -271,7 +271,7 @@ func TestVerifyBlockSignature_InvalidLink(t *testing.T) {
 }
 
 func TestVerifyBlockSignature_TamperedData(t *testing.T) {
-	lsys, keys := setupTestEnv(t)
+	lsys, keys := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	createSignedBlock(t, lsys, &block, SignatureTypeEd25519, keys)
 
@@ -283,7 +283,7 @@ func TestVerifyBlockSignature_TamperedData(t *testing.T) {
 }
 
 func TestVerifyBlockSignature_UnsupportedType(t *testing.T) {
-	lsys, _ := setupTestEnv(t)
+	lsys, _ := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 
 	// Create signature block with unsupported type
@@ -302,5 +302,5 @@ func TestVerifyBlockSignature_UnsupportedType(t *testing.T) {
 	block.Signature = &sigLink
 
 	err = VerifyBlockSignature(&block, lsys)
-	require.ErrorIs(t, err, crypto.ErrUnsupportedSignatureType)
+	require.ErrorIs(t, err, crypto.ErrUnsupportedPrivKeyType)
 }

@@ -238,7 +238,7 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
-	sigBytes, err := crypto.Sign(crypto.SignatureTypeECDSA256K, ident.Value().PrivateKey, blockBytes)
+	sigBytes, err := crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
 	if err != nil {
 		return err
 	}

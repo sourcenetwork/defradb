@@ -11,7 +11,10 @@
 package coreblock
 
 import (
-	ipld "github.com/ipld/go-ipld-prime"
+	"crypto/ed25519"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 
@@ -109,7 +112,6 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
 		return nil
 	}
 
-	// Load the signature block
 	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
 	if err != nil {
 		return ErrSignatureNotFound
@@ -120,26 +122,27 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
 		return ErrSignatureNotFound
 	}
 
-	// Generate a new node from the block without the signature field
-	// This is what was originally signed
 	blockToVerify := *block
 	blockToVerify.Signature = nil
 
-	// Marshal the node to get the bytes that were signed
 	signedBytes, err := marshalNode(&blockToVerify, BlockSchema)
 	if err != nil {
 		return err
 	}
 
-	var sigType crypto.SignatureType
 	switch sigBlock.Header.Type {
 	case SignatureTypeEd25519:
-		sigType = crypto.SignatureTypeEd25519
-	case SignatureTypeECDSA256K:
-		sigType = crypto.SignatureTypeECDSA256K
-	default:
-		return crypto.ErrUnsupportedSignatureType
-	}
+		pubKey := ed25519.PublicKey(sigBlock.Header.Identity)
+		return crypto.Verify(pubKey, signedBytes, sigBlock.Value)
 
-	return crypto.Verify(sigType, sigBlock.Header.Identity, signedBytes, sigBlock.Value)
+	case SignatureTypeECDSA256K:
+		pubKey, err := secp256k1.ParsePubKey(sigBlock.Header.Identity)
+		if err != nil {
+			return crypto.ErrUnsupportedECDSAPrivKeyType
+		}
+		return crypto.Verify(pubKey, signedBytes, sigBlock.Value)
+
+	default:
+		return crypto.ErrUnsupportedPrivKeyType
+	}
 }
