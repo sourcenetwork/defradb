@@ -241,8 +241,9 @@ func TestVerifyBlockSignature_NoSignature(t *testing.T) {
 	lsys, _ := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	storeBlock(t, lsys, block)
-	err := VerifyBlockSignature(&block, lsys)
+	verified, err := VerifyBlockSignature(&block, lsys)
 	require.NoError(t, err)
+	require.False(t, verified)
 }
 
 func TestVerifyBlockSignature_ValidEd25519(t *testing.T) {
@@ -250,24 +251,27 @@ func TestVerifyBlockSignature_ValidEd25519(t *testing.T) {
 	block := makeCompositeBlock(t, lsys)
 	createSignedBlock(t, lsys, &block, SignatureTypeEd25519, keys)
 	storeBlock(t, lsys, block)
-	err := VerifyBlockSignature(&block, lsys)
+	verified, err := VerifyBlockSignature(&block, lsys)
 	require.NoError(t, err)
+	require.True(t, verified)
 }
 
 func TestVerifyBlockSignature_ValidECDSA(t *testing.T) {
 	lsys, keys := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	createSignedBlock(t, lsys, &block, SignatureTypeECDSA256K, keys)
-	err := VerifyBlockSignature(&block, lsys)
+	verified, err := VerifyBlockSignature(&block, lsys)
 	require.NoError(t, err)
+	require.True(t, verified)
 }
 
 func TestVerifyBlockSignature_InvalidLink(t *testing.T) {
 	lsys, _ := setupSignatureTestEnv(t)
 	block := makeCompositeBlock(t, lsys)
 	block.Signature = &cidlink.Link{} // Invalid CID
-	err := VerifyBlockSignature(&block, lsys)
-	require.ErrorIs(t, err, ErrSignatureNotFound)
+	verified, err := VerifyBlockSignature(&block, lsys)
+	require.ErrorIs(t, err, NewErrCouldNotLoadSignatureBlock(nil))
+	require.False(t, verified)
 }
 
 func TestVerifyBlockSignature_TamperedData(t *testing.T) {
@@ -278,8 +282,9 @@ func TestVerifyBlockSignature_TamperedData(t *testing.T) {
 	// Tamper with the data after signing
 	block.Links = append(block.Links, block.Links[0])
 
-	err := VerifyBlockSignature(&block, lsys)
+	verified, err := VerifyBlockSignature(&block, lsys)
 	require.ErrorIs(t, err, crypto.ErrSignatureVerification)
+	require.True(t, verified)
 }
 
 func TestVerifyBlockSignature_UnsupportedType(t *testing.T) {
@@ -301,6 +306,7 @@ func TestVerifyBlockSignature_UnsupportedType(t *testing.T) {
 	require.True(t, ok)
 	block.Signature = &sigLink
 
-	err = VerifyBlockSignature(&block, lsys)
+	verified, err := VerifyBlockSignature(&block, lsys)
 	require.ErrorIs(t, err, crypto.ErrUnsupportedPrivKeyType)
+	require.False(t, verified)
 }

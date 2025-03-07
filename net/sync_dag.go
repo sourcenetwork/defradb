@@ -74,7 +74,10 @@ func loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *cor
 	var asyncErrOnce sync.Once
 
 	if block.Signature != nil {
-		err := coreblock.VerifyBlockSignature(block, linkSys)
+		// we deliberately ignore the first returned value, which indicates whether the signature
+		// the block was actually verified or not, because we don't handle it any different here.
+		// But we want to keep the API of VerifyBlockSignature explicit about the results.
+		_, err := coreblock.VerifyBlockSignature(block, linkSys)
 		if err != nil {
 			return err
 		}

@@ -23,7 +23,7 @@ const (
 	errGeneratingLink              string = "failed to generate link"
 	errInvalidBlockEncryptionType  string = "invalid block encryption type"
 	errInvalidBlockEncryptionKeyID string = "invalid block encryption key id"
-	errSignatureNotFound           string = "signature block not found"
+	errCouldNotLoadSignatureBlock  string = "could not load signature block"
 	errSignatureVerification       string = "signature verification failed"
 )
 
@@ -38,7 +38,6 @@ var (
 	ErrGeneratingLink              = errors.New(errGeneratingLink)
 	ErrInvalidBlockEncryptionType  = errors.New(errInvalidBlockEncryptionType)
 	ErrInvalidBlockEncryptionKeyID = errors.New(errInvalidBlockEncryptionKeyID)
-	ErrSignatureNotFound           = errors.New(errSignatureNotFound)
 	ErrSignatureVerification       = errors.New(errSignatureVerification)
 )
 
@@ -71,6 +70,14 @@ func NewErrUnmarshallingBlock(err error) error {
 func NewErrGeneratingLink(err error) error {
 	return errors.Wrap(
 		errGeneratingLink,
+		err,
+	)
+}
+
+// NewErrCouldNotLoadSignatureBlock returns an error indicating that the signature block could not be found.
+func NewErrCouldNotLoadSignatureBlock(err error) error {
+	return errors.Wrap(
+		errCouldNotLoadSignatureBlock,
 		err,
 	)
 }

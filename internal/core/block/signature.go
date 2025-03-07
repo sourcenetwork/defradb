@@ -107,19 +107,19 @@ func (sig *Signature) GenerateNode() ipld.Node {
 // It returns an error if:
 // - The signature block cannot be loaded
 // - The signature verification fails
-func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
+func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) {
 	if block.Signature == nil {
-		return nil
+		return false, nil
 	}
 
 	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
 	if err != nil {
-		return ErrSignatureNotFound
+		return false, NewErrCouldNotLoadSignatureBlock(err)
 	}
 
 	sigBlock, err := GetSignatureBlockFromNode(nd)
 	if err != nil {
-		return ErrSignatureNotFound
+		return false, NewErrCouldNotLoadSignatureBlock(err)
 	}
 
 	blockToVerify := *block
@@ -127,22 +127,22 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) error {
 
 	signedBytes, err := marshalNode(&blockToVerify, BlockSchema)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	switch sigBlock.Header.Type {
 	case SignatureTypeEd25519:
 		pubKey := ed25519.PublicKey(sigBlock.Header.Identity)
-		return crypto.Verify(pubKey, signedBytes, sigBlock.Value)
+		return true, crypto.Verify(pubKey, signedBytes, sigBlock.Value)
 
 	case SignatureTypeECDSA256K:
 		pubKey, err := secp256k1.ParsePubKey(sigBlock.Header.Identity)
 		if err != nil {
-			return crypto.ErrUnsupportedECDSAPrivKeyType
+			return false, crypto.ErrUnsupportedECDSAPrivKeyType
 		}
-		return crypto.Verify(pubKey, signedBytes, sigBlock.Value)
+		return true, crypto.Verify(pubKey, signedBytes, sigBlock.Value)
 
 	default:
-		return crypto.ErrUnsupportedPrivKeyType
+		return false, crypto.ErrUnsupportedPrivKeyType
 	}
 }
