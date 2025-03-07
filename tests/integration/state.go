@@ -239,8 +239,12 @@ func (s *state) GetCurrentNodeID() int {
 	return s.currentNodeID
 }
 
+// TestState is read-only interface for test state. It allows passing the state to custom matchers
+// without allowing them to modify the state.
 type TestState interface {
+	// GetClientType returns the client type of the test.
 	GetClientType() ClientType
+	// GetCurrentNodeID returns the node id that is currently being asserted.
 	GetCurrentNodeID() int
 }
 
