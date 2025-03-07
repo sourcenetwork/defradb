@@ -133,7 +133,6 @@ func TestUniqueValueMatcher(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantMatch[i], got)
 			}
-
 		})
 	}
 }
