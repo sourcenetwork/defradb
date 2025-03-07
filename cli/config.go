@@ -99,6 +99,7 @@ var configDefaults = map[string]any{
 	"log.stacktrace":                    false,
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
+	"datastore.nosigning":               false,
 }
 
 // defaultConfig returns a new config with default values.
