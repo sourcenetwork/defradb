@@ -26,7 +26,7 @@ func TestSignECDSA_WithPrivateKeyStruct(t *testing.T) {
 	require.NoError(t, err)
 
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeECDSA256K, privKey, message)
+	sig, err := Sign(privKey, message)
 	require.NoError(t, err)
 
 	// Parse the DER signature
@@ -42,8 +42,9 @@ func TestSignECDSA_WithPrivateKeyBytes(t *testing.T) {
 	privKey, err := GenerateSecp256k1()
 	require.NoError(t, err)
 
+	// Use the privkey directly with SignECDSA256K
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeECDSA256K, privKey.Serialize(), message)
+	sig, err := SignECDSA256K(privKey, message)
 	require.NoError(t, err)
 
 	// Parse the DER signature
@@ -60,7 +61,7 @@ func TestSignEd25519_WithPrivateKeyStruct(t *testing.T) {
 	require.NoError(t, err)
 
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeEd25519, privKey, message)
+	sig, err := Sign(privKey, message)
 	require.NoError(t, err)
 	assert.Equal(t, ed25519.SignatureSize, len(sig))
 	assert.True(t, ed25519.Verify(pubKey, message, sig))
@@ -70,21 +71,12 @@ func TestSignEd25519_WithPrivateKeyBytes(t *testing.T) {
 	pubKey, privKey, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
 
+	// Use SignEd25519 directly
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeEd25519, []byte(privKey), message)
+	sig, err := SignEd25519(privKey, message)
 	require.NoError(t, err)
 	assert.Equal(t, ed25519.SignatureSize, len(sig))
 	assert.True(t, ed25519.Verify(pubKey, message, sig))
-}
-
-func TestSign_InvalidSignatureType(t *testing.T) {
-	privKey, err := GenerateSecp256k1()
-	require.NoError(t, err)
-
-	message := []byte("test message")
-	_, err = Sign(SignatureType(99), privKey, message)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "unsupported signature type")
 }
 
 func TestSignECDSA256K_WithPrivateKeyStruct(t *testing.T) {
@@ -102,19 +94,11 @@ func TestSignECDSA256K_WithPrivateKeyStruct(t *testing.T) {
 	assert.True(t, signature.Verify(hash[:], privKey.PubKey()))
 }
 
-func TestSignECDSA256K_WithPrivateKeyBytes(t *testing.T) {
-	privKey, err := GenerateSecp256k1()
-	require.NoError(t, err)
-
+func TestSignECDSA256K_NilPrivateKey(t *testing.T) {
 	message := []byte("test message")
-	sig, err := SignECDSA256K(privKey.Serialize(), message)
-	require.NoError(t, err)
-
-	signature, err := ecdsa.ParseDERSignature(sig)
-	require.NoError(t, err)
-
-	hash := sha256.Sum256(message)
-	assert.True(t, signature.Verify(hash[:], privKey.PubKey()))
+	_, err := SignECDSA256K(nil, message)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidECDSAPrivKeyBytes)
 }
 
 func TestSignEd25519_Direct_WithPrivateKeyStruct(t *testing.T) {
@@ -128,24 +112,16 @@ func TestSignEd25519_Direct_WithPrivateKeyStruct(t *testing.T) {
 	assert.True(t, ed25519.Verify(pubKey, message, sig))
 }
 
-func TestSignEd25519_Direct_WithPrivateKeyBytes(t *testing.T) {
-	pubKey, privKey, err := ed25519.GenerateKey(nil)
-	require.NoError(t, err)
-
+func TestSignEd25519_InvalidPrivateKey(t *testing.T) {
+	// Test with nil key
 	message := []byte("test message")
-	sig, err := SignEd25519([]byte(privKey), message)
-	require.NoError(t, err)
-	assert.Equal(t, ed25519.SignatureSize, len(sig))
-	assert.True(t, ed25519.Verify(pubKey, message, sig))
-}
-
-func TestSign_InvalidPrivateKeyType(t *testing.T) {
-	message := []byte("test message")
-	_, err := Sign(SignatureTypeECDSA256K, []byte("invalid key"), message)
+	_, err := SignEd25519(nil, message)
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrInvalidECDSAPrivKeyBytes)
+	assert.ErrorIs(t, err, ErrInvalidEd25519PrivKeyLength)
 
-	_, err = Sign(SignatureTypeEd25519, []byte("invalid key"), message)
+	// Test with invalid length key
+	invalidKey := make(ed25519.PrivateKey, 10) // wrong size
+	_, err = SignEd25519(invalidKey, message)
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, ErrInvalidEd25519PrivKeyLength)
 }
@@ -155,23 +131,19 @@ func TestVerifyECDSA_WithPublicKeyStruct(t *testing.T) {
 	require.NoError(t, err)
 
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeECDSA256K, privKey, message)
+	sig, err := Sign(privKey, message)
 	require.NoError(t, err)
 
-	err = Verify(SignatureTypeECDSA256K, privKey.PubKey(), message, sig)
+	err = Verify(privKey.PubKey(), message, sig)
 	require.NoError(t, err)
 }
 
-func TestVerifyECDSA_WithPublicKeyBytes(t *testing.T) {
-	privKey, err := GenerateSecp256k1()
-	require.NoError(t, err)
-
+func TestVerifyECDSA_NilPublicKey(t *testing.T) {
+	// Test with nil key
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeECDSA256K, privKey, message)
-	require.NoError(t, err)
-
-	err = Verify(SignatureTypeECDSA256K, privKey.PubKey().SerializeCompressed(), message, sig)
-	require.NoError(t, err)
+	err := VerifyECDSA256K(nil, message, []byte("signature"))
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrUnsupportedECDSAPrivKeyType)
 }
 
 func TestVerifyEd25519_WithPublicKeyStruct(t *testing.T) {
@@ -179,23 +151,25 @@ func TestVerifyEd25519_WithPublicKeyStruct(t *testing.T) {
 	require.NoError(t, err)
 
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeEd25519, privKey, message)
+	sig, err := Sign(privKey, message)
 	require.NoError(t, err)
 
-	err = Verify(SignatureTypeEd25519, pubKey, message, sig)
+	err = Verify(pubKey, message, sig)
 	require.NoError(t, err)
 }
 
-func TestVerifyEd25519_WithPublicKeyBytes(t *testing.T) {
-	pubKey, privKey, err := ed25519.GenerateKey(nil)
-	require.NoError(t, err)
-
+func TestVerifyEd25519_InvalidPublicKey(t *testing.T) {
+	// Test with nil key
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeEd25519, privKey, message)
-	require.NoError(t, err)
+	err := VerifyEd25519(nil, message, []byte("signature"))
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidEd25519PrivKeyLength)
 
-	err = Verify(SignatureTypeEd25519, []byte(pubKey), message, sig)
-	require.NoError(t, err)
+	// Test with invalid length key
+	invalidKey := make(ed25519.PublicKey, 10) // wrong size
+	err = VerifyEd25519(invalidKey, message, []byte("signature"))
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidEd25519PrivKeyLength)
 }
 
 func TestVerifyECDSA256K_Direct_WithPublicKeyStruct(t *testing.T) {
@@ -207,18 +181,6 @@ func TestVerifyECDSA256K_Direct_WithPublicKeyStruct(t *testing.T) {
 	require.NoError(t, err)
 
 	err = VerifyECDSA256K(privKey.PubKey(), message, sig)
-	require.NoError(t, err)
-}
-
-func TestVerifyECDSA256K_Direct_WithPublicKeyBytes(t *testing.T) {
-	privKey, err := GenerateSecp256k1()
-	require.NoError(t, err)
-
-	message := []byte("test message")
-	sig, err := SignECDSA256K(privKey, message)
-	require.NoError(t, err)
-
-	err = VerifyECDSA256K(privKey.PubKey().SerializeCompressed(), message, sig)
 	require.NoError(t, err)
 }
 
@@ -234,30 +196,18 @@ func TestVerifyEd25519_Direct_WithPublicKeyStruct(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestVerifyEd25519_Direct_WithPublicKeyBytes(t *testing.T) {
-	pubKey, privKey, err := ed25519.GenerateKey(nil)
-	require.NoError(t, err)
-
-	message := []byte("test message")
-	sig, err := SignEd25519(privKey, message)
-	require.NoError(t, err)
-
-	err = VerifyEd25519([]byte(pubKey), message, sig)
-	require.NoError(t, err)
-}
-
 func TestVerifyECDSA_TamperedMessage(t *testing.T) {
 	privKey, err := GenerateSecp256k1()
 	require.NoError(t, err)
 	pubKey := privKey.PubKey()
 
 	originalMessage := []byte("original message")
-	sig, err := Sign(SignatureTypeECDSA256K, privKey, originalMessage)
+	sig, err := Sign(privKey, originalMessage)
 	require.NoError(t, err)
 
 	tamperedMessage := []byte("tampered message")
 
-	err = Verify(SignatureTypeECDSA256K, pubKey, tamperedMessage, sig)
+	err = Verify(pubKey, tamperedMessage, sig)
 	require.ErrorIs(t, err, ErrSignatureVerification)
 }
 
@@ -266,12 +216,12 @@ func TestVerifyEd25519_TamperedMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	originalMessage := []byte("original message")
-	sig, err := Sign(SignatureTypeEd25519, privKey, originalMessage)
+	sig, err := Sign(privKey, originalMessage)
 	require.NoError(t, err)
 
 	tamperedMessage := []byte("tampered message")
 
-	err = Verify(SignatureTypeEd25519, pubKey, tamperedMessage, sig)
+	err = Verify(pubKey, tamperedMessage, sig)
 	require.ErrorIs(t, err, ErrSignatureVerification)
 }
 
@@ -281,7 +231,7 @@ func TestVerifyECDSA_TamperedSignature(t *testing.T) {
 	pubKey := priv.PubKey()
 	message := []byte("test message")
 
-	sig, err := Sign(SignatureTypeECDSA256K, priv, message)
+	sig, err := Sign(priv, message)
 	require.NoError(t, err)
 
 	signature, err := ecdsa.ParseDERSignature(sig)
@@ -295,7 +245,7 @@ func TestVerifyECDSA_TamperedSignature(t *testing.T) {
 
 	modifiedSig := ecdsa.NewSignature(&r, &s)
 
-	err = Verify(SignatureTypeECDSA256K, pubKey, message, modifiedSig.Serialize())
+	err = Verify(pubKey, message, modifiedSig.Serialize())
 	require.ErrorIs(t, err, ErrSignatureVerification)
 }
 
@@ -304,14 +254,14 @@ func TestVerifyEd25519_TamperedSignature(t *testing.T) {
 	require.NoError(t, err)
 	message := []byte("test message")
 
-	sig, err := Sign(SignatureTypeEd25519, privKey, message)
+	sig, err := Sign(privKey, message)
 	require.NoError(t, err)
 
 	tamperedSig := make([]byte, len(sig))
 	copy(tamperedSig, sig)
 	tamperedSig[0] ^= 0xff // Flip bits in first byte to tamper with signature
 
-	err = Verify(SignatureTypeEd25519, pubKey, message, tamperedSig)
+	err = Verify(pubKey, message, tamperedSig)
 	require.ErrorIs(t, err, ErrSignatureVerification)
 }
 
@@ -324,10 +274,10 @@ func TestVerifyECDSA_WrongPublicKey(t *testing.T) {
 	wrongPub := wrongPriv.PubKey()
 
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeECDSA256K, correctPriv, message)
+	sig, err := Sign(correctPriv, message)
 	require.NoError(t, err)
 
-	err = Verify(SignatureTypeECDSA256K, wrongPub, message, sig)
+	err = Verify(wrongPub, message, sig)
 	require.ErrorIs(t, err, ErrSignatureVerification)
 }
 
@@ -339,18 +289,9 @@ func TestVerifyEd25519_WrongPublicKey(t *testing.T) {
 	require.NoError(t, err)
 
 	message := []byte("test message")
-	sig, err := Sign(SignatureTypeEd25519, correctPriv, message)
+	sig, err := Sign(correctPriv, message)
 	require.NoError(t, err)
 
-	err = Verify(SignatureTypeEd25519, wrongPub, message, sig)
+	err = Verify(wrongPub, message, sig)
 	require.ErrorIs(t, err, ErrSignatureVerification)
-}
-
-func TestVerify_InvalidSignatureType(t *testing.T) {
-	// Test with an invalid signature type
-	invalidSigType := SignatureType(99)
-	err := Verify(invalidSigType, []byte("any"), []byte("any"), []byte("any"))
-	require.Error(t, err)
-	require.ErrorIs(t, err, ErrUnsupportedSignatureType)
-	require.Contains(t, err.Error(), "unsupported signature type")
 }

@@ -18,71 +18,45 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
 
-// SignatureType represents the type of signature algorithm to use
-type SignatureType int
-
-const (
-	// SignatureTypeECDSA256K represents secp256k1 ECDSA signatures using secp256k1 curve
-	SignatureTypeECDSA256K SignatureType = iota
-	// SignatureTypeEd25519 represents Ed25519 signatures
-	SignatureTypeEd25519
-)
-
-// Sign signs the provided message using the specified signature type and private key.
-// This is a generic function that accepts various types of private keys.
+// Sign signs the provided message using the appropriate signature algorithm based on the key type.
+//
+// This is a generic function that accepts different types of private keys and
+// automatically uses the correct signing algorithm based on the key type.
 //
 // For ECDSA (secp256k1):
 // - Returns signature in DER format
-// - Accepts private key as either:
-//   - *secp256k1.PrivateKey: Direct private key object
-//   - []byte: Raw private key bytes that will be parsed into secp256k1.PrivateKey
+// - Accepts private key as *secp256k1.PrivateKey
 //
 // For Ed25519:
 // - Returns standard Ed25519 signature
-// - Accepts private key as either:
-//   - ed25519.PrivateKey: Direct private key object
-//   - []byte: Raw private key bytes (must be ed25519.PrivateKeySize bytes)
+// - Accepts private key as ed25519.PrivateKey
 //
 // Parameters:
-//   - sigType: The type of signature algorithm to use (ECDSA or Ed25519)
-//   - privKey: The private key to sign with (see above for accepted types)
+//   - privKey: The private key to sign with
 //   - message: The message to sign
 //
 // Returns:
-//   - []byte: The signature in the format appropriate for the chosen algorithm
+//   - []byte: The signature in the format appropriate for the key type
 //   - error: Any error encountered during signing, including invalid key types
-func Sign[T ed25519.PrivateKey | *secp256k1.PrivateKey | []byte](
-	sigType SignatureType,
+func Sign[T ed25519.PrivateKey | *secp256k1.PrivateKey](
 	privKey T,
 	message []byte,
 ) ([]byte, error) {
-	switch sigType {
-	case SignatureTypeECDSA256K:
-		// Type assertion to ensure we're passing a compatible key type
-		switch k := any(privKey).(type) {
-		case *secp256k1.PrivateKey:
-			return SignECDSA256K(k, message)
-		case []byte:
-			return SignECDSA256K(k, message)
-		}
-	case SignatureTypeEd25519:
-		// Type assertion to ensure we're passing a compatible key type
-		switch k := any(privKey).(type) {
-		case ed25519.PrivateKey:
-			return SignEd25519(k, message)
-		case []byte:
-			return SignEd25519(k, message)
-		}
+	switch k := any(privKey).(type) {
+	case *secp256k1.PrivateKey:
+		return SignECDSA256K(k, message)
+	case ed25519.PrivateKey:
+		return SignEd25519(k, message)
+	default:
+		// This should never happen due to type constraints on T
+		return nil, ErrUnsupportedPrivKeyType
 	}
-	return nil, ErrUnsupportedSignatureType
 }
 
 // SignECDSA256K signs a message using ECDSA with the secp256k1 curve.
 //
 // Returns signature in DER format.
-// Accepts private key as either:
-// - *secp256k1.PrivateKey: Direct private key object
-// - []byte: Raw private key bytes that will be parsed into secp256k1.PrivateKey
+// Accepts private key as *secp256k1.PrivateKey: Direct private key object
 //
 // Parameters:
 //   - privKey: The ECDSA private key to sign with
@@ -91,38 +65,23 @@ func Sign[T ed25519.PrivateKey | *secp256k1.PrivateKey | []byte](
 // Returns:
 //   - []byte: The DER-encoded signature
 //   - error: Any error encountered during signing
-func SignECDSA256K[T *secp256k1.PrivateKey | []byte](
-	privKey T,
+func SignECDSA256K(
+	privKey *secp256k1.PrivateKey,
 	message []byte,
 ) ([]byte, error) {
-	var privateKey *secp256k1.PrivateKey
-
-	switch k := any(privKey).(type) {
-	case *secp256k1.PrivateKey:
-		privateKey = k
-	case []byte:
-		if len(k) < 32 {
-			return nil, ErrInvalidECDSAPrivKeyBytes
-		}
-		privateKey = secp256k1.PrivKeyFromBytes(k)
-		if privateKey == nil {
-			return nil, ErrInvalidECDSAPrivKeyBytes
-		}
-	default:
-		return nil, ErrUnsupportedECDSAPrivKeyType
+	if privKey == nil {
+		return nil, ErrInvalidECDSAPrivKeyBytes
 	}
 
 	hash := sha256.Sum256(message)
-	signature := ecdsa.Sign(privateKey, hash[:])
+	signature := ecdsa.Sign(privKey, hash[:])
 	return signature.Serialize(), nil
 }
 
 // SignEd25519 signs a message using Ed25519.
 //
 // Returns standard Ed25519 signature.
-// Accepts private key as either:
-// - ed25519.PrivateKey: Direct private key object
-// - []byte: Raw private key bytes (must be ed25519.PrivateKeySize bytes)
+// Accepts private key as ed25519.PrivateKey: Direct private key object
 //
 // Parameters:
 //   - privKey: The Ed25519 private key to sign with
@@ -131,81 +90,53 @@ func SignECDSA256K[T *secp256k1.PrivateKey | []byte](
 // Returns:
 //   - []byte: The Ed25519 signature
 //   - error: Any error encountered during signing
-func SignEd25519[T ed25519.PrivateKey | []byte](
-	privKey T,
+func SignEd25519(
+	privKey ed25519.PrivateKey,
 	message []byte,
 ) ([]byte, error) {
-	switch k := any(privKey).(type) {
-	case ed25519.PrivateKey:
-		return ed25519.Sign(k, message), nil
-	case []byte:
-		if len(k) != ed25519.PrivateKeySize {
-			return nil, ErrInvalidEd25519PrivKeyLength
-		}
-		return ed25519.Sign(ed25519.PrivateKey(k), message), nil
-	default:
-		return nil, ErrUnsupportedEd25519PrivKeyType
+	if privKey == nil || len(privKey) != ed25519.PrivateKeySize {
+		return nil, ErrInvalidEd25519PrivKeyLength
 	}
+	return ed25519.Sign(privKey, message), nil
 }
 
-// Verify verifies a signature against a message using the specified signature algorithm.
+// Verify verifies a signature against a message using the appropriate signature algorithm based on the key type.
 //
 // For ECDSA (secp256k1):
 // - Expects signature in DER format
-// - Accepts public key as either:
-//   - *secp256k1.PublicKey: Direct public key object
-//   - []byte: Raw public key bytes that will be parsed
+// - Accepts public key as *secp256k1.PublicKey
 //
 // For Ed25519:
 // - Expects standard Ed25519 signature
-// - Accepts public key as either:
-//   - ed25519.PublicKey: Direct public key object
-//   - []byte: Raw public key bytes (must be ed25519.PublicKeySize bytes)
+// - Accepts public key as ed25519.PublicKey
 //
 // Parameters:
-//   - sigType: The type of signature algorithm (ECDSA or Ed25519)
-//   - pubKey: The public key to verify with (see above for accepted types)
+//   - pubKey: The public key to verify with
 //   - message: The original message that was signed
 //   - signature: The signature to verify
 //
 // Returns:
 //   - error: nil if verification succeeds, appropriate error otherwise
-func Verify[T *secp256k1.PublicKey | ed25519.PublicKey | []byte](
-	sigType SignatureType,
+func Verify[T *secp256k1.PublicKey | ed25519.PublicKey](
 	pubKey T,
 	message []byte,
 	signature []byte,
 ) error {
-	switch sigType {
-	case SignatureTypeECDSA256K:
-		switch k := any(pubKey).(type) {
-		case *secp256k1.PublicKey:
-			return VerifyECDSA256K(k, message, signature)
-		case []byte:
-			return VerifyECDSA256K(k, message, signature)
-		default:
-			return ErrUnsupportedECDSAPrivKeyType
-		}
-	case SignatureTypeEd25519:
-		switch k := any(pubKey).(type) {
-		case ed25519.PublicKey:
-			return VerifyEd25519(k, message, signature)
-		case []byte:
-			return VerifyEd25519(k, message, signature)
-		default:
-			return ErrUnsupportedEd25519PrivKeyType
-		}
+	switch k := any(pubKey).(type) {
+	case *secp256k1.PublicKey:
+		return VerifyECDSA256K(k, message, signature)
+	case ed25519.PublicKey:
+		return VerifyEd25519(k, message, signature)
 	default:
-		return ErrUnsupportedSignatureType
+		// This should never happen due to type constraints on T
+		return ErrUnsupportedPubKeyType
 	}
 }
 
 // VerifyECDSA256K verifies a signature against a message using ECDSA with the secp256k1 curve.
 //
 // Expects signature in DER format.
-// Accepts public key as either:
-// - *secp256k1.PublicKey: Direct public key object
-// - []byte: Raw public key bytes that will be parsed
+// Accepts public key as *secp256k1.PublicKey: Direct public key object
 //
 // Parameters:
 //   - pubKey: The ECDSA public key to verify with
@@ -214,23 +145,12 @@ func Verify[T *secp256k1.PublicKey | ed25519.PublicKey | []byte](
 //
 // Returns:
 //   - error: nil if verification succeeds, appropriate error otherwise
-func VerifyECDSA256K[T *secp256k1.PublicKey | []byte](
-	pubKey T,
+func VerifyECDSA256K(
+	pubKey *secp256k1.PublicKey,
 	message []byte,
 	signature []byte,
 ) error {
-	var publicKey *secp256k1.PublicKey
-
-	switch k := any(pubKey).(type) {
-	case *secp256k1.PublicKey:
-		publicKey = k
-	case []byte:
-		var err error
-		publicKey, err = secp256k1.ParsePubKey(k)
-		if err != nil {
-			return err
-		}
-	default:
+	if pubKey == nil {
 		return ErrUnsupportedECDSAPrivKeyType
 	}
 
@@ -240,7 +160,7 @@ func VerifyECDSA256K[T *secp256k1.PublicKey | []byte](
 	}
 
 	hash := sha256.Sum256(message)
-	if !sig.Verify(hash[:], publicKey) {
+	if !sig.Verify(hash[:], pubKey) {
 		return ErrSignatureVerification
 	}
 
@@ -250,9 +170,7 @@ func VerifyECDSA256K[T *secp256k1.PublicKey | []byte](
 // VerifyEd25519 verifies a signature against a message using Ed25519.
 //
 // Expects standard Ed25519 signature.
-// Accepts public key as either:
-// - ed25519.PublicKey: Direct public key object
-// - []byte: Raw public key bytes (must be ed25519.PublicKeySize bytes)
+// Accepts public key as ed25519.PublicKey: Direct public key object
 //
 // Parameters:
 //   - pubKey: The Ed25519 public key to verify with
@@ -261,25 +179,17 @@ func VerifyECDSA256K[T *secp256k1.PublicKey | []byte](
 //
 // Returns:
 //   - error: nil if verification succeeds, appropriate error otherwise
-func VerifyEd25519[T ed25519.PublicKey | []byte](
-	pubKey T,
+func VerifyEd25519(
+	pubKey ed25519.PublicKey,
 	message []byte,
 	signature []byte,
 ) error {
-	switch k := any(pubKey).(type) {
-	case ed25519.PublicKey:
-		if !ed25519.Verify(k, message, signature) {
-			return ErrSignatureVerification
-		}
-	case []byte:
-		if len(k) != ed25519.PublicKeySize {
-			return ErrInvalidEd25519PrivKeyLength
-		}
-		if !ed25519.Verify(ed25519.PublicKey(k), message, signature) {
-			return ErrSignatureVerification
-		}
-	default:
-		return ErrUnsupportedEd25519PrivKeyType
+	if pubKey == nil || len(pubKey) != ed25519.PublicKeySize {
+		return ErrInvalidEd25519PrivKeyLength
+	}
+
+	if !ed25519.Verify(pubKey, message, signature) {
+		return ErrSignatureVerification
 	}
 
 	return nil
