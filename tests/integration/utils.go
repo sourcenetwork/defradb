@@ -1943,6 +1943,7 @@ func assertRequestResults(
 	asserter ResultAsserter,
 	nodeID int,
 ) bool {
+	s.currentNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true

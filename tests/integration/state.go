@@ -223,7 +223,28 @@ type state struct {
 	// statefulMatchers contains all stateful matchers that have been executed during a single
 	// test run. After a single test run, the statefulMatchers are reset.
 	statefulMatchers []StatefulMatcher
+
+	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
+	// node they should be asserting. For example, the [UniqueValue] matcher checks that  it is
+	// called with a value that it didn't see before, but the value should be the same for different
+	// nodes.
+	currentNodeID int
 }
+
+func (s *state) GetClientType() ClientType {
+	return s.clientType
+}
+
+func (s *state) GetCurrentNodeID() int {
+	return s.currentNodeID
+}
+
+type TestState interface {
+	GetClientType() ClientType
+	GetCurrentNodeID() int
+}
+
+var _ TestState = &state{}
 
 // newState returns a new fresh state for the given testCase.
 func newState(

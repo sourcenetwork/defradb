@@ -21,7 +21,6 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,10 +29,10 @@ import (
 )
 
 type testStateMatcher struct {
-	s *state
+	s TestState
 }
 
-func (matcher *testStateMatcher) SetTestState(s *state) {
+func (matcher *testStateMatcher) SetTestState(s TestState) {
 	matcher.s = s
 }
 
@@ -41,7 +40,7 @@ func (matcher *testStateMatcher) SetTestState(s *state) {
 type TestStateMatcher interface {
 	types.GomegaMatcher
 	// SetTestState sets the test state.
-	SetTestState(s *state)
+	SetTestState(s TestState)
 }
 
 // StatefulMatcher is a matcher that requires state to be reset between tests.
@@ -68,7 +67,7 @@ type anyOf struct {
 var _ TestStateMatcher = (*anyOf)(nil)
 
 func (matcher *anyOf) Match(actual any) (bool, error) {
-	switch matcher.s.clientType {
+	switch matcher.s.GetClientType() {
 	case HTTPClientType, CLIClientType:
 		if !areResultsAnyOf(matcher.Values, actual) {
 			return gomega.ContainElement(actual).Match(matcher.Values)
@@ -92,7 +91,8 @@ func (matcher *anyOf) NegatedFailureMessage(actual any) string {
 // An instance of this matcher should be given to at least 2 assert result places, otherwise
 // the matcher makes no sense.
 type UniqueValue struct {
-	seenValues       map[any]bool
+	testStateMatcher
+	seenValues       []map[any]bool
 	invalidValueType any
 }
 
@@ -101,14 +101,19 @@ var _ StatefulMatcher = (*UniqueValue)(nil)
 // NewUniqueValue creates a new matcher that verifies each value is unique.
 // This matcher will track values across all Match calls and fail if a duplicate is found.
 func NewUniqueValue() *UniqueValue {
-	return &UniqueValue{seenValues: make(map[any]bool)}
+	return &UniqueValue{}
 }
 
 func (matcher *UniqueValue) ResetMatcherState() {
-	matcher.seenValues = make(map[any]bool)
+	matcher.seenValues = nil
 }
 
 func (matcher *UniqueValue) Match(actual any) (bool, error) {
+	nodeID := matcher.s.GetCurrentNodeID()
+	for nodeID >= len(matcher.seenValues) {
+		matcher.seenValues = append(matcher.seenValues, make(map[any]bool))
+	}
+
 	var key any
 
 	if !reflect.TypeOf(actual).Comparable() {
@@ -117,11 +122,11 @@ func (matcher *UniqueValue) Match(actual any) (bool, error) {
 		key = actual
 	}
 
-	if matcher.seenValues[key] {
+	if matcher.seenValues[nodeID][key] {
 		return false, nil
 	}
 
-	matcher.seenValues[key] = true
+	matcher.seenValues[nodeID][key] = true
 	return true, nil
 }
 
@@ -209,92 +214,6 @@ func areResultsAnyOf(expected []any, actual any) bool {
 		}
 	}
 	return false
-}
-
-// UniqueCid allows the referencing of Cids by an arbitrary test-defined ID.
-//
-// Instead of asserting on a specific Cid value, this type will assert that
-// no other [UniqueCid]s with different [ID]s has the first Cid value that this instance
-// describes.
-//
-// It will also ensure that all Cids described by this [UniqueCid] have the same
-// valid, Cid value.
-type UniqueCid struct {
-	testStateMatcher
-	// id is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
-	id any
-
-	valuesMismatch bool
-	duplicatedID   any
-	castFailed     bool
-	cidDecodeErr   error
-}
-
-var _ TestStateMatcher = (*UniqueCid)(nil)
-
-// NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
-// id.
-//
-// All results described by [UniqueCid]s with the given id must have the same valid Cid value.
-// No other [UniqueCid] ids may describe the same Cid value.
-func NewUniqueCid(id any) *UniqueCid {
-	return &UniqueCid{
-		id: id,
-	}
-}
-
-func (matcher *UniqueCid) Match(actual any) (bool, error) {
-	isNew := true
-	for id, value := range matcher.s.cids {
-		if id == matcher.id {
-			if value != actual {
-				matcher.valuesMismatch = true
-				return false, nil
-			}
-			isNew = false
-		} else {
-			if value == actual {
-				matcher.duplicatedID = id
-				return false, nil
-			}
-		}
-	}
-
-	if isNew {
-		value, ok := actual.(string)
-		if !ok {
-			matcher.castFailed = true
-			return false, nil
-		}
-
-		cid, err := cid.Decode(value)
-		if err != nil {
-			matcher.cidDecodeErr = err
-			return false, nil
-		}
-
-		matcher.s.cids[matcher.id] = cid.String()
-	}
-
-	return true, nil
-}
-
-func (matcher *UniqueCid) FailureMessage(actual any) string {
-	if matcher.valuesMismatch {
-		return fmt.Sprintf("Expected Cids with the same id %v to match", matcher.id)
-	} else if matcher.duplicatedID != nil {
-		return fmt.Sprintf("Expected Cid value to be unique, but ids \"%v\" and \"%v\" point to the same cid: %v",
-			matcher.id, matcher.duplicatedID, actual)
-	} else if matcher.castFailed {
-		return fmt.Sprintf("Actual value is expected to be convertible to a string. Actual: %v", actual)
-	} else if matcher.cidDecodeErr != nil {
-		return fmt.Sprintf("Expected actual value to be a valid Cid. Error: %v", matcher.cidDecodeErr)
-	}
-	return ""
-}
-
-func (matcher *UniqueCid) NegatedFailureMessage(actual any) string {
-	panic("UniqueCid cannot be negated")
 }
 
 // areResultsEqual returns true if the expected and actual results are of equal value.

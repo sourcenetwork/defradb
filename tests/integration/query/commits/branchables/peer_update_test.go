@@ -13,12 +13,31 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	collectionNode0Update3Cid := testUtils.NewSameValue()
+	collectionNode1Update2Cid := testUtils.NewSameValue()
+	collectionNode1Update1Cid := testUtils.NewSameValue()
+	docNode0Update3Cid := testUtils.NewSameValue()
+	collectionCreateCid := testUtils.NewSameValue()
+	docNode1Update1Cid := testUtils.NewSameValue()
+	docCreateCid := testUtils.NewSameValue()
+	collectionNode0Update1Cid := testUtils.NewSameValue()
+	docNode1Update2Cid := testUtils.NewSameValue()
+	docNode0Update1Cid := testUtils.NewSameValue()
+	nameNode0Update3Cid := testUtils.NewSameValue()
+	nameNode1Update1Cid := testUtils.NewSameValue()
+	nameNode1Update2Cid := testUtils.NewSameValue()
+	nameNode0Update1Cid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -88,151 +107,151 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection, node0 update3"),
+							"cid": gomega.And(collectionNode0Update3Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, node1 update2"),
+									"cid": collectionNode1Update2Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("collection, node1 update1"),
+									"cid": collectionNode1Update1Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, node0 update3"),
+									"cid": docNode0Update3Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, node1 update1"),
+							"cid": gomega.And(collectionNode1Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, create"),
+									"cid": collectionCreateCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, node1 update1"),
+									"cid": docNode1Update1Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, create"),
+							"cid": gomega.And(collectionCreateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc, create"),
+									"cid": docCreateCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, node1 update2"),
+							"cid": gomega.And(collectionNode1Update2Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, node0 update1"),
+									"cid": collectionNode0Update1Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, node1 update2"),
+									"cid": docNode1Update2Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, node0 update1"),
+							"cid": gomega.And(collectionNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, create"),
+									"cid": collectionCreateCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, node0 update1"),
+									"cid": docNode0Update1Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, node0 update3"),
+							"cid": gomega.And(nameNode0Update3Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("name, node1 update1"),
+									"cid": nameNode1Update1Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, node1 update2"),
+									"cid": nameNode1Update2Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, node1 update2"),
+							"cid": gomega.And(nameNode1Update2Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("name, node0 update1"),
+									"cid": nameNode0Update1Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, node0 update1"),
+							"cid": gomega.And(nameNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("name, create"),
+									"cid": nameCreateCid,
 								},
 							},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("name, create"),
+							"cid":   gomega.And(nameCreateCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, node1 update1"),
+							"cid": gomega.And(nameNode1Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("name, create"),
+									"cid": nameCreateCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, node0 update3"),
+							"cid": gomega.And(docNode0Update3Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc, node1 update2"),
+									"cid": docNode1Update2Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc, node1 update1"),
+									"cid": docNode1Update1Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, node0 update3"),
+									"cid": nameNode0Update3Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, node1 update1"),
+							"cid": gomega.And(docNode1Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc, create"),
+									"cid": docCreateCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, node1 update1"),
+									"cid": nameNode1Update1Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, create"),
+							"cid": gomega.And(docCreateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("name, create"),
+									"cid": nameCreateCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, node1 update2"),
+							"cid": gomega.And(docNode1Update2Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc, node0 update1"),
+									"cid": docNode0Update1Cid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, node1 update2"),
+									"cid": nameNode1Update2Cid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc, node0 update1"),
+							"cid": gomega.And(docNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc, create"),
+									"cid": docCreateCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("name, node0 update1"),
+									"cid": nameNode0Update1Cid,
 								},
 							},
 						},

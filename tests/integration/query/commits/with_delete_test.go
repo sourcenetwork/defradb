@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,10 +13,18 @@ package commits
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	deleteCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
+	createAgeCid := testUtils.NewSameValue()
+	createNameCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -52,25 +60,25 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":       testUtils.NewUniqueCid("delete"),
+							"cid":       gomega.And(deleteCid, uniqueCid),
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("create composite"),
+									"cid":  createCompositeCid,
 									"name": "_head",
 								},
 							},
 						},
 						{
-							"cid":       testUtils.NewUniqueCid("create composite"),
+							"cid":       gomega.And(createCompositeCid, uniqueCid),
 							"fieldName": nil,
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("create age"),
+									"cid":  createAgeCid,
 									"name": "age",
 								},
 								{
-									"cid":  testUtils.NewUniqueCid("create name"),
+									"cid":  createNameCid,
 									"name": "name",
 								},
 							},

@@ -13,10 +13,18 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	collectionCid := testUtils.NewSameValue()
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	headCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -42,16 +50,16 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
+							"cid": gomega.And(collectionCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": gomega.And(nameCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": gomega.And(ageCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": gomega.And(headCid, uniqueCid),
 						},
 					},
 				},
@@ -63,6 +71,12 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 }
 
 func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	headCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -90,13 +104,13 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 						// Note: This collection is not branchable, there is no collection
 						// level commit
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": gomega.And(nameCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": gomega.And(ageCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": gomega.And(headCid, uniqueCid),
 						},
 					},
 				},
