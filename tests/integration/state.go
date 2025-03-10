@@ -17,6 +17,7 @@ import (
 	cid "github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -225,9 +226,10 @@ type state struct {
 	statefulMatchers []StatefulMatcher
 
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
-	// node they should be asserting. For example, the [UniqueValue] matcher checks that  it is
+	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
 	// called with a value that it didn't see before, but the value should be the same for different
-	// nodes.
+	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
+	// should have the same Cid.
 	currentNodeID int
 }
 
@@ -239,6 +241,10 @@ func (s *state) GetCurrentNodeID() int {
 	return s.currentNodeID
 }
 
+func (s *state) GetNodeIdentity(nodeIndex int) acpIdentity.Identity {
+	return getIdentity(s, NodeIdentity(nodeIndex))
+}
+
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
 // without allowing them to modify the state.
 type TestState interface {
@@ -246,6 +252,8 @@ type TestState interface {
 	GetClientType() ClientType
 	// GetCurrentNodeID returns the node id that is currently being asserted.
 	GetCurrentNodeID() int
+	// GetNodeIdentity returns the identity for the given node index.
+	GetNodeIdentity(nodeIndex int) acpIdentity.Identity
 }
 
 var _ TestState = &state{}

@@ -13,6 +13,7 @@ package tests
 import (
 	"testing"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,6 +29,10 @@ func (m *mockTestState) GetClientType() ClientType {
 
 func (m *mockTestState) GetCurrentNodeID() int {
 	return m.currentNodeID
+}
+
+func (m *mockTestState) GetNodeIdentity(_ int) acpIdentity.Identity {
+	return acpIdentity.Identity{}
 }
 
 func TestAnyOfMatcher(t *testing.T) {

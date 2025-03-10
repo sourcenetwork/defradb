@@ -34,7 +34,6 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 					"name":	"John",
 					"age":	21
 				}`,
-				IsDocEncrypted: true,
 			},
 			testUtils.Request{
 				Request: `

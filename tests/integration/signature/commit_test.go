@@ -13,14 +13,36 @@ package signature
 import (
 	"testing"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+func makeFieldBlock(fieldName string, value any) coreblock.Block {
+	const docID = "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3"
+	const schemaVersionID = "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq"
+
+	fieldVal, err := cbor.Marshal(value)
+	if err != nil {
+		panic("failed to marshal field value")
+	}
+
+	delta := &corecrdt.LWWRegDelta{
+		Data:            fieldVal,
+		DocID:           []byte(docID),
+		FieldName:       fieldName,
+		SchemaVersionID: schemaVersionID,
+		Priority:        1,
+	}
+
+	block := coreblock.New(delta, nil)
+	return *block
+}
+
 func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
-	uniqueSignature := testUtils.NewUniqueValue()
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
@@ -62,7 +84,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 									gomega.Not(gomega.BeEmpty()),
 									sameIdentity,
 								),
-								"value": uniqueSignature,
+								"value": newSignatureMatcher(makeFieldBlock("age", 21)),
 							},
 						},
 						{
@@ -70,7 +92,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
-								"value":    uniqueSignature,
+								"value":    newSignatureMatcher(makeFieldBlock("name", "John")),
 							},
 						},
 						{
@@ -78,7 +100,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
-								"value":    uniqueSignature,
+								"value":    gomega.Not(gomega.BeEmpty()),
 							},
 						},
 					},
