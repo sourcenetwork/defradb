@@ -342,7 +342,7 @@ linters-settings:
     disable-all: false
     disable:
       - shadow
-      - fieldalignment
+      # - fieldalignment
 
 
   lll:
