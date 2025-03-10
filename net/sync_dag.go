@@ -73,6 +73,8 @@ func loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *cor
 	var asyncErr error
 	var asyncErrOnce sync.Once
 
+	// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
+	// https://github.com/sourcenetwork/defradb/issues/3525
 	if block.Signature != nil {
 		// we deliberately ignore the first returned value, which indicates whether the signature
 		// the block was actually verified or not, because we don't handle it any different here.

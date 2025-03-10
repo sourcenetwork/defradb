@@ -101,12 +101,7 @@ func (sig *Signature) GenerateNode() ipld.Node {
 }
 
 // VerifyBlockSignature verifies the signature of a block.
-// It returns nil if:
-// - The block has no signature (optional signature)
-// - The signature is valid
-// It returns an error if:
-// - The signature block cannot be loaded
-// - The signature verification fails
+// The first return value is true if it actually ran cryptographic verification.
 func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) {
 	if block.Signature == nil {
 		return false, nil
