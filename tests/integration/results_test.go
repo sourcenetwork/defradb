@@ -13,8 +13,9 @@ package tests
 import (
 	"testing"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/stretchr/testify/assert"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
 // mockTestState is a simple mock implementation of TestState interface for testing
