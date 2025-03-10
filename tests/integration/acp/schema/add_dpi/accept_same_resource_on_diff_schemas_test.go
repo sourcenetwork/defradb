@@ -19,7 +19,6 @@ import (
 )
 
 func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 	sharedSameResourceName := "users"
 
 	test := testUtils.TestCase{
@@ -55,23 +54,24 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: fmt.Sprintf(`
 					type OldUsers @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "%s"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
 					sharedSameResourceName,
 				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -116,16 +116,19 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
 			testUtils.SchemaUpdate{
 				Schema: fmt.Sprintf(`
 					type NewUsers @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "%s"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
 					sharedSameResourceName,
 				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

@@ -128,7 +128,6 @@ func TestACP_DEMO(t *testing.T) {
 					}
 				`,
 
-				// Replace: immutable.Some([]int{0, 0, 1}),
 				Replace: map[string]testUtils.ReplaceType{
 					"Policy0": testUtils.NewPolicyIndex(0),
 					"Policy1": testUtils.NewPolicyIndex(1),

@@ -62,8 +62,6 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "a9e1a113ccc2609d7f99a42531017f0fbc9b736640ec8ffc7f09a1e29583ca45",
 			},
 		},
 	}
