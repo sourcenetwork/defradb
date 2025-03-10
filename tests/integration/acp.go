@@ -148,6 +148,12 @@ func addPolicyACP(
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
 		if acpType == SourceHubACPType {
+			// Note: If we break here the state will only preserve the policyIDs result on the
+			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
+			// on all the nodes, so we don't have to handle all the edge cases later in actions.
+			for otherIndexes := index + 1; otherIndexes < len(nodes); otherIndexes++ {
+				s.policyIDs[nodeIDs[otherIndexes]] = s.policyIDs[nodeID]
+			}
 			break
 		}
 	}
