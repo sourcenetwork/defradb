@@ -20,14 +20,14 @@ import (
 
 // HeadstoreColKey are used to store the current collection head in the headstore.
 type HeadstoreColKey struct {
+
+	// Cid is the cid of this head block.
+	Cid cid.Cid
 	// CollectionRoot is the root of the collection that this head refers to.
 	//
 	// Including it in the key allows easier identification of a given collection's
 	// head.
 	CollectionRoot uint32
-
-	// Cid is the cid of this head block.
-	Cid cid.Cid
 }
 
 var _ HeadstoreKey = (*HeadstoreColKey)(nil)

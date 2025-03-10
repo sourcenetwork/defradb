@@ -27,8 +27,8 @@ type iterableShim struct {
 
 type iteratorShim struct {
 	readable iterableShim
-	q        dsq.Query
 	results  dsq.Results
+	q        dsq.Query
 }
 
 func NewIterable(readable ds.Read) Iterable {

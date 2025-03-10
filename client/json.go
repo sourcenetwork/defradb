@@ -207,10 +207,10 @@ type JSONVisitor func(value JSON) error
 
 // traverseJSONOptions configures how the JSON tree is traversed.
 type traverseJSONOptions struct {
-	// onlyLeaves when true visits only leaf nodes (not objects or arrays)
-	onlyLeaves bool
 	// pathPrefix when set visits only paths that start with this prefix
 	pathPrefix JSONPath
+	// onlyLeaves when true visits only leaf nodes (not objects or arrays)
+	onlyLeaves bool
 	// visitArrayElements when true visits array elements
 	visitArrayElements bool
 	// recurseVisitedArrayElements when true visits array elements recursively

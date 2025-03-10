@@ -52,22 +52,23 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 // Wraps a selectNode and all the logic of a plan graph into a single struct for proper plan expansion.
 // Executes the top level plan node.
 type selectTopNode struct {
+
+	// plan is the top of the plan graph (the wired and finalized plan graph).
+	planNode planNode
 	docMapper
 
-	group      *groupNode
-	order      *orderNode
-	limit      *limitNode
-	aggregates []aggregateNode
+	group *groupNode
+	order *orderNode
+	limit *limitNode
 
 	// selectNode is used pre-wiring of the plan (before expansion and all).
 	selectNode *selectNode
 
+	aggregates []aggregateNode
+
 	// This is added temporarity until Planner is refactored
 	// https://github.com/sourcenetwork/defradb/issues/3467
 	similarity []*similarityNode
-
-	// plan is the top of the plan graph (the wired and finalized plan graph).
-	planNode planNode
 }
 
 func (n *selectTopNode) Kind() string { return "selectTopNode" }
@@ -99,10 +100,6 @@ func (n *selectTopNode) Close() error {
 }
 
 type selectNode struct {
-	documentIterator
-	docMapper
-
-	planner *Planner
 
 	// main data source for the select node.
 	source planNode
@@ -112,6 +109,10 @@ type selectNode struct {
 	origSource planNode
 
 	collection client.Collection
+
+	docMapper
+
+	planner *Planner
 
 	// top level filter expression
 	// filter is split between select, scan, and typeIndexJoin.
@@ -123,10 +124,13 @@ type selectNode struct {
 	// are defined in the subtype scan node.
 	filter *mapper.Filter
 
+	selectReq *mapper.Select
+
 	docIDs immutable.Option[[]string]
 
-	selectReq    *mapper.Select
 	groupSelects []*mapper.Select
+
+	documentIterator
 
 	execInfo selectExecInfo
 }

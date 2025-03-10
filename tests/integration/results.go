@@ -112,14 +112,15 @@ func areResultsAnyOf(expected []any, actual any) bool {
 // It will also ensure that all Cids described by this [UniqueCid] have the same
 // valid, Cid value.
 type UniqueCid struct {
-	stateMatcher
 	// id is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
 	id any
 
+	duplicatedID any
+	cidDecodeErr error
+	stateMatcher
+
 	valuesMismatch bool
-	duplicatedID   any
 	castFailed     bool
-	cidDecodeErr   error
 }
 
 // var _ Validator = (*UniqueCid)(nil)

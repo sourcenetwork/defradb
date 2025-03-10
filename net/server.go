@@ -44,17 +44,18 @@ import (
 // but not the API calls.
 type server struct {
 	peer *Peer
-	opts []grpc.DialOption
 
 	topics map[string]pubsubTopic
 	// replicators is a map from collectionName => peerId
 	replicators map[string]map[libpeer.ID]struct{}
-	mu          sync.Mutex
 
 	conns map[libpeer.ID]*grpc.ClientConn
 
 	peerIdentities map[libpeer.ID]identity.Identity
-	piMux          sync.RWMutex
+	opts           []grpc.DialOption
+
+	piMux sync.RWMutex
+	mu    sync.Mutex
 }
 
 // pubsubTopic is a wrapper of rpc.Topic to be able to track if the topic has

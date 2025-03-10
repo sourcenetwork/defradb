@@ -18,25 +18,26 @@ import (
 )
 
 type updateNode struct {
-	documentIterator
+	collection client.Collection
+
+	results planNode
+
 	docMapper
 
 	p *Planner
 
-	collection client.Collection
-
 	filter *mapper.Filter
-
-	docIDs []string
 
 	// input map of fields and values
 	input map[string]any
 
-	isUpdating bool
+	docIDs []string
 
-	results planNode
+	documentIterator
 
 	execInfo updateExecInfo
+
+	isUpdating bool
 }
 
 type updateExecInfo struct {

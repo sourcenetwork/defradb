@@ -57,44 +57,45 @@ const (
 
 // DB is the main struct for DefraDB's storage layer.
 type DB struct {
-	glock sync.RWMutex
+
+	// Contains ACP if it exists
+	acp immutable.Option[acp.ACP]
 
 	rootstore  datastore.Rootstore
 	multistore datastore.MultiStore
-
-	events *event.Bus
 
 	parser core.Parser
 
 	lensRegistry client.LensRegistry
 
-	// The maximum number of retries per transaction.
-	maxTxnRetries immutable.Option[int]
-
-	// The options used to init the database
-	options []Option
-
-	// The ID of the last transaction created.
-	previousTxnID atomic.Uint64
-
-	// The identity of the current node
-	nodeIdentity immutable.Option[identity.Identity]
-
-	// Contains ACP if it exists
-	acp immutable.Option[acp.ACP]
-
 	// The peer ID and network address information for the current node
 	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
 	peerInfo atomic.Value
+
+	events *event.Bus
 
 	// To be able to close the context passed to NewDB on DB close,
 	// we need to keep a reference to the cancel function. Otherwise,
 	// some goroutines might leak.
 	ctxCancel context.CancelFunc
 
+	// The identity of the current node
+	nodeIdentity immutable.Option[identity.Identity]
+
+	// The options used to init the database
+	options []Option
+
 	// The intervals at which to retry replicator failures.
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals []time.Duration
+
+	// The maximum number of retries per transaction.
+	maxTxnRetries immutable.Option[int]
+
+	// The ID of the last transaction created.
+	previousTxnID atomic.Uint64
+
+	glock sync.RWMutex
 }
 
 var _ client.DB = (*DB)(nil)

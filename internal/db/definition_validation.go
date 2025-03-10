@@ -23,14 +23,14 @@ import (
 //
 // It is read only and will not and should not be mutated.
 type definitionState struct {
-	collections     []client.CollectionDescription
+	definitionCache client.DefinitionCache
 	collectionsByID map[uint32]client.CollectionDescription
 
 	schemaByID   map[string]client.SchemaDescription
 	schemaByName map[string]client.SchemaDescription
 
 	definitionsByName map[string]client.CollectionDefinition
-	definitionCache   client.DefinitionCache
+	collections       []client.CollectionDescription
 }
 
 // newDefinitionState creates a new definitionState object given the provided

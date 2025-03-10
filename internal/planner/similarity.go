@@ -17,17 +17,18 @@ import (
 )
 
 type similarityNode struct {
-	documentIterator
-	docMapper
-
-	p    *Planner
 	plan planNode
 
+	vector any
+	docMapper
+
+	p         *Planner
+	simFilter *mapper.Filter
+	target    mapper.Targetable
+	documentIterator
+
 	virtualFieldIndex int
-	target            mapper.Targetable
-	vector            any
 	execInfo          similarityExecInfo
-	simFilter         *mapper.Filter
 }
 
 type similarityExecInfo struct {

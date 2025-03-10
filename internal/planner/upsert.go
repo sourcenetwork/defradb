@@ -18,16 +18,16 @@ import (
 )
 
 type upsertNode struct {
-	documentIterator
+	collection client.Collection
+	source     planNode
 	docMapper
 
-	p             *Planner
-	collection    client.Collection
-	filter        *mapper.Filter
-	createInput   map[string]any
-	updateInput   map[string]any
+	p           *Planner
+	filter      *mapper.Filter
+	createInput map[string]any
+	updateInput map[string]any
+	documentIterator
 	isInitialized bool
-	source        planNode
 }
 
 // Next only returns once.

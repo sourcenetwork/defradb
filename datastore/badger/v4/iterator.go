@@ -28,12 +28,12 @@ import (
 type BadgerIterator struct {
 	iterator       *badger.Iterator
 	resultsBuilder *dsq.ResultBuilder
-	query          dsq.Query
 	txn            txn
+	query          dsq.Query
 	skipped        int
 	sent           int
-	closedEarly    bool
 	iteratorLock   sync.RWMutex
+	closedEarly    bool
 	reversedOrder  bool
 }
 

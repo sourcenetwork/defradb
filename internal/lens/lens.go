@@ -24,8 +24,8 @@ type schemaVersionID = string
 type LensDoc = map[string]any
 
 type lensInput struct {
-	SchemaVersionID schemaVersionID
 	Doc             LensDoc
+	SchemaVersionID schemaVersionID
 }
 
 // Lens migrate items fed in to the target schema version.

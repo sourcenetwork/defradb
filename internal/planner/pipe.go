@@ -20,12 +20,13 @@ import (
 // The node will start empty, and then load items as they are requested.  Items that are
 // requested more than once will not be re-loaded from source.
 type pipeNode struct {
-	documentIterator
-	docMapper
-
 	source planNode
 
+	docMapper
+
 	docs *container.DocumentContainer
+
+	documentIterator
 
 	// The index of the current value - will be -1 if nothinghas been read yet
 	docIndex int

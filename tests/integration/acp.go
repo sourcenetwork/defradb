@@ -78,17 +78,12 @@ func init() {
 
 // AddPolicy will attempt to add the given policy using DefraDB's ACP system.
 type AddPolicy struct {
-	// NodeID may hold the ID (index) of the node we want to add policy to.
-	//
-	// If a value is not provided the policy will be added in all nodes, unless testing with
-	// sourcehub ACP, in which case the policy will only be defined once.
-	NodeID immutable.Option[int]
-
-	// The raw policy string.
-	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
 	Identity immutable.Option[identity]
+
+	// The raw policy string.
+	Policy string
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	ExpectedPolicyID string
@@ -98,6 +93,11 @@ type AddPolicy struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+	// NodeID may hold the ID (index) of the node we want to add policy to.
+	//
+	// If a value is not provided the policy will be added in all nodes, unless testing with
+	// sourcehub ACP, in which case the policy will only be defined once.
+	NodeID immutable.Option[int]
 }
 
 // addPolicyACP will attempt to add the given policy using DefraDB's ACP system.
@@ -133,6 +133,28 @@ func addPolicyACP(
 
 // AddDocActorRelationship will attempt to create a new relationship for a document with an actor.
 type AddDocActorRelationship struct {
+
+	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	TargetIdentity immutable.Option[identity]
+
+	// The requestor identity, i.e. identity of the actor creating the relationship.
+	// Note: This identity must either own or have managing access defined in the policy.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	RequestorIdentity immutable.Option[identity]
+
+	// The name of the relation to set between document and target actor (should be defined in the policy).
+	//
+	// This is a required field.
+	Relation string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be added in all nodes, unless testing with
@@ -151,30 +173,8 @@ type AddDocActorRelationship struct {
 	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
 	DocID int
 
-	// The name of the relation to set between document and target actor (should be defined in the policy).
-	//
-	// This is a required field.
-	Relation string
-
-	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
-	//
-	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[identity]
-
-	// The requestor identity, i.e. identity of the actor creating the relationship.
-	// Note: This identity must either own or have managing access defined in the policy.
-	//
-	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[identity]
-
 	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
 	ExpectedExistence bool
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
 }
 
 func addDocActorRelationshipACP(
@@ -225,6 +225,28 @@ func addDocActorRelationshipACP(
 
 // DeleteDocActorRelationship will attempt to delete a relationship between a document and an actor.
 type DeleteDocActorRelationship struct {
+
+	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	TargetIdentity immutable.Option[identity]
+
+	// The requestor identity, i.e. identity of the actor deleting the relationship.
+	// Note: This identity must either own or have managing access defined in the policy.
+	//
+	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
+	RequestorIdentity immutable.Option[identity]
+
+	// The name of the relation within the relationship we want to delete (should be defined in the policy).
+	//
+	// This is a required field.
+	Relation string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
@@ -243,31 +265,9 @@ type DeleteDocActorRelationship struct {
 	// This is a required field. To test the invalid usage of not having this arg, use -1 index.
 	DocID int
 
-	// The name of the relation within the relationship we want to delete (should be defined in the policy).
-	//
-	// This is a required field.
-	Relation string
-
-	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
-	//
-	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[identity]
-
-	// The requestor identity, i.e. identity of the actor deleting the relationship.
-	// Note: This identity must either own or have managing access defined in the policy.
-	//
-	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[identity]
-
 	// Result returns true if the relationship record was expected to be found and deleted,
 	// and returns false if no matching relationship record was found (no-op).
 	ExpectedRecordFound bool
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
 }
 
 func deleteDocActorRelationshipACP(

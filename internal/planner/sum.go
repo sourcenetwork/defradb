@@ -21,18 +21,21 @@ import (
 )
 
 type sumNode struct {
-	documentIterator
-	docMapper
-
-	p    *Planner
 	plan planNode
 
-	isFloat           bool
+	docMapper
+
+	p               *Planner
+	aggregateFilter *mapper.Filter
+
+	aggregateMapping []mapper.AggregateTarget
+
+	documentIterator
 	virtualFieldIndex int
-	aggregateMapping  []mapper.AggregateTarget
-	aggregateFilter   *mapper.Filter
 
 	execInfo sumExecInfo
+
+	isFloat bool
 }
 
 type sumExecInfo struct {

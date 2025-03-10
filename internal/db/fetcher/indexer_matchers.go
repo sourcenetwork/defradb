@@ -38,8 +38,8 @@ type valueMatcher interface {
 }
 
 type intMatcher struct {
-	value    int64
 	evalFunc func(int64, int64) bool
+	value    int64
 }
 
 func (m *intMatcher) Match(value client.NormalValue) (bool, error) {
@@ -56,8 +56,8 @@ func (m *intMatcher) Match(value client.NormalValue) (bool, error) {
 }
 
 type float32Matcher struct {
-	value    float32
 	evalFunc func(float32, float32) bool
+	value    float32
 }
 
 func (m *float32Matcher) Match(value client.NormalValue) (bool, error) {
@@ -74,8 +74,8 @@ func (m *float32Matcher) Match(value client.NormalValue) (bool, error) {
 }
 
 type float64Matcher struct {
-	value    float64
 	evalFunc func(float64, float64) bool
+	value    float64
 }
 
 func (m *float64Matcher) Match(value client.NormalValue) (bool, error) {
@@ -92,8 +92,8 @@ func (m *float64Matcher) Match(value client.NormalValue) (bool, error) {
 }
 
 type stringMatcher struct {
-	value    string
 	evalFunc func(string, string) bool
+	value    string
 }
 
 func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
@@ -110,8 +110,8 @@ func (m *stringMatcher) Match(value client.NormalValue) (bool, error) {
 }
 
 type timeMatcher struct {
-	op    string
 	value time.Time
+	op    string
 }
 
 func (m *timeMatcher) Match(value client.NormalValue) (bool, error) {
@@ -204,12 +204,12 @@ func (m *indexInArrayMatcher) Match(value client.NormalValue) (bool, error) {
 
 // checks if the index value satisfies the LIKE condition
 type indexLikeMatcher struct {
+	value             string
+	startAndEnd       []string
 	hasPrefix         bool
 	hasSuffix         bool
-	startAndEnd       []string
 	isLike            bool
 	isCaseInsensitive bool
-	value             string
 }
 
 func newLikeIndexCmp(filterValue string, isLike bool, isCaseInsensitive bool) (*indexLikeMatcher, error) {

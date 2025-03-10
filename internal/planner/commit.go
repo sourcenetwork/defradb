@@ -26,19 +26,22 @@ import (
 )
 
 type dagScanNode struct {
-	documentIterator
+	prefix immutable.Option[keys.HeadstoreKey]
 	docMapper
 
 	planner *Planner
 
-	depthVisited uint64
 	visitedNodes map[string]bool
+
+	commitSelect *mapper.CommitSelect
+
+	fetcher fetcher.HeadFetcher
 
 	queuedCids []*cid.Cid
 
-	fetcher      fetcher.HeadFetcher
-	prefix       immutable.Option[keys.HeadstoreKey]
-	commitSelect *mapper.CommitSelect
+	documentIterator
+
+	depthVisited uint64
 
 	execInfo dagScanExecInfo
 }

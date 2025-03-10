@@ -25,11 +25,12 @@ import (
 type permissionedFetcher struct {
 	ctx context.Context
 
-	identity immutable.Option[acpIdentity.Identity]
-	acp      acp.ACP
-	col      client.Collection
+	acp acp.ACP
+	col client.Collection
 
 	fetcher fetcher
+
+	identity immutable.Option[acpIdentity.Identity]
 }
 
 var _ fetcher = (*permissionedFetcher)(nil)

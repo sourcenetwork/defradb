@@ -46,10 +46,11 @@ func OptionFieldDirective(typeName, field, directive string) Option {
 type Generator struct {
 	ctx context.Context
 
-	schema string
-	types  []any
 	// map of type name to field name to list of directives
 	directives map[string]map[string][]string
+
+	schema string
+	types  []any
 }
 
 func ForSchema(ctx context.Context, schemaName string, options ...Option) Generator {

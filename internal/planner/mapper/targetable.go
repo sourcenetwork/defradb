@@ -211,13 +211,13 @@ const (
 // OrderCondition represents a single property by which request results should
 // be ordered, and the direction in which they should be ordered.
 type OrderCondition struct {
+
+	// The direction in which the sort should be applied.
+	Direction SortDirection
 	// A chain of field indexes by which the property to sort by may be found.
 	// This is relative to the host/defining object and may traverse through
 	// multiple object layers.
 	FieldIndexes []int
-
-	// The direction in which the sort should be applied.
-	Direction SortDirection
 }
 
 type OrderBy struct {
@@ -226,12 +226,6 @@ type OrderBy struct {
 
 // Targetable represents a targetable property.
 type Targetable struct {
-	// The basic field information of this property.
-	Field
-
-	// A optional collection of docIDs that can be specified to restrict results
-	// to belonging to this set.
-	DocIDs immutable.Option[[]string]
 
 	// An optional filter, that can be specified to restrict results to documents
 	// that satisfies all of its conditions.
@@ -248,6 +242,13 @@ type Targetable struct {
 	// An optional order clause, that can be specified to order results by property
 	// value
 	OrderBy *OrderBy
+
+	// The basic field information of this property.
+	Field
+
+	// A optional collection of docIDs that can be specified to restrict results
+	// to belonging to this set.
+	DocIDs immutable.Option[[]string]
 
 	ShowDeleted bool
 }

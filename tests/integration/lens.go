@@ -35,22 +35,23 @@ func init() {
 // ConfigureMigration is a test action which will configure a Lens migration using the
 // provided configuration.
 type ConfigureMigration struct {
-	// NodeID is the node ID (index) of the node in which to configure the migration.
-	NodeID immutable.Option[int]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// The configuration to use.
-	//
-	// Paths to WASM Lens modules may be found in: github.com/sourcenetwork/defradb/tests/lenses
-	client.LensConfig
 
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// The configuration to use.
+	//
+	// Paths to WASM Lens modules may be found in: github.com/sourcenetwork/defradb/tests/lenses
+	client.LensConfig
+
+	// NodeID is the node ID (index) of the node in which to configure the migration.
+	NodeID immutable.Option[int]
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
 }
 
 func configureMigration(

@@ -26,10 +26,10 @@ type ReplicatorParams struct {
 
 // Replicator is a peer that a set of local collections are replicated to.
 type Replicator struct {
+	LastStatusChange time.Time
 	Info             peer.AddrInfo
 	Schemas          []string
 	Status           ReplicatorStatus
-	LastStatusChange time.Time
 }
 
 // ReplicatorStatus is the status of a Replicator.

@@ -128,10 +128,12 @@ type nodeState struct {
 	event *eventState
 	// p2p contains p2p states for the node.
 	p2p *p2pState
-	// The network configurations for the nodes
-	netOpts []net.NodeOpt
 	// The path to any file-based databases active in this test.
 	dbPath string
+	// peerInfo contains the peer information for the node.
+	peerInfo peer.AddrInfo
+	// The network configurations for the nodes
+	netOpts []net.NodeOpt
 	// Collections by index present in the test.
 	// Indexes matches that of collectionNames.
 	collections []client.Collection
@@ -139,8 +141,6 @@ type nodeState struct {
 	indexes [][]client.IndexDescription
 	// indicates if the node is closed.
 	closed bool
-	// peerInfo contains the peer information for the node.
-	peerInfo peer.AddrInfo
 }
 
 // state contains all testing state.
@@ -151,8 +151,23 @@ type state struct {
 	// The Go Test test state
 	t testing.TB
 
-	// The TestCase currently being executed.
-	testCase TestCase
+	// identities contains all identities created in this test.
+	// The map key is the identity reference that uniquely identifies identities of different
+	// types. See [identRef].
+	// The map value is the identity holder that contains the identity itself and token
+	// generated for different target nodes. See [identityHolder].
+	identities map[identity]*identityHolder
+
+	// Will receive an item once all actions have finished processing.
+	allActionsDone chan struct{}
+
+	// A map of the collection indexes by their Root, this allows easier
+	// identification of collections in a natural, human readable, order
+	// even when they are renamed.
+	collectionIndexesByRoot map[uint32]int
+
+	// Valid Cid string values by [UniqueCid] ID.
+	cids map[any]string
 
 	// The type of KMS currently being tested.
 	kms KMSType
@@ -163,23 +178,16 @@ type state struct {
 	// The type of client currently being tested.
 	clientType ClientType
 
+	// The SourceHub address used to pay for SourceHub transactions.
+	sourcehubAddress string
+
+	// The TestCase currently being executed.
+	testCase TestCase
+
 	// Any explicit transactions active in this test.
 	//
 	// This is order dependent and the property is accessed by index.
 	txns []datastore.Txn
-
-	// identities contains all identities created in this test.
-	// The map key is the identity reference that uniquely identifies identities of different
-	// types. See [identRef].
-	// The map value is the identity holder that contains the identity itself and token
-	// generated for different target nodes. See [identityHolder].
-	identities map[identity]*identityHolder
-
-	// The seed for the next identity generation. We want identities to be deterministic.
-	nextIdentityGenSeed int
-
-	// Will receive an item once all actions have finished processing.
-	allActionsDone chan struct{}
 
 	// These channels will receive a function which asserts results of any subscription requests.
 	subscriptionResultsChans []chan func()
@@ -194,25 +202,17 @@ type state struct {
 	// Indexes matches that of initial collections.
 	collectionNames []string
 
-	// A map of the collection indexes by their Root, this allows easier
-	// identification of collections in a natural, human readable, order
-	// even when they are renamed.
-	collectionIndexesByRoot map[uint32]int
-
 	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
 	docIDs [][]client.DocID
 
-	// Valid Cid string values by [UniqueCid] ID.
-	cids map[any]string
+	// The seed for the next identity generation. We want identities to be deterministic.
+	nextIdentityGenSeed int
 
 	// isBench indicates wether the test is currently being benchmarked.
 	isBench bool
-
-	// The SourceHub address used to pay for SourceHub transactions.
-	sourcehubAddress string
 
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool

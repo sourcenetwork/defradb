@@ -273,9 +273,9 @@ func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 }
 
 type GraphQLRequest struct {
+	Variables     map[string]any `json:"variables"`
 	Query         string         `json:"query"`
 	OperationName string         `json:"operationName"`
-	Variables     map[string]any `json:"variables"`
 }
 
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {

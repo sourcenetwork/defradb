@@ -331,10 +331,10 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 }
 
 type lensEncodedDocument struct {
-	key             []byte
-	schemaVersionID string
-	status          client.DocumentStatus
 	properties      map[client.FieldDefinition]any
+	schemaVersionID string
+	key             []byte
+	status          client.DocumentStatus
 }
 
 var _ fetcher.EncodedDocument = (*lensEncodedDocument)(nil)

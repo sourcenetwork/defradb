@@ -28,15 +28,16 @@ type DocFields []any
 
 // Doc is a document.
 type Doc struct {
+	// The id of the schema version that this document is currently at.  This includes
+	// any migrations that may have been run.
+	SchemaVersionID string
+
+	Fields DocFields
 	// If true, this Doc will not be rendered, but will still be passed through
 	// the plan graph just like any other document.
 	Hidden bool
 
-	Fields DocFields
 	Status client.DocumentStatus
-	// The id of the schema version that this document is currently at.  This includes
-	// any migrations that may have been run.
-	SchemaVersionID string
 }
 
 // GetID returns the DocID for this document.
@@ -80,23 +81,32 @@ func (d *Doc) Clone() Doc {
 
 // RenderKey is a key that should be rendered into the document.
 type RenderKey struct {
-	// The field index to be rendered.
-	Index int
 
 	// The key by which the field contents should be rendered into.
 	Key string
+	// The field index to be rendered.
+	Index int
 }
 
 type mappingTypeInfo struct {
-	// The index at which the type name is to be held
-	Index int
 
 	// The name of the host type
 	Name string
+	// The index at which the type name is to be held
+	Index int
 }
 
 // DocumentMapping is a mapping of a document.
 type DocumentMapping struct {
+
+	// The set of fields available using this mapping.
+	//
+	// If a field-name is not in this collection, it essentially doesn't exist.
+	// Collection should include fields that are not rendered to the consumer.
+	// Multiple fields may exist for any given name (for example if a property
+	// exists under different aliases/filters).
+	IndexesByName map[string][]int
+
 	// The type information for the object, if provided.
 	typeInfo immutable.Option[mappingTypeInfo]
 
@@ -107,24 +117,16 @@ type DocumentMapping struct {
 	// items should not be accessed this way.
 	RenderKeys []RenderKey
 
-	// The set of fields available using this mapping.
-	//
-	// If a field-name is not in this collection, it essentially doesn't exist.
-	// Collection should include fields that are not rendered to the consumer.
-	// Multiple fields may exist for any given name (for example if a property
-	// exists under different aliases/filters).
-	IndexesByName map[string][]int
-
-	// The next index available for use.
-	//
-	// Also useful for identifying how many fields a document should have.
-	nextIndex int
-
 	// The collection of child mappings for this object.
 	//
 	// Indexes correspond exactly to field indexes, however entries may be default
 	// if the field is unmappable (e.g. integer fields).
 	ChildMappings []*DocumentMapping
+
+	// The next index available for use.
+	//
+	// Also useful for identifying how many fields a document should have.
+	nextIndex int
 }
 
 // NewDocumentMapping instantiates a new DocumentMapping instance.

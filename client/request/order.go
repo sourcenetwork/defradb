@@ -16,6 +16,7 @@ type (
 	OrderDirection string
 
 	OrderCondition struct {
+		Direction OrderDirection
 		// field may be a compound field statement
 		// since the order statement allows ordering on
 		// sub objects.
@@ -23,8 +24,7 @@ type (
 		// Given the statement: {order: {author: {birthday: DESC}}}
 		// The field value would be "author.birthday"
 		// and the direction would be "DESC"
-		Fields    []string
-		Direction OrderDirection
+		Fields []string
 	}
 
 	OrderBy struct {

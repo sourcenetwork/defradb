@@ -22,11 +22,11 @@ const operationNodeKind string = "operationNode"
 // operationNode is the top level node for operations with
 // one or more child selections, such as queries or mutations.
 type operationNode struct {
-	documentIterator
 	docMapper
 
 	children map[int]planNode
-	isDone   bool
+	documentIterator
+	isDone bool
 }
 
 func (n *operationNode) Prefixes(prefixes []keys.Walkable) {

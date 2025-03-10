@@ -41,8 +41,9 @@ type EPTuple []encProperty
 
 // EncProperty is an encoded property of a EncodedDocument
 type encProperty struct {
+	Raw []byte
+
 	Desc client.FieldDefinition
-	Raw  []byte
 
 	// Filter flag to determine if this flag
 	// is needed for eager filter evaluation
@@ -65,9 +66,6 @@ func (e encProperty) Decode() (any, error) {
 
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
-	id                   []byte
-	schemaVersionID      string
-	status               client.DocumentStatus
 	properties           map[client.FieldDefinition]*encProperty
 	decodedPropertyCache map[client.FieldDefinition]any
 
@@ -76,8 +74,11 @@ type encodedDocument struct {
 	// 0 means we we ignore the field
 	// we update the bitsets as we collect values
 	// by clearing the bit for the FieldID
-	filterSet *bitset.BitSet // filter fields
-	selectSet *bitset.BitSet // select fields
+	filterSet       *bitset.BitSet // filter fields
+	selectSet       *bitset.BitSet // select fields
+	schemaVersionID string
+	id              []byte
+	status          client.DocumentStatus
 }
 
 var _ EncodedDocument = (*encodedDocument)(nil)

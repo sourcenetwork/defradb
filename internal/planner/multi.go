@@ -55,15 +55,15 @@ type MultiNode interface {
 // However, they are entirely independent graphs, so they can
 // be executed in parallel.
 type parallelNode struct { // serialNode?
-	documentIterator
 	docMapper
 
 	p *Planner
 
+	multiscan *multiScanNode
+
 	children     []planNode
 	childIndexes []int
-
-	multiscan *multiScanNode
+	documentIterator
 }
 
 func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {

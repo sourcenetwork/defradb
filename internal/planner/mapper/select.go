@@ -20,8 +20,6 @@ import (
 //
 // It wraps child Fields belonging to this Select.
 type Select struct {
-	// Targeting information used to restrict or format the result.
-	Targetable
 
 	// The document mapping for this select, describing how items yielded
 	// for this select can be accessed and rendered.
@@ -38,6 +36,9 @@ type Select struct {
 	// These can include stuff such as version information, aggregates, and other
 	// Selects.
 	Fields []Requestable
+
+	// Targeting information used to restrict or format the result.
+	Targetable
 
 	// SkipResolve is a flag that indicates that the fields in this Select don't need to be resolved,
 	// i.e. it's value doesn't need to be fetched and provided to the user.

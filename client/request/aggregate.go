@@ -30,16 +30,7 @@ type Aggregate struct {
 
 // AggregateTarget represents the target of an [Aggregate].
 type AggregateTarget struct {
-	Limitable
-	Offsetable
-	Orderable
 	Filterable
-
-	// HostName is the name of the immediate field on the object hosting the aggregate.
-	//
-	// For example if averaging Friends.Age on the User collection, this property would be
-	// "Friends".
-	HostName string
 
 	// ChildName is the name of the child field on the object navigated to via [HostName].
 	//
@@ -49,4 +40,14 @@ type AggregateTarget struct {
 	// When averaging Friends.Age on the User collection, this property would be
 	// "Age".
 	ChildName immutable.Option[string]
+
+	// HostName is the name of the immediate field on the object hosting the aggregate.
+	//
+	// For example if averaging Friends.Age on the User collection, this property would be
+	// "Friends".
+	HostName string
+
+	Orderable
+	Limitable
+	Offsetable
 }

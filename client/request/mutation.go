@@ -23,31 +23,33 @@ const (
 // ObjectMutation is a field on the `mutation` operation of a graphql request. It includes
 // all the possible arguments.
 type ObjectMutation struct {
+	Filterable
+
+	// UpdateInput is a map of fields and values used for an update mutation.
+	UpdateInput map[string]any
+
 	Field
+
+	// Collection is the target collection name.
+	Collection string
+
+	DocIDsFilter
+
 	ChildSelect
 
-	Filterable
-	DocIDsFilter
+	// CreateInput is the array of maps of fields and values used for a create mutation.
+	CreateInput []map[string]any
+
+	// EncryptFields is a list of doc fields from input data that should be encrypted.
+	EncryptFields []string
 
 	// Type is the type of mutatation that this object represents.
 	//
 	// For example [CreateObjects].
 	Type MutationType
 
-	// Collection is the target collection name.
-	Collection string
-
-	// CreateInput is the array of maps of fields and values used for a create mutation.
-	CreateInput []map[string]any
-
-	// UpdateInput is a map of fields and values used for an update mutation.
-	UpdateInput map[string]any
-
 	// Encrypt is a boolean flag that indicates whether the input data should be encrypted.
 	Encrypt bool
-
-	// EncryptFields is a list of doc fields from input data that should be encrypted.
-	EncryptFields []string
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as

@@ -43,9 +43,9 @@ var _ client.Collection = (*collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
 	db             *DB
-	def            client.CollectionDefinition
-	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
+	indexes        []CollectionIndex
+	def            client.CollectionDefinition
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.

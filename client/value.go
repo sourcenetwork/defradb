@@ -15,8 +15,8 @@ import (
 )
 
 type FieldValue struct {
-	t       CType
 	value   NormalValue
+	t       CType
 	isDirty bool
 }
 

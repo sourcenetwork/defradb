@@ -31,24 +31,22 @@ const OrphanRootID uint32 = math.MaxUint32
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
+
+	// Policy contains the policy information on this collection.
+	//
+	// It is possible for a collection to not have a policy, a collection
+	// without a policy has no access control.
+	//
+	// Note: The policy information must be validated using acp right after
+	// parsing is done, to avoid storing an invalid policyID or policy resource
+	// that may not even exist on acp.
+	Policy immutable.Option[PolicyDescription]
+
 	// Name contains the name of the collection.
 	//
 	// It is conceptually local to the node hosting the DefraDB instance, but currently there
 	// is no means to update the local value so that it differs from the (global) schema name.
 	Name immutable.Option[string]
-
-	// ID is the local identifier of this collection.
-	//
-	// It is immutable.
-	ID uint32
-
-	// RootID is the local root identifier of this collection, linking together a chain of
-	// collection instances on different schema versions.
-	//
-	// Collections sharing the same RootID will be compatable with each other, with the documents
-	// within them shared and yielded as if they were in the same set, using Lens transforms to
-	// migrate between schema versions when provided.
-	RootID uint32
 
 	// The ID of the schema version that this collection is at.
 	SchemaVersionID string
@@ -70,15 +68,28 @@ type CollectionDescription struct {
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
 
-	// Policy contains the policy information on this collection.
+	// VectorEmbeddings contains the configuration for generating embedding vectors.
 	//
-	// It is possible for a collection to not have a policy, a collection
-	// without a policy has no access control.
+	// This is only usable with array fields.
 	//
-	// Note: The policy information must be validated using acp right after
-	// parsing is done, to avoid storing an invalid policyID or policy resource
-	// that may not even exist on acp.
-	Policy immutable.Option[PolicyDescription]
+	// When configured, embeddings may call 3rd party APIs inline with document mutations.
+	// This may cause increase latency in the completion of the mutation requests.
+	// This is necessary to ensure that the generated docID is representative of the
+	// content of the document.
+	VectorEmbeddings []VectorEmbeddingDescription
+
+	// ID is the local identifier of this collection.
+	//
+	// It is immutable.
+	ID uint32
+
+	// RootID is the local root identifier of this collection, linking together a chain of
+	// collection instances on different schema versions.
+	//
+	// Collections sharing the same RootID will be compatable with each other, with the documents
+	// within them shared and yielded as if they were in the same set, using Lens transforms to
+	// migrate between schema versions when provided.
+	RootID uint32
 
 	// IsMaterialized defines whether the items in this collection are cached or not.
 	//
@@ -103,16 +114,6 @@ type CollectionDescription struct {
 	// Currently this property is immutable and can only be set on collection creation, however
 	// that will change in the future.
 	IsBranchable bool
-
-	// VectorEmbeddings contains the configuration for generating embedding vectors.
-	//
-	// This is only usable with array fields.
-	//
-	// When configured, embeddings may call 3rd party APIs inline with document mutations.
-	// This may cause increase latency in the completion of the mutation requests.
-	// This is necessary to ensure that the generated docID is representative of the
-	// content of the document.
-	VectorEmbeddings []VectorEmbeddingDescription
 }
 
 // QuerySource represents a collection data source from a query.
@@ -120,8 +121,6 @@ type CollectionDescription struct {
 // The query will be executed when data from this source is requested, and the query results
 // yielded to the consumer.
 type QuerySource struct {
-	// Query contains the base query of this data source.
-	Query request.Select
 
 	// Transform is a optional Lens configuration.  If specified, data drawn from the [Query] will have the
 	// transform applied before being returned.
@@ -129,6 +128,8 @@ type QuerySource struct {
 	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
 	// those passed in from the underlying query.
 	Transform immutable.Option[model.Lens]
+	// Query contains the base query of this data source.
+	Query request.Select
 }
 
 // CollectionSource represents a collection data source from another collection instance.
@@ -138,12 +139,6 @@ type QuerySource struct {
 //
 // Typically these are used to link together multiple schema versions into the same dataset.
 type CollectionSource struct {
-	// SourceCollectionID is the local identifier of the source [CollectionDescription] from which to
-	// share data.
-	//
-	// This is a bi-directional relationship, and documents in the host collection instance will also
-	// be available to the source collection instance.
-	SourceCollectionID uint32
 
 	// Transform is a optional Lens configuration.  If specified, data drawn from the source will have the
 	// transform applied before being returned by any operation on the host collection instance.
@@ -151,6 +146,12 @@ type CollectionSource struct {
 	// If the transform supports an inverse operation, that inverse will be applied when the source collection
 	// draws data from this host.
 	Transform immutable.Option[model.Lens]
+	// SourceCollectionID is the local identifier of the source [CollectionDescription] from which to
+	// share data.
+	//
+	// This is a bi-directional relationship, and documents in the host collection instance will also
+	// be available to the source collection instance.
+	SourceCollectionID uint32
 }
 
 // IDString returns the collection ID as a string.
@@ -208,20 +209,20 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 // collectionDescription is a private type used to facilitate the unmarshalling
 // of json to a [CollectionDescription].
 type collectionDescription struct {
+	Policy immutable.Option[PolicyDescription]
 	// These properties are unmarshalled using the default json unmarshaller
 	Name             immutable.Option[string]
-	ID               uint32
-	RootID           uint32
 	SchemaVersionID  string
-	IsMaterialized   bool
-	IsBranchable     bool
-	Policy           immutable.Option[PolicyDescription]
 	Indexes          []IndexDescription
 	Fields           []CollectionFieldDescription
 	VectorEmbeddings []VectorEmbeddingDescription
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
-	Sources []map[string]json.RawMessage
+	Sources        []map[string]json.RawMessage
+	ID             uint32
+	RootID         uint32
+	IsMaterialized bool
+	IsBranchable   bool
 }
 
 func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
@@ -288,9 +289,6 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 type VectorEmbeddingDescription struct {
 	// FieldName is the name of the field on the collection that this embedding description applies to.
 	FieldName string
-	// Fields are the fields in the parent schema that will be used as the basis of the
-	// vector generation.
-	Fields []string
 	// Model is the LLM of the provider to use for generating the embeddings.
 	// For example: text-embedding-3-small
 	Model string
@@ -319,6 +317,9 @@ type VectorEmbeddingDescription struct {
 	// Not providing a URL will result in the use of the default
 	// known URL for the given provider.
 	URL string
+	// Fields are the fields in the parent schema that will be used as the basis of the
+	// vector generation.
+	Fields []string
 }
 
 // IsSupportedVectorEmbeddingSourceKind return true if the fields used for embedding generation

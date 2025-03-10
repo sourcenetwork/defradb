@@ -56,8 +56,7 @@ type Txn interface {
 
 type txn struct {
 	MultiStore
-	t  ds.Txn
-	id uint64
+	t ds.Txn
 
 	successFns []func()
 	errorFns   []func()
@@ -66,6 +65,7 @@ type txn struct {
 	successAsyncFns []func()
 	errorAsyncFns   []func()
 	discardAsyncFns []func()
+	id              uint64
 }
 
 var _ Txn = (*txn)(nil)

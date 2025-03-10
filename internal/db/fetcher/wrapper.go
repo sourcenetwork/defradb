@@ -28,19 +28,20 @@ import (
 // wrappingFetcher is a fetcher type that bridges between the existing [Fetcher] interface
 // and the newer [fetcher] interface.
 type wrappingFetcher struct {
-	fetcher  fetcher
-	execInfo ExecInfo
+	acp       immutable.Option[acp.ACP]
+	fetcher   fetcher
+	txn       datastore.Txn
+	col       client.Collection
+	filter    *mapper.Filter
+	docMapper *core.DocumentMapping
 
 	// The below properties are only held in state in order to temporarily adhere to the [Fetcher]
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
-	identity    immutable.Option[acpIdentity.Identity]
-	txn         datastore.Txn
-	acp         immutable.Option[acp.ACP]
-	index       immutable.Option[client.IndexDescription]
-	col         client.Collection
-	fields      []client.FieldDefinition
-	filter      *mapper.Filter
-	docMapper   *core.DocumentMapping
+	identity immutable.Option[acpIdentity.Identity]
+	fields   []client.FieldDefinition
+	index    immutable.Option[client.IndexDescription]
+	execInfo ExecInfo
+
 	showDeleted bool
 }
 

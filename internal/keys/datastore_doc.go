@@ -35,10 +35,10 @@ const (
 
 // DataStoreKey is a type that represents a key in the database.
 type DataStoreKey struct {
-	CollectionRootID uint32
 	InstanceType     InstanceType
 	DocID            string
 	FieldID          string
+	CollectionRootID uint32
 }
 
 var _ Walkable = (*DataStoreKey)(nil)

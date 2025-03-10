@@ -25,8 +25,6 @@ type closeCommand struct{}
 
 // Bus uses a buffered channel to manage subscribers and publish messages.
 type Bus struct {
-	// subID is incremented for each subscriber and used to set subscriber ids.
-	subID atomic.Uint64
 	// subs is a mapping of subscriber ids to subscriptions.
 	subs map[uint64]*Subscription
 	// events is a mapping of event names to subscriber ids.
@@ -38,12 +36,14 @@ type Bus struct {
 	//
 	// This does mean that non-event commands can block the database if the buffer
 	// size is breached (e.g. if many subscribe commands occupy the buffer).
-	commandChannel  chan any
+	commandChannel chan any
+	hasClosedChan  chan struct{}
+	// subID is incremented for each subscriber and used to set subscriber ids.
+	subID           atomic.Uint64
 	eventBufferSize int
-	hasClosedChan   chan struct{}
-	isClosed        bool
 	// closeMutex is only locked when the bus is closing.
 	closeMutex sync.RWMutex
+	isClosed   bool
 }
 
 // NewBus creates a new event bus with the given commandBufferSize and

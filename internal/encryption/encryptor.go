@@ -50,9 +50,9 @@ func generateTestEncryptionKey(docID string, fieldName immutable.Option[string])
 // receives an UpdateEvent on a document (or any other event) a new DocEncryptor is created and stored
 // in the context, so that the same DocEncryptor can be used by other object down the call chain.
 type DocEncryptor struct {
-	conf          immutable.Option[DocEncConfig]
 	ctx           context.Context
 	generatedKeys map[genK][]byte
+	conf          immutable.Option[DocEncConfig]
 }
 
 type genK struct {

@@ -14,11 +14,12 @@ import "github.com/sourcenetwork/defradb/internal/core"
 
 // An optional child target.
 type OptionalChildTarget struct {
-	// The field index of this target.
-	Index int
 
 	// The name of the target, for example '_sum' or 'Age'.
 	Name string
+
+	// The field index of this target.
+	Index int
 
 	// If true this child target exists and has been requested.
 	//

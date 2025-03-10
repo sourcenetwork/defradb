@@ -27,8 +27,8 @@ const MaxStackDepth int = 50
 
 // KV is a key-value pair.
 type KV struct {
-	key   string
 	value any
+	key   string
 }
 
 // NewKV creates a new key-value pair.

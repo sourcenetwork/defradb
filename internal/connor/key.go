@@ -4,12 +4,12 @@ package connor
 type KeyResult struct {
 	// Data is the data that should be used to filter the value matching the key.
 	Data any
-	// MissProp is true if the key is missing a property, otherwise false.
-	// It's relevant for object of dynamic type, like JSON.
-	MissProp bool
 	// Operator is the operator that should be used to filter the value matching the key.
 	// If the key does not have an operator the given defaultOp will be returned.
 	Operator string
+	// MissProp is true if the key is missing a property, otherwise false.
+	// It's relevant for object of dynamic type, like JSON.
+	MissProp bool
 }
 
 // FilterKey represents a type that may be used as a map key

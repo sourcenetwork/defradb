@@ -37,9 +37,9 @@ var (
 
 // DocID is the root identifier for documents in DefraDB.
 type DocID struct {
+	cid     cid.Cid
 	version uint16
 	uuid    uuid.UUID
-	cid     cid.Cid
 }
 
 // NewDocIDV0 creates a new DocID identified by the root data CID, peerID, and namespaced by the versionNS.

@@ -18,16 +18,17 @@ import (
 )
 
 type deleteNode struct {
-	documentIterator
+	collection client.Collection
+	source     planNode
+
 	docMapper
 
 	p *Planner
 
-	collection client.Collection
-	source     planNode
-
 	filter *mapper.Filter
 	docIDs []string
+
+	documentIterator
 
 	execInfo deleteExecInfo
 }

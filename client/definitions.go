@@ -28,10 +28,10 @@ import (
 // from various functions as a convienient means to access the computated convergence of schema
 // and collection descriptions.
 type CollectionDefinition struct {
-	// Description returns the CollectionDescription of this Collection.
-	Description CollectionDescription `json:"description"`
 	// Schema returns the SchemaDescription used to define this Collection.
 	Schema SchemaDescription `json:"schema"`
+	// Description returns the CollectionDescription of this Collection.
+	Description CollectionDescription `json:"description"`
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
@@ -123,20 +123,30 @@ func (def CollectionDefinition) GetName() string {
 // from various functions as a convienient means to access the computated convergence of schema
 // and collection descriptions.
 type FieldDefinition struct {
-	// Name contains the name of this field.
-	Name string
-
-	// ID contains the local, internal ID of this field.
-	ID FieldID
 
 	// The data type that this field holds.
 	//
 	// Must contain a valid value. It is currently immutable.
 	Kind FieldKind
 
+	// DefaultValue contains the default value for this field.
+	DefaultValue any
+
+	// Name contains the name of this field.
+	Name string
+
 	// RelationName the name of the relationship that this field represents if this field is
 	// a relation field.  Otherwise this will be empty.
 	RelationName string
+
+	// Size is a constraint that can be applied to fields that are arrays.
+	//
+	// Mutations on fields with a size constraint will fail if the size of the array
+	// does not match the constraint.
+	Size int
+
+	// ID contains the local, internal ID of this field.
+	ID FieldID
 
 	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
 	//
@@ -145,15 +155,6 @@ type FieldDefinition struct {
 
 	// If true, this is the primary half of a relation, otherwise is false.
 	IsPrimaryRelation bool
-
-	// DefaultValue contains the default value for this field.
-	DefaultValue any
-
-	// Size is a constraint that can be applied to fields that are arrays.
-	//
-	// Mutations on fields with a size constraint will fail if the size of the array
-	// does not match the constraint.
-	Size int
 }
 
 // NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
@@ -217,14 +218,14 @@ func (f FieldDefinition) GetSecondaryRelationField(c CollectionDefinition) (Fiel
 
 // DefinitionCache is an object providing easy access to cached collection definitions.
 type DefinitionCache struct {
-	// The full set of [CollectionDefinition]s within this cache
-	Definitions []CollectionDefinition
 
 	// The cached Definitions mapped by the Root of their [SchemaDescription]
 	DefinitionsBySchemaRoot map[string]CollectionDefinition
 
 	// The cached Definitions mapped by the Root of their [CollectionDescription]
 	DefinitionsByCollectionRoot map[uint32]CollectionDefinition
+	// The full set of [CollectionDefinition]s within this cache
+	Definitions []CollectionDefinition
 }
 
 // NewDefinitionCache creates a new [DefinitionCache] populated with the given [CollectionDefinition]s.

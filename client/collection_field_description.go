@@ -22,11 +22,6 @@ type FieldID uint32
 
 // CollectionFieldDescription describes the local components of a field on a collection.
 type CollectionFieldDescription struct {
-	// Name contains the name of the [SchemaFieldDescription] that this field uses.
-	Name string
-
-	// ID contains the local, internal ID of this field.
-	ID FieldID
 
 	// Kind contains the local field kind if this is a local-only field (e.g. the secondary
 	// side of a relation).
@@ -34,21 +29,27 @@ type CollectionFieldDescription struct {
 	// If the field is globaly defined (on the Schema), this will be [None].
 	Kind immutable.Option[FieldKind]
 
+	// DefaultValue contains the default value for this field.
+	//
+	// This value has no effect on views.
+	DefaultValue any
+
 	// RelationName contains the name of this relation, if this field is part of a relationship.
 	//
 	// Otherwise will be [None].
 	RelationName immutable.Option[string]
 
-	// DefaultValue contains the default value for this field.
-	//
-	// This value has no effect on views.
-	DefaultValue any
+	// Name contains the name of the [SchemaFieldDescription] that this field uses.
+	Name string
 
 	// Size is a constraint that can be applied to fields that are arrays.
 	//
 	// Mutations on fields with a size constraint will fail if the size of the array
 	// does not match the constraint.
 	Size int
+
+	// ID contains the local, internal ID of this field.
+	ID FieldID
 }
 
 func (f FieldID) String() string {
@@ -58,14 +59,15 @@ func (f FieldID) String() string {
 // collectionFieldDescription is a private type used to facilitate the unmarshalling
 // of json to a [CollectionFieldDescription].
 type collectionFieldDescription struct {
-	Name         string
-	ID           FieldID
-	RelationName immutable.Option[string]
 	DefaultValue any
-	Size         int
+	RelationName immutable.Option[string]
+	Name         string
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
+	Size int
+
+	ID FieldID
 }
 
 func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {

@@ -41,12 +41,7 @@ type orderingStrategy interface {
 
 // order the results
 type orderNode struct {
-	docMapper
-
-	p    *Planner
 	plan planNode
-
-	ordering []mapper.OrderCondition
 
 	// simplified planNode interface
 	// used for iterating through
@@ -58,11 +53,17 @@ type orderNode struct {
 	// sorted
 	orderStrategy orderingStrategy
 
+	docMapper
+
+	p *Planner
+
+	ordering []mapper.OrderCondition
+
+	execInfo orderExecInfo
+
 	// indicates if our underlying orderStrategy is still
 	// consuming and sorting data.
 	needSort bool
-
-	execInfo orderExecInfo
 }
 
 type orderExecInfo struct {

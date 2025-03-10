@@ -89,15 +89,15 @@ var CborNil []byte
 // @body: A document interface can be implemented by both a TypedDocument and a
 // UnTypedDocument, which use a schema and schemaless approach respectively.
 type Document struct {
-	id     DocID
 	fields map[string]Field
 	values map[Field]*FieldValue
 	head   cid.Cid
-	mu     sync.RWMutex
-	// marks if document has unsaved changes
-	isDirty bool
 
 	collectionDefinition CollectionDefinition
+	id                   DocID
+	mu                   sync.RWMutex
+	// marks if document has unsaved changes
+	isDirty bool
 }
 
 func newEmptyDoc(collectionDefinition CollectionDefinition) (*Document, error) {

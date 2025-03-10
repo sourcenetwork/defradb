@@ -22,8 +22,8 @@ import (
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
 type SchemaManager struct {
-	schema    gql.Schema
 	Generator *Generator
+	schema    gql.Schema
 }
 
 // NewSchemaManager returns a new instance of a SchemaManager

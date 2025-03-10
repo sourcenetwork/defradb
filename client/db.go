@@ -304,10 +304,10 @@ type Store interface {
 
 // GQLOptions contains optional arguments for GQL requests.
 type GQLOptions struct {
-	// OperationName is the name of the operation to exec.
-	OperationName string
 	// Variables is a map of names to varible values.
 	Variables map[string]any
+	// OperationName is the name of the operation to exec.
+	OperationName string
 }
 
 // RequestOption sets an optional request setting.
@@ -331,16 +331,16 @@ func WithVariables(variables map[string]any) RequestOption {
 //
 // It does not handle subscription channels. This object and its children are json serializable.
 type GQLResult struct {
-	// Errors contains any errors generated whilst attempting to execute the request.
-	//
-	// If there are values in this slice the request will likely not have run to completion
-	// and [Data] will be nil.
-	Errors []error `json:"errors,omitempty"`
 
 	// Data contains the resultant data produced by the GQL request.
 	//
 	// It will be nil if any errors were raised during execution.
 	Data any `json:"data"`
+	// Errors contains any errors generated whilst attempting to execute the request.
+	//
+	// If there are values in this slice the request will likely not have run to completion
+	// and [Data] will be nil.
+	Errors []error `json:"errors,omitempty"`
 }
 
 // gqlError represents an error that was encountered during a GQL request.
@@ -355,10 +355,10 @@ type gqlError struct {
 //
 // The serialized data should always match the graphQL spec.
 type gqlResult struct {
-	// Errors contains the formatted result errors
-	Errors []gqlError `json:"errors,omitempty"`
 	// Data contains the result data
 	Data any `json:"data"`
+	// Errors contains the formatted result errors
+	Errors []gqlError `json:"errors,omitempty"`
 }
 
 func (res *GQLResult) UnmarshalJSON(data []byte) error {
@@ -387,12 +387,12 @@ func (res GQLResult) MarshalJSON() ([]byte, error) {
 
 // RequestResult represents the results of a GQL request.
 type RequestResult struct {
-	// GQL contains the immediate results of the GQL request.
-	GQL GQLResult
 
 	// Subscription is an optional channel which returns results
 	// from a subscription request.
 	Subscription <-chan GQLResult
+	// GQL contains the immediate results of the GQL request.
+	GQL GQLResult
 }
 
 // CollectionFetchOptions represents a set of options used for fetching collections.
@@ -403,11 +403,11 @@ type CollectionFetchOptions struct {
 	// If provided, only collections with schemas of this root will be returned.
 	SchemaRoot immutable.Option[string]
 
-	// If provided, only collections with this root will be returned.
-	Root immutable.Option[uint32]
-
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]
+
+	// If provided, only collections with this root will be returned.
+	Root immutable.Option[uint32]
 
 	// If IncludeInactive is true, then inactive collections will also be returned.
 	IncludeInactive immutable.Option[bool]

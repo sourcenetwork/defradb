@@ -65,21 +65,21 @@ type indexIterator interface {
 }
 
 type indexIterResult struct {
+	value    []byte
 	key      keys.IndexDataStoreKey
 	foundKey bool
-	value    []byte
 }
 
 // indexPrefixIterator is an iterator over index keys with a specific prefix.
 type indexPrefixIterator struct {
-	indexDesc     client.IndexDescription
-	indexedFields []client.FieldDefinition
-	indexKey      keys.IndexDataStoreKey
-	matchers      []valueMatcher
-	execInfo      *ExecInfo
 	resultIter    query.Results
 	ctx           context.Context
 	store         datastore.DSReaderWriter
+	execInfo      *ExecInfo
+	indexKey      keys.IndexDataStoreKey
+	indexedFields []client.FieldDefinition
+	matchers      []valueMatcher
+	indexDesc     client.IndexDescription
 }
 
 var _ indexIterator = (*indexPrefixIterator)(nil)
@@ -154,11 +154,11 @@ func (iter *indexPrefixIterator) Close() error {
 }
 
 type eqSingleIndexIterator struct {
-	indexKey keys.IndexDataStoreKey
+	ctx      context.Context
+	store    datastore.DSReaderWriter
 	execInfo *ExecInfo
 
-	ctx   context.Context
-	store datastore.DSReaderWriter
+	indexKey keys.IndexDataStoreKey
 }
 
 var _ indexIterator = (*eqSingleIndexIterator)(nil)
@@ -191,10 +191,10 @@ func (iter *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
-	inValues     []client.NormalValue
-	nextValIndex int
 	ctx          context.Context
 	store        datastore.DSReaderWriter
+	inValues     []client.NormalValue
+	nextValIndex int
 	hasIterator  bool
 }
 
@@ -475,11 +475,11 @@ func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
 }
 
 type fieldFilterCond struct {
+	val      client.NormalValue
+	kind     client.FieldKind
 	op       string
 	arrOp    string
 	jsonPath client.JSONPath
-	val      client.NormalValue
-	kind     client.FieldKind
 }
 
 // determineFieldFilterConditions determines the conditions and their corresponding operation

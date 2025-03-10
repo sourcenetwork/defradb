@@ -28,12 +28,12 @@ type IndexedField struct {
 
 // IndexDataStoreKey is key of an indexed document in the database.
 type IndexDataStoreKey struct {
+	// Fields is the values of the fields in the index
+	Fields []IndexedField
 	// CollectionID is the id of the collection
 	CollectionID uint32
 	// IndexID is the id of the index
 	IndexID uint32
-	// Fields is the values of the fields in the index
-	Fields []IndexedField
 }
 
 var _ Key = (*IndexDataStoreKey)(nil)

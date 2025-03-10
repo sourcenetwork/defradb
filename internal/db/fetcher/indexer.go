@@ -31,14 +31,14 @@ type indexFetcher struct {
 	ctx           context.Context
 	txn           datastore.Txn
 	col           client.Collection
+	indexIter     indexIterator
 	indexFilter   *mapper.Filter
 	mapping       *core.DocumentMapping
-	indexedFields []client.FieldDefinition
 	fieldsByID    map[uint32]client.FieldDefinition
-	indexDesc     client.IndexDescription
-	indexIter     indexIterator
-	currentDocID  immutable.Option[string]
 	execInfo      *ExecInfo
+	currentDocID  immutable.Option[string]
+	indexedFields []client.FieldDefinition
+	indexDesc     client.IndexDescription
 }
 
 var _ fetcher = (*indexFetcher)(nil)

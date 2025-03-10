@@ -126,26 +126,26 @@ type Collection interface {
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.
 type DocIDResult struct {
-	// If a DocID was successfully retrieved, this will be that DocID.
-	ID DocID
 	// If an error was generated whilst attempting to retrieve the DocID, this will be the error.
 	Err error
+	// If a DocID was successfully retrieved, this will be that DocID.
+	ID DocID
 }
 
 // UpdateResult wraps the result of an update call.
 type UpdateResult struct {
-	// Count contains the number of documents updated by the update call.
-	Count int64
 	// DocIDs contains the DocIDs of all the documents updated by the update call.
 	DocIDs []string
+	// Count contains the number of documents updated by the update call.
+	Count int64
 }
 
 // DeleteResult wraps the result of an delete call.
 type DeleteResult struct {
-	// Count contains the number of documents deleted by the delete call.
-	Count int64
 	// DocIDs contains the DocIDs of all the documents deleted by the delete call.
 	DocIDs []string
+	// Count contains the number of documents deleted by the delete call.
+	Count int64
 }
 
 // P2PCollection is the gRPC response representation of a P2P collection topic

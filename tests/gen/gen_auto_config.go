@@ -18,9 +18,9 @@ import (
 
 // genConfig is a configuration for a generation of a field.
 type genConfig struct {
-	labels         []string
 	props          map[string]any
 	fieldGenerator GenerateFieldFunc
+	labels         []string
 }
 
 // configsMap is a map of type name to a map of field name to a generation configuration.

@@ -386,6 +386,7 @@ func (p *Planner) newInvertableTypeJoin(
 
 type joinSide struct {
 	plan planNode
+	col  client.Collection
 	// The field definition of the relation-object field on this side of the relation.
 	//
 	// This will always have a value on the primary side, but it may not have a value on
@@ -393,7 +394,6 @@ type joinSide struct {
 	relFieldDef        immutable.Option[client.FieldDefinition]
 	relFieldMapIndex   immutable.Option[int]
 	relIDFieldMapIndex immutable.Option[int]
-	col                client.Collection
 	isFirst            bool
 	isParent           bool
 }
@@ -469,19 +469,19 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 type invertibleTypeJoin struct {
 	docMapper
 
-	skipChild bool
-
-	parentSide joinSide
-	childSide  joinSide
-
 	// the filter of the subnode to store in case it's replaced by an index filter
 	subFilter *mapper.Filter
-
-	secondaryFetchLimit uint
 
 	// docsToYield contains documents read and ready to be yielded by this node.
 	docsToYield       []core.Doc
 	encounteredDocIDs []string
+
+	parentSide joinSide
+	childSide  joinSide
+
+	secondaryFetchLimit uint
+
+	skipChild bool
 }
 
 func (join *invertibleTypeJoin) replaceRoot(node planNode) {
@@ -517,17 +517,19 @@ func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
 
 type primaryObjectsRetriever struct {
-	relIDFieldDef client.FieldDefinition
 	primarySide   *joinSide
 	secondarySide *joinSide
 
-	targetSecondaryDoc core.Doc
-	filter             *mapper.Filter
+	filter *mapper.Filter
 
 	primaryScan *scanNode
 
-	resultPrimaryDocs  []core.Doc
+	targetSecondaryDoc core.Doc
 	resultSecondaryDoc core.Doc
+
+	resultPrimaryDocs []core.Doc
+
+	relIDFieldDef client.FieldDefinition
 }
 
 func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {

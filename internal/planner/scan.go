@@ -35,25 +35,28 @@ type scanExecInfo struct {
 
 // scans an index for records
 type scanNode struct {
-	documentIterator
-	docMapper
-
-	p   *Planner
 	col client.Collection
 
-	fields []client.FieldDefinition
+	fetcher fetcher.Fetcher
 
-	showDeleted bool
+	docMapper
 
-	prefixes []keys.Walkable
+	p *Planner
 
 	filter *mapper.Filter
 	slct   *mapper.Select
 
-	index   immutable.Option[client.IndexDescription]
-	fetcher fetcher.Fetcher
+	documentIterator
+
+	fields []client.FieldDefinition
+
+	prefixes []keys.Walkable
+
+	index immutable.Option[client.IndexDescription]
 
 	execInfo scanExecInfo
+
+	showDeleted bool
 }
 
 func (n *scanNode) Kind() string {
@@ -319,6 +322,7 @@ func (p *Planner) Scan(
 // doesn't not provide idempotency guarantees. Counting is purely for performance
 // reasons and removing it should be safe.
 type multiScanNode struct {
+	err        error
 	scanNode   *scanNode
 	numReaders int
 	nextCount  int
@@ -327,7 +331,6 @@ type multiScanNode struct {
 	closeCount int
 
 	nextResult bool
-	err        error
 }
 
 // Init initializes the multiScanNode.

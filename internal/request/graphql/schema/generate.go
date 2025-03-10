@@ -41,10 +41,10 @@ const (
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
-	typeDefs []*gql.Object
-	manager  *SchemaManager
+	manager *SchemaManager
 
 	expandedFields map[string]bool
+	typeDefs       []*gql.Object
 }
 
 // NewGenerator creates a new instance of the Generator

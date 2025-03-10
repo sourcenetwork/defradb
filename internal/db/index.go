@@ -158,11 +158,11 @@ func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
 
 type collectionBaseIndex struct {
 	collection client.Collection
-	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
 	fieldsDescs     []client.SchemaFieldDescription
 	fieldGenerators []FieldIndexGenerator
+	desc            client.IndexDescription
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.

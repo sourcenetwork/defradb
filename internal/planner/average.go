@@ -18,18 +18,18 @@ import (
 )
 
 type averageNode struct {
-	documentIterator
+	plan planNode
+
 	docMapper
 
-	plan planNode
+	aggregateFilter *mapper.Filter
+	documentIterator
 
 	sumFieldIndex     int
 	countFieldIndex   int
 	virtualFieldIndex int
 
 	execInfo averageExecInfo
-
-	aggregateFilter *mapper.Filter
 }
 
 type averageExecInfo struct {

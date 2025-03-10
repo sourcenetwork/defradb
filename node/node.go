@@ -42,10 +42,10 @@ type Option any
 
 // Options contains start configuration values.
 type Options struct {
+	kmsType           immutable.Option[kms.ServiceType]
 	disableP2P        bool
 	disableAPI        bool
 	enableDevelopment bool
-	kmsType           immutable.Option[kms.ServiceType]
 }
 
 // DefaultOptions returns options with default settings.

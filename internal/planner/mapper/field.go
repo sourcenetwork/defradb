@@ -12,11 +12,11 @@ package mapper
 
 // Field contains the most basic information about a requestable.
 type Field struct {
-	// The location of this field within it's parent.
-	Index int
 
 	// The name of this field.  For example 'Age', or '_group'.
 	Name string
+	// The location of this field within it's parent.
+	Index int
 }
 
 func (f *Field) GetIndex() int {

@@ -18,13 +18,13 @@ import (
 // of a graphql request. It includes all the possible
 // arguments
 type ObjectSubscription struct {
-	Field
-	ChildSelect
-
 	Filterable
+
+	Field
 
 	// Collection is the target collection name
 	Collection string
+	ChildSelect
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as

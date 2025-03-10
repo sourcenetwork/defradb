@@ -28,22 +28,23 @@ import (
 //
 // It manages the document fetcher instances that will do the actual scanning.
 type prefixFetcher struct {
-	// The prefixes that this prefix fetcher must fetch from.
-	prefixes []keys.DataStoreKey
 	// The Iterator this prefix fetcher will use to scan.
 	kvIter iterable.Iterator
 
-	// The index of the current prefix being fetched.
-	currentPrefix int
+	// The below properties are only held here in order to pass them on to the next
+	// child fetcher instance.
+	ctx context.Context
 	// The child document fetcher, specific to the current prefix.
 	fetcher *documentFetcher
 
-	// The below properties are only held here in order to pass them on to the next
-	// child fetcher instance.
-	ctx        context.Context
 	fieldsByID map[uint32]client.FieldDefinition
-	status     client.DocumentStatus
 	execInfo   *ExecInfo
+	// The prefixes that this prefix fetcher must fetch from.
+	prefixes []keys.DataStoreKey
+
+	// The index of the current prefix being fetched.
+	currentPrefix int
+	status        client.DocumentStatus
 }
 
 var _ fetcher = (*prefixFetcher)(nil)

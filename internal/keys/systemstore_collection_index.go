@@ -21,10 +21,10 @@ import (
 
 // CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
-	// CollectionID is the id of the collection that the index is on
-	CollectionID immutable.Option[uint32]
 	// IndexName is the name of the index
 	IndexName string
+	// CollectionID is the id of the collection that the index is on
+	CollectionID immutable.Option[uint32]
 }
 
 var _ Key = (*CollectionIndexKey)(nil)

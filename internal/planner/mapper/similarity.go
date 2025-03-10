@@ -14,13 +14,14 @@ import "github.com/sourcenetwork/defradb/internal/core"
 
 // Similarity represents an cosine similarity operation definition.
 type Similarity struct {
-	Field
-	// The mapping of this aggregate's parent/host.
-	*core.DocumentMapping
-
-	// The targetted field for the cosine similarity
-	SimilarityTarget Targetable
 
 	// The vector to compare the target field to.
 	Vector any
+	// The mapping of this aggregate's parent/host.
+	*core.DocumentMapping
+
+	Field
+
+	// The targetted field for the cosine similarity
+	SimilarityTarget Targetable
 }

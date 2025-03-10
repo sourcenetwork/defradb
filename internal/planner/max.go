@@ -22,18 +22,21 @@ import (
 )
 
 type maxNode struct {
-	documentIterator
+	plan planNode
 	docMapper
 
 	p      *Planner
-	plan   planNode
 	parent *mapper.Select
+
+	aggregateFilter *mapper.Filter
+
+	aggregateMapping []mapper.AggregateTarget
+
+	documentIterator
 
 	// virtualFieldIndex is the index of the field
 	// that contains the result of the aggregate.
 	virtualFieldIndex int
-	aggregateMapping  []mapper.AggregateTarget
-	aggregateFilter   *mapper.Filter
 
 	execInfo maxExecInfo
 }

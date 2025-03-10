@@ -41,8 +41,8 @@ var storePurgeFuncs = map[StoreType]func(ctx context.Context, options *StoreOpti
 type StoreOptions struct {
 	store               StoreType
 	path                string
-	badgerFileSize      int64
 	badgerEncryptionKey []byte
+	badgerFileSize      int64
 	badgerInMemory      bool
 }
 

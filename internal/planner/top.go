@@ -23,12 +23,12 @@ const topLevelNodeKind string = "topLevelNode"
 // plan graph. It has no source, and will only yield a single item
 // containing all of its children.
 type topLevelNode struct {
-	documentIterator
 	docMapper
 
 	children     []planNode
 	childIndexes []int
-	isdone       bool
+	documentIterator
+	isdone bool
 
 	// This node's children may use this node as a source
 	// this property controls the recursive flow preventing

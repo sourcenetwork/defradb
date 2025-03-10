@@ -37,15 +37,16 @@ func (d typeDemand) getAverage() int {
 // demand for each type, setting up the relation usage counters, and setting up
 // the random seed.
 type docsGenConfigurator struct {
-	types           map[string]client.CollectionDefinition
+	usageCounter typeUsageCounters
+	types        map[string]client.CollectionDefinition
+
+	config          configsMap
+	primaryGraph    map[string][]string
+	docsDemand      map[string]typeDemand
+	random          *rand.Rand
 	definitionCache client.DefinitionCache
 
-	config       configsMap
-	primaryGraph map[string][]string
-	typesOrder   []string
-	docsDemand   map[string]typeDemand
-	usageCounter typeUsageCounters
-	random       *rand.Rand
+	typesOrder []string
 }
 
 type collectionID = uint32
@@ -107,12 +108,7 @@ func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *
 }
 
 type relationUsage struct {
-	// counter is the number of primary documents that have been used for the relation.
-	counter int
-	// minSecDocsPerPrimary is the minimum number of primary documents that should be used for the relation.
-	minSecDocsPerPrimary int
-	// maxSecDocsPerPrimary is the maximum number of primary documents that should be used for the relation.
-	maxSecDocsPerPrimary int
+	random *rand.Rand
 	// docIDsCounter is a slice of structs that keep track of the number of times
 	// each primary document has been used for the relation.
 	docIDsCounter []struct {
@@ -121,10 +117,15 @@ type relationUsage struct {
 		// count is the number of times the primary document has been used for the relation.
 		count int
 	}
+	// counter is the number of primary documents that have been used for the relation.
+	counter int
+	// minSecDocsPerPrimary is the minimum number of primary documents that should be used for the relation.
+	minSecDocsPerPrimary int
+	// maxSecDocsPerPrimary is the maximum number of primary documents that should be used for the relation.
+	maxSecDocsPerPrimary int
 	// numAvailablePrimaryDocs is the number of documents of the primary type that are available
 	// for the relation.
 	numAvailablePrimaryDocs int
-	random                  *rand.Rand
 }
 
 func newRelationUsage(minSecDocPerPrim, maxSecDocPerPrim, numDocs int, random *rand.Rand) *relationUsage {

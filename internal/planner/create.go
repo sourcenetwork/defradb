@@ -27,24 +27,26 @@ import (
 // document, until we've exhausted the payload. No filtering
 // or Select plans
 type createNode struct {
-	documentIterator
-	docMapper
-
-	p *Planner
 
 	// cache information about the original data source
 	// collection name, meta-data, etc.
 	collection client.Collection
 
+	results planNode
+
+	docMapper
+
+	p *Planner
+
 	// input map of fields and values
 	input []map[string]any
 	docs  []*client.Document
 
-	didCreate bool
-
-	results planNode
+	documentIterator
 
 	execInfo createExecInfo
+
+	didCreate bool
 }
 
 type createExecInfo struct {

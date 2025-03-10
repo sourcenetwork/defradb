@@ -33,24 +33,26 @@ import (
 // lensRegistry is responsible for managing all migration related state within a local
 // database instance.
 type lensRegistry struct {
-	poolSize int
 
 	// The runtime used to execute lens wasm modules.
 	runtime module.Runtime
 
 	// The modules by file path used to instantiate lens wasm module instances.
 	modulesByPath map[string]module.Module
-	moduleLock    sync.Mutex
 
 	lensPoolsByCollectionID     map[uint32]*lensPool
 	reversedPoolsByCollectionID map[uint32]*lensPool
-	poolLock                    sync.RWMutex
 
 	// Writable transaction contexts by transaction ID.
 	//
 	// Read-only transaction contexts are not tracked.
-	txnCtxs map[uint64]*txnContext
-	txnLock sync.RWMutex
+	txnCtxs  map[uint64]*txnContext
+	poolSize int
+
+	poolLock sync.RWMutex
+
+	txnLock    sync.RWMutex
+	moduleLock sync.Mutex
 }
 
 // txnContext contains uncommitted transaction state tracked by the registry,
@@ -291,9 +293,6 @@ func (r *lensRegistry) getPool(
 // Instanstiating a lens module is pretty expensive as it has to spin up the wasm runtime environment
 // so we need to limit how frequently we do this.
 type lensPool struct {
-	// The config used to create the lenses within this locker.
-	cfg model.Lens
-
 	registry *lensRegistry
 
 	// Using a buffered channel provides an easy way to manage a finite
@@ -303,6 +302,8 @@ type lensPool struct {
 	// to be dynamically resizing this collection and spinning up new lens instances
 	// in user time, or holding on to large numbers of them.
 	pipes chan *lensPipe
+	// The config used to create the lenses within this locker.
+	cfg model.Lens
 }
 
 func (r *lensRegistry) newPool(lensPoolSize int, cfg model.Lens) *lensPool {

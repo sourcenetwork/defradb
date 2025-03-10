@@ -19,8 +19,8 @@ import (
 // It contains the index of the field in the core.DocumentMapping
 // as well as index -> Property map of the fields in case the field is an object.
 type Property struct {
-	Index  int
 	Fields map[int]Property
+	Index  int
 }
 
 func (p Property) IsRelation() bool {

@@ -20,7 +20,6 @@ import (
 
 // A node responsible for the grouping of documents by a given selection of fields.
 type groupNode struct {
-	documentIterator
 	docMapper
 
 	p *Planner
@@ -35,10 +34,11 @@ type groupNode struct {
 	// The data sources that this node will draw data from.
 	dataSources []*dataSource
 
-	values       []core.Doc
-	currentIndex int
+	values []core.Doc
+	documentIterator
 
-	execInfo groupExecInfo
+	execInfo     groupExecInfo
+	currentIndex int
 }
 
 type groupExecInfo struct {

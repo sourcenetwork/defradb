@@ -32,9 +32,10 @@ type valuesNode struct {
 	p *Planner
 	// plan planNode
 
+	docs *container.DocumentContainer
+
 	ordering []mapper.OrderCondition
 
-	docs     *container.DocumentContainer
 	docIndex int
 }
 

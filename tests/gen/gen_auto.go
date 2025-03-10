@@ -72,10 +72,10 @@ func newRandomDocGenerator(types map[string]client.CollectionDefinition, config 
 }
 
 type genDoc struct {
+	doc *client.Document
 	// the docID of the document. Its cached value from doc.ID().String() just to avoid
 	// calculating it multiple times.
 	docID string
-	doc   *client.Document
 }
 
 type randomDocGenerator struct {

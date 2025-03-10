@@ -24,9 +24,9 @@ const (
 )
 
 type dbOptions struct {
-	maxTxnRetries  immutable.Option[int]
-	RetryIntervals []time.Duration
 	identity       immutable.Option[identity.Identity]
+	RetryIntervals []time.Duration
+	maxTxnRetries  immutable.Option[int]
 }
 
 // defaultOptions returns the default db options.

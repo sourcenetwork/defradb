@@ -23,10 +23,9 @@ const RequestKeysEventName = event.Name("enc-keys-request")
 //
 // It must only contain public elements not protected by ACP.
 type RequestKeysEvent struct {
+	Resp chan<- Result
 	// Keys is a list of the keys that are being requested.
 	Keys []cidlink.Link
-
-	Resp chan<- Result
 }
 
 // RequestedKeyEventData represents the data that was retrieved for a specific key.
@@ -42,8 +41,8 @@ type Item struct {
 }
 
 type Result struct {
-	Items []Item
 	Error error
+	Items []Item
 }
 
 type Results struct {

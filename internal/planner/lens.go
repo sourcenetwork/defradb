@@ -25,15 +25,16 @@ import (
 // and there is no guarentee that those documents will actually exist as documents
 // in Defra (they may be created by the transform).
 type lensNode struct {
-	docMapper
-	documentIterator
-
-	p          *Planner
-	source     planNode
-	collection client.CollectionDescription
+	source planNode
 
 	input  enumerable.Queue[map[string]any]
 	output enumerable.Enumerable[map[string]any]
+	docMapper
+
+	p *Planner
+	documentIterator
+
+	collection client.CollectionDescription
 }
 
 func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client.Collection) *lensNode {

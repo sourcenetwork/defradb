@@ -28,10 +28,10 @@ type IndexedFieldDescription struct {
 type IndexDescription struct {
 	// Name contains the name of the index.
 	Name string
-	// ID is the local identifier of this index.
-	ID uint32
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
+	// ID is the local identifier of this index.
+	ID uint32
 	// Unique indicates whether the index is unique.
 	Unique bool
 }

@@ -48,17 +48,17 @@ type ConnectPeers struct {
 // however updates in the target node to documents synced from the source node will
 // be synced back to the source node.
 type ConfigureReplicator struct {
-	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
-	SourceNodeID int
-
-	// TargetNodeID is the node ID (index) of the node to which data should be replicated.
-	TargetNodeID int
 
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
+	SourceNodeID int
+
+	// TargetNodeID is the node ID (index) of the node to which data should be replicated.
+	TargetNodeID int
 }
 
 // DeleteReplicator deletes a directional replicator relationship between two nodes.
@@ -82,50 +82,52 @@ const (
 // Changes made to subscribed collections in peers connected to this node will be synced from
 // them to this node.
 type SubscribeToCollection struct {
-	// NodeID is the node ID (index) of the node in which to activate the subscription.
+
+	// Any error expected from the action. Optional.
 	//
-	// Changes made to subscribed collections in peers connected to this node will be synced from
-	// them to this node.
-	NodeID int
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
 	CollectionIDs []int
 
-	// Any error expected from the action. Optional.
+	// NodeID is the node ID (index) of the node in which to activate the subscription.
 	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
+	// Changes made to subscribed collections in peers connected to this node will be synced from
+	// them to this node.
+	NodeID int
 }
 
 // UnsubscribeToCollection removes the given collections from the set of active subscriptions on
 // the given node.
 type UnsubscribeToCollection struct {
-	// NodeID is the node ID (index) of the node in which to remove the subscription.
-	NodeID int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
 	CollectionIDs []int
 
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
+	// NodeID is the node ID (index) of the node in which to remove the subscription.
+	NodeID int
 }
 
 // GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
 // expected results.
 type GetAllP2PCollections struct {
-	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
-	NodeID int
 
 	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
 	ExpectedCollectionIDs []int
+	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+	NodeID int
 }
 
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization

@@ -27,23 +27,24 @@ import (
 //
 // It does not filter the data in any way.
 type documentFetcher struct {
-	// The set of fields to fetch, mapped by field ID.
-	fieldsByID map[uint32]client.FieldDefinition
-	// The status to assign fetched documents.
-	status client.DocumentStatus
-	// Statistics on the actions of this instance.
-	execInfo *ExecInfo
 	// The iterable results that documents will be fetched from.
 	kvResultsIter dsq.Results
 
-	// The most recently yielded item from kvResultsIter.
-	currentKV keyValue
+	// The set of fields to fetch, mapped by field ID.
+	fieldsByID map[uint32]client.FieldDefinition
+	// Statistics on the actions of this instance.
+	execInfo *ExecInfo
 	// nextKV may hold a datastore key value retrieved from kvResultsIter
 	// that was not yet ready to be yielded from the instance.
 	//
 	// When the next document is requested, this value should be yielded
 	// before resuming iteration through the kvResultsIter.
 	nextKV immutable.Option[keyValue]
+
+	// The most recently yielded item from kvResultsIter.
+	currentKV keyValue
+	// The status to assign fetched documents.
+	status client.DocumentStatus
 }
 
 var _ fetcher = (*documentFetcher)(nil)

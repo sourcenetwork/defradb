@@ -31,8 +31,8 @@ type LensRegistry struct {
 }
 
 type setMigrationRequest struct {
-	CollectionID uint32
 	Config       model.Lens
+	CollectionID uint32
 }
 
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
@@ -67,8 +67,8 @@ func (c *LensRegistry) ReloadLenses(ctx context.Context) error {
 }
 
 type migrateRequest struct {
-	CollectionID uint32
 	Data         []map[string]any
+	CollectionID uint32
 }
 
 func (c *LensRegistry) MigrateUp(

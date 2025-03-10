@@ -27,15 +27,18 @@ import (
 )
 
 type countNode struct {
-	documentIterator
-	docMapper
-
-	p    *Planner
 	plan planNode
 
+	docMapper
+
+	p               *Planner
+	aggregateFilter *mapper.Filter
+
+	aggregateMapping []mapper.AggregateTarget
+
+	documentIterator
+
 	virtualFieldIndex int
-	aggregateMapping  []mapper.AggregateTarget
-	aggregateFilter   *mapper.Filter
 
 	execInfo countExecInfo
 }

@@ -39,12 +39,12 @@ var tlsCipherSuites = []uint16{
 type ServerOptions struct {
 	// Address is the bind address the server listens on.
 	Address string
-	// AllowedOrigins is the list of allowed origins for CORS.
-	AllowedOrigins []string
 	// TLSCertPath is the path to the TLS certificate.
 	TLSCertPath string
 	// TLSKeyPath is the path to the TLS key.
 	TLSKeyPath string
+	// AllowedOrigins is the list of allowed origins for CORS.
+	AllowedOrigins []string
 	// ReadTimeout is the read timeout for connections.
 	ReadTimeout time.Duration
 	// WriteTimeout is the write timeout for connections.

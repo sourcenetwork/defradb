@@ -23,9 +23,8 @@ import (
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
+	kvIter  dsq.Results
 	fieldId immutable.Option[string]
-
-	kvIter dsq.Results
 }
 
 // Start starts/initializes the fetcher, performing all the work it can do outside

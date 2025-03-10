@@ -19,14 +19,8 @@ var (
 // CommitSelect represents the selection of database commits to Defra documents.
 type CommitSelect struct {
 	Field
-	ChildSelect
 
 	CIDFilter
-
-	Limitable
-	Offsetable
-	Orderable
-	Groupable
 
 	// DocID is an optional filter which when provided will limit commits to those
 	// belonging to the given document.
@@ -37,6 +31,14 @@ type CommitSelect struct {
 	//
 	// `C` may be provided for document-level (composite) commits.
 	FieldID immutable.Option[string]
+
+	Orderable
+	Groupable
+
+	ChildSelect
+
+	Limitable
+	Offsetable
 
 	// Depth limits the returned commits to being X places in the history away from the
 	// most current.

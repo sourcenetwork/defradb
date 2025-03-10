@@ -21,11 +21,12 @@ import (
 
 // viewNode processes queries to a Defra View constructed from a base query ahead of time.
 type viewNode struct {
+	source planNode
+
 	docMapper
 
-	p      *Planner
-	desc   client.CollectionDescription
-	source planNode
+	p    *Planner
+	desc client.CollectionDescription
 
 	// This is cached as a boolean to save rediscovering this in the main Next/Value iteration loop
 	hasTransform bool
@@ -169,13 +170,13 @@ func convertBetweenMaps(srcMap *core.DocumentMapping, dstMap *core.DocumentMappi
 
 // cachedViewFetcher is a planner node that fetches view items from a materialized cache.
 type cachedViewFetcher struct {
+	queryResults query.Results
 	docMapper
+	p *Planner
+
 	documentIterator
 
 	def client.CollectionDefinition
-	p   *Planner
-
-	queryResults query.Results
 }
 
 var _ planNode = (*cachedViewFetcher)(nil)

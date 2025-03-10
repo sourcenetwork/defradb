@@ -29,8 +29,8 @@ type BackupConfig struct {
 	Filepath string `json:"filepath"`
 	// Only JSON is supported at the moment.
 	Format string `json:"format"`
-	// Pretty print JSON.
-	Pretty bool `json:"pretty"`
 	// List of collection names to select which one to backup.
 	Collections []string `json:"collections"`
+	// Pretty print JSON.
+	Pretty bool `json:"pretty"`
 }

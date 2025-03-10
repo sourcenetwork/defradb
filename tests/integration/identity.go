@@ -31,12 +31,12 @@ const (
 
 // identity helps specify identity type info and selector/index of identity to use in a test case.
 type identity struct {
-	// type of identity
-	kind identityType
 
 	// selector can be a valid identity index or a selecting pattern like "*".
 	// Note: "*" means to select all identities of the specified [kind] type.
 	selector string
+	// type of identity
+	kind identityType
 }
 
 // NoIdentity returns an reference to an identity that represents no identity.
@@ -77,10 +77,10 @@ func NodeIdentity(indexSelector int) immutable.Option[identity] {
 // identityHolder holds an identity and the generated tokens for each target node.
 // This is used to cache the generated tokens for each node.
 type identityHolder struct {
-	// Identity is the identity.
-	Identity acpIdentity.Identity
 	// NodeTokens is a map of node index to the generated token for that node.
 	NodeTokens map[int]string
+	// Identity is the identity.
+	Identity acpIdentity.Identity
 }
 
 func newIdentityHolder(ident acpIdentity.Identity) *identityHolder {

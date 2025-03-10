@@ -18,16 +18,17 @@ import (
 // It is used for sub-types in a request.
 // Includes fields, and request arguments like filters, limits, etc.
 type Select struct {
+	Filterable
 	Field
+	CIDFilter
+	Orderable
+	DocIDsFilter
+	Groupable
+
 	ChildSelect
 
 	Limitable
 	Offsetable
-	Orderable
-	Filterable
-	DocIDsFilter
-	CIDFilter
-	Groupable
 
 	// ShowDeleted will return deleted documents along with non-deleted ones
 	// if set to true.
@@ -113,14 +114,14 @@ func (s *Select) validateGroupBy() []error {
 // It contains everything minus the [ChildSelect], which uses a custom UnmarshalJSON
 // and is skipped over when embedding due to the way the std lib json pkg works.
 type selectJson struct {
+	Filterable
 	Field
+	CIDFilter
+	Orderable
+	DocIDsFilter
+	Groupable
 	Limitable
 	Offsetable
-	Orderable
-	Filterable
-	DocIDsFilter
-	CIDFilter
-	Groupable
 	ShowDeleted bool
 }
 

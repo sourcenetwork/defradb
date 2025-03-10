@@ -36,15 +36,16 @@ type FieldKind interface {
 
 // SchemaFieldDescription describes a field on a Schema and its associated metadata.
 type SchemaFieldDescription struct {
-	// Name contains the name of this field.
-	//
-	// It is currently immutable.
-	Name string
 
 	// The data type that this field holds.
 	//
 	// Must contain a valid value. It is currently immutable.
 	Kind FieldKind
+
+	// Name contains the name of this field.
+	//
+	// It is currently immutable.
+	Name string
 
 	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
 	//
@@ -69,11 +70,11 @@ type CollectionKind struct {
 
 // SchemaKind represents a relationship with a [SchemaDescription].
 type SchemaKind struct {
-	// If true, this side of the relationship points to many related records.
-	Array bool
 
 	// The root ID of the related [SchemaDescription].
 	Root string
+	// If true, this side of the relationship points to many related records.
+	Array bool
 }
 
 // NamedKind represents a temporary declaration of a relationship to another
@@ -400,10 +401,10 @@ func (f SchemaFieldDescription) IsRelation() bool {
 // of json to a [SchemaFieldDescription].
 type schemaFieldDescription struct {
 	Name string
-	Typ  CType
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
+	Typ  CType
 }
 
 func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
@@ -426,9 +427,9 @@ func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
 // objectKind is a private type used to facilitate the unmarshalling
 // of json to a [FieldKind].
 type objectKind struct {
-	Array      bool
 	Root       any
 	RelativeID string
+	Array      bool
 }
 
 func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {

@@ -27,14 +27,15 @@ var log = logger.Logger("badger")
 type Datastore struct {
 	DB *badger.DB
 
-	closeLk   sync.RWMutex
-	closed    bool
-	closeOnce sync.Once
-	closing   chan struct{}
+	closing chan struct{}
 
 	gcDiscardRatio float64
 	gcSleep        time.Duration
 	gcInterval     time.Duration
+
+	closeLk   sync.RWMutex
+	closeOnce sync.Once
+	closed    bool
 
 	syncWrites bool
 }
@@ -59,6 +60,7 @@ type txn struct {
 
 // Options are the badger datastore options, reexported here for convenience.
 type Options struct {
+	badger.Options
 	// Please refer to the Badger docs to see what this is for
 	GcDiscardRatio float64
 
@@ -72,8 +74,6 @@ type Options struct {
 	// If zero, the datastore will only perform one round of GC per
 	// GcInterval.
 	GcSleep time.Duration
-
-	badger.Options
 }
 
 // DefaultOptions are the default options for the badger datastore.

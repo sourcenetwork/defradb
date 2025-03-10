@@ -32,6 +32,6 @@ type Directives struct {
 }
 
 type OperationDefinition struct {
-	Selections []Selection
 	Directives Directives
+	Selections []Selection
 }

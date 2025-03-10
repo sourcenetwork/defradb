@@ -226,8 +226,8 @@ func generateKey(doc core.Doc, keyFields []mapper.Field) string {
 // A specialized collection that allows retrieval of items by key whilst preserving the order
 // in which they were added.
 type orderedMap struct {
-	values       []core.Doc
 	indexesByKey map[string]int
+	values       []core.Doc
 }
 
 func (m *orderedMap) mergeParent(key string, childIndexes []int, value core.Doc) {

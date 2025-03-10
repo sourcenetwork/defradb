@@ -20,11 +20,11 @@ import (
 type Options struct {
 	ListenAddresses   []string
 	PrivateKey        []byte
-	EnablePubSub      bool
-	EnableRelay       bool
 	GRPCServerOptions []grpc.ServerOption
 	GRPCDialOptions   []grpc.DialOption
 	BootstrapPeers    []string
+	EnablePubSub      bool
+	EnableRelay       bool
 }
 
 // DefaultOptions returns the default net options.

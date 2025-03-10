@@ -19,12 +19,12 @@ import (
 // For example, to check if the field value needs to be encrypted depending on the document-level
 // encryption is enabled or not.
 type DocField struct {
+	// FieldValue is the field value.
+	FieldValue *client.FieldValue
 	// DocID is the ID of a document associated with the field value.
 	DocID string
 	// FieldName is the name of the field.
 	FieldName string
-	// FieldValue is the field value.
-	FieldValue *client.FieldValue
 }
 
 // NewDocField creates a new DocField instance.

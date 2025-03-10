@@ -22,21 +22,21 @@ const (
 
 // Mutation represents a request to mutate data stored in Defra.
 type Mutation struct {
+
+	// UpdateInput is a map of fields and values used for an update mutation.
+	UpdateInput map[string]any
+
+	// CreateInput is the array of maps of fields and values used for a create mutation.
+	CreateInput []map[string]any
+
+	// EncryptFields is a list of fields from the input data that should be encrypted.
+	EncryptFields []string
 	// The underlying Select, defining the information requested upon return.
 	Select
 
 	// The type of mutation. For example a create request.
 	Type MutationType
 
-	// CreateInput is the array of maps of fields and values used for a create mutation.
-	CreateInput []map[string]any
-
-	// UpdateInput is a map of fields and values used for an update mutation.
-	UpdateInput map[string]any
-
 	// Encrypt is a flag to indicate if the input data should be encrypted.
 	Encrypt bool
-
-	// EncryptFields is a list of fields from the input data that should be encrypted.
-	EncryptFields []string
 }

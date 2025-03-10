@@ -66,6 +66,9 @@ var (
 )
 
 type PlanNodeTargetCase struct {
+
+	// Expected value of the target node's attribute(s).
+	ExpectedAttributes any
 	// Name of the plan node, whose attribute(s) we are targetting to be asserted.
 	TargetNodeName string
 
@@ -74,20 +77,9 @@ type PlanNodeTargetCase struct {
 
 	// If set to 'true' will include the nested node(s), with their attribute(s) as well.
 	IncludeChildNodes bool
-
-	// Expected value of the target node's attribute(s).
-	ExpectedAttributes any
 }
 
 type ExplainRequest struct {
-	// NodeID is the node ID (index) of the node in which to explain.
-	NodeID immutable.Option[int]
-
-	// The identity of this request.
-	Identity string
-
-	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
-	Request string
 
 	// The raw expected explain graph with everything (helpful for debugging purposes).
 	// Note: This is not always asserted (i.e. ignored from the comparison if not provided).
@@ -98,6 +90,15 @@ type ExplainRequest struct {
 	//       - This is not always asserted (i.e. ignored from the comparison if not provided).
 	ExpectedPatterns map[string]any
 
+	// The identity of this request.
+	Identity string
+
+	// Has to be a valid explain request type (one of: 'simple', 'debug', 'execute', 'predict').
+	Request string
+
+	// The expected error from the explain request.
+	ExpectedError string
+
 	// Every target helps assert an individual node somewhere in the explain graph (node's position is omitted).
 	// Each target assertion is only responsible to check if the node's attributes are correct.
 	// This is the only test that sorts the keys and traverses the map in a deterministic order to ensure
@@ -105,8 +106,8 @@ type ExplainRequest struct {
 	// Note: This is not always asserted (i.e. ignored from the comparison if not provided).
 	ExpectedTargets []PlanNodeTargetCase
 
-	// The expected error from the explain request.
-	ExpectedError string
+	// NodeID is the node ID (index) of the node in which to explain.
+	NodeID immutable.Option[int]
 }
 
 func executeExplainRequest(
