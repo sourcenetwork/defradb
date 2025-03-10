@@ -35,15 +35,15 @@ const (
 // policy is a data container carrying the necessary data
 // to verify whether a policy meets DPI requirements
 type policy struct {
-	ID        string
 	Resources map[string]*resource
+	ID        string
 }
 
 // resource is a data container carrying the necessary data
 // to verify whether it meets DPI requirements.
 type resource struct {
-	Name        string
 	Permissions map[string]*permission
+	Name        string
 }
 
 // permission is a data container carrying the necessary data

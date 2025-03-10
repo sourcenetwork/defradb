@@ -30,9 +30,9 @@ const localACPStoreName = "local_acp"
 
 // ACPLocal represents a local acp implementation that makes no remote calls.
 type ACPLocal struct {
-	pathToStore immutable.Option[string]
 	engine      types.ACPEngineServer
 	manager     runtime.RuntimeManager
+	pathToStore immutable.Option[string]
 	closed      bool
 }
 
