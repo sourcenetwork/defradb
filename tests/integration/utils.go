@@ -1017,9 +1017,68 @@ func updateSchema(
 	s *state,
 	action SchemaUpdate,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
-		results, err := node.AddSchema(s.ctx, action.Schema)
+	policyIDPlaceHolderLabel := "%policyID%"
+
+	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
+	if action.PolicyIDs.HasValue() {
+		policyIDIndexes := action.PolicyIDs.Value()
+		if len(policyIDIndexes) == 0 {
+			require.Fail(s.t, "Specified policyID substitution but none given.", s.testCase.Description)
+		}
+
+		howManyPlaceHolders := strings.Count(action.Schema, policyIDPlaceHolderLabel)
+		if howManyPlaceHolders == 0 {
+			require.Fail(
+				s.t,
+				"Can't do substitution because no place holder labels:"+policyIDPlaceHolderLabel,
+				s.testCase.Description,
+			)
+		}
+
+		if howManyPlaceHolders != len(policyIDIndexes) {
+			require.Fail(
+				s.t,
+				"Can't do substitution when place holders are not equal to specified indexes",
+				s.testCase.Description,
+			)
+		}
+
+	}
+
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		// This schema might be modified if the caller needs some substitution magic done.
+		var modifiedSchema = action.Schema
+
+		// We need to substitute the policyIDs into the `%policyID% place holders.
+		if action.PolicyIDs.HasValue() {
+			policyIDIndexes := action.PolicyIDs.Value()
+			nodeID := nodeIDs[index]
+
+			nodesPolicyIDs := s.policyIDs[nodeID]
+			for _, policyIDIndex := range policyIDIndexes {
+				// Ensure policy index specified is valid (compared the existing policyIDs) for this node.
+				if policyIDIndex >= len(nodesPolicyIDs) {
+					require.Fail(
+						s.t,
+						"a policyID index is out of range, number of added policies is smaller",
+						s.testCase.Description,
+					)
+				}
+
+				policyID := nodesPolicyIDs[policyIDIndex]
+
+				// Now actually perform the substitution as all the sanity checks are done.
+				modifiedSchema = strings.Replace(
+					modifiedSchema,
+					policyIDPlaceHolderLabel,
+					policyID,
+					1,
+				)
+			}
+		}
+
+		results, err := node.AddSchema(s.ctx, modifiedSchema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

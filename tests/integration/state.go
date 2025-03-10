@@ -179,6 +179,9 @@ type state struct {
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
 
+	// Policy IDs, by node index, by policyID index (in the order they were added).
+	policyIDs [][]string
+
 	// Will receive an item once all actions have finished processing.
 	allActionsDone chan struct{}
 
@@ -283,6 +286,7 @@ func newState(
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
 		cids:                     map[any]string{},
+		policyIDs:                [][]string{},
 		isBench:                  false,
 		enabledBlockSigning:      testCase.EnabledBlockSigning,
 	}
