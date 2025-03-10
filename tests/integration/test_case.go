@@ -133,16 +133,14 @@ type SchemaUpdate struct {
 	// The schema update.
 	Schema string
 
-	// PolicyIDs is an optional list argument which makes it easier to substitute/embed PolicyIDs
-	// into the schema string where place holder labels ("%policyID%") are at, without us using
-	// explicit policy identifiers.
+	// Replace is an optional map argument which makes it easier to substitute/replace different elements
+	// into the schema string where template labels are match.
 	//
 	// Note:
-	// - The number of placeholder labels (%policyID%) must exactly match the number of policyID
-	//   indexes in this list.
-	// - The list must contain the policyID Indexes in the same order they are to be substituted in.
-	// - Can substitute the same policyID at an index, by specifying that index multiple times.
-	// - The indexes must be valid (correspond to the number of policies added so far).
+	// - Will match and replace multiple occurances.
+	// - The indexes must be valid.
+	// - The substitution type must be valid.
+	// - If this map is empty, nothing is done.
 	//
 	// Example:
 	//
@@ -150,16 +148,18 @@ type SchemaUpdate struct {
 	// PolicyID="94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454"
 	//
 	// Then using this attribute like:
-	// PolicyIDs: immutable.Some([]int{0, 0}),
+	// Replace: map[string]string{
+	//     "policy0": NewPolicyIndex(0),
+	// },
 	//
 	// On a Schema string like:
 	// ```
-	//	type Users1 @policy(id: "%policyID%", resource: "users") {
+	//	type Users1 @policy(id: "{{.policy0}}", resource: "users") {
 	//		name: String
 	//		age: Int
 	//	}
 	//
-	//	type Users2 @policy(id: "%policyID%", resource: "users") {
+	//	type Users2 @policy(id: "{{.policy0}}", resource: "users") {
 	//		name: String
 	//		age: Int
 	//	}
@@ -176,7 +176,7 @@ type SchemaUpdate struct {
 	//		age: Int
 	//	}
 	// ```
-	PolicyIDs immutable.Option[[]int]
+	Replace map[string]ReplaceType
 
 	// Optionally, the expected results.
 	//

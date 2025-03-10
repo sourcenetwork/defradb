@@ -26,7 +26,7 @@ func TestACP_DEMO(t *testing.T) {
 		Actions: []any{
 			testUtils.AddPolicy{ // Specified and subbed in for User1 and User2 schema below
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -66,7 +66,7 @@ func TestACP_DEMO(t *testing.T) {
 
 			testUtils.AddPolicy{ // Specified and subbed in for User3 schema below
 
-				Identity: immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
                     name: test
@@ -104,7 +104,7 @@ func TestACP_DEMO(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users1 @policy(
-						id: "%policyID%",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
@@ -112,7 +112,7 @@ func TestACP_DEMO(t *testing.T) {
 					}
 
 					type User2 @policy(
-						id: "%policyID%",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
@@ -120,7 +120,7 @@ func TestACP_DEMO(t *testing.T) {
 					}
 
 					type User3 @policy(
-						id: "%policyID%",
+						id: "{{.Policy1}}",
 						resource: "users"
 					) {
 						name: String
@@ -128,7 +128,11 @@ func TestACP_DEMO(t *testing.T) {
 					}
 				`,
 
-				PolicyIDs: immutable.Some([]int{0, 0, 1}),
+				// Replace: immutable.Some([]int{0, 0, 1}),
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+					"Policy1": testUtils.NewPolicyIndex(1),
+				},
 			},
 		},
 	}

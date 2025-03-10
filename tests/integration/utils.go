@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -1017,32 +1019,22 @@ func updateSchema(
 	s *state,
 	action SchemaUpdate,
 ) {
-	policyIDPlaceHolderLabel := "%policyID%"
-
 	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
-	if action.PolicyIDs.HasValue() {
-		policyIDIndexes := action.PolicyIDs.Value()
-		if len(policyIDIndexes) == 0 {
-			require.Fail(s.t, "Specified policyID substitution but none given.", s.testCase.Description)
-		}
+	if len(action.Replace) > 0 {
+		for substituteLabel := range action.Replace {
+			if substituteLabel == "" {
+				require.Fail(s.t, "Empty substitution label.", s.testCase.Description)
+			}
 
-		howManyPlaceHolders := strings.Count(action.Schema, policyIDPlaceHolderLabel)
-		if howManyPlaceHolders == 0 {
-			require.Fail(
-				s.t,
-				"Can't do substitution because no place holder labels:"+policyIDPlaceHolderLabel,
-				s.testCase.Description,
-			)
+			howManyLabelsToSub := strings.Count(action.Schema, substituteLabel)
+			if howManyLabelsToSub == 0 {
+				require.Fail(
+					s.t,
+					"Can't do substitution because no label: "+substituteLabel,
+					s.testCase.Description,
+				)
+			}
 		}
-
-		if howManyPlaceHolders != len(policyIDIndexes) {
-			require.Fail(
-				s.t,
-				"Can't do substitution when place holders are not equal to specified indexes",
-				s.testCase.Description,
-			)
-		}
-
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
@@ -1051,31 +1043,38 @@ func updateSchema(
 		var modifiedSchema = action.Schema
 
 		// We need to substitute the policyIDs into the `%policyID% place holders.
-		if action.PolicyIDs.HasValue() {
-			policyIDIndexes := action.PolicyIDs.Value()
+		if len(action.Replace) > 0 {
 			nodeID := nodeIDs[index]
-
 			nodesPolicyIDs := s.policyIDs[nodeID]
-			for _, policyIDIndex := range policyIDIndexes {
-				// Ensure policy index specified is valid (compared the existing policyIDs) for this node.
-				if policyIDIndex >= len(nodesPolicyIDs) {
-					require.Fail(
-						s.t,
-						"a policyID index is out of range, number of added policies is smaller",
-						s.testCase.Description,
-					)
+			templateData := map[string]string{}
+			for substituteLabel, replaceWith := range action.Replace {
+				switch repType := replaceWith.(type) {
+				case replacePolicyIndex:
+					// Ensure policy index specified is valid (compared the existing policyIDs) for this node.
+					policyReplaceIndex := repType.Value().(int)
+					if policyReplaceIndex >= len(nodesPolicyIDs) {
+						require.Fail(
+							s.t,
+							"a policyID index is out of range, number of added policies is smaller",
+							s.testCase.Description,
+						)
+					}
+					policyID := nodesPolicyIDs[policyReplaceIndex]
+					templateData[substituteLabel] = policyID
+				default:
+					require.Fail(s.t, "Empty substitution label.", s.testCase.Description)
 				}
-
-				policyID := nodesPolicyIDs[policyIDIndex]
-
-				// Now actually perform the substitution as all the sanity checks are done.
-				modifiedSchema = strings.Replace(
-					modifiedSchema,
-					policyIDPlaceHolderLabel,
-					policyID,
-					1,
-				)
 			}
+
+			// Template should be built now, so execute it.
+			tmpl := template.Must(template.New("schema").Parse(modifiedSchema))
+			var renderedSchema bytes.Buffer
+			err := tmpl.Execute(&renderedSchema, templateData)
+			if err != nil {
+				require.Fail(s.t, "Template execution for schema update failed.", s.testCase.Description)
+			}
+
+			modifiedSchema = renderedSchema.String()
 		}
 
 		results, err := node.AddSchema(s.ctx, modifiedSchema)
