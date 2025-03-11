@@ -56,7 +56,6 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
                             types:
                               - actor
                 `,
-				ExpectedPolicyID: "7a698a9c5fe74a5854c2e1e8d00c606926c64ad883a157db2f345749e8609fcb",
 			},
 			testUtils.SchemaUpdate{
 				Schema: `

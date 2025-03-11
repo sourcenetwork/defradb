@@ -47,8 +47,6 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
                     actor:
                       name: actor
                 `,
-
-				ExpectedPolicyID: "a756ba5a7fe25e3fc36a4f113016a49b718b09028c917199ae68f478addc048c",
 			},
 		},
 	}

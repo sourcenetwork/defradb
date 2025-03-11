@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCanUpdate(t *testing.T) {
-	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
@@ -82,22 +79,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -1017,9 +1019,53 @@ func updateSchema(
 	s *state,
 	action SchemaUpdate,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
-		results, err := node.AddSchema(s.ctx, action.Schema)
+	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
+	if len(action.Replace) > 0 {
+		for substituteLabel := range action.Replace {
+			if substituteLabel == "" {
+				require.Fail(s.t, "Empty substitution label.", s.testCase.Description)
+			}
+
+			howManyLabelsToSub := strings.Count(action.Schema, substituteLabel)
+			if howManyLabelsToSub == 0 {
+				require.Fail(
+					s.t,
+					"Can't do substitution because no label: "+substituteLabel,
+					s.testCase.Description,
+				)
+			}
+		}
+	}
+
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		// This schema might be modified if the caller needs some substitution magic done.
+		var modifiedSchema = action.Schema
+
+		// We need to substitute the policyIDs into the `%policyID% place holders.
+		if len(action.Replace) > 0 {
+			nodeID := nodeIDs[index]
+			nodesPolicyIDs := s.policyIDs[nodeID]
+			templateData := map[string]string{}
+			// Build template with the replacing values.
+			for substituteLabel, replaceWith := range action.Replace {
+				replacer, err := replaceWith.Replacer(nodesPolicyIDs)
+				require.NoError(s.t, err)
+				templateData[substituteLabel] = replacer
+			}
+
+			// Template should be built now, so execute it.
+			tmpl := template.Must(template.New("schema").Parse(modifiedSchema))
+			var renderedSchema bytes.Buffer
+			err := tmpl.Execute(&renderedSchema, templateData)
+			if err != nil {
+				require.Fail(s.t, "Template execution for schema update failed.", s.testCase.Description)
+			}
+
+			modifiedSchema = renderedSchema.String()
+		}
+
+		results, err := node.AddSchema(s.ctx, modifiedSchema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

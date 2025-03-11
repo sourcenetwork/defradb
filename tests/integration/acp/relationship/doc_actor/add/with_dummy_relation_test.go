@@ -11,15 +11,12 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChanges(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add doc actor relationship with a dummy relation defined on policy, nothing happens",
@@ -72,22 +69,22 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -159,8 +156,6 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
 }
 
 func TestACP_AddDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add doc actor relationship with an invalid relation (not defined on policy), error",
@@ -213,22 +208,22 @@ func TestACP_AddDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t 
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

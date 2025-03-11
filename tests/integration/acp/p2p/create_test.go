@@ -11,7 +11,6 @@
 package test_acp_p2p
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, p2p create private documents on different nodes, with source-hub",
@@ -84,22 +81,22 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -132,8 +129,6 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 }
 
 func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 		Description: "Test acp, p2p create a private documents and sync after adding actor relationship, with source-hub",
 		SupportedACPTypes: immutable.Some(
@@ -197,22 +192,22 @@ func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.SubscribeToCollection{

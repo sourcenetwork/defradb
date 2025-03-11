@@ -46,8 +46,6 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}
@@ -92,8 +90,6 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 					  }
 					}
                 `,
-
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}

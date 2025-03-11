@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "c74076630d0b4efd8bfe6fd8ee91256de10598a8a2b7a49dd8ddc9aab3f6973c"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, with extra permissions having required relation, schema accepted",
@@ -56,22 +53,22 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -119,8 +116,6 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 }
 
 func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "6990d33c4bfddef663a37a0177b28922ae42a3d988987d72c355865a7afbe96f"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, with extra permissions having required relation in the end, schema accepted",
@@ -156,22 +151,22 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -219,8 +214,6 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 }
 
 func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "05719e4bbd78a92c65758f2cb642bd58ad6d122d4aa3b8b2419bd307749f35bc"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, with extra permissions having no required relation, schema accepted",
@@ -256,22 +249,22 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
