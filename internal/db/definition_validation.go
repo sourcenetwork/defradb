@@ -961,7 +961,6 @@ func validateSelfReferences(
 
 	for _, col := range newState.collections {
 		for _, field := range col.Fields {
-
 			if !field.Kind.HasValue() {
 				continue
 			}
