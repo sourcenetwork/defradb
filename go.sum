@@ -2,6 +2,7 @@ al.essio.dev/pkg/shellescape v1.5.1 h1:86HrALUujYS/h+GtqoB26SBEdkWfmMI6FubjXlsXy
 al.essio.dev/pkg/shellescape v1.5.1/go.mod h1:6sIqp7X2P6mThCQ7twERpZTuigpr6KbZWtls1U8I890=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1 h1:tdpHgTbmbvEIARu+bixzmleMi14+3imnpoFXz+Qzjp4=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1/go.mod h1:xafc+XIsTxTy76GJQ1TKgvJWsSugFBqMaN27WhUblew=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.3-20241127180247-a33202765966.1/go.mod h1:6VPKM8zbmgf9qsmkmKeH49a36Vtmidw3rG53B5mTenc=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.31.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
@@ -485,6 +486,7 @@ github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5Kwzbycv
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.15.0 h1:kOqh6YHBtK8aywxGerMG2Eq3H6Qgoqeo13Bk2Mv/nBs=
 github.com/fatih/color v1.15.0/go.mod h1:0h5ZqXfHYED7Bhv2ZJamyIOUej9KtShiJESRwBDUSsw=
+github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/filecoin-project/go-clock v0.1.0 h1:SFbYIM75M8NnFm1yMHhN9Ahy3W5bEZV9gd6MPfXbKVU=
@@ -613,6 +615,7 @@ github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7/go.mod h1:cIg4er
 github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da h1:oI5xCqsCo564l8iNU+DwB5epxmsaqB+rhGL0m5jtYqE=
 github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
+github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8/go.mod h1:wcDNUvekVysuuOpQKo3191zZyTpiI6se1N1ULghS0sw=
 github.com/golang/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
@@ -775,6 +778,7 @@ github.com/hashicorp/go-getter v1.7.5 h1:dT58k9hQ/vbxNMwoI5+xFYAJuv6152UNvdHokfI
 github.com/hashicorp/go-getter v1.7.5/go.mod h1:W7TalhMmbPmsSMdNjD0ZskARur/9GJ17cfHTRtXV744=
 github.com/hashicorp/go-hclog v1.5.0 h1:bI2ocEMgcVlz55Oj1xZNBsVi900c7II+fWDyV9o+13c=
 github.com/hashicorp/go-hclog v1.5.0/go.mod h1:W4Qnvbt70Wk/zYJryRzDRU/4r0kIg0PVHBcfoyhpF5M=
+github.com/hashicorp/go-hclog v1.6.3/go.mod h1:W4Qnvbt70Wk/zYJryRzDRU/4r0kIg0PVHBcfoyhpF5M=
 github.com/hashicorp/go-immutable-radix v1.0.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-immutable-radix v1.3.1 h1:DKHmCUm2hRBK510BaiZlwvpD40f8bJFeZnpfm2KLowc=
 github.com/hashicorp/go-immutable-radix v1.3.1/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
@@ -846,6 +850,7 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ignite/cli/v28 v28.4.0 h1:i7Um7APUsBwKJexLxoMuynXmXlVZQPS0UPnfqmMBSjY=
 github.com/ignite/cli/v28 v28.4.0/go.mod h1:134NUUb4d5jVtlu1jyDIGJMNrQy5XO3GwPlu03HMkhE=
+github.com/ignite/cli/v28 v28.6.1/go.mod h1:HzT0fYcTX1q8rbgm/OTxTwHl0rsJSOxJ9O3urSNu/6Y=
 github.com/improbable-eng/grpc-web v0.15.0 h1:BN+7z6uNXZ1tQGcNAuaU1YjsLTApzkjt2tzCixLaUPQ=
 github.com/improbable-eng/grpc-web v0.15.0/go.mod h1:1sy9HKV4Jt9aEs9JSnkWlRJPuPtwNr0l57L4f878wP8=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
@@ -1390,6 +1395,8 @@ github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIK
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/sourcenetwork/acp_core v0.0.0-20250119220233-a3579dc36a39 h1:8uDvZs1LKYhLTE9Xv7C/chgV8uoWT/kviYJoUeYxUxQ=
 github.com/sourcenetwork/acp_core v0.0.0-20250119220233-a3579dc36a39/go.mod h1:Z5UEfZqix3/TPUoP00HU4wiWaS+17+odoA/Ws/DCmJg=
+github.com/sourcenetwork/acp_core v0.4.1 h1:3p5AsVYszeZun99GdbV+96/IuAmxOzm30xuMTEMUw2g=
+github.com/sourcenetwork/acp_core v0.4.1/go.mod h1:lzxkAEyyRhAeBSJhPhGHaSV0ddpLuAWwwVXUXJt9034=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276 h1:TpQDDPfucDgCNH0NVqVUk6SSq6T6G8p9HIocmwZh9Tg=
 github.com/sourcenetwork/badger/v4 v4.2.1-0.20231113215945-a63444ca5276/go.mod h1:lxiZTDBw0vheFMqSwX2OvB6RTDI1+/UtVCSU4rpThFM=
 github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
@@ -1402,8 +1409,11 @@ github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3n
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234 h1:8dA9bVC1A0ChJygtsUfNsek3oR0GnwpLoYpmEo4t2mk=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240606193653-1e91e9be9234/go.mod h1:JvZ+G3QTmv7zto3tUBxnV0+fPoev0DkObSwczTm9VJE=
+github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
 github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274 h1:llH2tge8H5aw2gT6bCFnXK2ZAYuUS6PjIsZg4nikWc8=
 github.com/sourcenetwork/sourcehub v0.2.1-0.20240704194128-f43f5e427274/go.mod h1:spQwqm6P+KB8MsR9rPkWkncIHGFtqUqPWwjkv1nhfdA=
+github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf h1:AFak3vTANR+TH0yOhU/78fQa8UWyEJItk27roxJmf4Q=
+github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf/go.mod h1:0R571ioIrJSiuqLVD2YwyxCt+EMGI/r9ZF/CHj75/5U=
 github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030 h1:MV+7W7HyJyyyKqPGk6A858xOw3ixXHyFW/nuHIXiJT4=
 github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030/go.mod h1:A/KKCfhcKHKhdqL41aKGue7KtJNdGY8DlLpG6/Vh4QI=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
@@ -1456,6 +1466,7 @@ github.com/tendermint/go-amino v0.16.0 h1:GyhmgQKvqF82e2oZeuMSp9JTN0N09emoSZlb2l
 github.com/tendermint/go-amino v0.16.0/go.mod h1:TQU0M1i/ImAo+tYpZi73AU3V/dKeCoMC9Sphe2ZwGME=
 github.com/tetratelabs/wazero v1.5.0 h1:Yz3fZHivfDiZFUXnWMPUoiW7s8tC1sjdBtlJn08qYa0=
 github.com/tetratelabs/wazero v1.5.0/go.mod h1:0U0G41+ochRKoPKCJlh0jMg1CHkyfK8kDqiirMmKY8A=
+github.com/tetratelabs/wazero v1.8.2/go.mod h1:yAI0XTsMBhREkM/YDAK/zNou3GoiAce1P6+rp/wQhjs=
 github.com/textileio/go-datastore-extensions v1.0.1 h1:qIJGqJaigQ1wD4TdwS/hf73u0HChhXvvUSJuxBEKS+c=
 github.com/textileio/go-datastore-extensions v1.0.1/go.mod h1:Pzj9FDRkb55910dr/FX8M7WywvnS26gBgEDez1ZBuLE=
 github.com/textileio/go-ds-badger3 v0.1.0 h1:q0kBuBmAcRUR3ClMSYlyw0224XeuzjjGinU53Qz1uXI=
@@ -1533,6 +1544,7 @@ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.4
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0/go.mod h1:Mjt1i1INqiaoZOMGR1RIUJN+i3ChKoFRqzrRQhlkbs0=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 h1:UP6IpuHFkUgOQL9FFQFrZ+5LiwhhYRbi7VZSIx6Nj5s=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0/go.mod h1:qxuZLtbq5QDtdeSHsS7bcf6EH6uO6jUAgk764zd3rhM=
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0/go.mod h1:umTcuxiv1n/s/S6/c2AT/g2CQ7u5C59sHDNmfSwgz7Q=
 go.opentelemetry.io/contrib/instrumentation/runtime v0.59.0 h1:rfi2MMujBc4yowE0iHckZX4o4jg6SA67EnFVL8ldVvU=
 go.opentelemetry.io/contrib/instrumentation/runtime v0.59.0/go.mod h1:IO/gfPEcQYpOpPxn1OXFp1DvRY0viP8ONMedXLjjHIU=
 go.opentelemetry.io/otel v1.34.0 h1:zRLXxLCgL1WyKsPVrgbSdMN4c0FMkDAskSTQP+0hdUY=
