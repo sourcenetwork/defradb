@@ -756,16 +756,20 @@ func validateEmbeddingAndKindCompatible(
 		for _, embedding := range colDef.Description.VectorEmbeddings {
 			if embedding.FieldName == "" {
 				errs = append(errs, client.ErrEmptyFieldNameForEmbedding)
+				continue
 			}
+
 			field, fieldExists := colDef.GetFieldByName(embedding.FieldName)
+			if !fieldExists {
+				errs = append(errs, client.NewErrVectorFieldDoesNotExist(embedding.FieldName))
+				continue
+			}
 
 			if field.Kind == nil {
 				errs = append(errs, client.NewErrVectorFieldDoesNotExist(embedding.FieldName))
+				continue
 			}
 
-			if !fieldExists {
-				errs = append(errs, client.NewErrVectorFieldDoesNotExist(embedding.FieldName))
-			}
 			if !client.IsVectorEmbeddingCompatible(field.Kind) {
 				errs = append(errs, client.NewErrInvalidTypeForEmbedding(field.Kind))
 			}
