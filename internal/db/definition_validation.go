@@ -760,7 +760,7 @@ func validateEmbeddingAndKindCompatible(
 			field, fieldExists := colDef.GetFieldByName(embedding.FieldName)
 
 			if field.Kind == nil {
-				continue
+				errs = append(errs, client.NewErrVectorFieldDoesNotExist(embedding.FieldName))
 			}
 
 			if !fieldExists {
