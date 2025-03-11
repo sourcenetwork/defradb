@@ -12,6 +12,9 @@ package signature
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/onsi/gomega/types"
 
@@ -21,9 +24,9 @@ import (
 )
 
 type signatureMatcher struct {
-	s               testUtils.TestState
-	block           coreblock.Block
-	bytesCastFailed bool
+	s          testUtils.TestState
+	block      coreblock.Block
+	castFailed bool
 }
 
 func newSignatureMatcher(block coreblock.Block) *signatureMatcher {
@@ -46,23 +49,37 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 
 	ident := matcher.s.GetNodeIdentity(matcher.s.GetCurrentNodeID())
 
-	sigBytes, err := crypto.SignECDSA256K(ident.PrivateKey, blockBytes)
+	expectedSigBytes, err := crypto.SignECDSA256K(ident.PrivateKey, blockBytes)
 	if err != nil {
 		return false, err
 	}
 
-	actualBytes, ok := actual.([]byte)
-	if !ok {
-		matcher.bytesCastFailed = true
-		return false, nil
+	if matcher.s.GetClientType() == testUtils.GoClientType {
+		actualSigBytes, ok := actual.([]byte)
+		if !ok {
+			matcher.castFailed = true
+			return false, nil
+		}
+		return bytes.Equal(expectedSigBytes, actualSigBytes), nil
+	} else {
+		actualSigString, ok := actual.(string)
+		if !ok {
+			matcher.castFailed = true
+			return false, nil
+		}
+		// CLI and HTTP clients return json response, so here we should expect a json string
+		expectedSigBytes, err = json.Marshal(expectedSigBytes)
+		if err != nil {
+			return false, err
+		}
+		expectedSigString := strings.Trim(string(expectedSigBytes), "\"")
+		return actualSigString == expectedSigString, nil
 	}
-
-	return bytes.Equal(sigBytes, actualBytes), nil
 }
 
 func (matcher *signatureMatcher) FailureMessage(actual any) string {
-	if matcher.bytesCastFailed {
-		return "Expected actual to be a byte slice"
+	if matcher.castFailed {
+		return fmt.Sprintf("Expected actual to be a byte slice, but got %T", actual)
 	}
 	return "Expected signature to match"
 }
