@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -25,6 +25,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/matchers"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -271,6 +272,11 @@ func executeTestCase(
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, i, testCase.Actions[i])
 	}
+
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
+	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
+	// by them. So the matchers need to be reset between the test runs.
+	resetMatchers(s)
 
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.allActionsDone)
@@ -726,7 +732,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.isNetworkEnabled {
-		st, err := setupNode(s)
+		st, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
 		require.Nil(s.t, err)
 		s.nodes = append(s.nodes, st)
 	}
@@ -1937,6 +1943,7 @@ func assertRequestResults(
 	asserter ResultAsserter,
 	nodeID int,
 ) bool {
+	s.currentNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true
@@ -2028,61 +2035,63 @@ func assertRequestResultDocs(
 			),
 		)
 
-		for field, actualValue := range actualDoc {
-			stack.pushMap(field)
+		assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack)
 
-			switch expectedValue := expectedDoc[field].(type) {
-			case gomega.OmegaMatcher:
-				execGomegaMatcher(expectedValue, s, actualValue, stack)
-
-			case DocIndex:
-				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					expectedDocID,
-					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-				)
-			case []map[string]any:
-				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
-
-				assertRequestResultDocs(
-					s,
-					nodeID,
-					expectedValue,
-					actualValueMap,
-					stack,
-				)
-
-			default:
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					expectedValue,
-					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-				)
-			}
-			stack.pop()
-		}
 		stack.pop()
 	}
 
 	return false
 }
 
-func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
-	if stateMatcher, ok := exp.(StateMatcher); ok {
-		stateMatcher.SetState(s)
-	}
-	success, err := exp.Match(actual)
-	if err != nil {
-		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
-	}
+func assertRequestResultDoc(
+	s *state,
+	nodeID int,
+	actualDoc map[string]any,
+	expectedDoc map[string]any,
+	stack *assertStack,
+) {
+	for field, actualValue := range actualDoc {
+		stack.pushMap(field)
 
-	if !success {
-		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+		switch expectedValue := expectedDoc[field].(type) {
+		case gomega.OmegaMatcher:
+			execGomegaMatcher(expectedValue, s, actualValue, stack)
+
+		case DocIndex:
+			expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expectedDocID,
+				actualValue,
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+			)
+		case []map[string]any:
+			actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
+
+			assertRequestResultDocs(
+				s,
+				nodeID,
+				expectedValue,
+				actualValueMap,
+				stack,
+			)
+
+		case map[string]any:
+			actualMap, ok := actualValue.(map[string]any)
+			require.True(s.t, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack)
+
+		default:
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expectedValue,
+				actualValue,
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+			)
+		}
+		stack.pop()
 	}
 }
 
@@ -2415,4 +2424,53 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
 	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+}
+
+// execGomegaMatcher executes the given gomega matcher and asserts the result.
+func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
+	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
+
+	success, err := exp.Match(actual)
+	if err != nil {
+		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
+	}
+
+	if !success {
+		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+	}
+
+	traverseGomegaMatchers(exp, s, func(m StatefulMatcher) {
+		if !slices.Contains(s.statefulMatchers, m) {
+			s.statefulMatchers = append(s.statefulMatchers, m)
+		}
+	})
+}
+
+// traverseGomegaMatchers traverses the given gomega matcher and calls the given function
+// for each matcher found with the type T.
+func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *state, f func(T)) {
+	if m, ok := exp.(T); ok {
+		f(m)
+		return
+	}
+
+	switch exp := exp.(type) {
+	case *matchers.AndMatcher:
+		for _, m := range exp.Matchers {
+			traverseGomegaMatchers(m, s, f)
+		}
+	case *matchers.OrMatcher:
+		for _, m := range exp.Matchers {
+			traverseGomegaMatchers(m, s, f)
+		}
+	case *matchers.NotMatcher:
+		traverseGomegaMatchers(exp.Matcher, s, f)
+	}
+}
+
+// resetMatchers resets the state of all stateful matchers.
+func resetMatchers(s *state) {
+	for _, matcher := range s.statefulMatchers {
+		matcher.ResetMatcherState()
+	}
 }

@@ -47,7 +47,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
+							"cid": "bafyreifi7borlnkazxrcohgl7r36cm5ga7moyiiajov3om7urexbx7cyl4",
 							// Extra params are used to verify this is a collection level cid
 							"collectionID": int64(1),
 							"docID":        nil,

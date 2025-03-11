@@ -25,12 +25,28 @@ const (
 	errVerificationWithHMACFailed      string = "verification with HMAC failed"
 	errFailedToDecrypt                 string = "failed to decrypt"
 	errNoPublicKeyForDecryption        string = "no public key provided for decryption"
+	errUnsupportedSignatureType        string = "unsupported signature type"
+	errInvalidECDSAPrivKeyBytes        string = "invalid ECDSA private key bytes"
+	errUnsupportedECDSAPrivKeyType     string = "unsupported ECDSA private key type"
+	errInvalidEd25519PrivKeyLength     string = "invalid Ed25519 private key length"
+	errUnsupportedEd25519PrivKeyType   string = "unsupported Ed25519 private key type"
+	errSignatureVerification           string = "signature verification failed"
+	errUnsupportedPrivKeyType          string = "unsupported private key type"
+	errUnsupportedPubKeyType           string = "unsupported public key type"
 )
 
 var (
-	ErrCipherTextTooShort         = errors.New(errCipherTextTooShort)
-	ErrVerificationWithHMACFailed = errors.New(errVerificationWithHMACFailed)
-	ErrNoPublicKeyForDecryption   = errors.New(errNoPublicKeyForDecryption)
+	ErrCipherTextTooShort            = errors.New(errCipherTextTooShort)
+	ErrVerificationWithHMACFailed    = errors.New(errVerificationWithHMACFailed)
+	ErrNoPublicKeyForDecryption      = errors.New(errNoPublicKeyForDecryption)
+	ErrUnsupportedSignatureType      = errors.New(errUnsupportedSignatureType)
+	ErrInvalidECDSAPrivKeyBytes      = errors.New(errInvalidECDSAPrivKeyBytes)
+	ErrUnsupportedECDSAPrivKeyType   = errors.New(errUnsupportedECDSAPrivKeyType)
+	ErrInvalidEd25519PrivKeyLength   = errors.New(errInvalidEd25519PrivKeyLength)
+	ErrUnsupportedEd25519PrivKeyType = errors.New(errUnsupportedEd25519PrivKeyType)
+	ErrSignatureVerification         = errors.New(errSignatureVerification)
+	ErrUnsupportedPrivKeyType        = errors.New(errUnsupportedPrivKeyType)
+	ErrUnsupportedPubKeyType         = errors.New(errUnsupportedPubKeyType)
 )
 
 func NewErrFailedToGenerateEphemeralKey(inner error) error {

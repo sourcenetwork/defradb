@@ -194,3 +194,8 @@ func (c CRDT) IsComposite() bool {
 func (c CRDT) IsCollection() bool {
 	return c.CollectionDelta != nil
 }
+
+// IsField returns true if the CRDT is a field CRDT.
+func (c CRDT) IsField() bool {
+	return !c.IsComposite() && !c.IsCollection()
+}

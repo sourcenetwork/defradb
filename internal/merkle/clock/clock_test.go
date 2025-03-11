@@ -45,11 +45,11 @@ func newTestMerkleClock() *MerkleClock {
 
 func TestNewMerkleClock(t *testing.T) {
 	s := newDS()
-	multistore := datastore.MultiStoreFrom(s)
-	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
-	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), multistore.Encstore(), keys.HeadstoreDocKey{}, reg)
+	m := datastore.MultiStoreFrom(s)
+	reg := crdt.NewLWWRegister(m.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
+	clk := NewMerkleClock(m.Headstore(), m.Blockstore(), m.Encstore(), keys.HeadstoreDocKey{}, reg)
 
-	if clk.headstore != multistore.Headstore() {
+	if clk.headstore != m.Headstore() {
 		t.Error("MerkleClock store not correctly set")
 	} else if clk.headset.store == nil {
 		t.Error("MerkleClock head set not correctly set")
@@ -64,7 +64,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 	reg := crdt.LWWRegister{}
 	delta := reg.Set([]byte("test"))
 	block := coreblock.New(delta, nil)
-	_, err := clk.putBlock(ctx, block)
+	_, err := putBlock(ctx, clk.blockstore, block)
 	if err != nil {
 		t.Errorf("Failed to putBlock, err: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 	}
 	heads := []cid.Cid{c}
 	block := coreblock.New(delta, nil, heads...)
-	_, err = clk.putBlock(ctx, block)
+	_, err = putBlock(ctx, clk.blockstore, block)
 	if err != nil {
 		t.Error("Failed to putBlock with heads:", err)
 		return

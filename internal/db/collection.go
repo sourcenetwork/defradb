@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -34,6 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
@@ -641,6 +643,11 @@ func (c *collection) save(
 	}
 	txn := mustGetContextTxn(ctx)
 
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
+
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
 	// wait, and just did it here, then *if* the commit fails down
@@ -649,6 +656,10 @@ func (c *collection) save(
 	txn.OnSuccess(func() {
 		doc.Clean()
 	})
+
+	if c.db.blockSigningEnabled {
+		ctx = clock.ContextWithSigning(ctx)
+	}
 
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker

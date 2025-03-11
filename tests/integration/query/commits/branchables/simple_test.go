@@ -13,10 +13,14 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -42,16 +46,16 @@ func TestQueryCommitsBranchables(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
+							"cid": uniqueCid,
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": uniqueCid,
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": uniqueCid,
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": uniqueCid,
 						},
 					},
 				},
@@ -63,6 +67,13 @@ func TestQueryCommitsBranchables(t *testing.T) {
 }
 
 func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	collectionCid := testUtils.NewSameValue()
+	compositeCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	nameCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -98,7 +109,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          testUtils.NewUniqueCid("collection"),
+							"cid":          gomega.And(collectionCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        nil,
@@ -107,13 +118,13 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("composite"),
+									"cid":  compositeCid,
 									"name": nil,
 								},
 							},
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("age"),
+							"cid":          gomega.And(ageCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(21),
 							"docID":        "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
@@ -123,7 +134,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("name"),
+							"cid":          gomega.And(nameCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue("John"),
 							"docID":        "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
@@ -133,7 +144,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"links":        []map[string]any{},
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("composite"),
+							"cid":          gomega.And(compositeCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
@@ -142,11 +153,11 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("age"),
+									"cid":  ageCid,
 									"name": "age",
 								},
 								{
-									"cid":  testUtils.NewUniqueCid("name"),
+									"cid":  nameCid,
 									"name": "name",
 								},
 							},

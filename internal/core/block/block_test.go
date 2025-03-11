@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,7 +13,7 @@ package coreblock
 import (
 	"testing"
 
-	"github.com/ipld/go-ipld-prime"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
-func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
+func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	// Generate new Block and save to lsys
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
@@ -38,9 +38,7 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 		},
 	}
 	fieldBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), fieldBlock.GenerateNode())
-	if err != nil {
-		return cidlink.Link{}, err
-	}
+	require.NoError(t, err)
 
 	compositeBlock := Block{
 		Delta: crdt.CRDT{
@@ -59,9 +57,7 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 		},
 	}
 	compositeBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), compositeBlock.GenerateNode())
-	if err != nil {
-		return cidlink.Link{}, err
-	}
+	require.NoError(t, err)
 
 	fieldUpdateBlock := Block{
 		Delta: crdt.CRDT{
@@ -78,11 +74,9 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 		},
 	}
 	fieldUpdateBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), fieldUpdateBlock.GenerateNode())
-	if err != nil {
-		return cidlink.Link{}, err
-	}
+	require.NoError(t, err)
 
-	compositeUpdateBlock := Block{
+	return Block{
 		Delta: crdt.CRDT{
 			CompositeDAGDelta: &crdt.CompositeDAGDelta{
 				DocID:           []byte("docID"),
@@ -101,16 +95,13 @@ func generateBlocks(lsys *linking.LinkSystem) (cidlink.Link, error) {
 			},
 		},
 	}
-	compositeUpdateBlockLink, err := lsys.Store(
-		ipld.LinkContext{},
-		GetLinkPrototype(),
-		compositeUpdateBlock.GenerateNode(),
-	)
-	if err != nil {
-		return cidlink.Link{}, err
-	}
+}
 
-	return compositeUpdateBlockLink.(cidlink.Link), nil
+func storeBlock(t *testing.T, lsys *linking.LinkSystem, block Block) cidlink.Link {
+	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
+	require.NoError(t, err)
+
+	return blockLink.(cidlink.Link)
 }
 
 func TestBlock(t *testing.T) {
@@ -119,10 +110,9 @@ func TestBlock(t *testing.T) {
 	lsys.SetReadStorage(&store)
 	lsys.SetWriteStorage(&store)
 
-	rootLink, err := generateBlocks(&lsys)
-	require.NoError(t, err)
+	rootLink := storeBlock(t, &lsys, makeCompositeBlock(t, &lsys))
 
-	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	block, err := GetFromNode(nd)
@@ -136,7 +126,7 @@ func TestBlock(t *testing.T) {
 
 	require.Equal(t, block, newBlock)
 
-	newNode := bindnode.Wrap(block, Schema)
+	newNode := bindnode.Wrap(block, BlockSchema)
 	require.Equal(t, nd, newNode)
 
 	link, err := block.GenerateLink()
@@ -159,10 +149,9 @@ func TestBlockDeltaPriority(t *testing.T) {
 	lsys.SetReadStorage(&store)
 	lsys.SetWriteStorage(&store)
 
-	rootLink, err := generateBlocks(&lsys)
-	require.NoError(t, err)
+	rootLink := storeBlock(t, &lsys, makeCompositeBlock(t, &lsys))
 
-	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, rootLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	block, err := GetFromNode(nd)
@@ -205,7 +194,7 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 	blockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), block.GenerateNode())
 	require.NoError(t, err)
 
-	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, blockLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 
 	loadedBlock, err := GetFromNode(nd)
@@ -242,7 +231,7 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	fieldBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), fieldBlock.GenerateNode())
 	require.NoError(t, err)
 
-	nd, err := lsys.Load(ipld.LinkContext{}, fieldBlockLink, SchemaPrototype)
+	nd, err := lsys.Load(ipld.LinkContext{}, fieldBlockLink, BlockSchemaPrototype)
 	require.NoError(t, err)
 	_, err = GetFromNode(nd)
 	require.NoError(t, err)
@@ -301,4 +290,154 @@ func TestEncryptionBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, encBlock, unmarshaledBlock)
+}
+
+func TestBlock_IsEncrypted(t *testing.T) {
+	tests := []struct {
+		name       string
+		setupBlock func() Block
+		wantResult bool
+	}{
+		{
+			name: "with encryption link",
+			setupBlock: func() Block {
+				return Block{
+					Delta: crdt.CRDT{
+						LWWRegDelta: &crdt.LWWRegDelta{},
+					},
+					Encryption: &cidlink.Link{},
+				}
+			},
+			wantResult: true,
+		},
+		{
+			name: "without encryption link",
+			setupBlock: func() Block {
+				return Block{
+					Delta: crdt.CRDT{
+						LWWRegDelta: &crdt.LWWRegDelta{},
+					},
+				}
+			},
+			wantResult: false,
+		},
+		{
+			name: "with other fields but no encryption",
+			setupBlock: func() Block {
+				return Block{
+					Delta: crdt.CRDT{
+						LWWRegDelta: &crdt.LWWRegDelta{},
+					},
+					Signature: &cidlink.Link{},
+					Heads:     []cidlink.Link{{}},
+				}
+			},
+			wantResult: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			block := tt.setupBlock()
+			result := block.IsEncrypted()
+			require.Equal(t, tt.wantResult, result)
+		})
+	}
+}
+
+func TestBlock_Clone(t *testing.T) {
+	lsys := cidlink.DefaultLinkSystem()
+	store := memstore.Store{}
+	lsys.SetReadStorage(&store)
+	lsys.SetWriteStorage(&store)
+
+	// Create encryption block and link
+	encBlock := Encryption{
+		DocID: []byte("docID"),
+		Key:   []byte("keyID"),
+	}
+	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
+	require.NoError(t, err, "Failed to store encryption block")
+	encLink := encBlockLink.(cidlink.Link)
+
+	// Create signature block and link
+	sigBlock := Signature{
+		Header: SignatureHeader{
+			Type:     SignatureTypeEd25519,
+			Identity: []byte("signer-id"),
+		},
+		Value: []byte("signature-value"),
+	}
+	sigBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), sigBlock.GenerateNode())
+	require.NoError(t, err, "Failed to store signature block")
+	sigLink := sigBlockLink.(cidlink.Link)
+
+	// Create a dummy block and get its CID for Heads
+	dummyBlock := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				Data: []byte("dummy"),
+			},
+		},
+	}
+	dummyLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), dummyBlock.GenerateNode())
+	require.NoError(t, err, "Failed to store dummy block")
+
+	// Create an original block with all fields set
+	original := Block{
+		Delta: crdt.CRDT{
+			LWWRegDelta: &crdt.LWWRegDelta{
+				DocID:           []byte("docID"),
+				FieldName:       "name",
+				Priority:        1,
+				SchemaVersionID: "schemaVersionID",
+				Data:            []byte("John"),
+			},
+		},
+		Heads: []cidlink.Link{dummyLink.(cidlink.Link)},
+		Links: []DAGLink{{
+			Name: "testLink",
+			Link: dummyLink.(cidlink.Link),
+		}},
+		Encryption: &encLink,
+		Signature:  &sigLink,
+	}
+
+	// Serialize the original block
+	originalBytes, err := original.Marshal()
+	require.NoError(t, err, "Failed to serialize original block")
+
+	// Clone the block
+	cloned := original.Clone()
+
+	// Serialize the cloned block
+	clonedBytes, err := cloned.Marshal()
+	require.NoError(t, err, "Failed to serialize cloned block")
+
+	// Compare serialized forms
+	require.Equal(t, originalBytes, clonedBytes, "Serialized blocks should be identical")
+
+	// Modify the original to verify deep copy
+	original.Delta.LWWRegDelta.Data = []byte("Jane")
+
+	// Serialize both again
+	originalBytes, err = original.Marshal()
+	require.NoError(t, err, "Failed to serialize original block after modification")
+	clonedBytes, err = cloned.Marshal()
+	require.NoError(t, err, "Failed to serialize cloned block after original modification")
+
+	// Verify they are now different
+	require.NotEqual(t, originalBytes, clonedBytes, "Modifying original should not affect clone")
+
+	// Verify we can unmarshal both blocks successfully
+	var unmarshaledOriginal Block
+	var unmarshaledClone Block
+	err = unmarshaledOriginal.Unmarshal(originalBytes)
+	require.NoError(t, err, "Failed to unmarshal original block")
+	err = unmarshaledClone.Unmarshal(clonedBytes)
+	require.NoError(t, err, "Failed to unmarshal cloned block")
+
+	// Verify the unmarshaled blocks have the expected values
+	require.Equal(t, []byte("Jane"), unmarshaledOriginal.Delta.LWWRegDelta.Data)
+	require.Equal(t, []byte("John"), unmarshaledClone.Delta.LWWRegDelta.Data)
 }

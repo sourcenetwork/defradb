@@ -95,6 +95,10 @@ type DB struct {
 	// The intervals at which to retry replicator failures.
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals []time.Duration
+
+	// Whether block signing is enabled. If set to true DAG blocks will include a link to
+	// a block with the signature of the block.
+	blockSigningEnabled bool
 }
 
 var _ client.DB = (*DB)(nil)
@@ -148,6 +152,7 @@ func newDB(
 	}
 
 	db.nodeIdentity = opts.identity
+	db.blockSigningEnabled = opts.blockSigningEnabled
 
 	if lens != nil {
 		lens.Init(db)
