@@ -157,13 +157,17 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
+      # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
+      - name: Get SourceHub version
+        run: |
+          SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
+          echo "SOURCEHUB_COMMIT=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
+
       # We have to install it ourselves because it contains replace commands in its go.mod file.
       - name: Install sourcehub
         uses: ./.github/composites/install-sourcehub
         with:
-          # Lock the sourcehub version until the dev branch is stable
-          # remove this when closed https://github.com/sourcenetwork/defradb/issues/2865
-          ref: c232133c35c96924509a4d955a7b450eb3624a15
+          ref: ${{ env.SOURCEHUB_COMMIT }}
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
