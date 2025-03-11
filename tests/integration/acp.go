@@ -444,7 +444,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	args = []string{"genesis", "gentx", validatorName, "1000000000uopen",
+	args = []string{"genesis", "gentx", validatorName, "100000000uopen",
 		"--chain-id", chainID,
 		"--keyring-backend", keyringBackend,
 		"--home", directory}
@@ -455,15 +455,13 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	/*
-		args = []string{"genesis", "collect-gentxs", "--home", directory}
-		s.t.Log("$ sourcehubd " + strings.Join(args, " "))
-		out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-		s.t.Log(string(out))
-		if err != nil {
-			return nil, err
-		}
-	*/
+	args = []string{"genesis", "collect-gentxs", "--home", directory}
+	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
+	s.t.Log(string(out))
+	if err != nil {
+		return nil, err
+	}
 
 	// We need to lock across all the test processes as we assign ports to the source hub instance as this
 	// process involves finding free ports, dropping them, and then assigning them to the source hub node.

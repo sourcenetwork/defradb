@@ -50,6 +50,7 @@ func NewACPSourceHub(
 	txBuilder, err := sourcehub.NewTxBuilder(
 		sourcehub.WithSDKClient(client),
 		sourcehub.WithChainID(chainID),
+		sourcehub.WithGasLimit(400000),
 	)
 	if err != nil {
 		return nil, err
