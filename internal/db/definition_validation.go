@@ -150,13 +150,12 @@ func (db *DB) validateSchemaUpdate(
 	oldDefinitions []client.CollectionDefinition,
 	newDefinitions []client.CollectionDefinition,
 ) error {
+	var errs []error
 	newState := newDefinitionState(newDefinitions)
 	oldState := newDefinitionState(oldDefinitions)
 
-	var errs []error
 	for _, validator := range schemaUpdateValidators {
-		err := validator(ctx, db, newState, oldState)
-		if err != nil {
+		if err := validator(ctx, db, newState, oldState); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -171,7 +170,6 @@ func (db *DB) validateCollectionChanges(
 ) error {
 	newState := newDefinitionState(newDefinitions)
 	oldState := newDefinitionState(oldDefinitions)
-
 	var errs []error
 	for _, validator := range collectionUpdateValidators {
 		err := validator(ctx, db, newState, oldState)
@@ -190,7 +188,6 @@ func (db *DB) validateNewCollection(
 ) error {
 	newState := newDefinitionState(newDefinitions)
 	oldState := newDefinitionState(oldDefinitions)
-
 	var errs []error
 	for _, validator := range createValidators {
 		err := validator(ctx, db, newState, oldState)
@@ -321,31 +318,28 @@ func validateSingleSidePrimary(
 		if !ok {
 			continue
 		}
-
 		definition := client.CollectionDefinition{
 			Description: newCollection,
 			Schema:      schema,
 		}
-
 		for _, field := range definition.GetFields() {
+			if field.Kind == nil {
+				continue
+			}
 			if !field.Kind.IsObject() {
 				continue
 			}
-
 			if field.RelationName == "" {
 				continue
 			}
-
 			if !field.IsPrimaryRelation {
 				// This is a secondary field and thus passes this rule
 				continue
 			}
-
 			otherDef, ok := client.GetDefinition(newState.definitionCache, definition, field.Kind)
 			if !ok {
 				continue
 			}
-
 			otherField, ok := otherDef.Description.GetFieldByRelation(
 				field.RelationName,
 				definition.GetName(),
@@ -355,7 +349,6 @@ func validateSingleSidePrimary(
 				// This must be a one-sided relation, in which case it passes this rule
 				continue
 			}
-
 			_, ok = otherDef.Schema.GetFieldByName(otherField.Name)
 			if ok {
 				// This primary is paired with another primary, which is invalid
@@ -437,12 +430,15 @@ func validateSourcesNotRedefined(
 		}
 
 		for i := range newColSources {
+			if i >= len(oldColSources) {
+				continue // Avoid out-of-bounds panic
+			}
 			if newColSources[i].SourceCollectionID != oldColSources[i].SourceCollectionID {
-				return NewErrCollectionSourceIDMutated(
+				errs = append(errs, NewErrCollectionSourceIDMutated(
 					newCol.ID,
 					newColSources[i].SourceCollectionID,
 					oldColSources[i].SourceCollectionID,
-				)
+				))
 			}
 		}
 
@@ -529,13 +525,14 @@ func validateIDNotZero(
 	newState *definitionState,
 	oldState *definitionState,
 ) error {
+	var errs []error
 	for _, newCol := range newState.collections {
 		if newCol.ID == 0 {
-			return ErrCollectionIDCannotBeZero
+			errs = append(errs, ErrCollectionIDCannotBeZero)
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func validateIDUnique(
@@ -548,7 +545,7 @@ func validateIDUnique(
 	colIds := map[uint32]struct{}{}
 	for _, newCol := range newState.collections {
 		if _, ok := colIds[newCol.ID]; ok {
-			errs = append(errs, ErrCollectionIDCannotBeZero)
+			errs = append(errs, NewErrCollectionIDAlreadyExists(newCol.ID))
 		}
 		colIds[newCol.ID] = struct{}{}
 	}
@@ -565,7 +562,7 @@ func validateIDExists(
 	var errs []error
 	for _, newCol := range newState.collections {
 		if _, ok := oldState.collectionsByID[newCol.ID]; !ok {
-			errs = append(errs, NewErrCollectionIDAlreadyExists(newCol.ID))
+			errs = append(errs, NewErrAddCollectionIDWithPatch(newCol.ID))
 		}
 	}
 
@@ -761,6 +758,11 @@ func validateEmbeddingAndKindCompatible(
 				errs = append(errs, client.ErrEmptyFieldNameForEmbedding)
 			}
 			field, fieldExists := colDef.GetFieldByName(embedding.FieldName)
+
+			if field.Kind == nil {
+				continue
+			}
+
 			if !fieldExists {
 				errs = append(errs, client.NewErrVectorFieldDoesNotExist(embedding.FieldName))
 			}
@@ -796,6 +798,11 @@ func validateEmbeddingFieldsForGeneration(
 				if !fieldExists {
 					errs = append(errs, client.NewErrFieldForEmbeddingGenerationDoesNotExist(fieldName))
 				}
+
+				if field.Kind == nil {
+					continue
+				}
+
 				// Check that the field is of a supperted kind.
 				if !client.IsSupportedVectorEmbeddingSourceKind(field.Kind) {
 					errs = append(errs, client.NewErrInvalidTypeForEmbeddingGeneration(field.Kind))
@@ -843,7 +850,6 @@ func validateTypeSupported(
 			}
 		}
 	}
-
 	return errors.Join(errs...)
 }
 
@@ -951,6 +957,7 @@ func validateSelfReferences(
 
 	for _, col := range newState.collections {
 		for _, field := range col.Fields {
+
 			if !field.Kind.HasValue() {
 				continue
 			}

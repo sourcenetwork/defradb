@@ -1895,15 +1895,9 @@ func AssertError(t testing.TB, description string, err error, expectedError stri
 		require.NoError(t, err, description)
 		return false
 	} else {
-		expectedErr := errors.New(expectedError)
-
-		// Check if expectedError exists in the error chain
-		if !errors.Is(err, expectedErr) {
-			// Also check if the string appears anywhere in the error message
-			if strings.Contains(err.Error(), expectedError) {
-				return true
-			}
-			require.Failf(t, "Unexpected error", "expected error: %q, got: %q", expectedError, err.Error())
+		if !strings.Contains(err.Error(), expectedError) {
+			// Must be require instead of assert, otherwise will show a fake "error not raised".
+			require.ErrorIs(t, err, errors.New(expectedError))
 			return false
 		}
 		return true
@@ -1920,22 +1914,18 @@ func AssertErrors(
 ) bool {
 	if expectedError == "" {
 		require.Empty(t, errs, description)
-		return false
-	}
-
-	for _, e := range errs {
-		// Directly check if the expected error is in the chain
-		if errors.Is(e, errors.New(expectedError)) {
-			return true
-		}
-
-		// Fallback: Check if expectedError exists in the error message string
-		if strings.Contains(e.Error(), expectedError) {
+	} else {
+		for _, e := range errs {
+			// This is always a string at the moment, add support for other types as and when needed
+			errorString := e.Error()
+			if !strings.Contains(errorString, expectedError) {
+				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
+				require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
+				continue
+			}
 			return true
 		}
 	}
-
-	require.Failf(t, "Unexpected error", "expected error: %q, got: %v", expectedError, errs)
 	return false
 }
 
