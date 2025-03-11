@@ -102,6 +102,7 @@ require (
 	github.com/Jorropo/jsync v1.0.1 // indirect
 	github.com/NathanBaulch/protoc-gen-cobra v1.2.1 // indirect
 	github.com/TBD54566975/ssi-sdk v0.0.4-alpha // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/awalterschulze/gographviz v2.0.3+incompatible // indirect
 	github.com/aws/aws-sdk-go v1.44.224 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
@@ -341,6 +342,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
+	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
 	github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
@@ -349,6 +351,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
+	github.com/tendermint/tendermint v0.35.9 // indirect
 	github.com/tetratelabs/wazero v1.8.2 // indirect
 	github.com/textileio/go-log/v2 v2.1.3-gke-2 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect

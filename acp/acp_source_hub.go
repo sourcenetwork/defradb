@@ -16,6 +16,8 @@ import (
 	"strings"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
+	acperrors "github.com/sourcenetwork/acp_core/pkg/errors"
+	coretypes "github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
 	sourcehub "github.com/sourcenetwork/sourcehub/sdk"
 	acptypes "github.com/sourcenetwork/sourcehub/x/acp/types"
@@ -77,7 +79,7 @@ func (a *acpSourceHub) AddPolicy(
 ) (string, error) {
 	msgSet := sourcehub.MsgSet{}
 	policyMapper := msgSet.WithCreatePolicy(
-		acptypes.NewMsgCreatePolicyNow(a.signer.GetAccAddress(), policy, acptypes.PolicyMarshalingType(policyMarshalType)),
+		acptypes.NewMsgCreatePolicy(a.signer.GetAccAddress(), policy, coretypes.PolicyMarshalingType(policyMarshalType)),
 	)
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
@@ -102,7 +104,7 @@ func (a *acpSourceHub) AddPolicy(
 		return "", err
 	}
 
-	return policyResponse.Policy.Id, nil
+	return policyResponse.Record.Policy.Id, nil
 }
 
 func (a *acpSourceHub) Policy(
@@ -117,7 +119,7 @@ func (a *acpSourceHub) Policy(
 		// todo: https://github.com/sourcenetwork/defradb/issues/2826
 		// Sourcehub errors do not currently work with errors.Is, errors.Is
 		// should be used here instead of strings.Contains when that is fixed.
-		if strings.Contains(err.Error(), acptypes.ErrPolicyNotFound.Error()) {
+		if strings.Contains(err.Error(), acperrors.ErrorType_NOT_FOUND.Error()) {
 			return immutable.None[policy](), nil
 		}
 
@@ -125,11 +127,11 @@ func (a *acpSourceHub) Policy(
 	}
 
 	return immutable.Some(
-		fromSourceHubPolicy(response.Policy),
+		fromSourceHubPolicy(response.Record.Policy),
 	), nil
 }
 
-func fromSourceHubPolicy(pol *acptypes.Policy) policy {
+func fromSourceHubPolicy(pol *coretypes.Policy) policy {
 	resources := make(map[string]*resource)
 	for _, coreResource := range pol.Resources {
 		resource := fromSourceHubResource(coreResource)
@@ -142,7 +144,7 @@ func fromSourceHubPolicy(pol *acptypes.Policy) policy {
 	}
 }
 
-func fromSourceHubResource(policy *acptypes.Resource) *resource {
+func fromSourceHubResource(policy *coretypes.Resource) *resource {
 	perms := make(map[string]*permission)
 	for _, corePermission := range policy.Permissions {
 		perm := fromSourceHubPermission(corePermission)
@@ -155,7 +157,7 @@ func fromSourceHubResource(policy *acptypes.Resource) *resource {
 	}
 }
 
-func fromSourceHubPermission(perm *acptypes.Permission) *permission {
+func fromSourceHubPermission(perm *coretypes.Permission) *permission {
 	return &permission{
 		Name:       perm.Name,
 		Expression: perm.Expression,
@@ -169,38 +171,34 @@ func (a *acpSourceHub) RegisterObject(
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
-) (RegistrationResult, error) {
+) error {
 	msgSet := sourcehub.MsgSet{}
 	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
-		Creator:      a.signer.GetAccAddress(),
-		BearerToken:  identity.BearerToken,
-		PolicyId:     policyID,
-		Cmd:          acptypes.NewRegisterObjectCmd(acptypes.NewObject(resourceName, objectID)),
-		CreationTime: creationTime,
+		Creator:     a.signer.GetAccAddress(),
+		BearerToken: identity.BearerToken,
+		PolicyId:    policyID,
+		Cmd:         acptypes.NewRegisterObjectCmd(coretypes.NewObject(resourceName, objectID)),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	resp, err := a.client.BroadcastTx(ctx, tx)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	result, err := a.client.AwaitTx(ctx, resp.TxHash)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	if result.Error() != nil {
-		return 0, result.Error()
+		return result.Error()
 	}
 
-	cmdResult, err := cmdMapper.Map(result.TxPayload())
-	if err != nil {
-		return 0, err
-	}
+	_, err = cmdMapper.Map(result.TxPayload())
 
-	return RegistrationResult(cmdResult.GetResult().GetRegisterObjectResult().Result), nil
+	return err
 }
 
 func (a *acpSourceHub) ObjectOwner(
@@ -209,22 +207,22 @@ func (a *acpSourceHub) ObjectOwner(
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
-	owner, err := a.client.ACPQueryClient().ObjectOwner(
+	resp, err := a.client.ACPQueryClient().ObjectOwner(
 		ctx,
 		&acptypes.QueryObjectOwnerRequest{
 			PolicyId: policyID,
-			Object:   acptypes.NewObject(resourceName, objectID),
+			Object:   coretypes.NewObject(resourceName, objectID),
 		},
 	)
 	if err != nil {
 		return immutable.None[string](), err
 	}
 
-	if owner.OwnerId == "" {
+	if !resp.IsRegistered {
 		return immutable.None[string](), nil
 	}
 
-	return immutable.Some(owner.OwnerId), nil
+	return immutable.Some(resp.Record.Metadata.OwnerDid), nil
 }
 
 func (a *acpSourceHub) VerifyAccessRequest(
@@ -239,14 +237,14 @@ func (a *acpSourceHub) VerifyAccessRequest(
 		ctx,
 		&acptypes.QueryVerifyAccessRequestRequest{
 			PolicyId: policyID,
-			AccessRequest: &acptypes.AccessRequest{
-				Operations: []*acptypes.Operation{
+			AccessRequest: &coretypes.AccessRequest{
+				Operations: []*coretypes.Operation{
 					{
-						Object:     acptypes.NewObject(resourceName, docID),
+						Object:     coretypes.NewObject(resourceName, docID),
 						Permission: permission.String(),
 					},
 				},
-				Actor: &acptypes.Actor{
+				Actor: &coretypes.Actor{
 					Id: actorID,
 				},
 			},
@@ -279,15 +277,15 @@ func (a *acpSourceHub) AddActorRelationship(
 ) (bool, error) {
 	msgSet := sourcehub.MsgSet{}
 
-	var newActorRelationship *acptypes.Relationship
+	var newActorRelationship *coretypes.Relationship
 	if targetActor == "*" {
-		newActorRelationship = acptypes.NewAllActorsRelationship(
+		newActorRelationship = coretypes.NewAllActorsRelationship(
 			resourceName,
 			objectID,
 			relation,
 		)
 	} else {
-		newActorRelationship = acptypes.NewActorRelationship(
+		newActorRelationship = coretypes.NewActorRelationship(
 			resourceName,
 			objectID,
 			relation,
@@ -296,11 +294,10 @@ func (a *acpSourceHub) AddActorRelationship(
 	}
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
-		Creator:      a.signer.GetAccAddress(),
-		BearerToken:  requester.BearerToken,
-		PolicyId:     policyID,
-		Cmd:          acptypes.NewSetRelationshipCmd(newActorRelationship),
-		CreationTime: creationTime,
+		Creator:     a.signer.GetAccAddress(),
+		BearerToken: requester.BearerToken,
+		PolicyId:    policyID,
+		Cmd:         acptypes.NewSetRelationshipCmd(newActorRelationship),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
@@ -339,15 +336,15 @@ func (a *acpSourceHub) DeleteActorRelationship(
 ) (bool, error) {
 	msgSet := sourcehub.MsgSet{}
 
-	var newActorRelationship *acptypes.Relationship
+	var newActorRelationship *coretypes.Relationship
 	if targetActor == "*" {
-		newActorRelationship = acptypes.NewAllActorsRelationship(
+		newActorRelationship = coretypes.NewAllActorsRelationship(
 			resourceName,
 			objectID,
 			relation,
 		)
 	} else {
-		newActorRelationship = acptypes.NewActorRelationship(
+		newActorRelationship = coretypes.NewActorRelationship(
 			resourceName,
 			objectID,
 			relation,
@@ -356,11 +353,10 @@ func (a *acpSourceHub) DeleteActorRelationship(
 	}
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&acptypes.MsgBearerPolicyCmd{
-		Creator:      a.signer.GetAccAddress(),
-		BearerToken:  requester.BearerToken,
-		PolicyId:     policyID,
-		Cmd:          acptypes.NewDeleteRelationshipCmd(newActorRelationship),
-		CreationTime: creationTime,
+		Creator:     a.signer.GetAccAddress(),
+		BearerToken: requester.BearerToken,
+		PolicyId:    policyID,
+		Cmd:         acptypes.NewDeleteRelationshipCmd(newActorRelationship),
 	})
 
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
