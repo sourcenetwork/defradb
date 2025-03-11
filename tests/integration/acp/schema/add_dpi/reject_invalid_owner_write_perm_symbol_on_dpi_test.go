@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "20dcca408d23cb04e7c50b8fe59af10886496843b10466fd0c208d7a1b701594"
+	policyIDOfInvalidDPI := "616fc086decd5a79e63d8c69c70d8ef9db890dedbd493337d88130d161c00d19"
 
 	test := testUtils.TestCase{
 
@@ -104,7 +104,7 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprO
 }
 
 func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "eed2e57dad5c3265fa13330a8bcbfd0e51d194712fe66c031a9d1a993754e648"
+	policyIDOfInvalidDPI := "1941f8401249b50a5e6cd7c751e893176666770368d389f13caf1ebfe31062e0"
 
 	test := testUtils.TestCase{
 
@@ -190,7 +190,7 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExp
 }
 
 func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "5ddabf78f90cc7c1a2ef7dc9fa11cc7f7ed2b3875e5252a84613fb45173a5b58"
+	policyIDOfInvalidDPI := "c0aca7f9bae891dc82a61c80b6f595c29c8a70dc8616a24bb92171e270ac2547"
 
 	test := testUtils.TestCase{
 

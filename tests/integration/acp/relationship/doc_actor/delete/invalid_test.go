@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -123,7 +123,7 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 }
 
 func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -228,7 +228,7 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 }
 
 func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -333,7 +333,7 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 }
 
 func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -438,7 +438,7 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 }
 
 func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 

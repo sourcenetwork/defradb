@@ -47,7 +47,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
 
                 `,
 
-				ExpectedPolicyID: "2eb8b503c9fc0b7c1f7b04d68a6faa0f82a299db0ae02fed68f9897612439cb6",
+				ExpectedPolicyID: "05da0c4ceba2b05537f7dc861e6c76c014377ad11b006c164b3b1b0592236215",
 			},
 
 			testUtils.AddPolicy{
@@ -82,7 +82,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                               - actor
                 `,
 
-				ExpectedPolicyID: "6b766a9aafabf0bf65102f73b7cd81963b65e1fd87ce763f386cc685147325ee",
+				ExpectedPolicyID: "725caeee6c5043f019e7dc3bb6a627520c235f063e862696c67ac89b5c1fc840",
 			},
 		},
 	}
@@ -128,7 +128,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                     }
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 			},
 
 			testUtils.AddPolicy{
@@ -163,7 +163,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                               - actor
                 `,
 
-				ExpectedPolicyID: "757c772e9c4418de530ecd72cbc56dfc4e0c22aa2f3b2d219afa7663b2f0af00",
+				ExpectedPolicyID: "47f986f872dfcfc7d126b017a4258df86d508f3333d93f19c0eb7f4624e97023",
 			},
 		},
 	}
@@ -203,7 +203,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 				Policy: policyUsedByBoth,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 			},
 
 			testUtils.AddPolicy{
@@ -211,7 +211,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 				Policy: policyUsedByBoth,
 
-				ExpectedPolicyID: "ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}
@@ -250,7 +250,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 			},
 
 			testUtils.AddPolicy{
@@ -278,7 +278,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}
@@ -316,7 +316,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                               - actor
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 			},
 
 			testUtils.AddPolicy{
@@ -351,7 +351,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                    }
                `,
 
-				ExpectedPolicyID: "ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 			},
 		},
 	}

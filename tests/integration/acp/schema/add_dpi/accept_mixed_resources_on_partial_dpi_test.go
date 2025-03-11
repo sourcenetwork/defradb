@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema(t *testing.T) {
-	policyIDOfPartiallyValidDPI := "d0093bc2d984f42a498dff029df5c931bae5f8cb79b24d36243ab9b84547023d"
+	policyIDOfPartiallyValidDPI := "a86c6bb344c14be93ec0e44e0f660c070494f57eb740d33381b269ceb01121e5"
 
 	test := testUtils.TestCase{
 

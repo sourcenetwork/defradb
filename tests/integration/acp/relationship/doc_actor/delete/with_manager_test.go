@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -191,7 +191,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 }
 
 func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -377,7 +377,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 }
 
 func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -487,7 +487,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 
 				Relation: "owner",
 
-				ExpectedError: "cannot delete an owner relationship",
+				ExpectedError: "deleting an owner relationship is not allowed",
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Owner can still perform owner operations, like restrict admin.

@@ -47,7 +47,7 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 			},
 		},
 	}
@@ -93,7 +93,7 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 					}
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 			},
 		},
 	}

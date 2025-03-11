@@ -24,13 +24,13 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 			testUtils.AddPolicy{
 				Identity:         testUtils.ClientIdentity(1),
 				Policy:           userPolicy,
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
 						resource: "users"
 					) {
 						name: String
@@ -72,13 +72,13 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 			testUtils.AddPolicy{
 				Identity:         testUtils.ClientIdentity(1),
 				Policy:           userPolicy,
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
 						resource: "users"
 					) {
 						name: String @index

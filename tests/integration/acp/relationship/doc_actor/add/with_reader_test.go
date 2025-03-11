@@ -20,7 +20,7 @@ import (
 )
 
 func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -157,7 +157,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 }
 
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -306,7 +306,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 // Note: Testing that owner can still read after the relationship was formed is to ensure
 // that no transfer of ownership has taken place.
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -459,7 +459,7 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 }
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdate(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 
@@ -644,7 +644,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 }
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelete(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 

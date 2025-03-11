@@ -39,7 +39,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
                     resources:
                 `,
 
-				ExpectedPolicyID: "e3ffe8e802e4612dc41d7a638cd77dc16d51eb1db0d18682eec75b05234e6ee2",
+				ExpectedPolicyID: "93c47536da98588f3c3c9a47279e818a1b77222f5f4fff9bcddaa860b807e273",
 			},
 		},
 	}
@@ -66,7 +66,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
                       name: actor
                 `,
 
-				ExpectedPolicyID: "e3ffe8e802e4612dc41d7a638cd77dc16d51eb1db0d18682eec75b05234e6ee2",
+				ExpectedPolicyID: "93c47536da98588f3c3c9a47279e818a1b77222f5f4fff9bcddaa860b807e273",
 			},
 		},
 	}

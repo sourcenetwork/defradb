@@ -51,7 +51,7 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "db6e4d3efc58f8a7bfe8f35c73c39630f1ad3e6fad7ffeb22563d1284bd176dc",
+				ExpectedPolicyID: "29e141d4c49f5f6a0e12aa035aa1cae2a2a05d364759fcaae76473ef8484fc89",
 			},
 		},
 	}
@@ -89,7 +89,7 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "106a38bfb702608e26feda961d9fffd74141ef34eccc17b3de2c15dd7620da46",
+				ExpectedPolicyID: "71fb347c0db1db6c5242342905d1ef9676fc3215b42d5f8860e0b03f3be68df0",
 			},
 		},
 	}
@@ -122,7 +122,7 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "db6e4d3efc58f8a7bfe8f35c73c39630f1ad3e6fad7ffeb22563d1284bd176dc",
+				ExpectedPolicyID: "29e141d4c49f5f6a0e12aa035aa1cae2a2a05d364759fcaae76473ef8484fc89",
 			},
 		},
 	}
@@ -158,7 +158,7 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "106a38bfb702608e26feda961d9fffd74141ef34eccc17b3de2c15dd7620da46",
+				ExpectedPolicyID: "71fb347c0db1db6c5242342905d1ef9676fc3215b42d5f8860e0b03f3be68df0",
 			},
 		},
 	}

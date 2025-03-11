@@ -20,7 +20,7 @@ import (
 )
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCanUpdate(t *testing.T) {
-	expectedPolicyID := "0a243b1e61f990bccde41db7e81a915ffa1507c1403ae19727ce764d3b08846b"
+	expectedPolicyID := "32f3f1d87062c708778d20207abd030bc76659478880f2eb381ed58f00687d29"
 
 	test := testUtils.TestCase{
 

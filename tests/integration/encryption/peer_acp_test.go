@@ -65,7 +65,7 @@ resources:
 `
 
 func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
@@ -152,7 +152,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 }
 
 func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
@@ -229,7 +229,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 }
 
 func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
@@ -375,7 +375,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 }
 
 func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailable_ShouldNotFetch(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
+	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
 
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},

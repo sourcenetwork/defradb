@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_AddDPISchema_SpecifiedResourceDoesNotExistOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
+	policyIDOfValidDPI := "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
 
 	test := testUtils.TestCase{
 
