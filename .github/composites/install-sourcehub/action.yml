@@ -28,7 +28,17 @@ runs:
       with:
         repository: sourcenetwork/sourcehub
         path: _sourceHub
-        ref: ${{ inputs.ref }}
+        fetch-depth: 0
+    
+    # We fetch the full depth then checkout a given commit
+    # because the checkout action attempts to checkout a git tag
+    # when given a short commit hash.
+    # Unfortunately, go.mod's automatically generated placeholder version
+    # only stores the short commit.
+    - name: Checkout repository at given version
+      working-directory: _sourcehub
+      shell: bash
+      run: git checkout ${{ inputs.ref}}
 
     - name: Install SourceHub CLI
       working-directory: _sourceHub
