@@ -10,20 +10,33 @@
 
 package tests
 
+import "github.com/sourcenetwork/defradb/errors"
+
 var (
 	_ ReplaceType = (*replacePolicyIndex)(nil)
 )
 
 type ReplaceType interface {
-	Value() any
+	Replacer(input any) (string, error)
 }
 
 type replacePolicyIndex struct {
 	value int
 }
 
-func (r replacePolicyIndex) Value() any {
-	return r.value
+func (r replacePolicyIndex) Replacer(input any) (string, error) {
+	// Ensure policy index specified is valid (compared the existing policyIDs) for this node.
+	nodesPolicyIDs, ok := input.([]string)
+	if !ok {
+		return "", errors.New("incorrect policyIDs input")
+	}
+
+	policyReplaceIndex := r.value
+	if policyReplaceIndex >= len(nodesPolicyIDs) {
+		return "", errors.New("a policyID index is out of range, number of added policies is smaller")
+	}
+
+	return nodesPolicyIDs[policyReplaceIndex], nil
 }
 
 func NewPolicyIndex(value int) replacePolicyIndex {

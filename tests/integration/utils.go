@@ -1047,23 +1047,11 @@ func updateSchema(
 			nodeID := nodeIDs[index]
 			nodesPolicyIDs := s.policyIDs[nodeID]
 			templateData := map[string]string{}
+			// Build template with the replacing values.
 			for substituteLabel, replaceWith := range action.Replace {
-				switch repType := replaceWith.(type) {
-				case replacePolicyIndex:
-					// Ensure policy index specified is valid (compared the existing policyIDs) for this node.
-					policyReplaceIndex := repType.Value().(int)
-					if policyReplaceIndex >= len(nodesPolicyIDs) {
-						require.Fail(
-							s.t,
-							"a policyID index is out of range, number of added policies is smaller",
-							s.testCase.Description,
-						)
-					}
-					policyID := nodesPolicyIDs[policyReplaceIndex]
-					templateData[substituteLabel] = policyID
-				default:
-					require.Fail(s.t, "Empty substitution label.", s.testCase.Description)
-				}
+				replacer, err := replaceWith.Replacer(nodesPolicyIDs)
+				require.NoError(s.t, err)
+				templateData[substituteLabel] = replacer
 			}
 
 			// Template should be built now, so execute it.
