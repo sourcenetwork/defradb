@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, specify basic policy that was added in YAML format, accept schema",
@@ -51,22 +48,22 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -114,8 +111,6 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, specify basic policy that was added in JSON format, accept schema",
@@ -153,22 +148,22 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 					  }
 					}
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

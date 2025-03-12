@@ -21,20 +21,23 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 		Description: "Test acp, querying private doc without identity should not fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         testUtils.ClientIdentity(1),
-				Policy:           userPolicy,
-				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   userPolicy,
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String @index
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.CreateDoc{
 				Doc: `
@@ -75,20 +78,23 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 		Description: "Test acp, querying private doc with identity should  fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         testUtils.ClientIdentity(1),
-				Policy:           userPolicy,
-				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   userPolicy,
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String @index
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.CreateDoc{
 				Doc: `
@@ -135,20 +141,23 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 		Description: "Test acp, querying private doc with wrong identity should not fetch",
 		Actions: []any{
 			testUtils.AddPolicy{
-				Identity:         testUtils.ClientIdentity(1),
-				Policy:           userPolicy,
-				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   userPolicy,
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String @index
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.CreateDoc{
 				Doc: `

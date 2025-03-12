@@ -18,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_PartialValidDPIButUseInValidDPIResource_RejectSchema(t *testing.T) {
-	policyIDOfPartiallyValidDPI := "a86c6bb344c14be93ec0e44e0f660c070494f57eb740d33381b269ceb01121e5"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, has both valid & invalid resources, but use invalid resource, schema rejected",
@@ -68,22 +66,22 @@ func TestACP_AddDPISchema_PartialValidDPIButUseInValidDPIResource_RejectSchema(t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfPartiallyValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "usersInvalid"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfPartiallyValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",

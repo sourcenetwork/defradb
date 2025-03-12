@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanUpdate(t *testing.T) {
-	expectedPolicyID := "32f3f1d87062c708778d20207abd030bc76659478880f2eb381ed58f00687d29"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
@@ -81,22 +78,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -204,8 +201,6 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
 }
 
 func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanDelete(t *testing.T) {
-	expectedPolicyID := "32f3f1d87062c708778d20207abd030bc76659478880f2eb381ed58f00687d29"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(delete) access without explicit read permission, can still delete",
@@ -258,22 +253,22 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorWithoutExplicitReadPerm_Ot
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

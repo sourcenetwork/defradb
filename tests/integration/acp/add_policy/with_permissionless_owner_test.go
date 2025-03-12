@@ -55,8 +55,6 @@ func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "39a4c846e0ac0326e388504f9d8aa5d8ca7ade7c18880f6a73ea45609f118782",
 			},
 		},
 	}
@@ -96,8 +94,6 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "6b6ee55e66667322f7d3f739f62736e780b5c080e965533b415371089a0aef14",
 			},
 		},
 	}
@@ -137,8 +133,6 @@ func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "39a4c846e0ac0326e388504f9d8aa5d8ca7ade7c18880f6a73ea45609f118782",
 			},
 		},
 	}

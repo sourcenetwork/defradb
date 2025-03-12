@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
-	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
@@ -80,22 +77,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -179,8 +176,6 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 }
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t *testing.T) {
-	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access to another actor",
@@ -239,22 +234,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

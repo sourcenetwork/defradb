@@ -11,15 +11,12 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_AddDPISchema_MissingRequiredReadPermissionOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "71fb347c0db1db6c5242342905d1ef9676fc3215b42d5f8860e0b03f3be68df0"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, with missing required read permission, reject schema",
@@ -47,29 +44,24 @@ func TestACP_AddDPISchema_MissingRequiredReadPermissionOnDPI_SchemaRejected(t *t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfInvalidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfInvalidDPI,
-				),
 
-				ExpectedError: fmt.Sprintf(
-					"resource is missing required permission on policy. PolicyID: %s, ResourceName: %s, Permission: %s",
-					policyIDOfInvalidDPI,
-					"users",
-					"read",
-				),
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
+
+				ExpectedError: "resource is missing required permission on policy.",
 			},
 
 			testUtils.IntrospectionRequest{

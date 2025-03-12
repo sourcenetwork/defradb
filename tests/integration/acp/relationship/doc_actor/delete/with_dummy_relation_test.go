@@ -11,15 +11,12 @@
 package test_acp_relationship_doc_actor_delete
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChanges(t *testing.T) {
-	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, delete doc actor relationship with a dummy relation defined on policy, nothing happens",
@@ -72,22 +69,22 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -159,8 +156,6 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 }
 
 func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t *testing.T) {
-	expectedPolicyID := "79c1f6654334894c1e131920dd98cf35bda96fd8d7de5f1ee772e898e52cf810"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, delete doc actor relationship with an invalid relation (not defined on policy), error",
@@ -213,22 +208,22 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

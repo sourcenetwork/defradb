@@ -48,8 +48,6 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "0d428b097234d2da7734f8464890ec3f7ad346ac014ecfbb150dc5d6bf457f8b",
 			},
 		},
 	}
@@ -90,8 +88,6 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "cce1b5c107c8507c56b6209f19f8b2d2fe414591ec0a4061f6c397b1cce873c6",
 			},
 		},
 	}

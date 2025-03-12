@@ -7,11 +7,11 @@ import (
 
 	client "github.com/sourcenetwork/defradb/client"
 
+	corekv "github.com/sourcenetwork/corekv"
+
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
 	event "github.com/sourcenetwork/defradb/event"
-
-	go_datastore "github.com/ipfs/go-datastore"
 
 	identity "github.com/sourcenetwork/defradb/acp/identity"
 
@@ -1224,19 +1224,19 @@ func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context.Context, client.Sche
 }
 
 // Headstore provides a mock function with given fields:
-func (_m *DB) Headstore() go_datastore.Read {
+func (_m *DB) Headstore() corekv.Reader {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Headstore")
 	}
 
-	var r0 go_datastore.Read
-	if rf, ok := ret.Get(0).(func() go_datastore.Read); ok {
+	var r0 corekv.Reader
+	if rf, ok := ret.Get(0).(func() corekv.Reader); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(go_datastore.Read)
+			r0 = ret.Get(0).(corekv.Reader)
 		}
 	}
 
@@ -1260,12 +1260,12 @@ func (_c *DB_Headstore_Call) Run(run func()) *DB_Headstore_Call {
 	return _c
 }
 
-func (_c *DB_Headstore_Call) Return(_a0 go_datastore.Read) *DB_Headstore_Call {
+func (_c *DB_Headstore_Call) Return(_a0 corekv.Reader) *DB_Headstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Headstore_Call) RunAndReturn(run func() go_datastore.Read) *DB_Headstore_Call {
+func (_c *DB_Headstore_Call) RunAndReturn(run func() corekv.Reader) *DB_Headstore_Call {
 	_c.Call.Return(run)
 	return _c
 }

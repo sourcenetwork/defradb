@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema(t *testing.T) {
-	policyIDOfPartiallyValidDPI := "a86c6bb344c14be93ec0e44e0f660c070494f57eb740d33381b269ceb01121e5"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, has both valid & invalid resources, but use only valid resource, schema accepted",
@@ -69,22 +66,22 @@ func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfPartiallyValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "usersValid"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfPartiallyValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

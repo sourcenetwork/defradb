@@ -58,18 +58,21 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
                             types:
                               - actor
                 `,
-				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConfigureReplicator{
 				SourceNodeID:  0,
@@ -122,18 +125,21 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
                             types:
                               - actor
                 `,
-				ExpectedPolicyID: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,

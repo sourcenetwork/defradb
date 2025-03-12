@@ -17,8 +17,6 @@ import (
 )
 
 func TestACP_AddDPISchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but no arg was specified on schema, reject schema",
@@ -52,8 +50,6 @@ func TestACP_AddDPISchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T)
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
@@ -92,8 +88,6 @@ func TestACP_AddDPISchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T)
 }
 
 func TestACP_AddDPISchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, specified args on schema are empty, reject schema",
@@ -127,8 +121,6 @@ func TestACP_AddDPISchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testin
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
@@ -138,6 +130,7 @@ func TestACP_AddDPISchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testin
 						age: Int
 					}
 				`,
+
 				ExpectedError: "missing policy arguments, must have both id and resource",
 			},
 

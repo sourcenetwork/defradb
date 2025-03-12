@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
-	policyIDOfValidDPI := "abe378ae8dac56f43238b56126a5a5ff1d1021e6bf8027d477b5a366e6238fc2"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, where one resource is specified on different schemas, schemas accepted",
@@ -59,22 +56,22 @@ func TestACP_AddDPISchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

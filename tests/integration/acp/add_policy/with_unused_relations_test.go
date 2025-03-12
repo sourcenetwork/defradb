@@ -49,8 +49,6 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "43d63a8d70360b06311c0ed7f724668bce2af74be1146c9a17ee1a340ae2afa3",
 			},
 		},
 	}

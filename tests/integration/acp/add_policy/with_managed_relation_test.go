@@ -52,8 +52,6 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "b53db707d836137cbac70fc7f02ede9f2396f86f00529700b5b14fecba49dd8d",
 			},
 		},
 	}

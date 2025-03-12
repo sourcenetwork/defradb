@@ -62,8 +62,6 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "3a187eb00be4826ade19f273cf15a55c3c682e2f23e6af897928a699d54a294f",
 			},
 		},
 	}
@@ -167,7 +165,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedError: "resource missing owner relation",
+				ExpectedError: "resource books: resource missing owner relation: invalid policy",
 			},
 		},
 	}

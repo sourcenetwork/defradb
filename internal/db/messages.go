@@ -14,9 +14,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -67,7 +67,7 @@ func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
 					// while a merge is in progress.
 					for i := 0; i < db.MaxTxnRetries(); i++ {
 						err = db.executeMerge(ctx, col, evt)
-						if errors.Is(err, datastore.ErrTxnConflict) {
+						if errors.Is(err, corekv.ErrTxnConflict) {
 							continue // retry merge
 						}
 						break // merge success or error

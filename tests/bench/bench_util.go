@@ -18,11 +18,11 @@ import (
 	"sync"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
@@ -171,7 +171,7 @@ func BackfillBenchmarkDB(
 						// but its fine :).
 						for {
 							if err := cols[j].Create(ctx, doc); err != nil &&
-								err.Error() == badger.ErrConflict.Error() {
+								err.Error() == corekv.ErrTxnConflict.Error() {
 								log.InfoContext(
 									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
@@ -214,7 +214,7 @@ func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
 	return dbi, err
 }
 
-func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
+func NewTestStorage(ctx context.Context, t testing.TB) (datastore.Rootstore, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.Rootstore(), err
 }

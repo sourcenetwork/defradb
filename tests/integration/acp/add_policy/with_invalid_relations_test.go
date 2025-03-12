@@ -43,7 +43,7 @@ func TestACP_AddPolicy_NoRelations_Error(t *testing.T) {
                         relations:
                 `,
 
-				ExpectedError: "resource missing owner relation",
+				ExpectedError: "resource users: resource missing owner relation: invalid policy",
 			},
 		},
 	}
@@ -76,7 +76,7 @@ func TestACP_AddPolicy_NoRelationsLabel_Error(t *testing.T) {
                             expr: owner + reader
                 `,
 
-				ExpectedError: "resource missing owner relation",
+				ExpectedError: "resource users: resource missing owner relation: invalid policy",
 			},
 		},
 	}

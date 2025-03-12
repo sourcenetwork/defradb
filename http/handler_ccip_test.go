@@ -22,12 +22,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 

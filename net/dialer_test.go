@@ -22,8 +22,8 @@ import (
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
-	db1 := FixtureNewMemoryDBWithBroadcaster(t)
-	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := fixtureNewMemoryDBWithBroadcaster(t)
+	db2 := fixtureNewMemoryDBWithBroadcaster(t)
 	defer db1.Close()
 	defer db2.Close()
 	ctx := context.Background()
@@ -54,8 +54,8 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
-	db1 := FixtureNewMemoryDBWithBroadcaster(t)
-	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := fixtureNewMemoryDBWithBroadcaster(t)
+	db2 := fixtureNewMemoryDBWithBroadcaster(t)
 	defer db1.Close()
 	defer db2.Close()
 	ctx := context.Background()
@@ -89,8 +89,8 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_ClosingConnectionError(t *testing.T) {
-	db1 := FixtureNewMemoryDBWithBroadcaster(t)
-	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := fixtureNewMemoryDBWithBroadcaster(t)
+	db2 := fixtureNewMemoryDBWithBroadcaster(t)
 	defer db1.Close()
 	defer db2.Close()
 	ctx := context.Background()

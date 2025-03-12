@@ -17,8 +17,6 @@ import (
 )
 
 func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but no policyID was specified on schema, reject schema",
@@ -52,8 +50,6 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
@@ -92,8 +88,6 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
 }
 
 func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, specified policyID arg on schema is empty, reject schema",
@@ -127,8 +121,6 @@ func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{

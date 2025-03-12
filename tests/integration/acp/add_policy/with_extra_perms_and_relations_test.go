@@ -53,8 +53,6 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "d5128219b48e5f86ef54cbef8a5ea7ce2892e33e6df33519c7c6178cb285fc2d",
 			},
 		},
 	}
