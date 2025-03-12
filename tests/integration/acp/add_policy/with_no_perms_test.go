@@ -50,8 +50,6 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "db6e4d3efc58f8a7bfe8f35c73c39630f1ad3e6fad7ffeb22563d1284bd176dc",
 			},
 		},
 	}
@@ -88,8 +86,6 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "106a38bfb702608e26feda961d9fffd74141ef34eccc17b3de2c15dd7620da46",
 			},
 		},
 	}
@@ -121,8 +117,6 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "db6e4d3efc58f8a7bfe8f35c73c39630f1ad3e6fad7ffeb22563d1284bd176dc",
 			},
 		},
 	}
@@ -157,8 +151,6 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "106a38bfb702608e26feda961d9fffd74141ef34eccc17b3de2c15dd7620da46",
 			},
 		},
 	}

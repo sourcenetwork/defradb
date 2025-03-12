@@ -73,7 +73,7 @@ type Peer struct {
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
-	bserv blockservice.BlockService
+	blockService blockservice.BlockService
 
 	acp immutable.Option[acp.ACP]
 	db  DB
@@ -164,7 +164,7 @@ func NewPeer(
 
 	bswapnet := network.NewFromIpfsHost(h)
 	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
-	p.bserv = blockservice.New(db.Blockstore(), bswap)
+	p.blockService = blockservice.New(db.Blockstore(), bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
@@ -219,7 +219,7 @@ func (p *Peer) Close() {
 		p.bus.Unsubscribe(p.updateSub)
 	}
 
-	if err := p.bserv.Close(); err != nil {
+	if err := p.blockService.Close(); err != nil {
 		log.ErrorE("Error closing block service", err)
 	}
 
@@ -309,7 +309,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// let the exchange know we have this block
 	// this should speed up the dag sync process
-	err := p.bserv.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
+	err := p.blockService.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
 	if err != nil {
 		log.ErrorE("Failed to notify new blocks", err)
 	}

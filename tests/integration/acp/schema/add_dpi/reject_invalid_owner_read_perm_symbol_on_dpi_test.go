@@ -18,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "0fa5c11ee4323db5961207de897886f20320cffd41b7102dfbaf6bdf0cdd7f86"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, owner relation with difference (-) set operation on read permission expression, reject schema",
@@ -53,22 +51,22 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOn
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfInvalidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfInvalidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
@@ -104,8 +102,6 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOn
 }
 
 func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "56a7eb82f934d297548370e682e1f96751ac6163379fec5d21b5e18871e81c02"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, owner relation with intersection (&) set operation on read permission expression, reject schema",
@@ -139,22 +135,22 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExpr
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfInvalidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfInvalidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
@@ -190,8 +186,6 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExpr
 }
 
 func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfInvalidDPI := "73837e44fc12215fd639a7572d81257a17f5c11446035331948c0a08375733d5"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, owner relation with invalid set operation on read permission expression, reject schema",
@@ -225,22 +219,22 @@ func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDPI
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfInvalidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfInvalidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",

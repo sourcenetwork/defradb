@@ -13,10 +13,18 @@ package commits
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommits(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	headCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Description: "Simple all commits query",
 		Actions: []any{
@@ -37,13 +45,13 @@ func TestQueryCommits(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": gomega.And(nameCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": gomega.And(ageCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": gomega.And(headCid, uniqueCid),
 						},
 					},
 				},
@@ -329,6 +337,14 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 }
 
 func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	ageUpdateCid := testUtils.NewSameValue()
+	ageCreateCid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+	updateCompositeCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -340,8 +356,8 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
-					"age":	22
-				}`,
+						"age":	22
+					}`,
 			},
 			testUtils.Request{
 				Request: `
@@ -358,13 +374,16 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 								cid
 								name
 							}
+							signature {
+								type
+						}
 						}
 					}
 				`,
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          testUtils.NewUniqueCid("age update"),
+							"cid":          gomega.And(ageUpdateCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(22),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -373,13 +392,14 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":       int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("age create"),
+									"cid":  ageCreateCid,
 									"name": "_head",
 								},
 							},
+							"signature": nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("age create"),
+							"cid":          gomega.And(ageCreateCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue(21),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -387,9 +407,10 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"fieldName":    "age",
 							"height":       int64(1),
 							"links":        []map[string]any{},
+							"signature":    nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("name create"),
+							"cid":          gomega.And(nameCreateCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        testUtils.CBORValue("John"),
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -397,9 +418,10 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"fieldName":    "name",
 							"height":       int64(1),
 							"links":        []map[string]any{},
+							"signature":    nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("update composite"),
+							"cid":          gomega.And(updateCompositeCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -408,17 +430,18 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":       int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("create composite"),
+									"cid":  createCompositeCid,
 									"name": "_head",
 								},
 								{
-									"cid":  testUtils.NewUniqueCid("age update"),
+									"cid":  ageUpdateCid,
 									"name": "age",
 								},
 							},
+							"signature": nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("create composite"),
+							"cid":          gomega.And(createCompositeCid, uniqueCid),
 							"collectionID": int64(1),
 							"delta":        nil,
 							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
@@ -427,14 +450,15 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":       int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("age create"),
+									"cid":  ageCreateCid,
 									"name": "age",
 								},
 								{
-									"cid":  testUtils.NewUniqueCid("name create"),
+									"cid":  nameCreateCid,
 									"name": "name",
 								},
 							},
+							"signature": nil,
 						},
 					},
 				},

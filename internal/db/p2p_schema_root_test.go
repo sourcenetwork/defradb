@@ -22,7 +22,7 @@ import (
 
 func TestAddP2PCollection_WithInvalidCollection_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	err = db.AddP2PCollections(ctx, []string{"invalidCollection"})
@@ -31,7 +31,7 @@ func TestAddP2PCollection_WithInvalidCollection_ShouldError(t *testing.T) {
 
 func TestAddP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.P2PTopicName)
@@ -52,7 +52,7 @@ func TestAddP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 
 func TestAddP2PCollection_WithValidCollectionAndDoc_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.P2PTopicName)
@@ -79,7 +79,7 @@ func TestAddP2PCollection_WithValidCollectionAndDoc_ShouldSucceed(t *testing.T) 
 
 func TestAddP2PCollection_WithMultipleValidCollections_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.P2PTopicName)
@@ -104,7 +104,7 @@ func TestAddP2PCollection_WithMultipleValidCollections_ShouldSucceed(t *testing.
 
 func TestRemoveP2PCollection_WithInvalidCollection_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	err = db.RemoveP2PCollections(ctx, []string{"invalidCollection"})
@@ -113,7 +113,7 @@ func TestRemoveP2PCollection_WithInvalidCollection_ShouldError(t *testing.T) {
 
 func TestRemoveP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.P2PTopicName)
@@ -142,7 +142,7 @@ func TestRemoveP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 
 func TestRemoveP2PCollection_WithValidCollectionAndDoc_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.P2PTopicName)
@@ -178,7 +178,7 @@ func TestRemoveP2PCollection_WithValidCollectionAndDoc_ShouldSucceed(t *testing.
 
 func TestLoadP2PCollection_WithValidCollectionsAndDocs_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.P2PTopicName)
@@ -223,7 +223,7 @@ func TestLoadP2PCollection_WithValidCollectionsAndDocs_ShouldSucceed(t *testing.
 
 func TestGetAllP2PCollections_WithMultipleValidCollections_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	cols1, err := db.AddSchema(ctx, `type User { name: String }`)
