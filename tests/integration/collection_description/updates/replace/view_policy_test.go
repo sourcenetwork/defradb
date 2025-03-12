@@ -72,7 +72,7 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
 				`,
 				SDL: `
 					type UserView @policy(
-						id: "7a698a9c5fe74a5854c2e1e8d00c606926c64ad883a157db2f345749e8609fcb",
+						id: "2d3b053b31151f2d2b6c151eae959473249bd4dc71a02b8b52c451fa5f2b25ee",
 						resource: "userView"
 					) @materialized(if: false) {
 						name: String
