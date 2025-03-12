@@ -165,7 +165,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedError: "resource books: resource missing owner relation: invalid policy",
+				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}

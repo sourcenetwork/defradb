@@ -480,7 +480,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 
 				Relation: "owner",
 
-				ExpectedError: "cannot delete an owner relationship",
+				ExpectedError: "OPERATION_FORBIDDEN",
 			},
 
 			testUtils.DeleteDocActorRelationship{ // Owner can still perform owner operations, like restrict admin.
