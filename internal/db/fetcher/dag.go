@@ -14,7 +14,7 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
-	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/datastore"
@@ -25,7 +25,7 @@ import (
 type HeadFetcher struct {
 	fieldId immutable.Option[string]
 
-	kvIter dsq.Results
+	kvIter corekv.Iterator
 }
 
 // Start starts/initializes the fetcher, performing all the work it can do outside
@@ -42,40 +42,35 @@ func (hf *HeadFetcher) Start(
 ) error {
 	hf.fieldId = fieldId
 
-	var prefixString string
+	var prefixBytes []byte
 	if prefix.HasValue() {
-		prefixString = prefix.Value().ToString()
+		prefixBytes = prefix.Value().Bytes()
 	}
 
-	q := dsq.Query{
-		Prefix: prefixString,
-		Orders: []dsq.Order{dsq.OrderByKey{}},
-	}
-
-	var err error
 	if hf.kvIter != nil {
 		if err := hf.kvIter.Close(); err != nil {
 			return err
 		}
 	}
-	hf.kvIter, err = txn.Headstore().Query(ctx, q)
+
+	iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: prefixBytes,
+	})
 	if err != nil {
 		return err
 	}
 
+	hf.kvIter = iter
 	return nil
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
-	res, available := hf.kvIter.NextSync()
-	if res.Error != nil {
-		return nil, res.Error
-	}
-	if !available {
-		return nil, nil
+	hasValue, err := hf.kvIter.Next()
+	if err != nil || !hasValue {
+		return nil, err
 	}
 
-	headStoreKey, err := keys.NewHeadstoreKey(res.Key)
+	headStoreKey, err := keys.NewHeadstoreKey(string(hf.kvIter.Key()))
 	if err != nil {
 		return nil, err
 	}

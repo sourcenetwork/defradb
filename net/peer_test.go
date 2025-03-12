@@ -15,17 +15,17 @@ import (
 	"testing"
 	"time"
 
+	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
-	badger "github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/corekv/memory"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -65,13 +65,15 @@ func createCID(doc *client.Document) (cid.Cid, error) {
 const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
-	store := memory.NewDatastore(ctx)
+	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
+
 	acpLocal := acp.NewLocalACP()
 	acpLocal.Init(context.Background(), "")
 	db, err := db.NewDB(
 		ctx,
 		store,
-		immutable.Some[acp.ACP](acpLocal),
+		immutable.Some(acpLocal),
 		nil,
 		db.WithRetryInterval([]time.Duration{time.Second}),
 	)
@@ -249,11 +251,9 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func FixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
+func fixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
+	rootstore := memory.NewDatastore(ctx)
 	database, err := db.NewDB(ctx, rootstore, acp.NoACP, nil)
 	require.NoError(t, err)
 	return database
