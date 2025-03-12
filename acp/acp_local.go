@@ -17,7 +17,7 @@ import (
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/acp_core/pkg/auth"
-	acperrors "github.com/sourcenetwork/acp_core/pkg/errors"
+	acpErrors "github.com/sourcenetwork/acp_core/pkg/errors"
 	"github.com/sourcenetwork/acp_core/pkg/runtime"
 	"github.com/sourcenetwork/acp_core/pkg/services"
 	"github.com/sourcenetwork/acp_core/pkg/types"
@@ -187,7 +187,7 @@ func (l *ACPLocal) Policy(
 	response, err := l.engine.GetPolicy(ctx, &request)
 
 	if err != nil {
-		if errors.Is(err, acperrors.ErrorType_NOT_FOUND) {
+		if errors.Is(err, acpErrors.ErrorType_NOT_FOUND) {
 			return none, nil
 		}
 		return none, err

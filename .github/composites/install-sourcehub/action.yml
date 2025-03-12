@@ -38,7 +38,7 @@ runs:
     - name: Checkout repository at given version
       working-directory: _sourceHub
       shell: bash
-      run: git checkout ${{ inputs.ref}}
+      run: git checkout ${{ inputs.ref }}
 
     - name: Install SourceHub CLI
       working-directory: _sourceHub
