@@ -28,11 +28,16 @@ const (
 	errUnsupportedSignatureType        string = "unsupported signature type"
 	errInvalidECDSAPrivKeyBytes        string = "invalid ECDSA private key bytes"
 	errUnsupportedECDSAPrivKeyType     string = "unsupported ECDSA private key type"
+	errInvalidECDSASignature           string = "invalid ECDSA signature"
+	errInvalidECDSAPubKey              string = "invalid secp256k1 public key"
 	errInvalidEd25519PrivKeyLength     string = "invalid Ed25519 private key length"
+	errInvalidEd25519PubKeyLength      string = "invalid Ed25519 public key length"
+	errInvalidEd25519PubKey            string = "invalid Ed25519 public key"
 	errUnsupportedEd25519PrivKeyType   string = "unsupported Ed25519 private key type"
 	errSignatureVerification           string = "signature verification failed"
 	errUnsupportedPrivKeyType          string = "unsupported private key type"
 	errUnsupportedPubKeyType           string = "unsupported public key type"
+	errFailedToCreateDIDKey            string = "failed to create DID key"
 )
 
 var (
@@ -42,7 +47,11 @@ var (
 	ErrUnsupportedSignatureType      = errors.New(errUnsupportedSignatureType)
 	ErrInvalidECDSAPrivKeyBytes      = errors.New(errInvalidECDSAPrivKeyBytes)
 	ErrUnsupportedECDSAPrivKeyType   = errors.New(errUnsupportedECDSAPrivKeyType)
+	ErrInvalidECDSASignature         = errors.New(errInvalidECDSASignature)
+	ErrInvalidECDSAPubKey            = errors.New(errInvalidECDSAPubKey)
 	ErrInvalidEd25519PrivKeyLength   = errors.New(errInvalidEd25519PrivKeyLength)
+	ErrInvalidEd25519PubKeyLength    = errors.New(errInvalidEd25519PubKeyLength)
+	ErrInvalidEd25519PubKey          = errors.New(errInvalidEd25519PubKey)
 	ErrUnsupportedEd25519PrivKeyType = errors.New(errUnsupportedEd25519PrivKeyType)
 	ErrSignatureVerification         = errors.New(errSignatureVerification)
 	ErrUnsupportedPrivKeyType        = errors.New(errUnsupportedPrivKeyType)
@@ -75,4 +84,8 @@ func NewErrFailedToParseEphemeralPublicKey(inner error) error {
 
 func NewErrFailedToDecrypt(inner error) error {
 	return errors.Wrap(errFailedToDecrypt, inner)
+}
+
+func NewErrFailedToCreateDIDKey(inner error) error {
+	return errors.Wrap(errFailedToCreateDIDKey, inner)
 }

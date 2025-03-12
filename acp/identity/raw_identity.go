@@ -14,15 +14,16 @@ import (
 	"encoding/hex"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 // RawIdentity holds the raw bytes that make up an actor's identity.
 type RawIdentity struct {
-	// PrivateKey is a secp256k1 private key that is a 256-bit big-endian
-	// binary-encoded number, padded to a length of 32 bytes in HEX format.
+	// PrivateKey is a hex-encoded private key
 	PrivateKey string
 
-	// PublicKey is a compressed 33-byte secp256k1 public key in HEX format.
+	// PublicKey is a hex-encoded public key
 	PublicKey string
 
 	// DID is `did:key` key generated from the public key address.
@@ -31,22 +32,11 @@ type RawIdentity struct {
 
 // PublicRawIdentity holds the raw bytes that make up an actor's identity that can be shared publicly.
 type PublicRawIdentity struct {
-	// PublicKey is a compressed 33-byte secp256k1 public key in HEX format.
+	// PublicKey is a hex-encoded public key
 	PublicKey string
 
 	// DID is `did:key` key generated from the public key address.
 	DID string
-}
-
-func newRawIdentity(privateKey *secp256k1.PrivateKey, publicKey *secp256k1.PublicKey, did string) RawIdentity {
-	res := RawIdentity{
-		PublicKey: hex.EncodeToString(publicKey.SerializeCompressed()),
-		DID:       did,
-	}
-	if privateKey != nil {
-		res.PrivateKey = hex.EncodeToString(privateKey.Serialize())
-	}
-	return res
 }
 
 func (r RawIdentity) Public() PublicRawIdentity {
@@ -58,16 +48,19 @@ func (r RawIdentity) Public() PublicRawIdentity {
 
 // IntoIdentity converts a RawIdentity into an Identity.
 func (r RawIdentity) IntoIdentity() (Identity, error) {
+	// For now we only support secp256k1 keys
 	privateKeyBytes, err := hex.DecodeString(r.PrivateKey)
 	if err != nil {
 		return Identity{}, err
 	}
 
 	privateKey := secp256k1.PrivKeyFromBytes(privateKeyBytes)
+	privKey := crypto.NewPrivateKey(privateKey)
+	pubKey := privKey.GetPublic()
 
 	return Identity{
-		PublicKey:  privateKey.PubKey(),
-		PrivateKey: privateKey,
+		PublicKey:  pubKey,
+		PrivateKey: privKey,
 		DID:        r.DID,
 	}, nil
 }

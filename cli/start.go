@@ -340,7 +340,8 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option,
 		}
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(identityBytes))
+	privateKey := secp256k1.PrivKeyFromBytes(identityBytes)
+	nodeIdentity, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +355,7 @@ func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
 		return nil, err
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(privateKey.Serialize()))
+	nodeIdentity, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,6 @@ import (
 
 	"github.com/onsi/gomega/types"
 
-	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -49,7 +48,7 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 
 	ident := matcher.s.GetNodeIdentity(matcher.s.GetCurrentNodeID())
 
-	expectedSigBytes, err := crypto.SignECDSA256K(ident.PrivateKey, blockBytes)
+	expectedSigBytes, err := ident.PrivateKey.Sign(blockBytes)
 	if err != nil {
 		return false, err
 	}

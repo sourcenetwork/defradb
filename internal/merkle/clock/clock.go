@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -248,7 +247,8 @@ func (mc *MerkleClock) signBlock(
 	// We need to handle different key types based on the signing algorithm
 	switch signingAlg {
 	case coreblock.SignatureTypeECDSA256K:
-		sigBytes, err = crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
+		//sigBytes, err = crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
+		sigBytes, err = ident.Value().PrivateKey.Sign(blockBytes)
 		sigType = coreblock.SignatureTypeECDSA256K
 	default:
 		return fmt.Errorf("unsupported signature algorithm: %s", signingAlg)
@@ -261,7 +261,7 @@ func (mc *MerkleClock) signBlock(
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
 			Type:     sigType,
-			Identity: []byte(ident.Value().PublicKey.SerializeCompressed()),
+			Identity: []byte(ident.Value().PublicKey.String()),
 		},
 		Value: sigBytes,
 	}

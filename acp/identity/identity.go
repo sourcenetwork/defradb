@@ -14,13 +14,15 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/cyware/ssi-sdk/crypto"
+	gocrypto "github.com/cyware/ssi-sdk/crypto"
 	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 // AuthorizedAccountClaim is the name of the claim
@@ -34,7 +36,7 @@ import (
 const AuthorizedAccountClaim = "authorized_account"
 
 // didProducer generates a did:key from a public key
-type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
+type didProducer = func(gocrypto.KeyType, []byte) (*key.DIDKey, error)
 
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
@@ -46,9 +48,9 @@ const BearerTokenSignatureScheme = jwa.ES256K
 // Identity describes a unique actor.
 type Identity struct {
 	// PublicKey is the actor's public key.
-	PublicKey *secp256k1.PublicKey
+	PublicKey crypto.PublicKey
 	// PrivateKey is the actor's private key.
-	PrivateKey *secp256k1.PrivateKey
+	PrivateKey crypto.PrivateKey
 	// DID is the actor's unique identifier.
 	//
 	// The address is derived from the actor's public key,
@@ -62,16 +64,17 @@ type Identity struct {
 // FromPrivateKey returns a new identity using the given private key.
 // In order to generate a fresh token for this identity, use the [UpdateToken]
 func FromPrivateKey(privateKey *secp256k1.PrivateKey) (Identity, error) {
-	publicKey := privateKey.PubKey()
-	did, err := DIDFromPublicKey(publicKey)
+	privKey := crypto.NewPrivateKey(privateKey)
+	pubKey := privKey.GetPublic()
+	did, err := pubKey.DID()
 	if err != nil {
 		return Identity{}, err
 	}
 
 	return Identity{
 		DID:        did,
-		PrivateKey: privateKey,
-		PublicKey:  publicKey,
+		PrivateKey: privKey,
+		PublicKey:  pubKey,
 	}, nil
 }
 
@@ -92,14 +95,15 @@ func FromToken(data []byte) (Identity, error) {
 		return Identity{}, err
 	}
 
-	did, err := DIDFromPublicKey(pubKey)
+	publicKey := crypto.NewPublicKey(pubKey)
+	did, err := publicKey.DID()
 	if err != nil {
 		return Identity{}, err
 	}
 
 	return Identity{
 		DID:         did,
-		PublicKey:   pubKey,
+		PublicKey:   publicKey,
 		BearerToken: string(data),
 	}, nil
 }
@@ -112,7 +116,7 @@ func DIDFromPublicKey(publicKey *secp256k1.PublicKey) (string, error) {
 // didFromPublicKey produces a did from a secp256k1 key and a producer function
 func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (string, error) {
 	bytes := publicKey.SerializeUncompressed()
-	did, err := producer(crypto.SECP256k1, bytes)
+	did, err := producer(gocrypto.SECP256k1, bytes)
 	if err != nil {
 		return "", newErrDIDCreation(err, "secp256k1", bytes)
 	}
@@ -121,7 +125,13 @@ func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (str
 
 // IntoRawIdentity converts an `Identity` into a `RawIdentity`.
 func (identity Identity) IntoRawIdentity() RawIdentity {
-	return newRawIdentity(identity.PrivateKey, identity.PublicKey, identity.DID)
+	privKeyBytes, _ := identity.PrivateKey.Raw()
+	pubKeyBytes, _ := identity.PublicKey.Raw()
+	return RawIdentity{
+		PrivateKey: hex.EncodeToString(privKeyBytes),
+		PublicKey:  hex.EncodeToString(pubKeyBytes),
+		DID:        identity.DID,
+	}
 }
 
 // UpdateToken updates the `BearerToken` field of the `Identity`.
@@ -160,7 +170,11 @@ func (identity Identity) NewToken(
 	authorizedAccount immutable.Option[string],
 ) ([]byte, error) {
 	var signedToken []byte
-	subject := hex.EncodeToString(identity.PublicKey.SerializeCompressed())
+	pubKeyBytes, err := identity.PublicKey.Raw()
+	if err != nil {
+		return nil, err
+	}
+	subject := hex.EncodeToString(pubKeyBytes)
 	now := time.Now()
 
 	jwtBuilder := jwt.NewBuilder()
@@ -186,7 +200,19 @@ func (identity Identity) NewToken(
 		}
 	}
 
-	signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, identity.PrivateKey.ToECDSA()))
+	// For now we only support ECDSA with secp256k1 for bearer tokens
+	if identity.PrivateKey.Type() != crypto.KeyTypeSecp256k1 {
+		return nil, crypto.ErrUnsupportedSignatureType
+	}
+
+	// Convert to ECDSA key for JWT signing
+	privKeyBytes, err := identity.PrivateKey.Raw()
+	if err != nil {
+		return nil, err
+	}
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+
+	signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, privKey.ToECDSA()))
 	if err != nil {
 		return nil, err
 	}
@@ -202,9 +228,24 @@ func VerifyAuthToken(ident Identity, audience string) error {
 		return err
 	}
 
+	// For now we only support ECDSA with secp256k1 for bearer tokens
+	if ident.PublicKey.Type() != crypto.KeyTypeSecp256k1 {
+		return crypto.ErrUnsupportedSignatureType
+	}
+
+	// Convert to ECDSA key for JWT verification
+	pubKeyBytes, err := ident.PublicKey.Raw()
+	if err != nil {
+		return err
+	}
+	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes)
+	if err != nil {
+		return err
+	}
+
 	_, err = jws.Verify(
 		[]byte(ident.BearerToken),
-		jws.WithKey(BearerTokenSignatureScheme, ident.PublicKey.ToECDSA()),
+		jws.WithKey(BearerTokenSignatureScheme, pubKey.ToECDSA()),
 	)
 	if err != nil {
 		return err

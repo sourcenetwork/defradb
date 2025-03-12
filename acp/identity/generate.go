@@ -21,12 +21,16 @@ func Generate() (RawIdentity, error) {
 		return RawIdentity{}, err
 	}
 
-	publicKey := privateKey.PubKey()
+	publicKey := crypto.NewPublicKey(privateKey.PubKey())
 
-	did, err := DIDFromPublicKey(publicKey)
+	did, err := publicKey.DID()
 	if err != nil {
 		return RawIdentity{}, err
 	}
 
-	return newRawIdentity(privateKey, publicKey, did), nil
+	return RawIdentity{
+		PrivateKey: crypto.NewPrivateKey(privateKey).String(),
+		PublicKey:  publicKey.String(),
+		DID:        did,
+	}, nil
 }
