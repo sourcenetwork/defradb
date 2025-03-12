@@ -82,6 +82,29 @@ func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdateAddCollections_ErrorsMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Dogs"} },
+						{ "op": "add", "path": "/3", "value": {"ID": 3, "Name": "Dogs"} }
+					]
+				`,
+				ExpectedError: "adding collections via patch is not supported. ID: 2\nadding collections via patch is not supported. ID: 3",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
