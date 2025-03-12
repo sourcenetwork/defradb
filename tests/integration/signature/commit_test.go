@@ -16,6 +16,8 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/immutable"
+
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -46,7 +48,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -117,7 +119,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -200,6 +202,71 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSignature_WithEd25519Algorithm_ShouldIncludeSignatureData(t *testing.T) {
+	test := testUtils.TestCase{
+		SigningAlg: immutable.Some(coreblock.SignatureTypeEd25519),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							fieldName
+							signature {
+								type
+								identity
+								value
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": gomega.Not(gomega.BeEmpty()),
+								"value":    gomega.Not(gomega.BeEmpty()),
+							},
+						},
+						{
+							"fieldName": "name",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": gomega.Not(gomega.BeEmpty()),
+								"value":    gomega.Not(gomega.BeEmpty()),
+							},
+						},
+						{
+							"fieldName": nil,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": gomega.Not(gomega.BeEmpty()),
+								"value":    gomega.Not(gomega.BeEmpty()),
 							},
 						},
 					},

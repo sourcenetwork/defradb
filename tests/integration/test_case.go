@@ -71,8 +71,10 @@ type TestCase struct {
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
-	// If set to true DAG blocks will be signed with a separate block that
-	EnabledBlockSigning bool
+	// The signature algorithm to use for DAG blocks.
+	// If None, block signing is disabled.
+	// Valid values are defined in coreblock package: SignatureTypeECDSA256K and SignatureTypeEd25519.
+	SigningAlg immutable.Option[string]
 }
 
 // KMS contains the configuration for KMS to be used in the test

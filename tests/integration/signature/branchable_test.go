@@ -17,11 +17,12 @@ import (
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testing.T) {
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

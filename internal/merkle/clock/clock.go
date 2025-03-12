@@ -15,9 +15,10 @@ package clock
 
 import (
 	"context"
+	"fmt"
 
 	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -112,8 +113,9 @@ func (mc *MerkleClock) AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	if IsSigningContext(ctx) {
-		err = mc.signBlock(ctx, dagBlock)
+	signAlg := SigningAlgFromContext(ctx)
+	if signAlg.HasValue() {
+		err = mc.signBlock(ctx, dagBlock, signAlg.Value())
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
@@ -221,6 +223,7 @@ func encryptBlock(
 func (mc *MerkleClock) signBlock(
 	ctx context.Context,
 	block *coreblock.Block,
+	signingAlg string,
 ) error {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
@@ -238,14 +241,26 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
-	sigBytes, err := crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
+	var sigBytes []byte
+	var sigType string
+
+	// TODO: The identity.PrivateKey is always a *secp256k1.PrivateKey in the current implementation
+	// We need to handle different key types based on the signing algorithm
+	switch signingAlg {
+	case coreblock.SignatureTypeECDSA256K:
+		sigBytes, err = crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
+		sigType = coreblock.SignatureTypeECDSA256K
+	default:
+		return fmt.Errorf("unsupported signature algorithm: %s", signingAlg)
+	}
+
 	if err != nil {
 		return err
 	}
 
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
-			Type:     coreblock.SignatureTypeECDSA256K,
+			Type:     sigType,
 			Identity: []byte(ident.Value().PublicKey.SerializeCompressed()),
 		},
 		Value: sigBytes,
@@ -337,15 +352,18 @@ func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
 }
 
-type signingContextKey struct{}
+type signingAlgContextKey struct{}
 
-// ContextWithSigning returns a new context with the signing context key set to true.
-func ContextWithSigning(ctx context.Context) context.Context {
-	return context.WithValue(ctx, signingContextKey{}, true)
+// ContextWithSigningAlg returns a context with the specified signing algorithm.
+func ContextWithSigningAlg(ctx context.Context, alg string) context.Context {
+	return context.WithValue(ctx, signingAlgContextKey{}, immutable.Some(alg))
 }
 
-// IsSigningContext returns true if the context is a signing context.
-func IsSigningContext(ctx context.Context) bool {
-	_, ok := ctx.Value(signingContextKey{}).(bool)
-	return ok
+// SigningAlgFromContext returns the signing algorithm from the context.
+func SigningAlgFromContext(ctx context.Context) immutable.Option[string] {
+	val := ctx.Value(signingAlgContextKey{})
+	if val == nil {
+		return immutable.None[string]()
+	}
+	return val.(immutable.Option[string])
 }

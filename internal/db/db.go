@@ -95,9 +95,9 @@ type DB struct {
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals []time.Duration
 
-	// Whether block signing is enabled. If set to true DAG blocks will include a link to
-	// a block with the signature of the block.
-	blockSigningEnabled bool
+	// The signature algorithm to use for DAG blocks.
+	// If None, block signing is disabled.
+	signingAlg immutable.Option[string]
 }
 
 var _ client.DB = (*DB)(nil)
@@ -151,7 +151,7 @@ func newDB(
 	}
 
 	db.nodeIdentity = opts.identity
-	db.blockSigningEnabled = opts.blockSigningEnabled
+	db.signingAlg = opts.signingAlg
 
 	if lens != nil {
 		lens.Init(db)

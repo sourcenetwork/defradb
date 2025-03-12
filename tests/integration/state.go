@@ -14,8 +14,9 @@ import (
 	"context"
 	"testing"
 
-	cid "github.com/ipfs/go-cid"
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -223,8 +224,9 @@ type state struct {
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool
 
-	// If set to true DAG blocks will be signed with a separate block that
-	enabledBlockSigning bool
+	// The signature algorithm to use for DAG blocks.
+	// If None, block signing is disabled.
+	signingAlg immutable.Option[string]
 
 	// statefulMatchers contains all stateful matchers that have been executed during a single
 	// test run. After a single test run, the statefulMatchers are reset.
@@ -273,7 +275,7 @@ func newState(
 	clientType ClientType,
 	collectionNames []string,
 ) *state {
-	return &state{
+	s := &state{
 		ctx:                      ctx,
 		t:                        t,
 		testCase:                 testCase,
@@ -281,15 +283,19 @@ func newState(
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
-		allActionsDone:           make(chan struct{}),
 		identities:               map[identity]*identityHolder{},
+		nextIdentityGenSeed:      0,
+		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
+		nodes:                    []*nodeState{},
+		acpOptions:               []node.ACPOpt{},
 		collectionNames:          collectionNames,
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
 		cids:                     map[any]string{},
 		policyIDs:                [][]string{},
 		isBench:                  false,
-		enabledBlockSigning:      testCase.EnabledBlockSigning,
+		signingAlg:               testCase.SigningAlg,
 	}
+	return s
 }

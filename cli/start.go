@@ -137,7 +137,10 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
-			opts = append(opts, db.WithBlockSigning(!cfg.GetBool("datastore.nosigning")))
+			if !cfg.GetBool("datastore.nosigning") {
+				signingAlg := cfg.GetString("datastore.defaultsigningalg")
+				opts = append(opts, db.WithSigningAlgorithm(immutable.Some(signingAlg)))
+			}
 
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
@@ -275,6 +278,10 @@ func MakeStartCommand() *cobra.Command {
 		"no-signing",
 		cfg.GetBool(configFlags["no-signing"]),
 		"Disable signing of commits.")
+	cmd.Flags().String(
+		"default-signing-alg",
+		cfg.GetString(configFlags["default-signing-alg"]),
+		"Default signature algorithm to use for signing commits. Valid values are 'ES256K' (ECDSA with secp256k1) and 'Ed25519'.")
 	return cmd
 }
 
