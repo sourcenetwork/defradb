@@ -51,25 +51,6 @@ func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestSchema_WithIntForEmbedding_ShouldError_Multiple(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name_v: [Int!] @embedding
-					}
-				`,
-				ExpectedError: "invalid type for vecdddtor embedding",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
