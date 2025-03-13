@@ -15,7 +15,6 @@ package clock
 
 import (
 	"context"
-	"fmt"
 
 	cid "github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -250,7 +249,7 @@ func (mc *MerkleClock) signBlock(
 	case crypto.KeyTypeEd25519:
 		sigType = coreblock.SignatureTypeEd25519
 	default:
-		return fmt.Errorf("unsupported signature algorithm: %s", signingAlg)
+		return NewErrUnsupportedSignatureAlgorithm(signingAlg)
 	}
 
 	sigBytes, err = ident.Value().PrivateKey.Sign(blockBytes)
