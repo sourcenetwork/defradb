@@ -555,7 +555,36 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErro
 						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
 					]
 				`,
-				ExpectedError: "gfdgfdgfgf",
+				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: about_v",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+						desc_v: [Float32!]
+						about_v: [Float32!] @embedding(fields: ["about"], provider: "openai", model: "text-embedding-3-small",  url: "https://api.openai.com/v1")
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "desc_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+
+					]
+				`,
+				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: about_v\ninvalid field type for vector embedding generation. Actual: [Float32!]\nembedding fields cannot refer to self or another embedding field. Field: about_v\ninvalid field type for vector embedding generation. Actual: [Float32!]",
 			},
 		},
 	}

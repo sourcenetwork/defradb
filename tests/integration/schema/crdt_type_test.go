@@ -114,23 +114,6 @@ func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_ErrorMultiple(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						points: String @crdt(type: pncounter)
-					}
-				`,
-				ExpectedError: "CRDT type pncounter can't be assigned to field kind String",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

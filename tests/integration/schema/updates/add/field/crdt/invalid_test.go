@@ -39,3 +39,28 @@ func TestSchemaUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdatesAddFieldCRDTInvalidErrorsMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with invalid CRDT (99)",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":99} },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "bar", "Kind": 2, "Typ":99} }
+					]
+				`,
+				ExpectedError: "CRDT type not supported. Name: foo, CRDTType: unknown\nCRDT type not supported. Name: bar",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

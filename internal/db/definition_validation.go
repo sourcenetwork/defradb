@@ -1045,7 +1045,6 @@ func validateSchemaNotAdded(
 			// for the user
 			continue
 		}
-
 		if _, exists := oldState.schemaByName[newSchema.Name]; !exists {
 			errs = append(errs, NewErrAddSchemaWithPatch(newSchema.Name))
 		}
