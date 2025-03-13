@@ -951,7 +951,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 
 				Relation: "writer",
 
-				ExpectedError: "acp protocol violation",
+				ExpectedError: "UNAUTHORIZED",
 			},
 
 			testUtils.Request{

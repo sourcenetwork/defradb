@@ -127,7 +127,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 				),
 			},
 
@@ -164,7 +164,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"757c772e9c4418de530ecd72cbc56dfc4e0c22aa2f3b2d219afa7663b2f0af00",
+					"47f986f872dfcfc7d126b017a4258df86d508f3333d93f19c0eb7f4624e97023",
 				),
 			},
 		},
@@ -206,7 +206,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 				),
 			},
 
@@ -216,7 +216,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 				),
 			},
 		},
@@ -257,7 +257,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 				),
 			},
 
@@ -287,7 +287,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 				),
 			},
 		},
@@ -327,7 +327,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
 				),
 			},
 
@@ -364,7 +364,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                `,
 
 				ExpectedPolicyID: immutable.Some(
-					"ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
 				),
 			},
 		},

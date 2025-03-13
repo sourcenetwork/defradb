@@ -461,7 +461,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	validatorAddress := strings.TrimSpace(string(out))
 	s.sourcehubAddress = validatorAddress
 
-	args = []string{"genesis", "add-genesis-account", validatorAddress, "900000000stake",
+	args = []string{"genesis", "add-genesis-account", validatorAddress, "1000000000uopen",
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
 	}
@@ -472,7 +472,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	args = []string{"genesis", "gentx", validatorName, "10000000stake",
+	args = []string{"genesis", "gentx", validatorName, "100000000uopen",
 		"--chain-id", chainID,
 		"--keyring-backend", keyringBackend,
 		"--home", directory}
@@ -537,7 +537,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 
 	args = []string{
 		"start",
-		"--minimum-gas-prices", "0stake",
+		"--minimum-gas-prices", "0uopen",
 		"--home", directory,
 		"--grpc.address", gRpcAddress,
 		"--rpc.laddr", rpcAddress,
