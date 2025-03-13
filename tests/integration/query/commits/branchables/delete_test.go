@@ -13,10 +13,21 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	collectionDeleteCid := testUtils.NewSameValue()
+	collectionCreateCid := testUtils.NewSameValue()
+	deleteCid := testUtils.NewSameValue()
+	createCid := testUtils.NewSameValue()
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -48,48 +59,48 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection, delete"),
+							"cid": gomega.And(collectionDeleteCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, create"),
+									"cid": collectionCreateCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("delete"),
+									"cid": deleteCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, create"),
+							"cid": gomega.And(collectionCreateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("create"),
+									"cid": createCid,
 								},
 							},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("name"),
+							"cid":   gomega.And(nameCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("age"),
+							"cid":   gomega.And(ageCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("delete"),
+							"cid": gomega.And(deleteCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("create"),
+									"cid": createCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("create"),
+							"cid": gomega.And(createCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("name"),
+									"cid": nameCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("age"),
+									"cid": ageCid,
 								},
 							},
 						},

@@ -54,6 +54,7 @@ var configFlags = map[string]string{
 	"max-txn-retries":    "datastore.maxtxnretries",
 	"store":              "datastore.store",
 	"no-encryption":      "datastore.noencryption",
+	"no-signing":         "datastore.nosigning",
 	"valuelogfilesize":   "datastore.badger.valuelogfilesize",
 	"peers":              "net.peers",
 	"p2paddr":            "net.p2paddresses",
@@ -98,6 +99,7 @@ var configDefaults = map[string]any{
 	"log.stacktrace":                    false,
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
+	"datastore.nosigning":               false,
 }
 
 // defaultConfig returns a new config with default values.

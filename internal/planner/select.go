@@ -423,13 +423,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 					return nil, nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
-			} else if f.Name == request.LinksFieldName &&
-				(selectReq.Name == request.CommitsName || selectReq.Name == request.LatestCommitsName) &&
-				f.CollectionName == "" {
+			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-				// commit query link fields are always added and need no special treatment here
-				// WARNING: It is important to check collection name is nil and the parent select name
-				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
 			} else if !(n.collection != nil && len(n.collection.Description().QuerySources()) > 0) {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
@@ -446,6 +441,17 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 	}
 
 	return aggregates, similarity, nil
+}
+
+func isSpecialNoOpField(field *mapper.Select, parentField *mapper.Select) bool {
+	// commit query link and signature fields are always added and need no special treatment here
+	// WARNING: It is important to check collection name is nil and the parent select name
+	// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
+	if field.CollectionName != "" {
+		return false
+	}
+	isCommit := parentField.Name == request.CommitsName || parentField.Name == request.LatestCommitsName
+	return isCommit && (field.Name == request.LinksFieldName || field.Name == request.SignatureFieldName)
 }
 
 func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {

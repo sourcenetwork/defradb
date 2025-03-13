@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
@@ -81,22 +78,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -180,8 +177,6 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 }
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access to another actor",
@@ -241,22 +236,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -364,8 +359,6 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 }
 
 func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwner(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives write(update) access to another actor, both can read",
@@ -418,22 +411,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

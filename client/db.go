@@ -15,8 +15,8 @@ import (
 	"context"
 	"encoding/json"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -66,7 +66,7 @@ type DB interface {
 	// Headstore returns the headstore where the current heads of the database are stored.
 	//
 	// It is read-only and sits within the rootstore returned by [Root].
-	Headstore() ds.Read
+	Headstore() corekv.Reader
 
 	// Close closes the database instance and releases any resources held.
 	//

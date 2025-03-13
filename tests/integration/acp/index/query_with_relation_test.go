@@ -19,14 +19,13 @@ import (
 func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 	return []any{
 		testUtils.AddPolicy{
-			Identity:         testUtils.ClientIdentity(1),
-			Policy:           bookAuthorPolicy,
-			ExpectedPolicyID: "f6927e8861f91122a5e3e333249297e4315b672298b5cb93ee3f49facc1e0d11",
+			Identity: testUtils.ClientIdentity(1),
+			Policy:   bookAuthorPolicy,
 		},
 		testUtils.SchemaUpdate{
 			Schema: `
 				type Author @policy(
-					id: "f6927e8861f91122a5e3e333249297e4315b672298b5cb93ee3f49facc1e0d11",
+					id: "{{.Policy0}}",
 					resource: "author"
 				) {
 					name: String
@@ -36,13 +35,17 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				}
 
 				type Book @policy(
-					id: "f6927e8861f91122a5e3e333249297e4315b672298b5cb93ee3f49facc1e0d11",
+					id: "{{.Policy0}}",
 					resource: "author"
 				) {
 					name: String
 					rating: Float @index
 					author: Author
 				}`,
+
+			Replace: map[string]testUtils.ReplaceType{
+				"Policy0": testUtils.NewPolicyIndex(0),
+			},
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,

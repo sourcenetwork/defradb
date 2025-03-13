@@ -38,7 +38,6 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 						commits(
 							fieldId: null
 						) {
-							cid
 							collectionID
 							docID
 							fieldId
@@ -47,7 +46,6 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
 							// Extra params are used to verify this is a collection level cid
 							"collectionID": int64(1),
 							"docID":        nil,

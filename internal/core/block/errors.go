@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -23,6 +23,8 @@ const (
 	errGeneratingLink              string = "failed to generate link"
 	errInvalidBlockEncryptionType  string = "invalid block encryption type"
 	errInvalidBlockEncryptionKeyID string = "invalid block encryption key id"
+	errCouldNotLoadSignatureBlock  string = "could not load signature block"
+	errSignatureVerification       string = "signature verification failed"
 )
 
 // Errors returnable from this package.
@@ -36,6 +38,7 @@ var (
 	ErrGeneratingLink              = errors.New(errGeneratingLink)
 	ErrInvalidBlockEncryptionType  = errors.New(errInvalidBlockEncryptionType)
 	ErrInvalidBlockEncryptionKeyID = errors.New(errInvalidBlockEncryptionKeyID)
+	ErrSignatureVerification       = errors.New(errSignatureVerification)
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.
@@ -67,6 +70,14 @@ func NewErrUnmarshallingBlock(err error) error {
 func NewErrGeneratingLink(err error) error {
 	return errors.Wrap(
 		errGeneratingLink,
+		err,
+	)
+}
+
+// NewErrCouldNotLoadSignatureBlock returns an error indicating that the signature block could not be found.
+func NewErrCouldNotLoadSignatureBlock(err error) error {
+	return errors.Wrap(
+		errCouldNotLoadSignatureBlock,
 		err,
 	)
 }

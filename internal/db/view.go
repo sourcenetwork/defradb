@@ -14,9 +14,8 @@ import (
 	"context"
 	"fmt"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
 	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -212,7 +211,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 		}
 
 		itemKey := keys.NewViewCacheKey(col.Description.RootID, itemID)
-		err = txn.Datastore().Put(ctx, itemKey.ToDS(), serializedItem)
+		err = txn.Datastore().Set(ctx, itemKey.Bytes(), serializedItem)
 		if err != nil {
 			return err
 		}
@@ -228,28 +227,31 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
-	prefix := keys.NewViewCacheColPrefix(col.Description.RootID)
 
-	q, err := txn.Datastore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   keys.NewViewCacheColPrefix(col.Description.RootID).Bytes(),
 		KeysOnly: true,
 	})
 	if err != nil {
 		return err
 	}
 
-	for res := range q.Next() {
-		if res.Error != nil {
-			return errors.Join(res.Error, q.Close())
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
 		}
 
-		err = txn.Datastore().Delete(ctx, ds.NewKey(res.Key))
+		err = txn.Datastore().Delete(ctx, iter.Key())
 		if err != nil {
-			return errors.Join(err, q.Close())
+			return errors.Join(err, iter.Close())
 		}
 	}
 
-	return q.Close()
+	return iter.Close()
 }
 
 func (db *DB) generateMaximalSelectFromCollection(

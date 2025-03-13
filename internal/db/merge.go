@@ -199,7 +199,7 @@ func (mp *mergeProcessor) loadComposites(
 		return nil
 	}
 
-	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
+	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ func (mp *mergeProcessor) loadComposites(
 		newMT := newMergeTarget()
 		for _, b := range mt.heads {
 			for _, link := range b.Heads {
-				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.SchemaPrototype)
+				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.BlockSchemaPrototype)
 				if err != nil {
 					return err
 				}
@@ -399,7 +399,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	for _, link := range dagBlock.Links {
-		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
 			return err
 		}

@@ -11,15 +11,12 @@
 package test_acp_relationship_doc_actor_delete
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner revokes write(delete) access from another actor, they can not delete anymore",
@@ -72,22 +69,22 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			// Creating two documents because need one to do the test on after one is deleted.

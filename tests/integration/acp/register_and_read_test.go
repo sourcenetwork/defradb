@@ -54,20 +54,22 @@ func TestACP_CreateWithoutIdentityAndReadWithoutIdentity_CanRead(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -145,20 +147,22 @@ func TestACP_CreateWithoutIdentityAndReadWithIdentity_CanRead(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -238,20 +242,22 @@ func TestACP_CreateWithIdentityAndReadWithIdentity_CanRead(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -333,20 +339,22 @@ func TestACP_CreateWithIdentityAndReadWithoutIdentity_CanNotRead(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -420,20 +428,22 @@ func TestACP_CreateWithIdentityAndReadWithWrongIdentity_CanNotRead(t *testing.T)
                              types:
                                - actor
                  `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
  					type Users @policy(
- 						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
  						resource: "users"
  					) {
  						name: String
  						age: Int
  					}
  				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

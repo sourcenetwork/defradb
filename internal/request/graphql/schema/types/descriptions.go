@@ -63,6 +63,10 @@ Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
  the single mutation.  Collection commits will link to composites.
 `
+	signatureDescription string = `
+The signature of the commit, if one exists. This is used to verify the integrity
+ of the commit and the data it contains.
+`
 	commitHeightFieldDescription string = `
 Height represents the location of the commit in the DAG. All commits (collection, composite,
  and field level) on create will have a height of '1', each subsequent local update

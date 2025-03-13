@@ -12,6 +12,7 @@ package datastore
 
 import (
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 )
 
 var (
@@ -38,16 +39,15 @@ type multistore struct {
 var _ MultiStore = (*multistore)(nil)
 
 // MultiStoreFrom creates a MultiStore from a root datastore.
-func MultiStoreFrom(rootstore ds.Datastore) MultiStore {
-	rootRW := AsDSReaderWriter(rootstore)
+func MultiStoreFrom(rootstore corekv.Store) MultiStore {
 	ms := &multistore{
-		root:   rootRW,
-		data:   prefix(rootRW, dataStoreKey),
-		enc:    newBlockstore(prefix(rootRW, encStoreKey)),
-		head:   prefix(rootRW, headStoreKey),
-		peer:   prefix(rootRW, peerStoreKey),
-		system: prefix(rootRW, systemStoreKey),
-		dag:    newBlockstore(prefix(rootRW, blockStoreKey)),
+		root:   rootstore,
+		data:   prefix(rootstore, dataStoreKey.Bytes()),
+		enc:    newBlockstore(prefix(rootstore, encStoreKey.Bytes())),
+		head:   prefix(rootstore, headStoreKey.Bytes()),
+		peer:   prefix(rootstore, peerStoreKey.Bytes()),
+		system: prefix(rootstore, systemStoreKey.Bytes()),
+		dag:    newBlockstore(prefix(rootstore, blockStoreKey.Bytes())),
 	}
 
 	return ms

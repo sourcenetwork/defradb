@@ -29,7 +29,7 @@ var invalidIdentity = identity.Identity{
 	DID: "did:something",
 }
 
-var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
+var validPolicyID string = "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
 var validPolicy string = `
 name: test
 description: a policy

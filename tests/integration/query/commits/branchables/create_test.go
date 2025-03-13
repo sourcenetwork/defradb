@@ -13,10 +13,23 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	doc1NameFieldCid := testUtils.NewSameValue()
+	doc1AgeFieldCid := testUtils.NewSameValue()
+	doc2NameFieldCid := testUtils.NewSameValue()
+	doc2AgeFieldCid := testUtils.NewSameValue()
+	doc2CollectionCid := testUtils.NewSameValue()
+	doc1CollectionCid := testUtils.NewSameValue()
+	doc2CompositeCid := testUtils.NewSameValue()
+	doc1CompositeCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -51,59 +64,59 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection, doc2 create"),
+							"cid": gomega.And(doc2CollectionCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, doc1 create"),
+									"cid": doc1CollectionCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc2 create"),
+									"cid": doc2CompositeCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, doc1 create"),
+							"cid": gomega.And(doc1CollectionCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc1 create"),
+									"cid": doc1CompositeCid,
 								},
 							},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("doc1 name"),
+							"cid":   gomega.And(doc1NameFieldCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("doc1 age"),
+							"cid":   gomega.And(doc1AgeFieldCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc1 create"),
+							"cid": gomega.And(doc1CompositeCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc1 name"),
+									"cid": doc1NameFieldCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc1 age"),
+									"cid": doc1AgeFieldCid,
 								},
 							},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("doc2 name"),
+							"cid":   gomega.And(doc2NameFieldCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("doc2 age"),
+							"cid":   gomega.And(doc2AgeFieldCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("doc2 create"),
+							"cid": gomega.And(doc2CompositeCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("doc2 name"),
+									"cid": doc2NameFieldCid,
 								},
 								{
-									"cid": testUtils.NewUniqueCid("doc2 age"),
+									"cid": doc2AgeFieldCid,
 								},
 							},
 						},

@@ -65,7 +65,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 			},
 			testUtils.SetActiveSchemaVersion{
 				SchemaVersionID: "does not exist",
-				ExpectedError:   "datastore: key not found",
+				ExpectedError:   "key not found",
 			},
 		},
 	}

@@ -13,7 +13,8 @@ package client
 import (
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -203,8 +204,8 @@ func ReviveError(message string) error {
 	switch message {
 	case ErrDocumentNotFoundOrNotAuthorized.Error():
 		return ErrDocumentNotFoundOrNotAuthorized
-	case datastore.ErrTxnConflict.Error():
-		return datastore.ErrTxnConflict
+	case corekv.ErrTxnConflict.Error():
+		return corekv.ErrTxnConflict
 	default:
 		return fmt.Errorf("%s", message)
 	}
