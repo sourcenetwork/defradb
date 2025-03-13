@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -222,7 +223,7 @@ func encryptBlock(
 func (mc *MerkleClock) signBlock(
 	ctx context.Context,
 	block *coreblock.Block,
-	signingAlg string,
+	signingAlg crypto.KeyType,
 ) error {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
@@ -243,16 +244,16 @@ func (mc *MerkleClock) signBlock(
 	var sigBytes []byte
 	var sigType string
 
-	// TODO: The identity.PrivateKey is always a *secp256k1.PrivateKey in the current implementation
-	// We need to handle different key types based on the signing algorithm
 	switch signingAlg {
-	case coreblock.SignatureTypeECDSA256K:
-		//sigBytes, err = crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
-		sigBytes, err = ident.Value().PrivateKey.Sign(blockBytes)
+	case crypto.KeyTypeSecp256k1:
 		sigType = coreblock.SignatureTypeECDSA256K
+	case crypto.KeyTypeEd25519:
+		sigType = coreblock.SignatureTypeEd25519
 	default:
 		return fmt.Errorf("unsupported signature algorithm: %s", signingAlg)
 	}
+
+	sigBytes, err = ident.Value().PrivateKey.Sign(blockBytes)
 
 	if err != nil {
 		return err
@@ -355,15 +356,15 @@ func (mc *MerkleClock) Heads() *heads {
 type signingAlgContextKey struct{}
 
 // ContextWithSigningAlg returns a context with the specified signing algorithm.
-func ContextWithSigningAlg(ctx context.Context, alg string) context.Context {
+func ContextWithSigningAlg(ctx context.Context, alg crypto.KeyType) context.Context {
 	return context.WithValue(ctx, signingAlgContextKey{}, immutable.Some(alg))
 }
 
 // SigningAlgFromContext returns the signing algorithm from the context.
-func SigningAlgFromContext(ctx context.Context) immutable.Option[string] {
+func SigningAlgFromContext(ctx context.Context) immutable.Option[crypto.KeyType] {
 	val := ctx.Value(signingAlgContextKey{})
 	if val == nil {
-		return immutable.None[string]()
+		return immutable.None[crypto.KeyType]()
 	}
-	return val.(immutable.Option[string])
+	return val.(immutable.Option[crypto.KeyType])
 }

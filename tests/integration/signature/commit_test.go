@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -48,7 +49,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
+		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -86,7 +87,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 									gomega.Not(gomega.BeEmpty()),
 									sameIdentity,
 								),
-								"value": newSignatureMatcher(makeFieldBlock("age", 21)),
+								"value": newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeSecp256k1),
 							},
 						},
 						{
@@ -94,7 +95,8 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
-								"value":    newSignatureMatcher(makeFieldBlock("name", "John")),
+								"value": newSignatureMatcher(
+									makeFieldBlock("name", "John"), crypto.KeyTypeSecp256k1),
 							},
 						},
 						{
@@ -119,7 +121,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
+		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -215,7 +217,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 
 func TestSignature_WithEd25519Algorithm_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(coreblock.SignatureTypeEd25519),
+		SigningAlg: immutable.Some(crypto.KeyTypeEd25519),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -250,7 +252,7 @@ func TestSignature_WithEd25519Algorithm_ShouldIncludeSignatureData(t *testing.T)
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeEd25519),
 							},
 						},
 						{
@@ -258,7 +260,7 @@ func TestSignature_WithEd25519Algorithm_ShouldIncludeSignatureData(t *testing.T)
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
 								"identity": gomega.Not(gomega.BeEmpty()),
-								"value":    gomega.Not(gomega.BeEmpty()),
+								"value":    newSignatureMatcher(makeFieldBlock("name", "John"), crypto.KeyTypeEd25519),
 							},
 						},
 						{

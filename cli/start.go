@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -139,7 +140,11 @@ func MakeStartCommand() *cobra.Command {
 
 			if !cfg.GetBool("datastore.nosigning") {
 				signingAlg := cfg.GetString("datastore.defaultsigningalg")
-				opts = append(opts, db.WithSigningAlgorithm(immutable.Some(signingAlg)))
+				keyType := crypto.KeyType(signingAlg)
+				if keyType != crypto.KeyTypeSecp256k1 && keyType != crypto.KeyTypeEd25519 {
+					return fmt.Errorf("invalid signing algorithm: %s", signingAlg)
+				}
+				opts = append(opts, db.WithSigningAlgorithm(immutable.Some(keyType)))
 			}
 
 			isDevMode := cfg.GetBool("development")
@@ -281,7 +286,8 @@ func MakeStartCommand() *cobra.Command {
 	cmd.Flags().String(
 		"default-signing-alg",
 		cfg.GetString(configFlags["default-signing-alg"]),
-		"Default signature algorithm to use for signing commits. Valid values are 'ES256K' (ECDSA with secp256k1) and 'Ed25519'.")
+		"Default signature algorithm to use for signing commits. Valid values are 'secp256k1' and 'ed25519'."+
+			"If not specified, the default signing algorithm will be 'secp256k1'.")
 	return cmd
 }
 
@@ -341,7 +347,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option,
 	}
 
 	privateKey := secp256k1.PrivKeyFromBytes(identityBytes)
-	nodeIdentity, err := identity.FromPrivateKey(privateKey)
+	nodeIdentity, err := identity.FromPrivateKey(crypto.NewPrivateKey(privateKey))
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +361,7 @@ func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
 		return nil, err
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(privateKey)
+	nodeIdentity, err := identity.FromPrivateKey(crypto.NewPrivateKey(privateKey))
 	if err != nil {
 		return nil, err
 	}

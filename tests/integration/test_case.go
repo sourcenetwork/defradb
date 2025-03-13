@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
@@ -73,8 +74,7 @@ type TestCase struct {
 
 	// The signature algorithm to use for DAG blocks.
 	// If None, block signing is disabled.
-	// Valid values are defined in coreblock package: SignatureTypeECDSA256K and SignatureTypeEd25519.
-	SigningAlg immutable.Option[string]
+	SigningAlg immutable.Option[crypto.KeyType]
 }
 
 // KMS contains the configuration for KMS to be used in the test

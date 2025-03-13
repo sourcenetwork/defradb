@@ -12,6 +12,7 @@ package tests
 
 import (
 	"context"
+	"crypto/ed25519"
 	"math/rand"
 	"strconv"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 type identityType int
@@ -145,8 +147,18 @@ func generateIdentity(s *state) acpIdentity.Identity {
 	source := rand.NewSource(int64(s.nextIdentityGenSeed))
 	r := rand.New(source)
 
-	privateKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-	require.NoError(s.t, err)
+	var privateKey crypto.PrivateKey
+	if !s.signingAlg.HasValue() || s.signingAlg.Value() == crypto.KeyTypeSecp256k1 {
+		privKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
+		require.NoError(s.t, err)
+		privateKey = crypto.NewPrivateKey(privKey)
+	} else if s.signingAlg.Value() == crypto.KeyTypeEd25519 {
+		_, privKey, err := ed25519.GenerateKey(r)
+		require.NoError(s.t, err)
+		privateKey = crypto.NewPrivateKey(privKey)
+	} else {
+		require.Fail(s.t, "Unsupported signing algorithm", s.testCase.Description)
+	}
 
 	s.nextIdentityGenSeed++
 

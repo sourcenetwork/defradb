@@ -15,13 +15,13 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/crypto"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
+		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -63,7 +63,7 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 
 func TestDocSignature_WithPeers_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
+		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

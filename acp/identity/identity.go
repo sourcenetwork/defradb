@@ -63,9 +63,8 @@ type Identity struct {
 
 // FromPrivateKey returns a new identity using the given private key.
 // In order to generate a fresh token for this identity, use the [UpdateToken]
-func FromPrivateKey(privateKey *secp256k1.PrivateKey) (Identity, error) {
-	privKey := crypto.NewPrivateKey(privateKey)
-	pubKey := privKey.GetPublic()
+func FromPrivateKey(privateKey crypto.PrivateKey) (Identity, error) {
+	pubKey := privateKey.GetPublic()
 	did, err := pubKey.DID()
 	if err != nil {
 		return Identity{}, err
@@ -73,7 +72,7 @@ func FromPrivateKey(privateKey *secp256k1.PrivateKey) (Identity, error) {
 
 	return Identity{
 		DID:        did,
-		PrivateKey: privKey,
+		PrivateKey: privateKey,
 		PublicKey:  pubKey,
 	}, nil
 }

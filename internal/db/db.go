@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -97,7 +98,7 @@ type DB struct {
 
 	// The signature algorithm to use for DAG blocks.
 	// If None, block signing is disabled.
-	signingAlg immutable.Option[string]
+	signingAlg immutable.Option[crypto.KeyType]
 }
 
 var _ client.DB = (*DB)(nil)

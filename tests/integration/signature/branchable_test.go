@@ -15,6 +15,7 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
@@ -22,7 +23,7 @@ import (
 
 func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(coreblock.SignatureTypeECDSA256K),
+		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

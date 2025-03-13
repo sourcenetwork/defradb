@@ -20,6 +20,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
@@ -226,7 +227,7 @@ type state struct {
 
 	// The signature algorithm to use for DAG blocks.
 	// If None, block signing is disabled.
-	signingAlg immutable.Option[string]
+	signingAlg immutable.Option[crypto.KeyType]
 
 	// statefulMatchers contains all stateful matchers that have been executed during a single
 	// test run. After a single test run, the statefulMatchers are reset.

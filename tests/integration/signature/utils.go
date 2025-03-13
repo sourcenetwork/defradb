@@ -18,19 +18,24 @@ import (
 
 	"github.com/onsi/gomega/types"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 type signatureMatcher struct {
-	s          testUtils.TestState
-	block      coreblock.Block
-	castFailed bool
+	s                 testUtils.TestState
+	block             coreblock.Block
+	expectedKeyType   crypto.KeyType
+	castFailed        bool
+	unexpectedKeyType immutable.Option[crypto.KeyType]
 }
 
-func newSignatureMatcher(block coreblock.Block) *signatureMatcher {
+func newSignatureMatcher(block coreblock.Block, keyType crypto.KeyType) *signatureMatcher {
 	return &signatureMatcher{
-		block: block,
+		block:           block,
+		expectedKeyType: keyType,
 	}
 }
 
@@ -47,6 +52,11 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 	}
 
 	ident := matcher.s.GetNodeIdentity(matcher.s.GetCurrentNodeID())
+
+	if ident.PrivateKey.Type() != matcher.expectedKeyType {
+		matcher.unexpectedKeyType = immutable.Some(ident.PrivateKey.Type())
+		return false, nil
+	}
 
 	expectedSigBytes, err := ident.PrivateKey.Sign(blockBytes)
 	if err != nil {
@@ -79,6 +89,10 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 func (matcher *signatureMatcher) FailureMessage(actual any) string {
 	if matcher.castFailed {
 		return fmt.Sprintf("Expected actual to be a byte slice, but got %T", actual)
+	}
+	if matcher.unexpectedKeyType.HasValue() {
+		return fmt.Sprintf("Expected key type to be %s, but got %s",
+			matcher.expectedKeyType, matcher.unexpectedKeyType.Value())
 	}
 	return "Expected signature to match"
 }
