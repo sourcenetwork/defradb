@@ -5,7 +5,7 @@ go 1.23.6
 require (
 	github.com/bits-and-blooms/bitset v1.20.0
 	github.com/bxcodec/faker v2.0.1+incompatible
-	github.com/cosmos/cosmos-sdk v0.50.12
+	github.com/cosmos/cosmos-sdk v0.50.13
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cyware/ssi-sdk v0.0.0-20231229164914-f93f3006379f
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
@@ -61,8 +61,8 @@ require (
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.34.0
-	go.opentelemetry.io/otel/sdk v1.34.0
-	go.opentelemetry.io/otel/sdk/metric v1.34.0
+	go.opentelemetry.io/otel/sdk v1.35.0
+	go.opentelemetry.io/otel/sdk/metric v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
 	golang.org/x/crypto v0.35.0
 	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa
@@ -132,7 +132,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v1.2.2 // indirect
 	github.com/cosmos/ibc-go/modules/capability v1.0.1 // indirect
-	github.com/cosmos/ibc-go/v8 v8.6.1 // indirect
+	github.com/cosmos/ibc-go/v8 v8.7.0 // indirect
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.14.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
