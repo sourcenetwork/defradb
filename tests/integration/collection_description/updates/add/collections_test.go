@@ -94,7 +94,7 @@ func TestColDescrUpdateAddCollections_ErrorsMultiple(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Dogs"} },
-						{ "op": "add", "path": "/3", "value": {"ID": 3, "Name": "Dogs"} }
+						{ "op": "add", "path": "/3", "value": {"ID": 3, "Name": "Cats"} }
 					]
 				`,
 				ExpectedError: "adding collections via patch is not supported. ID: 2\nadding collections via patch is not supported. ID: 3",
