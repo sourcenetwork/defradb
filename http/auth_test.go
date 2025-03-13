@@ -22,49 +22,96 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func TestVerifyAuthToken(t *testing.T) {
+func TestAuth_WithSecp256k1_ShouldSucceed(t *testing.T) {
 	audience := "abc123"
 
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	require.NoError(t, err)
 
 	err = identity.UpdateToken(time.Hour, immutable.Some(audience), immutable.None[string]())
-	require.NoError(t, err)
+	require.NoError(t, err, "failed to update token")
 
 	err = acpIdentity.VerifyAuthToken(identity, audience)
-	require.NoError(t, err)
+	require.NoError(t, err, "failed to verify auth token")
 }
 
-func TestVerifyAuthTokenErrorsWithNonMatchingAudience(t *testing.T) {
+func TestAuth_WithSecp256k1AndNonMatchingAudience_ShouldError(t *testing.T) {
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	require.NoError(t, err)
 
 	err = identity.UpdateToken(time.Hour, immutable.Some("valid"), immutable.None[string]())
-	require.NoError(t, err)
+	require.NoError(t, err, "failed to update token")
 
 	err = acpIdentity.VerifyAuthToken(identity, "invalid")
-	assert.Error(t, err)
+	assert.Error(t, err, "failed to verify auth token")
 }
 
-func TestVerifyAuthTokenErrorsWithExpired(t *testing.T) {
+func TestAuth_WithSecp256k1AndExpiredToken_ShouldError(t *testing.T) {
 	audience := "abc123"
 
 	privKey, err := crypto.GenerateSecp256k1()
 	require.NoError(t, err)
 
-	identity, err := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	require.NoError(t, err)
 
 	// negative expiration
 	err = identity.UpdateToken(-time.Hour, immutable.Some(audience), immutable.None[string]())
+	require.NoError(t, err, "failed to update token")
+
+	err = acpIdentity.VerifyAuthToken(identity, audience)
+	assert.Error(t, err, "failed to verify auth token")
+}
+
+func TestAuth_WithEd25519_ShouldSucceed(t *testing.T) {
+	audience := "abc123"
+
+	privKey, err := crypto.GenerateEd25519()
 	require.NoError(t, err)
 
-	err = acpIdentity.VerifyAuthToken(identity, "123abc")
-	assert.Error(t, err)
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some(audience), immutable.None[string]())
+	require.NoError(t, err, "failed to update token")
+
+	err = acpIdentity.VerifyAuthToken(identity, audience)
+	require.NoError(t, err, "failed to verify auth token")
+}
+
+func TestAuth_WithEd25519AndNonMatchingAudience_ShouldError(t *testing.T) {
+	privKey, err := crypto.GenerateEd25519()
+	require.NoError(t, err)
+
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("valid"), immutable.None[string]())
+	require.NoError(t, err, "failed to update token")
+
+	err = acpIdentity.VerifyAuthToken(identity, "invalid")
+	assert.Error(t, err, "failed to verify auth token")
+}
+
+func TestAuth_WithEd25519AndExpiredToken_ShouldError(t *testing.T) {
+	audience := "abc123"
+
+	privKey, err := crypto.GenerateEd25519()
+	require.NoError(t, err)
+
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
+	require.NoError(t, err)
+
+	// negative expiration
+	err = identity.UpdateToken(-time.Hour, immutable.Some(audience), immutable.None[string]())
+	require.NoError(t, err, "failed to update token")
+
+	err = acpIdentity.VerifyAuthToken(identity, audience)
+	assert.Error(t, err, "failed to verify auth token")
 }

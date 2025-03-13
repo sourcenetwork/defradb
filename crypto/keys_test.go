@@ -277,3 +277,43 @@ func TestGenericNewPublicKey(t *testing.T) {
 	assert.NotNil(t, genericEd25519Key)
 	assert.Equal(t, KeyTypeEd25519, genericEd25519Key.Type())
 }
+
+func TestSecp256k1_Underlying(t *testing.T) {
+	privKey, err := secp256k1.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	wrappedPrivKey := NewPrivateKey(privKey)
+	wrappedPubKey := wrappedPrivKey.GetPublic()
+
+	// Test private key
+	underlying := wrappedPrivKey.Underlying()
+	assert.NotNil(t, underlying)
+	assert.IsType(t, &secp256k1.PrivateKey{}, underlying)
+	assert.Equal(t, privKey, underlying)
+
+	// Test public key
+	underlying = wrappedPubKey.Underlying()
+	assert.NotNil(t, underlying)
+	assert.IsType(t, &secp256k1.PublicKey{}, underlying)
+	assert.Equal(t, privKey.PubKey(), underlying)
+}
+
+func TestEd25519_Underlying(t *testing.T) {
+	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPrivKey := NewPrivateKey(privKey)
+	wrappedPubKey := NewPublicKey(pubKey)
+
+	// Test private key
+	underlying := wrappedPrivKey.Underlying()
+	assert.NotNil(t, underlying)
+	assert.IsType(t, ed25519.PrivateKey{}, underlying)
+	assert.Equal(t, privKey, underlying)
+
+	// Test public key
+	underlying = wrappedPubKey.Underlying()
+	assert.NotNil(t, underlying)
+	assert.IsType(t, ed25519.PublicKey{}, underlying)
+	assert.Equal(t, pubKey, underlying)
+}

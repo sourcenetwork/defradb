@@ -41,6 +41,8 @@ type Key interface {
 	String() string
 	// Type returns the key type
 	Type() KeyType
+	// Underlying returns the underlying key implementation
+	Underlying() any
 }
 
 // PublicKey represents a public key
@@ -156,6 +158,10 @@ func (k *secp256k1PrivateKey) GetPublic() PublicKey {
 	return &secp256k1PublicKey{key: k.key.PubKey()}
 }
 
+func (k *secp256k1PrivateKey) Underlying() any {
+	return k.key
+}
+
 func (k *secp256k1PublicKey) Equals(other Key) bool {
 	if other.Type() != KeyTypeSecp256k1 {
 		return false
@@ -198,6 +204,10 @@ func (k *secp256k1PublicKey) DID() (string, error) {
 	return did.String(), nil
 }
 
+func (k *secp256k1PublicKey) Underlying() any {
+	return k.key
+}
+
 func (k *ed25519PrivateKey) Equals(other Key) bool {
 	if other.Type() != KeyTypeEd25519 {
 		return false
@@ -223,6 +233,10 @@ func (k *ed25519PrivateKey) Sign(data []byte) ([]byte, error) {
 
 func (k *ed25519PrivateKey) GetPublic() PublicKey {
 	return &ed25519PublicKey{key: k.key.Public().(ed25519.PublicKey)}
+}
+
+func (k *ed25519PrivateKey) Underlying() any {
+	return k.key
 }
 
 func (k *ed25519PublicKey) Equals(other Key) bool {
@@ -258,4 +272,8 @@ func (k *ed25519PublicKey) DID() (string, error) {
 		return "", NewErrFailedToCreateDIDKey(err)
 	}
 	return did.String(), nil
+}
+
+func (k *ed25519PublicKey) Underlying() any {
+	return k.key
 }

@@ -41,10 +41,6 @@ type didProducer = func(gocrypto.KeyType, []byte) (*key.DIDKey, error)
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
 
-// BearerTokenSignatureScheme is the signature algorithm used to sign the
-// Identity.BearerToken.
-const BearerTokenSignatureScheme = jwa.ES256K
-
 // Identity describes a unique actor.
 type Identity struct {
 	// PublicKey is the actor's public key.
@@ -168,16 +164,10 @@ func (identity Identity) NewToken(
 	audience immutable.Option[string],
 	authorizedAccount immutable.Option[string],
 ) ([]byte, error) {
-	var signedToken []byte
-	pubKeyBytes, err := identity.PublicKey.Raw()
-	if err != nil {
-		return nil, err
-	}
-	subject := hex.EncodeToString(pubKeyBytes)
 	now := time.Now()
 
 	jwtBuilder := jwt.NewBuilder()
-	jwtBuilder = jwtBuilder.Subject(subject)
+	jwtBuilder = jwtBuilder.Subject(identity.PublicKey.String())
 	jwtBuilder = jwtBuilder.Expiration(now.Add(duration))
 	jwtBuilder = jwtBuilder.NotBefore(now)
 	jwtBuilder = jwtBuilder.Issuer(identity.DID)
@@ -199,19 +189,17 @@ func (identity Identity) NewToken(
 		}
 	}
 
-	// For now we only support ECDSA with secp256k1 for bearer tokens
-	if identity.PrivateKey.Type() != crypto.KeyTypeSecp256k1 {
+	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
+	if identity.PrivateKey.Type() != crypto.KeyTypeSecp256k1 && identity.PrivateKey.Type() != crypto.KeyTypeEd25519 {
 		return nil, crypto.ErrUnsupportedSignatureType
 	}
 
-	// Convert to ECDSA key for JWT signing
-	privKeyBytes, err := identity.PrivateKey.Raw()
-	if err != nil {
-		return nil, err
+	privKey := identity.PrivateKey.Underlying()
+	if secpPrivKey, ok := privKey.(*secp256k1.PrivateKey); ok {
+		privKey = secpPrivKey.ToECDSA()
 	}
-	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
 
-	signedToken, err = jwt.Sign(token, jwt.WithKey(BearerTokenSignatureScheme, privKey.ToECDSA()))
+	signedToken, err := jwt.Sign(token, jwt.WithKey(keyTypeToJWK(identity.PrivateKey.Type()), privKey))
 	if err != nil {
 		return nil, err
 	}
@@ -227,28 +215,27 @@ func VerifyAuthToken(ident Identity, audience string) error {
 		return err
 	}
 
-	// For now we only support ECDSA with secp256k1 for bearer tokens
-	if ident.PublicKey.Type() != crypto.KeyTypeSecp256k1 {
+	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
+	if ident.PublicKey.Type() != crypto.KeyTypeSecp256k1 && ident.PublicKey.Type() != crypto.KeyTypeEd25519 {
 		return crypto.ErrUnsupportedSignatureType
 	}
 
-	// Convert to ECDSA key for JWT verification
-	pubKeyBytes, err := ident.PublicKey.Raw()
-	if err != nil {
-		return err
-	}
-	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes)
-	if err != nil {
-		return err
+	pubKey := ident.PublicKey.Underlying()
+	if secpPubkey, ok := pubKey.(*secp256k1.PublicKey); ok {
+		pubKey = secpPubkey.ToECDSA()
 	}
 
-	_, err = jws.Verify(
-		[]byte(ident.BearerToken),
-		jws.WithKey(BearerTokenSignatureScheme, pubKey.ToECDSA()),
-	)
+	_, err = jws.Verify([]byte(ident.BearerToken), jws.WithKey(keyTypeToJWK(ident.PublicKey.Type()), pubKey))
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func keyTypeToJWK(keyType crypto.KeyType) jwa.SignatureAlgorithm {
+	if keyType == crypto.KeyTypeEd25519 {
+		return jwa.EdDSA
+	}
+	return jwa.ES256K
 }
