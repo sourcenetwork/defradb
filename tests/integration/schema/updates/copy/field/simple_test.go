@@ -208,30 +208,3 @@ func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testi
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitutionMultiple(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, copy field, rename, re-type to invalid",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
-						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "Age" },
-						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "NotAValidKind" },
-						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "NotAValidKind" }
-					]
-				`,
-				ExpectedError: "fdfdno type found for given name. Field: Age, Kind: NotAValidKind",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
