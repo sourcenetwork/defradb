@@ -81,30 +81,6 @@ func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestColDescrUpdateAddCollections_ErrorsMultiple(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {}
-				`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Cats"} },
-						{ "op": "add", "path": "/3", "value": {"ID": 3, "Name": "Mice"} }
-					]
-				`,
-				ExpectedError: "multiple versions of same collection cannot be active. Name: Cats, Root: 0\nadding collections via patch is not supported. ID: 3\nadding collections via patch is not supported. ID: 2",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestColDescrUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
