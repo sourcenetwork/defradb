@@ -93,11 +93,11 @@ func TestColDescrUpdateAddCollections_ErrorsMultiple(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Dogs"} },
-						{ "op": "add", "path": "/3", "value": {"ID": 3, "Name": "Cats"} }
+						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Cats"} },
+						{ "op": "add", "path": "/3", "value": {"ID": 3, "Name": "Mice"} }
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported. ID: 2\nadding collections via patch is not supported. ID: 3",
+				ExpectedError: "multiple versions of same collection cannot be active. Name: Cats, Root: 0\nadding collections via patch is not supported. ID: 3\nadding collections via patch is not supported. ID: 2",
 			},
 		},
 	}
