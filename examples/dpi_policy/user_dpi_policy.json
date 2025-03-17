@@ -8,10 +8,13 @@
     "users": {
       "permissions": {
         "read": {
-          "expr": "owner + reader"
+          "expr": "owner + reader + updater + deleter"
         },
-        "write": {
-          "expr": "owner"
+        "update": {
+          "expr": "owner + updater"
+        },
+        "delete": {
+          "expr": "owner + deleter"
         }
       },
       "relations": {
@@ -21,6 +24,16 @@
           ]
         },
         "reader": {
+          "types": [
+            "actor"
+          ]
+        },
+        "updater": {
+          "types": [
+            "actor"
+          ]
+        },
+        "deleter": {
           "types": [
             "actor"
           ]
