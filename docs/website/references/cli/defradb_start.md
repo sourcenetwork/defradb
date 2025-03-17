@@ -14,6 +14,7 @@ defradb start [flags]
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
+      --default-signing-alg string    Default signature algorithm to use for signing commits. Valid values are 'secp256k1' and 'ed25519'.If not specified, the default signing algorithm will be 'secp256k1'. (default "secp256k1")
       --development                   Enables a set of features that make development easier but should not be enabled in production:
                                        - allows purging of all persisted data 
                                        - generates temporary node identity if keyring is disabled
