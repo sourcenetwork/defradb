@@ -317,3 +317,17 @@ func TestEd25519_Underlying(t *testing.T) {
 	assert.IsType(t, ed25519.PublicKey{}, underlying)
 	assert.Equal(t, pubKey, underlying)
 }
+
+func TestEd25519_GetPublic(t *testing.T) {
+	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPrivKey := NewPrivateKey(privKey)
+	wrappedPubKey := NewPublicKey(pubKey)
+
+	publicKey := wrappedPrivKey.GetPublic()
+	assert.NotNil(t, publicKey)
+	assert.Equal(t, KeyTypeEd25519, publicKey.Type())
+	assert.Equal(t, pubKey, publicKey.Underlying())
+	assert.True(t, publicKey.Equals(wrappedPubKey))
+}
