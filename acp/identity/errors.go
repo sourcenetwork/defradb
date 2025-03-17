@@ -17,11 +17,14 @@ import (
 )
 
 const (
-	errDIDCreation = "could not produce did for key"
+	errDIDCreation        = "could not produce did for key"
+	errUnsupportedKeyType = "unsupported key type"
 )
 
 var (
 	ErrDIDCreation = errors.New(errDIDCreation)
+	// ErrUnsupportedKeyType is returned when attempting to use an unsupported key type.
+	ErrUnsupportedKeyType = errors.New(errUnsupportedKeyType)
 )
 
 func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
@@ -31,4 +34,8 @@ func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
 		errors.NewKV("KeyType", keytype),
 		errors.NewKV("PubKey", hex.EncodeToString(pubKey)),
 	)
+}
+
+func newErrUnsupportedKeyType(keyType string) error {
+	return errors.New(errUnsupportedKeyType, errors.NewKV("KeyType", keyType))
 }

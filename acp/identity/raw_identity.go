@@ -11,6 +11,7 @@
 package identity
 
 import (
+	"crypto/ed25519"
 	"encoding/hex"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -51,14 +52,22 @@ func (r RawIdentity) Public() PublicRawIdentity {
 
 // IntoIdentity converts a RawIdentity into an Identity.
 func (r RawIdentity) IntoIdentity() (Identity, error) {
-	// For now we only support secp256k1 keys
 	privateKeyBytes, err := hex.DecodeString(r.PrivateKey)
 	if err != nil {
 		return Identity{}, err
 	}
 
-	privateKey := secp256k1.PrivKeyFromBytes(privateKeyBytes)
-	privKey := crypto.NewPrivateKey(privateKey)
+	var privKey crypto.PrivateKey
+	switch r.KeyType {
+	case string(crypto.KeyTypeSecp256k1):
+		key := secp256k1.PrivKeyFromBytes(privateKeyBytes)
+		privKey = crypto.NewPrivateKey(key)
+	case string(crypto.KeyTypeEd25519):
+		privKey = crypto.NewPrivateKey(ed25519.PrivateKey(privateKeyBytes))
+	default:
+		return Identity{}, newErrUnsupportedKeyType(r.KeyType)
+	}
+
 	pubKey := privKey.GetPublic()
 
 	return Identity{

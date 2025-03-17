@@ -24,7 +24,7 @@ import (
 	defracrypto "github.com/sourcenetwork/defradb/crypto"
 )
 
-func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
+func TestDIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	pubKey := &secp256k1.PublicKey{}
 
 	did, err := DIDFromPublicKey(pubKey)
@@ -34,7 +34,7 @@ func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
+func TestDIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
 	mockedProducer := func(crypto.KeyType, []byte) (*key.DIDKey, error) {
 		return nil, fmt.Errorf("did generation err")
 	}
@@ -47,7 +47,7 @@ func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
 	require.ErrorIs(t, err, ErrDIDCreation)
 }
 
-func Test_Generate_WithSecp256k1_ReturnsNewRawIdentity(t *testing.T) {
+func TestGenerate_WithSecp256k1_ReturnsNewRawIdentity(t *testing.T) {
 	newIdentity, err := Generate(defracrypto.KeyTypeSecp256k1)
 	require.NoError(t, err)
 
@@ -66,7 +66,7 @@ func Test_Generate_WithSecp256k1_ReturnsNewRawIdentity(t *testing.T) {
 	require.Equal(t, defracrypto.KeyTypeSecp256k1, identity.PrivateKey.Type())
 }
 
-func Test_Generate_WithEd25519_ReturnsNewRawIdentity(t *testing.T) {
+func TestGenerate_WithEd25519_ReturnsNewRawIdentity(t *testing.T) {
 	newIdentity, err := Generate(defracrypto.KeyTypeEd25519)
 	require.NoError(t, err)
 
@@ -84,13 +84,13 @@ func Test_Generate_WithEd25519_ReturnsNewRawIdentity(t *testing.T) {
 	require.Equal(t, defracrypto.KeyTypeEd25519, identity.PrivateKey.Type())
 }
 
-func Test_Generate_WithInvalidType_ReturnsError(t *testing.T) {
+func TestGenerate_WithInvalidType_ReturnsError(t *testing.T) {
 	_, err := Generate(defracrypto.KeyType("invalid"))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported key type: invalid")
 }
 
-func Test_Generate_ReturnsUniqueRawIdentities(t *testing.T) {
+func TestGenerate_ReturnsUniqueRawIdentities(t *testing.T) {
 	newIdentity1, err1 := Generate(defracrypto.KeyTypeSecp256k1)
 	newIdentity2, err2 := Generate(defracrypto.KeyTypeSecp256k1)
 	require.NoError(t, err1)
@@ -112,4 +112,70 @@ func Test_Generate_ReturnsUniqueRawIdentities(t *testing.T) {
 	require.NotEqual(t, newIdentity1.PrivateKey, newIdentity2.PrivateKey)
 	require.NotEqual(t, newIdentity1.PublicKey, newIdentity2.PublicKey)
 	require.NotEqual(t, newIdentity1.DID, newIdentity2.DID)
+}
+
+func TestRawIdentity_IntoIdentityWithSecp256k1_Success(t *testing.T) {
+	rawIdentity, err := Generate(defracrypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	identity, err := rawIdentity.IntoIdentity()
+	require.NoError(t, err)
+
+	require.Equal(t, defracrypto.KeyTypeSecp256k1, identity.PrivateKey.Type())
+	require.Equal(t, defracrypto.KeyTypeSecp256k1, identity.PublicKey.Type())
+	require.Equal(t, rawIdentity.DID, identity.DID)
+
+	privKeyBytes, err := identity.PrivateKey.Raw()
+	require.NoError(t, err)
+	require.Equal(t, rawIdentity.PrivateKey, hex.EncodeToString(privKeyBytes))
+
+	pubKeyBytes, err := identity.PublicKey.Raw()
+	require.NoError(t, err)
+	require.Equal(t, rawIdentity.PublicKey, hex.EncodeToString(pubKeyBytes))
+}
+
+func TestRawIdentity_IntoIdentityWithEd25519_Success(t *testing.T) {
+	rawIdentity, err := Generate(defracrypto.KeyTypeEd25519)
+	require.NoError(t, err)
+
+	identity, err := rawIdentity.IntoIdentity()
+	require.NoError(t, err)
+
+	require.Equal(t, defracrypto.KeyTypeEd25519, identity.PrivateKey.Type())
+	require.Equal(t, defracrypto.KeyTypeEd25519, identity.PublicKey.Type())
+	require.Equal(t, rawIdentity.DID, identity.DID)
+
+	privKeyBytes, err := identity.PrivateKey.Raw()
+	require.NoError(t, err)
+	require.Equal(t, rawIdentity.PrivateKey, hex.EncodeToString(privKeyBytes))
+
+	pubKeyBytes, err := identity.PublicKey.Raw()
+	require.NoError(t, err)
+	require.Equal(t, rawIdentity.PublicKey, hex.EncodeToString(pubKeyBytes))
+}
+
+func TestRawIdentity_IntoIdentityWithInvalidKeyType_Error(t *testing.T) {
+	rawIdentity := RawIdentity{
+		PrivateKey: "0123456789abcdef",
+		PublicKey:  "fedcba9876543210",
+		DID:        "did:key:test",
+		KeyType:    "invalid",
+	}
+
+	_, err := rawIdentity.IntoIdentity()
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrUnsupportedKeyType)
+}
+
+func TestRawIdentity_IntoIdentityWithInvalidPrivateKey_Error(t *testing.T) {
+	rawIdentity := RawIdentity{
+		PrivateKey: "not-hex",
+		PublicKey:  "fedcba9876543210",
+		DID:        "did:key:test",
+		KeyType:    string(defracrypto.KeyTypeSecp256k1),
+	}
+
+	_, err := rawIdentity.IntoIdentity()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "encoding/hex")
 }
