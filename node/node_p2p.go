@@ -24,11 +24,12 @@ func (n *Node) startP2P(ctx context.Context) error {
 	if n.config.disableP2P {
 		return nil
 	}
+	coreDB, _ := n.DB.(*db.DB)
 	peer, err := net.NewPeer(
 		ctx,
 		n.DB.Events(),
 		n.acp,
-		n.DB.(*db.DB),
+		coreDB,
 		filterOptions[net.NodeOpt](n.options)...,
 	)
 	if err != nil {

@@ -12,6 +12,7 @@ package node
 
 import (
 	"github.com/sourcenetwork/defradb/internal/kms"
+
 	"github.com/sourcenetwork/immutable"
 )
 
