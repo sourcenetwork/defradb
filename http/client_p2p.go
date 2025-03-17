@@ -51,13 +51,13 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams)
 }
 
 func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
+	methodURL := c.http.baseURL.JoinPath("p2p", "replicators", "delete")
 
 	body, err := json.Marshal(rep)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -95,13 +95,13 @@ func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) 
 }
 
 func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
+	methodURL := c.http.baseURL.JoinPath("p2p", "collections", "delete")
 
 	body, err := json.Marshal(collectionIDs)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
