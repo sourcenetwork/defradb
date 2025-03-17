@@ -56,7 +56,9 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

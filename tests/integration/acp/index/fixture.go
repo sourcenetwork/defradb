@@ -10,7 +10,6 @@
 
 package test_acp_index
 
-// policy id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454"
 const userPolicy = `
 name: test
 description: a test policy which marks a collection in a database as a resource
@@ -23,7 +22,9 @@ resources:
     permissions:
       read:
         expr: owner + reader
-      write:
+      update:
+        expr: owner
+      delete:
         expr: owner
 
     relations:
@@ -40,7 +41,6 @@ resources:
           - actor
 `
 
-// policy id: "f6927e8861f91122a5e3e333249297e4315b672298b5cb93ee3f49facc1e0d11"
 const bookAuthorPolicy = `
 name: test
 description: a test policy which marks a collection in a database as a resource
@@ -53,7 +53,9 @@ resources:
     permissions:
       read:
         expr: owner + reader
-      write:
+      update:
+        expr: owner
+      delete:
         expr: owner
 
     relations:
@@ -73,7 +75,9 @@ resources:
     permissions:
       read:
         expr: owner + reader
-      write:
+      update:
+        expr: owner
+      delete:
         expr: owner
 
     relations:

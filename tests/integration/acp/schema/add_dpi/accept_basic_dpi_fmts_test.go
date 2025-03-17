@@ -39,7 +39,9 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -130,7 +132,10 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 					        "read": {
 					          "expr": "owner"
 					        },
-					        "write": {
+					        "update": {
+					          "expr": "owner"
+					        },
+					        "delete": {
 					          "expr": "owner"
 					        }
 					      },

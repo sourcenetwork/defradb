@@ -40,7 +40,9 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner + reader
+                          delete:
                             expr: owner + reader
                           magic:
                             expr: owner - reader
@@ -138,7 +140,9 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           magic:
                             expr: reader & owner
@@ -236,7 +240,9 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           magic:
                             expr: reader

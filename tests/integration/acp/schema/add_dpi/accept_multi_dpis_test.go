@@ -32,7 +32,9 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
             permissions:
               read:
                 expr: owner + reader
-              write:
+              update:
+                expr: owner
+              delete:
                 expr: owner
 
             relations:

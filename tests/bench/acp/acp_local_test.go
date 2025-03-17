@@ -45,10 +45,12 @@ actor:
 resources:
   users:
     permissions:
-      write:
-        expr: owner
       read:
         expr: owner + reader
+      update:
+        expr: owner
+      delete:
+        expr: owner
 
     relations:
       owner:

@@ -40,7 +40,9 @@ func TestACP_AddDPISchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

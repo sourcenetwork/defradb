@@ -26,7 +26,9 @@ resources:
     permissions:
       read:
         expr: owner + reader
-      write:
+      update:
+        expr: owner
+      delete:
         expr: owner
 
     relations:
@@ -41,7 +43,9 @@ resources:
     permissions:
       read:
         expr: owner + reader
-      write:
+      update:
+        expr: owner
+      delete:
         expr: owner
 
     relations:

@@ -39,7 +39,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -65,7 +67,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -110,7 +114,10 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                             "read": {
                               "expr": "owner"
                             },
-                            "write": {
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
                               "expr": "owner"
                             }
                           },
@@ -146,7 +153,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -186,8 +195,10 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
             permissions:
               read:
                 expr: owner
-              write:
-                expr: owner
+			  update:
+				expr: owner
+			  delete:
+				expr: owner
 
             relations:
               owner:
@@ -246,7 +257,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -276,7 +289,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -317,7 +332,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -335,32 +352,35 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                   {
-                     "name": "test",
-                     "description": "a policy",
-                     "actor": {
-                       "name": "actor"
-                     },
-                     "resources": {
-                       "users": {
-                         "permissions": {
-                           "read": {
-                             "expr": "owner"
-                           },
-                           "write": {
-                             "expr": "owner"
-                           }
-                         },
-                         "relations": {
-                           "owner": {
-                             "types": [
-                               "actor"
-                             ]
-                           }
-                         }
-                       }
-                     }
-                   }
+                    {
+                      "name": "test",
+                      "description": "a policy",
+                      "actor": {
+                        "name": "actor"
+                      },
+                      "resources": {
+                        "users": {
+                          "permissions": {
+                            "read": {
+                              "expr": "owner"
+                            },
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
+                              "expr": "owner"
+                            }
+                          },
+                          "relations": {
+                            "owner": {
+                              "types": [
+                                "actor"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
                `,
 
 				ExpectedPolicyID: immutable.Some(
