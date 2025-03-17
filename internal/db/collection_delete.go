@@ -131,7 +131,7 @@ func (c *collection) applyDelete(
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.WritePermission,
+		acp.DeletePermission,
 		primaryKey.DocID,
 	)
 
