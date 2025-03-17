@@ -18,16 +18,19 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-// RawIdentity holds the raw bytes that make up an actor's identity.
+// RawIdentity represents an identity in a format suitable for serialization.
 type RawIdentity struct {
-	// PrivateKey is a hex-encoded private key
+	// PrivateKey is the actor's private key in HEX format.
 	PrivateKey string
-
-	// PublicKey is a hex-encoded public key
+	// PublicKey is the actor's public key in HEX format.
 	PublicKey string
-
-	// DID is `did:key` key generated from the public key address.
+	// DID is the actor's unique identifier.
+	//
+	// The address is derived from the actor's public key,
+	// using the did:key method
 	DID string
+	// KeyType is the type of the key (secp256k1 or ed25519)
+	KeyType string
 }
 
 // PublicRawIdentity holds the raw bytes that make up an actor's identity that can be shared publicly.

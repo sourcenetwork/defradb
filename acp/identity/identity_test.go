@@ -54,6 +54,7 @@ func Test_RawIdentityGeneration_ReturnsNewRawIdentity(t *testing.T) {
 	// Check that both private and public key are not empty.
 	require.NotEmpty(t, newIdentity.PrivateKey)
 	require.NotEmpty(t, newIdentity.PublicKey)
+	require.Equal(t, string(defracrypto.KeyTypeSecp256k1), newIdentity.KeyType)
 
 	// Check leading `did:key` prefix.
 	require.Equal(t, newIdentity.DID[:7], "did:key")
@@ -68,8 +69,10 @@ func Test_RawIdentityGenerationIsNotFixed_ReturnsUniqueRawIdentites(t *testing.T
 	// Check that both private and public key are not empty.
 	require.NotEmpty(t, newIdentity1.PrivateKey)
 	require.NotEmpty(t, newIdentity1.PublicKey)
+	require.Equal(t, string(defracrypto.KeyTypeSecp256k1), newIdentity1.KeyType)
 	require.NotEmpty(t, newIdentity2.PrivateKey)
 	require.NotEmpty(t, newIdentity2.PublicKey)
+	require.Equal(t, string(defracrypto.KeyTypeSecp256k1), newIdentity2.KeyType)
 
 	// Check leading `did:key` prefix.
 	require.Equal(t, newIdentity1.DID[:7], "did:key")
@@ -87,6 +90,7 @@ func Test_GenerateWithType_WithSecp256k1_ReturnsNewRawIdentity(t *testing.T) {
 
 	require.NotEmpty(t, newIdentity.PrivateKey)
 	require.NotEmpty(t, newIdentity.PublicKey)
+	require.Equal(t, string(defracrypto.KeyTypeSecp256k1), newIdentity.KeyType)
 
 	require.Equal(t, newIdentity.DID[:7], "did:key")
 
@@ -105,6 +109,7 @@ func Test_GenerateWithType_WithEd25519_ReturnsNewRawIdentity(t *testing.T) {
 
 	require.NotEmpty(t, newIdentity.PrivateKey)
 	require.NotEmpty(t, newIdentity.PublicKey)
+	require.Equal(t, string(defracrypto.KeyTypeEd25519), newIdentity.KeyType)
 
 	require.Equal(t, newIdentity.DID[:7], "did:key")
 

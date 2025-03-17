@@ -126,6 +126,7 @@ func (identity Identity) IntoRawIdentity() RawIdentity {
 		PrivateKey: hex.EncodeToString(privKeyBytes),
 		PublicKey:  hex.EncodeToString(pubKeyBytes),
 		DID:        identity.DID,
+		KeyType:    string(identity.PrivateKey.Type()),
 	}
 }
 
