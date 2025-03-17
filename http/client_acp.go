@@ -107,7 +107,7 @@ func (c *Client) DeleteDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteDocActorRelationshipResult, error) {
-	methodURL := c.http.baseURL.JoinPath("acp", "relationship")
+	methodURL := c.http.baseURL.JoinPath("acp", "relationship", "delete")
 
 	body, err := json.Marshal(
 		deleteDocActorRelationshipRequest{
@@ -124,7 +124,7 @@ func (c *Client) DeleteDocActorRelationship(
 
 	req, err := http.NewRequestWithContext(
 		ctx,
-		http.MethodDelete,
+		http.MethodPost,
 		methodURL.String(),
 		bytes.NewBuffer(body),
 	)
