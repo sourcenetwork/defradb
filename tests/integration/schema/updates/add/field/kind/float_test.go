@@ -110,7 +110,7 @@ func TestSchemaUpdatesAddFieldKindFloatSubstitutionWithCreate(t *testing.T) {
 			testUtils.SchemaPatch{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Float"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Float64"} }
 					]
 				`,
 			},

@@ -234,12 +234,23 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
 						) {
 						name
+						_version {
+							cid
+						}
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Johnn",
+							"_version": []map[string]any{
+								{
+									"cid": "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
+								},
+								{
+									"cid": "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
+								},
+							},
 						},
 					},
 				},

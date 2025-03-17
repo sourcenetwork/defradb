@@ -20,9 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
-
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -36,10 +34,12 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
 var (
-	log = corelog.NewLogger("db")
+	log    = corelog.NewLogger("db")
+	tracer = telemetry.NewTracer()
 )
 
 // make sure we match our client interface
@@ -54,9 +54,8 @@ const (
 	eventBufferSize = 100
 )
 
-// DB is the main interface for interacting with the
-// DefraDB storage system.
-type db struct {
+// DB is the main struct for DefraDB's storage layer.
+type DB struct {
 	glock sync.RWMutex
 
 	rootstore  datastore.Rootstore
@@ -95,7 +94,13 @@ type db struct {
 	// The intervals at which to retry replicator failures.
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals []time.Duration
+
+	// Whether block signing is enabled. If set to true DAG blocks will include a link to
+	// a block with the signature of the block.
+	blockSigningEnabled bool
 }
+
+var _ client.DB = (*DB)(nil)
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
@@ -104,7 +109,7 @@ func NewDB(
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
-) (client.DB, error) {
+) (*DB, error) {
 	return newDB(ctx, rootstore, acp, lens, options...)
 }
 
@@ -114,7 +119,7 @@ func newDB(
 	acp immutable.Option[acp.ACP],
 	lens client.LensRegistry,
 	options ...Option,
-) (*db, error) {
+) (*DB, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
 
 	parser, err := graphql.NewParser()
@@ -129,7 +134,7 @@ func newDB(
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	db := &db{
+	db := &DB{
 		rootstore:      rootstore,
 		multistore:     multistore,
 		acp:            acp,
@@ -146,6 +151,7 @@ func newDB(
 	}
 
 	db.nodeIdentity = opts.identity
+	db.blockSigningEnabled = opts.blockSigningEnabled
 
 	if lens != nil {
 		lens.Init(db)
@@ -167,50 +173,53 @@ func newDB(
 }
 
 // NewTxn creates a new transaction.
-func (db *db) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *db) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly), nil
 }
 
 // Rootstore returns the root datastore.
-func (db *db) Rootstore() datastore.Rootstore {
+func (db *DB) Rootstore() datastore.Rootstore {
 	return db.rootstore
 }
 
 // Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Blockstore() datastore.Blockstore {
+func (db *DB) Blockstore() datastore.Blockstore {
 	return db.multistore.Blockstore()
 }
 
 // Encstore returns the internal enc store which contains encryption key for documents and their fields.
-func (db *db) Encstore() datastore.Blockstore {
+func (db *DB) Encstore() datastore.Blockstore {
 	return db.multistore.Encstore()
 }
 
 // Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Peerstore() datastore.DSReaderWriter {
+func (db *DB) Peerstore() datastore.DSReaderWriter {
 	return db.multistore.Peerstore()
 }
 
 // Headstore returns the internal DAG store which contains IPLD blocks.
-func (db *db) Headstore() ds.Read {
+func (db *DB) Headstore() corekv.Reader {
 	return db.multistore.Headstore()
 }
 
-func (db *db) LensRegistry() client.LensRegistry {
+func (db *DB) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
-func (db *db) AddPolicy(
+func (db *DB) AddPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -230,7 +239,7 @@ func (db *db) AddPolicy(
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
-func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
 	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
 	if err != nil {
 		return err
@@ -256,13 +265,16 @@ func (db *db) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	return nil
 }
 
-func (db *db) AddDocActorRelationship(
+func (db *DB) AddDocActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
 ) (client.AddDocActorRelationshipResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -301,13 +313,16 @@ func (db *db) AddDocActorRelationship(
 	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
-func (db *db) DeleteDocActorRelationship(
+func (db *DB) DeleteDocActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
 ) (client.DeleteDocActorRelationshipResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	if !db.acp.HasValue() {
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -339,16 +354,23 @@ func (db *db) DeleteDocActorRelationship(
 	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
-func (db *db) GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
 		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
 	}
 	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
+func (db *DB) GetNodeIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
+	if db.nodeIdentity.HasValue() {
+		return db.nodeIdentity.Value().NewToken(time.Hour*24, audience, immutable.None[string]())
+	}
+	return nil, nil
+}
+
 // Initialize is called when a database is first run and creates all the db global meta data
 // like Collection ID counters.
-func (db *db) initialize(ctx context.Context) error {
+func (db *DB) initialize(ctx context.Context) error {
 	db.glock.Lock()
 	defer db.glock.Unlock()
 
@@ -366,8 +388,8 @@ func (db *db) initialize(ctx context.Context) error {
 		}
 	}
 
-	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
@@ -396,7 +418,7 @@ func (db *db) initialize(ctx context.Context) error {
 		return err
 	}
 
-	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
+	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -405,13 +427,13 @@ func (db *db) initialize(ctx context.Context) error {
 }
 
 // Events returns the events Channel.
-func (db *db) Events() *event.Bus {
+func (db *DB) Events() *event.Bus {
 	return db.events
 }
 
 // MaxRetries returns the maximum number of retries per transaction.
 // Defaults to `defaultMaxTxnRetries` if not explicitely set
-func (db *db) MaxTxnRetries() int {
+func (db *DB) MaxTxnRetries() int {
 	if db.maxTxnRetries.HasValue() {
 		return db.maxTxnRetries.Value()
 	}
@@ -419,13 +441,13 @@ func (db *db) MaxTxnRetries() int {
 }
 
 // PrintDump prints the entire database to console.
-func (db *db) PrintDump(ctx context.Context) error {
+func (db *DB) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.multistore.Rootstore())
 }
 
 // Close is called when we are shutting down the database.
 // This is the place for any last minute cleanup or releasing of resources (i.e.: Badger instance).
-func (db *db) Close() {
+func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
 
 	db.ctxCancel()
@@ -447,20 +469,28 @@ func (db *db) Close() {
 }
 
 func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	q := dsq.Query{
-		Prefix:   "",
-		KeysOnly: false,
-		Orders:   []dsq.Order{dsq.OrderByKey{}},
-	}
-
-	results, err := store.Query(ctx, q)
+	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err
 	}
 
-	for r := range results.Next() {
-		log.InfoContext(ctx, "", corelog.Any(r.Key, r.Value))
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if !hasNext {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		log.InfoContext(ctx, "", corelog.Any(string(iter.Key()), value))
 	}
 
-	return results.Close()
+	return iter.Close()
 }

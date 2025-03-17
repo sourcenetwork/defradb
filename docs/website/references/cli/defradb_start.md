@@ -21,6 +21,8 @@ defradb start [flags]
       --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
       --no-encryption                 Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
       --no-p2p                        Disable the peer-to-peer network synchronization system
+      --no-signing                    Disable signing of commits.
+      --no-telemetry                  Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
       --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray             List of peers to connect to
       --privkeypath string            Path to the private key for tls

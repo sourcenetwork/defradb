@@ -66,6 +66,7 @@ func (f *lensedFetcher) Init(
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
 	acp immutable.Option[acp.ACP],
+	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
@@ -117,6 +118,7 @@ historyLoop:
 		identity,
 		txn,
 		acp,
+		index,
 		col,
 		innerFetcherFields,
 		filter,
@@ -313,14 +315,14 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			return err
 		}
 
-		err = f.txn.Datastore().Put(ctx, fieldKey.ToDS(), bytes)
+		err = f.txn.Datastore().Set(ctx, fieldKey.Bytes(), bytes)
 		if err != nil {
 			return err
 		}
 	}
 
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	err := f.txn.Datastore().Put(ctx, versionKey.ToDS(), []byte(f.targetVersionID))
+	err := f.txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
 	if err != nil {
 		return err
 	}

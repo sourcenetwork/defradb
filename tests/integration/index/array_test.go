@@ -122,7 +122,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t *testing.T) {
+func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
 		User(filter: {numbers: {_none: {_ge: 33}}}) {
 			name
@@ -166,8 +166,9 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t *testing.
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(9),
+				Request: makeExplainQuery(req),
+				// index is not used for _none operator as it might be even less optimal than full scan
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}

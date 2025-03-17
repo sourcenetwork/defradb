@@ -30,8 +30,11 @@ import (
 
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
+	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
@@ -39,12 +42,23 @@ import (
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 )
 
+// DB hold the database related methods that are required by Peer.
+type DB interface {
+	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
+	Blockstore() datastore.Blockstore
+	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
+	Encstore() datastore.Blockstore
+	// GetCollections returns the list of collections according to the given options.
+	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
+	// GetNodeIndentityToken returns an identity token for the given audience.
+	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	// GetNodeIdentity returns the node's public raw identity.
+	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+}
+
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	blockstore datastore.Blockstore
-	encstore   datastore.Blockstore
-
 	bus       *event.Bus
 	updateSub *event.Subscription
 
@@ -59,7 +73,10 @@ type Peer struct {
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
-	bserv blockservice.BlockService
+	blockService blockservice.BlockService
+
+	acp immutable.Option[acp.ACP]
+	db  DB
 
 	bootCloser io.Closer
 }
@@ -67,9 +84,9 @@ type Peer struct {
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
 	ctx context.Context,
-	blockstore datastore.Blockstore,
-	encstore datastore.Blockstore,
 	bus *event.Bus,
+	acp immutable.Option[acp.ACP],
+	db DB,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
 	ctx, cancel := context.WithCancel(ctx)
@@ -81,7 +98,7 @@ func NewPeer(
 		}
 	}()
 
-	if blockstore == nil || encstore == nil {
+	if db == nil {
 		return nil, ErrNilDB
 	}
 
@@ -111,19 +128,15 @@ func NewPeer(
 		corelog.Any("Address", options.ListenAddresses),
 	)
 
-	bswapnet := network.NewFromIpfsHost(h, ddht)
-	bswap := bitswap.New(ctx, bswapnet, blockstore)
-
 	p = &Peer{
-		host:       h,
-		dht:        ddht,
-		blockstore: blockstore,
-		encstore:   encstore,
-		ctx:        ctx,
-		cancel:     cancel,
-		bus:        bus,
-		p2pRPC:     grpc.NewServer(options.GRPCServerOptions...),
-		bserv:      blockservice.New(blockstore, bswap),
+		host:   h,
+		dht:    ddht,
+		ctx:    ctx,
+		cancel: cancel,
+		bus:    bus,
+		acp:    acp,
+		db:     db,
+		p2pRPC: grpc.NewServer(options.GRPCServerOptions...),
 	}
 
 	if options.EnablePubSub {
@@ -148,6 +161,10 @@ func NewPeer(
 	if err != nil {
 		return nil, err
 	}
+
+	bswapnet := network.NewFromIpfsHost(h)
+	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
+	p.blockService = blockservice.New(db.Blockstore(), bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
@@ -202,7 +219,7 @@ func (p *Peer) Close() {
 		p.bus.Unsubscribe(p.updateSub)
 	}
 
-	if err := p.bserv.Close(); err != nil {
+	if err := p.blockService.Close(); err != nil {
 		log.ErrorE("Error closing block service", err)
 	}
 
@@ -292,7 +309,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// let the exchange know we have this block
 	// this should speed up the dag sync process
-	err := p.bserv.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
+	err := p.blockService.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
 	if err != nil {
 		log.ErrorE("Failed to notify new blocks", err)
 	}

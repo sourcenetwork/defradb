@@ -14,7 +14,7 @@ import (
 	"context"
 	"encoding/binary"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -25,14 +25,14 @@ type sequence struct {
 	val uint64
 }
 
-func (db *db) getSequence(ctx context.Context, key keys.Key) (*sequence, error) {
+func (db *DB) getSequence(ctx context.Context, key keys.Key) (*sequence, error) {
 	seq := &sequence{
 		key: key,
 		val: uint64(0),
 	}
 
 	_, err := seq.get(ctx)
-	if errors.Is(err, ds.ErrNotFound) {
+	if errors.Is(err, corekv.ErrNotFound) {
 		err = seq.update(ctx)
 		if err != nil {
 			return nil, err
@@ -47,7 +47,7 @@ func (db *db) getSequence(ctx context.Context, key keys.Key) (*sequence, error) 
 func (seq *sequence) get(ctx context.Context) (uint64, error) {
 	txn := mustGetContextTxn(ctx)
 
-	val, err := txn.Systemstore().Get(ctx, seq.key.ToDS())
+	val, err := txn.Systemstore().Get(ctx, seq.key.Bytes())
 	if err != nil {
 		return 0, err
 	}
@@ -61,7 +61,7 @@ func (seq *sequence) update(ctx context.Context) error {
 
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := txn.Systemstore().Put(ctx, seq.key.ToDS(), buf[:]); err != nil {
+	if err := txn.Systemstore().Set(ctx, seq.key.Bytes(), buf[:]); err != nil {
 		return err
 	}
 

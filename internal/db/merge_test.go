@@ -37,7 +37,7 @@ type User {
 func TestMerge_SingleBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, userSchema)
@@ -82,7 +82,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 func TestMerge_DualBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, userSchema)
@@ -140,7 +140,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, userSchema)

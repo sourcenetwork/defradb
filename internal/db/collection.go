@@ -17,11 +17,11 @@ import (
 	"strconv"
 	"strings"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -34,6 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
@@ -42,7 +43,7 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *db
+	db             *DB
 	def            client.CollectionDefinition
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
@@ -55,7 +56,7 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *db) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
+func (db *DB) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
 	return &collection{
 		db:  db,
 		def: client.CollectionDefinition{Description: desc, Schema: schema},
@@ -77,7 +78,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
 }
 
-func (db *db) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
+func (db *DB) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
 	txn := mustGetContextTxn(ctx)
 
 	col, err := description.GetCollectionByID(ctx, txn, id)
@@ -101,7 +102,7 @@ func (db *db) getCollectionByID(ctx context.Context, id uint32) (client.Collecti
 }
 
 // getCollectionByName returns an existing collection within the database.
-func (db *db) getCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Collection, error) {
 	if name == "" {
 		return nil, ErrCollectionNameEmpty
 	}
@@ -120,7 +121,7 @@ func (db *db) getCollectionByName(ctx context.Context, name string) (client.Coll
 //
 // Inactive collections are not returned by default unless a specific schema version ID
 // is provided.
-func (db *db) getCollections(
+func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
@@ -195,7 +196,7 @@ func (db *db) getCollections(
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
-			if !errors.Is(err, ds.ErrNotFound) {
+			if !errors.Is(err, corekv.ErrNotFound) {
 				return nil, err
 			}
 		}
@@ -219,7 +220,7 @@ func (db *db) getCollections(
 }
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
-func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
+func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
 	txn := mustGetContextTxn(ctx)
 
 	cols, err := description.GetActiveCollections(ctx, txn)
@@ -268,6 +269,9 @@ func (db *db) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
@@ -282,8 +286,8 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionRootID: c.Description().RootID,
 	}
-	q, err := txn.Datastore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
 	if err != nil {
@@ -293,13 +297,13 @@ func (c *collection) getAllDocIDsChan(
 	resCh := make(chan client.DocIDResult)
 	go func() {
 		defer func() {
-			if err := q.Close(); err != nil {
+			if err := iter.Close(); err != nil {
 				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
 			close(resCh)
 			txn.Discard(ctx)
 		}()
-		for res := range q.Next() {
+		for {
 			// check for Done on context first
 			select {
 			case <-ctx.Done():
@@ -308,14 +312,21 @@ func (c *collection) getAllDocIDsChan(
 			default:
 				// noop, just continue on the with the for loop
 			}
-			if res.Error != nil {
+
+			hasNext, err := iter.Next()
+			if err != nil {
 				resCh <- client.DocIDResult{
-					Err: res.Error,
+					Err: err,
 				}
 				return
 			}
+			if !hasNext {
+				break
+			}
 
-			rawDocID := ds.NewKey(res.Key).BaseNamespace()
+			splitString := strings.Split(string(iter.Key()), "/")
+			rawDocID := splitString[len(splitString)-1]
+
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
 				resCh <- client.DocIDResult{
@@ -382,6 +393,9 @@ func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -402,6 +416,9 @@ func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -437,6 +454,11 @@ func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	err := c.setEmbedding(ctx, doc, true)
+	if err != nil {
+		return err
+	}
+
 	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
 	if err != nil {
 		return err
@@ -458,7 +480,7 @@ func (c *collection) create(
 	if len(doc.Values()) == 0 {
 		txn := mustGetContextTxn(ctx)
 		valueKey := c.getDataStoreKeyFromDocID(docID)
-		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
+		err = txn.Datastore().Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -485,6 +507,9 @@ func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -533,6 +558,11 @@ func (c *collection) update(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
+	err = c.setEmbedding(ctx, doc, false)
+	if err != nil {
+		return err
+	}
+
 	err = c.save(ctx, doc, false)
 	if err != nil {
 		return err
@@ -546,6 +576,9 @@ func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -616,6 +649,11 @@ func (c *collection) save(
 	}
 	txn := mustGetContextTxn(ctx)
 
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
+
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
 	// wait, and just did it here, then *if* the commit fails down
@@ -624,6 +662,10 @@ func (c *collection) save(
 	txn.OnSuccess(func() {
 		doc.Clean()
 	})
+
+	if c.db.blockSigningEnabled {
+		ctx = clock.ContextWithSigning(ctx)
+	}
 
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
@@ -779,7 +821,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	}
 
 	filter := fmt.Sprintf(
-		`{_and: [{%s: {_ne: "%s"}}, {%s: {_eq: "%s"}}]}`,
+		`%s: {_ne: "%s"}, %s: {_eq: "%s"}`,
 		request.DocIDFieldName,
 		docID,
 		fieldDescription.Name,
@@ -841,6 +883,9 @@ func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
@@ -866,6 +911,9 @@ func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
@@ -874,7 +922,7 @@ func (c *collection) Exists(
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return false, err
 	}
 	return exists && !isDeleted, txn.Commit(ctx)
@@ -897,8 +945,8 @@ func (c *collection) exists(
 	}
 
 	txn := mustGetContextTxn(ctx)
-	val, err := txn.Datastore().Get(ctx, primaryKey.ToDS())
-	if err != nil && errors.Is(err, ds.ErrNotFound) {
+	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
+	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
 		return false, false, err

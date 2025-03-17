@@ -34,6 +34,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Access Control System](#access-control-system)
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
+   * [Telemetry](#telemetry)
    * [Community](#community)
    * [Licensing](#licensing)
    * [Contributors](#contributors)
@@ -472,6 +473,14 @@ To restore the data, run the following command:
 ```shell
 defradb client backup import path/to/backup.json
 ```
+
+## Telemetry
+
+DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraDB you must build with the `telemetry` tag set. To configure the HTTP exporters use the environment variables in the links below.
+
+[Metric exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp)
+
+[Trace exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
 
 ## Community
 

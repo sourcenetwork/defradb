@@ -11,7 +11,6 @@
 package test_acp_p2p
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, p2p create private documents on different nodes, with source-hub",
@@ -84,22 +81,22 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -123,6 +120,148 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test acp, p2p create a private documents and sync after adding actor relationship, with source-hub",
+		SupportedACPTypes: immutable.Some(
+			[]testUtils.ACPType{
+				testUtils.SourceHubACPType,
+			},
+		),
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+
+			testUtils.AddPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+                    name: Test Policy
+
+                    description: A Policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          read:
+                            expr: owner + reader + writer
+
+                          write:
+                            expr: owner + writer
+
+                          nothing:
+                            expr: dummy
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+
+                          reader:
+                            types:
+                              - actor
+
+                          writer:
+                            types:
+                              - actor
+
+                          admin:
+                            manages:
+                              - reader
+                            types:
+                              - actor
+
+                          dummy:
+                            types:
+                              - actor
+                `,
+			},
+
+			testUtils.SchemaUpdate{
+				Schema: `
+						type Users @policy(
+							id: "{{.Policy0}}",
+							resource: "users"
+						) {
+							name: String
+							age: Int
+						}
+					`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
+			},
+
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+
+			testUtils.CreateDoc{
+				Identity:     testUtils.ClientIdentity(1),
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Shahzad",
+				},
+			},
+
+			// At this point the document is only accessible to the owner so node 1
+			// should not have been able to sync the document.
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(1),
+				NodeID:   immutable.Some(1),
+				Request: `query {
+					Users{
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.NodeIdentity(1),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
+				ExpectedExistence: false,
+			},
+
+			testUtils.WaitForSync{},
+
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(1),
+				NodeID:   immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Shahzad"},
+					},
 				},
 			},
 		},

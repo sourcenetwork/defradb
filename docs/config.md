@@ -164,3 +164,7 @@ SourceHub ACP requests in order to create protected data.
 ## `secretfile`
 
 Path to the file containing secrets. Defaults to `.env`.
+
+## `telemetry.disabled`
+
+Disables telemetry reporting. Telemetry is only enabled in builds that use the `telemetry` flag. Defaults to `false`.

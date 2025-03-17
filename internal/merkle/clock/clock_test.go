@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	cid "github.com/ipfs/go-cid"
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv/memory"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -25,12 +25,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func newDS() ds.Datastore {
-	return ds.NewMapDatastore()
-}
-
 func newTestMerkleClock() *MerkleClock {
-	s := newDS()
+	s := memory.NewDatastore(context.Background())
 
 	multistore := datastore.MultiStoreFrom(s)
 	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
@@ -44,7 +40,8 @@ func newTestMerkleClock() *MerkleClock {
 }
 
 func TestNewMerkleClock(t *testing.T) {
-	s := newDS()
+	s := memory.NewDatastore(context.Background())
+
 	multistore := datastore.MultiStoreFrom(s)
 	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
 	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), multistore.Encstore(), keys.HeadstoreDocKey{}, reg)
@@ -64,7 +61,7 @@ func TestMerkleClockPutBlock(t *testing.T) {
 	reg := crdt.LWWRegister{}
 	delta := reg.Set([]byte("test"))
 	block := coreblock.New(delta, nil)
-	_, err := clk.putBlock(ctx, block)
+	_, err := putBlock(ctx, clk.blockstore, block)
 	if err != nil {
 		t.Errorf("Failed to putBlock, err: %v", err)
 	}
@@ -91,7 +88,7 @@ func TestMerkleClockPutBlockWithHeads(t *testing.T) {
 	}
 	heads := []cid.Cid{c}
 	block := coreblock.New(delta, nil, heads...)
-	_, err = clk.putBlock(ctx, block)
+	_, err = putBlock(ctx, clk.blockstore, block)
 	if err != nil {
 		t.Error("Failed to putBlock with heads:", err)
 		return

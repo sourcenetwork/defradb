@@ -12,11 +12,13 @@ package planner
 
 import (
 	cid "github.com/ipfs/go-cid"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -84,7 +86,11 @@ func (n *dagScanNode) Init() error {
 		}
 	}
 
-	return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+	// only need the head fetcher for non cid specific queries
+	if !n.commitSelect.Cid.HasValue() {
+		return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+	}
+	return nil
 }
 
 func (n *dagScanNode) Start() error {
@@ -123,7 +129,10 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *dagScanNode) Close() error {
-	return n.fetcher.Close()
+	if !n.commitSelect.Cid.HasValue() {
+		return n.fetcher.Close()
+	}
+	return nil
 }
 
 func (n *dagScanNode) Source() planNode { return nil }
@@ -183,7 +192,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
-	} else {
+	} else if n.commitSelect.Cid.HasValue() && len(n.visitedNodes) == 0 {
+		cid, err := cid.Parse(n.commitSelect.Cid.Value())
+		if err != nil {
+			return false, err
+		}
+
+		currentCid = &cid
+	} else if !n.commitSelect.Cid.HasValue() {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
@@ -192,6 +208,8 @@ func (n *dagScanNode) Next() (bool, error) {
 		currentCid = cid
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
+	} else {
+		return false, nil
 	}
 
 	// skip already visited CIDs
@@ -207,7 +225,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// clear the cid after
 	block, err := store.Get(n.planner.ctx, *currentCid)
 	if err != nil {
-		return false, err
+		return false, errors.Join(ErrMissingCID, err)
 	}
 
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
@@ -220,6 +238,18 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
+	// if this is a time travel query or a latestCommits
+	// (cid + undefined depth + docId) then we need to make sure the
+	// target block actually belongs to the doc, since we are
+	// bypassing the HeadFetcher for the first cid
+	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
+	if n.commitSelect.Cid.HasValue() &&
+		len(n.visitedNodes) == 0 &&
+		n.commitSelect.DocID.HasValue() &&
+		currentDocID != n.commitSelect.DocID.Value() {
+		return false, ErrIncorrectCIDForDocId
+	}
+
 	// the dagscan node can traverse into the merkle dag
 	// based on the specified depth limit.
 	// The default query operation 'latestCommit' only cares about
@@ -230,7 +260,13 @@ func (n *dagScanNode) Next() (bool, error) {
 	// HEAD paths.
 	n.depthVisited++
 	n.visitedNodes[currentCid.String()] = true // mark the current node as "visited"
-	if !n.commitSelect.Depth.HasValue() || n.depthVisited < n.commitSelect.Depth.Value() {
+
+	// the default behavior for depth is:
+	// doc ID, max depth
+	// just doc ID + CID, 0 depth
+	// doc ID + CID + depth, use depth
+	if (!n.commitSelect.Depth.HasValue() && !n.commitSelect.Cid.HasValue()) ||
+		(n.commitSelect.Depth.HasValue() && n.depthVisited < n.commitSelect.Depth.Value()) {
 		// Insert the newly fetched cids into the slice of queued items, in reverse order
 		// so that the last new cid will be at the front of the slice
 		n.queuedCids = append(make([]*cid.Cid, len(dagBlock.Heads)), n.queuedCids...)
@@ -238,12 +274,6 @@ func (n *dagScanNode) Next() (bool, error) {
 		for i, head := range dagBlock.Heads {
 			n.queuedCids[len(dagBlock.Heads)-i-1] = &head.Cid
 		}
-	}
-
-	if n.commitSelect.Cid.HasValue() && currentCid.String() != n.commitSelect.Cid.Value() {
-		// If a specific cid has been requested, and the current item does not
-		// match, keep searching.
-		return n.Next()
 	}
 
 	n.currentValue = currentValue
@@ -295,64 +325,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
-	prio := block.Delta.GetPriority()
-
 	schemaVersionId := block.Delta.GetSchemaVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
-
-	var fieldName any
-	var fieldID any
-	if block.Delta.CompositeDAGDelta != nil {
-		fieldID = core.COMPOSITE_NAMESPACE
-		fieldName = nil
-	} else if block.Delta.CollectionDelta != nil {
-		fieldID = nil
-		fieldName = nil
-	} else {
-		fName := block.Delta.GetFieldName()
-		fieldName = fName
-		cols, err := n.planner.db.GetCollections(
-			n.planner.ctx,
-			client.CollectionFetchOptions{
-				IncludeInactive: immutable.Some(true),
-				SchemaVersionID: immutable.Some(schemaVersionId),
-			},
-		)
-		if err != nil {
-			return core.Doc{}, err
-		}
-		if len(cols) == 0 {
-			return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
-		}
-
-		// Because we only care about the schema, we can safely take the first - the schema is the same
-		// for all in the set.
-		field, ok := cols[0].Definition().GetFieldByName(fName)
-		if !ok {
-			return core.Doc{}, client.NewErrFieldNotExist(fName)
-		}
-		fieldID = field.ID.String()
-	}
-	// We need to explicitely set delta to an untyped nil otherwise it will be marshalled
-	// as an empty slice in the JSON response of the HTTP client.
-	d := block.Delta.GetData()
-	if d != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)
-	} else {
-		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
-	}
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
-
-	docID := block.Delta.GetDocID()
-	if docID != nil {
-		n.commitSelect.DocumentMapping.SetFirstOfName(
-			&commit,
-			request.DocIDArgName,
-			string(docID),
-		)
-	}
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
@@ -366,6 +340,56 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 	if len(cols) == 0 {
 		return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+	}
+
+	var fieldName any
+	var fieldID any
+	if block.Delta.CompositeDAGDelta != nil {
+		fieldID = core.COMPOSITE_NAMESPACE
+		fieldName = nil
+	} else if block.Delta.CollectionDelta != nil {
+		fieldID = nil
+		fieldName = nil
+	} else {
+		fName := block.Delta.GetFieldName()
+		fieldName = fName
+
+		// Because we only care about the schema, we can safely take the first - the schema is the same
+		// for all in the set.
+		field, ok := cols[0].Definition().GetFieldByName(fName)
+		if !ok {
+			return core.Doc{}, client.NewErrFieldNotExist(fName)
+		}
+		fieldID = field.ID.String()
+	}
+	// We need to explicitly set delta to an untyped nil otherwise it will be marshalled
+	// as an empty slice in the JSON response of the HTTP client.
+	d := block.Delta.GetData()
+	if d != nil {
+		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, d)
+	} else {
+		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
+	}
+
+	if block.Signature != nil {
+		err := n.addSignatureFieldToDoc(*block.Signature, &commit)
+		if err != nil {
+			return core.Doc{}, err
+		}
+	}
+
+	prio := block.Delta.GetPriority()
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
+
+	docID := block.Delta.GetDocID()
+	if docID != nil {
+		n.commitSelect.DocumentMapping.SetFirstOfName(
+			&commit,
+			request.DocIDArgName,
+			string(docID),
+		)
 	}
 
 	// WARNING: This will become incorrect once we allow multiple collections to share the same schema,
@@ -406,4 +430,28 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 
 	return commit, nil
+}
+
+func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
+	store := n.planner.txn.Blockstore()
+	sigIPLDBlock, err := store.Get(n.planner.ctx, link.Cid)
+	if err != nil {
+		return err
+	}
+
+	sigBlock, err := coreblock.GetSignatureBlockFromBytes(sigIPLDBlock.RawData())
+	if err != nil {
+		return err
+	}
+	sigFieldIndex := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName][0]
+	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndex]
+
+	sigDoc := sigMapping.NewDoc()
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, sigBlock.Header.Identity)
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureValueFieldName, sigBlock.Value)
+
+	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
+
+	return nil
 }

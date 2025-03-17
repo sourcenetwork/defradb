@@ -26,8 +26,7 @@ const (
 	errMissingReqArgToAddDocActorRelationship    = "missing a required argument needed to add doc actor relationship"
 	errMissingReqArgToDeleteDocActorRelationship = "missing a required argument needed to delete doc actor relationship"
 
-	errObjectDidNotRegister = "no-op while registering object (already exists or error) with acp"
-	errNoPolicyArgs         = "missing policy arguments, must have both id and resource"
+	errNoPolicyArgs = "missing policy arguments, must have both id and resource"
 
 	errPolicyIDMustNotBeEmpty        = "policyID must not be empty"
 	errPolicyDoesNotExistWithACP     = "policyID specified does not exist with acp"
@@ -57,7 +56,7 @@ var (
 
 	ErrPolicyDataMustNotBeEmpty    = errors.New("policy data can not be empty")
 	ErrPolicyCreatorMustNotBeEmpty = errors.New("policy creator can not be empty")
-	ErrObjectDidNotRegister        = errors.New(errObjectDidNotRegister)
+	ErrACPResetState               = errors.New("acp could not be reset")
 	ErrNoPolicyArgs                = errors.New(errNoPolicyArgs)
 	ErrPolicyIDMustNotBeEmpty      = errors.New(errPolicyIDMustNotBeEmpty)
 	ErrResourceNameMustNotBeEmpty  = errors.New(errResourceNameMustNotBeEmpty)

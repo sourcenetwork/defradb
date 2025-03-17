@@ -13,18 +13,23 @@ package db
 import (
 	"context"
 
-	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 const marker = byte(0xff)
 
-func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -65,13 +70,15 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Put(ctx, key.ToDS(), []byte{marker})
+		err = txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
 			return err
 		}
 		evt.ToAdd = append(evt.ToAdd, col.SchemaRoot())
 	}
 
+	// This is a node specific action which means the actor is the node itself.
+	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
@@ -89,7 +96,10 @@ func (db *db) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	return txn.Commit(ctx)
 }
 
-func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -122,13 +132,15 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Delete(ctx, key.ToDS())
+		err = txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
 		evt.ToRemove = append(evt.ToRemove, col.SchemaRoot())
 	}
 
+	// This is a node specific action which means the actor is the node itself.
+	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range storeCollections {
 		keyChan, err := col.GetAllDocIDs(ctx)
 		if err != nil {
@@ -146,34 +158,45 @@ func (db *db) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	return txn.Commit(ctx)
 }
 
-func (db *db) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	txn, err := db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 	defer txn.Discard(ctx)
 
-	query := dsq.Query{
-		Prefix: keys.NewP2PCollectionKey("").ToString(),
-	}
-	results, err := txn.Systemstore().Query(ctx, query)
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
+		KeysOnly: true,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	collectionIDs := []string{}
-	for result := range results.Next() {
-		key, err := keys.NewP2PCollectionKeyFromString(result.Key)
+	for {
+		hasNext, err := iter.Next()
 		if err != nil {
-			return nil, err
+			return nil, errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		key, err := keys.NewP2PCollectionKeyFromString(string(iter.Key()))
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
 		}
 		collectionIDs = append(collectionIDs, key.CollectionID)
 	}
 
-	return collectionIDs, nil
+	return collectionIDs, iter.Close()
 }
 
-func (db *db) PeerInfo() peer.AddrInfo {
+func (db *DB) PeerInfo() peer.AddrInfo {
 	peerInfo := db.peerInfo.Load()
 	if peerInfo != nil {
 		return peerInfo.(peer.AddrInfo)
@@ -181,7 +204,7 @@ func (db *db) PeerInfo() peer.AddrInfo {
 	return peer.AddrInfo{}
 }
 
-func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
+func (db *DB) loadAndPublishP2PCollections(ctx context.Context) error {
 	schemaRoots, err := db.GetAllP2PCollections(ctx)
 	if err != nil {
 		return err
@@ -202,6 +225,8 @@ func (db *db) loadAndPublishP2PCollections(ctx context.Context) error {
 		colMap[schemaRoot] = struct{}{}
 	}
 
+	// This is a node specific action which means the actor is the node itself.
+	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range cols {
 		// If we subscribed to the collection, we skip subscribing to the collection's docIDs.
 		if _, ok := colMap[col.SchemaRoot()]; ok {

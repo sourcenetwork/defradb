@@ -62,20 +62,22 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_LocalACP(t *test
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.ConnectPeers{
@@ -139,19 +141,21 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
-						id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
@@ -168,9 +172,10 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 					"name": "John",
 				},
 			},
-			testUtils.WaitForSync{},
 			testUtils.Request{
-				// Ensure that the document is accessible on all nodes to authorized actors
+				// The document will only be accessible on node 0 since node 1 is not authorized to
+				// access the document.
+				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -185,6 +190,22 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 							"name": "John",
 						},
 					},
+				},
+			},
+			testUtils.Request{
+				// Since node 1 is not authorized to access the document, it won't have to document
+				// so even if requesting with an authorized identity, the document won't be returned.
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
+				Request: `
+					query {
+						Users {
+							name
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
 				},
 			},
 			testUtils.Request{

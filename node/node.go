@@ -12,14 +12,15 @@ package node
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	gohttp "net/http"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
@@ -88,6 +89,7 @@ type Node struct {
 	Peer       *net.Peer
 	Server     *http.Server
 	kmsService kms.Service
+	acp        immutable.Option[acp.ACP]
 
 	options    *Options
 	dbOpts     []db.Option
@@ -137,7 +139,7 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	acp, err := NewACP(ctx, n.acpOpts...)
+	n.acp, err = NewACP(ctx, n.acpOpts...)
 	if err != nil {
 		return err
 	}
@@ -147,19 +149,26 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, acp, lens, n.dbOpts...)
+	coreDB, err := db.NewDB(ctx, rootstore, n.acp, lens, n.dbOpts...)
 	if err != nil {
 		return err
 	}
+	n.DB = coreDB
 
 	if !n.options.disableP2P {
 		// setup net node
-		n.Peer, err = net.NewPeer(ctx, n.DB.Blockstore(), n.DB.Encstore(), n.DB.Events(), n.netOpts...)
+		n.Peer, err = net.NewPeer(
+			ctx,
+			coreDB.Events(),
+			n.acp,
+			coreDB,
+			n.netOpts...,
+		)
 		if err != nil {
 			return err
 		}
 
-		ident, err := n.DB.GetNodeIdentity(ctx)
+		ident, err := coreDB.GetNodeIdentity(ctx)
 		if err != nil {
 			return err
 		}
@@ -171,10 +180,10 @@ func (n *Node) Start(ctx context.Context) error {
 					ctx,
 					n.Peer.PeerID(),
 					n.Peer.Server(),
-					n.DB.Events(),
-					n.DB.Encstore(),
-					acp,
-					db.NewCollectionRetriever(n.DB),
+					coreDB.Events(),
+					coreDB.Encstore(),
+					n.acp,
+					db.NewCollectionRetriever(coreDB),
 					ident.Value().DID,
 				)
 			}
@@ -186,7 +195,7 @@ func (n *Node) Start(ctx context.Context) error {
 
 	if !n.options.disableAPI {
 		// setup http server
-		handler, err := http.NewHandler(n.DB)
+		handler, err := http.NewHandler(coreDB)
 		if err != nil {
 			return err
 		}
@@ -240,5 +249,21 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	if n.acp.HasValue() {
+		acp := n.acp.Value()
+		err := acp.ResetState(ctx)
+		if err != nil {
+			// for now we will just log this error, since SourceHub ACP doesn't yet
+			// implement the ResetState.
+			log.ErrorE("Failed to reset ACP state", err)
+		}
+		// follow up close call on ACP is required since the node.Start function starts
+		// ACP again anyways so we need to gracefully close before starting again
+		err = acp.Close()
+		if err != nil {
+			return err
+		}
+	}
+
 	return n.Start(ctx)
 }

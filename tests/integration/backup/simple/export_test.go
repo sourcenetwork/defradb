@@ -79,7 +79,7 @@ func TestBackupExport_WithInvalidCollection_ReturnError(t *testing.T) {
 				Config: client.BackupConfig{
 					Collections: []string{"Invalid"},
 				},
-				ExpectedError: "failed to get collection: datastore: key not found. Name: Invalid",
+				ExpectedError: "failed to get collection: key not found. Name: Invalid",
 			},
 		},
 	}

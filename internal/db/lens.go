@@ -13,7 +13,7 @@ package db
 import (
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	txn := mustGetContextTxn(ctx)
 
 	dstCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, cfg.DestinationSchemaVersionID)
@@ -117,7 +117,7 @@ func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
 				// If the root schema id is known, we need to add it to the index, even if the schema is not known locally
 				schema, err := description.GetSchemaVersion(ctx, txn, cfg.SourceSchemaVersionID)
 				if err != nil {
-					if !errors.Is(err, ds.ErrNotFound) {
+					if !errors.Is(err, corekv.ErrNotFound) {
 						return err
 					}
 				} else {
@@ -126,7 +126,7 @@ func (db *db) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 				if schemaFound {
 					schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
-					err = txn.Systemstore().Put(ctx, schemaRootKey.ToDS(), []byte{})
+					err = txn.Systemstore().Set(ctx, schemaRootKey.Bytes(), []byte{})
 					if err != nil {
 						return err
 					}

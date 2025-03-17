@@ -11,15 +11,12 @@
 package test_acp_relationship_doc_actor_delete
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner revokes read access twice, second time is no-op",
@@ -72,22 +69,22 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -151,8 +148,6 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 }
 
 func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner revokes read access from another actor, they can not read anymore",
@@ -205,22 +200,22 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

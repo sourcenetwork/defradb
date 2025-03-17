@@ -106,19 +106,23 @@ func defaultDirectivesType(
 		types.RelationDirective(),
 		types.MaterializedDirective(),
 		types.BranchableDirective(),
+		types.VectorEmbeddingDirective(),
+		types.ConstraintsDirective(),
 	}
 }
 
 func inlineArrayTypes() []gql.Type {
 	return []gql.Type{
 		gql.Boolean,
-		gql.Float,
+		types.Float32,
+		types.Float64,
 		gql.Int,
 		gql.String,
 		gql.NewNonNull(gql.Boolean),
-		gql.NewNonNull(gql.Float),
 		gql.NewNonNull(gql.Int),
 		gql.NewNonNull(gql.String),
+		gql.NewNonNull(types.Float32),
+		gql.NewNonNull(types.Float64),
 	}
 }
 
@@ -137,14 +141,16 @@ func defaultTypes(
 
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
-	floatOpBlock := types.FloatOperatorBlock()
+	float64OpBlock := types.Float64OperatorBlock()
+	float32OpBlock := types.Float32OperatorBlock()
 	booleanOpBlock := types.BooleanOperatorBlock()
 	stringOpBlock := types.StringOperatorBlock()
 	blobOpBlock := types.BlobOperatorBlock(blobScalarType)
 	dateTimeOpBlock := types.DateTimeOperatorBlock()
 
 	notNullIntOpBlock := types.NotNullIntOperatorBlock()
-	notNullFloatOpBlock := types.NotNullFloatOperatorBlock()
+	notNullFloat64OpBlock := types.NotNullFloat64OperatorBlock()
+	notNullFloat32OpBlock := types.NotNullFloat32OperatorBlock()
 	notNullBooleanOpBlock := types.NotNullBooleanOperatorBlock()
 	notNullStringOpBlock := types.NotNullStringOperatorBlock()
 	notNullBlobOpBlock := types.NotNullBlobOperatorBlock(blobScalarType)
@@ -154,6 +160,8 @@ func defaultTypes(
 		gql.Boolean,
 		gql.DateTime,
 		gql.Float,
+		types.Float32,
+		types.Float64,
 		gql.ID,
 		gql.Int,
 		gql.String,
@@ -170,7 +178,8 @@ func defaultTypes(
 		// Filter scalar blocks
 		idOpBlock,
 		intOpBlock,
-		floatOpBlock,
+		float64OpBlock,
+		float32OpBlock,
 		booleanOpBlock,
 		stringOpBlock,
 		blobOpBlock,
@@ -178,20 +187,23 @@ func defaultTypes(
 
 		// Filter non null scalar blocks
 		notNullIntOpBlock,
-		notNullFloatOpBlock,
+		notNullFloat64OpBlock,
+		notNullFloat32OpBlock,
 		notNullBooleanOpBlock,
 		notNullStringOpBlock,
 		notNullBlobOpBlock,
 
 		// Filter scalar list blocks
 		types.IntListOperatorBlock(intOpBlock),
-		types.FloatListOperatorBlock(floatOpBlock),
+		types.Float64ListOperatorBlock(float64OpBlock),
+		types.Float32ListOperatorBlock(float32OpBlock),
 		types.BooleanListOperatorBlock(booleanOpBlock),
 		types.StringListOperatorBlock(stringOpBlock),
 
 		// Filter non null scalar list blocks
 		types.NotNullIntListOperatorBlock(notNullIntOpBlock),
-		types.NotNullFloatListOperatorBlock(notNullFloatOpBlock),
+		types.NotNullFloat64ListOperatorBlock(notNullFloat64OpBlock),
+		types.NotNullFloat32ListOperatorBlock(notNullFloat32OpBlock),
 		types.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
 		types.NotNullStringListOperatorBlock(notNullStringOpBlock),
 

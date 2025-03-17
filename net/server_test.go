@@ -15,11 +15,11 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore/query"
 	"github.com/stretchr/testify/require"
 	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -34,59 +34,16 @@ func TestNewServerSimple(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestGetDocGraph(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.GetDocGraph(ctx, &getDocGraphRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
-func TestPushDocGraph(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.PushDocGraph(ctx, &pushDocGraphRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
-func TestGetLog(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.GetLog(ctx, &getLogRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
-func TestGetHeadLog(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	r, err := p.server.GetHeadLog(ctx, &getHeadLogRequest{})
-	require.Nil(t, r)
-	require.Nil(t, err)
-}
-
 func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
-	prefix := keys.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToString()
-	results, err := db.Headstore().Query(ctx, query.Query{Prefix: prefix})
-	if err != nil {
-		return cid.Undef, err
-	}
-	entries, err := results.Rest()
+	prefix := keys.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).Bytes()
+
+	entries, err := datastore.FetchKeysForPrefix(ctx, prefix, db.Headstore())
 	if err != nil {
 		return cid.Undef, err
 	}
 
 	if len(entries) > 0 {
-		hsKey, err := keys.NewHeadstoreDocKey(entries[0].Key)
+		hsKey, err := keys.NewHeadstoreDocKey(string(entries[0]))
 		if err != nil {
 			return cid.Undef, err
 		}
@@ -126,7 +83,7 @@ func TestPushLog(t *testing.T) {
 	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
-	_, err = p.server.PushLog(ctx, &pushLogRequest{
+	_, err = p.server.pushLogHandler(ctx, &pushLogRequest{
 		DocID:      doc.ID().String(),
 		CID:        headCID.Bytes(),
 		SchemaRoot: col.SchemaRoot(),

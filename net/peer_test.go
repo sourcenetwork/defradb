@@ -15,17 +15,17 @@ import (
 	"testing"
 	"time"
 
+	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
-	badger "github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/corekv/memory"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -65,13 +65,15 @@ func createCID(doc *client.Document) (cid.Cid, error) {
 const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
-	store := memory.NewDatastore(ctx)
+	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
+
 	acpLocal := acp.NewLocalACP()
 	acpLocal.Init(context.Background(), "")
 	db, err := db.NewDB(
 		ctx,
 		store,
-		immutable.Some[acp.ACP](acpLocal),
+		immutable.Some(acpLocal),
 		nil,
 		db.WithRetryInterval([]time.Duration{time.Second}),
 	)
@@ -79,9 +81,9 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 		WithListenAddresses(randomMultiaddr),
 	)
 	require.NoError(t, err)
@@ -95,14 +97,14 @@ func TestNewPeer_NoError(t *testing.T) {
 	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
-	p, err := NewPeer(ctx, db.Blockstore(), db.Encstore(), db.Events())
+	p, err := NewPeer(ctx, db.Events(), immutable.None[acp.ACP](), db)
 	require.NoError(t, err)
 	p.Close()
 }
 
 func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	ctx := context.Background()
-	_, err := NewPeer(ctx, nil, nil, nil, nil)
+	_, err := NewPeer(ctx, nil, immutable.None[acp.ACP](), nil)
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
@@ -120,18 +122,18 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db1.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
@@ -249,13 +251,10 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func FixtureNewMemoryDBWithBroadcaster(t *testing.T) client.DB {
-	var database client.DB
+func fixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	require.NoError(t, err)
-	database, err = db.NewDB(ctx, rootstore, acp.NoACP, nil)
+	rootstore := memory.NewDatastore(ctx)
+	database, err := db.NewDB(ctx, rootstore, acp.NoACP, nil)
 	require.NoError(t, err)
 	return database
 }
@@ -268,9 +267,9 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 		WithEnableRelay(true),
 	)
 	require.NoError(t, err)
@@ -286,9 +285,9 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 		WithEnablePubSub(false),
 	)
 	require.NoError(t, err)
@@ -305,9 +304,9 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		ctx,
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 		WithEnablePubSub(true),
 	)
 
@@ -325,9 +324,9 @@ func TestNodeClose_NoError(t *testing.T) {
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 	)
 	require.NoError(t, err)
 	n.Close()
@@ -342,9 +341,9 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
@@ -361,9 +360,9 @@ func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
 
 	n, err := NewPeer(
 		context.Background(),
-		db.Blockstore(),
-		db.Encstore(),
 		db.Events(),
+		immutable.None[acp.ACP](),
+		db,
 		WithBootstrapPeers("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"),
 	)
 	require.NoError(t, err)

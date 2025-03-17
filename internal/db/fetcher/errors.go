@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -94,6 +94,11 @@ func NewErrVFetcherFailedToGetDagLink(inner error) error {
 // NewErrFailedToGetDagNode returns an error indicating that the given DAG node could not be retrieved.
 func NewErrFailedToGetDagNode(inner error) error {
 	return errors.Wrap(errFailedToGetDagNode, inner)
+}
+
+// NewErrInvalidInOperatorValue returns an error indicating that the given value is invalid for the _in/_nin operator.
+func NewErrInvalidInOperatorValue(inner error) error {
+	return errors.Wrap(errInvalidInOperatorValue, inner)
 }
 
 // NewErrInvalidFilterOperator returns an error indicating that the given filter operator is invalid.

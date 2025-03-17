@@ -30,6 +30,9 @@ func (c *collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
@@ -154,6 +157,8 @@ func (c *collection) makeSelectionPlan(
 		}
 	case immutable.Option[request.Filter]:
 		f = fval
+	case map[string]any:
+		f = immutable.Some(request.Filter{Conditions: fval})
 	default:
 		return nil, ErrInvalidFilter
 	}

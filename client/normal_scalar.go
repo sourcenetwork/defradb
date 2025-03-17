@@ -55,16 +55,28 @@ func (v normalInt) Equal(other NormalValue) bool {
 	return areNormalScalarsEqual(v.val, other.Int)
 }
 
-type normalFloat struct {
+type normalFloat64 struct {
 	baseNormalValue[float64]
 }
 
-func (v normalFloat) Float() (float64, bool) {
+func (v normalFloat64) Float64() (float64, bool) {
 	return v.val, true
 }
 
-func (v normalFloat) Equal(other NormalValue) bool {
-	return areNormalScalarsEqual(v.val, other.Float)
+func (v normalFloat64) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Float64)
+}
+
+type normalFloat32 struct {
+	baseNormalValue[float32]
+}
+
+func (v normalFloat32) Float32() (float32, bool) {
+	return v.val, true
+}
+
+func (v normalFloat32) Equal(other NormalValue) bool {
+	return areNormalScalarsEqual(v.val, other.Float32)
 }
 
 type normalString struct {
@@ -134,8 +146,12 @@ func newNormalInt(val int64) NormalValue {
 	return normalInt{newBaseNormalValue(val)}
 }
 
-func newNormalFloat(val float64) NormalValue {
-	return normalFloat{newBaseNormalValue(val)}
+func newNormalFloat64(val float64) NormalValue {
+	return normalFloat64{newBaseNormalValue(val)}
+}
+
+func newNormalFloat32(val float32) NormalValue {
+	return normalFloat32{newBaseNormalValue(val)}
 }
 
 // NewNormalBool creates a new NormalValue that represents a `bool` value.
@@ -148,9 +164,14 @@ func NewNormalInt[T constraints.Integer | constraints.Float](val T) NormalValue 
 	return normalInt{baseNormalValue[int64]{val: int64(val)}}
 }
 
-// NewNormalFloat creates a new NormalValue that represents a `float64` value.
-func NewNormalFloat[T constraints.Integer | constraints.Float](val T) NormalValue {
-	return normalFloat{baseNormalValue[float64]{val: float64(val)}}
+// NewNormalFloat64 creates a new NormalValue that represents a `float64` value.
+func NewNormalFloat64[T constraints.Integer | constraints.Float](val T) NormalValue {
+	return normalFloat64{baseNormalValue[float64]{val: float64(val)}}
+}
+
+// NewNormalFloat32 creates a new NormalValue that represents a `float32` value.
+func NewNormalFloat32[T constraints.Integer | constraints.Float](val T) NormalValue {
+	return normalFloat32{baseNormalValue[float32]{val: float32(val)}}
 }
 
 // NewNormalString creates a new NormalValue that represents a `string` value.

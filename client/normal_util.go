@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,6 +14,11 @@ package client
 // is an array. If the given value is not an array, an error is returned.
 func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 	if !val.IsArray() {
+		if jsonVal, ok := val.JSON(); ok {
+			if jsonArr, ok := jsonVal.Array(); ok {
+				return toNormalArray(jsonArr, NewNormalJSON), nil
+			}
+		}
 		return nil, NewCanNotTurnNormalValueIntoArray(val)
 	}
 	if !val.IsNillable() {
@@ -23,8 +28,11 @@ func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 		if v, ok := val.IntArray(); ok {
 			return toNormalArray(v, NewNormalInt), nil
 		}
-		if v, ok := val.FloatArray(); ok {
-			return toNormalArray(v, NewNormalFloat), nil
+		if v, ok := val.Float64Array(); ok {
+			return toNormalArray(v, NewNormalFloat64), nil
+		}
+		if v, ok := val.Float32Array(); ok {
+			return toNormalArray(v, NewNormalFloat32), nil
 		}
 		if v, ok := val.StringArray(); ok {
 			return toNormalArray(v, NewNormalString), nil
@@ -38,14 +46,20 @@ func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 		if v, ok := val.DocumentArray(); ok {
 			return toNormalArray(v, NewNormalDocument), nil
 		}
+		if v, ok := val.JSONArray(); ok {
+			return toNormalArray(v, NewNormalJSON), nil
+		}
 		if v, ok := val.NillableBoolArray(); ok {
 			return toNormalArray(v, NewNormalNillableBool), nil
 		}
 		if v, ok := val.NillableIntArray(); ok {
 			return toNormalArray(v, NewNormalNillableInt), nil
 		}
-		if v, ok := val.NillableFloatArray(); ok {
-			return toNormalArray(v, NewNormalNillableFloat), nil
+		if v, ok := val.NillableFloat64Array(); ok {
+			return toNormalArray(v, NewNormalNillableFloat64), nil
+		}
+		if v, ok := val.NillableFloat32Array(); ok {
+			return toNormalArray(v, NewNormalNillableFloat32), nil
 		}
 		if v, ok := val.NillableStringArray(); ok {
 			return toNormalArray(v, NewNormalNillableString), nil
@@ -69,8 +83,11 @@ func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 		if v, ok := val.NillableIntNillableArray(); ok {
 			return toNormalArray(v.Value(), NewNormalNillableInt), nil
 		}
-		if v, ok := val.NillableFloatNillableArray(); ok {
-			return toNormalArray(v.Value(), NewNormalNillableFloat), nil
+		if v, ok := val.NillableFloat64NillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableFloat64), nil
+		}
+		if v, ok := val.NillableFloat32NillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalNillableFloat32), nil
 		}
 		if v, ok := val.NillableStringNillableArray(); ok {
 			return toNormalArray(v.Value(), NewNormalNillableString), nil
@@ -90,8 +107,11 @@ func ToArrayOfNormalValues(val NormalValue) ([]NormalValue, error) {
 		if v, ok := val.IntNillableArray(); ok {
 			return toNormalArray(v.Value(), NewNormalInt), nil
 		}
-		if v, ok := val.FloatNillableArray(); ok {
-			return toNormalArray(v.Value(), NewNormalFloat), nil
+		if v, ok := val.Float64NillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalFloat64), nil
+		}
+		if v, ok := val.Float32NillableArray(); ok {
+			return toNormalArray(v.Value(), NewNormalFloat32), nil
 		}
 		if v, ok := val.StringNillableArray(); ok {
 			return toNormalArray(v.Value(), NewNormalString), nil

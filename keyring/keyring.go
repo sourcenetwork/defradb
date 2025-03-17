@@ -24,4 +24,6 @@ type Keyring interface {
 	//
 	// If a key with that name does not exist `ErrNotFound` is returned.
 	Delete(name string) error
+	// List returns a list of all keys in the keyring, used by the CLI 'keyring list' command
+	List() ([]string, error)
 }

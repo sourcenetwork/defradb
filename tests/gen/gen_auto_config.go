@@ -89,6 +89,8 @@ func checkAndValidateMinMax(field *client.FieldDefinition, conf *genConfig) erro
 		var err error
 		if field.Kind.IsArray() || field.Kind == client.FieldKind_NILLABLE_INT {
 			err = validateMinConfig[int](conf, field.Kind.IsArray())
+		} else if field.Kind == client.FieldKind_NILLABLE_FLOAT32 {
+			err = validateMinConfig[float32](conf, false)
 		} else {
 			err = validateMinConfig[float64](conf, false)
 		}
@@ -138,7 +140,7 @@ func checkAndValidateRatio(field *client.FieldDefinition, conf *genConfig) error
 	return nil
 }
 
-func validateMinConfig[T int | float64](fieldConf *genConfig, onlyPositive bool) error {
+func validateMinConfig[T int | float64 | float32](fieldConf *genConfig, onlyPositive bool) error {
 	min, ok := fieldConf.props["min"].(T)
 	if !ok {
 		var t T
@@ -162,7 +164,7 @@ func validateMinConfig[T int | float64](fieldConf *genConfig, onlyPositive bool)
 	return nil
 }
 
-func getMinMaxOrDefault[T int | float64](conf genConfig, min, max T) (T, T) {
+func getMinMaxOrDefault[T int | float64 | float32](conf genConfig, min, max T) (T, T) {
 	if prop, ok := conf.props["min"]; ok {
 		min = prop.(T)
 	}

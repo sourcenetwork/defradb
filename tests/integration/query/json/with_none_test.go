@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -49,6 +49,64 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 						{
 							"name": "Shahzad",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple JSON array, filtered none of string array",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `type Users {
+					name: String
+					custom: JSON
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": [1, false, "second", {"one": 3}, [1, 3]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"custom": [null, false, "second", 3, {"one": 1}, [1, 2]]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": 3
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": null
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": false
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {custom: {_none: {_eq: 3}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Shahzad"},
 					},
 				},
 			},

@@ -13,41 +13,49 @@ package datastore
 import (
 	"context"
 	"encoding/json"
-	"errors"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // DeserializePrefix deserializes all elements with the given prefix from the given storage.
 // It returns the keys and their corresponding elements.
 func DeserializePrefix[T any](
 	ctx context.Context,
-	prefix string,
-	store ds.Read,
-) ([]string, []T, error) {
-	q, err := store.Query(ctx, query.Query{Prefix: prefix})
+	prefix []byte,
+	store corekv.Reader,
+) ([][]byte, []T, error) {
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: prefix})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keys := make([]string, 0)
+	keys := make([][]byte, 0)
 	elements := make([]T, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			return nil, nil, errors.Join(res.Error, q.Close())
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, nil, errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return nil, nil, errors.Join(err, iter.Close())
 		}
 
 		var element T
-		err = json.Unmarshal(res.Value, &element)
+		err = json.Unmarshal(value, &element)
 		if err != nil {
-			return nil, nil, errors.Join(NewErrInvalidStoredValue(err), q.Close())
+			return nil, nil, errors.Join(NewErrInvalidStoredValue(err), iter.Close())
 		}
-		keys = append(keys, res.Key)
+		keys = append(keys, iter.Key())
 		elements = append(elements, element)
 	}
-	if err := q.Close(); err != nil {
+	if err := iter.Close(); err != nil {
 		return nil, nil, err
 	}
 	return keys, elements, nil
@@ -56,22 +64,30 @@ func DeserializePrefix[T any](
 // FetchKeysForPrefix fetches all keys with the given prefix from the given storage.
 func FetchKeysForPrefix(
 	ctx context.Context,
-	prefix string,
-	store ds.Read,
-) ([]ds.Key, error) {
-	q, err := store.Query(ctx, query.Query{Prefix: prefix})
+	prefix []byte,
+	store corekv.Reader,
+) ([][]byte, error) {
+	iter, err := store.Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix,
+		KeysOnly: true,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	keys := make([]ds.Key, 0)
-	for res := range q.Next() {
-		if res.Error != nil {
-			return nil, errors.Join(res.Error, q.Close())
+	keys := make([][]byte, 0)
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
 		}
-		keys = append(keys, ds.NewKey(res.Key))
+		if !hasNext {
+			break
+		}
+
+		keys = append(keys, iter.Key())
 	}
-	if err = q.Close(); err != nil {
+	if err := iter.Close(); err != nil {
 		return nil, err
 	}
 

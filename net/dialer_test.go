@@ -14,30 +14,33 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/acp"
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
-	db1 := FixtureNewMemoryDBWithBroadcaster(t)
-	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := fixtureNewMemoryDBWithBroadcaster(t)
+	db2 := fixtureNewMemoryDBWithBroadcaster(t)
 	defer db1.Close()
 	defer db2.Close()
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db1.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -51,25 +54,25 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
-	db1 := FixtureNewMemoryDBWithBroadcaster(t)
-	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := fixtureNewMemoryDBWithBroadcaster(t)
+	db2 := fixtureNewMemoryDBWithBroadcaster(t)
 	defer db1.Close()
 	defer db2.Close()
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db1.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
@@ -86,25 +89,25 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_ClosingConnectionError(t *testing.T) {
-	db1 := FixtureNewMemoryDBWithBroadcaster(t)
-	db2 := FixtureNewMemoryDBWithBroadcaster(t)
+	db1 := fixtureNewMemoryDBWithBroadcaster(t)
+	db2 := fixtureNewMemoryDBWithBroadcaster(t)
 	defer db1.Close()
 	defer db2.Close()
 	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
-		db1.Blockstore(),
-		db1.Encstore(),
 		db1.Events(),
+		immutable.None[acp.ACP](),
+		db1,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
 	n2, err := NewPeer(
 		ctx,
-		db2.Blockstore(),
-		db1.Encstore(),
 		db2.Events(),
+		immutable.None[acp.ACP](),
+		db2,
 		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)

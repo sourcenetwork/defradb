@@ -12,14 +12,14 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // CollectionDefinition contains the metadata defining what a Collection is.
@@ -148,6 +148,12 @@ type FieldDefinition struct {
 
 	// DefaultValue contains the default value for this field.
 	DefaultValue any
+
+	// Size is a constraint that can be applied to fields that are arrays.
+	//
+	// Mutations on fields with a size constraint will fail if the size of the array
+	// does not match the constraint.
+	Size int
 }
 
 // NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
@@ -168,6 +174,7 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 		Typ:               global.Typ,
 		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
 		DefaultValue:      local.DefaultValue,
+		Size:              local.Size,
 	}
 }
 
@@ -179,6 +186,7 @@ func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 		Kind:         local.Kind.Value(),
 		RelationName: local.RelationName.Value(),
 		DefaultValue: local.DefaultValue,
+		Size:         local.Size,
 	}
 }
 
@@ -298,7 +306,7 @@ func GetDefinitionFromStore(
 	switch typedKind := kind.(type) {
 	case *NamedKind:
 		col, err := store.GetCollectionByName(ctx, typedKind.Name)
-		if errors.Is(err, datastore.ErrNotFound) {
+		if errors.Is(err, corekv.ErrNotFound) {
 			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
 				Name: immutable.Some(typedKind.Name),
 			})

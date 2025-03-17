@@ -11,7 +11,6 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -19,7 +18,7 @@ import (
 )
 
 func MakeSchemaAddCommand() *cobra.Command {
-	var schemaFile string
+	var schemaFiles []string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",
 		Short: "Add new schema",
@@ -36,6 +35,12 @@ Example: add from an argument string:
 Example: add from file:
   defradb client schema add -f schema.graphql
 
+Example: add from multiple files:
+  defradb client schema add -f schema1.graphql -f schema2.graphql
+
+Example: add from multiple files:
+  defradb client schema add -f schema1.graphql,schema2.graphql
+
 Example: add from stdin:
   cat schema.graphql | defradb client schema add -
 
@@ -43,33 +48,46 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
-			var schema string
+			var combinedSchema string
 			switch {
-			case schemaFile != "":
-				data, err := os.ReadFile(schemaFile)
-				if err != nil {
-					return err
+			case len(schemaFiles) > 0:
+				// Read schemas from files and concatenate them
+				for _, schemaFile := range schemaFiles {
+					data, err := os.ReadFile(schemaFile)
+					if err != nil {
+						return NewErrFailedToReadSchemaFile(schemaFile, err)
+					}
+					combinedSchema += string(data) + "\n"
 				}
-				schema = string(data)
+
 			case len(args) > 0 && args[0] == "-":
+				// Read schema from stdin
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrFailedToReadSchemaFromStdin(err)
 				}
-				schema = string(data)
+				combinedSchema += string(data) + "\n"
+
 			case len(args) > 0:
-				schema = args[0]
+				// Read schema from argument string
+				combinedSchema += args[0] + "\n"
+
 			default:
-				return fmt.Errorf("schema cannot be empty")
+				return ErrEmptySchemaString
 			}
 
-			cols, err := store.AddSchema(cmd.Context(), schema)
+			// Process the combined schema
+			cols, err := store.AddSchema(cmd.Context(), combinedSchema)
 			if err != nil {
+				return NewErrFailedToAddSchema(err)
+			}
+			if err := writeJSON(cmd, cols); err != nil {
 				return err
 			}
-			return writeJSON(cmd, cols)
+
+			return nil
 		},
 	}
-	cmd.Flags().StringVarP(&schemaFile, "file", "f", "", "File to load a schema from")
+	cmd.Flags().StringSliceVarP(&schemaFiles, "file", "f", []string{}, "File to load schema from")
 	return cmd
 }

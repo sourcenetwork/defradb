@@ -155,6 +155,8 @@ func (n *minNode) Next() (bool, error) {
 							res = res.SetInt64(v)
 						case uint64:
 							res = res.SetUint64(v)
+						case float32:
+							res = res.SetFloat64(float64(v))
 						case float64:
 							res = res.SetFloat64(v)
 						default:

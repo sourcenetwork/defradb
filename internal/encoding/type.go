@@ -19,11 +19,14 @@ type Type int
 const (
 	Unknown   Type = 0
 	Null      Type = 1
+	Bool      Type = 2
 	Int       Type = 3
-	Float     Type = 4
+	Float64   Type = 4
 	Bytes     Type = 6
 	BytesDesc Type = 7
 	Time      Type = 8
+	JSON      Type = 9
+	Float32   Type = 10
 )
 
 // PeekType peeks at the type of the value encoded at the start of b.
@@ -39,10 +42,16 @@ func PeekType(b []byte) Type {
 			return BytesDesc
 		case m >= IntMin && m <= IntMax:
 			return Int
-		case m >= floatNaN && m <= floatNaNDesc:
-			return Float
+		case m >= float32NaN && m <= float32NaNDesc:
+			return Float32
+		case m >= float64NaN && m <= float64NaNDesc:
+			return Float64
 		case m == timeMarker:
 			return Time
+		case m == falseMarker, m == trueMarker:
+			return Bool
+		case m == jsonMarker:
+			return JSON
 		}
 	}
 	return Unknown

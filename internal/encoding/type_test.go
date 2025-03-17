@@ -27,8 +27,10 @@ func TestPeekType(t *testing.T) {
 		{EncodeVarintDescending(nil, 0), Int},
 		{EncodeUvarintAscending(nil, 0), Int},
 		{EncodeUvarintDescending(nil, 0), Int},
-		{EncodeFloatAscending(nil, 0), Float},
-		{EncodeFloatDescending(nil, 0), Float},
+		{EncodeFloat32Ascending(nil, 0), Float32},
+		{EncodeFloat32Descending(nil, 0), Float32},
+		{EncodeFloat64Ascending(nil, 0), Float64},
+		{EncodeFloat64Descending(nil, 0), Float64},
 		{EncodeBytesAscending(nil, []byte("")), Bytes},
 		{EncodeBytesDescending(nil, []byte("")), BytesDesc},
 	}

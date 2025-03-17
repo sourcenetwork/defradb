@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -70,6 +70,9 @@ type TestCase struct {
 
 	// Configuration for KMS to be used in the test
 	KMS KMS
+
+	// If set to true DAG blocks will be signed with a separate block that
+	EnabledBlockSigning bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -129,6 +132,51 @@ type SchemaUpdate struct {
 
 	// The schema update.
 	Schema string
+
+	// Replace is an optional map argument which makes it easier to substitute/replace different elements
+	// into the schema string where template labels are match.
+	//
+	// Note:
+	// - Will match and replace multiple occurances.
+	// - The indexes must be valid.
+	// - The substitution type must be valid.
+	// - If this map is empty, nothing is done.
+	//
+	// Example:
+	//
+	// Consider we have one policy that was added resulting in the following policyID:
+	// PolicyID="94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454"
+	//
+	// Then using this attribute like:
+	// Replace: map[string]string{
+	//     "policy0": NewPolicyIndex(0),
+	// },
+	//
+	// On a Schema string like:
+	// ```
+	//	type Users1 @policy(id: "{{.policy0}}", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	//
+	//	type Users2 @policy(id: "{{.policy0}}", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	// ```
+	// The Schema that will be loaded will be this modified one:
+	// ```
+	//	type Users1 @policy(id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	//
+	//	type Users2 @policy(id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	// ```
+	Replace map[string]ReplaceType
 
 	// Optionally, the expected results.
 	//

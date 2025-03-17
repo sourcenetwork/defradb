@@ -142,6 +142,69 @@ func TestQueryWithIndex_IfFloatFieldInDescOrder_ShouldFetchInRevertedOrder(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If indexed float32 field is in DESC order, it should be fetched in reverted order",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						iq: Float32 @index(direction: DESC)
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"iq":	0.2
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"iq":	0.4
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Kate",
+						"iq":	0.3
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						User(filter: {iq: {_lt: 1}}) {
+							name
+							iq
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"iq":   float32(0.4),
+						},
+						{
+							"name": "Kate",
+							"iq":   float32(0.3),
+						},
+						{
+							"name": "Alice",
+							"iq":   float32(0.2),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If indexed string field is in DESC order, it should be fetched in reverted order",

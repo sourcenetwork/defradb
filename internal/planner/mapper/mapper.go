@@ -804,6 +804,26 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
+		case *request.Similarity:
+			index := mapping.GetNextIndex()
+			fields = append(fields, &Similarity{
+				Field: Field{
+					Index: index,
+					Name:  f.Name,
+				},
+				Vector: f.Vector,
+				SimilarityTarget: Targetable{
+					Field: Field{
+						Index: mapping.FirstIndexOfName(f.Target),
+						Name:  f.Target,
+					},
+				},
+			})
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
 		}
@@ -957,6 +977,14 @@ func getTopLevelInfo(
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(request.LinksFieldName)
+	} else if selectRequest.Name == request.SignatureFieldName {
+		for i, f := range request.SignatureFields {
+			mapping.Add(i, f)
+		}
+
+		// Setting the type name must be done after adding the fields, as
+		// the typeName index is dynamic, but the field indexes are not
+		mapping.SetTypeName(request.SignatureFieldName)
 	} else {
 		for i, f := range request.VersionFields {
 			mapping.Add(i, f)

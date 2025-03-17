@@ -69,7 +69,9 @@ func (val FieldValue) Bytes() ([]byte, error) {
 		value = convertImmutable(v)
 	} else if v, ok := val.value.NillableIntArray(); ok {
 		value = convertImmutable(v)
-	} else if v, ok := val.value.NillableFloatArray(); ok {
+	} else if v, ok := val.value.NillableFloat64Array(); ok {
+		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableFloat32Array(); ok {
 		value = convertImmutable(v)
 	} else if v, ok := val.value.NillableBoolArray(); ok {
 		value = convertImmutable(v)

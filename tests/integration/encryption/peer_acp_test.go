@@ -11,7 +11,6 @@
 package encryption
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -65,8 +64,6 @@ resources:
 `
 
 func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		SupportedACPTypes: immutable.Some(
@@ -78,22 +75,23 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddPolicy{
-				Identity:         testUtils.ClientIdentity(0),
-				Policy:           policy,
-				ExpectedPolicyID: expectedPolicyID,
+				Identity: testUtils.ClientIdentity(0),
+				Policy:   policy,
 			},
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
@@ -152,8 +150,6 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 }
 
 func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		SupportedACPTypes: immutable.Some(
@@ -165,22 +161,23 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddPolicy{
-				Identity:         testUtils.ClientIdentity(0),
-				Policy:           policy,
-				ExpectedPolicyID: expectedPolicyID,
+				Identity: testUtils.ClientIdentity(0),
+				Policy:   policy,
 			},
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
@@ -229,8 +226,6 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 }
 
 func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		SupportedACPTypes: immutable.Some(
@@ -242,22 +237,23 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddPolicy{
-				Identity:         testUtils.NodeIdentity(0),
-				Policy:           policy,
-				ExpectedPolicyID: expectedPolicyID,
+				Identity: testUtils.NodeIdentity(0),
+				Policy:   policy,
 			},
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
@@ -375,8 +371,6 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 }
 
 func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailable_ShouldNotFetch(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		SupportedACPTypes: immutable.Some(
@@ -389,22 +383,23 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddPolicy{
-				Identity:         testUtils.NodeIdentity(0),
-				Policy:           policy,
-				ExpectedPolicyID: expectedPolicyID,
+				Identity: testUtils.NodeIdentity(0),
+				Policy:   policy,
 			},
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-						type Users @policy(
-							id: "%s",
-							resource: "users"
-						) {
-							name: String
-							age: Int
-						}
-					`,
-					expectedPolicyID,
-				),
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
@@ -433,7 +428,6 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.WaitForSync{},
 			testUtils.Close{
 				NodeID: immutable.Some(0),
 			},

@@ -8,7 +8,7 @@ func in(conditions, data any) (bool, error) {
 	switch cn := conditions.(type) {
 	case []any:
 		for _, ce := range cn {
-			if m, err := eq(ce, data); err != nil {
+			if m, err := eq(ce, data, true); err != nil {
 				return false, err
 			} else if m {
 				return true, nil

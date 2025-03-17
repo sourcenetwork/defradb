@@ -89,9 +89,12 @@ func (p *Planner) isValueFloat(
 		if !fieldDescriptionFound {
 			return false, client.NewErrFieldNotExist(source.Name)
 		}
-		return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT ||
-			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
+		return fieldDescription.Kind == client.FieldKind_FLOAT32_ARRAY ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32 ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32_ARRAY ||
+			fieldDescription.Kind == client.FieldKind_FLOAT64_ARRAY ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64 ||
+			fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64_ARRAY, nil
 	}
 
 	// If path length is two, we are summing a group or a child relationship
@@ -138,9 +141,12 @@ func (p *Planner) isValueFloat(
 		return false, client.NewErrFieldNotExist(source.ChildTarget.Name)
 	}
 
-	return fieldDescription.Kind == client.FieldKind_FLOAT_ARRAY ||
-		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT ||
-		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT_ARRAY, nil
+	return fieldDescription.Kind == client.FieldKind_FLOAT32_ARRAY ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32 ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT32_ARRAY ||
+		fieldDescription.Kind == client.FieldKind_FLOAT64_ARRAY ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64 ||
+		fieldDescription.Kind == client.FieldKind_NILLABLE_FLOAT64_ARRAY, nil
 }
 
 func (n *sumNode) Kind() string {
@@ -244,6 +250,8 @@ func (n *sumNode) Next() (bool, error) {
 						return value + float64(v)
 					case uint64:
 						return value + float64(v)
+					case float32:
+						return value + float64(v)
 					case float64:
 						return value + v
 					default:
@@ -275,7 +283,33 @@ func (n *sumNode) Next() (bool, error) {
 						return value + float64(childItem.Value())
 					},
 				)
-
+			case []float32:
+				var tempSum float32
+				tempSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[float32],
+					0,
+					func(childItem float32, value float32) float32 {
+						return value + childItem
+					},
+				)
+				collectionSum = float64(tempSum)
+			case []immutable.Option[float32]:
+				var tempSum float32
+				tempSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[float32],
+					0,
+					func(childItem immutable.Option[float32], value float32) float32 {
+						if !childItem.HasValue() {
+							return value + 0
+						}
+						return value + childItem.Value()
+					},
+				)
+				collectionSum = float64(tempSum)
 			case []float64:
 				collectionSum, err = reduceItems(
 					childCollection,

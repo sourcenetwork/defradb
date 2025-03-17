@@ -37,6 +37,8 @@ env:
 
   DEFRA_BADGER_ENCRYPTION: false
 
+  DEFRA_VECTOR_EMBEDDING: false
+
   DEFRA_MUTATION_TYPE: collection-save
   DEFRA_LENS_TYPE: wasm-time
   DEFRA_ACP_TYPE: local
@@ -72,6 +74,7 @@ jobs:
       DEFRA_BADGER_MEMORY: ${{ matrix.database-type == 'memory' }}
       DEFRA_BADGER_FILE: ${{ matrix.database-type == 'file' }}
       DEFRA_MUTATION_TYPE: ${{ matrix.mutation-type }}
+      DEFRA_VECTOR_EMBEDDING: true
 
     steps:
       - name: Checkout code into the directory
@@ -79,6 +82,15 @@ jobs:
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
+
+      - name: Install Ollama
+        run: make deps:ollama
+
+      - name: Run Ollama
+        run: make ollama
+
+      - name: Pull LLM model
+        run: make ollama:nomic
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
@@ -145,13 +157,17 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
+      # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
+      - name: Get SourceHub version
+        run: |
+          SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
+          echo "SOURCEHUB_COMMIT=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
+
       # We have to install it ourselves because it contains replace commands in its go.mod file.
       - name: Install sourcehub
         uses: ./.github/composites/install-sourcehub
         with:
-          # Lock the sourcehub version until the dev branch is stable
-          # remove this when closed https://github.com/sourcenetwork/defradb/issues/2865
-          ref: c232133c35c96924509a4d955a7b450eb3624a15
+          ref: ${{ env.SOURCEHUB_COMMIT }}
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
@@ -236,6 +252,27 @@ jobs:
           coverage-artifact-name: "coverage_encryption"
           coverage-path: coverage.txt
 
+  # This job runs the database with telemetry tests using default configuration, on linux.
+  test-telemetry:
+    name: Test telemetry job
+
+    runs-on: ubuntu-latest
+
+    env:
+      GOFLAGS: -tags=telemetry
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_telemetry"
+          coverage-path: coverage.txt
 
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
@@ -248,6 +285,7 @@ jobs:
       - test-lens         #  2 test(s)
       - test-view         #  1 test(s)
       - test-encryption   #  1 test(s)
+      - test-telemetry    #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.

@@ -54,6 +54,7 @@ var configFlags = map[string]string{
 	"max-txn-retries":    "datastore.maxtxnretries",
 	"store":              "datastore.store",
 	"no-encryption":      "datastore.noencryption",
+	"no-signing":         "datastore.nosigning",
 	"valuelogfilesize":   "datastore.badger.valuelogfilesize",
 	"peers":              "net.peers",
 	"p2paddr":            "net.p2paddresses",
@@ -68,6 +69,7 @@ var configFlags = map[string]string{
 	"source-hub-address": "acp.sourceHub.address",
 	"development":        "development",
 	"secret-file":        "secretfile",
+	"no-telemetry":       "telemetry.disabled",
 }
 
 // configDefaults contains default values for config entries.
@@ -96,6 +98,8 @@ var configDefaults = map[string]any{
 	"log.source":                        false,
 	"log.stacktrace":                    false,
 	"secretfile":                        ".env",
+	"telemetry.disabled":                false,
+	"datastore.nosigning":               false,
 }
 
 // defaultConfig returns a new config with default values.

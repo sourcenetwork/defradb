@@ -23,16 +23,13 @@ func MakeCollectionUpdateCommand() *cobra.Command {
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document>",
+		Use:   "update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater>",
 		Short: "Update documents by docID or filter.",
 		Long: `Update documents by docID or filter.
-		
-Example: update from string:
-  defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
 
 Example: update by filter:
   defradb client collection update --name User \
-  --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
+  --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'
 
 Example: update by docID:
   defradb client collection update --name User \
@@ -42,15 +39,18 @@ Example: update private docID, with identity:
   defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
   --docID bae-123 --updater '{ "verified": true }'
 		`,
-		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}
 
+			if updater == "" {
+				return NewErrMissingRequiredFlag("updater")
+			}
+
 			switch {
-			case filter != "" || updater != "":
+			case filter != "":
 				var filterValue any
 				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 					return err
@@ -60,7 +60,7 @@ Example: update private docID, with identity:
 					return err
 				}
 				return writeJSON(cmd, res)
-			case argDocID != "" && len(args) == 1:
+			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err
@@ -69,7 +69,7 @@ Example: update private docID, with identity:
 				if err != nil {
 					return err
 				}
-				if err := doc.SetWithJSON([]byte(args[0])); err != nil {
+				if err := doc.SetWithJSON([]byte(updater)); err != nil {
 					return err
 				}
 				return col.Update(cmd.Context(), doc)

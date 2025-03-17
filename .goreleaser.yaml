@@ -6,7 +6,8 @@ before:
     - make deps:playground
 
 builds:
-  - id: "defradb"
+  # Minimal build with no extras
+  - id: "defradb_lite"
     main: ./cmd/defradb
     goos:
       - linux
@@ -15,11 +16,11 @@ builds:
     goarch:
       - amd64
       - arm64
-  # A build with the playground included.
-  - id: "defradb_playground"
+  # Default build with playground and telemetry
+  - id: "defradb"
     main: ./cmd/defradb
     flags:
-      - -tags=playground
+      - -tags=playground,telemetry
     goos:
       - linux
       - windows
@@ -32,20 +33,20 @@ partial:
   by: target
 
 archives:
-  - id: defradb_playground
+  - id: defradb_lite
     builds:
-      - defradb_playground
-    format: binary
+      - defradb_lite
+    formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
-      {{ .Binary }}_playground_{{ .Version }}_{{ .Os }}_
+      {{ .Binary }}_lite_{{ .Version }}_{{ .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
   - id: defradb
     builds:
       - defradb
-    format: binary
+    formats: [binary]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .Binary }}_{{ .Version }}_{{ .Os }}_

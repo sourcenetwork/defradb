@@ -11,6 +11,10 @@
 package planner
 
 import (
+	"math"
+	"slices"
+	"strings"
+
 	cid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/immutable"
 
@@ -57,6 +61,10 @@ type selectTopNode struct {
 
 	// selectNode is used pre-wiring of the plan (before expansion and all).
 	selectNode *selectNode
+
+	// This is added temporarity until Planner is refactored
+	// https://github.com/sourcenetwork/defradb/issues/3467
+	similarity []*similarityNode
 
 	// plan is the top of the plan graph (the wired and finalized plan graph).
 	planNode planNode
@@ -233,14 +241,14 @@ func (n *selectNode) Explain(explainType request.ExplainType) (map[string]any, e
 // creating scanNodes, typeIndexJoinNodes, and splitting
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
-func (n *selectNode) initSource() ([]aggregateNode, error) {
+func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	if n.selectReq.CollectionName == "" {
 		n.selectReq.CollectionName = n.selectReq.Name
 	}
 
 	sourcePlan, err := n.planner.getSource(n.selectReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	n.source = sourcePlan.plan
 	n.origSource = sourcePlan.plan
@@ -261,7 +269,7 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		if n.selectReq.Cid.HasValue() {
 			c, err := cid.Decode(n.selectReq.Cid.Value())
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
@@ -290,16 +298,17 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 		}
 	}
 
-	aggregates, err := n.initFields(n.selectReq)
+	aggregates, similarity, err := n.initFields(n.selectReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if isScanNode {
-		origScan.initFetcher(n.selectReq.Cid, findIndexByFilteringField(origScan))
+		origScan.index = findIndexByFilteringField(origScan)
+		origScan.initFetcher(n.selectReq.Cid)
 	}
 
-	return aggregates, nil
+	return aggregates, similarity, nil
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
@@ -308,17 +317,31 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	}
 	colDesc := scanNode.col.Description()
 
-	for _, field := range scanNode.col.Schema().Fields {
-		if _, isFiltered := scanNode.filter.ExternalConditions[field.Name]; !isFiltered {
-			continue
+	conditions := scanNode.filter.ExternalConditions
+	var indexCandidates []client.IndexDescription
+	filter.TraverseFields(conditions, func(path []string, val any) bool {
+		for _, field := range scanNode.col.Schema().Fields {
+			if field.Name != path[0] {
+				continue
+			}
+			indexes := colDesc.GetIndexesOnField(field.Name)
+			if len(indexes) > 0 {
+				indexCandidates = append(indexCandidates, indexes...)
+				return true
+			}
 		}
-		indexes := colDesc.GetIndexesOnField(field.Name)
-		if len(indexes) > 0 {
-			// we return the first found index. We will optimize it later.
-			return immutable.Some(indexes[0])
-		}
+		return true
+	})
+	if len(indexCandidates) == 0 {
+		return immutable.None[client.IndexDescription]()
 	}
-	return immutable.None[client.IndexDescription]()
+
+	slices.SortFunc(indexCandidates, func(a, b client.IndexDescription) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	// we return the first found index. We will optimize it later.
+	// https://github.com/sourcenetwork/defradb/issues/2680
+	return immutable.Some(indexCandidates[0])
 }
 
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
@@ -336,8 +359,9 @@ func findIndexByFieldName(col client.Collection, fieldName string) immutable.Opt
 	return immutable.None[client.IndexDescription]()
 }
 
-func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
+func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
 	aggregates := []aggregateNode{}
+	similarity := []*similarityNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, field := range selectReq.Fields {
@@ -363,7 +387,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 			}
 
 			if aggregateError != nil {
-				return nil, aggregateError
+				return nil, nil, aggregateError
 			}
 
 			if plan != nil {
@@ -382,40 +406,52 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 					// commit. Instead, _version references the CID
 					// of that Target version we are querying.
 					// So instead of a LatestCommit subquery, we need
-					// a OneCommit subquery, with the supplied parameters.
+					// a commits query with max depth starting from the
+					// target CID version
 					commitSlct.DocID = immutable.Some(selectReq.DocIDs.Value()[0]) // @todo check length
 					commitSlct.Cid = selectReq.Cid
+					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
 				}
 
 				commitPlan := n.planner.DAGScan(commitSlct)
 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			} else if f.Name == request.GroupFieldName {
 				if selectReq.GroupBy == nil {
-					return nil, ErrGroupOutsideOfGroupBy
+					return nil, nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
-			} else if f.Name == request.LinksFieldName &&
-				(selectReq.Name == request.CommitsName || selectReq.Name == request.LatestCommitsName) &&
-				f.CollectionName == "" {
+			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-				// commit query link fields are always added and need no special treatment here
-				// WARNING: It is important to check collection name is nil and the parent select name
-				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
 			} else if !(n.collection != nil && len(n.collection.Description().QuerySources()) > 0) {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
+		case *mapper.Similarity:
+			var simFilter *mapper.Filter
+			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
+			similarity = append(similarity, n.planner.Similarity(f, simFilter))
 		}
 	}
 
-	return aggregates, nil
+	return aggregates, similarity, nil
+}
+
+func isSpecialNoOpField(field *mapper.Select, parentField *mapper.Select) bool {
+	// commit query link and signature fields are always added and need no special treatment here
+	// WARNING: It is important to check collection name is nil and the parent select name
+	// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
+	if field.CollectionName != "" {
+		return false
+	}
+	isCommit := parentField.Name == request.CommitsName || parentField.Name == request.LatestCommitsName
+	return isCommit && (field.Name == request.LinksFieldName || field.Name == request.SignatureFieldName)
 }
 
 func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
@@ -464,7 +500,7 @@ func (p *Planner) SelectFromSource(
 		s.collection = col
 	}
 
-	aggregates, err := s.initFields(selectReq)
+	aggregates, similarity, err := s.initFields(selectReq)
 	if err != nil {
 		return nil, err
 	}
@@ -490,6 +526,7 @@ func (p *Planner) SelectFromSource(
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		similarity: similarity,
 		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil
@@ -508,7 +545,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	orderBy := selectReq.OrderBy
 	groupBy := selectReq.GroupBy
 
-	aggregates, err := s.initSource()
+	aggregates, similarity, err := s.initSource()
 	if err != nil {
 		return nil, err
 	}
@@ -534,6 +571,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		similarity: similarity,
 		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil

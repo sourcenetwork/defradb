@@ -63,6 +63,10 @@ Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
  the single mutation.  Collection commits will link to composites.
 `
+	signatureDescription string = `
+The signature of the commit, if one exists. This is used to verify the integrity
+ of the commit and the data it contains.
+`
 	commitHeightFieldDescription string = `
 Height represents the location of the commit in the DAG. All commits (collection, composite,
  and field level) on create will have a height of '1', each subsequent local update
@@ -148,12 +152,20 @@ These are the set of filter operators available for use when filtering on Boolea
 These are the set of filter operators available for use when filtering on DateTime
  values.
 `
-	floatOperatorBlockDescription string = `
-These are the set of filter operators available for use when filtering on Float
+	float32OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float32
  values.
 `
-	notNullFloatOperatorBlockDescription string = `
-These are the set of filter operators available for use when filtering on Float!
+	notNullFloat32OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float32!
+ values.
+`
+	float64OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float64
+ values.
+`
+	notNullFloat64OperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Float64!
  values.
 `
 	intOperatorBlockDescription string = `
@@ -251,6 +263,11 @@ Sort the results in descending order, e.g. c,b,a,3,2,1,null.
 `
 	crdtDirectiveDescription string = `
 Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister.
+`
+	constraintsDirectiveDescription string = `
+Set constrains on a field.`
+	embeddingDirectiveDescription string = `
+Indicate that a [float!] type is used to store embeddings.
 `
 	primaryDirectiveDescription string = `
 Indicate the primary side of a one-to-one relationship.

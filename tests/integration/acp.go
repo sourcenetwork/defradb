@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -91,7 +92,11 @@ type AddPolicy struct {
 	Identity immutable.Option[identity]
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
-	ExpectedPolicyID string
+	//
+	// This is an optional attribute, for situations where a test might want to assert
+	// the exact policyID. When this is not provided the test will just assert that
+	// the resulting policyID is not empty.
+	ExpectedPolicyID immutable.Option[string]
 
 	// Any error expected from the action. Optional.
 	//
@@ -105,14 +110,25 @@ func addPolicyACP(
 	s *state,
 	action AddPolicy,
 ) {
-	// If we expect an error, then ExpectedPolicyID should be empty.
-	if action.ExpectedError != "" && action.ExpectedPolicyID != "" {
+	// If we expect an error, then ExpectedPolicyID should never be provided.
+	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
 		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	maxNodeID := slices.Max(nodeIDs)
+	// Expand the policyIDs slice once, so we can minimize how many times we need to expaind it.
+	// We use the maximum nodeID provided to make sure policyIDs slice can accomodate upto that nodeID.
+	if len(s.policyIDs) <= maxNodeID {
+		// Expand the slice if required, so that the policyID can be accessed by node index
+		policyIDs := make([][]string, maxNodeID+1)
+		copy(policyIDs, s.policyIDs)
+		s.policyIDs = policyIDs
+	}
+
 	for index, node := range nodes {
-		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIDs[index])
+		nodeID := nodeIDs[index]
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		policyResult, err := node.AddPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -120,12 +136,24 @@ func addPolicyACP(
 
 		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
-			require.Equal(s.t, action.ExpectedPolicyID, policyResult.PolicyID)
+			if action.ExpectedPolicyID.HasValue() {
+				require.Equal(s.t, action.ExpectedPolicyID.Value(), policyResult.PolicyID)
+			} else {
+				require.NotEqual(s.t, policyResult.PolicyID, "")
+			}
+
+			s.policyIDs[nodeID] = append(s.policyIDs[nodeID], policyResult.PolicyID)
 		}
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
 		if acpType == SourceHubACPType {
+			// Note: If we break here the state will only preserve the policyIDs result on the
+			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
+			// on all the nodes, so we don't have to handle all the edge cases later in actions.
+			for otherIndexes := index + 1; otherIndexes < len(nodes); otherIndexes++ {
+				s.policyIDs[nodeIDs[otherIndexes]] = s.policyIDs[nodeID]
+			}
 			break
 		}
 	}
@@ -219,7 +247,7 @@ func addDocActorRelationshipACP(
 			docID: {},
 		}
 
-		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect)
+		waitForUpdateEvents(s, actionNodeID, action.CollectionID, expect, action.TargetIdentity)
 	}
 }
 
@@ -433,7 +461,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	validatorAddress := strings.TrimSpace(string(out))
 	s.sourcehubAddress = validatorAddress
 
-	args = []string{"genesis", "add-genesis-account", validatorAddress, "900000000stake",
+	args = []string{"genesis", "add-genesis-account", validatorAddress, "1000000000uopen",
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
 	}
@@ -444,7 +472,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 		return nil, err
 	}
 
-	args = []string{"genesis", "gentx", validatorName, "10000000stake",
+	args = []string{"genesis", "gentx", validatorName, "100000000uopen",
 		"--chain-id", chainID,
 		"--keyring-backend", keyringBackend,
 		"--home", directory}
@@ -471,7 +499,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 	//
 	// We need to lock before getting the ports, otherwise they may try and use the port we use for locking.
 	// We can only unlock after the source hub node has started and begun listening on the assigned ports.
-	unlock, err := crossLock(55555)
+	unlock, err := crossLock(44444)
 	if err != nil {
 		return nil, err
 	}
@@ -509,7 +537,7 @@ func setupSourceHub(s *state) ([]node.ACPOpt, error) {
 
 	args = []string{
 		"start",
-		"--minimum-gas-prices", "0stake",
+		"--minimum-gas-prices", "0uopen",
 		"--home", directory,
 		"--grpc.address", gRpcAddress,
 		"--rpc.laddr", rpcAddress,

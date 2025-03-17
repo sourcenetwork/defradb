@@ -18,7 +18,7 @@ import (
 	"math/big"
 
 	"github.com/fxamacker/cbor/v2"
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 	"golang.org/x/exp/constraints"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -124,7 +124,7 @@ func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, er
 	// To ensure that the dag block is unique, we add a random number to the delta.
 	// This is done only on update (if the doc doesn't already exist) to ensure that the
 	// initial dag block of a document can be reproducible.
-	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
+	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +163,8 @@ func (c Counter) incrementValue(
 	priority uint64,
 ) error {
 	key := c.key.WithValueFlag()
-	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().ToDS())
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
@@ -179,7 +179,12 @@ func (c Counter) incrementValue(
 		if err != nil {
 			return err
 		}
-	case client.FieldKind_NILLABLE_FLOAT:
+	case client.FieldKind_NILLABLE_FLOAT32:
+		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		if err != nil {
+			return err
+		}
+	case client.FieldKind_NILLABLE_FLOAT64:
 		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
 		if err != nil {
 			return err
@@ -188,7 +193,7 @@ func (c Counter) incrementValue(
 		return NewErrUnsupportedCounterType(c.Kind)
 	}
 
-	err = c.store.Put(ctx, key.ToDS(), resultAsBytes)
+	err = c.store.Set(ctx, key.Bytes(), resultAsBytes)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}
@@ -233,9 +238,9 @@ func getCurrentValue[T Incrementable](
 	store datastore.DSReaderWriter,
 	key keys.DataStoreKey,
 ) (T, error) {
-	curValue, err := store.Get(ctx, key.ToDS())
+	curValue, err := store.Get(ctx, key.Bytes())
 	if err != nil {
-		if errors.Is(err, ds.ErrNotFound) {
+		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, nil
 		}
 		return 0, err

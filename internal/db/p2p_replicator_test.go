@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 )
 
-func waitForPeerInfo(db *db, sub *event.Subscription) {
+func waitForPeerInfo(db *DB, sub *event.Subscription) {
 	for msg := range sub.Message() {
 		if msg.Name == event.PeerInfoName {
 			hasPeerInfo := false
@@ -40,7 +40,7 @@ func waitForPeerInfo(db *db, sub *event.Subscription) {
 
 func TestSetReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	err = db.SetReplicator(ctx, client.ReplicatorParams{})
@@ -49,7 +49,7 @@ func TestSetReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {
 
 func TestSetReplicator_WithSelfTarget_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.PeerInfoName)
@@ -58,11 +58,13 @@ func TestSetReplicator_WithSelfTarget_ShouldError(t *testing.T) {
 	waitForPeerInfo(db, sub)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{Info: peer.AddrInfo{ID: "self"}})
 	require.ErrorIs(t, err, ErrSelfTargetForReplicator)
+
+	db.events.Unsubscribe(sub)
 }
 
 func TestSetReplicator_WithInvalidCollection_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.PeerInfoName)
@@ -78,7 +80,7 @@ func TestSetReplicator_WithInvalidCollection_ShouldError(t *testing.T) {
 
 func TestSetReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)
@@ -104,7 +106,7 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 	peerID, err := peer.IDFromBytes(b)
 	require.NoError(t, err)
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)
@@ -140,7 +142,7 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 
 func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)
@@ -170,7 +172,7 @@ func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 
 func TestDeleteReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	err = db.DeleteReplicator(ctx, client.ReplicatorParams{})
@@ -179,7 +181,7 @@ func TestDeleteReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {
 
 func TestDeleteReplicator_WithNonExistantReplicator_ShouldError(t *testing.T) {
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	err = db.DeleteReplicator(ctx, client.ReplicatorParams{Info: peer.AddrInfo{ID: "other"}})
@@ -192,7 +194,7 @@ func TestDeleteReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 	peerID, err := peer.IDFromBytes(b)
 	require.NoError(t, err)
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)
@@ -224,7 +226,7 @@ func TestDeleteReplicator_PartialWithValidCollections_ShouldSucceed(t *testing.T
 	peerID, err := peer.IDFromBytes(b)
 	require.NoError(t, err)
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)
@@ -261,7 +263,7 @@ func TestGetAllReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 	peerID, err := peer.IDFromBytes(b)
 	require.NoError(t, err)
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)
@@ -292,7 +294,7 @@ func TestLoadReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 	peerID, err := peer.IDFromBytes(b)
 	require.NoError(t, err)
 	ctx := context.Background()
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 	sub, err := db.events.Subscribe(event.ReplicatorName)

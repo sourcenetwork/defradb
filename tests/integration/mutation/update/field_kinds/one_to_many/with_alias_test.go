@@ -245,7 +245,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 					}`,
 					author2ID,
 				),
-				ExpectedError: "The given field does not exist. Name: notName",
+				ExpectedError: "the given field does not exist. Name: notName",
 			},
 		},
 	}

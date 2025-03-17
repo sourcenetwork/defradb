@@ -44,13 +44,13 @@ func NewDefraCommand() *cobra.Command {
 		MakeP2PInfoCommand(),
 	)
 
-	schema_migrate := MakeSchemaMigrationCommand()
-	schema_migrate.AddCommand(
-		MakeSchemaMigrationSetCommand(),
-		MakeSchemaMigrationSetRegistryCommand(),
-		MakeSchemaMigrationReloadCommand(),
-		MakeSchemaMigrationUpCommand(),
-		MakeSchemaMigrationDownCommand(),
+	lens := MakeLensCommand()
+	lens.AddCommand(
+		MakeLensUpCommand(),
+		MakeLensDownCommand(),
+		MakeLensReloadCommand(),
+		MakeLensSetCommand(),
+		MakeLensSetRegistryCommand(),
 	)
 
 	schema := MakeSchemaCommand()
@@ -59,7 +59,6 @@ func NewDefraCommand() *cobra.Command {
 		MakeSchemaPatchCommand(),
 		MakeSchemaSetActiveCommand(),
 		MakeSchemaDescribeCommand(),
-		schema_migrate,
 	)
 
 	acp_policy := MakeACPPolicyCommand()
@@ -130,6 +129,7 @@ func NewDefraCommand() *cobra.Command {
 		backup,
 		tx,
 		collection,
+		lens,
 	)
 
 	keyring := MakeKeyringCommand()
@@ -137,6 +137,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeKeyringGenerateCommand(),
 		MakeKeyringImportCommand(),
 		MakeKeyringExportCommand(),
+		MakeKeyringListCommand(),
 	)
 
 	identity := MakeIdentityCommand()

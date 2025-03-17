@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
-	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
@@ -51,6 +50,7 @@ type scanNode struct {
 	filter *mapper.Filter
 	slct   *mapper.Select
 
+	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
 	execInfo scanExecInfo
@@ -67,6 +67,7 @@ func (n *scanNode) Init() error {
 		n.p.identity,
 		n.p.txn,
 		n.p.acp,
+		n.index,
 		n.col,
 		n.fields,
 		n.filter,
@@ -120,6 +121,8 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 					n.tryAddFieldWithName(target.Field.Name)
 				}
 			}
+		case *mapper.Similarity:
+			n.tryAddFieldWithName(requestable.SimilarityTarget.Name)
 		}
 	}
 	return nil
@@ -152,41 +155,12 @@ func (n *scanNode) addField(field client.FieldDefinition) {
 	}
 }
 
-func (scan *scanNode) initFetcher(
-	cid immutable.Option[string],
-	index immutable.Option[client.IndexDescription],
-) {
+func (scan *scanNode) initFetcher(cid immutable.Option[string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = fetcher.NewDocumentFetcher()
-
-		if index.HasValue() {
-			fieldsToMove := make([]mapper.Field, 0, len(index.Value().Fields))
-			fieldsToCopy := make([]mapper.Field, 0, len(index.Value().Fields))
-			for _, field := range index.Value().Fields {
-				fieldName := field.Name
-				typeIndex := scan.documentMapping.FirstIndexOfName(fieldName)
-				indexField := mapper.Field{Index: typeIndex, Name: fieldName}
-				fd, _ := scan.col.Definition().Schema.GetFieldByName(fieldName)
-				// if the field is an array, we need to copy it instead of moving so that the
-				// top select node can do final filter check on the whole array of the document
-				if fd.Kind.IsArray() {
-					fieldsToCopy = append(fieldsToCopy, indexField)
-				} else {
-					fieldsToMove = append(fieldsToMove, indexField)
-				}
-			}
-			var indexFilter *mapper.Filter
-			scan.filter, indexFilter = filter.SplitByFields(scan.filter, fieldsToMove...)
-			for i := range fieldsToCopy {
-				indexFilter = filter.Merge(indexFilter, filter.CopyField(scan.filter, fieldsToCopy[i]))
-			}
-			if indexFilter != nil {
-				f = fetcher.NewIndexFetcher(f, index.Value(), indexFilter)
-			}
-		}
 
 		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
 	}

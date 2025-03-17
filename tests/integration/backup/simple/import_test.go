@@ -63,7 +63,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 		Actions: []any{
 			testUtils.BackupImport{
 				ImportContent: `{"Invalid":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
-				ExpectedError: "failed to get collection: datastore: key not found. Name: Invalid",
+				ExpectedError: "failed to get collection: key not found. Name: Invalid",
 			},
 		},
 	}
@@ -194,7 +194,7 @@ func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 					{"INVALID":31,"name":"Smith"},
 					{"age":32,"name":"Bob"}
 				]}`,
-				ExpectedError: "The given field does not exist. Name: INVALID",
+				ExpectedError: "the given field does not exist. Name: INVALID",
 			},
 			testUtils.Request{
 				Request: `

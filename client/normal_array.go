@@ -57,16 +57,28 @@ func (v normalIntArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.IntArray)
 }
 
-type normalFloatArray struct {
+type normalFloat64Array struct {
 	baseArrayNormalValue[[]float64]
 }
 
-func (v normalFloatArray) FloatArray() ([]float64, bool) {
+func (v normalFloat64Array) Float64Array() ([]float64, bool) {
 	return v.val, true
 }
 
-func (v normalFloatArray) Equal(other NormalValue) bool {
-	return areNormalArraysEqual(v.val, other.FloatArray)
+func (v normalFloat64Array) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.Float64Array)
+}
+
+type normalFloat32Array struct {
+	baseArrayNormalValue[[]float32]
+}
+
+func (v normalFloat32Array) Float32Array() ([]float32, bool) {
+	return v.val, true
+}
+
+func (v normalFloat32Array) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.Float32Array)
 }
 
 type normalStringArray struct {
@@ -120,6 +132,18 @@ func (v normalDocumentArray) Equal(other NormalValue) bool {
 	return areNormalArraysEqual(v.val, other.DocumentArray)
 }
 
+type normalJSONArray struct {
+	baseArrayNormalValue[[]JSON]
+}
+
+func (v normalJSONArray) JSONArray() ([]JSON, bool) {
+	return v.val, true
+}
+
+func (v normalJSONArray) Equal(other NormalValue) bool {
+	return areNormalArraysEqual(v.val, other.JSONArray)
+}
+
 // NewNormalBoolArray creates a new NormalValue that represents a `[]bool` value.
 func NewNormalBoolArray(val []bool) NormalValue {
 	return normalBoolArray{newBaseArrayNormalValue(val)}
@@ -130,9 +154,14 @@ func NewNormalIntArray[T constraints.Integer | constraints.Float](val []T) Norma
 	return normalIntArray{newBaseArrayNormalValue(normalizeNumArr[int64](val))}
 }
 
-// NewNormalFloatArray creates a new NormalValue that represents a `[]float64` value.
-func NewNormalFloatArray[T constraints.Integer | constraints.Float](val []T) NormalValue {
-	return normalFloatArray{newBaseArrayNormalValue(normalizeNumArr[float64](val))}
+// NewNormalFloat64Array creates a new NormalValue that represents a `[]float64` value.
+func NewNormalFloat64Array[T constraints.Integer | constraints.Float](val []T) NormalValue {
+	return normalFloat64Array{newBaseArrayNormalValue(normalizeNumArr[float64](val))}
+}
+
+// NewNormalFloat32Array creates a new NormalValue that represents a `[]float32` value.
+func NewNormalFloat32Array[T constraints.Integer | constraints.Float](val []T) NormalValue {
+	return normalFloat32Array{newBaseArrayNormalValue(normalizeNumArr[float32](val))}
 }
 
 // NewNormalStringArray creates a new NormalValue that represents a `[]string` value.
@@ -155,7 +184,12 @@ func NewNormalDocumentArray(val []*Document) NormalValue {
 	return normalDocumentArray{newBaseArrayNormalValue(val)}
 }
 
-func normalizeNumArr[R int64 | float64, T constraints.Integer | constraints.Float](val []T) []R {
+// NewNormalJSONArray creates a new NormalValue that represents a `[]JSON` value.
+func NewNormalJSONArray(val []JSON) NormalValue {
+	return normalJSONArray{newBaseArrayNormalValue(val)}
+}
+
+func normalizeNumArr[R int64 | float64 | float32, T constraints.Integer | constraints.Float](val []T) []R {
 	var v any = val
 	if arr, ok := v.([]R); ok {
 		return arr

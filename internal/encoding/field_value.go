@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -27,24 +27,16 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 	}
 	if v, ok := val.Bool(); ok {
-		var boolInt int64 = 0
-		if v {
-			boolInt = 1
-		}
 		if descending {
-			return EncodeVarintDescending(b, boolInt)
+			return EncodeBoolDescending(b, v)
 		}
-		return EncodeVarintAscending(b, boolInt)
+		return EncodeBoolAscending(b, v)
 	}
 	if v, ok := val.NillableBool(); ok {
-		var boolInt int64 = 0
-		if v.Value() {
-			boolInt = 1
-		}
 		if descending {
-			return EncodeVarintDescending(b, boolInt)
+			return EncodeBoolDescending(b, v.Value())
 		}
-		return EncodeVarintAscending(b, boolInt)
+		return EncodeBoolAscending(b, v.Value())
 	}
 	if v, ok := val.Int(); ok {
 		if descending {
@@ -58,17 +50,29 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 		return EncodeVarintAscending(b, v.Value())
 	}
-	if v, ok := val.Float(); ok {
+	if v, ok := val.Float32(); ok {
 		if descending {
-			return EncodeFloatDescending(b, v)
+			return EncodeFloat32Descending(b, v)
 		}
-		return EncodeFloatAscending(b, v)
+		return EncodeFloat32Ascending(b, v)
 	}
-	if v, ok := val.NillableFloat(); ok {
+	if v, ok := val.NillableFloat32(); ok {
 		if descending {
-			return EncodeFloatDescending(b, v.Value())
+			return EncodeFloat32Descending(b, v.Value())
 		}
-		return EncodeFloatAscending(b, v.Value())
+		return EncodeFloat32Ascending(b, v.Value())
+	}
+	if v, ok := val.Float64(); ok {
+		if descending {
+			return EncodeFloat64Descending(b, v)
+		}
+		return EncodeFloat64Ascending(b, v)
+	}
+	if v, ok := val.NillableFloat64(); ok {
+		if descending {
+			return EncodeFloat64Descending(b, v.Value())
+		}
+		return EncodeFloat64Ascending(b, v.Value())
 	}
 	if v, ok := val.String(); ok {
 		if descending {
@@ -94,6 +98,12 @@ func EncodeFieldValue(b []byte, val client.NormalValue, descending bool) []byte 
 		}
 		return EncodeTimeAscending(b, v.Value())
 	}
+	if v, ok := val.JSON(); ok {
+		if descending {
+			return EncodeJSONDescending(b, v)
+		}
+		return EncodeJSONAscending(b, v)
+	}
 
 	return b
 }
@@ -107,6 +117,18 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 		b, _ = DecodeIfNull(b)
 		nilVal, err := client.NewNormalNil(kind)
 		return b, nilVal, err
+	case Bool:
+		var v bool
+		var err error
+		if descending {
+			b, v, err = DecodeBoolDescending(b)
+		} else {
+			b, v, err = DecodeBoolAscending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalBool(v), nil
 	case Int:
 		var v int64
 		var err error
@@ -119,18 +141,30 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalInt(v), nil
-	case Float:
-		var v float64
+	case Float32:
+		var v float32
 		var err error
 		if descending {
-			b, v, err = DecodeFloatDescending(b)
+			b, v, err = DecodeFloat32Descending(b)
 		} else {
-			b, v, err = DecodeFloatAscending(b)
+			b, v, err = DecodeFloat32Ascending(b)
 		}
 		if err != nil {
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
-		return b, client.NewNormalFloat(v), nil
+		return b, client.NewNormalFloat32(v), nil
+	case Float64:
+		var v float64
+		var err error
+		if descending {
+			b, v, err = DecodeFloat64Descending(b)
+		} else {
+			b, v, err = DecodeFloat64Ascending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalFloat64(v), nil
 	case Bytes, BytesDesc:
 		var v []byte
 		var err error
@@ -155,6 +189,18 @@ func DecodeFieldValue(b []byte, descending bool, kind client.FieldKind) ([]byte,
 			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
 		}
 		return b, client.NewNormalTime(v), nil
+	case JSON:
+		var v client.JSON
+		var err error
+		if descending {
+			b, v, err = DecodeJSONDescending(b)
+		} else {
+			b, v, err = DecodeJSONAscending(b)
+		}
+		if err != nil {
+			return nil, nil, NewErrCanNotDecodeFieldValue(b, kind, err)
+		}
+		return b, client.NewNormalJSON(v), nil
 	}
 
 	return nil, nil, NewErrCanNotDecodeFieldValue(b, kind)

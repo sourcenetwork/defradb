@@ -55,6 +55,10 @@ func (c *collection) checkAccessOfDocWithACP(
 	if !c.db.acp.HasValue() {
 		return true, nil
 	}
+	ident := identity.FromContext(ctx)
+	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID == c.db.nodeIdentity.Value().DID {
+		return true, nil
+	}
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		identity.FromContext(ctx),
