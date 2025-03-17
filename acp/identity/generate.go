@@ -19,15 +19,9 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-// Generate generates a new identity with a secp256k1 key pair.
-// This is kept for backward compatibility.
-func Generate() (RawIdentity, error) {
-	return GenerateWithType(crypto.KeyTypeSecp256k1)
-}
-
-// GenerateWithType generates a new identity with the specified key type.
+// Generate generates a new identity with the specified key type.
 // Supported types are KeyTypeSecp256k1 and KeyTypeEd25519.
-func GenerateWithType(keyType crypto.KeyType) (RawIdentity, error) {
+func Generate(keyType crypto.KeyType) (RawIdentity, error) {
 	var privKey crypto.PrivateKey
 	var err error
 
