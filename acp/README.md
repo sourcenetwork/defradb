@@ -174,6 +174,8 @@ defradb client ... --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b
 
 We have in `examples/dpi_policy/user_dpi_policy.yml`:
 ```yaml
+name: An Example Policy
+
 description: A Valid DefraDB Policy Interface (DPI)
 
 actor:
@@ -183,15 +185,23 @@ resources:
   users:
     permissions:
       read:
-        expr: owner + reader
-      write:
-        expr: owner
+        expr: owner + reader + updater + deleter
+      update:
+        expr: owner + updater
+      delete:
+        expr: owner + deleter
 
     relations:
       owner:
         types:
           - actor
       reader:
+        types:
+          - actor
+      updater:
+        types:
+          - actor
+      deleter:
         types:
           - actor
 ```
@@ -443,8 +453,8 @@ Note:
   - The collection with the target document must have a valid policy and resource linked.
   - The target document must be registered with ACP already (private document).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
-  - If the specified relation was not granted the miminum DPI permissions (read or write) within the policy,
-  and a relationship is formed, the subject/actor will still not be able to access (read or write) the resource.
+  - If the specified relation was not granted the miminum DPI permissions (read or update or delete) within the policy,
+  and a relationship is formed, the subject/actor will still not be able to access (read or update or delete) the resource.
   - If the relationship already exists, then it will just be a no-op.
 
 Consider the following policy that we have under `examples/dpi_policy/user_dpi_policy_with_manages.yml`:
@@ -461,10 +471,13 @@ resources:
   users:
     permissions:
       read:
-        expr: owner + reader + writer
+        expr: owner + writer + updater + deleter + reader
 
-      write:
-        expr: owner + writer
+      update:
+        expr: owner + writer + updater
+
+      delete:
+        expr: owner + writer + deleter
 
       nothing:
         expr: dummy
@@ -475,6 +488,14 @@ resources:
           - actor
 
       reader:
+        types:
+          - actor
+
+      updater:
+        types:
+          - actor
+
+      deleter:
         types:
           - actor
 
