@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -278,7 +277,6 @@ func (db *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams)
 	}
 
 	for _, col := range collections {
-		fmt.Println("I will delete")
 		delete(storedSchemas, col.SchemaRoot())
 	}
 	// Update the list of schemas for this replicator prior to persisting.

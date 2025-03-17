@@ -166,5 +166,6 @@ func (h *acpHandler) bindRoutes(router *Router) {
 
 	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
 	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)
-	router.AddRoute("/acp/relationship/delete", http.MethodPost, acpDeleteDocActorRelationship, h.DeleteDocActorRelationship)
+	router.AddRoute("/acp/relationship/delete", http.MethodPost, acpDeleteDocActorRelationship,
+		h.DeleteDocActorRelationship)
 }
