@@ -101,7 +101,7 @@ var configDefaults = map[string]any{
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
 	"datastore.nosigning":               false,
-	"datastore.defaultsigningalg":       "ES256K",
+	"datastore.defaultsigningalg":       "secp256k1",
 }
 
 // defaultConfig returns a new config with default values.

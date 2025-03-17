@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	SignatureTypeECDSA256K = "ES256K"
-	SignatureTypeEd25519   = "Ed25519"
+	SignatureTypeECDSA256K = "secp256k1"
+	SignatureTypeEd25519   = "ed25519"
 )
 
 // SignatureHeader contains the header of the signature.

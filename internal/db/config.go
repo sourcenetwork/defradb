@@ -73,7 +73,6 @@ func WithNodeIdentity(ident identity.Identity) Option {
 
 // WithSigningAlgorithm sets the signature algorithm to use for DAG blocks.
 // If set to None, block signing is disabled.
-// Valid values are defined in coreblock package: SignatureTypeECDSA256K and SignatureTypeEd25519.
 func WithSigningAlgorithm(alg immutable.Option[crypto.KeyType]) Option {
 	return func(opts *dbOptions) {
 		opts.signingAlg = alg
