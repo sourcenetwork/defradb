@@ -17,10 +17,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnDeletePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, owner relation with difference (-) set operation on write permission expression, reject schema",
+		Description: "Test acp, add dpi schema, owner relation with difference (-) set operation on delete permission expression, reject schema",
 
 		Actions: []any{
 
@@ -40,7 +40,9 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprO
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner - reader
 
                         relations:
@@ -70,7 +72,7 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprO
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
-					"write",
+					"delete",
 					"owner",
 					"-",
 				),
@@ -101,10 +103,10 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnWritePermissionExprO
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnDeletePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, owner relation with intersection (&) set operation on write permission expression, reject schema",
+		Description: "Test acp, add dpi schema, owner relation with intersection (&) set operation on delete permission expression, reject schema",
 
 		Actions: []any{
 
@@ -124,7 +126,9 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExp
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner & reader
 
                         relations:
@@ -154,7 +158,7 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExp
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
-					"write",
+					"delete",
 					"owner",
 					"&",
 				),
@@ -185,10 +189,10 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnWritePermissionExp
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnDeletePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, owner relation with invalid set operation on write permission expression, reject schema",
+		Description: "Test acp, add dpi schema, owner relation with invalid set operation on delete permission expression, reject schema",
 
 		Actions: []any{
 
@@ -208,7 +212,9 @@ func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnWritePermissionExprOnDP
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner - owner
 
                         relations:
@@ -238,7 +244,7 @@ func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnWritePermissionExprOnDP
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
-					"write",
+					"delete",
 					"owner",
 					"-",
 				),
