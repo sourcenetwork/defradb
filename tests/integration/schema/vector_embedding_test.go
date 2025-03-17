@@ -51,7 +51,6 @@ func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
 func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",

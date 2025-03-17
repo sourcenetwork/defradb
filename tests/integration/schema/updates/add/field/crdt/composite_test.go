@@ -39,3 +39,28 @@ func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdatesAddFieldCRDTCompositeErrorsMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field with crdt composite (3)",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":3} },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":3} }
+					]
+				`,
+				ExpectedError: "CRDT type not supported. Name: foo, CRDTType: composite\nCRDT type not supported. Name: foo",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

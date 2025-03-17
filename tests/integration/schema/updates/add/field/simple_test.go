@@ -379,6 +379,31 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, add field that already exists",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} },
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
+					]
+				`,
+				ExpectedError: "mutating an existing field is not supported. ProposedName: name\nmutating an existing field is not supported. ProposedName: name",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add duplicate fields",
