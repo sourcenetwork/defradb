@@ -2,6 +2,8 @@ module github.com/sourcenetwork/defradb
 
 go 1.23.6
 
+toolchain go1.24.1
+
 require (
 	github.com/bits-and-blooms/bitset v1.20.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -57,7 +59,7 @@ require (
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.1.2
 	github.com/zalando/go-keyring v0.2.6
-	go.opentelemetry.io/contrib/instrumentation/runtime v0.59.0
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.60.0
 	go.opentelemetry.io/otel v1.35.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.34.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.34.0
