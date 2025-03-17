@@ -38,10 +38,13 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -55,7 +58,11 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 

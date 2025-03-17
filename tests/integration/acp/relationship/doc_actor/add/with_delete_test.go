@@ -38,10 +38,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -55,7 +58,11 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -183,10 +190,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -200,7 +210,11 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -364,10 +378,13 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -381,7 +398,11 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 

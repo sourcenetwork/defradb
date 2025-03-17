@@ -47,10 +47,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -64,7 +67,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -205,10 +212,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -222,7 +232,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -380,10 +394,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -397,7 +414,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
