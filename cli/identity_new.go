@@ -50,7 +50,7 @@ Example: generate a new identity with ed25519 key:
 				return fmt.Errorf("unsupported key type: %s", keyType)
 			}
 
-			newIdentity, err := identity.GenerateWithType(keyTypeEnum)
+			newIdentity, err := identity.Generate(keyTypeEnum)
 			if err != nil {
 				return err
 			}
