@@ -232,6 +232,7 @@ func (k *ed25519PrivateKey) Sign(data []byte) ([]byte, error) {
 }
 
 func (k *ed25519PrivateKey) GetPublic() PublicKey {
+	//nolint:forcetypeassert
 	return &ed25519PublicKey{key: k.key.Public().(ed25519.PublicKey)}
 }
 
