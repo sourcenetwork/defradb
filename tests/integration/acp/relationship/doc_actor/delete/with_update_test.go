@@ -18,10 +18,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testing.T) {
+func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes write(update) access from another actor, they can not update anymore",
+		Description: "Test acp, owner revokes update access from another actor, they can not update anymore",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionNamedMutationType,
@@ -65,7 +65,11 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -120,7 +124,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
@@ -171,7 +175,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedRecordFound: true,
 			},
@@ -238,10 +242,10 @@ func TestACP_OwnerRevokesUpdateWriteAccess_OtherActorCanNoLongerUpdate(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *testing.T) {
+func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes write(update) access from another actor, they can not update anymore (gql)",
+		Description: "Test acp, owner revokes update access from another actor, they can not update anymore (gql)",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return no error.
@@ -344,7 +348,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
@@ -395,7 +399,7 @@ func TestACP_OwnerRevokesUpdateWriteAccess_GQL_OtherActorCanNoLongerUpdate(t *te
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedRecordFound: true,
 			},

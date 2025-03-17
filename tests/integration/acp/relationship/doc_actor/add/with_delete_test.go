@@ -16,10 +16,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
+func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(delete) access to another actor twice, no-op",
+		Description: "Test acp, owner gives delete access to another actor twice, no-op",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -144,7 +144,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedExistence: false,
 			},
@@ -158,7 +158,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedExistence: true, // is a no-op
 			},
@@ -168,10 +168,10 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActorTwice_ShowThatTheRelations
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *testing.T) {
+func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(delete) access to another actor",
+		Description: "Test acp, owner gives delete access to another actor",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -296,7 +296,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedExistence: false,
 			},
@@ -356,10 +356,10 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDelete(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwner(t *testing.T) {
+func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwner(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(delete) access to another actor, both can read",
+		Description: "Test acp, owner gives delete access to another actor, both can read",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -456,7 +456,7 @@ func TestACP_OwnerGivesDeleteWriteAccessToAnotherActor_OtherActorCanDeleteSoCanT
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedExistence: false,
 			},

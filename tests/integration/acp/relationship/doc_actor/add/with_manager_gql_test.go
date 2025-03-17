@@ -21,7 +21,7 @@ import (
 func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanReadAndWrite(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner makes a manager that gives itself read and write access",
+		Description: "Test acp, owner makes a manager that gives itself read and write (update and delete) access",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -79,7 +79,8 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
                           admin:
                             manages:
                               - reader
-                              - writer
+                              - updater
+                              - deleter
                             types:
                               - actor
 
@@ -176,7 +177,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager makes itself a writer
+			testUtils.AddDocActorRelationship{ // Manager makes itself a updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -185,12 +186,12 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
 
-			// Note: It is not neccesary to make itself a reader, as becoming a writer allows reading.
+			// Note: It is not neccesary to make itself a reader, as becoming an updater allows reading.
 			testUtils.AddDocActorRelationship{ // Manager makes itself a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
@@ -246,7 +247,31 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				Identity: testUtils.ClientIdentity(2), // Manager can now delete.
+				Identity: testUtils.ClientIdentity(2), // Manager still can not delete yet.
+
+				DocID: 0,
+
+				ExpectedError: "document not found or not authorized to access",
+			},
+
+			testUtils.AddDocActorRelationship{ // Manager makes itself a deleter.
+				RequestorIdentity: testUtils.ClientIdentity(2),
+
+				TargetIdentity: testUtils.ClientIdentity(2),
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "deleter",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+
+				Identity: testUtils.ClientIdentity(2), // Manager can delete now.
 
 				DocID: 0,
 			},
@@ -277,7 +302,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantReadOrWrite(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner makes a manager, manager can't read or write",
+		Description: "Test acp, owner makes a manager, manager can't read or write (update or delete)",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -563,7 +588,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a writer
+			testUtils.AddDocActorRelationship{ // Admin tries to make another actor an updater
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -572,7 +597,21 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
+
+				ExpectedError: "UNAUTHORIZED",
+			},
+
+			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a deleter
+				RequestorIdentity: testUtils.ClientIdentity(2),
+
+				TargetIdentity: testUtils.ClientIdentity(3),
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "deleter",
 
 				ExpectedError: "UNAUTHORIZED",
 			},

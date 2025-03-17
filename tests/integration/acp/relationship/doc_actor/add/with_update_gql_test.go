@@ -18,10 +18,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
+func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
+		Description: "Test acp, owner gives update access to another actor twice, no-op",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -158,7 +158,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
@@ -172,7 +172,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: true, // is a no-op
 			},
@@ -182,10 +182,10 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_GQL_ShowThatTheRelat
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t *testing.T) {
+func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor",
+		Description: "Test acp, owner gives update access to another actor",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -322,7 +322,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_GQL_OtherActorCanUpdate(t
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},

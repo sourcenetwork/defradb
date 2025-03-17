@@ -16,10 +16,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testing.T) {
+func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes write(delete) access from another actor, they can not delete anymore",
+		Description: "Test acp, owner revokes delete access from another actor, they can not delete anymore",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -130,7 +130,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedExistence: false,
 			},
@@ -143,7 +143,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 				DocID: 1,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedExistence: false,
 			},
@@ -192,7 +192,7 @@ func TestACP_OwnerRevokesDeleteWriteAccess_OtherActorCanNoLongerDelete(t *testin
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "deleter",
 
 				ExpectedRecordFound: true,
 			},
