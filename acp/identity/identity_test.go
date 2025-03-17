@@ -11,6 +11,8 @@
 package identity
 
 import (
+	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -18,6 +20,8 @@ import (
 	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
+
+	defracrypto "github.com/sourcenetwork/defradb/crypto"
 )
 
 func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
@@ -75,4 +79,45 @@ func Test_RawIdentityGenerationIsNotFixed_ReturnsUniqueRawIdentites(t *testing.T
 	require.NotEqual(t, newIdentity1.PrivateKey, newIdentity2.PrivateKey)
 	require.NotEqual(t, newIdentity1.PublicKey, newIdentity2.PublicKey)
 	require.NotEqual(t, newIdentity1.DID, newIdentity2.DID)
+}
+
+func Test_GenerateWithType_WithSecp256k1_ReturnsNewRawIdentity(t *testing.T) {
+	newIdentity, err := GenerateWithType(defracrypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, newIdentity.PrivateKey)
+	require.NotEmpty(t, newIdentity.PublicKey)
+
+	require.Equal(t, newIdentity.DID[:7], "did:key")
+
+	privKeyBytes, err := hex.DecodeString(newIdentity.PrivateKey)
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+
+	identity, err := FromPrivateKey(defracrypto.NewPrivateKey(privKey))
+	require.NoError(t, err)
+	require.Equal(t, defracrypto.KeyTypeSecp256k1, identity.PrivateKey.Type())
+}
+
+func Test_GenerateWithType_WithEd25519_ReturnsNewRawIdentity(t *testing.T) {
+	newIdentity, err := GenerateWithType(defracrypto.KeyTypeEd25519)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, newIdentity.PrivateKey)
+	require.NotEmpty(t, newIdentity.PublicKey)
+
+	require.Equal(t, newIdentity.DID[:7], "did:key")
+
+	privKeyBytes, err := hex.DecodeString(newIdentity.PrivateKey)
+	require.NoError(t, err)
+
+	identity, err := FromPrivateKey(defracrypto.NewPrivateKey(ed25519.PrivateKey(privKeyBytes)))
+	require.NoError(t, err)
+	require.Equal(t, defracrypto.KeyTypeEd25519, identity.PrivateKey.Type())
+}
+
+func Test_GenerateWithType_WithInvalidType_ReturnsError(t *testing.T) {
+	_, err := GenerateWithType(defracrypto.KeyType("invalid"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported key type: invalid")
 }
