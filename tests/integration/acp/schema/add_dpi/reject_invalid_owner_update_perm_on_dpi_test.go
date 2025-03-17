@@ -17,10 +17,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerMissingRequiredUpdatePermissionOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, with owner missing required write permission, reject schema",
+		Description: "Test acp, add dpi schema, with owner missing required update permission, reject schema",
 
 		Actions: []any{
 
@@ -38,9 +38,11 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionOnDPI_SchemaRejecte
                     resources:
                       users:
                         permissions:
-                          write:
-                            expr: w
                           read:
+                            expr: owner
+                          update:
+                            expr: w
+                          delete:
                             expr: owner
 
                         relations:
@@ -70,7 +72,7 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionOnDPI_SchemaRejecte
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"write",
+					"update",
 					"owner",
 				),
 			},
@@ -100,10 +102,10 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionOnDPI_SchemaRejecte
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerMissingRequiredUpdatePermissionLabelOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, with owner missing required write permission label, reject schema",
+		Description: "Test acp, add dpi schema, with owner missing required update permission label, reject schema",
 
 		Actions: []any{
 
@@ -122,6 +124,8 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRe
                        users:
                          permissions:
                            read:
+                             expr: owner
+                           delete:
                              expr: owner
 
                          relations:
@@ -177,10 +181,10 @@ func TestACP_AddDPISchema_OwnerMissingRequiredWritePermissionLabelOnDPI_SchemaRe
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, owner specified incorrectly on write permission expression, reject schema",
+		Description: "Test acp, add dpi schema, owner specified incorrectly on update permission expression, reject schema",
 
 		Actions: []any{
 
@@ -200,14 +204,16 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_Sc
                          permissions:
                            read:
                              expr: owner
-                           write:
-                             expr: writer + owner
+                           update:
+                             expr: updater + owner
+                           delete:
+                             expr: owner
 
                          relations:
                            owner:
                              types:
                                - actor
-                           writer:
+                           updater:
                              types:
                                - actor
                  `,
@@ -230,7 +236,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_Sc
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"write",
+					"update",
 					"owner",
 				),
 			},
@@ -260,10 +266,10 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionExprOnDPI_Sc
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionNoSpaceExprOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionNoSpaceExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, owner specified incorrectly on write permission expression (no space), reject schema",
+		Description: "Test acp, add dpi schema, owner specified incorrectly on update permission expression (no space), reject schema",
 
 		Actions: []any{
 
@@ -283,14 +289,16 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionNoSpaceExprO
                          permissions:
                            read:
                              expr: owner
-                           write:
-                             expr: writer+owner
+                           update:
+                             expr: updater+owner
+                           delete:
+                             expr: owner
 
                          relations:
                            owner:
                              types:
                                - actor
-                           writer:
+                           updater:
                              types:
                                - actor
                  `,
@@ -313,7 +321,7 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionNoSpaceExprO
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"write",
+					"update",
 					"owner",
 				),
 			},
@@ -343,10 +351,10 @@ func TestACP_AddDPISchema_OwnerSpecifiedIncorrectlyOnWritePermissionNoSpaceExprO
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnWritePermissionExprOnDPI_SchemaRejected(t *testing.T) {
+func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, malicious owner specified on write permission expression, reject schema",
+		Description: "Test acp, add dpi schema, malicious owner specified on update permission expression, reject schema",
 
 		Actions: []any{
 
@@ -366,8 +374,10 @@ func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnWritePermissionExprOnDPI_Sche
                          permissions:
                            read:
                              expr: owner
-                           write:
+                           update:
                              expr: ownerBad
+                           delete:
+                             expr: owner
 
                          relations:
                            owner:
@@ -396,7 +406,7 @@ func TestACP_AddDPISchema_MaliciousOwnerSpecifiedOnWritePermissionExprOnDPI_Sche
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
-					"write",
+					"update",
 					"owner",
 					"B",
 				),
