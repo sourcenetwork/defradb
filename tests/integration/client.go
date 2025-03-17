@@ -97,7 +97,7 @@ type goClientWrapper struct {
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		peer: n.Peer,
+		peer: n.Peer.(*net.Peer),
 	}
 }
 

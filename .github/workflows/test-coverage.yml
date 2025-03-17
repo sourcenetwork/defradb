@@ -274,6 +274,22 @@ jobs:
           coverage-artifact-name: "coverage_telemetry"
           coverage-path: coverage.txt
 
+  # This job runs the JS tests to ensure they are able to build and run.
+  test-js:
+    name: Test JS job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test JS
+        run: make test:js
+
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job

@@ -12,219 +12,88 @@ package node
 
 import (
 	"context"
-	"fmt"
-	gohttp "net/http"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
-	"github.com/sourcenetwork/defradb/net"
 )
 
 var log = corelog.NewLogger("node")
 
-// Option is a generic option that applies to any subsystem.
-//
-// Invalid option types will be silently ignored. Valid option types are:
-// - `ACPOpt`
-// - `NodeOpt`
-// - `StoreOpt`
-// - `db.Option`
-// - `http.ServerOpt`
-// - `net.NodeOpt`
-type Option any
-
-// Options contains start configuration values.
-type Options struct {
-	disableP2P        bool
-	disableAPI        bool
-	enableDevelopment bool
-	kmsType           immutable.Option[kms.ServiceType]
-}
-
-// DefaultOptions returns options with default settings.
-func DefaultOptions() *Options {
-	return &Options{}
-}
-
-// NodeOpt is a function for setting configuration values.
-type NodeOpt func(*Options)
-
-// WithDisableP2P sets the disable p2p flag.
-func WithDisableP2P(disable bool) NodeOpt {
-	return func(o *Options) {
-		o.disableP2P = disable
-	}
-}
-
-// WithDisableAPI sets the disable api flag.
-func WithDisableAPI(disable bool) NodeOpt {
-	return func(o *Options) {
-		o.disableAPI = disable
-	}
-}
-
-func WithKMS(kms kms.ServiceType) NodeOpt {
-	return func(o *Options) {
-		o.kmsType = immutable.Some(kms)
-	}
-}
-
-// WithEnableDevelopment sets the enable development mode flag.
-func WithEnableDevelopment(enable bool) NodeOpt {
-	return func(o *Options) {
-		o.enableDevelopment = enable
-	}
+// Peer defines the minimal p2p network interface.
+type Peer interface {
+	Close()
+	PeerID() peer.ID
+	PeerInfo() peer.AddrInfo
+	Connect(context.Context, peer.AddrInfo) error
 }
 
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
-	DB         client.DB
-	Peer       *net.Peer
-	Server     *http.Server
+	// DB is the database instance
+	DB client.DB
+	// Peer is the p2p networking subsystem instance
+	Peer Peer
+	// api http server instance
+	server *http.Server
+	// kms subsystem instance
 	kmsService kms.Service
-	acp        immutable.Option[acp.ACP]
-
-	options    *Options
-	dbOpts     []db.Option
-	acpOpts    []ACPOpt
-	netOpts    []net.NodeOpt
-	storeOpts  []StoreOpt
-	serverOpts []http.ServerOpt
-	lensOpts   []LenOpt
+	// acp subsystem instance
+	acp immutable.Option[acp.ACP]
+	// config values after applying options
+	config *Config
+	// options the node was created with
+	options []Option
 }
 
 // New returns a new node instance configured with the given options.
-func New(ctx context.Context, opts ...Option) (*Node, error) {
+func New(ctx context.Context, options ...Option) (*Node, error) {
 	n := Node{
-		options: DefaultOptions(),
+		config:  DefaultConfig(),
+		options: options,
 	}
-	for _, opt := range opts {
-		switch t := opt.(type) {
-		case NodeOpt:
-			t(n.options)
-
-		case ACPOpt:
-			n.acpOpts = append(n.acpOpts, t)
-
-		case StoreOpt:
-			n.storeOpts = append(n.storeOpts, t)
-
-		case db.Option:
-			n.dbOpts = append(n.dbOpts, t)
-
-		case http.ServerOpt:
-			n.serverOpts = append(n.serverOpts, t)
-
-		case net.NodeOpt:
-			n.netOpts = append(n.netOpts, t)
-
-		case LenOpt:
-			n.lensOpts = append(n.lensOpts, t)
-		}
+	for _, opt := range filterOptions[NodeOpt](options) {
+		opt(n.config)
 	}
 	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, err := NewStore(ctx, n.storeOpts...)
+	rootstore, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}
-
-	n.acp, err = NewACP(ctx, n.acpOpts...)
+	n.acp, err = NewACP(ctx, filterOptions[ACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
-
-	lens, err := NewLens(ctx, n.lensOpts...)
+	lens, err := NewLens(ctx, filterOptions[LenOpt](n.options)...)
 	if err != nil {
 		return err
 	}
-
-	coreDB, err := db.NewDB(ctx, rootstore, n.acp, lens, n.dbOpts...)
+	n.DB, err = db.NewDB(ctx, rootstore, n.acp, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
-	n.DB = coreDB
-
-	if !n.options.disableP2P {
-		// setup net node
-		n.Peer, err = net.NewPeer(
-			ctx,
-			coreDB.Events(),
-			n.acp,
-			coreDB,
-			n.netOpts...,
-		)
-		if err != nil {
-			return err
-		}
-
-		ident, err := coreDB.GetNodeIdentity(ctx)
-		if err != nil {
-			return err
-		}
-
-		if n.options.kmsType.HasValue() {
-			switch n.options.kmsType.Value() {
-			case kms.PubSubServiceType:
-				n.kmsService, err = kms.NewPubSubService(
-					ctx,
-					n.Peer.PeerID(),
-					n.Peer.Server(),
-					coreDB.Events(),
-					coreDB.Encstore(),
-					n.acp,
-					db.NewCollectionRetriever(coreDB),
-					ident.Value().DID,
-				)
-			}
-			if err != nil {
-				return err
-			}
-		}
+	err = n.startP2P(ctx)
+	if err != nil {
+		return err
 	}
-
-	if !n.options.disableAPI {
-		// setup http server
-		handler, err := http.NewHandler(coreDB)
-		if err != nil {
-			return err
-		}
-		n.Server, err = http.NewServer(handler, n.serverOpts...)
-		if err != nil {
-			return err
-		}
-		err = n.Server.SetListener()
-		if err != nil {
-			return err
-		}
-		log.InfoContext(ctx,
-			fmt.Sprintf("Providing HTTP API at %s PlaygroundEnabled=%t", n.Server.Address(), http.PlaygroundEnabled))
-		log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/v0/graphql", n.Server.Address()))
-		go func() {
-			if err := n.Server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
-				log.ErrorContextE(ctx, "HTTP server stopped", err)
-			}
-		}()
-	}
-
-	return nil
+	return n.startAPI(ctx)
 }
 
 // Close stops the node sub-systems.
 func (n *Node) Close(ctx context.Context) error {
 	var err error
-	if n.Server != nil {
-		err = n.Server.Shutdown(ctx)
+	if n.server != nil {
+		err = n.server.Shutdown(ctx)
 	}
 	if n.Peer != nil {
 		n.Peer.Close()
@@ -238,14 +107,14 @@ func (n *Node) Close(ctx context.Context) error {
 // PurgeAndRestart causes the node to shutdown, purge all data from
 // its datastore, and restart.
 func (n *Node) PurgeAndRestart(ctx context.Context) error {
-	if !n.options.enableDevelopment {
+	if !n.config.enableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
 	err := n.Close(ctx)
 	if err != nil {
 		return err
 	}
-	err = purgeStore(ctx, n.storeOpts...)
+	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}

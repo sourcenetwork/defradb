@@ -389,8 +389,8 @@ github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23/go.mod h1:bbYlZJ7
 github.com/butuzov/ireturn v0.1.1/go.mod h1:Wh6Zl3IMtTpaIKbmwzqi6olnM9ptYQxxVacMsOEFPoc=
 github.com/bxcodec/faker v2.0.1+incompatible h1:P0KUpUw5w6WJXwrPfv35oc91i4d8nf40Nwln+M/+faA=
 github.com/bxcodec/faker v2.0.1+incompatible/go.mod h1:BNzfpVdTwnFJ6GtfYTcQu6l6rHShT+veBxNCnjCx5XM=
-github.com/bytecodealliance/wasmtime-go/v15 v15.0.0 h1:4R2MpSPPbtSxqdsOTvsMn1pnwdEhzbDGMao6LUUSLv4=
-github.com/bytecodealliance/wasmtime-go/v15 v15.0.0/go.mod h1:m6vB/SsM+pnJkVHmO1wzHYUeYtciltTKuxuvkR8pYcY=
+github.com/bytecodealliance/wasmtime-go/v21 v21.0.0 h1:d2m3R7TpNpOGuIi2PTC9w2nUY/A2IJinHOZTL76jyhg=
+github.com/bytecodealliance/wasmtime-go/v21 v21.0.0/go.mod h1:o/HNPe7TdXkqbrkmU9YgHBFXU9OIF1FVPlqhZwC1tyk=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/casbin/casbin/v2 v2.37.0/go.mod h1:vByNa/Fchek0KZUgG5wEsl7iFsiviAYKRtgrQfcJqHg=
 github.com/cenkalti/backoff v2.2.1+incompatible h1:tNowT99t7UNflLxfYYSlKYsBpXdEet03Pg2g16Swow4=
@@ -1239,8 +1239,8 @@ github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+
 github.com/kyoh86/exportloopref v0.1.8/go.mod h1:1tUcJeiioIs7VWe5gcOObrux3lb66+sBqGZrRkMwPgg=
 github.com/ldez/gomoddirectives v0.2.3/go.mod h1:cpgBogWITnCfRq2qGoDkKMEVSaarhdBr6g8G04uz6d0=
 github.com/ldez/tagliatelle v0.3.1/go.mod h1:8s6WJQwEYHbKZDsp/LjArytKOG8qaMrKQQ3mFukHs88=
-github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c h1:bG+mr4SqbYRU69L6CSvHDsKbRg5Q9vaN2T5g7qcrPdQ=
-github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c/go.mod h1:a4edl+KcOVk1Nj3EjG77htqg2/0Mmy3bSG0kl+FWVqQ=
+github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5 h1:pP850r5kNYqBnTCEp1iQvJgH3j+0GfSRP6/7jxnUNVo=
+github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5/go.mod h1:/KALHpn4yHMQ9vx/8KzG7XnE/Z4Yb14T6sBcyNhqhHA=
 github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgxpxOKII=
 github.com/leodido/go-urn v1.2.4 h1:XlAE/cm/ms7TE/VMVoduSpNBoyc2dOxHs5MZSwAN63Q=
 github.com/leodido/go-urn v1.2.4/go.mod h1:7ZrI8mTSeBSHl/UaRyKQW1qZeMgak41ANeCNaVckg+4=

@@ -21,7 +21,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
-	acptypes "github.com/sourcenetwork/sourcehub/x/acp/bearer_token"
 )
 
 // didProducer generates a did:key from a public key
@@ -171,7 +170,7 @@ func (identity Identity) NewToken(
 	}
 
 	if authorizedAccount.HasValue() {
-		err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
+		err = token.Set("authorized_account", authorizedAccount.Value())
 		if err != nil {
 			return nil, err
 		}
