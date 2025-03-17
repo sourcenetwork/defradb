@@ -290,6 +290,11 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
+      # Disable AppArmor for Ubuntu 23.10+.
+      # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
+      - name: Disable AppArmor
+        run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+
       - name: Test JS
         run: make test:js
 
