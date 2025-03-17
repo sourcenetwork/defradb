@@ -251,5 +251,5 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/replicators/delete", http.MethodPost, deleteReplicator, h.DeleteReplicator)
 	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollection)
-	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollection)
+	router.AddRoute("/p2p/collections/delete", http.MethodPost, removePeerCollections, h.RemoveP2PCollection)
 }
