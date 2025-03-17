@@ -195,7 +195,7 @@ func TestSecp256k1_InvalidSignature(t *testing.T) {
 	valid, err := wrappedPubKey.Verify(message, []byte("invalid signature"))
 	assert.Error(t, err)
 	assert.False(t, valid)
-	assert.Equal(t, ErrInvalidECDSASignature, err) // This error is still used for parsing failures
+	assert.Equal(t, ErrInvalidECDSASignature, err)
 }
 
 func TestEd25519_InvalidSignature(t *testing.T) {
@@ -243,7 +243,6 @@ func TestEd25519PublicKey_InvalidLengthValidation(t *testing.T) {
 
 // Test the generic NewPublicKey/NewPrivateKey functions
 func TestGenericNewPrivateKey(t *testing.T) {
-	// Test with secp256k1
 	privKey, err := secp256k1.GeneratePrivateKey()
 	require.NoError(t, err)
 
@@ -251,7 +250,6 @@ func TestGenericNewPrivateKey(t *testing.T) {
 	assert.NotNil(t, genericKey)
 	assert.Equal(t, KeyTypeSecp256k1, genericKey.Type())
 
-	// Test with Ed25519
 	_, ed25519Key, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
@@ -261,7 +259,6 @@ func TestGenericNewPrivateKey(t *testing.T) {
 }
 
 func TestGenericNewPublicKey(t *testing.T) {
-	// Test with secp256k1
 	privKey, err := secp256k1.GeneratePrivateKey()
 	require.NoError(t, err)
 
@@ -269,7 +266,6 @@ func TestGenericNewPublicKey(t *testing.T) {
 	assert.NotNil(t, genericKey)
 	assert.Equal(t, KeyTypeSecp256k1, genericKey.Type())
 
-	// Test with Ed25519
 	ed25519Pub, _, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
 
@@ -285,13 +281,11 @@ func TestSecp256k1_Underlying(t *testing.T) {
 	wrappedPrivKey := NewPrivateKey(privKey)
 	wrappedPubKey := wrappedPrivKey.GetPublic()
 
-	// Test private key
 	underlying := wrappedPrivKey.Underlying()
 	assert.NotNil(t, underlying)
 	assert.IsType(t, &secp256k1.PrivateKey{}, underlying)
 	assert.Equal(t, privKey, underlying)
 
-	// Test public key
 	underlying = wrappedPubKey.Underlying()
 	assert.NotNil(t, underlying)
 	assert.IsType(t, &secp256k1.PublicKey{}, underlying)
@@ -305,13 +299,11 @@ func TestEd25519_Underlying(t *testing.T) {
 	wrappedPrivKey := NewPrivateKey(privKey)
 	wrappedPubKey := NewPublicKey(pubKey)
 
-	// Test private key
 	underlying := wrappedPrivKey.Underlying()
 	assert.NotNil(t, underlying)
 	assert.IsType(t, ed25519.PrivateKey{}, underlying)
 	assert.Equal(t, privKey, underlying)
 
-	// Test public key
 	underlying = wrappedPubKey.Underlying()
 	assert.NotNil(t, underlying)
 	assert.IsType(t, ed25519.PublicKey{}, underlying)

@@ -41,7 +41,7 @@ type Key interface {
 	String() string
 	// Type returns the key type
 	Type() KeyType
-	// Underlying returns the underlying key implementation
+	// Underlying returns the underlying key
 	Underlying() any
 }
 
