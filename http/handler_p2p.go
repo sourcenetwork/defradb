@@ -113,10 +113,16 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	rawIDs := req.URL.Query().Get("IDs")
-	collectionIDs := strings.Split(rawIDs, ",")
+	// The parameter IDs will contain a comma-separated list of collection IDs for us to extract
+	q := req.URL.Query()
+	idsParam := q.Get("IDs")
+	var collectionIDs []string
+	if idsParam != "" {
+		collectionIDs = strings.Split(idsParam, ",")
+	}
 
-	if len(collectionIDs) == 0 {
+	// If no IDs are provided, return an error
+	if len(collectionIDs) == 0 || (len(collectionIDs) == 1 && collectionIDs[0] == "") {
 		retErr := errors.New("missing required parameter: IDs")
 		responseJSON(rw, http.StatusBadRequest, errorResponse{retErr})
 		return
@@ -127,7 +133,6 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
 	rw.WriteHeader(http.StatusOK)
 }
 
