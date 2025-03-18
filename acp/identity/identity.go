@@ -23,6 +23,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+// AuthorizedAccountClaim is the name of the claim
+// field containing the authorized account.
+//
+// This must be the same as `AuthorizedAccountClaim`
+// defined in github.com/sourcenetwork/sourcehub/x/acp/types
+const AuthorizedAccountClaim = "authorized_account"
+
 // didProducer generates a did:key from a public key
 type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
 
@@ -170,7 +177,7 @@ func (identity Identity) NewToken(
 	}
 
 	if authorizedAccount.HasValue() {
-		err = token.Set("authorized_account", authorizedAccount.Value())
+		err = token.Set(AuthorizedAccountClaim, authorizedAccount.Value())
 		if err != nil {
 			return nil, err
 		}
