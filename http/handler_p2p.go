@@ -11,7 +11,9 @@
 package http
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 
@@ -111,16 +113,21 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	var collectionIDs []string
-	if err := requestJSON(req, &collectionIDs); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	rawIDs := req.URL.Query().Get("IDs")
+	collectionIDs := strings.Split(rawIDs, ",")
+
+	if len(collectionIDs) == 0 {
+		retErr := errors.New("missing required parameter: IDs")
+		responseJSON(rw, http.StatusBadRequest, errorResponse{retErr})
 		return
 	}
+
 	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -251,5 +258,5 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/replicators/delete", http.MethodPost, deleteReplicator, h.DeleteReplicator)
 	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollection)
-	router.AddRoute("/p2p/collections/delete", http.MethodPost, removePeerCollections, h.RemoveP2PCollection)
+	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollection)
 }
