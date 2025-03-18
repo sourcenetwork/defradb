@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -98,7 +99,8 @@ func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) 
 func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
 
-	query := methodURL.Query()
+	// Appen query parameters to the URL
+	query := url.Values{}
 	query.Set("IDs", strings.Join(collectionIDs, ","))
 	methodURL.RawQuery = query.Encode()
 

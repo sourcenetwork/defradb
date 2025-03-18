@@ -102,7 +102,7 @@ type SubscribeToCollection struct {
 
 // UnsubscribeToCollection removes the given collections from the set of active subscriptions on
 // the given node.
-type UnsubscribeToCollection struct {
+type  struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
 
