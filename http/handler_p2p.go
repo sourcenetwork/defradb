@@ -245,9 +245,27 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	removePeerCollections.Description = "Remove peer collections"
 	removePeerCollections.OperationID = "peer_collection_remove"
 	removePeerCollections.Tags = []string{"p2p"}
-	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
-		Value: peerCollectionRequest,
+
+	// Define query parameter "IDs" as a required string (comma-separated list)
+	removePeerCollections.Parameters = openapi3.Parameters{
+		&openapi3.ParameterRef{
+			Value: &openapi3.Parameter{
+				Name:        "IDs",
+				In:          "query",
+				Description: "Comma-separated list of collection IDs to remove",
+				Required:    true,
+				Schema: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Type:    openapi3.NewStringSchema().Type,
+						Format:  "",
+						Example: "col1,col2,col3",
+					},
+				},
+			},
+		},
 	}
+
+	// Remove the request body since we're using query parameters
 	removePeerCollections.Responses = openapi3.NewResponses()
 	removePeerCollections.Responses.Set("200", successResponse)
 	removePeerCollections.Responses.Set("400", errorResponse)
