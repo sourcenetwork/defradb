@@ -28,6 +28,9 @@ import (
 //
 // This must be the same as `AuthorizedAccountClaim`
 // defined in github.com/sourcenetwork/sourcehub/x/acp/types
+//
+// The type cannot be directly referenced here due
+// to compilation issues with JS targets.
 const AuthorizedAccountClaim = "authorized_account"
 
 // didProducer generates a did:key from a public key
