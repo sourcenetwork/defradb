@@ -548,7 +548,7 @@ func (c *collection) update(
 	// Stop the update if the correct permissions aren't there.
 	canUpdate, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.WritePermission,
+		acp.UpdatePermission,
 		doc.ID().String(),
 	)
 	if err != nil {

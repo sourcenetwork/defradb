@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_p2p
+package test_acp_relationship_doc_actor_add
 
 import (
 	"testing"
@@ -18,22 +18,20 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
+func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, p2p update private documents on different nodes, with source-hub",
+		Description: "Test acp, owner gives update access without explicit read permission, can still update",
 
-		SupportedACPTypes: immutable.Some(
-			[]testUtils.ACPType{
-				testUtils.SourceHubACPType,
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// GQL mutation will return no error when wrong identity is used (only for update requests),
+				// so test that separately.
+				testUtils.GQLRequestMutationType,
 			},
 		),
 
 		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-
-			testUtils.RandomNetworkingConfig(),
-
 			testUtils.AddPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
@@ -50,7 +48,7 @@ func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + updater + deleter
+                            expr: owner + reader
 
                           update:
                             expr: owner + updater
@@ -106,67 +104,103 @@ func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 				},
 			},
 
-			testUtils.ConfigureReplicator{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
-
 			testUtils.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
-				NodeID: immutable.Some(0),
-
 				CollectionID: 0,
 
-				DocMap: map[string]any{
-					"name": "Shahzad",
-				},
+				Doc: `
+					{
+						"name": "Shahzad",
+						"age": 28
+					}
+				`,
 			},
 
-			testUtils.CreateDoc{
-				Identity: testUtils.ClientIdentity(1),
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
-				NodeID: immutable.Some(1),
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
 
-				CollectionID: 0,
-
-				DocMap: map[string]any{
-					"name": "Shahzad Lone",
+				Results: map[string]any{
+					"Users": []map[string]any{}, // Can't see the documents yet
 				},
 			},
-
-			testUtils.WaitForSync{},
 
 			testUtils.UpdateDoc{
-				Identity: testUtils.ClientIdentity(1),
-
-				NodeID: immutable.Some(0),
-
 				CollectionID: 0,
+
+				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
 
 				DocID: 0,
 
 				Doc: `
 					{
-						"name": "ShahzadLone"
+						"name": "Shahzad Lone"
+					}
+				`,
+
+				SkipLocalUpdateEvent: true,
+			},
+
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+
+				TargetIdentity: testUtils.ClientIdentity(2),
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "updater",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+
+				Identity: testUtils.ClientIdentity(2), // This identity can now update.
+
+				DocID: 0,
+
+				Doc: `
+					{
+						"name": "Shahzad Lone"
 					}
 				`,
 			},
 
-			testUtils.UpdateDoc{
-				Identity: testUtils.ClientIdentity(1),
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
-				NodeID: immutable.Some(1),
-
-				CollectionID: 0,
-
-				DocID: 1,
-
-				Doc: `
-					{
-						"name": "ShahzadLone"
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
 					}
 				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad Lone", // Note: updated name
+							"age":    int64(28),
+						},
+					},
+				},
 			},
 		},
 	}

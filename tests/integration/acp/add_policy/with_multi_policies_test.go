@@ -39,7 +39,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -65,7 +67,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -110,7 +114,10 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                             "read": {
                               "expr": "owner"
                             },
-                            "write": {
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
                               "expr": "owner"
                             }
                           },
@@ -127,7 +134,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
 				),
 			},
 
@@ -146,7 +153,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -164,7 +173,7 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"47f986f872dfcfc7d126b017a4258df86d508f3333d93f19c0eb7f4624e97023",
+					"32371d1285f8662ba54c8d63439f823b72e3347d517aa00cd7e305d73df57dcc",
 				),
 			},
 		},
@@ -186,8 +195,10 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
             permissions:
               read:
                 expr: owner
-              write:
-                expr: owner
+			  update:
+				expr: owner
+			  delete:
+				expr: owner
 
             relations:
               owner:
@@ -206,7 +217,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
 				),
 			},
 
@@ -216,7 +227,7 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
 				),
 			},
 		},
@@ -246,7 +257,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -257,7 +270,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
 				),
 			},
 
@@ -276,7 +289,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -287,7 +302,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
 				),
 			},
 		},
@@ -317,7 +332,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -327,7 +344,7 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444",
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
 				),
 			},
 
@@ -335,36 +352,39 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                   {
-                     "name": "test",
-                     "description": "a policy",
-                     "actor": {
-                       "name": "actor"
-                     },
-                     "resources": {
-                       "users": {
-                         "permissions": {
-                           "read": {
-                             "expr": "owner"
-                           },
-                           "write": {
-                             "expr": "owner"
-                           }
-                         },
-                         "relations": {
-                           "owner": {
-                             "types": [
-                               "actor"
-                             ]
-                           }
-                         }
-                       }
-                     }
-                   }
+                    {
+                      "name": "test",
+                      "description": "a policy",
+                      "actor": {
+                        "name": "actor"
+                      },
+                      "resources": {
+                        "users": {
+                          "permissions": {
+                            "read": {
+                              "expr": "owner"
+                            },
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
+                              "expr": "owner"
+                            }
+                          },
+                          "relations": {
+                            "owner": {
+                              "types": [
+                                "actor"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
                `,
 
 				ExpectedPolicyID: immutable.Some(
-					"66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
 				),
 			},
 		},

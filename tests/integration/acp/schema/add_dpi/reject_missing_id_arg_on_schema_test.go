@@ -39,7 +39,9 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -110,7 +112,9 @@ func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

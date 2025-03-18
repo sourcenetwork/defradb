@@ -29,7 +29,7 @@ var invalidIdentity = identity.Identity{
 	DID: "did:something",
 }
 
-var validPolicyID string = "230bc7230d06a741e395b1ee093b03d0b3f8fd8c9c21727575db10219fb55be1"
+var validPolicyID string = "196f584c831c596489278ed2c98ee7a42fc2cf85b2e86276165a03b53b4684fa"
 var validPolicy string = `
 name: test
 description: a policy
@@ -40,10 +40,12 @@ actor:
 resources:
   users:
     permissions:
-      write:
-        expr: owner
       read:
         expr: owner + reader
+      update:
+        expr: owner
+      delete:
+        expr: owner
 
     relations:
       owner:
@@ -613,10 +615,23 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
-	// Invalid empty arguments such that we can't check doc access (write).
+	// Invalid empty arguments such that we can't check doc access (update).
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		WritePermission,
+		UpdatePermission,
+		identity1.DID,
+		validPolicyID,
+		"",
+		"",
+	)
+	require.Error(t, errCheckDocAccess)
+	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.False(t, hasAccess)
+
+	// Invalid empty arguments such that we can't check doc access (delete).
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		DeletePermission,
 		identity1.DID,
 		validPolicyID,
 		"",
@@ -712,10 +727,23 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
-	// Invalid empty arguments such that we can't check doc access (write).
+	// Invalid empty arguments such that we can't check doc access (update).
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		WritePermission,
+		UpdatePermission,
+		identity1.DID,
+		validPolicyID,
+		"",
+		"",
+	)
+	require.Error(t, errCheckDocAccess)
+	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.False(t, hasAccess)
+
+	// Invalid empty arguments such that we can't check doc access (delete).
+	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
+		ctx,
+		DeletePermission,
 		identity1.DID,
 		validPolicyID,
 		"",

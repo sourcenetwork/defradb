@@ -37,7 +37,9 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

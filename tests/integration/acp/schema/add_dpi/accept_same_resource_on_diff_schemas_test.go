@@ -43,7 +43,9 @@ func TestACP_AddDPISchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *tes
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

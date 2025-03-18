@@ -39,7 +39,9 @@ func TestACP_AddDPISchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejec
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -110,7 +112,9 @@ func TestACP_AddDPISchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejec
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

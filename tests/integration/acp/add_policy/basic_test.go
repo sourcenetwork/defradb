@@ -37,7 +37,9 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -63,32 +65,35 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-					{
-					  "name": "test",
-					  "description": "a basic policy that satisfies minimum DPI requirements",
-					  "resources": {
-					    "users": {
-					      "permissions": {
-					        "read": {
-					          "expr": "owner"
-					        },
-					        "write": {
-					          "expr": "owner"
-					        }
-					      },
-					      "relations": {
-					        "owner": {
-					          "types": [
-					            "actor"
-					          ]
-					        }
-					      }
-					    }
-					  },
-					  "actor": {
-					    "name": "actor"
-					  }
-					}
+                    {
+                      "name": "test",
+                      "description": "a basic policy that satisfies minimum DPI requirements",
+                      "resources": {
+                        "users": {
+                          "permissions": {
+                            "read": {
+                              "expr": "owner"
+                            },
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
+                              "expr": "owner"
+                            }
+                          },
+                          "relations": {
+                            "owner": {
+                              "types": [
+                                "actor"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "actor": {
+                        "name": "actor"
+                      }
+                    }
                 `,
 			},
 		},

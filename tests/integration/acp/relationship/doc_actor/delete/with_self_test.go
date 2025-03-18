@@ -38,10 +38,13 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -55,7 +58,11 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -169,10 +176,13 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -186,7 +196,11 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 

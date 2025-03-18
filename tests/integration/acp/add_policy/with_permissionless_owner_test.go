@@ -17,16 +17,16 @@ import (
 )
 
 // Note: Similar to the one in ./with_no_perms_test.go
-// Eventhough this file shows we can load a policy, that assigns no read/write permissions which
+// Eventhough this file shows we can load a policy, that assigns no read/update/delete permissions which
 // are required for DPI. When a schema is loaded, and it has policyID and resource defined on the
 // collection, then before we accept that schema the validation occurs. Inotherwords, we do not
 // allow a non-DPI compliant policy to be specified on a collection schema, if it is, then the schema
 // would be rejected. However we register the policy with acp even if policy isn't DPI compliant.
 
-func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
+func TestACP_AddPolicy_PermissionlessOwnerUpdate_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with owner having no write permissions, valid ID",
+		Description: "Test acp, add policy with owner having no update permissions, valid ID",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -42,7 +42,50 @@ func TestACP_AddPolicy_PermissionlessOwnerWrite_ValidID(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: reader
+                          delete:
+                            expr: owner
+                          read:
+                            expr: owner + reader
+
+                        relations:
+                          owner:
+                            types:
+                              - actor
+                          reader:
+                            types:
+                              - actor
+                `,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_AddPolicy_PermissionlessOwnerDelete_ValidID(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Description: "Test acp, add policy with owner having no delete permissions, valid ID",
+
+		Actions: []any{
+			testUtils.AddPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+                    name: test
+                    description: a policy
+
+                    actor:
+                      name: actor
+
+                    resources:
+                      users:
+                        permissions:
+                          update:
+                            expr: owner
+                          delete:
                             expr: reader
                           read:
                             expr: owner + reader
@@ -81,7 +124,9 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner + reader
+                          delete:
                             expr: owner + reader
                           read:
                             expr: reader
@@ -101,10 +146,10 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
+func TestACP_AddPolicy_PermissionlessOwnerReadUpdateDelete_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with owner having no read/write permissions, valid ID",
+		Description: "Test acp, add policy with owner having no read/update/delete permissions, valid ID",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -120,10 +165,12 @@ func TestACP_AddPolicy_PermissionlessOwnerReadWrite_ValidID(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: reader
+                          delete:
                             expr: reader
                           read:
-                            expr: owner + reader
+                            expr: reader
 
                         relations:
                           owner:

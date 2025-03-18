@@ -42,7 +42,9 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -140,7 +142,9 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -235,7 +239,9 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -334,7 +340,9 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -439,7 +447,9 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

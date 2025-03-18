@@ -36,7 +36,9 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

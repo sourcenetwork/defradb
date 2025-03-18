@@ -35,7 +35,9 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
