@@ -592,7 +592,10 @@
             "peer_info": {
                 "properties": {
                     "Addrs": {
-                        "items": {},
+                        "items": {
+                            "items": {},
+                            "type": "array"
+                        },
                         "type": "array"
                     },
                     "ID": {
@@ -606,7 +609,10 @@
                     "Info": {
                         "properties": {
                             "Addrs": {
-                                "items": {},
+                                "items": {
+                                    "items": {},
+                                    "type": "array"
+                                },
                                 "type": "array"
                             },
                             "ID": {
@@ -644,7 +650,10 @@
                     "Info": {
                         "properties": {
                             "Addrs": {
-                                "items": {},
+                                "items": {
+                                    "items": {},
+                                    "type": "array"
+                                },
                                 "type": "array"
                             },
                             "ID": {

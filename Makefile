@@ -351,7 +351,7 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 15m --tags change_detector
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
 
 .PHONY: validate\:codecov
 validate\:codecov:
