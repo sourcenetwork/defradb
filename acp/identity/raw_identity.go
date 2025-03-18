@@ -30,7 +30,11 @@ type RawIdentity struct {
 	// The address is derived from the actor's public key,
 	// using the did:key method
 	DID string
-	// KeyType is the type of the key (secp256k1 or ed25519)
+	// KeyType is the type of the key
+	//
+	// Supported values are:
+	// - "secp256k1"
+	// - "ed25519"
 	KeyType string
 }
 

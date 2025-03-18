@@ -13,39 +13,13 @@ package identity
 import (
 	"crypto/ed25519"
 	"encoding/hex"
-	"fmt"
 	"testing"
 
-	"github.com/cyware/ssi-sdk/crypto"
-	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 
 	defracrypto "github.com/sourcenetwork/defradb/crypto"
 )
-
-func TestDIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
-	pubKey := &secp256k1.PublicKey{}
-
-	did, err := DIDFromPublicKey(pubKey)
-
-	want := "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F"
-	require.Equal(t, want, did)
-	require.NoError(t, err)
-}
-
-func TestDIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
-	mockedProducer := func(crypto.KeyType, []byte) (*key.DIDKey, error) {
-		return nil, fmt.Errorf("did generation err")
-	}
-
-	pubKey := &secp256k1.PublicKey{}
-
-	did, err := didFromPublicKey(pubKey, mockedProducer)
-
-	require.Empty(t, did)
-	require.ErrorIs(t, err, ErrDIDCreation)
-}
 
 func TestGenerate_WithSecp256k1_ReturnsNewRawIdentity(t *testing.T) {
 	newIdentity, err := Generate(defracrypto.KeyTypeSecp256k1)
@@ -125,12 +99,10 @@ func TestRawIdentity_IntoIdentityWithSecp256k1_Success(t *testing.T) {
 	require.Equal(t, defracrypto.KeyTypeSecp256k1, identity.PublicKey.Type())
 	require.Equal(t, rawIdentity.DID, identity.DID)
 
-	privKeyBytes, err := identity.PrivateKey.Raw()
-	require.NoError(t, err)
+	privKeyBytes := identity.PrivateKey.Raw()
 	require.Equal(t, rawIdentity.PrivateKey, hex.EncodeToString(privKeyBytes))
 
-	pubKeyBytes, err := identity.PublicKey.Raw()
-	require.NoError(t, err)
+	pubKeyBytes := identity.PublicKey.Raw()
 	require.Equal(t, rawIdentity.PublicKey, hex.EncodeToString(pubKeyBytes))
 }
 
@@ -145,12 +117,10 @@ func TestRawIdentity_IntoIdentityWithEd25519_Success(t *testing.T) {
 	require.Equal(t, defracrypto.KeyTypeEd25519, identity.PublicKey.Type())
 	require.Equal(t, rawIdentity.DID, identity.DID)
 
-	privKeyBytes, err := identity.PrivateKey.Raw()
-	require.NoError(t, err)
+	privKeyBytes := identity.PrivateKey.Raw()
 	require.Equal(t, rawIdentity.PrivateKey, hex.EncodeToString(privKeyBytes))
 
-	pubKeyBytes, err := identity.PublicKey.Raw()
-	require.NoError(t, err)
+	pubKeyBytes := identity.PublicKey.Raw()
 	require.Equal(t, rawIdentity.PublicKey, hex.EncodeToString(pubKeyBytes))
 }
 

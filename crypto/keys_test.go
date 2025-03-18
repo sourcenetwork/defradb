@@ -38,12 +38,10 @@ func TestSecp256k1_RawBytes(t *testing.T) {
 	wrappedPrivKey := NewPrivateKey(privKey)
 	wrappedPubKey := wrappedPrivKey.GetPublic()
 
-	privBytes, err := wrappedPrivKey.Raw()
-	require.NoError(t, err)
+	privBytes := wrappedPrivKey.Raw()
 	assert.Equal(t, privKey.Serialize(), privBytes)
 
-	pubBytes, err := wrappedPubKey.Raw()
-	require.NoError(t, err)
+	pubBytes := wrappedPubKey.Raw()
 	assert.Equal(t, privKey.PubKey().SerializeCompressed(), pubBytes)
 }
 
@@ -58,10 +56,10 @@ func TestSecp256k1_Equals(t *testing.T) {
 	otherWrappedPrivKey := NewPrivateKey(otherPrivKey)
 	otherWrappedPubKey := otherWrappedPrivKey.GetPublic()
 
-	assert.True(t, wrappedPrivKey.Equals(wrappedPrivKey))
-	assert.True(t, wrappedPubKey.Equals(wrappedPubKey))
-	assert.False(t, wrappedPrivKey.Equals(otherWrappedPrivKey))
-	assert.False(t, wrappedPubKey.Equals(otherWrappedPubKey))
+	assert.True(t, wrappedPrivKey.Equal(wrappedPrivKey))
+	assert.True(t, wrappedPubKey.Equal(wrappedPubKey))
+	assert.False(t, wrappedPrivKey.Equal(otherWrappedPrivKey))
+	assert.False(t, wrappedPubKey.Equal(otherWrappedPubKey))
 }
 
 func TestSecp256k1_SignAndVerify(t *testing.T) {
@@ -113,12 +111,10 @@ func TestEd25519_RawBytes(t *testing.T) {
 	wrappedPrivKey := NewPrivateKey(privKey)
 	wrappedPubKey := NewPublicKey(pubKey)
 
-	privBytes, err := wrappedPrivKey.Raw()
-	require.NoError(t, err)
+	privBytes := wrappedPrivKey.Raw()
 	assert.Equal(t, []byte(privKey), privBytes)
 
-	pubBytes, err := wrappedPubKey.Raw()
-	require.NoError(t, err)
+	pubBytes := wrappedPubKey.Raw()
 	assert.Equal(t, []byte(pubKey), pubBytes)
 }
 
@@ -133,10 +129,10 @@ func TestEd25519_Equals(t *testing.T) {
 	otherWrappedPrivKey := NewPrivateKey(otherPrivKey)
 	otherWrappedPubKey := NewPublicKey(otherPubKey)
 
-	assert.True(t, wrappedPrivKey.Equals(wrappedPrivKey))
-	assert.True(t, wrappedPubKey.Equals(wrappedPubKey))
-	assert.False(t, wrappedPrivKey.Equals(otherWrappedPrivKey))
-	assert.False(t, wrappedPubKey.Equals(otherWrappedPubKey))
+	assert.True(t, wrappedPrivKey.Equal(wrappedPrivKey))
+	assert.True(t, wrappedPubKey.Equal(wrappedPubKey))
+	assert.False(t, wrappedPrivKey.Equal(otherWrappedPrivKey))
+	assert.False(t, wrappedPubKey.Equal(otherWrappedPubKey))
 }
 
 func TestEd25519_SignAndVerify(t *testing.T) {
@@ -179,8 +175,8 @@ func TestKeyType_Equality(t *testing.T) {
 	wrappedEd25519PubKey := NewPublicKey(ed25519Pub)
 
 	// Different key types should not be equal
-	assert.False(t, wrappedSecp256k1Key.Equals(wrappedEd25519PrivKey))
-	assert.False(t, wrappedSecp256k1Key.GetPublic().Equals(wrappedEd25519PubKey))
+	assert.False(t, wrappedSecp256k1Key.Equal(wrappedEd25519PrivKey))
+	assert.False(t, wrappedSecp256k1Key.GetPublic().Equal(wrappedEd25519PubKey))
 }
 
 func TestSecp256k1_InvalidSignature(t *testing.T) {
@@ -321,7 +317,7 @@ func TestEd25519_GetPublic(t *testing.T) {
 	assert.NotNil(t, publicKey)
 	assert.Equal(t, KeyTypeEd25519, publicKey.Type())
 	assert.Equal(t, pubKey, publicKey.Underlying())
-	assert.True(t, publicKey.Equals(wrappedPubKey))
+	assert.True(t, publicKey.Equal(wrappedPubKey))
 }
 
 func TestPublicKeyFromString_ValidSecp256k1Key(t *testing.T) {
@@ -337,12 +333,10 @@ func TestPublicKeyFromString_ValidSecp256k1Key(t *testing.T) {
 	require.NotNil(t, parsedKey)
 
 	assert.Equal(t, KeyTypeSecp256k1, parsedKey.Type())
-	assert.True(t, wrappedKey.Equals(parsedKey))
+	assert.True(t, wrappedKey.Equal(parsedKey))
 
-	origBytes, err := wrappedKey.Raw()
-	require.NoError(t, err)
-	parsedBytes, err := parsedKey.Raw()
-	require.NoError(t, err)
+	origBytes := wrappedKey.Raw()
+	parsedBytes := parsedKey.Raw()
 	assert.Equal(t, origBytes, parsedBytes)
 }
 
@@ -358,12 +352,10 @@ func TestPublicKeyFromString_ValidEd25519Key(t *testing.T) {
 	require.NotNil(t, parsedKey)
 
 	assert.Equal(t, KeyTypeEd25519, parsedKey.Type())
-	assert.True(t, wrappedKey.Equals(parsedKey))
+	assert.True(t, wrappedKey.Equal(parsedKey))
 
-	origBytes, err := wrappedKey.Raw()
-	require.NoError(t, err)
-	parsedBytes, err := parsedKey.Raw()
-	require.NoError(t, err)
+	origBytes := wrappedKey.Raw()
+	parsedBytes := parsedKey.Raw()
 	assert.Equal(t, origBytes, parsedBytes)
 }
 

@@ -11,6 +11,7 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
@@ -33,15 +34,16 @@ const (
 
 // Key represents a cryptographic key
 type Key interface {
-	// Equals checks whether two keys are the same
-	Equals(Key) bool
+	// Equal checks whether two keys are the same
+	Equal(Key) bool
 	// Raw returns the raw bytes of the key
-	Raw() ([]byte, error)
+	Raw() []byte
 	// String returns a string representation of the key
 	String() string
 	// Type returns the key type
 	Type() KeyType
-	// Underlying returns the underlying key
+	// Underlying returns the underlying cryptographic key
+	// For example [*secp256k1.PrivateKey] or [ed25519.PrivateKey]
 	Underlying() any
 }
 
@@ -137,7 +139,7 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 	if err != nil {
 		return nil, NewErrFailedToParseEphemeralPublicKey(err)
 	}
-	
+
 	switch keyType {
 	case KeyTypeSecp256k1:
 		pubKey, err := secp256k1.ParsePubKey(keyBytes)
@@ -145,32 +147,27 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 			return nil, ErrInvalidECDSAPubKey
 		}
 		return &secp256k1PublicKey{key: pubKey}, nil
-		
+
 	case KeyTypeEd25519:
 		if len(keyBytes) != ed25519.PublicKeySize {
 			return nil, ErrInvalidEd25519PubKeyLength
 		}
 		return &ed25519PublicKey{key: keyBytes}, nil
-		
+
 	default:
 		return nil, ErrUnsupportedPubKeyType
 	}
 }
 
-func (k *secp256k1PrivateKey) Equals(other Key) bool {
+func (k *secp256k1PrivateKey) Equal(other Key) bool {
 	if other.Type() != KeyTypeSecp256k1 {
 		return false
 	}
-	otherBytes, err := other.Raw()
-	if err != nil {
-		return false
-	}
-	myBytes := k.key.Serialize()
-	return string(myBytes) == string(otherBytes)
+	return bytes.Equal(k.key.Serialize(), other.Raw())
 }
 
-func (k *secp256k1PrivateKey) Raw() ([]byte, error) {
-	return k.key.Serialize(), nil
+func (k *secp256k1PrivateKey) Raw() []byte {
+	return k.key.Serialize()
 }
 
 func (k *secp256k1PrivateKey) Type() KeyType {
@@ -189,20 +186,15 @@ func (k *secp256k1PrivateKey) Underlying() any {
 	return k.key
 }
 
-func (k *secp256k1PublicKey) Equals(other Key) bool {
+func (k *secp256k1PublicKey) Equal(other Key) bool {
 	if other.Type() != KeyTypeSecp256k1 {
 		return false
 	}
-	otherBytes, err := other.Raw()
-	if err != nil {
-		return false
-	}
-	myBytes := k.key.SerializeCompressed()
-	return string(myBytes) == string(otherBytes)
+	return bytes.Equal(k.key.SerializeCompressed(), other.Raw())
 }
 
-func (k *secp256k1PublicKey) Raw() ([]byte, error) {
-	return k.key.SerializeCompressed(), nil
+func (k *secp256k1PublicKey) Raw() []byte {
+	return k.key.SerializeCompressed()
 }
 
 func (k *secp256k1PublicKey) Type() KeyType {
@@ -235,19 +227,15 @@ func (k *secp256k1PublicKey) Underlying() any {
 	return k.key
 }
 
-func (k *ed25519PrivateKey) Equals(other Key) bool {
+func (k *ed25519PrivateKey) Equal(other Key) bool {
 	if other.Type() != KeyTypeEd25519 {
 		return false
 	}
-	otherBytes, err := other.Raw()
-	if err != nil {
-		return false
-	}
-	return string(k.key) == string(otherBytes)
+	return bytes.Equal(k.key, other.Raw())
 }
 
-func (k *ed25519PrivateKey) Raw() ([]byte, error) {
-	return k.key, nil
+func (k *ed25519PrivateKey) Raw() []byte {
+	return k.key
 }
 
 func (k *ed25519PrivateKey) Type() KeyType {
@@ -267,19 +255,15 @@ func (k *ed25519PrivateKey) Underlying() any {
 	return k.key
 }
 
-func (k *ed25519PublicKey) Equals(other Key) bool {
+func (k *ed25519PublicKey) Equal(other Key) bool {
 	if other.Type() != KeyTypeEd25519 {
 		return false
 	}
-	otherBytes, err := other.Raw()
-	if err != nil {
-		return false
-	}
-	return string(k.key) == string(otherBytes)
+	return bytes.Equal(k.key, other.Raw())
 }
 
-func (k *ed25519PublicKey) Raw() ([]byte, error) {
-	return k.key, nil
+func (k *ed25519PublicKey) Raw() []byte {
+	return k.key
 }
 
 func (k *ed25519PublicKey) Type() KeyType {

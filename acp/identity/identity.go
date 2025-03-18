@@ -14,8 +14,6 @@ import (
 	"encoding/hex"
 	"time"
 
-	gocrypto "github.com/cyware/ssi-sdk/crypto"
-	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jws"
@@ -34,9 +32,6 @@ import (
 // The type cannot be directly referenced here due
 // to compilation issues with JS targets.
 const AuthorizedAccountClaim = "authorized_account"
-
-// didProducer generates a did:key from a public key
-type didProducer = func(gocrypto.KeyType, []byte) (*key.DIDKey, error)
 
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
@@ -103,25 +98,10 @@ func FromToken(data []byte) (Identity, error) {
 	}, nil
 }
 
-// DIDFromPublicKey returns a did:key generated from the the given public key.
-func DIDFromPublicKey(publicKey *secp256k1.PublicKey) (string, error) {
-	return didFromPublicKey(publicKey, key.CreateDIDKey)
-}
-
-// didFromPublicKey produces a did from a secp256k1 key and a producer function
-func didFromPublicKey(publicKey *secp256k1.PublicKey, producer didProducer) (string, error) {
-	bytes := publicKey.SerializeUncompressed()
-	did, err := producer(gocrypto.SECP256k1, bytes)
-	if err != nil {
-		return "", newErrDIDCreation(err, "secp256k1", bytes)
-	}
-	return did.String(), nil
-}
-
 // IntoRawIdentity converts an `Identity` into a `RawIdentity`.
 func (identity Identity) IntoRawIdentity() RawIdentity {
-	privKeyBytes, _ := identity.PrivateKey.Raw()
-	pubKeyBytes, _ := identity.PublicKey.Raw()
+	privKeyBytes := identity.PrivateKey.Raw()
+	pubKeyBytes := identity.PublicKey.Raw()
 	return RawIdentity{
 		PrivateKey: hex.EncodeToString(privKeyBytes),
 		PublicKey:  hex.EncodeToString(pubKeyBytes),
