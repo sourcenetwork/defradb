@@ -11,30 +11,17 @@
 package identity
 
 import (
-	"encoding/hex"
-
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errDIDCreation        = "could not produce did for key"
 	errUnsupportedKeyType = "unsupported key type"
 )
 
 var (
-	ErrDIDCreation = errors.New(errDIDCreation)
 	// ErrUnsupportedKeyType is returned when attempting to use an unsupported key type.
 	ErrUnsupportedKeyType = errors.New(errUnsupportedKeyType)
 )
-
-func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
-	return errors.Wrap(
-		errDIDCreation,
-		inner,
-		errors.NewKV("KeyType", keytype),
-		errors.NewKV("PubKey", hex.EncodeToString(pubKey)),
-	)
-}
 
 func newErrUnsupportedKeyType(keyType string) error {
 	return errors.New(errUnsupportedKeyType, errors.NewKV("KeyType", keyType))

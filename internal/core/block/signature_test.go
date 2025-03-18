@@ -55,7 +55,7 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 		// Convert to hex-encoded string for identity
 		pubKeyWrapped := crypto.NewPublicKey(keys.ed25519Pub)
 		pubKeyHex := []byte(pubKeyWrapped.String())
-		
+
 		sigBlock = &Signature{
 			Header: SignatureHeader{
 				Type:     SignatureTypeEd25519,
@@ -66,11 +66,11 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 	case SignatureTypeECDSA256K:
 		sig, err := crypto.Sign(keys.ecdsaKey, blockBytes)
 		require.NoError(t, err)
-		
+
 		// Convert to hex-encoded string for identity
 		pubKeyWrapped := crypto.NewPublicKey(keys.ecdsaKey.PubKey())
 		pubKeyHex := []byte(pubKeyWrapped.String())
-		
+
 		sigBlock = &Signature{
 			Header: SignatureHeader{
 				Type:     SignatureTypeECDSA256K,
