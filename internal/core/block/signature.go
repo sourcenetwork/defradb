@@ -11,9 +11,6 @@
 package coreblock
 
 import (
-	"crypto/ed25519"
-
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
@@ -125,19 +122,32 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) 
 		return false, err
 	}
 
+	// Convert the hex-encoded public key to a crypto.PublicKey using the new function
+	var keyType crypto.KeyType
 	switch sigBlock.Header.Type {
 	case SignatureTypeEd25519:
-		pubKey := ed25519.PublicKey(sigBlock.Header.Identity)
-		return true, crypto.Verify(pubKey, signedBytes, sigBlock.Value)
-
+		keyType = crypto.KeyTypeEd25519
 	case SignatureTypeECDSA256K:
-		pubKey, err := secp256k1.ParsePubKey(sigBlock.Header.Identity)
-		if err != nil {
-			return false, crypto.ErrUnsupportedECDSAPrivKeyType
-		}
-		return true, crypto.Verify(pubKey, signedBytes, sigBlock.Value)
-
+		keyType = crypto.KeyTypeSecp256k1
 	default:
 		return false, crypto.ErrUnsupportedPrivKeyType
 	}
+
+	pubKey, err := crypto.PublicKeyFromString(keyType, string(sigBlock.Header.Identity))
+	if err != nil {
+		return false, err
+	}
+
+	valid, err := pubKey.Verify(signedBytes, sigBlock.Value)
+
+	if err != nil {
+		// We return true for 'verified' because we did run cryptographic verification
+		return true, err
+	}
+
+	if !valid {
+		return true, crypto.ErrSignatureVerification
+	}
+
+	return true, nil
 }

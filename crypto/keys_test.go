@@ -323,3 +323,77 @@ func TestEd25519_GetPublic(t *testing.T) {
 	assert.Equal(t, pubKey, publicKey.Underlying())
 	assert.True(t, publicKey.Equals(wrappedPubKey))
 }
+
+func TestPublicKeyFromString_ValidSecp256k1Key(t *testing.T) {
+	privKey, err := secp256k1.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	pubKey := privKey.PubKey()
+	wrappedKey := NewPublicKey(pubKey)
+	keyString := wrappedKey.String()
+
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256k1, keyString)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeSecp256k1, parsedKey.Type())
+	assert.True(t, wrappedKey.Equals(parsedKey))
+
+	origBytes, err := wrappedKey.Raw()
+	require.NoError(t, err)
+	parsedBytes, err := parsedKey.Raw()
+	require.NoError(t, err)
+	assert.Equal(t, origBytes, parsedBytes)
+}
+
+func TestPublicKeyFromString_ValidEd25519Key(t *testing.T) {
+	pubKey, _, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	wrappedKey := NewPublicKey(pubKey)
+	keyString := wrappedKey.String()
+
+	parsedKey, err := PublicKeyFromString(KeyTypeEd25519, keyString)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeEd25519, parsedKey.Type())
+	assert.True(t, wrappedKey.Equals(parsedKey))
+
+	origBytes, err := wrappedKey.Raw()
+	require.NoError(t, err)
+	parsedBytes, err := parsedKey.Raw()
+	require.NoError(t, err)
+	assert.Equal(t, origBytes, parsedBytes)
+}
+
+func TestPublicKeyFromString_InvalidHexString(t *testing.T) {
+	// Not hex encoded
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256k1, "not-hex-data")
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+}
+
+func TestPublicKeyFromString_InvalidKeyType(t *testing.T) {
+	// Valid hex but wrong key type
+	parsedKey, err := PublicKeyFromString("unknown-type", "deadbeef")
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrUnsupportedPubKeyType, err)
+}
+
+func TestPublicKeyFromString_InvalidSecp256k1KeyData(t *testing.T) {
+	// Valid hex but invalid key data for secp256k1
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256k1, "deadbeef")
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidECDSAPubKey, err)
+}
+
+func TestPublicKeyFromString_InvalidEd25519KeyLength(t *testing.T) {
+	// Valid hex but wrong length for Ed25519
+	parsedKey, err := PublicKeyFromString(KeyTypeEd25519, "deadbeef")
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidEd25519PubKeyLength, err)
+}

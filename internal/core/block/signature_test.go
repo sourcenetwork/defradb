@@ -52,20 +52,29 @@ func createSignedBlock(t *testing.T, lsys *linking.LinkSystem, block *Block, sig
 	var sigBlock *Signature
 	switch sigType {
 	case SignatureTypeEd25519:
+		// Convert to hex-encoded string for identity
+		pubKeyWrapped := crypto.NewPublicKey(keys.ed25519Pub)
+		pubKeyHex := []byte(pubKeyWrapped.String())
+		
 		sigBlock = &Signature{
 			Header: SignatureHeader{
 				Type:     SignatureTypeEd25519,
-				Identity: keys.ed25519Pub,
+				Identity: pubKeyHex,
 			},
 			Value: ed25519.Sign(keys.ed25519Priv, blockBytes),
 		}
 	case SignatureTypeECDSA256K:
 		sig, err := crypto.Sign(keys.ecdsaKey, blockBytes)
 		require.NoError(t, err)
+		
+		// Convert to hex-encoded string for identity
+		pubKeyWrapped := crypto.NewPublicKey(keys.ecdsaKey.PubKey())
+		pubKeyHex := []byte(pubKeyWrapped.String())
+		
 		sigBlock = &Signature{
 			Header: SignatureHeader{
 				Type:     SignatureTypeECDSA256K,
-				Identity: keys.ecdsaKey.PubKey().SerializeCompressed(),
+				Identity: pubKeyHex,
 			},
 			Value: sig,
 		}
@@ -97,7 +106,7 @@ func TestSignatureBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
 	sigBlock := Signature{
 		Header: SignatureHeader{
 			Type:     SignatureTypeEd25519,
-			Identity: []byte("signer-id"),
+			Identity: []byte("7369676e65722d6964"), // hex-encoded "signer-id"
 		},
 		Value: []byte("signature-value"),
 	}
@@ -121,7 +130,7 @@ func TestBlockMarshal_IfSignatureNotSet_ShouldNotContainSignatureField(t *testin
 	sigBlock := Signature{
 		Header: SignatureHeader{
 			Type:     SignatureTypeECDSA256K,
-			Identity: []byte("pubkey-bytes"),
+			Identity: []byte("7075626b65792d6279746573"), // hex-encoded "pubkey-bytes"
 		},
 		Value: []byte("signature-bytes"),
 	}
@@ -185,7 +194,7 @@ func TestBlockWithSignatureAndEncryption(t *testing.T) {
 	sigBlock := Signature{
 		Header: SignatureHeader{
 			Type:     SignatureTypeEd25519,
-			Identity: []byte("signer-id"),
+			Identity: []byte("7369676e65722d6964"), // hex-encoded "signer-id"
 		},
 		Value: []byte("signature-value"),
 	}
@@ -295,7 +304,7 @@ func TestVerifyBlockSignature_UnsupportedType(t *testing.T) {
 	sigBlock := &Signature{
 		Header: SignatureHeader{
 			Type:     "UnsupportedType",
-			Identity: []byte("any"),
+			Identity: []byte("616e79"), // hex-encoded "any"
 		},
 		Value: []byte("any"),
 	}

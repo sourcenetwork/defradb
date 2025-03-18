@@ -130,6 +130,33 @@ func NewPublicKey[T *secp256k1.PublicKey | ed25519.PublicKey](key T) PublicKey {
 	}
 }
 
+// PublicKeyFromString creates a public key from a hex-encoded string and key type.
+// This is useful for deserializing public keys.
+func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
+	keyBytes, err := hex.DecodeString(keyString)
+	if err != nil {
+		return nil, NewErrFailedToParseEphemeralPublicKey(err)
+	}
+	
+	switch keyType {
+	case KeyTypeSecp256k1:
+		pubKey, err := secp256k1.ParsePubKey(keyBytes)
+		if err != nil {
+			return nil, ErrInvalidECDSAPubKey
+		}
+		return &secp256k1PublicKey{key: pubKey}, nil
+		
+	case KeyTypeEd25519:
+		if len(keyBytes) != ed25519.PublicKeySize {
+			return nil, ErrInvalidEd25519PubKeyLength
+		}
+		return &ed25519PublicKey{key: keyBytes}, nil
+		
+	default:
+		return nil, ErrUnsupportedPubKeyType
+	}
+}
+
 func (k *secp256k1PrivateKey) Equals(other Key) bool {
 	if other.Type() != KeyTypeSecp256k1 {
 		return false
