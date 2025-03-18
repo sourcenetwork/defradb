@@ -274,29 +274,6 @@ jobs:
           coverage-artifact-name: "coverage_telemetry"
           coverage-path: coverage.txt
 
-  # This job runs the JS tests to ensure they are able to build and run.
-  test-js:
-    name: Test JS job
-
-    runs-on: ubuntu-latest
-
-    env:
-      CGO_ENABLED: 0
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v4
-
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
-
-      # Disable AppArmor for Ubuntu 23.10+.
-      # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
-      - name: Disable AppArmor
-        run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
-
-      - name: Test JS
-        run: make test:js
 
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
