@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
@@ -27,6 +28,7 @@ func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
+	fmt.Println("DEBUG: Starting DeleteWithFilter -- this one")
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

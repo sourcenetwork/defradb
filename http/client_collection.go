@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -254,6 +255,7 @@ func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
+
 	if !c.Description().Name.HasValue() {
 		return nil, client.ErrOperationNotPermittedOnNamelessCols
 	}
@@ -269,7 +271,11 @@ func (c *Collection) DeleteWithFilter(
 	query.Set("filter", string(filterJSON))
 	methodURL.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	finalURL := methodURL.String() + "?" + query.Encode()
+
+	fmt.Println("DEBUG: Final request URL =", finalURL)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, finalURL, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -53,13 +53,13 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams)
 }
 
 func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators", "delete")
+	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
