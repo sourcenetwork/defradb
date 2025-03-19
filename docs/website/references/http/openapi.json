@@ -1107,6 +1107,51 @@
             }
         },
         "/collections/{name}": {
+            "delete": {
+                "description": "Delete document(s) from a collection",
+                "operationId": "collection_delete_with_filter",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter expression to determine which documents to delete",
+                        "in": "query",
+                        "name": "filter",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete results"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
             "get": {
                 "description": "Get all document IDs",
                 "operationId": "collection_keys",
@@ -1219,54 +1264,6 @@
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "collection"
-                ]
-            }
-        },
-        "/collections/{name}/deleteWithFilter": {
-            "post": {
-                "description": "Delete document(s) from a collection",
-                "operationId": "collection_delete_with_filter",
-                "parameters": [
-                    {
-                        "description": "Collection name",
-                        "in": "path",
-                        "name": "name",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/collection_delete"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/delete_result"
-                                }
-                            }
-                        },
-                        "description": "Delete results"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -1839,6 +1836,36 @@
             }
         },
         "/p2p/collections": {
+            "delete": {
+                "description": "Remove peer collections",
+                "operationId": "peer_collection_remove",
+                "parameters": [
+                    {
+                        "description": "Comma-separated list of collection IDs to remove",
+                        "in": "query",
+                        "name": "IDs",
+                        "required": true,
+                        "schema": {
+                            "example": "col1,col2,col3",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
             "get": {
                 "description": "List peer collections",
                 "operationId": "peer_collection_list",
@@ -1899,39 +1926,6 @@
                 ]
             }
         },
-        "/p2p/collections/delete": {
-            "post": {
-                "description": "Remove peer collections",
-                "operationId": "peer_collection_remove",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "p2p"
-                ]
-            }
-        },
         "/p2p/info": {
             "get": {
                 "operationId": "peer_info",
@@ -1959,6 +1953,34 @@
             }
         },
         "/p2p/replicators": {
+            "delete": {
+                "description": "Delete peer replicators",
+                "operationId": "peer_replicator_delete",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/replicator_params"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
             "get": {
                 "description": "List peer replicators",
                 "operationId": "peer_replicator_list",
@@ -1990,36 +2012,6 @@
             "post": {
                 "description": "Add peer replicators",
                 "operationId": "peer_replicator_set",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "p2p"
-                ]
-            }
-        },
-        "/p2p/replicators/delete": {
-            "post": {
-                "description": "Delete peer replicators",
-                "operationId": "peer_replicator_delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
