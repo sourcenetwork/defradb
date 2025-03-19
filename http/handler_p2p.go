@@ -120,14 +120,12 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		collectionIDs = strings.Split(idsParam, ",")
 	}
 
-	// If the collectionIDs is not empty, remove the collections
-	if len(collectionIDs) != 0 {
-		err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
+	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
