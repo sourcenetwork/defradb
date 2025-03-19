@@ -27,7 +27,13 @@ const BadgerStore = StoreType("badger")
 
 func init() {
 	constructor := func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error) {
-		badgerOpts := badgerds.DefaultOptions(options.path)
+		var path string
+		if !options.badgerInMemory {
+			// Badger will error if we give it a path and set `InMemory` to true
+			path = options.path
+		}
+
+		badgerOpts := badgerds.DefaultOptions(path)
 		badgerOpts.InMemory = options.badgerInMemory
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
@@ -39,7 +45,7 @@ func init() {
 			badgerOpts.IndexCacheSize = 100 << 20
 		}
 
-		return badger.NewDatastore(options.path, badgerOpts)
+		return badger.NewDatastore(path, badgerOpts)
 	}
 	purge := func(ctx context.Context, options *StoreOptions) error {
 		store, err := constructor(ctx, options)
