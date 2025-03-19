@@ -12,6 +12,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -91,13 +92,16 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
-	var request CollectionDeleteRequest
-	if err := requestJSON(req, &request); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// Extract the filter from the query parameters
+	q := req.URL.Query()
+	filterParam := q.Get("filter")
+	if filterParam == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: filter")})
 		return
 	}
 
-	result, err := col.DeleteWithFilter(req.Context(), request.Filter)
+	// Call DeleteWithFilter with the extracted filter
+	result, err := col.DeleteWithFilter(req.Context(), filterParam)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -311,9 +315,6 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	updateResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/update_result",
 	}
-	collectionDeleteSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/collection_delete",
-	}
 	deleteResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/delete_result",
 	}
@@ -376,10 +377,6 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionUpdateWith.AddResponse(200, collectionUpdateWithResponse)
 	collectionUpdateWith.Responses.Set("400", errorResponse)
 
-	collectionDeleteWithRequest := openapi3.NewRequestBody().
-		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(collectionDeleteSchema))
-
 	collectionDeleteWithResponse := openapi3.NewResponse().
 		WithDescription("Delete results").
 		WithJSONSchemaRef(deleteResultSchema)
@@ -389,9 +386,24 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionDeleteWith.Description = "Delete document(s) from a collection"
 	collectionDeleteWith.Tags = []string{"collection"}
 	collectionDeleteWith.AddParameter(collectionNamePathParam)
-	collectionDeleteWith.RequestBody = &openapi3.RequestBodyRef{
-		Value: collectionDeleteWithRequest,
+
+	// Add a query parameter for the filter
+	filterQueryParam := &openapi3.ParameterRef{
+		Value: &openapi3.Parameter{
+			Name:        "filter",
+			In:          "query",
+			Description: "Filter expression to determine which documents to delete",
+			Required:    true,
+			Schema: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Type:   openapi3.NewStringSchema().Type,
+					Format: "",
+				},
+			},
+		},
 	}
+	collectionDeleteWith.AddParameter(filterQueryParam.Value)
+
 	collectionDeleteWith.AddResponse(200, collectionDeleteWithResponse)
 	collectionDeleteWith.Responses.Set("400", errorResponse)
 
@@ -491,7 +503,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
-	router.AddRoute("/collections/{name}/deleteWithFilter", http.MethodPost, collectionDeleteWith, h.DeleteWithFilter)
+	router.AddRoute("/collections/{name}", http.MethodDelete, collectionDeleteWith, h.DeleteWithFilter)
 	router.AddRoute("/collections/{name}/indexes", http.MethodPost, createIndex, h.CreateIndex)
 	router.AddRoute("/collections/{name}/indexes", http.MethodGet, getIndexes, h.GetIndexes)
 	router.AddRoute("/collections/{name}/indexes/{index}", http.MethodDelete, dropIndex, h.DropIndex)

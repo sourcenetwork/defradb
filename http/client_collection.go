@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -260,16 +261,12 @@ func (c *Collection) DeleteWithFilter(
 
 	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
 
-	request := CollectionDeleteRequest{
-		Filter: filter,
-	}
+	// Append the filter to the methodURL as a query parameter
+	query := url.Values{}
+	query.Set("filter", fmt.Sprintf("%v", filter))
+	methodURL.RawQuery = query.Encode()
 
-	body, err := json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
