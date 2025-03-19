@@ -11,6 +11,7 @@
 package subscribe_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -208,6 +209,9 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 }
 
 func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
+
+	fmt.Println("DEBUG: Running TestP2PSubscribeAddSingleAndRemoveNone")
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

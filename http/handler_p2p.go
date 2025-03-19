@@ -12,6 +12,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -121,6 +122,8 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		collectionIDs = strings.Split(idsParam, ",")
 	}
 
+	fmt.Println("I am here")
+	fmt.Println("DEBUG: collectionIDs:", collectionIDs)
 	// If no IDs are provided, return an error
 	if len(collectionIDs) == 0 || (len(collectionIDs) == 1 && collectionIDs[0] == "") {
 		retErr := errors.New("missing required parameter: IDs")
