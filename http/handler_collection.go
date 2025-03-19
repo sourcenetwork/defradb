@@ -95,6 +95,7 @@ func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	// Extract the filter from the query parameters
 	q := req.URL.Query()
 	filterParam := q.Get("filter")
+	fmt.Println("DEBUG: Received filter query param:", filterParam)
 	if filterParam == "" {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: filter")})
 		return

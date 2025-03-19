@@ -266,6 +266,8 @@ func (c *Collection) DeleteWithFilter(
 	query.Set("filter", fmt.Sprintf("%v", filter))
 	methodURL.RawQuery = query.Encode()
 
+	fmt.Println("DEBUG: Making DELETE request to:", methodURL.String())
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
