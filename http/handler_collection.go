@@ -92,28 +92,21 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
-	fmt.Println("DEBUG: Received DELETE request")
-
 	// Extract the filter from the query parameters
 	q := req.URL.Query()
 	filterParam := q.Get("filter")
 	if filterParam == "" {
-		fmt.Println("DEBUG: Missing filter parameter") // ADD THIS
 		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: filter")})
 		return
 	}
 
-	fmt.Printf("DEBUG: Calling col.DeleteWithFilter with filter: %s\n", filterParam) // ADD THIS
-
 	// Call DeleteWithFilter with the extracted filter
 	result, err := col.DeleteWithFilter(req.Context(), filterParam)
 	if err != nil {
-		fmt.Printf("DEBUG: col.DeleteWithFilter returned error: %v\n", err) // ADD THIS
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	fmt.Println("DEBUG: col.DeleteWithFilter completed successfully") // ADD THIS
 	responseJSON(rw, http.StatusOK, result)
 }
 

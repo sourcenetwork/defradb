@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -272,8 +271,6 @@ func (c *Collection) DeleteWithFilter(
 	methodURL.RawQuery = query.Encode()
 
 	finalURL := methodURL.String() + "?" + query.Encode()
-
-	fmt.Println("DEBUG: Final request URL =", finalURL)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, finalURL, nil)
 	if err != nil {
