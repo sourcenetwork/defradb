@@ -17,6 +17,7 @@ import (
 const (
 	errLensRuntimeNotSupported string = "the selected lens runtime is not supported by this build"
 	errStoreTypeNotSupported   string = "the selected store type is not supported by this build"
+	errACPTypeNotSupported     string = "the selected acp type is not supported by this build"
 )
 
 var (
@@ -24,6 +25,7 @@ var (
 	ErrLensRuntimeNotSupported      = errors.New(errLensRuntimeNotSupported)
 	ErrStoreTypeNotSupported        = errors.New(errStoreTypeNotSupported)
 	ErrPurgeWithDevModeDisabled     = errors.New("cannot purge database when development mode is disabled")
+	ErrP2PNotSupported              = errors.New("p2p networking is not supported by this build")
 )
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
@@ -32,4 +34,8 @@ func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 
 func NewErrStoreTypeNotSupported(store StoreType) error {
 	return errors.New(errStoreTypeNotSupported, errors.NewKV("Store", store))
+}
+
+func NewErrACPTypeNotSupported(acp ACPType) error {
+	return errors.New(errACPTypeNotSupported, errors.NewKV("ACP", acp))
 }

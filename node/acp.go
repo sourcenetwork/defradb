@@ -22,10 +22,21 @@ import (
 type ACPType string
 
 const (
-	NoACPType        ACPType = "none"
-	LocalACPType     ACPType = "local"
-	SourceHubACPType ACPType = "source-hub"
+	// NoACPType disables the ACP subsystem.
+	NoACPType ACPType = "none"
+	// DefaultACPType uses the default ACP implementation for this build.
+	DefaultACPType ACPType = ""
 )
+
+// acpConstructors is a map of [ACPType]s to acp implementations.
+//
+// It is populated by the `init` functions in the implementation-specific files - this
+// allows it's population to be managed by build flags.
+var acpConstructors = map[ACPType]func(context.Context, *ACPOptions) (immutable.Option[acp.ACP], error){
+	NoACPType: func(ctx context.Context, a *ACPOptions) (immutable.Option[acp.ACP], error) {
+		return acp.NoACP, nil
+	},
+}
 
 // ACPOptions contains ACP configuration values.
 type ACPOptions struct {
@@ -116,36 +127,9 @@ func NewACP(ctx context.Context, opts ...ACPOpt) (immutable.Option[acp.ACP], err
 	for _, opt := range opts {
 		opt(options)
 	}
-
-	switch options.acpType {
-	case NoACPType:
-		return acp.NoACP, nil
-
-	case LocalACPType:
-		acpLocal := acp.NewLocalACP()
-		acpLocal.Init(ctx, options.path)
-		return immutable.Some[acp.ACP](acpLocal), nil
-
-	case SourceHubACPType:
-		if !options.signer.HasValue() {
-			return acp.NoACP, ErrSignerMissingForSourceHubACP
-		}
-
-		acpSourceHub, err := acp.NewSourceHubACP(
-			options.sourceHubChainID,
-			options.sourceHubGRPCAddress,
-			options.sourceHubCometRPCAddress,
-			options.signer.Value(),
-		)
-		if err != nil {
-			return acp.NoACP, err
-		}
-
-		return immutable.Some(acpSourceHub), nil
-
-	default:
-		acpLocal := acp.NewLocalACP()
-		acpLocal.Init(ctx, options.path)
-		return immutable.Some[acp.ACP](acpLocal), nil
+	acpConstructor, ok := acpConstructors[options.acpType]
+	if ok {
+		return acpConstructor(ctx, options)
 	}
+	return immutable.None[acp.ACP](), NewErrACPTypeNotSupported(options.acpType)
 }

@@ -27,7 +27,7 @@ require (
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/joho/godotenv v1.5.1
-	github.com/lens-vm/lens/host-go v0.0.0-20231127204031-8d858ed2926c
+	github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5
 	github.com/lestrrat-go/jwx/v2 v2.1.3
 	github.com/libp2p/go-libp2p v0.41.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
@@ -108,7 +108,7 @@ require (
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
-	github.com/bytecodealliance/wasmtime-go/v15 v15.0.0 // indirect
+	github.com/bytecodealliance/wasmtime-go/v21 v21.0.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

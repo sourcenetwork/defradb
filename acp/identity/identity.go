@@ -21,8 +21,17 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
-	acptypes "github.com/sourcenetwork/sourcehub/x/acp/bearer_token"
 )
+
+// AuthorizedAccountClaim is the name of the claim
+// field containing the authorized account.
+//
+// This must be the same as `AuthorizedAccountClaim`
+// defined in github.com/sourcenetwork/sourcehub/x/acp/types
+//
+// The type cannot be directly referenced here due
+// to compilation issues with JS targets.
+const AuthorizedAccountClaim = "authorized_account"
 
 // didProducer generates a did:key from a public key
 type didProducer = func(crypto.KeyType, []byte) (*key.DIDKey, error)
@@ -171,7 +180,7 @@ func (identity Identity) NewToken(
 	}
 
 	if authorizedAccount.HasValue() {
-		err = token.Set(acptypes.AuthorizedAccountClaim, authorizedAccount.Value())
+		err = token.Set(AuthorizedAccountClaim, authorizedAccount.Value())
 		if err != nil {
 			return nil, err
 		}

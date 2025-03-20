@@ -19,7 +19,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -91,7 +90,7 @@ func setupClient(s *state, node *node.Node) (impl clients.Client, err error) {
 
 type goClientWrapper struct {
 	client.DB
-	peer *net.Peer
+	peer node.Peer
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {

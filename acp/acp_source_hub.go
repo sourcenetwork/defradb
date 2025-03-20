@@ -8,6 +8,10 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// SourceHub is not supported in JS environments.
+//
+//go:build !js
+
 package acp
 
 import (
@@ -24,6 +28,23 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
+
+func NewSourceHubACP(
+	chainID string,
+	grpcAddress string,
+	cometRPCAddress string,
+	signer sourcehub.TxSigner,
+) (ACP, error) {
+	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, signer)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sourceHubBridge{
+		client:      acpSourceHub,
+		supportsP2P: true,
+	}, nil
+}
 
 type acpSourceHub struct {
 	client    *sourcehub.Client
