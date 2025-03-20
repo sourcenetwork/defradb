@@ -270,9 +270,7 @@ func (c *Collection) DeleteWithFilter(
 	query.Set("filter", string(filterJSON))
 	methodURL.RawQuery = query.Encode()
 
-	finalURL := methodURL.String() + "?" + query.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, finalURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
