@@ -11,6 +11,8 @@
 package http
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -57,16 +59,26 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	var rep client.ReplicatorParams
-	if err := requestJSON(req, &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// Extract the replicator from the query parameter
+	query := req.URL.Query().Get("replicator")
+	if query == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: replicator")})
 		return
 	}
+
+	// Decode JSON from the query parameter
+	var rep client.ReplicatorParams
+	if err := json.Unmarshal([]byte(query), &rep); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("invalid replicator JSON format")})
+		return
+	}
+
 	err := p2p.DeleteReplicator(req.Context(), rep)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -203,9 +215,21 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	deleteReplicator.Description = "Delete peer replicators"
 	deleteReplicator.OperationID = "peer_replicator_delete"
 	deleteReplicator.Tags = []string{"p2p"}
-	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
-		Value: replicatorRequest,
+	deleteReplicatorParam := &openapi3.ParameterRef{
+		Value: &openapi3.Parameter{
+			Name:        "replicator",
+			In:          "query",
+			Description: "Replicator to delete",
+			Required:    true,
+			Schema: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Type:   openapi3.NewStringSchema().Type,
+					Format: "",
+				},
+			},
+		},
 	}
+	deleteReplicator.AddParameter(deleteReplicatorParam.Value)
 	deleteReplicator.Responses = openapi3.NewResponses()
 	deleteReplicator.Responses.Set("200", successResponse)
 	deleteReplicator.Responses.Set("400", errorResponse)
