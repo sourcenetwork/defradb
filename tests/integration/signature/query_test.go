@@ -13,15 +13,12 @@ package signature
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/crypto"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

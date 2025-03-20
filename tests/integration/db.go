@@ -150,9 +150,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 
 	opts = append(defaultOpts, opts...)
 
-	if s.signingAlg.HasValue() {
-		opts = append(opts, db.WithSigningAlgorithm(s.signingAlg))
-	}
+	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 
 	switch acpType {
 	case LocalACPType:

@@ -16,8 +16,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -49,7 +47,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -121,7 +119,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -215,9 +213,12 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSignature_WithEd25519Algorithm_ShouldIncludeSignatureData(t *testing.T) {
+func TestSignature_WithEd25519Algorithm_ShouldIIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(crypto.KeyTypeEd25519),
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
+		},
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

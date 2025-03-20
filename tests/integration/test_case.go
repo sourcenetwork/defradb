@@ -72,9 +72,13 @@ type TestCase struct {
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
-	// The signature algorithm to use for DAG blocks.
-	// If None, block signing is disabled.
-	SigningAlg immutable.Option[crypto.KeyType]
+	// EnableSigning indicates if signing should be enabled for the test.
+	// Use [IdentityTypes] to customize the key type that is used for identity and signing.
+	EnableSigning bool
+
+	// IdentityTypes is a map of identity to key type.
+	// Use it to customize the key type that is used for identity and signing.
+	IdentityTypes map[Identity]crypto.KeyType
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -347,7 +351,7 @@ type CreateDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -419,7 +423,7 @@ type DeleteDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -452,7 +456,7 @@ type UpdateDoc struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -495,7 +499,7 @@ type UpdateWithFilter struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -652,7 +656,7 @@ type Request struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -855,7 +859,7 @@ type GetNodeIdentity struct {
 	//
 	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity immutable.Option[identity]
+	ExpectedIdentity immutable.Option[Identity]
 }
 
 // Wait is an action that will wait for the given duration.

@@ -31,8 +31,8 @@ const (
 	nodeIdentityType
 )
 
-// identity helps specify identity type info and selector/index of identity to use in a test case.
-type identity struct {
+// Identity helps specify Identity type info and selector/index of Identity to use in a test case.
+type Identity struct {
 	// type of identity
 	kind identityType
 
@@ -42,14 +42,14 @@ type identity struct {
 }
 
 // NoIdentity returns an reference to an identity that represents no identity.
-func NoIdentity() immutable.Option[identity] {
-	return immutable.None[identity]()
+func NoIdentity() immutable.Option[Identity] {
+	return immutable.None[Identity]()
 }
 
 // AllClientIdentities returns user identity selector specified with the "*".
-func AllClientIdentities() immutable.Option[identity] {
+func AllClientIdentities() immutable.Option[Identity] {
 	return immutable.Some(
-		identity{
+		Identity{
 			kind:     clientIdentityType,
 			selector: "*",
 		},
@@ -57,9 +57,9 @@ func AllClientIdentities() immutable.Option[identity] {
 }
 
 // ClientIdentity returns a user identity at the given index.
-func ClientIdentity(indexSelector int) immutable.Option[identity] {
+func ClientIdentity(indexSelector int) immutable.Option[Identity] {
 	return immutable.Some(
-		identity{
+		Identity{
 			kind:     clientIdentityType,
 			selector: strconv.Itoa(indexSelector),
 		},
@@ -67,9 +67,9 @@ func ClientIdentity(indexSelector int) immutable.Option[identity] {
 }
 
 // ClientIdentity returns a node identity at the given index.
-func NodeIdentity(indexSelector int) immutable.Option[identity] {
+func NodeIdentity(indexSelector int) immutable.Option[Identity] {
 	return immutable.Some(
-		identity{
+		Identity{
 			kind:     nodeIdentityType,
 			selector: strconv.Itoa(indexSelector),
 		},
@@ -94,7 +94,7 @@ func newIdentityHolder(ident acpIdentity.Identity) *identityHolder {
 
 // getIdentity returns the identity for the given reference.
 // If the identity does not exist, it will be generated.
-func getIdentity(s *state, identity immutable.Option[identity]) acpIdentity.Identity {
+func getIdentity(s *state, identity immutable.Option[Identity]) acpIdentity.Identity {
 	if !identity.HasValue() {
 		return acpIdentity.Identity{}
 	}
@@ -110,20 +110,25 @@ func getIdentity(s *state, identity immutable.Option[identity]) acpIdentity.Iden
 
 // getIdentityHolder returns the identity holder for the given reference.
 // If the identity does not exist, it will be generated.
-func getIdentityHolder(s *state, identity identity) *identityHolder {
+func getIdentityHolder(s *state, identity Identity) *identityHolder {
 	ident, ok := s.identities[identity]
 	if ok {
 		return ident
 	}
 
-	s.identities[identity] = newIdentityHolder(generateIdentity(s))
+	keyType := crypto.KeyTypeSecp256k1
+	if k, ok := s.testCase.IdentityTypes[identity]; ok {
+		keyType = k
+	}
+
+	s.identities[identity] = newIdentityHolder(generateIdentity(s, keyType))
 	return s.identities[identity]
 }
 
 // getIdentityForRequest returns the identity for the given reference and node index.
 // It prepares the identity for a request by generating a token if needed, i.e. it will
 // return an identity with [Identity.BearerToken] set.
-func getIdentityForRequest(s *state, identity identity, nodeIndex int) acpIdentity.Identity {
+func getIdentityForRequest(s *state, identity Identity, nodeIndex int) acpIdentity.Identity {
 	identHolder := getIdentityHolder(s, identity)
 	ident := identHolder.Identity
 
@@ -143,16 +148,16 @@ func getIdentityForRequest(s *state, identity identity, nodeIndex int) acpIdenti
 
 // Generate the keys using predefined seed so that multiple runs yield the same private key.
 // This is important for stuff like the change detector.
-func generateIdentity(s *state) acpIdentity.Identity {
+func generateIdentity(s *state, keyType crypto.KeyType) acpIdentity.Identity {
 	source := rand.NewSource(int64(s.nextIdentityGenSeed))
 	r := rand.New(source)
 
 	var privateKey crypto.PrivateKey
-	if !s.signingAlg.HasValue() || s.signingAlg.Value() == crypto.KeyTypeSecp256k1 {
+	if keyType == crypto.KeyTypeSecp256k1 {
 		privKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
 		require.NoError(s.t, err)
 		privateKey = crypto.NewPrivateKey(privKey)
-	} else if s.signingAlg.Value() == crypto.KeyTypeEd25519 {
+	} else if keyType == crypto.KeyTypeEd25519 {
 		_, privKey, err := ed25519.GenerateKey(r)
 		require.NoError(s.t, err)
 		privateKey = crypto.NewPrivateKey(privKey)
@@ -174,7 +179,7 @@ func generateIdentity(s *state) acpIdentity.Identity {
 func getContextWithIdentity(
 	ctx context.Context,
 	s *state,
-	identity immutable.Option[identity],
+	identity immutable.Option[Identity],
 	nodeIndex int,
 ) context.Context {
 	if !identity.HasValue() {
@@ -192,7 +197,7 @@ func getContextWithIdentity(
 	)
 }
 
-func getIdentityDID(s *state, identity immutable.Option[identity]) string {
+func getIdentityDID(s *state, identity immutable.Option[Identity]) string {
 	if identity.HasValue() {
 		if identity.Value().selector == "*" {
 			return identity.Value().selector

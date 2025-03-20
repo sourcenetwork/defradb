@@ -16,11 +16,9 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/net"
@@ -176,7 +174,7 @@ type state struct {
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[identity]*identityHolder
+	identities map[Identity]*identityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
@@ -224,10 +222,6 @@ type state struct {
 
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool
-
-	// The signature algorithm to use for DAG blocks.
-	// If None, block signing is disabled.
-	signingAlg immutable.Option[crypto.KeyType]
 
 	// statefulMatchers contains all stateful matchers that have been executed during a single
 	// test run. After a single test run, the statefulMatchers are reset.
@@ -284,7 +278,7 @@ func newState(
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
-		identities:               map[identity]*identityHolder{},
+		identities:               map[Identity]*identityHolder{},
 		nextIdentityGenSeed:      0,
 		allActionsDone:           make(chan struct{}),
 		subscriptionResultsChans: []chan func(){},
@@ -296,7 +290,6 @@ func newState(
 		cids:                     map[any]string{},
 		policyIDs:                [][]string{},
 		isBench:                  false,
-		signingAlg:               testCase.SigningAlg,
 	}
 	return s
 }

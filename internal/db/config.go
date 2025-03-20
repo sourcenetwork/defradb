@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/crypto"
 )
 
 const (
@@ -28,7 +27,7 @@ type dbOptions struct {
 	maxTxnRetries  immutable.Option[int]
 	RetryIntervals []time.Duration
 	identity       immutable.Option[identity.Identity]
-	signingAlg     immutable.Option[crypto.KeyType]
+	disableSigning bool
 }
 
 // defaultOptions returns the default db options.
@@ -71,10 +70,10 @@ func WithNodeIdentity(ident identity.Identity) Option {
 	}
 }
 
-// WithSigningAlgorithm sets the signature algorithm to use for DAG blocks.
-// If set to None, block signing is disabled.
-func WithSigningAlgorithm(alg immutable.Option[crypto.KeyType]) Option {
+// WithEnabledSigning sets the signing algorithm to use for DAG blocks.
+// If false, block signing is disabled. By default, block signing is enabled.
+func WithEnabledSigning(value bool) Option {
 	return func(opts *dbOptions) {
-		opts.signingAlg = alg
+		opts.disableSigning = !value
 	}
 }

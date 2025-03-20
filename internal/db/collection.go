@@ -663,8 +663,8 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	if c.db.signingAlg.HasValue() {
-		ctx = clock.ContextWithSigningAlg(ctx, c.db.signingAlg.Value())
+	if !c.db.signingDisabled {
+		ctx = clock.ContextWithEnabledSigning(ctx)
 	}
 
 	// New batch transaction/store (optional/todo)

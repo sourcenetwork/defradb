@@ -112,9 +112,8 @@ func (mc *MerkleClock) AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	signAlg := SigningAlgFromContext(ctx)
-	if signAlg.HasValue() {
-		err = mc.signBlock(ctx, dagBlock, signAlg.Value())
+	if EnabledSigningFromContext(ctx) {
+		err = mc.signBlock(ctx, dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
@@ -222,7 +221,6 @@ func encryptBlock(
 func (mc *MerkleClock) signBlock(
 	ctx context.Context,
 	block *coreblock.Block,
-	signingAlg crypto.KeyType,
 ) error {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
@@ -240,20 +238,18 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
-	var sigBytes []byte
 	var sigType string
 
-	switch signingAlg {
+	switch ident.Value().PrivateKey.Type() {
 	case crypto.KeyTypeSecp256k1:
 		sigType = coreblock.SignatureTypeECDSA256K
 	case crypto.KeyTypeEd25519:
 		sigType = coreblock.SignatureTypeEd25519
 	default:
-		return NewErrUnsupportedSignatureAlgorithm(signingAlg)
+		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
 	}
 
-	sigBytes, err = ident.Value().PrivateKey.Sign(blockBytes)
-
+	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
 	if err != nil {
 		return err
 	}
@@ -352,18 +348,18 @@ func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
 }
 
-type signingAlgContextKey struct{}
+type enabledSigningContextKey struct{}
 
-// ContextWithSigningAlg returns a context with the specified signing algorithm.
-func ContextWithSigningAlg(ctx context.Context, alg crypto.KeyType) context.Context {
-	return context.WithValue(ctx, signingAlgContextKey{}, immutable.Some(alg))
+// ContextWithEnabledSigning returns a context with block signing enabled.
+func ContextWithEnabledSigning(ctx context.Context) context.Context {
+	return context.WithValue(ctx, enabledSigningContextKey{}, true)
 }
 
-// SigningAlgFromContext returns the signing algorithm from the context.
-func SigningAlgFromContext(ctx context.Context) immutable.Option[crypto.KeyType] {
-	val := ctx.Value(signingAlgContextKey{})
+// EnabledSigningFromContext returns true if block signing is enabled in the context.
+func EnabledSigningFromContext(ctx context.Context) bool {
+	val := ctx.Value(enabledSigningContextKey{})
 	if val == nil {
-		return immutable.None[crypto.KeyType]()
+		return false
 	}
-	return val.(immutable.Option[crypto.KeyType])
+	return val.(bool)
 }

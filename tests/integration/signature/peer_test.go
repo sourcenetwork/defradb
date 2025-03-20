@@ -16,12 +16,17 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/crypto"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestDocSignature_WithPeersAndSecp256k1Signing_ShouldSync(t *testing.T) {
+func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(crypto.KeyTypeSecp256k1),
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
+			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeSecp256k1,
+		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -72,9 +77,13 @@ func TestDocSignature_WithPeersAndSecp256k1Signing_ShouldSync(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDocSignature_WithPeersAndEd25519Signing_ShouldSync(t *testing.T) {
+func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
-		SigningAlg: immutable.Some(crypto.KeyTypeEd25519),
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
+			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeEd25519,
+		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -115,6 +124,101 @@ func TestDocSignature_WithPeersAndEd25519Signing_ShouldSync(t *testing.T) {
 						{
 							"name": "John",
 							"age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
+			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeEd25519,
+		},
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        0,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"name":	"Fred",
+					"age":	22
+				}`,
+			},
+			testUtils.WaitForSync{},
+			// both nodes should have the same results
+			testUtils.Request{
+				Request: `query {
+					User {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
+						{
+							"name": "Fred",
+							"age":  int64(22),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(fieldId: "C") {
+							signature {
+								type
+							}
+						}
+					}`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"signature": map[string]any{
+								"type": coreblock.SignatureTypeECDSA256K,
+							},
+						},
+						{
+							"signature": map[string]any{
+								"type": coreblock.SignatureTypeEd25519,
+							},
 						},
 					},
 				},

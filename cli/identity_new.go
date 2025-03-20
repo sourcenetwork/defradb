@@ -11,8 +11,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -40,17 +38,7 @@ Example: generate a new identity with ed25519 key:
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var keyTypeEnum crypto.KeyType
-			switch keyType {
-			case "secp256k1":
-				keyTypeEnum = crypto.KeyTypeSecp256k1
-			case "ed25519":
-				keyTypeEnum = crypto.KeyTypeEd25519
-			default:
-				return fmt.Errorf("unsupported key type: %s", keyType)
-			}
-
-			newIdentity, err := identity.Generate(keyTypeEnum)
+			newIdentity, err := identity.Generate(crypto.KeyType(keyType))
 			if err != nil {
 				return err
 			}

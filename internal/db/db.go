@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -96,9 +95,8 @@ type DB struct {
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals []time.Duration
 
-	// The signature algorithm to use for DAG blocks.
-	// If None, block signing is disabled.
-	signingAlg immutable.Option[crypto.KeyType]
+	// If true, block signing is disabled. By default, block signing is enabled.
+	signingDisabled bool
 }
 
 var _ client.DB = (*DB)(nil)
@@ -152,7 +150,7 @@ func newDB(
 	}
 
 	db.nodeIdentity = opts.identity
-	db.signingAlg = opts.signingAlg
+	db.signingDisabled = opts.disableSigning
 
 	if lens != nil {
 		lens.Init(db)

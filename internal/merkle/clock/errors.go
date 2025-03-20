@@ -28,7 +28,7 @@ const (
 	errCouldNotFindBlock        = "error checking for known block "
 	errFailedToGetNextQResult   = "failed to get next query result"
 	errCouldNotGetEncKey        = "could not get encryption key"
-	errUnsupportedSignatureType = "unsupported signature type"
+	errUnsupportedKeyForSigning = "unsupported key type for signing"
 )
 
 var (
@@ -86,6 +86,6 @@ func NewErrFailedToGetNextQResult(inner error) error {
 	return errors.Wrap(errFailedToGetNextQResult, inner)
 }
 
-func NewErrUnsupportedSignatureAlgorithm(alg crypto.KeyType) error {
-	return errors.New(errUnsupportedSignatureType, errors.NewKV("Algorithm", alg))
+func NewErrUnsupportedKeyForSigning(keyType crypto.KeyType) error {
+	return errors.New(errUnsupportedKeyForSigning, errors.NewKV("KeyType", keyType))
 }
