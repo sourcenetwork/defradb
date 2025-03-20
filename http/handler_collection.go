@@ -95,7 +95,7 @@ func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	q := req.URL.Query()
 	filterParam := q.Get("filter")
 	if filterParam == "" {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingFilterParameter})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrMissingQueryParameter("filter")})
 		return
 	}
 
