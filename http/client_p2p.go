@@ -63,9 +63,8 @@ func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorPara
 	query := url.Values{}
 	query.Set("replicator", string(repJSON))
 	methodURL.RawQuery = query.Encode()
-	finalURL := methodURL.String() + "?" + query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, finalURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
