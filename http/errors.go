@@ -41,8 +41,9 @@ var (
 	ErrMethodIsNotImplemented = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity        = errors.New("required identity is missing")
 	ErrMissingQueryParameter  = errors.New("missing required query parameter")
-	ErrInvalidReplicatorJSON  = errors.New("invalid replicator JSON format")
+	ErrInvalidQueryParamJSON  = errors.New("invalid JSON format in the query parameter")
 	ErrMissingFilterParameter = errors.New("missing required query parameter: filter")
+	ErrMissingQueryParameters = errors.New("missing required query parameter: parameters")
 )
 
 type errorResponse struct {

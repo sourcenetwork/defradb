@@ -68,7 +68,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	// Decode JSON from the query parameter
 	var rep client.ReplicatorParams
 	if err := json.Unmarshal([]byte(query), &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidReplicatorJSON})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidQueryParamJSON})
 		return
 	}
 

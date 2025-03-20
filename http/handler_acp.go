@@ -12,7 +12,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 
@@ -73,7 +72,7 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 	// Extract the "parameters" query parameter
 	queryParams := req.URL.Query().Get("parameters")
 	if queryParams == "" {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: parameters")})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingQueryParameter})
 		return
 	}
 
@@ -81,7 +80,7 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 	var message deleteDocActorRelationshipRequest
 	err := json.Unmarshal([]byte(queryParams), &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("invalid JSON format in parameters")})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidQueryParamJSON})
 		return
 	}
 
