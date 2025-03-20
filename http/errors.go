@@ -23,6 +23,7 @@ const (
 	errMethodIsNotImplemented       string = "the method is not implemented"
 	errFailedToGetContext           string = "failed to get context"
 	errPurgeRequestNonDeveloperMode string = "cannot purge database when development mode is disabled"
+	errMissingQueryParameter        string = "missing required query parameter"
 )
 
 // Errors returnable from this package.
@@ -40,10 +41,7 @@ var (
 	ErrP2PDisabled            = errors.New("p2p network is disabled")
 	ErrMethodIsNotImplemented = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity        = errors.New("required identity is missing")
-	ErrMissingQueryParameter  = errors.New("missing required query parameter")
 	ErrInvalidQueryParamJSON  = errors.New("invalid JSON format in the query parameter")
-	ErrMissingFilterParameter = errors.New("missing required query parameter: filter")
-	ErrMissingQueryParameters = errors.New("missing required query parameter: parameters")
 )
 
 type errorResponse struct {
@@ -80,5 +78,12 @@ func NewErrFailedToLoadKeys(inner error, publicKeyPath, privateKeyPath string) e
 		inner,
 		errors.NewKV("PublicKeyPath", publicKeyPath),
 		errors.NewKV("PrivateKeyPath", privateKeyPath),
+	)
+}
+
+func NewErrMissingQueryParameter(param string) error {
+	return errors.New(
+		errMissingQueryParameter,
+		errors.NewKV("Parameter", param),
 	)
 }
