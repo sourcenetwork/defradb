@@ -13,6 +13,7 @@ package crypto
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/hex"
 	"testing"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -388,4 +389,98 @@ func TestPublicKeyFromString_InvalidEd25519KeyLength(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, parsedKey)
 	assert.Equal(t, ErrInvalidEd25519PubKeyLength, err)
+}
+
+func TestPrivateKeyFromBytes_ValidSecp256k1Key(t *testing.T) {
+	privKey, err := secp256k1.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	keyBytes := privKey.Serialize()
+	parsedKey, err := PrivateKeyFromBytes(KeyTypeSecp256k1, keyBytes)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeSecp256k1, parsedKey.Type())
+
+	parsedBytes := parsedKey.Raw()
+	assert.Equal(t, keyBytes, parsedBytes)
+
+	wrappedKey := NewPrivateKey(privKey)
+	assert.True(t, parsedKey.GetPublic().Equal(wrappedKey.GetPublic()))
+}
+
+func TestPrivateKeyFromBytes_ValidEd25519Key(t *testing.T) {
+	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	keyBytes := []byte(privKey)
+	parsedKey, err := PrivateKeyFromBytes(KeyTypeEd25519, keyBytes)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeEd25519, parsedKey.Type())
+
+	parsedBytes := parsedKey.Raw()
+	assert.Equal(t, keyBytes, parsedBytes)
+
+	wrappedPubKey := NewPublicKey(pubKey)
+	assert.True(t, parsedKey.GetPublic().Equal(wrappedPubKey))
+}
+
+func TestPrivateKeyFromBytes_InvalidKeyType(t *testing.T) {
+	// Valid bytes but wrong key type
+	parsedKey, err := PrivateKeyFromBytes(KeyType("unknown-type"), []byte{1, 2, 3, 4})
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrUnsupportedPrivKeyType, err)
+}
+
+func TestPrivateKeyFromBytes_InvalidSecp256k1KeyLength(t *testing.T) {
+	// Invalid length for secp256k1
+	parsedKey, err := PrivateKeyFromBytes(KeyTypeSecp256k1, []byte{1, 2, 3, 4})
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidECDSAPrivKeyBytes, err)
+}
+
+func TestPrivateKeyFromBytes_InvalidEd25519KeyLength(t *testing.T) {
+	// Invalid length for Ed25519
+	parsedKey, err := PrivateKeyFromBytes(KeyTypeEd25519, []byte{1, 2, 3, 4})
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidEd25519PrivKeyLength, err)
+}
+
+func TestPrivateKeyFromString_Secp256k1ValidKey(t *testing.T) {
+	privKey, err := secp256k1.GeneratePrivateKey()
+	require.NoError(t, err)
+
+	keyString := hex.EncodeToString(privKey.Serialize())
+	parsedKey, err := PrivateKeyFromString(KeyTypeSecp256k1, keyString)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeSecp256k1, parsedKey.Type())
+	assert.Equal(t, keyString, parsedKey.String())
+}
+
+func TestPrivateKeyFromString_Ed25519ValidKey(t *testing.T) {
+	_, privKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	keyString := hex.EncodeToString(privKey)
+	parsedKey, err := PrivateKeyFromString(KeyTypeEd25519, keyString)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeEd25519, parsedKey.Type())
+	assert.Equal(t, keyString, parsedKey.String())
+}
+
+func TestPrivateKeyFromString_InvalidHexString(t *testing.T) {
+	// Not hex encoded
+	parsedKey, err := PrivateKeyFromString(KeyTypeSecp256k1, "not-hex-data")
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Contains(t, err.Error(), "encoding/hex")
 }

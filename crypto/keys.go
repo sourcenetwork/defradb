@@ -289,3 +289,36 @@ func (k *ed25519PublicKey) DID() (string, error) {
 func (k *ed25519PublicKey) Underlying() any {
 	return k.key
 }
+
+// PrivateKeyFromBytes creates a private key from raw bytes and key type.
+// This is useful for deserializing private keys.
+func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
+	switch keyType {
+	case KeyTypeSecp256k1:
+		if len(keyBytes) != secp256k1.PrivKeyBytesLen {
+			return nil, ErrInvalidECDSAPrivKeyBytes
+		}
+		privKey := secp256k1.PrivKeyFromBytes(keyBytes)
+		return &secp256k1PrivateKey{key: privKey}, nil
+
+	case KeyTypeEd25519:
+		if len(keyBytes) != ed25519.PrivateKeySize {
+			return nil, ErrInvalidEd25519PrivKeyLength
+		}
+		return &ed25519PrivateKey{key: keyBytes}, nil
+
+	default:
+		return nil, ErrUnsupportedPrivKeyType
+	}
+}
+
+// PrivateKeyFromString creates a private key from a hex-encoded string and key type.
+// This is useful for deserializing private keys from string representation.
+func PrivateKeyFromString(keyType KeyType, keyString string) (PrivateKey, error) {
+	keyBytes, err := hex.DecodeString(keyString)
+	if err != nil {
+		return nil, err
+	}
+
+	return PrivateKeyFromBytes(keyType, keyBytes)
+}
