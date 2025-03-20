@@ -39,7 +39,9 @@ func TestACP_AddDPISchema_SpecifiedResourceDoesNotExistOnDPI_SchemaRejected(t *t
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

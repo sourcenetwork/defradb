@@ -18,7 +18,7 @@ import (
 )
 
 func TestACP_AddDPISchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
-	nonExistingPolicyID := "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444"
+	nonExistingPolicyID := "60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0"
 
 	test := testUtils.TestCase{
 
@@ -68,7 +68,7 @@ func TestACP_AddDPISchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaRejected(t *testing.T) {
-	incorrectPolicyID := "468a5f345b3afec72f025185159e0fe84b02ead3374ec6aa54c390b2e3299444"
+	incorrectPolicyID := "60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0"
 
 	test := testUtils.TestCase{
 
@@ -92,7 +92,9 @@ func TestACP_AddDPISchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaR
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

@@ -40,7 +40,9 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -72,7 +74,7 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
 				`,
 				SDL: `
 					type UserView @policy(
-						id: "2d3b053b31151f2d2b6c151eae959473249bd4dc71a02b8b52c451fa5f2b25ee",
+						id: "214e815615f3535588652eb91ed392d5581909266c60cd20a442e8dbbd1603c7",
 						resource: "userView"
 					) @materialized(if: false) {
 						name: String

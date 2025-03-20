@@ -35,7 +35,9 @@ func TestColDescrUpdateRemovePolicy_Errors(t *testing.T) {
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

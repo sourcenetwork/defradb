@@ -52,6 +52,43 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, copy field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						email: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
+						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" }
+					]
+				`,
+				ExpectedError: "moving fields is not currently supported. Name: email, ProposedIndex: 2, ExistingIndex: 1\nmoving fields is not currently supported. Name: email, ProposedIndex: 3, ExistingIndex: 1\nmoving fields is not currently supported. Name: name, ProposedIndex: 4, ExistingIndex: 2\nduplicate field. Name: email\nduplicate field. Name: email",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, copy field and rename",

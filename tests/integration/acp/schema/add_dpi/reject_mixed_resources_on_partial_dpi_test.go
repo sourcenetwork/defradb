@@ -40,7 +40,9 @@ func TestACP_AddDPISchema_PartialValidDPIButUseInValidDPIResource_RejectSchema(t
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -55,7 +57,9 @@ func TestACP_AddDPISchema_PartialValidDPIButUseInValidDPIResource_RejectSchema(t
                         permissions:
                           read:
                             expr: reader - owner
-                          write:
+                          update:
+                            expr: reader
+                          delete:
                             expr: reader
 
                         relations:

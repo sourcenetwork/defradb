@@ -40,7 +40,9 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -55,7 +57,9 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -148,7 +152,9 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -163,7 +169,9 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

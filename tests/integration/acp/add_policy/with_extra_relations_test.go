@@ -35,7 +35,9 @@ func TestACP_AddPolicy_ExtraRelations_ValidPolicyID(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -77,7 +79,9 @@ func TestACP_AddPolicy_ExtraDuplicateRelations_Error(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader

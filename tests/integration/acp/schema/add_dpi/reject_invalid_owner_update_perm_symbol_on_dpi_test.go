@@ -11,16 +11,16 @@
 package test_acp_schema_add_dpi
 
 import (
+	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
 
-func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *testing.T) {
+func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnUpdatePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, with extra permissions having required relation, schema accepted",
+		Description: "Test acp, add dpi schema, owner relation with difference (-) set operation on update permission expression, reject schema",
 
 		Actions: []any{
 
@@ -30,7 +30,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 
 				Policy: `
                     name: test
-                    description: A Valid Defra Policy Interface (DPI)
+                    description: a policy
 
                     actor:
                       name: actor
@@ -41,11 +41,9 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
                           read:
                             expr: owner + reader
                           update:
-                            expr: owner + reader
-                          delete:
-                            expr: owner + reader
-                          magic:
                             expr: owner - reader
+                          delete:
+                            expr: owner
 
                         relations:
                           owner:
@@ -71,6 +69,13 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 				Replace: map[string]testUtils.ReplaceType{
 					"Policy0": testUtils.NewPolicyIndex(0),
 				},
+
+				ExpectedError: fmt.Sprintf(
+					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
+					"update",
+					"owner",
+					"-",
+				),
 			},
 
 			testUtils.IntrospectionRequest{
@@ -89,26 +94,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
+					"__type": nil, // NOTE: No "Users" should exist.
 				},
 			},
 		},
@@ -117,10 +103,10 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchema(t *testing.T) {
+func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnUpdatePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, with extra permissions having required relation in the end, schema accepted",
+		Description: "Test acp, add dpi schema, owner relation with intersection (&) set operation on update permission expression, reject schema",
 
 		Actions: []any{
 
@@ -130,7 +116,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 
 				Policy: `
                     name: test
-                    description: A Valid Defra Policy Interface (DPI)
+                    description: a policy
 
                     actor:
                       name: actor
@@ -141,11 +127,9 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
                           read:
                             expr: owner + reader
                           update:
-                            expr: owner
+                            expr: owner & reader
                           delete:
                             expr: owner
-                          magic:
-                            expr: reader & owner
 
                         relations:
                           owner:
@@ -171,6 +155,13 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 				Replace: map[string]testUtils.ReplaceType{
 					"Policy0": testUtils.NewPolicyIndex(0),
 				},
+
+				ExpectedError: fmt.Sprintf(
+					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
+					"update",
+					"owner",
+					"&",
+				),
 			},
 
 			testUtils.IntrospectionRequest{
@@ -189,26 +180,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
+					"__type": nil, // NOTE: No "Users" should exist.
 				},
 			},
 		},
@@ -217,10 +189,10 @@ func TestACP_AddDPISchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSch
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *testing.T) {
+func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnUpdatePermissionExprOnDPI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add dpi schema, with extra permissions having no required relation, schema accepted",
+		Description: "Test acp, add dpi schema, owner relation with invalid set operation on update permission expression, reject schema",
 
 		Actions: []any{
 
@@ -230,7 +202,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 
 				Policy: `
                     name: test
-                    description: A Valid Defra Policy Interface (DPI)
+                    description: a policy
 
                     actor:
                       name: actor
@@ -239,13 +211,11 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
                       users:
                         permissions:
                           read:
-                            expr: owner + reader
-                          update:
                             expr: owner
+                          update:
+                            expr: owner - owner
                           delete:
                             expr: owner
-                          magic:
-                            expr: reader
 
                         relations:
                           owner:
@@ -271,6 +241,13 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 				Replace: map[string]testUtils.ReplaceType{
 					"Policy0": testUtils.NewPolicyIndex(0),
 				},
+
+				ExpectedError: fmt.Sprintf(
+					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
+					"update",
+					"owner",
+					"-",
+				),
 			},
 
 			testUtils.IntrospectionRequest{
@@ -289,26 +266,7 @@ func TestACP_AddDPISchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t 
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": map[string]any{
-						"name": "Users", // NOTE: "Users" MUST exist
-						"fields": schemaUtils.DefaultFields.Append(
-							schemaUtils.Field{
-								"name": "name",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
-								},
-							},
-						).Append(
-							schemaUtils.Field{
-								"name": "age",
-								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "Int",
-								},
-							},
-						).Tidy(),
-					},
+					"__type": nil, // NOTE: No "Users" should exist.
 				},
 			},
 		},

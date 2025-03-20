@@ -44,6 +44,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "foo"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "bar"} }
+					]
+				`,
+				ExpectedError: "the given field does not exist. Vector field: foo\nthe given field does not exist. Vector field: bar",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -63,6 +89,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_Sh
 					]
 				`,
 				ExpectedError: "the given field does not exist. Embedding generation field: foo",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "foo"]} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "bar"]} }
+					]
+				`,
+				ExpectedError: "the given field does not exist. Embedding generation field: foo\nthe given field does not exist. Embedding generation field: bar",
 			},
 		},
 	}
@@ -160,6 +212,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding FieldName cannot be empty\nembedding FieldName cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -179,6 +257,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *testi
 					]
 				`,
 				ExpectedError: "embedding Fields cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingFields_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding Fields cannot be empty\nembedding Fields cannot be empty",
 			},
 		},
 	}
@@ -210,6 +314,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingProvider_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding Provider cannot be empty\nunknown embedding provider. Provider: \nembedding Provider cannot be empty\nunknown embedding provider. Provider:",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -235,6 +365,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(t 
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "unknown embedding provider. Provider: deepseek\nunknown embedding provider. Provider: deepseek",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -254,6 +410,32 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *testin
 					]
 				`,
 				ExpectedError: "embedding Model cannot be empty",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingWithMissingModel_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding Model cannot be empty\nembedding Model cannot be empty",
 			},
 		},
 	}
@@ -328,6 +510,32 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToSelf_ShouldError(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColDescrUpdate_AddVectorEmbeddingReferenceToSelf_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v\nembedding fields cannot refer to self or another embedding field. Field: name_v",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -348,6 +556,35 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErro
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: about_v",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+						desc_v: [Float32!]
+						about_v: [Float32!] @embedding(fields: ["about"], provider: "openai", model: "text-embedding-3-small",  url: "https://api.openai.com/v1")
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "desc_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+
+					]
+				`,
+				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: about_v\ninvalid field type for vector embedding generation. Actual: [Float32!]\nembedding fields cannot refer to self or another embedding field. Field: about_v\ninvalid field type for vector embedding generation. Actual: [Float32!]",
 			},
 		},
 	}
@@ -375,6 +612,34 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_Sho
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_ShouldErrorMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						about: String
+						name_v: [Float32!]
+						about_v: [Float32!]
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
+						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+					]
+				`,
+				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v\ninvalid field type for vector embedding generation. Actual: [Float32!]\nembedding fields cannot refer to self or another embedding field. Field: name_v",
 			},
 		},
 	}

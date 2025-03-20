@@ -114,6 +114,23 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDLMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {}
+					type Users {}
+					type Users {}
+				`,
+				ExpectedError: "collection already exists. Name: Users\ncollection already exists. Name: Users",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -193,6 +210,24 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 					}
 				`,
 				ExpectedError: "no type found for given name. Field: name, Kind: NotAType",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: NotAType
+						age: NotAType
+					}
+				`,
+				ExpectedError: "no type found for given name. Field: age, Kind: NotAType\nno type found for given name. Field: name, Kind: NotAType",
 			},
 		},
 	}

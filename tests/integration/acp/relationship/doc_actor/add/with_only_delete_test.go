@@ -8,32 +8,20 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_p2p
+package test_acp_relationship_doc_actor_add
 
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
+func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, p2p update private documents on different nodes, with source-hub",
-
-		SupportedACPTypes: immutable.Some(
-			[]testUtils.ACPType{
-				testUtils.SourceHubACPType,
-			},
-		),
+		Description: "Test acp, owner gives delete access without explicit read permission, can still delete",
 
 		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-
-			testUtils.RandomNetworkingConfig(),
-
 			testUtils.AddPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
@@ -50,7 +38,7 @@ func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + updater + deleter
+                            expr: owner + reader
 
                           update:
                             expr: owner + updater
@@ -106,67 +94,109 @@ func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 				},
 			},
 
-			testUtils.ConfigureReplicator{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
-
 			testUtils.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
-				NodeID: immutable.Some(0),
-
 				CollectionID: 0,
 
-				DocMap: map[string]any{
-					"name": "Shahzad",
+				Doc: `
+					{
+						"name": "Shahzad",
+						"age": 28
+					}
+				`,
+			},
+
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{}, // Can't see the documents yet
 				},
 			},
 
-			testUtils.CreateDoc{
-				Identity: testUtils.ClientIdentity(1),
-
-				NodeID: immutable.Some(1),
-
+			testUtils.DeleteDoc{
 				CollectionID: 0,
 
-				DocMap: map[string]any{
-					"name": "Shahzad Lone",
-				},
+				Identity: testUtils.ClientIdentity(2), // This identity can not delete yet.
+
+				DocID: 0,
+
+				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.WaitForSync{},
+			testUtils.AddDocActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
 
-			testUtils.UpdateDoc{
-				Identity: testUtils.ClientIdentity(1),
-
-				NodeID: immutable.Some(0),
+				TargetIdentity: testUtils.ClientIdentity(2),
 
 				CollectionID: 0,
 
 				DocID: 0,
 
-				Doc: `
-					{
-						"name": "ShahzadLone"
-					}
-				`,
+				Relation: "deleter",
+
+				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
-				Identity: testUtils.ClientIdentity(1),
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(2), // This identity can now read.
 
-				NodeID: immutable.Some(1),
-
-				CollectionID: 0,
-
-				DocID: 1,
-
-				Doc: `
-					{
-						"name": "ShahzadLone"
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
 					}
 				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"name":   "Shahzad",
+							"age":    int64(28),
+						},
+					},
+				},
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+
+				Identity: testUtils.ClientIdentity(2), // This identity can now delete.
+
+				DocID: 0,
+			},
+
+			testUtils.Request{
+				Identity: testUtils.ClientIdentity(2), // Check if actually deleted.
+
+				Request: `
+					query {
+						Users {
+							_docID
+							name
+							age
+						}
+					}
+				`,
+
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

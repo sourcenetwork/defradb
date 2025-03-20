@@ -40,7 +40,9 @@ func TestACP_AddDPISchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOn
                         permissions:
                           read:
                             expr: owner - reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -124,7 +126,9 @@ func TestACP_AddDPISchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExpr
                         permissions:
                           read:
                             expr: owner & reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -208,7 +212,9 @@ func TestACP_AddDPISchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDPI
                         permissions:
                           read:
                             expr: owner - owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

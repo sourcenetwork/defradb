@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/ipfs/boxo/bitswap"
-	"github.com/ipfs/boxo/bitswap/network"
+	"github.com/ipfs/boxo/bitswap/network/bsnet"
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/bootstrap"
 	blocks "github.com/ipfs/go-block-format"
@@ -162,7 +162,7 @@ func NewPeer(
 		return nil, err
 	}
 
-	bswapnet := network.NewFromIpfsHost(h)
+	bswapnet := bsnet.NewFromIpfsHost(h)
 	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
 	p.blockService = blockservice.New(db.Blockstore(), bswap)
 

@@ -35,7 +35,9 @@ func TestACP_AddPolicy_NoRelations_Error(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -70,7 +72,9 @@ func TestACP_AddPolicy_NoRelationsLabel_Error(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader

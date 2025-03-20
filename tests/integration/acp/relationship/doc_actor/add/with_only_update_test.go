@@ -18,18 +18,17 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQL_OtherActorCanUpdate(t *testing.T) {
+func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access without explicit read permission, can still update",
+		Description: "Test acp, owner gives update access without explicit read permission, can still update",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
-				// GQL mutation will return no error when wrong identity is used (only for update requests),
-				// so test that separately.
-				testUtils.GQLRequestMutationType,
-			},
-		),
+				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -50,8 +49,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
                           read:
                             expr: owner + reader
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -65,7 +67,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -141,7 +147,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 					}
 				`,
 
-				SkipLocalUpdateEvent: true,
+				ExpectedError: "document not found or not authorized to access",
 			},
 
 			testUtils.AddDocActorRelationship{
@@ -153,7 +159,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorWithoutExplicitReadPerm_GQ
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},

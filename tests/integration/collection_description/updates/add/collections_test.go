@@ -81,7 +81,6 @@ func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
 func TestColDescrUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
