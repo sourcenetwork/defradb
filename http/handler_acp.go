@@ -72,7 +72,7 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 	// Extract the "parameters" query parameter
 	queryParams := req.URL.Query().Get("parameters")
 	if queryParams == "" {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingQueryParameter})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrMissingQueryParameter("parameters")})
 		return
 	}
 

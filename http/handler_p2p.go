@@ -61,7 +61,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	// Extract the replicator from the query parameter
 	query := req.URL.Query().Get("replicator")
 	if query == "" {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingQueryParameter})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrMissingQueryParameter("replicator")})
 		return
 	}
 
