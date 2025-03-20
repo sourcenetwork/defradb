@@ -24,7 +24,7 @@ func init() {
 	constructor := func(ctx context.Context, options *ACPOptions) (immutable.Option[acp.ACP], error) {
 		acpLocal := acp.NewLocalACP()
 		acpLocal.Init(ctx, options.path)
-		return immutable.Some[acp.ACP](acpLocal), nil
+		return immutable.Some(acpLocal), nil
 	}
 	acpConstructors[LocalACPType] = constructor
 	acpConstructors[DefaultACPType] = constructor

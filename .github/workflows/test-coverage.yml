@@ -274,7 +274,6 @@ jobs:
           coverage-artifact-name: "coverage_telemetry"
           coverage-path: coverage.txt
 
-
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job

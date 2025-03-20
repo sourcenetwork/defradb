@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+// P2P networking stack does not work in JS builds.
+//
 //go:build !js
 
 package node

@@ -8,7 +8,7 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Test JS
+name: Test JS Build Workflow
 
 on:
   pull_request:
@@ -26,7 +26,7 @@ on:
 jobs:
   # This job runs the JS tests to ensure they are able to build and run.
   test-js:
-    name: Test JS job
+    name: Test JS build job
     runs-on: ubuntu-latest
 
     env:
