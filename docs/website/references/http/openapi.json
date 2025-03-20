@@ -792,6 +792,52 @@
             }
         },
         "/acp/relationship": {
+            "delete": {
+                "description": "Delete an actor relationship using acp system",
+                "operationId": "delete relationship",
+                "parameters": [
+                    {
+                        "description": "Parameters for the delete request",
+                        "in": "query",
+                        "name": "parameters",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_relationship_delete_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_relationship"
+                ]
+            },
             "post": {
                 "description": "Add an actor relationship using acp system",
                 "operationId": "add relationship",
@@ -815,43 +861,6 @@
                             }
                         },
                         "description": "Add acp relationship result"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "acp_relationship"
-                ]
-            }
-        },
-        "/acp/relationship/delete": {
-            "post": {
-                "description": "Delete an actor relationship using acp system",
-                "operationId": "delete relationship",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/acp_relationship_delete_request"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
-                                }
-                            }
-                        },
-                        "description": "Delete acp relationship result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -1956,16 +1965,17 @@
             "delete": {
                 "description": "Delete peer replicators",
                 "operationId": "peer_replicator_delete",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
-                            }
+                "parameters": [
+                    {
+                        "description": "Replicator to delete",
+                        "in": "query",
+                        "name": "replicator",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
-                    },
-                    "required": true
-                },
+                    }
+                ],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
