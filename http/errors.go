@@ -40,6 +40,9 @@ var (
 	ErrP2PDisabled            = errors.New("p2p network is disabled")
 	ErrMethodIsNotImplemented = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity        = errors.New("required identity is missing")
+	ErrMissingQueryParameter  = errors.New("missing required query parameter")
+	ErrInvalidReplicatorJSON  = errors.New("invalid replicator JSON format")
+	ErrMissingFilterParameter = errors.New("missing required query parameter: filter")
 )
 
 type errorResponse struct {

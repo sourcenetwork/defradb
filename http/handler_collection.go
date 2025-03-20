@@ -12,7 +12,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -96,7 +95,7 @@ func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	q := req.URL.Query()
 	filterParam := q.Get("filter")
 	if filterParam == "" {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: filter")})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingFilterParameter})
 		return
 	}
 

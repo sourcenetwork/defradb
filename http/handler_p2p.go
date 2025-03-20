@@ -12,7 +12,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -62,14 +61,14 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	// Extract the replicator from the query parameter
 	query := req.URL.Query().Get("replicator")
 	if query == "" {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: replicator")})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingQueryParameter})
 		return
 	}
 
 	// Decode JSON from the query parameter
 	var rep client.ReplicatorParams
 	if err := json.Unmarshal([]byte(query), &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("invalid replicator JSON format")})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidReplicatorJSON})
 		return
 	}
 
