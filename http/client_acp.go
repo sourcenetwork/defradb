@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -119,6 +120,8 @@ func (c *Client) DeleteDocActorRelationship(
 		},
 	)
 
+	fmt.Println("DEBUG body:", string(body))
+
 	if err != nil {
 		return client.DeleteDocActorRelationshipResult{}, err
 	}
@@ -127,6 +130,8 @@ func (c *Client) DeleteDocActorRelationship(
 	query := url.Values{}
 	query.Set("parameters", string(body))
 	methodURL.RawQuery = query.Encode()
+
+	fmt.Println("DEBUG methodURL:", methodURL.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 

@@ -11,6 +11,8 @@
 package http
 
 import (
+	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -68,13 +70,22 @@ func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.R
 func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var message deleteDocActorRelationshipRequest
-	err := requestJSON(req, &message)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// Extract the "parameters" query parameter
+	queryParams := req.URL.Query().Get("parameters")
+	if queryParams == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: parameters")})
 		return
 	}
 
+	// Parse JSON from the query parameter
+	var message deleteDocActorRelationshipRequest
+	err := json.Unmarshal([]byte(queryParams), &message)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("invalid JSON format in parameters")})
+		return
+	}
+
+	// Call the database delete function
 	deleteDocActorRelResult, err := db.DeleteDocActorRelationship(
 		req.Context(),
 		message.CollectionName,
@@ -87,6 +98,7 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 		return
 	}
 
+	// Respond with success
 	responseJSON(rw, http.StatusOK, deleteDocActorRelResult)
 }
 
