@@ -13,7 +13,6 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -66,8 +65,6 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{errors.New("missing required query parameter: replicator")})
 		return
 	}
-
-	fmt.Println("DEBUG Replicator query:", query)
 
 	// Decode JSON from the query parameter
 	var rep client.ReplicatorParams
