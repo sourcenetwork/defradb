@@ -157,6 +157,21 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	acpDeleteDocActorRelationship.OperationID = "delete relationship"
 	acpDeleteDocActorRelationship.Description = "Delete an actor relationship using acp system"
 	acpDeleteDocActorRelationship.Tags = []string{"acp_relationship"}
+	acpDeleteDocActorRelationshipParam := &openapi3.ParameterRef{
+		Value: &openapi3.Parameter{
+			Name:        "parameters",
+			In:          "query",
+			Description: "Parameters for the delete request",
+			Required:    true,
+			Schema: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Type:   openapi3.NewStringSchema().Type,
+					Format: "",
+				},
+			},
+		},
+	}
+	acpDeleteDocActorRelationship.AddParameter(acpDeleteDocActorRelationshipParam.Value)
 	acpDeleteDocActorRelationship.Responses = openapi3.NewResponses()
 	acpDeleteDocActorRelationship.AddResponse(200, acpDeleteDocActorRelationshipResult)
 	acpDeleteDocActorRelationship.Responses.Set("400", errorResponse)
@@ -166,6 +181,6 @@ func (h *acpHandler) bindRoutes(router *Router) {
 
 	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
 	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)
-	router.AddRoute("/acp/relationship/delete", http.MethodPost, acpDeleteDocActorRelationship,
+	router.AddRoute("/acp/relationship", http.MethodDelete, acpDeleteDocActorRelationship,
 		h.DeleteDocActorRelationship)
 }
