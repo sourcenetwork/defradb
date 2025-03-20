@@ -55,8 +55,8 @@ type Identity struct {
 // FromPrivateKey returns a new identity using the given private key.
 // In order to generate a fresh token for this identity, use the [UpdateToken]
 func FromPrivateKey(privateKey crypto.PrivateKey) (Identity, error) {
-	pubKey := privateKey.GetPublic()
-	did, err := pubKey.DID()
+	publicKey := privateKey.GetPublic()
+	did, err := publicKey.DID()
 	if err != nil {
 		return Identity{}, err
 	}
@@ -64,7 +64,7 @@ func FromPrivateKey(privateKey crypto.PrivateKey) (Identity, error) {
 	return Identity{
 		DID:        did,
 		PrivateKey: privateKey,
-		PublicKey:  pubKey,
+		PublicKey:  publicKey,
 	}, nil
 }
 
