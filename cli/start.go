@@ -341,8 +341,15 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, keyTypeToCreate
 	}
 
 	sepPos := bytes.Index(identityBytes, []byte(":"))
+	// the separator might not exist, because of the old format of storing it
+	// we turn it into the new format and try again
 	if sepPos == -1 {
-		return nil, fmt.Errorf("invalid identity key: %s", string(identityBytes))
+		identityBytes = append([]byte(crypto.KeyTypeSecp256k1+":"), identityBytes...)
+		err = kr.Set(nodeIdentityKeyName, identityBytes)
+		if err != nil {
+			return nil, err
+		}
+		return getOrCreateIdentity(kr, opts, keyTypeToCreate)
 	}
 	keyType := string(identityBytes[:sepPos])
 	privateKey, err := crypto.PrivateKeyFromBytes(crypto.KeyType(keyType), identityBytes[sepPos+1:])
