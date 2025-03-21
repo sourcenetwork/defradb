@@ -12,7 +12,6 @@ package cli
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -365,22 +364,9 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, keyTypeToCreate
 }
 
 func generateIdentity(keyType string) (identity.Identity, error) {
-	var privateKey crypto.PrivateKey
-	switch keyType {
-	case "secp256k1":
-		privKey, err := crypto.GenerateSecp256k1()
-		if err != nil {
-			return identity.Identity{}, err
-		}
-		privateKey = crypto.NewPrivateKey(privKey)
-	case "ed25519":
-		privKey, err := crypto.GenerateEd25519()
-		if err != nil {
-			return identity.Identity{}, err
-		}
-		privateKey = crypto.NewPrivateKey(privKey)
-	default:
-		return identity.Identity{}, fmt.Errorf("invalid key type: %s", keyType)
+	privateKey, err := crypto.GenerateKey(crypto.KeyType(keyType))
+	if err != nil {
+		return identity.Identity{}, err
 	}
 
 	nodeIdentity, err := identity.FromPrivateKey(privateKey)

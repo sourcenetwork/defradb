@@ -43,7 +43,7 @@ Example: generate a new identity with ed25519 key:
 				return err
 			}
 
-			return writeJSON(cmd, newIdentity)
+			return writeJSON(cmd, newIdentity.IntoRawIdentity())
 		},
 	}
 

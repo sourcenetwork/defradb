@@ -11,43 +11,21 @@
 package identity
 
 import (
-	"crypto/ed25519"
-	"fmt"
-
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
 // Generate generates a new identity with the specified key type.
 // Supported types are KeyTypeSecp256k1 and KeyTypeEd25519.
-func Generate(keyType crypto.KeyType) (RawIdentity, error) {
-	var privKey crypto.PrivateKey
-	var err error
-
-	switch keyType {
-	case crypto.KeyTypeSecp256k1:
-		var key *secp256k1.PrivateKey
-		key, err = crypto.GenerateSecp256k1()
-		if err != nil {
-			return RawIdentity{}, err
-		}
-		privKey = crypto.NewPrivateKey(key)
-	case crypto.KeyTypeEd25519:
-		var key ed25519.PrivateKey
-		key, err = crypto.GenerateEd25519()
-		if err != nil {
-			return RawIdentity{}, err
-		}
-		privKey = crypto.NewPrivateKey(key)
-	default:
-		return RawIdentity{}, fmt.Errorf("unsupported key type: %s", keyType)
+func Generate(keyType crypto.KeyType) (Identity, error) {
+	privKey, err := crypto.GenerateKey(keyType)
+	if err != nil {
+		return Identity{}, err
 	}
 
 	identity, err := FromPrivateKey(privKey)
 	if err != nil {
-		return RawIdentity{}, err
+		return Identity{}, err
 	}
 
-	return identity.IntoRawIdentity(), nil
+	return identity, nil
 }

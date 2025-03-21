@@ -13,6 +13,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 
@@ -155,7 +156,7 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 		return &ed25519PublicKey{key: keyBytes}, nil
 
 	default:
-		return nil, ErrUnsupportedPubKeyType
+		return nil, NewErrUnsupportedKeyType(keyType)
 	}
 }
 
@@ -308,7 +309,7 @@ func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
 		return &ed25519PrivateKey{key: keyBytes}, nil
 
 	default:
-		return nil, ErrUnsupportedPrivKeyType
+		return nil, NewErrUnsupportedKeyType(keyType)
 	}
 }
 
@@ -321,4 +322,35 @@ func PrivateKeyFromString(keyType KeyType, keyString string) (PrivateKey, error)
 	}
 
 	return PrivateKeyFromBytes(keyType, keyBytes)
+}
+
+// GenerateKey generates a new private key of the given type.
+func GenerateKey(keyType KeyType) (PrivateKey, error) {
+	switch keyType {
+	case KeyTypeSecp256k1:
+		key, err := GenerateSecp256k1()
+		if err != nil {
+			return nil, err
+		}
+		return NewPrivateKey(key), nil
+	case KeyTypeEd25519:
+		key, err := GenerateEd25519()
+		if err != nil {
+			return nil, err
+		}
+		return NewPrivateKey(key), nil
+	default:
+		return nil, NewErrUnsupportedKeyType(keyType)
+	}
+}
+
+// GenerateSecp256k1 generates a new secp256k1 private key.
+func GenerateSecp256k1() (*secp256k1.PrivateKey, error) {
+	return secp256k1.GeneratePrivateKey()
+}
+
+// GenerateEd25519 generates a new random Ed25519 private key.
+func GenerateEd25519() (ed25519.PrivateKey, error) {
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	return priv, err
 }

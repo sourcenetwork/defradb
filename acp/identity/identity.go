@@ -172,7 +172,7 @@ func (identity Identity) NewToken(
 
 	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
 	if identity.PrivateKey.Type() != crypto.KeyTypeSecp256k1 && identity.PrivateKey.Type() != crypto.KeyTypeEd25519 {
-		return nil, crypto.ErrUnsupportedSignatureType
+		return nil, crypto.NewErrUnsupportedKeyType(identity.PrivateKey.Type())
 	}
 
 	privKey := identity.PrivateKey.Underlying()
@@ -198,7 +198,7 @@ func VerifyAuthToken(ident Identity, audience string) error {
 
 	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
 	if ident.PublicKey.Type() != crypto.KeyTypeSecp256k1 && ident.PublicKey.Type() != crypto.KeyTypeEd25519 {
-		return crypto.ErrUnsupportedSignatureType
+		return crypto.NewErrUnsupportedKeyType(ident.PublicKey.Type())
 	}
 
 	pubKey := ident.PublicKey.Underlying()

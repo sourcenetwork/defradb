@@ -372,7 +372,8 @@ func TestPublicKeyFromString_InvalidKeyType(t *testing.T) {
 	parsedKey, err := PublicKeyFromString("unknown-type", "deadbeef")
 	assert.Error(t, err)
 	assert.Nil(t, parsedKey)
-	assert.Equal(t, ErrUnsupportedPubKeyType, err)
+	assert.ErrorIs(t, NewErrUnsupportedKeyType(KeyType("unknown-type")), err)
+	assert.ErrorContains(t, err, "unknown-type")
 }
 
 func TestPublicKeyFromString_InvalidSecp256k1KeyData(t *testing.T) {
@@ -432,7 +433,8 @@ func TestPrivateKeyFromBytes_InvalidKeyType(t *testing.T) {
 	parsedKey, err := PrivateKeyFromBytes(KeyType("unknown-type"), []byte{1, 2, 3, 4})
 	assert.Error(t, err)
 	assert.Nil(t, parsedKey)
-	assert.Equal(t, ErrUnsupportedPrivKeyType, err)
+	assert.ErrorIs(t, NewErrUnsupportedKeyType(KeyType("unknown-type")), err)
+	assert.ErrorContains(t, err, "unknown-type")
 }
 
 func TestPrivateKeyFromBytes_InvalidSecp256k1KeyLength(t *testing.T) {
@@ -483,4 +485,58 @@ func TestPrivateKeyFromString_InvalidHexString(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, parsedKey)
 	assert.Contains(t, err.Error(), "encoding/hex")
+}
+
+func TestGenerateKey_Secp256k1(t *testing.T) {
+	key, err := GenerateKey(KeyTypeSecp256k1)
+	require.NoError(t, err)
+	require.NotNil(t, key)
+
+	assert.Equal(t, KeyTypeSecp256k1, key.Type())
+
+	pubKey := key.GetPublic()
+	require.NotNil(t, pubKey)
+	assert.Equal(t, KeyTypeSecp256k1, pubKey.Type())
+
+	message := []byte("test message")
+	sig, err := key.Sign(message)
+	require.NoError(t, err)
+
+	valid, err := pubKey.Verify(message, sig)
+	require.NoError(t, err)
+	assert.True(t, valid)
+
+	assert.IsType(t, &secp256k1.PrivateKey{}, key.Underlying())
+	assert.IsType(t, &secp256k1.PublicKey{}, pubKey.Underlying())
+}
+
+func TestGenerateKey_Ed25519(t *testing.T) {
+	key, err := GenerateKey(KeyTypeEd25519)
+	require.NoError(t, err)
+	require.NotNil(t, key)
+
+	assert.Equal(t, KeyTypeEd25519, key.Type())
+
+	pubKey := key.GetPublic()
+	require.NotNil(t, pubKey)
+	assert.Equal(t, KeyTypeEd25519, pubKey.Type())
+
+	message := []byte("test message")
+	sig, err := key.Sign(message)
+	require.NoError(t, err)
+
+	valid, err := pubKey.Verify(message, sig)
+	require.NoError(t, err)
+	assert.True(t, valid)
+
+	assert.IsType(t, ed25519.PrivateKey{}, key.Underlying())
+	assert.IsType(t, ed25519.PublicKey{}, pubKey.Underlying())
+}
+
+func TestGenerateKey_InvalidKeyType(t *testing.T) {
+	key, err := GenerateKey("invalid-key-type")
+	assert.Error(t, err)
+	assert.Nil(t, key)
+	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyType("invalid-key-type")))
+	assert.ErrorContains(t, err, "invalid-key-type")
 }
