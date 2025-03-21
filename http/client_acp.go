@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -126,9 +125,7 @@ func (c *Client) DeleteDocActorRelationship(
 
 	// Encode the parameters to the methodURL
 	query := url.Values{}
-	//query.Set("parameters", string(body))
-	fmt.Println("DEBUG Body:", string(body))
-
+	query.Set("parameters", string(body))
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)

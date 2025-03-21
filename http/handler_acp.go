@@ -115,9 +115,6 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Ref: "#/components/schemas/acp_relationship_add_result",
 	}
 
-	acpRelationshipDeleteRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/acp_relationship_delete_request",
-	}
 	acpRelationshipDeleteResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/acp_relationship_delete_result",
 	}
@@ -156,9 +153,6 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Value: acpAddDocActorRelationshipRequest,
 	}
 
-	acpDeleteDocActorRelationshipRequest := openapi3.NewRequestBody().
-		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(acpRelationshipDeleteRequestSchema))
 	acpDeleteDocActorRelationshipResult := openapi3.NewResponse().
 		WithDescription("Delete acp relationship result").
 		WithJSONSchemaRef(acpRelationshipDeleteResultSchema)
@@ -174,8 +168,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 			Required:    true,
 			Schema: &openapi3.SchemaRef{
 				Value: &openapi3.Schema{
-					Type:   openapi3.NewStringSchema().Type,
-					Format: "",
+					Type:    openapi3.NewStringSchema().Type,
+					Format:  "",
+					Example: `{"CollectionName":"Users","DocID":"bae-9d443d0c-52f6-568b-8f74-e8ff0825697b","Relation":"owner","TargetActor":"did:key:z7r8oqkfiiVe4bHLYBjHZTJqGiUqCuMo6q7qiNGNYogBb8CZhDZ6RmFocZYYrsxCLew1E9bdWJ5tC7bVCGosfQDrSy7nf"}`,
 				},
 			},
 		},
@@ -184,12 +179,8 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	acpDeleteDocActorRelationship.Responses = openapi3.NewResponses()
 	acpDeleteDocActorRelationship.AddResponse(200, acpDeleteDocActorRelationshipResult)
 	acpDeleteDocActorRelationship.Responses.Set("400", errorResponse)
-	acpDeleteDocActorRelationship.RequestBody = &openapi3.RequestBodyRef{
-		Value: acpDeleteDocActorRelationshipRequest,
-	}
 
 	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
 	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)
-	router.AddRoute("/acp/relationship", http.MethodDelete, acpDeleteDocActorRelationship,
-		h.DeleteDocActorRelationship)
+	router.AddRoute("/acp/relationship", http.MethodDelete, acpDeleteDocActorRelationship, h.DeleteDocActorRelationship)
 }
