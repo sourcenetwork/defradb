@@ -208,7 +208,6 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 }
 
 func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
