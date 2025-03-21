@@ -84,7 +84,6 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 		return
 	}
 
-	// Call the database delete function
 	deleteDocActorRelResult, err := db.DeleteDocActorRelationship(
 		req.Context(),
 		message.CollectionName,
@@ -97,7 +96,6 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 		return
 	}
 
-	// Respond with success
 	responseJSON(rw, http.StatusOK, deleteDocActorRelResult)
 }
 
