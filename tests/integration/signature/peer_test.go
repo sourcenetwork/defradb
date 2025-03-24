@@ -205,6 +205,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 						commits(fieldId: "C") {
 							signature {
 								type
+								identity
 							}
 						}
 					}`,
@@ -212,12 +213,14 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 					"commits": []map[string]any{
 						{
 							"signature": map[string]any{
-								"type": coreblock.SignatureTypeECDSA256K,
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 							},
 						},
 						{
 							"signature": map[string]any{
-								"type": coreblock.SignatureTypeEd25519,
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(1).Value()),
 							},
 						},
 					},
@@ -306,6 +309,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 						commits(fieldId: "C", order: {height: DESC}) {
 							signature {
 								type
+								identity
 							}
 						}
 					}`,
@@ -313,17 +317,20 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 					"commits": []map[string]any{
 						{
 							"signature": map[string]any{
-								"type": coreblock.SignatureTypeECDSA256K,
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 							},
 						},
 						{
 							"signature": map[string]any{
-								"type": coreblock.SignatureTypeEd25519,
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(1).Value()),
 							},
 						},
 						{
 							"signature": map[string]any{
-								"type": coreblock.SignatureTypeECDSA256K,
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 							},
 						},
 					},

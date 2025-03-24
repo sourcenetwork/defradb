@@ -213,7 +213,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSignature_WithEd25519Algorithm_ShouldIIncludeSignatureData(t *testing.T) {
+func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
@@ -252,7 +252,7 @@ func TestSignature_WithEd25519Algorithm_ShouldIIncludeSignatureData(t *testing.T
 							"fieldName": "age",
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 								"value":    newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeEd25519),
 							},
 						},
@@ -260,7 +260,7 @@ func TestSignature_WithEd25519Algorithm_ShouldIIncludeSignatureData(t *testing.T
 							"fieldName": "name",
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 								"value":    newSignatureMatcher(makeFieldBlock("name", "John"), crypto.KeyTypeEd25519),
 							},
 						},
@@ -268,8 +268,72 @@ func TestSignature_WithEd25519Algorithm_ShouldIIncludeSignatureData(t *testing.T
 							"fieldName": nil,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
-								"identity": gomega.Not(gomega.BeEmpty()),
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 								"value":    gomega.Not(gomega.BeEmpty()),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.ClientIdentity(0).Value(): crypto.KeyTypeEd25519,
+			testUtils.NodeIdentity(0).Value():   crypto.KeyTypeSecp256k1,
+		},
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				Identity: testUtils.ClientIdentity(0),
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age": 23
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits(fieldId: "C", order: {height: DESC}) {
+							height
+							signature {
+								type
+								identity
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"height": 2,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+							},
+						},
+						{
+							"height": 1,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.ClientIdentity(0).Value()),
 							},
 						},
 					},

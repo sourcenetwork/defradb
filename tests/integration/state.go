@@ -17,6 +17,8 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/immutable"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -243,8 +245,8 @@ func (s *state) GetCurrentNodeID() int {
 	return s.currentNodeID
 }
 
-func (s *state) GetNodeIdentity(nodeIndex int) acpIdentity.Identity {
-	return getIdentity(s, NodeIdentity(nodeIndex))
+func (s *state) GetIdentity(ident Identity) acpIdentity.Identity {
+	return getIdentity(s, immutable.Some(ident))
 }
 
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
@@ -254,8 +256,8 @@ type TestState interface {
 	GetClientType() ClientType
 	// GetCurrentNodeID returns the node id that is currently being asserted.
 	GetCurrentNodeID() int
-	// GetNodeIdentity returns the identity for the given node index.
-	GetNodeIdentity(nodeIndex int) acpIdentity.Identity
+	// GetIdentity returns the identity for the given node index.
+	GetIdentity(Identity) acpIdentity.Identity
 }
 
 var _ TestState = &state{}
