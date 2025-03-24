@@ -28,7 +28,7 @@ require (
 	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/joho/godotenv v1.5.1
 	github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5
-	github.com/lestrrat-go/jwx/v2 v2.1.3
+	github.com/lestrrat-go/jwx/v2 v2.1.4
 	github.com/libp2p/go-libp2p v0.41.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.30.2
