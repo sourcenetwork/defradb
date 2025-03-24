@@ -174,7 +174,7 @@ func (h *acpHandler) bindRoutes(router *Router) {
 						"CollectionName": "Users",
 						"DocID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
 						"Relation": "owner",
-						"TargetActor": "did:key:z7r8oqkfiiVe4bHLYBjHZTJqGiUqCuMo6q7qiNGNYogBb8CZhDZ6RmFocZYYrsxCLew1E9bdWJ5tC7bVCGosfQDrSy7nf"
+						"TargetActor": "did:key:z7r8oqkfiiVe4bHLYBjHZTJqGiUqCuM..."
 					}`,
 				},
 			},
