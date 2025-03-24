@@ -132,11 +132,31 @@ func (matcher *identityMatcher) SetTestState(s testUtils.TestState) {
 
 func (matcher *identityMatcher) Match(actual any) (bool, error) {
 	ident := matcher.s.GetIdentity(matcher.identity)
-	bytes, ok := actual.([]byte)
-	if !ok {
-		return false, fmt.Errorf("expected actual to be a byte slice, but got %T", actual)
+
+	actualString := ""
+	if matcher.s.GetClientType() == testUtils.GoClientType {
+		actualBytes, ok := actual.([]byte)
+		if !ok {
+			return false, fmt.Errorf("expected actual to be a byte slice, but got %T", actual)
+		}
+		actualString = string(actualBytes)
+	} else {
+		actualTmpString, ok := actual.(string)
+		if !ok {
+			return false, fmt.Errorf("expected actual to be a string, but got %T", actual)
+		}
+
+		// CLI and HTTP clients return json response, so here we should expect a json string
+		var actualBytes []byte
+		err := json.Unmarshal([]byte("\""+actualTmpString+"\""), &actualBytes)
+		if err != nil {
+			return false, err
+		}
+
+		actualString = string(actualBytes)
 	}
-	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey.Type(), string(bytes))
+
+	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey.Type(), actualString)
 	if err != nil {
 		return false, errors.Wrap("failed to convert actual to public key", err)
 	}
