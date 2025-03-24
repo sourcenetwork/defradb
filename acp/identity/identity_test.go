@@ -67,9 +67,10 @@ func TestGenerate_WithEd25519_ReturnsNewIdentity(t *testing.T) {
 }
 
 func TestGenerate_WithInvalidType_ReturnsError(t *testing.T) {
-	_, err := Generate(crypto.KeyType("invalid"))
+	_, err := Generate(crypto.KeyType("invalid_key_type"))
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "unsupported key type: invalid")
+	require.Contains(t, err.Error(), "unsupported key type")
+	require.Contains(t, err.Error(), "invalid_key_type")
 }
 
 func TestGenerate_ReturnsUniqueIdentities(t *testing.T) {
