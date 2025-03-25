@@ -32,18 +32,18 @@ type Action = action.Action
 type Actions = action.Actions
 type Stateful = action.Stateful[*state.State]
 
-// Argmented provides a function through which additional CLI arguments may be provided.
+// Augmented provides a function through which additional CLI arguments may be provided.
 //
 // It is typically used by multipliers in order to provide additional args to Actions
 // implementing this interface.
-type Argmented interface {
+type Augmented interface {
 	// Augments the host object (typically an action) with additional CLI arguments.
 	AddArgs(...string)
 }
 
-type ArgmentedAction interface {
+type AugmentedAction interface {
 	Action
-	Argmented
+	Augmented
 }
 
 type stateful struct {
@@ -65,14 +65,14 @@ func (a *stateful) AppendDirections(args []string) []string {
 	return append(args, "--url", a.s.Url, "--rootdir", a.s.RootDir)
 }
 
-type argmented struct {
+type augmented struct {
 	// Additional CLI arguments that should be sent along with the action-defined args.
 	AdditionalArgs []string
 }
 
-var _ Argmented = (*argmented)(nil)
+var _ Augmented = (*augmented)(nil)
 
-func (a *argmented) AddArgs(args ...string) {
+func (a *augmented) AddArgs(args ...string) {
 	a.AdditionalArgs = append(a.AdditionalArgs, args...)
 }
 

@@ -20,21 +20,21 @@ import (
 //
 // Executing this TxnAction will execute the given action within the scope
 // of the given transaction.
-type TxnAction[T ArgmentedAction] struct {
+type TxnAction[T AugmentedAction] struct {
 	s *state.State
-	argmented
+	augmented
 
 	TxnIndex int
 	Action   T
 }
 
-var _ Action = (*TxnAction[ArgmentedAction])(nil)
+var _ Action = (*TxnAction[AugmentedAction])(nil)
 
 // WithTxn wraps the given action within the scope of the default (ID: 0) transaction.
 //
 // If a transaction with the default ID (0) has not been created by the time this action
 // executes, executing the transaction will panic.
-func WithTxn[T ArgmentedAction](action T) *TxnAction[T] {
+func WithTxn[T AugmentedAction](action T) *TxnAction[T] {
 	return &TxnAction[T]{
 		Action: action,
 	}
@@ -44,7 +44,7 @@ func WithTxn[T ArgmentedAction](action T) *TxnAction[T] {
 //
 // If a transaction with the given ID has not been created by the time this action
 // executes, executing the transaction will panic.
-func WithTxnI[T ArgmentedAction](action T, txnIndex int) *TxnAction[T] {
+func WithTxnI[T AugmentedAction](action T, txnIndex int) *TxnAction[T] {
 	return &TxnAction[T]{
 		TxnIndex: txnIndex,
 		Action:   action,

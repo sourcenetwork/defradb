@@ -15,7 +15,7 @@ import "github.com/stretchr/testify/require"
 // SchemaAdd executes the `client schema add` command using the given schema.
 type SchemaAdd struct {
 	stateful
-	argmented
+	augmented
 
 	// The schema string value to be passed directly to the command (i.e. not via a file)
 	InlineSchema string

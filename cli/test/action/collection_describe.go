@@ -20,7 +20,7 @@ import (
 // result matches the expected value.
 type CollectionDescribe struct {
 	stateful
-	argmented
+	augmented
 
 	// The expected results.
 	//

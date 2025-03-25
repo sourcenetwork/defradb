@@ -57,8 +57,8 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 			result = append(result, &action.TxCreate{})
 
 		default:
-			if argumentedAction, ok := a.(action.ArgmentedAction); ok && i > lastStartIndex {
-				result = append(result, action.WithTxn(argumentedAction))
+			if augmentedAction, ok := a.(action.AugmentedAction); ok && i > lastStartIndex {
+				result = append(result, action.WithTxn(augmentedAction))
 			} else {
 				result = append(result, a)
 			}
