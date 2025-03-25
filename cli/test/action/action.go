@@ -138,10 +138,10 @@ func executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCl
 
 // executeUntil executes a defra command with the given args and will block until it reads the given
 // `until` string in stderr.
-func executeUntil(ctx context.Context, args []string, until string) error {
+func executeUntil(ctx context.Context, args []string, until string) (string, error) {
 	read, write, err := os.Pipe()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// We cannot simply restore this once `until` was reached whilst the command is still exectuting,
@@ -158,6 +158,7 @@ func executeUntil(ctx context.Context, args []string, until string) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
+	var targetLine string
 	scanner := bufio.NewScanner(read)
 	go func() {
 		targetReached := false
@@ -184,6 +185,7 @@ func executeUntil(ctx context.Context, args []string, until string) error {
 			if !targetReached {
 				targetReached = strings.Contains(scanner.Text(), until)
 				if targetReached {
+					targetLine = scanner.Text()
 					wg.Add(-1)
 				}
 			}
@@ -207,5 +209,5 @@ func executeUntil(ctx context.Context, args []string, until string) error {
 	// Block, until `until` is read from stderr
 	wg.Wait()
 
-	return nil
+	return targetLine, nil
 }

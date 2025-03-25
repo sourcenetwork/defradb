@@ -11,10 +11,7 @@
 package action
 
 import (
-	"fmt"
-	"net"
 	"strings"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -30,56 +27,19 @@ func Start() *StartCli {
 }
 
 func (a *StartCli) Execute() {
-	// We need to lock across all processes in order to allocate the port.
-	// We could alternatively let Defra assign the port and then read it from the logs,
-	// but explicit assignment is currently the prefered approach.
-	unlock, err := crossLock(44445)
-	require.NoError(a.s.T, err)
-	defer unlock()
-
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(a.s.T, err)
-
-	args := []string{"start", "--no-keyring", "--store=memory"}
-
-	a.s.Url = listener.Addr().String()
 	a.s.RootDir = a.s.T.TempDir()
+	args := []string{"start", "--no-keyring", "--store=memory", "--rootdir", a.s.RootDir, "--url", "127.0.0.1:"}
 
-	args = a.AppendDirections(args)
+	logPrefix := "Providing GraphQL endpoint at "
+	exampleUrl := "http://127.0.0.1:42571"
 
-	err = listener.Close()
+	logLine, err := executeUntil(a.s.Ctx, args, logPrefix)
+
+	startIndex := strings.Index(logLine, logPrefix)
+	// Take the url from the logs so that it may be passed into other commands later.
+	// This is quite a lazy solution, if it breaks, strongly consider pulling it from the generated config
+	// file instead.
+	a.s.Url = logLine[startIndex+len(logPrefix) : startIndex+len(logPrefix)+len(exampleUrl)]
+
 	require.NoError(a.s.T, err)
-
-	err = executeUntil(a.s.Ctx, args, "Providing GraphQL endpoint at")
-	require.NoError(a.s.T, err)
-}
-
-// crossLock forms a cross process lock by attempting to listen to the given port.
-//
-// This function will only return once the port is free or the timeout is reached.
-// A function to unbind from the port is returned - this unlock function may be called
-// multiple times without issue.
-func crossLock(port uint16) (func(), error) {
-	timeout := time.After(20 * time.Second)
-	for {
-		select {
-		case <-timeout:
-			return nil, fmt.Errorf("timeout reached while trying to acquire cross process lock on port %v", port)
-		default:
-			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%v", port))
-			if err != nil {
-				if strings.Contains(err.Error(), "address already in use") {
-					time.Sleep(5 * time.Millisecond)
-					continue
-				}
-				return nil, err
-			}
-
-			return func() {
-					// there are no errors that this returns that we actually care about
-					_ = l.Close()
-				},
-				nil
-		}
-	}
 }
