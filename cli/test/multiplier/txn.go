@@ -95,8 +95,8 @@ func (n *txnCommit) Apply(source action.Actions) action.Actions {
 
 		switch a.(type) {
 		// Append orginal, read-only actions that occured after the last write action,
-		// after the transaction has been commited.  This allows the automatic of whether
-		// or not the transaction-state has been persisted.
+		// after the transaction has been commited.  This allows the automatic coverage
+		// of whether or not the transaction-state has been persisted.
 		case *action.CollectionDescribe:
 			result = append(result, a)
 		}
