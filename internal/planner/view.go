@@ -34,7 +34,6 @@ type viewNode struct {
 func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, error) {
 	// For now, we assume a single source.  This will need to change if/when we support multiple sources
 	querySource := (col.Description().Sources[0].(*client.QuerySource))
-	hasTransform := querySource.Transform.HasValue()
 
 	var source planNode
 	if col.Description().IsMaterialized {
@@ -49,18 +48,13 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 		if err != nil {
 			return nil, err
 		}
-
-		if hasTransform {
-			source = p.Lens(source, query.DocumentMapping, col)
-		}
 	}
 
 	viewNode := &viewNode{
-		p:            p,
-		desc:         col.Description(),
-		source:       source,
-		docMapper:    docMapper{query.DocumentMapping},
-		hasTransform: hasTransform,
+		p:         p,
+		desc:      col.Description(),
+		source:    source,
+		docMapper: docMapper{query.DocumentMapping},
 	}
 
 	return viewNode, nil

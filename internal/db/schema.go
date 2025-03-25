@@ -18,7 +18,6 @@ import (
 	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	"github.com/lens-vm/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -86,7 +85,6 @@ func (db *DB) loadSchema(ctx context.Context) error {
 func (db *DB) patchSchema(
 	ctx context.Context,
 	patchString string,
-	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
 	txn := mustGetContextTxn(ctx)
@@ -134,7 +132,6 @@ func (db *DB) patchSchema(
 		ctx,
 		existingSchemaByName,
 		newSchemaByName,
-		migration,
 		setAsDefaultVersion,
 	)
 	if err != nil {
@@ -328,7 +325,6 @@ func (db *DB) updateSchema(
 	ctx context.Context,
 	existingSchemaByName map[string]client.SchemaDescription,
 	proposedDescriptionsByName map[string]client.SchemaDescription,
-	migration immutable.Option[model.Lens],
 	setAsActiveVersion bool,
 ) error {
 	newSchemas := []client.SchemaDescription{}
@@ -465,7 +461,6 @@ func (db *DB) updateSchema(
 				col.Sources = []any{
 					&client.CollectionSource{
 						SourceCollectionID: previousID,
-						Transform:          migration,
 					},
 				}
 
@@ -520,13 +515,6 @@ func (db *DB) updateSchema(
 			_, err = description.SaveCollection(ctx, txn, def.Description)
 			if err != nil {
 				return err
-			}
-
-			if migration.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, def.Description.ID, migration.Value())
-				if err != nil {
-					return err
-				}
 			}
 		}
 

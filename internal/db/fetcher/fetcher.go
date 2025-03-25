@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -55,7 +54,6 @@ type Fetcher interface {
 		ctx context.Context,
 		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
-		acp immutable.Option[acp.ACP],
 		index immutable.Option[client.IndexDescription],
 		col client.Collection,
 		fields []client.FieldDefinition,

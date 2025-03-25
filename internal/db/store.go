@@ -13,10 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/lens-vm/lens/host-go/config/model"
-
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -173,7 +169,6 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 func (db *DB) PatchSchema(
 	ctx context.Context,
 	patchString string,
-	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
 	ctx, span := tracer.Start(ctx)
@@ -185,7 +180,7 @@ func (db *DB) PatchSchema(
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchSchema(ctx, patchString, migration, setAsDefaultVersion)
+	err = db.patchSchema(ctx, patchString, setAsDefaultVersion)
 	if err != nil {
 		return err
 	}
@@ -254,7 +249,6 @@ func (db *DB) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -265,7 +259,7 @@ func (db *DB) AddView(
 	}
 	defer txn.Discard(ctx)
 
-	defs, err := db.addView(ctx, query, sdl, transform)
+	defs, err := db.addView(ctx, query, sdl)
 	if err != nil {
 		return nil, err
 	}

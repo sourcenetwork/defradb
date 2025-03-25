@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 )
@@ -66,7 +65,6 @@ func (n *scanNode) Init() error {
 		n.p.ctx,
 		n.p.identity,
 		n.p.txn,
-		n.p.acp,
 		n.index,
 		n.col,
 		n.fields,
@@ -161,8 +159,6 @@ func (scan *scanNode) initFetcher(cid immutable.Option[string]) {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = fetcher.NewDocumentFetcher()
-
-		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
 	}
 	scan.fetcher = f
 }

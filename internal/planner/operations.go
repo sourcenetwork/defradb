@@ -36,7 +36,6 @@ var (
 	_ planNode = (*upsertNode)(nil)
 	_ planNode = (*valuesNode)(nil)
 	_ planNode = (*viewNode)(nil)
-	_ planNode = (*lensNode)(nil)
 	_ planNode = (*similarityNode)(nil)
 
 	_ MultiNode = (*parallelNode)(nil)

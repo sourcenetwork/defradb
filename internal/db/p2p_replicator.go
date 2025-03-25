@@ -108,14 +108,6 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 		}
 	}
 
-	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
-		for _, col := range collections {
-			if col.Description().Policy.HasValue() {
-				return ErrReplicatorColHasPolicy
-			}
-		}
-	}
-
 	addedCols := []client.Collection{}
 	for _, col := range collections {
 		if _, ok := storedSchemas[col.SchemaRoot()]; !ok {

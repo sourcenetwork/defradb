@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -188,44 +187,6 @@ func (db *DB) patchCollection(
 				err := db.clearViewCache(ctx, client.CollectionDefinition{
 					Description: col,
 				})
-				if err != nil {
-					return err
-				}
-			}
-
-			// Clear any existing migrations in the registry, using this semi-hacky way
-			// to avoid adding more functions to a public interface that we wish to remove.
-
-			for _, src := range existingCol.CollectionSources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
-					if err != nil {
-						return err
-					}
-				}
-			}
-			for _, src := range existingCol.QuerySources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
-
-		for _, src := range col.CollectionSources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		for _, src := range col.QuerySources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
 				if err != nil {
 					return err
 				}

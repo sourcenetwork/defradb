@@ -24,14 +24,12 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -65,8 +63,6 @@ type DB struct {
 
 	parser core.Parser
 
-	lensRegistry client.LensRegistry
-
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
@@ -78,9 +74,6 @@ type DB struct {
 
 	// The identity of the current node
 	nodeIdentity immutable.Option[identity.Identity]
-
-	// Contains ACP if it exists
-	acp immutable.Option[acp.ACP]
 
 	// The peer ID and network address information for the current node
 	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
@@ -106,18 +99,14 @@ var _ client.DB = (*DB)(nil)
 func NewDB(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
-	acp immutable.Option[acp.ACP],
-	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, acp, lens, options...)
+	return newDB(ctx, rootstore, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
-	acp immutable.Option[acp.ACP],
-	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
 	multistore := datastore.MultiStoreFrom(rootstore)
@@ -137,8 +126,6 @@ func newDB(
 	db := &DB{
 		rootstore:      rootstore,
 		multistore:     multistore,
-		acp:            acp,
-		lensRegistry:   lens,
 		parser:         parser,
 		options:        options,
 		events:         event.NewBus(commandBufferSize, eventBufferSize),
@@ -152,10 +139,6 @@ func newDB(
 
 	db.nodeIdentity = opts.identity
 	db.blockSigningEnabled = opts.blockSigningEnabled
-
-	if lens != nil {
-		lens.Init(db)
-	}
 
 	err = db.initialize(ctx)
 	if err != nil {
@@ -209,33 +192,6 @@ func (db *DB) Headstore() corekv.Reader {
 	return db.multistore.Headstore()
 }
 
-func (db *DB) LensRegistry() client.LensRegistry {
-	return db.lensRegistry
-}
-
-func (db *DB) AddPolicy(
-	ctx context.Context,
-	policy string,
-) (client.AddPolicyResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if !db.acp.HasValue() {
-		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	policyID, err := db.acp.Value().AddPolicy(
-		ctx,
-		identity.FromContext(ctx).Value(),
-		policy,
-	)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	return client.AddPolicyResult{PolicyID: policyID}, nil
-}
-
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
@@ -265,95 +221,6 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	return nil
 }
 
-func (db *DB) AddDocActorRelationship(
-	ctx context.Context,
-	collectionName string,
-	docID string,
-	relation string,
-	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if !db.acp.HasValue() {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	collection, err := db.GetCollectionByName(ctx, collectionName)
-	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
-	}
-
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
-	if !hasPolicy {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
-	}
-
-	exists, err := db.acp.Value().AddDocActorRelationship(
-		ctx,
-		policyID,
-		resourceName,
-		docID,
-		relation,
-		identity.FromContext(ctx).Value(),
-		targetActor,
-	)
-
-	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
-	}
-
-	if !exists {
-		err = db.publishDocUpdateEvent(ctx, docID, collection)
-		if err != nil {
-			return client.AddDocActorRelationshipResult{}, err
-		}
-	}
-
-	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
-}
-
-func (db *DB) DeleteDocActorRelationship(
-	ctx context.Context,
-	collectionName string,
-	docID string,
-	relation string,
-	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if !db.acp.HasValue() {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	collection, err := db.GetCollectionByName(ctx, collectionName)
-	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
-	}
-
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
-	if !hasPolicy {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
-	}
-
-	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
-		ctx,
-		policyID,
-		resourceName,
-		docID,
-		relation,
-		identity.FromContext(ctx).Value(),
-		targetActor,
-	)
-
-	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
-	}
-
-	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
-}
-
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
 		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
@@ -380,14 +247,6 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	// Start acp if enabled, this will recover previous state if there is any.
-	if db.acp.HasValue() {
-		// db is responsible to call db.acp.Close() to free acp resources while closing.
-		if err = db.acp.Value().Start(ctx); err != nil {
-			return err
-		}
-	}
-
 	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
@@ -396,11 +255,6 @@ func (db *DB) initialize(ctx context.Context) error {
 	// and migrations and finish initialization
 	if exists {
 		err = db.loadSchema(ctx)
-		if err != nil {
-			return err
-		}
-
-		err = db.lensRegistry.ReloadLenses(ctx)
 		if err != nil {
 			return err
 		}
@@ -457,12 +311,6 @@ func (db *DB) Close() {
 	err := db.rootstore.Close()
 	if err != nil {
 		log.ErrorE("Failure closing running process", err)
-	}
-
-	if db.acp.HasValue() {
-		if err := db.acp.Value().Close(); err != nil {
-			log.ErrorE("Failure closing acp", err)
-		}
 	}
 
 	log.Info("Successfully closed running process")

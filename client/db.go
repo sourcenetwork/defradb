@@ -15,7 +15,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
@@ -96,52 +95,6 @@ type DB interface {
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// AddPolicy adds policy to acp, if acp is available.
-	//
-	// If policy was successfully added to acp then a policyID is returned,
-	// otherwise if acp was not available then returns the following error:
-	// [client.ErrPolicyAddFailureNoACP]
-	//
-	// Detects the format of the policy automatically by assuming YAML format if JSON
-	// validation fails.
-	//
-	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
-
-	// AddDocActorRelationship creates a relationship between document and the target actor.
-	//
-	// If failure occurs, the result will return an error. Upon success the boolean value will
-	// be true if the relationship already existed (no-op), and false if a new relationship was made.
-	//
-	// Note:
-	// - The request actor must either be the owner or manager of the document.
-	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
-	AddDocActorRelationship(
-		ctx context.Context,
-		collectionName string,
-		docID string,
-		relation string,
-		targetActor string,
-	) (AddDocActorRelationshipResult, error)
-
-	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
-	//
-	// If failure occurs, the result will return an error. Upon success the boolean value will
-	// be true if the relationship record was found and deleted. Upon success the boolean value
-	// will be false if the relationship record was not found (no-op).
-	//
-	// Note:
-	// - The request actor must either be the owner or manager of the document.
-	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
-	//   removed, however this does not revoke access from actors that had explicit relationships.
-	DeleteDocActorRelationship(
-		ctx context.Context,
-		collectionName string,
-		docID string,
-		relation string,
-		targetActor string,
-	) (DeleteDocActorRelationshipResult, error)
-
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 }
@@ -182,7 +135,7 @@ type Store interface {
 	// [FieldKindStringToEnumMapping].
 	//
 	// A lens configuration may also be provided, it will be added to all collections using the schema.
-	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
+	PatchSchema(context.Context, string, bool) error
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionDescriptions
 	// present in the database.
@@ -238,7 +191,6 @@ type Store interface {
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
-		transform immutable.Option[model.Lens],
 	) ([]CollectionDefinition, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
@@ -261,11 +213,6 @@ type Store interface {
 	// Migrations will only run if there is a complete path from the document schema version to the latest local
 	// schema version.
 	SetMigration(context.Context, LensConfig) error
-
-	// LensRegistry returns the LensRegistry in use by this database instance.
-	//
-	// It exposes several useful thread-safe migration related functions.
-	LensRegistry() LensRegistry
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//

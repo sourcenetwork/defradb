@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -33,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
@@ -75,7 +73,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
-	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
+	return innerFetcher
 }
 
 func (db *DB) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
@@ -323,36 +321,6 @@ func (c *collection) getAllDocIDsChan(
 			if !hasNext {
 				break
 			}
-
-			splitString := strings.Split(string(iter.Key()), "/")
-			rawDocID := splitString[len(splitString)-1]
-
-			docID, err := client.NewDocIDFromString(rawDocID)
-			if err != nil {
-				resCh <- client.DocIDResult{
-					Err: err,
-				}
-				return
-			}
-
-			canRead, err := c.checkAccessOfDocWithACP(
-				ctx,
-				acp.ReadPermission,
-				docID.String(),
-			)
-
-			if err != nil {
-				resCh <- client.DocIDResult{
-					Err: err,
-				}
-				return
-			}
-
-			if canRead {
-				resCh <- client.DocIDResult{
-					ID: docID,
-				}
-			}
 		}
 	}()
 
@@ -497,7 +465,7 @@ func (c *collection) create(
 		return err
 	}
 
-	return c.registerDocWithACP(ctx, doc.ID().String())
+	return nil
 }
 
 // Update an existing document with the new values.
@@ -545,20 +513,7 @@ func (c *collection) update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	// Stop the update if the correct permissions aren't there.
-	canUpdate, err := c.checkAccessOfDocWithACP(
-		ctx,
-		acp.UpdatePermission,
-		doc.ID().String(),
-	)
-	if err != nil {
-		return err
-	}
-	if !canUpdate {
-		return client.ErrDocumentNotFoundOrNotAuthorized
-	}
-
-	err = c.setEmbedding(ctx, doc, false)
+	err := c.setEmbedding(ctx, doc, false)
 	if err != nil {
 		return err
 	}
@@ -933,17 +888,6 @@ func (c *collection) exists(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
-	canRead, err := c.checkAccessOfDocWithACP(
-		ctx,
-		acp.ReadPermission,
-		primaryKey.DocID,
-	)
-	if err != nil {
-		return false, false, err
-	} else if !canRead {
-		return false, false, nil
-	}
-
 	txn := mustGetContextTxn(ctx)
 	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {

@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/core/net"
 )
 
@@ -40,20 +39,18 @@ type defraVersion struct {
 	CommitDate string `json:"commitDate"`
 	GoInfo     string `json:"go"`
 
-	VersionHTTPAPI string `json:"httpAPI"`
-	DocIDVersions  string `json:"docIDVersions"`
-	NetProtocol    string `json:"netProtocol"`
+	DocIDVersions string `json:"docIDVersions"`
+	NetProtocol   string `json:"netProtocol"`
 }
 
 // NewDefraVersion returns a defraVersion with normalized values.
 func NewDefraVersion() (defraVersion, error) {
 	dv := defraVersion{
-		GoInfo:         strings.Replace(GoInfo, "go version go", "", 1),
-		Release:        GitRelease,
-		Commit:         GitCommit,
-		CommitDate:     GitCommitDate,
-		VersionHTTPAPI: http.Version,
-		NetProtocol:    string(net.Protocol),
+		GoInfo:      strings.Replace(GoInfo, "go version go", "", 1),
+		Release:     GitRelease,
+		Commit:      GitCommit,
+		CommitDate:  GitCommitDate,
+		NetProtocol: string(net.Protocol),
 	}
 	var docIDVersions []string
 	for k, v := range client.ValidDocIDVersions {
@@ -86,14 +83,12 @@ func (dv *defraVersion) StringFull() string {
 	}
 	return fmt.Sprintf(
 		`defradb %s (%s %s)
-* HTTP API: %s
 * P2P multicodec: %s
 * DocID versions: %s
 * Go: %s`,
 		dv.Release,
 		commitHash,
 		dv.CommitDate,
-		dv.VersionHTTPAPI,
 		dv.NetProtocol,
 		dv.DocIDVersions,
 		dv.GoInfo,

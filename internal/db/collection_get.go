@@ -68,7 +68,7 @@ func (c *collection) get(
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
-	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, immutable.Option[client.IndexDescription]{},
+	err := df.Init(ctx, identity.FromContext(ctx), txn, immutable.Option[client.IndexDescription]{},
 		c, fields, nil, nil, showDeleted)
 	if err != nil {
 		_ = df.Close()

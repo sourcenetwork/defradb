@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
@@ -32,7 +31,6 @@ func (db *DB) addView(
 	ctx context.Context,
 	inputQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
@@ -65,8 +63,7 @@ func (db *DB) addView(
 
 	for i := range newDefinitions {
 		source := client.QuerySource{
-			Query:     *baseQuery,
-			Transform: transform,
+			Query: *baseQuery,
 		}
 		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
 	}
@@ -74,17 +71,6 @@ func (db *DB) addView(
 	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, definition := range returnDescriptions {
-		for _, source := range definition.Description.QuerySources() {
-			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
 	}
 
 	err = db.loadSchema(ctx)
@@ -146,7 +132,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
 	txn := mustGetContextTxn(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
+	p := planner.New(ctx, identity.FromContext(ctx), db, txn)
 
 	// temporarily disable the cache in order to query without using it
 	col.Description.IsMaterialized = false

@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -134,28 +133,6 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			}
 
 			dstCols = append(dstCols, col)
-		}
-	}
-
-	for _, col := range dstCols {
-		collectionSources := col.CollectionSources()
-
-		for _, source := range collectionSources {
-			// WARNING: Here we assume that the collection source points at a collection of the source schema version.
-			// This works currently, as collections only have a single source.  If/when this changes we need to make
-			// sure we only update the correct source.
-
-			source.Transform = immutable.Some(cfg.Lens)
-
-			err = db.LensRegistry().SetMigration(ctx, col.ID, cfg.Lens)
-			if err != nil {
-				return err
-			}
-		}
-
-		_, err = description.SaveCollection(ctx, txn, col)
-		if err != nil {
-			return err
 		}
 	}
 

@@ -21,7 +21,6 @@ func TestNewDefraVersion(t *testing.T) {
 	dv, err := NewDefraVersion()
 	assert.NoError(t, err)
 
-	assert.NotEmpty(t, dv.VersionHTTPAPI)
 	assert.NotEmpty(t, dv.NetProtocol)
 	assert.NotEmpty(t, dv.DocIDVersions)
 
@@ -46,13 +45,12 @@ func TestDefraVersionString(t *testing.T) {
 
 func TestDefraVersionStringFull(t *testing.T) {
 	dv := defraVersion{
-		Release:        "test-release",
-		Commit:         "abc123def456",
-		CommitDate:     "2022-01-01T12:00:00Z",
-		GoInfo:         "1.17.5",
-		VersionHTTPAPI: "v0",
-		DocIDVersions:  "1",
-		NetProtocol:    "/defra/0.0.1",
+		Release:       "test-release",
+		Commit:        "abc123def456",
+		CommitDate:    "2022-01-01T12:00:00Z",
+		GoInfo:        "1.17.5",
+		DocIDVersions: "1",
+		NetProtocol:   "/defra/0.0.1",
 	}
 
 	expected := `defradb test-release (abc123de 2022-01-01T12:00:00Z)
@@ -66,13 +64,12 @@ func TestDefraVersionStringFull(t *testing.T) {
 
 func TestDefraVersion_JSON(t *testing.T) {
 	dv1 := defraVersion{
-		Release:        "test-release",
-		Commit:         "abc123def456",
-		CommitDate:     "2022-01-01T12:00:00Z",
-		GoInfo:         "go1.17.5",
-		VersionHTTPAPI: "1.2.3",
-		DocIDVersions:  "0123456789abcdef",
-		NetProtocol:    "test-protocol",
+		Release:       "test-release",
+		Commit:        "abc123def456",
+		CommitDate:    "2022-01-01T12:00:00Z",
+		GoInfo:        "go1.17.5",
+		DocIDVersions: "0123456789abcdef",
+		NetProtocol:   "test-protocol",
 	}
 
 	_, err := json.Marshal(dv1)

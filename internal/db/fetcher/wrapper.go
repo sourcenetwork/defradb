@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -35,7 +34,6 @@ type wrappingFetcher struct {
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
 	identity    immutable.Option[acpIdentity.Identity]
 	txn         datastore.Txn
-	acp         immutable.Option[acp.ACP]
 	index       immutable.Option[client.IndexDescription]
 	col         client.Collection
 	fields      []client.FieldDefinition
@@ -54,7 +52,6 @@ func (f *wrappingFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
@@ -64,7 +61,6 @@ func (f *wrappingFetcher) Init(
 ) error {
 	f.identity = identity
 	f.txn = txn
-	f.acp = acp
 	f.index = index
 	f.col = col
 	f.fields = fields
@@ -150,10 +146,6 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 		}
 
 		top = newMultiFetcher(top, deletedFetcher)
-	}
-
-	if f.acp.HasValue() {
-		top = newPermissionedFetcher(ctx, f.identity, f.acp.Value(), f.col, top)
 	}
 
 	if f.filter != nil {

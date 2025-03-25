@@ -124,7 +124,6 @@ var globalValidators = []definitionValidator{
 	validateRelationPointsToValidKind,
 	validateSecondaryFieldsPairUp,
 	validateSingleSidePrimary,
-	validateCollectionDefinitionPolicyDesc,
 	validateSchemaNameNotEmpty,
 	validateRelationalFieldIDType,
 	validateSecondaryNotOnSchema,
@@ -652,48 +651,6 @@ oldLoop:
 		}
 
 		errs = append(errs, NewErrCollectionsCannotBeDeleted(oldCol.ID))
-	}
-
-	return errors.Join(errs...)
-}
-
-// validateCollectionDefinitionPolicyDesc validates that the policy definition is valid, beyond syntax.
-//
-// Ensures that the information within the policy definition makes sense,
-// this function might also make relevant remote calls using the acp system.
-func validateCollectionDefinitionPolicyDesc(
-	ctx context.Context,
-	db *DB,
-	newState *definitionState,
-	oldState *definitionState,
-) error {
-	var errs []error
-	for _, newCol := range newState.collections {
-		if !newCol.Policy.HasValue() {
-			// No policy validation needed, whether acp exists or not doesn't matter.
-			continue
-		}
-
-		// If there is a policy specified, but the database does not have
-		// acp enabled/available return an error, database must have an acp available
-		// to enable access control (inorder to adhere to the policy specified).
-		if !db.acp.HasValue() {
-			errs = append(errs, ErrCanNotHavePolicyWithoutACP)
-		}
-
-		// If we have the policy specified on the collection, and acp is available/enabled,
-		// then using the acp system we need to ensure the policy id specified
-		// actually exists as a policy, and the resource name exists on that policy
-		// and that the resource is a valid DPI.
-		err := db.acp.Value().ValidateResourceExistsOnValidDPI(
-			ctx,
-			newCol.Policy.Value().ID,
-			newCol.Policy.Value().ResourceName,
-		)
-
-		if err != nil {
-			errs = append(errs, err)
-		}
 	}
 
 	return errors.Join(errs...)

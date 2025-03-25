@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -779,7 +778,6 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 				ctx context.Context,
 				identity immutable.Option[acpIdentity.Identity],
 				txn datastore.Txn,
-				acp immutable.Option[acp.ACP],
 				index immutable.Option[client.IndexDescription],
 				col client.Collection,
 				fields []client.FieldDefinition,
