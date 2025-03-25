@@ -1,0 +1,2 @@
+# google.golang.org/protobuf/internal/filetype
+../../../../../../../../pkg/mod/google.golang.org/protobuf@v1.36.5/internal/filetype/build.go:230:21: undefined: reflect.SliceOf

@@ -1,0 +1,4 @@
+# github.com/hyperledger/fabric-amcl/amcl/FP256BN
+../../../../../../../../pkg/mod/github.com/hyperledger/fabric-amcl@v0.0.0-20230602173724-9e02669dceb2/amcl/FP256BN/FP.go:110:19: constant 30564559323915749 overflows int
+../../../../../../../../pkg/mod/github.com/hyperledger/fabric-amcl@v0.0.0-20230602173724-9e02669dceb2/amcl/FP256BN/FP.go:394:12: constant 30564559323915749 overflows int
+../../../../../../../../pkg/mod/github.com/hyperledger/fabric-amcl@v0.0.0-20230602173724-9e02669dceb2/amcl/FP256BN/FP.go:397:12: constant 30564559323915749 overflows int

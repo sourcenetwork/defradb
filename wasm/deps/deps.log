@@ -1,13 +1,18 @@
 Dependency Processing Summary:
 
 Total dependencies found: 82
-Processed successfully: 80
+Processed successfully: 74
 Ignored: 2
-Failed: 0
+Failed: 6
 
 Ignored Dependencies:
  - github.com/davecgh/go-spew
  - github.com/sourcenetwork/defradb
 
 Failed Dependencies:
- - 
+ - github.com/cyware/ssi-sdk
+ - github.com/go-playground/validator/v10
+ - github.com/goccy/go-json
+ - github.com/hyperledger/aries-framework-go/component/models/did
+ - github.com/ipfs/boxo/bitswap
+ - github.com/ipld/go-ipld-prime

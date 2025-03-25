@@ -1,0 +1,2 @@
+# github.com/goccy/go-json/internal/decoder
+../../../../../../../../pkg/mod/github.com/goccy/go-json@v0.10.5/internal/decoder/slice.go:95:19: undefined: reflect.SliceOf

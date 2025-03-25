@@ -6,47 +6,125 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
-)
 
-var dryRun bool
-var force bool
-var limit int
+	"github.com/google/shlex"
+)
 
 type Config struct {
 	Ignore  []string          `json:"ignore"`
 	Rewrite map[string]string `json:"rewrite"`
 }
 
+type status int
+
+const (
+	Success status = iota
+	Ignore
+	Failed
+
+	DefaultBuildCmd = "tinygo build -target wasm -opt 0"
+	BuildCmdEnv     = "DEP_BUILD_CMD"
+)
+
+var (
+	configPath string
+	modPath    string
+	config     Config
+	verbose    bool
+	dryRun     bool
+	force      bool
+	limit      int
+
+	buildCmd command
+)
+
+func sharedFlags(flagset *flag.FlagSet) {
+	flagset.BoolVar(&verbose, "verbose", false, "Verbose output")
+	flagset.BoolVar(&dryRun, "dry", false, "Dry run mode (no file or system changes)")
+	flagset.BoolVar(&force, "force", false, "Force reprocess dependencies even if folder exists")
+	flagset.StringVar(&modPath, "mod", "go.mod", "Path to the go.mod file")
+	flagset.IntVar(&limit, "limit", 0, "Limit number of dependencies to process (0 = no limit)")
+	flagset.StringVar(&configPath, "config", "config.json", "Path to config.json for ignore/rewrite rules")
+}
+
 func main() {
-	modPath := flag.String("mod", "go.mod", "Path to the go.mod file")
-	flag.BoolVar(&dryRun, "dry", false, "Dry run mode (no file or system changes)")
-	flag.BoolVar(&force, "force", false, "Force reprocess dependencies even if folder exists")
-	flag.IntVar(&limit, "limit", 0, "Limit number of dependencies to process (0 = no limit)")
-	configPath := flag.String("config", "config.json", "Path to config.json for ignore/rewrite rules")
-	flag.Parse()
-
-	file, err := os.Open(*modPath)
-	if err != nil {
-		log.Fatalf("Failed to open %s: %v", *modPath, err)
+	cmdStr, ok := os.LookupEnv(BuildCmdEnv)
+	var err error
+	if ok {
+		buildCmd, err = parseShellBuildCommand(cmdStr)
+	} else {
+		buildCmd, err = parseShellBuildCommand(DefaultBuildCmd)
 	}
-	defer file.Close()
+	if err != nil {
+		log.Fatal("Failed to parse build command: %s", err)
+	}
 
-	config := Config{}
-	configFile, err := os.ReadFile(*configPath)
+	parseflagSet := flag.NewFlagSet("parse", flag.ExitOnError)
+	buildFlagSet := flag.NewFlagSet("build", flag.ExitOnError)
+	sharedFlags(parseflagSet)
+	sharedFlags(buildFlagSet)
+
+	if len(os.Args) < 2 {
+		log.Fatal("expected 'parse' or 'build' subcommands")
+	}
+
+	switch os.Args[1] {
+	case "parse":
+		parseflagSet.Parse(os.Args[2:])
+		modfile, err := cmdConfigInit()
+		if modfile != nil {
+			defer modfile.Close()
+		}
+		if err != nil {
+			log.Fatal("failed init", err)
+		}
+		deps := parseDeps(modfile)
+		err = walkDepPkgs(deps, createDepPkg)
+	case "build":
+		buildFlagSet.Parse(os.Args[2:])
+		modfile, err := cmdConfigInit()
+		if modfile != nil {
+			defer modfile.Close()
+		}
+		if err != nil {
+			log.Fatal("failed init", err)
+		}
+
+		deps := parseDeps(modfile)
+		err = walkDepPkgs(deps, buildDepPkg)
+	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func cmdConfigInit() (*os.File, error) {
+	file, err := os.Open(modPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open %s: %w", modPath, err)
+	}
+
+	config = Config{}
+	configFile, err := os.ReadFile(configPath)
 	if err != nil && !os.IsNotExist(err) {
-		log.Fatalf("Failed to read config file: %v", err)
+		return nil, fmt.Errorf("Failed to read config file: %w", err)
 	} else if err == nil {
 		if err := json.Unmarshal(configFile, &config); err != nil {
-			log.Fatalf("Failed to parse config file: %v", err)
+			return nil, fmt.Errorf("Failed to unmarshal config: %w", err)
 		}
 	}
+	return file, nil
+}
 
+func parseDeps(file *os.File) []string {
 	depSet := make(map[string]struct{})
 
 	scanner := bufio.NewScanner(file)
@@ -67,7 +145,7 @@ func main() {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Error reading %s: %v", *modPath, err)
+		log.Fatalf("Error reading %s: %v", file.Name(), err)
 	}
 
 	deps := make([]string, 0, len(depSet))
@@ -75,11 +153,14 @@ func main() {
 		deps = append(deps, dep)
 	}
 	sort.Strings(deps)
+	return deps
+}
 
+func walkDepPkgs(deps []string, fn func(string) (status, error)) error {
 	failedDeps := []string{}
 	ignoredDeps := []string{}
-
 	processed := 0
+
 	for _, dep := range deps {
 		if contains(config.Ignore, dep) {
 			fmt.Printf("Ignoring dependency (via config): %s\n", dep)
@@ -87,78 +168,26 @@ func main() {
 			continue
 		}
 
-		if newDep, ok := config.Rewrite[dep]; ok {
-			fmt.Printf("Rewriting dependency %s -> %s\n", dep, newDep)
-			dep = newDep
-		}
 		if limit > 0 && processed >= limit {
 			fmt.Printf("Limit of %d dependencies reached. Stopping.\n", limit)
 			break
 		}
 
-		folderName := strings.ReplaceAll(dep, "/", "-")
-		if _, err := os.Stat(folderName); err == nil && !force {
-			fmt.Printf("Skipping existing folder: %s\n", folderName)
-			ignoredDeps = append(ignoredDeps, folderName)
-			continue
+		if newDep, ok := config.Rewrite[dep]; ok {
+			fmt.Printf("Rewriting dependency %s -> %s\n", dep, newDep)
+			dep = newDep
 		}
 
-		if dryRun {
-			fmt.Printf("===========================\n")
-			fmt.Printf("[Dry] create folder: %s\n", folderName)
-			fmt.Printf("[Dry] write main.go with import: %s\n", dep)
-			fmt.Printf("[Dry] run: go mod init %s\n", folderName)
-			fmt.Printf("[Dry] run: go get\n")
-			fmt.Printf("[Dry] Would run: go mod tidy\n\n")
+		s, err := fn(dep)
+		switch s {
+		case Ignore:
+			ignoredDeps = append(ignoredDeps, dep)
+		case Failed:
+			failedDeps = append(failedDeps, dep)
+			fmt.Println("[ERROR]:", err)
+		default:
 			processed++
-			continue
 		}
-
-		if err := os.RemoveAll(folderName); err != nil && force {
-			log.Printf("Failed to remove existing folder for %s: %v", dep, err)
-			failedDeps = append(failedDeps, dep)
-			continue
-		}
-
-		if err := os.Mkdir(folderName, 0755); err != nil {
-			log.Printf("Failed to create folder for %s: %v", dep, err)
-			failedDeps = append(failedDeps, dep)
-			continue
-		}
-
-		if err := os.WriteFile(filepath.Join(folderName, "main.go"), []byte(fmt.Sprintf(`package main
-
-import (
-	_ "%s"
-)
-
-func main() {}
-`, dep)), 0644); err != nil {
-			log.Printf("Failed to write main.go for %s: %v", dep, err)
-			failedDeps = append(failedDeps, dep)
-			continue
-		}
-
-		if err := runCmd(folderName, "go", "mod", "init", folderName); err != nil {
-			log.Printf("go mod init failed for %s: %v", dep, err)
-			failedDeps = append(failedDeps, dep)
-			continue
-		}
-
-		if err := runCmd(folderName, "go", "get"); err != nil {
-			log.Printf("go get failed for %s: %v", dep, err)
-			failedDeps = append(failedDeps, dep)
-			continue
-		}
-
-		if err := runCmd(folderName, "go", "mod", "tidy"); err != nil {
-			log.Printf("go mod tidy failed for %s: %v", dep, err)
-			failedDeps = append(failedDeps, dep)
-			continue
-		}
-
-		fmt.Printf("Processed: %s\n", dep)
-		processed++
 	}
 
 	if len(failedDeps) == 0 {
@@ -187,6 +216,167 @@ Failed Dependencies:
 
 	fmt.Println(logContent)
 	_ = os.WriteFile("deps.log", []byte(logContent), 0644)
+	return nil
+}
+
+func createDepPkg(dep string) (status, error) {
+	folderPrefix := "pkg"
+	folderName := strings.ReplaceAll(dep, "/", "-")
+	folderPath := filepath.Join(folderPrefix, folderName)
+	if _, err := os.Stat(folderPath); err == nil && !force {
+		fmt.Printf("Skipping existing folder: %s\n", folderName)
+		return Ignore, nil
+	}
+
+	if dryRun {
+		fmt.Printf("===========================\n")
+		fmt.Printf("[Dry] create folder: %s\n", folderName)
+		fmt.Printf("[Dry] write main.go with import: %s\n", dep)
+		fmt.Printf("[Dry] run: go mod init %s\n", folderName)
+		fmt.Printf("[Dry] run: go get\n")
+		fmt.Printf("[Dry] Would run: go mod tidy\n\n")
+		return Success, nil
+	}
+
+	if err := os.RemoveAll(folderPath); err != nil && force {
+		log.Printf("Failed to remove existing folder for %s: %v", dep, err)
+		return Failed, err
+	}
+
+	if err := os.Mkdir(folderPath, 0755); err != nil {
+		log.Printf("Failed to create folder for %s: %v", dep, err)
+		return Failed, err
+	}
+
+	if err := os.WriteFile(filepath.Join(folderPath, "main.go"), []byte(fmt.Sprintf(`package main
+
+import (
+_ "%s"
+)
+
+func main() {}
+`, dep)), 0644); err != nil {
+		log.Printf("Failed to write main.go for %s: %v", dep, err)
+		return Failed, err
+	}
+
+	if err := runCmd(folderPath, "go", "mod", "init", folderName); err != nil {
+		log.Printf("go mod init failed for %s: %v", dep, err)
+		return Failed, err
+	}
+
+	if err := runCmd(folderPath, "go", "get"); err != nil {
+		log.Printf("go get failed for %s: %v", dep, err)
+		return Failed, err
+	}
+
+	if err := runCmd(folderPath, "go", "mod", "tidy"); err != nil {
+		log.Printf("go mod tidy failed for %s: %v", dep, err)
+		return Failed, err
+	}
+
+	return Success, nil
+}
+
+func buildDepPkg(dep string) (status, error) {
+	folderPrefix := "pkg"
+	folderName := strings.ReplaceAll(dep, "/", "-")
+	folderPath := filepath.Join(folderPrefix, folderName)
+	if _, err := os.Stat(filepath.Join(folderPath, "main.wasm")); err == nil && !force {
+		fmt.Printf("Skipping previously built package: %s\n", folderName)
+		return Ignore, nil
+	}
+
+	fmt.Printf("Building %s...", dep)
+
+	// setup stderr capture
+	origStderr, r, w, err := takeStderr()
+	if err != nil {
+		return Failed, err
+	}
+	err = runCmdWithEnv(folderPath, buildCmd.env, buildCmd.name, append(buildCmd.args, "main.go")...)
+	// return stderr capture
+	buf, err2 := releaseStderr(origStderr, r, w)
+	if err2 != nil {
+		panic(err2)
+	}
+
+	if err != nil {
+		fmt.Println("❌")
+		if verbose {
+			fmt.Println(string(buf))
+		}
+		err3 := os.WriteFile(filepath.Join(folderPath, "build.log"), buf, 0644)
+		if err3 != nil {
+			panic(err3)
+		}
+		return Failed, err
+	}
+	fmt.Println("✅")
+
+	return Success, nil
+}
+
+func takeStderr() (*os.File, io.ReadCloser, io.WriteCloser, error) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	origStderr := os.Stderr
+	os.Stderr = w
+	return origStderr, r, w, nil
+}
+
+func releaseStderr(origStderr *os.File, rc io.ReadCloser, wc io.WriteCloser) ([]byte, error) {
+	os.Stderr = origStderr
+	wc.Close()
+
+	defer rc.Close()
+	return io.ReadAll(rc)
+}
+
+type command struct {
+	env  []string
+	name string
+	args []string
+}
+
+func parseShellBuildCommand(cmdStr string) (command, error) {
+	// Step 1: Tokenize like shell would
+	tokens, err := shlex.Split(cmdStr)
+	if err != nil {
+		return command{}, fmt.Errorf("failed to split command: %w", err)
+	}
+
+	if len(tokens) == 0 {
+		return command{}, fmt.Errorf("empty command")
+	}
+
+	// Step 2: Separate environment variables
+	var envVars []string
+	var cmdIndex int
+
+	for i, token := range tokens {
+		if !strings.Contains(token, "=") || strings.HasPrefix(token, "=") {
+			cmdIndex = i
+			break
+		}
+		envVars = append(envVars, token)
+	}
+
+	if cmdIndex >= len(tokens) {
+		return command{}, fmt.Errorf("no command found after env vars")
+	}
+
+	// Step 3: Command + args
+	cmdName := tokens[cmdIndex]
+	cmdArgs := tokens[cmdIndex+1:]
+	return command{
+		env:  envVars,
+		name: cmdName,
+		args: cmdArgs,
+	}, nil
 }
 
 func contains(slice []string, item string) bool {
@@ -198,35 +388,27 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-func getListOrNA(all []string, processed int, ignored []string, failed []string, category string) []string {
-	if category == "processed" {
-		ignoreMap := make(map[string]bool)
-		failMap := make(map[string]bool)
-		for _, dep := range ignored {
-			ignoreMap[dep] = true
-		}
-		for _, dep := range failed {
-			failMap[dep] = true
-		}
-		out := []string{}
-		for _, dep := range all {
-			if !ignoreMap[dep] && !failMap[dep] {
-				out = append(out, dep)
-			}
-		}
-		return out
-	}
-	return []string{"n/a"}
-}
-
-func runCmd(dir string, name string, args ...string) error {
+func runCmdWithEnv(dir string, env []string, name string, args ...string) error {
 	if dryRun {
-		fmt.Printf("[Dry Run] Would run command in %s: %s %s\n", dir, name, strings.Join(args, " "))
+		if len(env) > 0 {
+			fmt.Printf("[Dry Run] Environ: %s\n", env)
+		}
+		fmt.Printf("[Dry Run] run command in %s: %s %s\n", dir, name, strings.Join(args, " "))
 		return nil
 	}
 	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	if len(env) > 0 {
+		cmd.Env = os.Environ()
+		cmd.Env = append(cmd.Env, env...)
+	}
+
 	return cmd.Run()
+}
+
+func runCmd(dir string, name string, args ...string) error {
+	return runCmdWithEnv(dir, nil, name, args...)
 }

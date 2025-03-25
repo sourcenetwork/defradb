@@ -1,0 +1,7 @@
+# github.com/ipld/go-ipld-prime/node/bindnode
+../../../../../../../../pkg/mod/github.com/ipld/go-ipld-prime@v0.21.0/node/bindnode/infer.go:324:18: undefined: reflect.StructOf
+../../../../../../../../pkg/mod/github.com/ipld/go-ipld-prime@v0.21.0/node/bindnode/infer.go:343:19: undefined: reflect.SliceOf
+../../../../../../../../pkg/mod/github.com/ipld/go-ipld-prime@v0.21.0/node/bindnode/infer.go:347:19: undefined: reflect.MapOf
+../../../../../../../../pkg/mod/github.com/ipld/go-ipld-prime@v0.21.0/node/bindnode/infer.go:350:18: undefined: reflect.StructOf
+../../../../../../../../pkg/mod/github.com/ipld/go-ipld-prime@v0.21.0/node/bindnode/infer.go:356:18: undefined: reflect.SliceOf
+../../../../../../../../pkg/mod/github.com/ipld/go-ipld-prime@v0.21.0/node/bindnode/infer.go:372:18: undefined: reflect.StructOf
