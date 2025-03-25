@@ -440,10 +440,8 @@ func TestNonUniqueCreate_IfUponIndexingExistingDocsFetcherFails_ReturnError(t *t
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
-					mock.Anything,
 				).Unset()
 				f.EXPECT().Init(
-					mock.Anything,
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
@@ -639,10 +637,8 @@ func TestNonUniqueUpdate_IfFetcherFails_ReturnError(t *testing.T) {
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
-					mock.Anything,
 				).Unset()
 				f.EXPECT().Init(
-					mock.Anything,
 					mock.Anything,
 					mock.Anything,
 					mock.Anything,
@@ -760,10 +756,8 @@ func TestNonUniqueUpdate_ShouldPassToFetcherOnlyRelevantFields(t *testing.T) {
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
-			mock.Anything,
 		).Unset()
 		f.EXPECT().Init(
-			mock.Anything,
 			mock.Anything,
 			mock.Anything,
 			mock.Anything,
