@@ -111,22 +111,8 @@ func executeBytes(ctx context.Context, args []string) ([]byte, error) {
 }
 
 func execute(ctx context.Context, args []string) error {
-	stdOut, stdErr, err := executeStream(ctx, args)
-	if err != nil {
-		return err
-	}
-	_, err = io.ReadAll(stdOut)
-	if err != nil {
-		return err
-	}
-	stdErrData, err := io.ReadAll(stdErr)
-	if err != nil {
-		return err
-	}
-	if len(stdErrData) != 0 {
-		return fmt.Errorf("%s", stdErrData)
-	}
-	return nil
+	_, err := executeBytes(ctx, args)
+	return err
 }
 
 func executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCloser, error) {
