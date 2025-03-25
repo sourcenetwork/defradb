@@ -20,6 +20,23 @@ func init() {
 	multiplier.Register(&txnCommit{})
 }
 
+// The TxnCommit multiplier adapts tests to cover the commiting of a single transaction.
+//
+// It will ensure that any write actions are reflected within the transaction scope pre-commit,
+// and will ensure that those writes are later persisted in the backing store after transaction
+// commit.
+//
+// It does this by:
+//   - Creating a new new transaction immediately after the last [action.StartCli] action.
+//   - Scoping any following actions that implement the [action.AugmentedAction] interface to the
+//     new transaction.
+//   - Creating a [action.TxCommit] action to commit the transaction.
+//   - Duplicating the original read actions occuring after the last write action to re-execute them
+//     outside of the transaction scope following commit.
+//
+// Whether or not an action is a 'read' or 'write' is currently handled by switches within this
+// implementation, new action types will need to amend these switches should they wish to take
+// advantage of this multiplier.  Long term we should find a better solution.
 const TxnCommit Name = "txn-commit"
 
 type txnCommit struct{}
