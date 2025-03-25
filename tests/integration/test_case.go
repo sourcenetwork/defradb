@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
@@ -48,13 +47,6 @@ type TestCase struct {
 	SupportedClientTypes immutable.Option[[]ClientType]
 
 	// If provided a value, SupportedACPTypes will cause this test to be skipped
-	// if the active acp type is not within the given set.
-	//
-	// This is to only be used in the very rare cases where we really do want behavioural
-	// differences between acp types, or we need to temporarily document a bug.
-	SupportedACPTypes immutable.Option[[]ACPType]
-
-	// If provided a value, SupportedACPTypes will cause this test to be skipped
 	// if the active view type is not within the given set.
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
@@ -79,9 +71,6 @@ type TestCase struct {
 type KMS struct {
 	// Activated indicates if the KMS should be used in the test
 	Activated bool
-	// ExcludedTypes specifies the KMS types that should be excluded from the test.
-	// If none are specified all types will be used.
-	ExcludedTypes []KMSType
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
@@ -90,16 +79,6 @@ type KMS struct {
 // If a SetupComplete action is not provided the change detector will split before
 // the first item that is neither a SchemaUpdate, CreateDoc or UpdateDoc action.
 type SetupComplete struct{}
-
-// ConfigureNode allows the explicit configuration of new Defra nodes.
-//
-// If no nodes are explicitly configured, a default one will be setup.  There is no
-// upper limit to the number that can be configured.
-//
-// Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
-// If the action has a `NodeID` property and it is not specified, the action will be
-// effected on all nodes.
-type ConfigureNode func() []net.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}

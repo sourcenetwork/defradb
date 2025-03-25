@@ -128,13 +128,6 @@ func getIdentityForRequest(s *state, identity identity, nodeIndex int) acpIdenti
 	token, ok := identHolder.NodeTokens[nodeIndex]
 	if ok {
 		ident.BearerToken = token
-	} else {
-		audience := getNodeAudience(s, nodeIndex)
-		if acpType == SourceHubACPType || audience.HasValue() {
-			err := ident.UpdateToken(authTokenExpiration, audience, immutable.Some(s.sourcehubAddress))
-			require.NoError(s.t, err)
-			identHolder.NodeTokens[nodeIndex] = ident.BearerToken
-		}
 	}
 	return ident
 }

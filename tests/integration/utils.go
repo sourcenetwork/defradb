@@ -36,14 +36,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
-	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
@@ -171,10 +168,7 @@ func ExecuteTestCase(
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
-	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
-	skipIfNetworkTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
-	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []ClientType
 	if httpClient {
@@ -198,17 +192,6 @@ func ExecuteTestCase(
 		databases = append(databases, DefraIMType)
 	}
 
-	var kmsList []KMSType
-	if testCase.KMS.Activated {
-		kmsList = getKMSTypes()
-		for _, excluded := range testCase.KMS.ExcludedTypes {
-			kmsList = slices.DeleteFunc(kmsList, func(t KMSType) bool { return t == excluded })
-		}
-	}
-	if len(kmsList) == 0 {
-		kmsList = []KMSType{NoneKMSType}
-	}
-
 	// Assert that these are not empty to protect against accidental mis-configurations,
 	// otherwise an empty set would silently pass all the tests.
 	require.NotEmpty(t, databases)
@@ -220,9 +203,7 @@ func ExecuteTestCase(
 	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
-			for _, kms := range kmsList {
-				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
-			}
+			executeTestCase(ctx, t, collectionNames, testCase, dbt, ct)
 		}
 	}
 }
@@ -232,7 +213,6 @@ func executeTestCase(
 	t testing.TB,
 	collectionNames []string,
 	testCase TestCase,
-	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
 ) {
@@ -250,15 +230,11 @@ func executeTestCase(
 		corelog.String("changeDetector.Repository", changeDetector.Repository),
 	}
 
-	if kms != NoneKMSType {
-		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
-	}
-
 	log.InfoContext(ctx, testCase.Description, logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := newState(ctx, t, testCase, kms, dbt, clientType, collectionNames)
+	s := newState(ctx, t, testCase, dbt, clientType, collectionNames)
 	setStartingNodes(s)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -303,8 +279,6 @@ func performAction(
 	act any,
 ) {
 	switch action := act.(type) {
-	case ConfigureNode:
-		configureNode(s, action)
 
 	case Restart:
 		restartNodes(s)
@@ -314,24 +288,6 @@ func performAction(
 
 	case Start:
 		startNodes(s, action)
-
-	case ConnectPeers:
-		connectPeers(s, action)
-
-	case ConfigureReplicator:
-		configureReplicator(s, action)
-
-	case DeleteReplicator:
-		deleteReplicator(s, action)
-
-	case SubscribeToCollection:
-		subscribeToCollection(s, action)
-
-	case UnsubscribeToCollection:
-		unsubscribeToCollection(s, action)
-
-	case GetAllP2PCollections:
-		getAllP2PCollections(s, action)
 
 	case SchemaUpdate:
 		updateSchema(s, action)
@@ -356,18 +312,6 @@ func performAction(
 
 	case RefreshViews:
 		refreshViews(s, action)
-
-	case ConfigureMigration:
-		configureMigration(s, action)
-
-	case AddPolicy:
-		addPolicyACP(s, action)
-
-	case AddDocActorRelationship:
-		addDocActorRelationshipACP(s, action)
-
-	case DeleteDocActorRelationship:
-		deleteDocActorRelationshipACP(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -413,9 +357,6 @@ func performAction(
 
 	case ClientIntrospectionRequest:
 		assertClientIntrospectionResults(s, action)
-
-	case WaitForSync:
-		waitForSync(s, action)
 
 	case Wait:
 		<-time.After(action.Duration)
@@ -726,13 +667,6 @@ ActionLoop:
 func setStartingNodes(
 	s *state,
 ) {
-	for _, action := range s.testCase.Actions {
-		switch action.(type) {
-		case ConfigureNode:
-			s.isNetworkEnabled = true
-		}
-	}
-
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.isNetworkEnabled {
 		st, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
@@ -748,22 +682,11 @@ func startNodes(s *state, action Start) {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.nodes[nodeIndex].dbPath
-		opts := []node.Option{db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex)))}
-		for _, opt := range s.nodes[nodeIndex].netOpts {
-			opts = append(opts, opt)
-		}
-		var addresses []string
-		for _, addr := range s.nodes[nodeIndex].peerInfo.Addrs {
-			addresses = append(addresses, addr.String())
-		}
-		opts = append(opts, net.WithListenAddresses(addresses...))
-		node, err := setupNode(s, opts...)
+		node, err := setupNode(s)
 		require.NoError(s.t, err)
 		databaseDir = originalPath
 		node.p2p = s.nodes[nodeIndex].p2p
 		s.nodes[nodeIndex] = node
-
-		waitForNetworkSetupEvents(s, nodeIndex)
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -780,7 +703,6 @@ func restartNodes(
 	}
 	closeNodes(s, Close{})
 	startNodes(s, Start{})
-	reconnectPeers(s)
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
@@ -816,38 +738,6 @@ func refreshCollections(
 			}
 		}
 	}
-}
-
-// configureNode configures and starts a new Defra node using the provided configuration.
-//
-// It returns the new node, and its peer address. Any errors generated during configuration
-// will result in a test failure.
-func configureNode(
-	s *state,
-	action ConfigureNode,
-) {
-	if changeDetector.Enabled {
-		// We do not yet support the change detector for tests running across multiple nodes.
-		s.t.SkipNow()
-		return
-	}
-
-	privateKey, err := crypto.GenerateEd25519()
-	require.NoError(s.t, err)
-
-	netNodeOpts := action()
-	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
-
-	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
-	for _, opt := range netNodeOpts {
-		nodeOpts = append(nodeOpts, opt)
-	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
-
-	node, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
-	require.NoError(s.t, err)
-
-	s.nodes = append(s.nodes, node)
 }
 
 func refreshDocuments(
@@ -1094,7 +984,7 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
+		err := node.PatchSchema(s.ctx, action.Patch, setAsDefaultVersion)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1212,7 +1102,7 @@ func createView(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
-		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
+		_, err := node.AddView(s.ctx, action.Query, action.SDL)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1288,10 +1178,6 @@ func createDoc(
 	docIDMap := make(map[string]struct{})
 	for _, docID := range docIDs {
 		docIDMap[docID.String()] = struct{}{}
-	}
-
-	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, docIDMap, action.Identity)
 	}
 }
 
@@ -1467,14 +1353,6 @@ func deleteDoc(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if action.ExpectedError == "" {
-		expect := map[string]struct{}{
-			docID.String(): {},
-		}
-
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[identity]())
-	}
 }
 
 // updateDoc updates a document using the chosen [mutationType].
@@ -1516,16 +1394,6 @@ func updateDoc(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(
-			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateDoc(s, action),
-			immutable.None[identity](),
-		)
-	}
 }
 
 func updateDocViaColSave(
@@ -1602,7 +1470,6 @@ func updateDocViaGQL(
 
 // updateWithFilter updates the set of matched documents.
 func updateWithFilter(s *state, action UpdateWithFilter) {
-	var res *client.UpdateResult
 	var expectedErrorRaised bool
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
@@ -1614,7 +1481,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateWithFilter(ctx, action.Filter, action.Updater)
+				_, err = collection.UpdateWithFilter(ctx, action.Filter, action.Updater)
 				return err
 			},
 		)
@@ -1622,16 +1489,6 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
-
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(
-			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateWithFilter(s, action, res),
-			immutable.None[identity](),
-		)
-	}
 }
 
 // createIndex creates a secondary index using the collection api.
@@ -2351,22 +2208,6 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]ACPType]) {
-	if supportedACPTypes.HasValue() {
-		var isTypeSupported bool
-		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == acpType {
-				isTypeSupported = true
-				break
-			}
-		}
-
-		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", acpType)
-		}
-	}
-}
-
 func skipIfDatabaseTypeUnsupported(
 	t testing.TB,
 	databases []DatabaseType,
@@ -2390,36 +2231,6 @@ func skipIfDatabaseTypeUnsupported(
 	}
 
 	return filteredDatabases
-}
-
-// skipIfNetworkTest skips the current test if the given actions
-// contain network actions and skipNetworkTests is true.
-func skipIfNetworkTest(t testing.TB, actions []any) {
-	hasNetworkAction := false
-	for _, act := range actions {
-		switch act.(type) {
-		case ConfigureNode:
-			hasNetworkAction = true
-		}
-	}
-	if skipNetworkTests && hasNetworkAction {
-		t.Skip("test involves network actions")
-	}
-}
-
-// skipVectorEmbeddingTest skips the current test if the given actions
-// contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
-func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
-	hasVectorEmbedding := false
-	for _, act := range actions {
-		switch a := act.(type) {
-		case SchemaUpdate:
-			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
-		}
-	}
-	if !runVectorEmbeddingTests && hasVectorEmbedding {
-		t.Skip("test involves vector embedding generation")
-	}
 }
 
 func MustParseTime(timeString string) time.Time {

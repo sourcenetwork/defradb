@@ -21,8 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
@@ -129,8 +127,6 @@ type nodeState struct {
 	event *eventState
 	// p2p contains p2p states for the node.
 	p2p *p2pState
-	// The network configurations for the nodes
-	netOpts []net.NodeOpt
 	// The path to any file-based databases active in this test.
 	dbPath string
 	// Collections by index present in the test.
@@ -154,9 +150,6 @@ type state struct {
 
 	// The TestCase currently being executed.
 	testCase TestCase
-
-	// The type of KMS currently being tested.
-	kms KMSType
 
 	// The type of database currently being tested.
 	dbt DatabaseType
@@ -192,9 +185,6 @@ type state struct {
 
 	// The nodes active in this test.
 	nodes []*nodeState
-
-	// The ACP options to share between each node.
-	acpOptions []node.ACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
@@ -268,7 +258,6 @@ func newState(
 	ctx context.Context,
 	t testing.TB,
 	testCase TestCase,
-	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
 	collectionNames []string,
@@ -277,7 +266,6 @@ func newState(
 		ctx:                      ctx,
 		t:                        t,
 		testCase:                 testCase,
-		kms:                      kms,
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},

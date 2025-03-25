@@ -16,8 +16,9 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/defradb"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
@@ -26,35 +27,26 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 	// Spinning up a temporary in-memory node with all extras disabled is the
 	// most reliable and cheapest maintainance-cost-wise way to fully parse
 	// the SDL and correctly link all relations.
-	node, err := node.New(
+	store := memory.NewDatastore(ctx)
+	db, err := defradb.Open(
 		ctx,
-		node.WithBadgerInMemory(true),
-		node.WithDisableAPI(true),
-		node.WithDisableP2P(true),
+		store,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	err = node.Start(ctx)
+	_, err = db.AddSchema(ctx, gqlSDL)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = node.DB.AddSchema(ctx, gqlSDL)
+	cols, err := db.GetCollections(ctx, client.CollectionFetchOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	cols, err := node.DB.GetCollections(ctx, client.CollectionFetchOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	err = node.Close(ctx)
-	if err != nil {
-		return nil, err
-	}
+	db.Close()
 
 	result := make(map[string]client.CollectionDefinition, len(cols))
 	for _, col := range cols {
