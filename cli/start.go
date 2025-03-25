@@ -281,6 +281,11 @@ func MakeStartCommand() *cobra.Command {
 		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
+	cmd.PersistentFlags().String(
+		"acp-type",
+		cfg.GetString(configFlags["acp.type"]),
+		"Specify the acp engine to use (supported: none (default), local, source-hub)",
+	)
 	return cmd
 }
 
