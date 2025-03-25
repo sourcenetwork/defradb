@@ -44,8 +44,8 @@ type Test struct {
 
 func (test *Test) Execute(t testing.TB) {
 	ctx := context.Background()
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithTimeout(ctx, 1*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
 
 	multiplier.Skip(t, test.Includes, test.Excludes)
 
@@ -58,9 +58,8 @@ func (test *Test) Execute(t testing.TB) {
 	testo.Log(t, actions)
 
 	testo.ExecuteS(actions, &state.State{
-		T:       t,
-		Ctx:     ctx,
-		Cancels: []context.CancelFunc{cancel},
+		T:   t,
+		Ctx: ctx,
 	})
 }
 

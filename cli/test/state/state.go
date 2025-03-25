@@ -16,9 +16,8 @@ import (
 )
 
 type State struct {
-	Ctx     context.Context
-	Cancels []context.CancelFunc
-	T       testing.TB
+	Ctx context.Context
+	T   testing.TB
 
 	// The root directory in which the defra config file should exist.
 	RootDir string
