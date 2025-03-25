@@ -145,12 +145,11 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, event.ReplicatorFailureName)
+	sub, err := db.events.Subscribe(event.MergeName)
 	if err != nil {
 		return nil, err
 	}
 	go db.handleMessages(ctx, sub)
-	go db.handleReplicatorRetries(ctx)
 
 	return db, nil
 }

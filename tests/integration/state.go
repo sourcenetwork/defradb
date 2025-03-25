@@ -103,19 +103,9 @@ func newEventState(bus *event.Bus) (*eventState, error) {
 	if err != nil {
 		return nil, err
 	}
-	replicator, err := bus.Subscribe(event.ReplicatorCompletedName)
-	if err != nil {
-		return nil, err
-	}
-	p2pTopic, err := bus.Subscribe(event.P2PTopicCompletedName)
-	if err != nil {
-		return nil, err
-	}
 	return &eventState{
-		merge:      merge,
-		update:     update,
-		replicator: replicator,
-		p2pTopic:   p2pTopic,
+		merge:  merge,
+		update: update,
 	}, nil
 }
 

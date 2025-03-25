@@ -11,8 +11,6 @@
 package db
 
 import (
-	"github.com/libp2p/go-libp2p/core/peer"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -657,14 +655,6 @@ func NewErrRelationMissingField(objectName, relationName string) error {
 		errRelationMissingField,
 		errors.NewKV("Object", objectName),
 		errors.NewKV("RelationName", relationName),
-	)
-}
-
-func NewErrReplicatorExists(collection string, peerID peer.ID) error {
-	return errors.New(
-		errReplicatorExists,
-		errors.NewKV("Collection", collection),
-		errors.NewKV("PeerID", peerID.String()),
 	)
 }
 
