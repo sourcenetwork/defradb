@@ -84,7 +84,7 @@ func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
 	s.nodes[cfg.SourceNodeID].p2p.replicators[cfg.TargetNodeID] = struct{}{}
 }
 
-// waitForReplicatorConfigureEvent waits for a node to publish a
+// waitForReplicatorDeleteEvent waits for a node to publish a
 // replicator completed event on the local event bus.
 func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
 	select {
@@ -126,7 +126,7 @@ func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
 	}
 }
 
-// waitForSubscribeToCollectionEvent waits for a node to publish a
+// waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollection) {
 	select {

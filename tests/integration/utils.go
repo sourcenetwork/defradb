@@ -2407,7 +2407,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 }
 
-// skipVectorEmbeddingTest skips the current test if the given actions
+// skipIfVectorEmbeddingTest skips the current test if the given actions
 // contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
 func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
