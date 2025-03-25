@@ -1,0 +1,13 @@
+Dependency Processing Summary:
+
+Total dependencies found: 82
+Processed successfully: 80
+Ignored: 2
+Failed: 0
+
+Ignored Dependencies:
+ - github.com/davecgh/go-spew
+ - github.com/sourcenetwork/defradb
+
+Failed Dependencies:
+ - 

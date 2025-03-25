@@ -1,0 +1,21 @@
+{
+    "ignore": [
+        "github.com/sourcenetwork/defradb",
+        "github.com/davecgh/go-spew"
+    ],
+    "rewrite": {
+      "github.com/ipfs/boxo": "github.com/ipfs/boxo/bitswap",
+      "github.com/hyperledger/aries-framework-go/component/kmscrypto": "github.com/hyperledger/aries-framework-go/component/kmscrypto/crypto",
+      "github.com/hyperledger/aries-framework-go/component/models": "github.com/hyperledger/aries-framework-go/component/models/did",
+      "github.com/hyperledger/aries-framework-go/spi": "github.com/hyperledger/aries-framework-go/spi/crypto",
+      "github.com/lestrrat-go/iter": "github.com/lestrrat-go/iter/mapiter",
+      "github.com/piprate/json-gold": "github.com/piprate/json-gold/ld",
+      "github.com/pmezard/go-difflib": "github.com/pmezard/go-difflib/difflib",
+      "github.com/segmentio/asm": "github.com/segmentio/asm/base64",
+      "golang.org/x/crypto": "golang.org/x/crypto/blake2b",
+      "golang.org/x/exp": "golang.org/x/exp/slices",
+      "golang.org/x/net": "golang.org/x/net/ipv4",
+      "golang.org/x/sys": "golang.org/x/sys/cpu"
+    }
+  }
+  
