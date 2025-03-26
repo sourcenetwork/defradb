@@ -101,7 +101,7 @@ var configDefaults = map[string]any{
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
 	"datastore.nosigning":               false,
-	"replicator.retryintervals":         "1,2,4,5",
+	"replicator.retryintervals":         "30,60,120,240,480,960,1920",
 }
 
 // defaultConfig returns a new config with default values.
