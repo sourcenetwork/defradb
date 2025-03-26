@@ -110,7 +110,7 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	cmd.PersistentFlags().String(
 		"replicator-retry-intervals",
 		cfg.GetString(configFlags["replicator-retry-intervals"]),
-		"Retry intervals for the replicator. Format is a comma-separated list of durations. Example: 10, 20, 40, 80, 160, 320",
+		"Retry intervals for the replicator. Format is a comma-separated list of durations. Example: "10,20,40,80,160,320",
 	)
 	return cmd
 }
