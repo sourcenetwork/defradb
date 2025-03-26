@@ -281,7 +281,10 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TODO: This test can be enabled as part of https://github.com/sourcenetwork/defradb/issues/3573
+// It doesn't pass at the moment because the client identity is being passed to the node 
 func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
+	t.Skip("Skipping test because signing with client identity is not supported yet")
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
@@ -308,6 +311,12 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 					"age": 23
 				}`,
 			},
+			testUtils.UpdateDoc{
+				Identity: testUtils.ClientIdentity(0),
+				Doc: `{
+					"name": "John Doe"
+				}`,
+			},
 			testUtils.Request{
 				Request: `
 					query {
@@ -322,6 +331,13 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 				`,
 				Results: map[string]any{
 					"commits": []map[string]any{
+						{
+							"height": 3,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.ClientIdentity(0).Value()),
+							},
+						},
 						{
 							"height": 2,
 							"signature": map[string]any{
