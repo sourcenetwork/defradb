@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
@@ -304,3 +306,25 @@ func (m mockUnsupportedPublicKey) Type() crypto.KeyType                { return 
 func (m mockUnsupportedPublicKey) Verify([]byte, []byte) (bool, error) { return false, nil }
 func (m mockUnsupportedPublicKey) DID() (string, error)                { return "", nil }
 func (m mockUnsupportedPublicKey) Underlying() any                     { return nil }
+
+func TestFromToken_WithNonStringKeyType_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	token, err := identity.NewToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	parsedToken, err := jwt.Parse(token, jwt.WithVerify(false))
+	require.NoError(t, err)
+
+	// Set key_type to a non-string value (numeric in this case)
+	err = parsedToken.Set(KeyTypeClaim, 123)
+	require.NoError(t, err)
+
+	modifiedToken, err := jwt.Sign(parsedToken, jwt.WithKey(jwa.ES256K, identity.PrivateKey.Underlying().(*secp256k1.PrivateKey).ToECDSA()))
+	require.NoError(t, err)
+
+	_, err = FromToken(modifiedToken)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrInvalidKeyTypeClaimType)
+}

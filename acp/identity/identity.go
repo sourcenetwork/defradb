@@ -88,7 +88,12 @@ func FromToken(data []byte) (Identity, error) {
 		return Identity{}, ErrMissingKeyType
 	}
 
-	publicKey, err := crypto.PublicKeyFromString(crypto.KeyType(keyTypeStr.(string)), token.Subject())
+	keyTypeValue, ok := keyTypeStr.(string)
+	if !ok {
+		return Identity{}, ErrInvalidKeyTypeClaimType
+	}
+
+	publicKey, err := crypto.PublicKeyFromString(crypto.KeyType(keyTypeValue), token.Subject())
 	if err != nil {
 		return Identity{}, err
 	}
