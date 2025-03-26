@@ -28,7 +28,14 @@ func Start() *StartCli {
 
 func (a *StartCli) Execute() {
 	a.s.RootDir = a.s.T.TempDir()
-	args := []string{"start", "--no-keyring", "--store=memory", "--rootdir", a.s.RootDir, "--url", "127.0.0.1:"}
+	args := []string{
+		"start",
+		"--no-keyring",
+		"--store=memory",
+		"--rootdir", a.s.RootDir,
+		"--url=127.0.0.1:",
+		"--acp-type=local",
+	}
 
 	logPrefix := "Providing GraphQL endpoint at "
 	exampleUrl := "http://127.0.0.1:42571"
