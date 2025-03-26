@@ -282,7 +282,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 }
 
 // TODO: This test can be enabled as part of https://github.com/sourcenetwork/defradb/issues/3573
-// It doesn't pass at the moment because the client identity is being passed to the node 
+// It doesn't pass at the moment because the client identity is being passed to the node
 func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 	t.Skip("Skipping test because signing with client identity is not supported yet")
 	test := testUtils.TestCase{
