@@ -16,11 +16,14 @@ import (
 
 const (
 	errUnsupportedKeyType = "unsupported key type"
+	errMissingKeyType     = "missing key type in token"
 )
 
 var (
 	// ErrUnsupportedKeyType is returned when attempting to use an unsupported key type.
 	ErrUnsupportedKeyType = errors.New(errUnsupportedKeyType)
+	// ErrMissingKeyType is returned when a JWT token does not contain the required key_type claim.
+	ErrMissingKeyType = errors.New(errMissingKeyType)
 )
 
 func newErrUnsupportedKeyType(keyType string) error {

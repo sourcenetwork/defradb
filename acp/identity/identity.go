@@ -23,15 +23,23 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-// AuthorizedAccountClaim is the name of the claim
-// field containing the authorized account.
-//
-// This must be the same as `AuthorizedAccountClaim`
-// defined in github.com/sourcenetwork/sourcehub/x/acp/types
-//
-// The type cannot be directly referenced here due
-// to compilation issues with JS targets.
-const AuthorizedAccountClaim = "authorized_account"
+const (
+	// AuthorizedAccountClaim is the name of the claim
+	// field containing the authorized account.
+	//
+	// This must be the same as `AuthorizedAccountClaim`
+	// defined in github.com/sourcenetwork/sourcehub/x/acp/types
+	//
+	// The type cannot be directly referenced here due
+	// to compilation issues with JS targets.
+	AuthorizedAccountClaim = "authorized_account"
+
+	// KeyTypeClaim is the name of the claim field containing
+	// the type of key used to sign the token. This is used
+	// to determine the appropriate verification algorithm
+	// when validating the token signature.
+	KeyTypeClaim = "key_type"
+)
 
 // None specifies an anonymous actor.
 var None = immutable.None[Identity]()
@@ -75,17 +83,16 @@ func FromToken(data []byte) (Identity, error) {
 		return Identity{}, err
 	}
 
-	subject, err := hex.DecodeString(token.Subject())
+	keyTypeStr, ok := token.Get(KeyTypeClaim)
+	if !ok {
+		return Identity{}, ErrMissingKeyType
+	}
+
+	publicKey, err := crypto.PublicKeyFromString(crypto.KeyType(keyTypeStr.(string)), token.Subject())
 	if err != nil {
 		return Identity{}, err
 	}
 
-	pubKey, err := secp256k1.ParsePubKey(subject)
-	if err != nil {
-		return Identity{}, err
-	}
-
-	publicKey := crypto.NewPublicKey(pubKey)
 	did, err := publicKey.DID()
 	if err != nil {
 		return Identity{}, err
@@ -168,6 +175,11 @@ func (identity Identity) NewToken(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	err = token.Set(KeyTypeClaim, string(identity.PrivateKey.Type()))
+	if err != nil {
+		return nil, err
 	}
 
 	// For now we only support ECDSA with secp256k1 or Ed25519 for bearer tokens
