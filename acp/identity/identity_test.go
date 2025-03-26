@@ -321,7 +321,13 @@ func TestFromToken_WithNonStringKeyType_Error(t *testing.T) {
 	err = parsedToken.Set(KeyTypeClaim, 123)
 	require.NoError(t, err)
 
-	modifiedToken, err := jwt.Sign(parsedToken, jwt.WithKey(jwa.ES256K, identity.PrivateKey.Underlying().(*secp256k1.PrivateKey).ToECDSA()))
+	// Get the underlying private key and validate its type
+	privKey := identity.PrivateKey.Underlying()
+	secpPrivKey, ok := privKey.(*secp256k1.PrivateKey)
+	require.True(t, ok, "expected secp256k1.PrivateKey")
+
+	// Sign the token with the validated key
+	modifiedToken, err := jwt.Sign(parsedToken, jwt.WithKey(jwa.ES256K, secpPrivKey.ToECDSA()))
 	require.NoError(t, err)
 
 	_, err = FromToken(modifiedToken)
