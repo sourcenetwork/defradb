@@ -13,7 +13,9 @@ package cli
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
@@ -67,6 +69,17 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
+			// Parse the retry intervals from the config files from a string to a slice of time.Durations
+			replicatorRetryIntervals := []time.Duration{}
+			for _, interval := range strings.Split(cfg.GetString("replicator.retryintervals"), ",") {
+				interval = strings.TrimSpace(interval)
+				seconds, err := time.ParseDuration(interval + "s")
+				if err != nil {
+					return err
+				}
+				replicatorRetryIntervals = append(replicatorRetryIntervals, seconds)
+			}
+
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
@@ -79,6 +92,7 @@ func MakeStartCommand() *cobra.Command {
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
 				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
