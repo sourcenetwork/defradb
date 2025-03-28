@@ -105,7 +105,6 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 	cmd.PersistentFlags().String(
 		"secret-file",
 		cfg.GetString(configFlags["secret-file"]),
-		"Path to the file containing secrets",
-	)
+		"Path to the file containing secrets")
 	return cmd
 }
