@@ -16,6 +16,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -46,7 +47,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -84,7 +85,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 									gomega.Not(gomega.BeEmpty()),
 									sameIdentity,
 								),
-								"value": newSignatureMatcher(makeFieldBlock("age", 21)),
+								"value": newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeSecp256k1),
 							},
 						},
 						{
@@ -92,7 +93,8 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
-								"value":    newSignatureMatcher(makeFieldBlock("name", "John")),
+								"value": newSignatureMatcher(
+									makeFieldBlock("name", "John"), crypto.KeyTypeSecp256k1),
 							},
 						},
 						{
@@ -117,7 +119,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -200,6 +202,154 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
 								"value":    uniqueSignature,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
+		},
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits {
+							fieldName
+							signature {
+								type
+								identity
+								value
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+								"value":    newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeEd25519),
+							},
+						},
+						{
+							"fieldName": "name",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+								"value":    newSignatureMatcher(makeFieldBlock("name", "John"), crypto.KeyTypeEd25519),
+							},
+						},
+						{
+							"fieldName": nil,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+								"value":    gomega.Not(gomega.BeEmpty()),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TODO: This test can be enabled as part of https://github.com/sourcenetwork/defradb/issues/3573
+// It doesn't pass at the moment because the client identity is being passed to the node
+func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
+	t.Skip("Skipping test because signing with client identity is not supported yet")
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.ClientIdentity(0).Value(): crypto.KeyTypeEd25519,
+			testUtils.NodeIdentity(0).Value():   crypto.KeyTypeSecp256k1,
+		},
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				Identity: testUtils.ClientIdentity(0),
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age": 23
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Identity: testUtils.ClientIdentity(0),
+				Doc: `{
+					"name": "John Doe"
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						commits(fieldId: "C", order: {height: DESC}) {
+							height
+							signature {
+								type
+								identity
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"height": 3,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.ClientIdentity(0).Value()),
+							},
+						},
+						{
+							"height": 2,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+							},
+						},
+						{
+							"height": 1,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.ClientIdentity(0).Value()),
 							},
 						},
 					},

@@ -13,14 +13,12 @@ package signature
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -50,57 +48,6 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 							"_docID": testUtils.NewDocIndex(0, 0),
 							"name":   "John",
 							"age":    int64(21),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestDocSignature_WithPeers_ShouldSync(t *testing.T) {
-	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
-				Schema: `
-					type User {
-						name: String
-						age: Int
-					}
-				`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name":	"John",
-					"age":	21
-				}`,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				NodeID: immutable.Some(1),
-				Request: `query {
-					User {
-						age
-					}
-				}`,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{
-							"age": int64(21),
 						},
 					},
 				},

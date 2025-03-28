@@ -21,7 +21,7 @@ import (
 
 func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testing.T) {
 	test := testUtils.TestCase{
-		EnabledBlockSigning: true,
+		EnableSigning: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `

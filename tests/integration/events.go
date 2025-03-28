@@ -156,7 +156,7 @@ func waitForUpdateEvents(
 	nodeID immutable.Option[int],
 	collectionIndex int,
 	docIDs map[string]struct{},
-	ident immutable.Option[identity],
+	ident immutable.Option[Identity],
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -273,7 +273,7 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[identity]) {
+func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[Identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {

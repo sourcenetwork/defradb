@@ -14,6 +14,7 @@ defradb start [flags]
 
 ```
       --allowed-origins stringArray   List of origins to allow for CORS requests
+      --default-key-type string       Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
       --development                   Enables a set of features that make development easier but should not be enabled in production:
                                        - allows purging of all persisted data 
                                        - generates temporary node identity if keyring is disabled

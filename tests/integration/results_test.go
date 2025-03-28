@@ -32,7 +32,7 @@ func (m *mockTestState) GetCurrentNodeID() int {
 	return m.currentNodeID
 }
 
-func (m *mockTestState) GetNodeIdentity(_ int) acpIdentity.Identity {
+func (m *mockTestState) GetIdentity(_ Identity) acpIdentity.Identity {
 	return acpIdentity.Identity{}
 }
 

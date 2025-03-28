@@ -151,7 +151,7 @@ func VerifyECDSA256K(
 	signature []byte,
 ) error {
 	if pubKey == nil {
-		return ErrUnsupportedECDSAPrivKeyType
+		return ErrNilKey
 	}
 
 	sig, err := ecdsa.ParseDERSignature(signature)

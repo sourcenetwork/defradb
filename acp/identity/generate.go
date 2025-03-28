@@ -14,19 +14,18 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-// Generate generates a new identity.
-func Generate() (RawIdentity, error) {
-	privateKey, err := crypto.GenerateSecp256k1()
+// Generate generates a new identity with the specified key type.
+// Supported types are KeyTypeSecp256k1 and KeyTypeEd25519.
+func Generate(keyType crypto.KeyType) (Identity, error) {
+	privKey, err := crypto.GenerateKey(keyType)
 	if err != nil {
-		return RawIdentity{}, err
+		return Identity{}, err
 	}
 
-	publicKey := privateKey.PubKey()
-
-	did, err := DIDFromPublicKey(publicKey)
+	identity, err := FromPrivateKey(privKey)
 	if err != nil {
-		return RawIdentity{}, err
+		return Identity{}, err
 	}
 
-	return newRawIdentity(privateKey, publicKey, did), nil
+	return identity, nil
 }

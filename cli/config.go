@@ -55,6 +55,7 @@ var configFlags = map[string]string{
 	"store":              "datastore.store",
 	"no-encryption":      "datastore.noencryption",
 	"no-signing":         "datastore.nosigning",
+	"default-key-type":   "datastore.defaultkeytype",
 	"valuelogfilesize":   "datastore.badger.valuelogfilesize",
 	"peers":              "net.peers",
 	"p2paddr":            "net.p2paddresses",
@@ -100,6 +101,7 @@ var configDefaults = map[string]any{
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
 	"datastore.nosigning":               false,
+	"datastore.defaultkeytype":          "secp256k1",
 }
 
 // defaultConfig returns a new config with default values.
