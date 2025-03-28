@@ -13,7 +13,6 @@ package cli
 import (
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -69,15 +68,13 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
-			// Parse the retry intervals from the config files from a string to a slice of time.Durations
+			// Parse the retry intervals from the config files from a slice of ints to a slice of time.Durations
 			replicatorRetryIntervals := []time.Duration{}
-			for _, interval := range strings.Split(cfg.GetString("replicator.retryintervals"), ",") {
-				interval = strings.TrimSpace(interval)
-				seconds, err := time.ParseDuration(interval + "s")
-				if err != nil {
-					return err
+			for _, interval := range cfg.GetIntSlice("replicator.retryintervals") {
+				if interval <= 0 {
+					return ErrInvalidReplicatorRetryIntervals
 				}
-				replicatorRetryIntervals = append(replicatorRetryIntervals, seconds)
+				replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(interval)*time.Second)
 			}
 
 			opts := []node.Option{
@@ -288,7 +285,13 @@ func MakeStartCommand() *cobra.Command {
 	cmd.Flags().Bool(
 		"no-signing",
 		cfg.GetBool(configFlags["no-signing"]),
-		"Disable signing of commits.")
+		"Disable signing of commits.",
+	)
+	cmd.PersistentFlags().IntSlice(
+		"replicator-retry-intervals",
+		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),
+		"Retry intervals for the replicator. Format is a comma-separated list of durations. Example: [10,20,40,80,160,320]",
+	)
 	return cmd
 }
 
