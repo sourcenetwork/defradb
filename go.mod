@@ -2,6 +2,8 @@ module github.com/sourcenetwork/defradb
 
 go 1.23.6
 
+toolchain go1.24.1
+
 require (
 	github.com/bits-and-blooms/bitset v1.22.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -53,7 +55,7 @@ require (
 	github.com/sourcenetwork/testo v0.1.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/spf13/viper v1.20.0
+	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/valyala/fastjson v1.6.4
 	github.com/vito/go-sse v1.1.2
