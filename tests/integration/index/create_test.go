@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -127,6 +128,25 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 				IndexName:     "!",
 				FieldName:     "Name",
 				ExpectedError: schema.NewErrIndexWithInvalidName("!").Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestIndexCreate_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "If given same index name, should return error",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(name: "age_index", includes: [{field: "age"}]) @index(name: "age_index", includes: [{field: "age"}]) {
+						name: String 
+						age: Int @index(name: "age_index")
+					}
+				`,
+				ExpectedError: db.NewErrIndexWithNameAlreadyExists("age_index").Error(),
 			},
 		},
 	}
