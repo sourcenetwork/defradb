@@ -1849,8 +1849,8 @@ github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9yS
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/sourcegraph/go-diff v0.6.1/go.mod h1:iBszgVvyxdc8SFZ7gm69go2KDdt3ag071iBaWPF6cjs=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/acp_core v0.4.1 h1:3p5AsVYszeZun99GdbV+96/IuAmxOzm30xuMTEMUw2g=
-github.com/sourcenetwork/acp_core v0.4.1/go.mod h1:lzxkAEyyRhAeBSJhPhGHaSV0ddpLuAWwwVXUXJt9034=
+github.com/sourcenetwork/acp_core v0.5.1 h1:a/CMyt0ey/fthGTrBzMPMSErVtGrVQF92UY4/Rolty0=
+github.com/sourcenetwork/acp_core v0.5.1/go.mod h1:w6zmiGx7z7wRmlu9+ugBPgdoTEF2sLLsWb6Xy2qhWnE=
 github.com/sourcenetwork/corekv v0.1.1 h1:de8MBl9t0kVJWEYkxVrT1frLqt1A6sLwEcpSnnCKqPw=
 github.com/sourcenetwork/corekv v0.1.1/go.mod h1:n3H2Qb4GeixyO8/OW6jGwA2HLNx3TRpbs3nRZWTPfCM=
 github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
@@ -1869,8 +1869,8 @@ github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf h1:AFak3
 github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf/go.mod h1:0R571ioIrJSiuqLVD2YwyxCt+EMGI/r9ZF/CHj75/5U=
 github.com/sourcenetwork/testo v0.1.0 h1:mGhNDMOu6qvBTodlfPwy9NH1X4pOSc9AQ6mbOdqbmIg=
 github.com/sourcenetwork/testo v0.1.0/go.mod h1:CwCk0OPI7XLc0ypBS2QVoCtwOxyybv5x8gJxDkNCd14=
-github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030 h1:MV+7W7HyJyyyKqPGk6A858xOw3ixXHyFW/nuHIXiJT4=
-github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030/go.mod h1:A/KKCfhcKHKhdqL41aKGue7KtJNdGY8DlLpG6/Vh4QI=
+github.com/sourcenetwork/zanzi v0.3.1-0.20250326181925-74d3e97fb950 h1:3IrUxIt7IyrzWUR3Pq1gNy9qHAvNutkfdIQGfVZcMKQ=
+github.com/sourcenetwork/zanzi v0.3.1-0.20250326181925-74d3e97fb950/go.mod h1:XzPxq660MYb5q5EAHvvfqkyZtfJ8jzdmn/5OW5ha89A=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=
 github.com/spaolacci/murmur3 v1.1.0/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
@@ -2998,6 +2998,8 @@ honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt
 honnef.co/go/tools v0.0.1-2020.1.3/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
 honnef.co/go/tools v0.0.1-2020.1.4/go.mod h1:X/FiERA/W4tHapMX5mGpAtMSVEeEUOyHaw9vFzvIQ3k=
 honnef.co/go/tools v0.3.2/go.mod h1:jzwdWgg7Jdq75wlfblQxO4neNaFFSvgc1tD5Wv8U0Yw=
+k8s.io/apimachinery v0.32.3 h1:JmDuDarhDmA/Li7j3aPrwhpNBA94Nvk5zLeOge9HH1U=
+k8s.io/apimachinery v0.32.3/go.mod h1:GpHVgxoKlTxClKcteaeuF1Ul/lDVb74KpZcxcmLDElE=
 lukechampine.com/blake3 v1.4.0 h1:xDbKOZCVbnZsfzM6mHSYcGRHZ3YrLDzqz8XnV4uaD5w=
 lukechampine.com/blake3 v1.4.0/go.mod h1:MQJNQCTnR+kwOP/JEZSxj3MaQjp80FOFSNMMHXcSeX0=
 mvdan.cc/gofumpt v0.3.1/go.mod h1:w3ymliuxvzVx8DAutBnVyDqYb1Niy/yCJt/lk821YCE=

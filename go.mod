@@ -45,7 +45,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sourcenetwork/acp_core v0.4.1
+	github.com/sourcenetwork/acp_core v0.5.1
 	github.com/sourcenetwork/corekv v0.1.1
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
@@ -346,7 +346,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
-	github.com/sourcenetwork/zanzi v0.3.1-0.20250119215940-5b0336b71030 // indirect
+	github.com/sourcenetwork/zanzi v0.3.1-0.20250326181925-74d3e97fb950 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
@@ -398,6 +398,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
+	k8s.io/apimachinery v0.32.3 // indirect
 	lukechampine.com/blake3 v1.4.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	pgregory.net/rapid v1.1.0 // indirect
