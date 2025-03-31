@@ -55,6 +55,7 @@ var configFlags = map[string]string{
 	"store":                      "datastore.store",
 	"no-encryption":              "datastore.noencryption",
 	"no-signing":                 "datastore.nosigning",
+	"default-key-type":           "datastore.defaultkeytype",
 	"valuelogfilesize":           "datastore.badger.valuelogfilesize",
 	"peers":                      "net.peers",
 	"p2paddr":                    "net.p2paddresses",
@@ -66,6 +67,7 @@ var configFlags = map[string]string{
 	"keyring-backend":            "keyring.backend",
 	"keyring-path":               "keyring.path",
 	"no-keyring":                 "keyring.disabled",
+	"acp-type":                   "acp.type",
 	"source-hub-address":         "acp.sourceHub.address",
 	"development":                "development",
 	"secret-file":                "secretfile",
@@ -101,6 +103,8 @@ var configDefaults = map[string]any{
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
 	"datastore.nosigning":               false,
+	"datastore.defaultkeytype":          "secp256k1",
+	"acp.type":                          "none",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 

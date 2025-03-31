@@ -11,12 +11,12 @@
 package cli
 
 import (
+	"bytes"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 
@@ -132,7 +132,7 @@ func MakeStartCommand() *cobra.Command {
 					}
 				}
 
-				opts, err = getOrCreateIdentity(kr, opts)
+				opts, err = getOrCreateIdentity(kr, opts, cfg.GetString("datastore.defaultkeytype"))
 				if err != nil {
 					return err
 				}
@@ -148,20 +148,20 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
-			opts = append(opts, db.WithBlockSigning(!cfg.GetBool("datastore.nosigning")))
-
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
 			if isDevMode {
 				cmd.Printf(devModeBanner)
 				if cfg.GetBool("keyring.disabled") {
 					var err error
+					// Generate an ephemeral identity for the node
 					// TODO: we want to persist this identity so we can restart the node with the same identity
 					// even in development mode. https://github.com/sourcenetwork/defradb/issues/3148
-					opts, err = addEphemeralIdentity(opts)
+					ident, err := generateIdentity(cfg.GetString("datastore.defaultkeytype"))
 					if err != nil {
 						return err
 					}
+					opts = append(opts, db.WithNodeIdentity(ident))
 				}
 			}
 
@@ -285,8 +285,17 @@ func MakeStartCommand() *cobra.Command {
 	cmd.Flags().Bool(
 		"no-signing",
 		cfg.GetBool(configFlags["no-signing"]),
-		"Disable signing of commits.",
-	)
+		"Disable signing of commits.")
+	cmd.Flags().String(
+		"default-key-type",
+		cfg.GetString(configFlags["default-key-type"]),
+		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
+			"Valid values are 'secp256k1' and 'ed25519'. "+
+			"If not specified, the default key type will be 'secp256k1'.")
+	cmd.PersistentFlags().String(
+		"acp-type",
+		cfg.GetString(configFlags["acp.type"]),
+		"Specify the acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),
@@ -333,41 +342,57 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	return append(opts, net.WithPrivateKey(peerKey)), nil
 }
 
-func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, keyTypeToCreate string) ([]node.Option, error) {
 	identityBytes, err := kr.Get(nodeIdentityKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
 			return nil, err
 		}
-		privateKey, err := crypto.GenerateSecp256k1()
+		ident, err := generateIdentity(keyTypeToCreate)
 		if err != nil {
 			return nil, err
 		}
-		identityBytes := privateKey.Serialize()
+		rawKey := ident.PrivateKey.Raw()
+		err = kr.Set(nodeIdentityKeyName, append([]byte(keyTypeToCreate+":"), rawKey...))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	sepPos := bytes.Index(identityBytes, []byte(":"))
+	// the separator might not exist, because of the old format of storing it
+	// we turn it into the new format and try again
+	if sepPos == -1 {
+		identityBytes = append([]byte(crypto.KeyTypeSecp256k1+":"), identityBytes...)
 		err = kr.Set(nodeIdentityKeyName, identityBytes)
 		if err != nil {
 			return nil, err
 		}
+		return getOrCreateIdentity(kr, opts, keyTypeToCreate)
 	}
-
-	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(identityBytes))
+	keyType := string(identityBytes[:sepPos])
+	privateKey, err := crypto.PrivateKeyFromBytes(crypto.KeyType(keyType), identityBytes[sepPos+1:])
+	if err != nil {
+		return nil, err
+	}
+	ident, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
+	return append(opts, db.WithNodeIdentity(ident)), nil
 }
 
-func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
-	privateKey, err := crypto.GenerateSecp256k1()
+func generateIdentity(keyType string) (identity.Identity, error) {
+	privateKey, err := crypto.GenerateKey(crypto.KeyType(keyType))
 	if err != nil {
-		return nil, err
+		return identity.Identity{}, err
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(privateKey.Serialize()))
+	nodeIdentity, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
-		return nil, err
+		return identity.Identity{}, err
 	}
 
-	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
+	return nodeIdentity, nil
 }

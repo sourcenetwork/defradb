@@ -13,20 +13,22 @@ package clock
 import (
 	cid "github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errCreatingBlock          = "error creating block"
-	errWritingBlock           = "error writing block"
-	errGettingHeads           = "error getting heads"
-	errMergingDelta           = "error merging delta"
-	errAddingHead             = "error adding head"
-	errCheckingHead           = "error checking if is head"
-	errReplacingHead          = "error replacing head"
-	errCouldNotFindBlock      = "error checking for known block "
-	errFailedToGetNextQResult = "failed to get next query result"
-	errCouldNotGetEncKey      = "could not get encryption key"
+	errCreatingBlock            = "error creating block"
+	errWritingBlock             = "error writing block"
+	errGettingHeads             = "error getting heads"
+	errMergingDelta             = "error merging delta"
+	errAddingHead               = "error adding head"
+	errCheckingHead             = "error checking if is head"
+	errReplacingHead            = "error replacing head"
+	errCouldNotFindBlock        = "error checking for known block "
+	errFailedToGetNextQResult   = "failed to get next query result"
+	errCouldNotGetEncKey        = "could not get encryption key"
+	errUnsupportedKeyForSigning = "unsupported key type for signing"
 )
 
 var (
@@ -82,4 +84,8 @@ func NewErrCouldNotFindBlock(cid cid.Cid, inner error) error {
 
 func NewErrFailedToGetNextQResult(inner error) error {
 	return errors.Wrap(errFailedToGetNextQResult, inner)
+}
+
+func NewErrUnsupportedKeyForSigning(keyType crypto.KeyType) error {
+	return errors.New(errUnsupportedKeyForSigning, errors.NewKV("KeyType", keyType))
 }

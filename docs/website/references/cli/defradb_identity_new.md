@@ -7,13 +7,15 @@ Generate a new identity
 Generate a new identity
 
 The generated identity contains:
-- A secp256k1 private key that is a 256-bit big-endian binary-encoded number,
-padded to a length of 32 bytes in HEX format.
-- A compressed 33-byte secp256k1 public key in HEX format.
+- A private key (secp256k1 or ed25519, based on --type flag)
+- A corresponding public key
 - A "did:key" generated from the public key.
 
-Example: generate a new identity:
+Example: generate a new identity with secp256k1 key (default):
   defradb identity new
+
+Example: generate a new identity with ed25519 key:
+  defradb identity new --type ed25519
 
 
 
@@ -24,7 +26,8 @@ defradb identity new [flags]
 ### Options
 
 ```
-  -h, --help   help for new
+  -h, --help          help for new
+      --type string   Key type (secp256k1 or ed25519) (default "secp256k1")
 ```
 
 ### Options inherited from parent commands

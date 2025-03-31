@@ -11,68 +11,326 @@
 package identity
 
 import (
-	"fmt"
+	"crypto/ed25519"
+	"encoding/hex"
 	"testing"
+	"time"
 
-	"github.com/cyware/ssi-sdk/crypto"
-	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func Test_DIDFromPublicKey_ProducesDIDForPublicKey(t *testing.T) {
-	pubKey := &secp256k1.PublicKey{}
-
-	did, err := DIDFromPublicKey(pubKey)
-
-	want := "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F"
-	require.Equal(t, want, did)
-	require.NoError(t, err)
-}
-
-func Test_DIDFromPublicKey_ReturnsErrorWhenProducerFails(t *testing.T) {
-	mockedProducer := func(crypto.KeyType, []byte) (*key.DIDKey, error) {
-		return nil, fmt.Errorf("did generation err")
-	}
-
-	pubKey := &secp256k1.PublicKey{}
-
-	did, err := didFromPublicKey(pubKey, mockedProducer)
-
-	require.Empty(t, did)
-	require.ErrorIs(t, err, ErrDIDCreation)
-}
-
-func Test_RawIdentityGeneration_ReturnsNewRawIdentity(t *testing.T) {
-	newIdentity, err := Generate()
+func TestGenerate_WithSecp256k1_ReturnsNewIdentity(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
 	require.NoError(t, err)
 
-	// Check that both private and public key are not empty.
-	require.NotEmpty(t, newIdentity.PrivateKey)
-	require.NotEmpty(t, newIdentity.PublicKey)
+	require.NotNil(t, identity.PrivateKey)
+	require.NotNil(t, identity.PublicKey)
+	require.Equal(t, crypto.KeyTypeSecp256k1, identity.PrivateKey.Type())
+	require.Equal(t, crypto.KeyTypeSecp256k1, identity.PublicKey.Type())
 
-	// Check leading `did:key` prefix.
-	require.Equal(t, newIdentity.DID[:7], "did:key")
+	require.Equal(t, "did:key", identity.DID[:7])
+
+	rawIdentity := identity.IntoRawIdentity()
+	require.Equal(t, string(crypto.KeyTypeSecp256k1), rawIdentity.KeyType)
+
+	privKeyBytes, err := hex.DecodeString(rawIdentity.PrivateKey)
+	require.NoError(t, err)
+	privKey := secp256k1.PrivKeyFromBytes(privKeyBytes)
+
+	reconstructedIdentity, err := FromPrivateKey(crypto.NewPrivateKey(privKey))
+	require.NoError(t, err)
+	require.Equal(t, crypto.KeyTypeSecp256k1, reconstructedIdentity.PrivateKey.Type())
 }
 
-func Test_RawIdentityGenerationIsNotFixed_ReturnsUniqueRawIdentites(t *testing.T) {
-	newIdentity1, err1 := Generate()
-	newIdentity2, err2 := Generate()
+func TestGenerate_WithEd25519_ReturnsNewIdentity(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeEd25519)
+	require.NoError(t, err)
+
+	require.NotNil(t, identity.PrivateKey)
+	require.NotNil(t, identity.PublicKey)
+	require.Equal(t, crypto.KeyTypeEd25519, identity.PrivateKey.Type())
+	require.Equal(t, crypto.KeyTypeEd25519, identity.PublicKey.Type())
+
+	require.Equal(t, "did:key", identity.DID[:7])
+
+	rawIdentity := identity.IntoRawIdentity()
+	require.Equal(t, string(crypto.KeyTypeEd25519), rawIdentity.KeyType)
+
+	privKeyBytes, err := hex.DecodeString(rawIdentity.PrivateKey)
+	require.NoError(t, err)
+
+	reconstructedIdentity, err := FromPrivateKey(crypto.NewPrivateKey(ed25519.PrivateKey(privKeyBytes)))
+	require.NoError(t, err)
+	require.Equal(t, crypto.KeyTypeEd25519, reconstructedIdentity.PrivateKey.Type())
+}
+
+func TestGenerate_WithInvalidType_ReturnsError(t *testing.T) {
+	_, err := Generate(crypto.KeyType("invalid_key_type"))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported key type")
+	require.Contains(t, err.Error(), "invalid_key_type")
+}
+
+func TestGenerate_ReturnsUniqueIdentities(t *testing.T) {
+	identity1, err1 := Generate(crypto.KeyTypeSecp256k1)
+	identity2, err2 := Generate(crypto.KeyTypeSecp256k1)
 	require.NoError(t, err1)
 	require.NoError(t, err2)
 
-	// Check that both private and public key are not empty.
-	require.NotEmpty(t, newIdentity1.PrivateKey)
-	require.NotEmpty(t, newIdentity1.PublicKey)
-	require.NotEmpty(t, newIdentity2.PrivateKey)
-	require.NotEmpty(t, newIdentity2.PublicKey)
+	require.NotNil(t, identity1.PrivateKey)
+	require.NotNil(t, identity1.PublicKey)
+	require.Equal(t, crypto.KeyTypeSecp256k1, identity1.PrivateKey.Type())
+	require.NotNil(t, identity2.PrivateKey)
+	require.NotNil(t, identity2.PublicKey)
+	require.Equal(t, crypto.KeyTypeSecp256k1, identity2.PrivateKey.Type())
 
-	// Check leading `did:key` prefix.
-	require.Equal(t, newIdentity1.DID[:7], "did:key")
-	require.Equal(t, newIdentity2.DID[:7], "did:key")
+	require.Equal(t, "did:key", identity1.DID[:7])
+	require.Equal(t, "did:key", identity2.DID[:7])
 
-	// Check both are different.
-	require.NotEqual(t, newIdentity1.PrivateKey, newIdentity2.PrivateKey)
-	require.NotEqual(t, newIdentity1.PublicKey, newIdentity2.PublicKey)
-	require.NotEqual(t, newIdentity1.DID, newIdentity2.DID)
+	raw1 := identity1.IntoRawIdentity()
+	raw2 := identity2.IntoRawIdentity()
+
+	require.NotEqual(t, raw1.PrivateKey, raw2.PrivateKey)
+	require.NotEqual(t, raw1.PublicKey, raw2.PublicKey)
+	require.NotEqual(t, raw1.DID, raw2.DID)
+}
+
+func TestIdentity_IntoRawIdentityWithSecp256k1_Success(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	rawIdentity := identity.IntoRawIdentity()
+
+	require.Equal(t, string(crypto.KeyTypeSecp256k1), rawIdentity.KeyType)
+	require.Equal(t, identity.DID, rawIdentity.DID)
+
+	privKeyBytes := identity.PrivateKey.Raw()
+	require.Equal(t, hex.EncodeToString(privKeyBytes), rawIdentity.PrivateKey)
+
+	pubKeyBytes := identity.PublicKey.Raw()
+	require.Equal(t, hex.EncodeToString(pubKeyBytes), rawIdentity.PublicKey)
+}
+
+func TestIdentity_IntoRawIdentityWithEd25519_Success(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeEd25519)
+	require.NoError(t, err)
+
+	rawIdentity := identity.IntoRawIdentity()
+
+	require.Equal(t, string(crypto.KeyTypeEd25519), rawIdentity.KeyType)
+	require.Equal(t, identity.DID, rawIdentity.DID)
+
+	privKeyBytes := identity.PrivateKey.Raw()
+	require.Equal(t, hex.EncodeToString(privKeyBytes), rawIdentity.PrivateKey)
+
+	pubKeyBytes := identity.PublicKey.Raw()
+	require.Equal(t, hex.EncodeToString(pubKeyBytes), rawIdentity.PublicKey)
+}
+
+func TestRawIdentity_FromRawIdentityWithInvalidKeyType_Error(t *testing.T) {
+	rawIdentity := RawIdentity{
+		PrivateKey: "0123456789abcdef",
+		PublicKey:  "fedcba9876543210",
+		DID:        "did:key:test",
+		KeyType:    "invalid",
+	}
+
+	_, err := rawIdentity.IntoIdentity()
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrUnsupportedKeyType)
+}
+
+func TestRawIdentity_FromRawIdentityWithInvalidPrivateKey_Error(t *testing.T) {
+	rawIdentity := RawIdentity{
+		PrivateKey: "not-hex",
+		PublicKey:  "fedcba9876543210",
+		DID:        "did:key:test",
+		KeyType:    string(crypto.KeyTypeSecp256k1),
+	}
+
+	_, err := rawIdentity.IntoIdentity()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "encoding/hex")
+}
+
+func TestIdentity_RoundTripConversion(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	rawIdentity := identity.IntoRawIdentity()
+
+	reconstructedIdentity, err := rawIdentity.IntoIdentity()
+	require.NoError(t, err)
+
+	require.Equal(t, identity.DID, reconstructedIdentity.DID)
+	require.True(t, identity.PrivateKey.Equal(reconstructedIdentity.PrivateKey))
+	require.True(t, identity.PublicKey.Equal(reconstructedIdentity.PublicKey))
+}
+
+func TestFromToken_ValidSecp256k1Token_Success(t *testing.T) {
+	originalIdentity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = originalIdentity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	parsedIdentity, err := FromToken([]byte(originalIdentity.BearerToken))
+	require.NoError(t, err)
+
+	require.Equal(t, originalIdentity.DID, parsedIdentity.DID)
+	require.Equal(t, originalIdentity.PublicKey.String(), parsedIdentity.PublicKey.String())
+	require.Equal(t, originalIdentity.BearerToken, parsedIdentity.BearerToken)
+}
+
+func TestFromToken_ValidEd25519Token_Success(t *testing.T) {
+	originalIdentity, err := Generate(crypto.KeyTypeEd25519)
+	require.NoError(t, err)
+
+	err = originalIdentity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	parsedIdentity, err := FromToken([]byte(originalIdentity.BearerToken))
+	require.NoError(t, err)
+
+	require.Equal(t, originalIdentity.DID, parsedIdentity.DID)
+	require.Equal(t, originalIdentity.PublicKey.String(), parsedIdentity.PublicKey.String())
+	require.Equal(t, originalIdentity.BearerToken, parsedIdentity.BearerToken)
+}
+
+func TestFromToken_InvalidToken_Error(t *testing.T) {
+	_, err := FromToken([]byte("invalid-token"))
+	require.Error(t, err)
+}
+
+func TestUpdateToken_WithValidDuration_Success(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+	require.NotEmpty(t, identity.BearerToken)
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.NoError(t, err)
+}
+
+func TestUpdateToken_WithAuthorizedAccount_Success(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	authorizedAccount := "test-account"
+	err = identity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.Some(authorizedAccount))
+	require.NoError(t, err)
+	require.NotEmpty(t, identity.BearerToken)
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.NoError(t, err)
+}
+
+func TestNewToken_WithValidParameters_Success(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	token, err := identity.NewToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+	require.NotEmpty(t, token)
+
+	parsedIdentity, err := FromToken(token)
+	require.NoError(t, err)
+	require.Equal(t, identity.DID, parsedIdentity.DID)
+	require.Equal(t, identity.PublicKey.String(), parsedIdentity.PublicKey.String())
+}
+
+func TestVerifyAuthToken_WithExpiredToken_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(-time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.Error(t, err)
+}
+
+func TestVerifyAuthToken_WithWrongAudience_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = identity.UpdateToken(time.Hour, immutable.Some("correct-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	err = VerifyAuthToken(identity, "wrong-audience")
+	require.Error(t, err)
+}
+
+func TestVerifyAuthToken_WithNoToken_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.Error(t, err)
+}
+
+func TestVerifyAuthToken_WithUnsupportedKeyType_Error(t *testing.T) {
+	// First create a valid token using a supported key type
+	validIdentity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+	err = validIdentity.UpdateToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	// Create an identity with an unsupported key type but using the valid token
+	identity := Identity{
+		DID:         "did:key:test",
+		BearerToken: validIdentity.BearerToken,
+		PublicKey:   mockUnsupportedPublicKey{},
+	}
+
+	err = VerifyAuthToken(identity, "test-audience")
+	require.Error(t, err)
+	require.ErrorIs(t, err, crypto.NewErrUnsupportedKeyType("unsupported"))
+}
+
+// mockUnsupportedPublicKey implements crypto.PublicKey with an unsupported key type
+type mockUnsupportedPublicKey struct{}
+
+func (m mockUnsupportedPublicKey) Equal(other crypto.Key) bool         { return false }
+func (m mockUnsupportedPublicKey) Raw() []byte                         { return nil }
+func (m mockUnsupportedPublicKey) String() string                      { return "" }
+func (m mockUnsupportedPublicKey) Type() crypto.KeyType                { return "unsupported" }
+func (m mockUnsupportedPublicKey) Verify([]byte, []byte) (bool, error) { return false, nil }
+func (m mockUnsupportedPublicKey) DID() (string, error)                { return "", nil }
+func (m mockUnsupportedPublicKey) Underlying() any                     { return nil }
+
+func TestFromToken_WithNonStringKeyType_Error(t *testing.T) {
+	identity, err := Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+
+	token, err := identity.NewToken(time.Hour, immutable.Some("test-audience"), immutable.None[string]())
+	require.NoError(t, err)
+
+	parsedToken, err := jwt.Parse(token, jwt.WithVerify(false))
+	require.NoError(t, err)
+
+	// Set key_type to a non-string value (numeric in this case)
+	err = parsedToken.Set(KeyTypeClaim, 123)
+	require.NoError(t, err)
+
+	// Get the underlying private key and validate its type
+	privKey := identity.PrivateKey.Underlying()
+	secpPrivKey, ok := privKey.(*secp256k1.PrivateKey)
+	require.True(t, ok, "expected secp256k1.PrivateKey")
+
+	// Sign the token with the validated key
+	modifiedToken, err := jwt.Sign(parsedToken, jwt.WithKey(jwa.ES256K, secpPrivKey.ToECDSA()))
+	require.NoError(t, err)
+
+	_, err = FromToken(modifiedToken)
+	require.Error(t, err)
+	require.ErrorIs(t, err, ErrInvalidKeyTypeClaimType)
 }

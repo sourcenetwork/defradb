@@ -18,20 +18,26 @@ import (
 
 	"github.com/onsi/gomega/types"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 type signatureMatcher struct {
-	s          testUtils.TestState
-	block      coreblock.Block
-	castFailed bool
+	s                 testUtils.TestState
+	block             coreblock.Block
+	expectedKeyType   crypto.KeyType
+	castFailed        bool
+	unexpectedKeyType immutable.Option[crypto.KeyType]
 }
 
-func newSignatureMatcher(block coreblock.Block) *signatureMatcher {
+func newSignatureMatcher(block coreblock.Block, keyType crypto.KeyType) *signatureMatcher {
 	return &signatureMatcher{
-		block: block,
+		block:           block,
+		expectedKeyType: keyType,
 	}
 }
 
@@ -47,9 +53,14 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 		return false, err
 	}
 
-	ident := matcher.s.GetNodeIdentity(matcher.s.GetCurrentNodeID())
+	ident := matcher.s.GetIdentity(testUtils.NodeIdentity(matcher.s.GetCurrentNodeID()).Value())
 
-	expectedSigBytes, err := crypto.SignECDSA256K(ident.PrivateKey, blockBytes)
+	if ident.PrivateKey.Type() != matcher.expectedKeyType {
+		matcher.unexpectedKeyType = immutable.Some(ident.PrivateKey.Type())
+		return false, nil
+	}
+
+	expectedSigBytes, err := ident.PrivateKey.Sign(blockBytes)
 	if err != nil {
 		return false, err
 	}
@@ -81,9 +92,81 @@ func (matcher *signatureMatcher) FailureMessage(actual any) string {
 	if matcher.castFailed {
 		return fmt.Sprintf("Expected actual to be a byte slice, but got %T", actual)
 	}
+	if matcher.unexpectedKeyType.HasValue() {
+		return fmt.Sprintf("Expected key type to be %s, but got %s",
+			matcher.expectedKeyType, matcher.unexpectedKeyType.Value())
+	}
 	return "Expected signature to match"
 }
 
 func (matcher *signatureMatcher) NegatedFailureMessage(actual any) string {
 	return "Expected signature not to match"
+}
+
+// identityMatcher is a matcher that matches an identity.
+//
+// This is used to match the identity of a node or a client.
+//
+// The identity is represented as a byte slice, which is the string representation of the public key of the identity.
+type identityMatcher struct {
+	s        testUtils.TestState
+	identity testUtils.Identity
+}
+
+// newIdentityMatcher creates a new identity matcher.
+//
+// This is used to match the identity of a node or a client.
+//
+// The identity is represented as a byte slice, which is the string representation of the public key of the identity.
+func newIdentityMatcher(ident testUtils.Identity) *identityMatcher {
+	return &identityMatcher{
+		identity: ident,
+	}
+}
+
+var _ types.GomegaMatcher = (*identityMatcher)(nil)
+
+func (matcher *identityMatcher) SetTestState(s testUtils.TestState) {
+	matcher.s = s
+}
+
+func (matcher *identityMatcher) Match(actual any) (bool, error) {
+	ident := matcher.s.GetIdentity(matcher.identity)
+
+	actualString := ""
+	if matcher.s.GetClientType() == testUtils.GoClientType {
+		actualBytes, ok := actual.([]byte)
+		if !ok {
+			return false, fmt.Errorf("expected actual to be a byte slice, but got %T", actual)
+		}
+		actualString = string(actualBytes)
+	} else {
+		actualTmpString, ok := actual.(string)
+		if !ok {
+			return false, fmt.Errorf("expected actual to be a string, but got %T", actual)
+		}
+
+		// CLI and HTTP clients return json response, so here we should expect a json string
+		var actualBytes []byte
+		err := json.Unmarshal([]byte("\""+actualTmpString+"\""), &actualBytes)
+		if err != nil {
+			return false, err
+		}
+
+		actualString = string(actualBytes)
+	}
+
+	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey.Type(), actualString)
+	if err != nil {
+		return false, errors.Wrap("failed to convert actual to public key", err)
+	}
+	return ident.PublicKey.Equal(pubKey), nil
+}
+
+func (matcher *identityMatcher) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected identity to match, but got %s", actual)
+}
+
+func (matcher *identityMatcher) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected identity not to match, but got %s", actual)
 }

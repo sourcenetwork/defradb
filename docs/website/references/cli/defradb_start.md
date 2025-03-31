@@ -13,7 +13,9 @@ defradb start [flags]
 ### Options
 
 ```
+      --acp-type string                   Specify the acp engine to use (supported: none (default), local, source-hub)
       --allowed-origins stringArray       List of origins to allow for CORS requests
+      --default-key-type string           Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data 
                                            - generates temporary node identity if keyring is disabled
@@ -27,7 +29,7 @@ defradb start [flags]
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
       --pubkeypath string                 Path to the public key for tls
-      --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of durations. Example: [10,20,40,80,160,320] (default [30,60,120,240,480,960,1920])
+      --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of durations. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
       --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
       --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
 ```

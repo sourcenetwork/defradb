@@ -1473,7 +1473,7 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[identity]())
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[Identity]())
 	}
 }
 
@@ -1523,7 +1523,7 @@ func updateDoc(
 			action.NodeID,
 			action.CollectionID,
 			getEventsForUpdateDoc(s, action),
-			immutable.None[identity](),
+			immutable.None[Identity](),
 		)
 	}
 }
@@ -1629,7 +1629,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 			action.NodeID,
 			action.CollectionID,
 			getEventsForUpdateWithFilter(s, action, res),
-			immutable.None[identity](),
+			immutable.None[Identity](),
 		)
 	}
 }

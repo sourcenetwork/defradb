@@ -14,8 +14,10 @@ import (
 	"context"
 	"testing"
 
-	cid "github.com/ipfs/go-cid"
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+
+	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -174,7 +176,7 @@ type state struct {
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[identity]*identityHolder
+	identities map[Identity]*identityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
@@ -223,9 +225,6 @@ type state struct {
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool
 
-	// If set to true DAG blocks will be signed with a separate block that
-	enabledBlockSigning bool
-
 	// statefulMatchers contains all stateful matchers that have been executed during a single
 	// test run. After a single test run, the statefulMatchers are reset.
 	statefulMatchers []StatefulMatcher
@@ -246,8 +245,8 @@ func (s *state) GetCurrentNodeID() int {
 	return s.currentNodeID
 }
 
-func (s *state) GetNodeIdentity(nodeIndex int) acpIdentity.Identity {
-	return getIdentity(s, NodeIdentity(nodeIndex))
+func (s *state) GetIdentity(ident Identity) acpIdentity.Identity {
+	return getIdentity(s, immutable.Some(ident))
 }
 
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
@@ -257,8 +256,8 @@ type TestState interface {
 	GetClientType() ClientType
 	// GetCurrentNodeID returns the node id that is currently being asserted.
 	GetCurrentNodeID() int
-	// GetNodeIdentity returns the identity for the given node index.
-	GetNodeIdentity(nodeIndex int) acpIdentity.Identity
+	// GetIdentity returns the identity for the given node index.
+	GetIdentity(Identity) acpIdentity.Identity
 }
 
 var _ TestState = &state{}
@@ -273,7 +272,7 @@ func newState(
 	clientType ClientType,
 	collectionNames []string,
 ) *state {
-	return &state{
+	s := &state{
 		ctx:                      ctx,
 		t:                        t,
 		testCase:                 testCase,
@@ -281,15 +280,18 @@ func newState(
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
+		identities:               map[Identity]*identityHolder{},
+		nextIdentityGenSeed:      0,
 		allActionsDone:           make(chan struct{}),
-		identities:               map[identity]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
+		nodes:                    []*nodeState{},
+		acpOptions:               []node.ACPOpt{},
 		collectionNames:          collectionNames,
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
 		cids:                     map[any]string{},
 		policyIDs:                [][]string{},
 		isBench:                  false,
-		enabledBlockSigning:      testCase.EnabledBlockSigning,
 	}
+	return s
 }
