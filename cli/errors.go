@@ -36,10 +36,11 @@ var (
 	ErrSchemaVersionNotOfSchema        = errors.New(errSchemaVersionNotOfSchema)
 	ErrViewAddMissingArgs              = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty      = errors.New("policy file argument can not be empty")
-	ErrPurgeForceFlagRequired          = errors.New("run this command again with --force if you really want to purge all data")
 	ErrMissingKeyringSecret            = errors.New("missing keyring secret")
 	ErrEmptySchemaString               = errors.New(errEmptySchemaString)
 	ErrInvalidReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
+	ErrPurgeForceFlagRequired          = errors.New("run this command again with --force if you " +
+		"really want to purge all data")
 )
 
 func NewErrRequiredFlagEmpty(longName string, shortName string) error {
