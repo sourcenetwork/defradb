@@ -2,6 +2,8 @@ module github.com/sourcenetwork/defradb
 
 go 1.23.6
 
+toolchain go1.24.1
+
 require (
 	github.com/bits-and-blooms/bitset v1.22.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -12,7 +14,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.6.0
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.7.0
-	github.com/getkin/kin-openapi v0.130.0
+	github.com/getkin/kin-openapi v0.131.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
