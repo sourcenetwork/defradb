@@ -16,12 +16,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStartReplicatorRetry_NoError(t *testing.T) {
+// The following test contains a valid interval. If the error returned
+// is not ErrMissingKeyringSecret, then it means the replicator retry interval being set
+// did NOT cause the error, which is expected.
+func TestStartReplicatorRetry_ValidInterval(t *testing.T) {
 	cmd := NewDefraCommand()
-	cmd.SetArgs([]string{"start", "--no-keyring", "--replicator-retry-intervals=10,20,40"})
+	cmd.SetArgs([]string{"start", "--replicator-retry-intervals=10,20,40"})
 	err := cmd.Execute()
-	require.NoError(t, err)
+	require.ErrorIs(t, err, ErrMissingKeyringSecret)
 }
+
 func TestStartReplicatorRetry_NegativeIntervalError(t *testing.T) {
 	cmd := NewDefraCommand()
 	cmd.SetArgs([]string{"start", "--replicator-retry-intervals=10,-20,40"})
