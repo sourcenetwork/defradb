@@ -18,7 +18,7 @@ import (
 
 func TestStartReplicatorRetry_NoError(t *testing.T) {
 	cmd := NewDefraCommand()
-	cmd.SetArgs([]string{"start", "--replicator-retry-intervals=10,20,40"})
+	cmd.SetArgs([]string{"start", "--no-keyring", "--replicator-retry-intervals=10,20,40"})
 	err := cmd.Execute()
 	require.NoError(t, err)
 }
