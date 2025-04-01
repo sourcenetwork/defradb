@@ -14,7 +14,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.6.0
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.8.0
-	github.com/getkin/kin-openapi v0.130.0
+	github.com/getkin/kin-openapi v0.131.0
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/go-errors/errors v1.5.1
