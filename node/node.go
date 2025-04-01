@@ -12,13 +12,13 @@ package node
 
 import (
 	"context"
+	"io"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
@@ -26,20 +26,12 @@ import (
 
 var log = corelog.NewLogger("node")
 
-// Peer defines the minimal p2p network interface.
-type Peer interface {
-	Close()
-	PeerID() peer.ID
-	PeerInfo() peer.AddrInfo
-	Connect(context.Context, peer.AddrInfo) error
-}
-
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
 	// DB is the database instance
-	DB client.DB
+	DB *db.DB
 	// Peer is the p2p networking subsystem instance
-	Peer Peer
+	Peer io.Closer
 	// api http server instance
 	server *http.Server
 	// kms subsystem instance
@@ -96,7 +88,7 @@ func (n *Node) Close(ctx context.Context) error {
 		err = n.server.Shutdown(ctx)
 	}
 	if n.Peer != nil {
-		n.Peer.Close()
+		err = errors.Join(err, n.Peer.Close())
 	}
 	if n.DB != nil {
 		n.DB.Close()

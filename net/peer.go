@@ -149,7 +149,12 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		p.updateSub, err = p.bus.Subscribe(
+			event.UpdateName,
+			event.P2PTopicName,
+			event.ReplicatorName,
+			event.PeerConnectName,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -191,7 +196,7 @@ func NewPeer(
 }
 
 // Close the peer node and all its internal workers/goroutines/loops.
-func (p *Peer) Close() {
+func (p *Peer) Close() error {
 	defer p.cancel()
 
 	if p.bootCloser != nil {
@@ -240,6 +245,8 @@ func (p *Peer) Close() {
 	case <-stopped:
 		timer.Stop()
 	}
+
+	return nil
 }
 
 // handleMessage loop manages the transition of messages
@@ -263,6 +270,24 @@ func (p *Peer) handleMessageLoop() {
 
 		case event.Replicator:
 			p.server.updateReplicators(evt)
+
+		case event.PeerConnect:
+			if err := p.Connect(p.ctx, evt.Info); err != nil {
+				if evt.Err != nil {
+					evt.Err <- err
+				} else {
+					// Only log the error if it's not handled by the event emitter
+					log.ErrorE(
+						"failed to connect to peer",
+						err,
+						corelog.Any("PeerID", evt.Info.ID),
+						corelog.Any("PeerAddrs", evt.Info.Addrs),
+					)
+				}
+			}
+			if evt.Err != nil {
+				close(evt.Err)
+			}
 
 		default:
 			// ignore other events

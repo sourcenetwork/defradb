@@ -166,6 +166,7 @@ var (
 	ErrFieldNotFound                            = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
 	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
+	ErrTimoutOnPeerConnection                   = errors.New("timeout waiting for peer connection")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
