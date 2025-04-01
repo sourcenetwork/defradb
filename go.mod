@@ -2,8 +2,6 @@ module github.com/sourcenetwork/defradb
 
 go 1.23.6
 
-toolchain go1.24.1
-
 require (
 	github.com/bits-and-blooms/bitset v1.22.0
 	github.com/bxcodec/faker v2.0.1+incompatible
