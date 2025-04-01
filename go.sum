@@ -1849,8 +1849,8 @@ github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9yS
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/sourcegraph/go-diff v0.6.1/go.mod h1:iBszgVvyxdc8SFZ7gm69go2KDdt3ag071iBaWPF6cjs=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/acp_core v0.5.1 h1:a/CMyt0ey/fthGTrBzMPMSErVtGrVQF92UY4/Rolty0=
-github.com/sourcenetwork/acp_core v0.5.1/go.mod h1:w6zmiGx7z7wRmlu9+ugBPgdoTEF2sLLsWb6Xy2qhWnE=
+github.com/sourcenetwork/acp_core v0.4.1 h1:3p5AsVYszeZun99GdbV+96/IuAmxOzm30xuMTEMUw2g=
+github.com/sourcenetwork/acp_core v0.4.1/go.mod h1:lzxkAEyyRhAeBSJhPhGHaSV0ddpLuAWwwVXUXJt9034=
 github.com/sourcenetwork/corekv v0.1.1 h1:de8MBl9t0kVJWEYkxVrT1frLqt1A6sLwEcpSnnCKqPw=
 github.com/sourcenetwork/corekv v0.1.1/go.mod h1:n3H2Qb4GeixyO8/OW6jGwA2HLNx3TRpbs3nRZWTPfCM=
 github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
