@@ -16,6 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestStartReplicatorRetry_NoError(t *testing.T) {
+	cmd := NewDefraCommand()
+	cmd.SetArgs([]string{"start", "--replicator-retry-intervals=10,20,40"})
+	err := cmd.Execute()
+	require.NoError(t, err)
+}
 func TestStartReplicatorRetry_NegativeIntervalError(t *testing.T) {
 	cmd := NewDefraCommand()
 	cmd.SetArgs([]string{"start", "--replicator-retry-intervals=10,-20,40"})
