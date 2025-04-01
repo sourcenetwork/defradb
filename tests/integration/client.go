@@ -105,5 +105,8 @@ func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error
 }
 
 func (w *goClientWrapper) Close() {
-	w.node.Close(context.Background())
+	err := w.node.Close(context.Background())
+	if err != nil {
+		log.ErrorE("error closing goClientWrapper", err)
+	}
 }

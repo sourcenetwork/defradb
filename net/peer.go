@@ -94,7 +94,7 @@ func NewPeer(
 		if p == nil {
 			cancel()
 		} else if err != nil {
-			p.Close()
+			err = errors.Join(err, p.Close())
 		}
 	}()
 
