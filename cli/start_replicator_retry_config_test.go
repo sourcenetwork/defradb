@@ -12,9 +12,36 @@ package cli
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestStartReplicatorRetry_NoError(t *testing.T) {
+	cmd := NewDefraCommand()
+	args := []string{
+		"start",
+		"--no-keyring",
+		"--url=127.0.0.1:",
+		"--acp-type=local",
+		"--replicator-retry-intervals=10,20,40",
+	}
+	cmd.SetArgs(args)
+
+	// We do not expect the start command to return an error. So we will start
+	// and wait 10 seconds. If it does not return, then we are good
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Execute()
+	}()
+
+	select {
+	case <-time.After(10 * time.Second):
+		// Pass
+	case <-done:
+		t.Fail() //Fail the test if the command returns an error
+	}
+}
 
 func TestStartReplicatorRetry_NegativeIntervalError(t *testing.T) {
 	cmd := NewDefraCommand()
