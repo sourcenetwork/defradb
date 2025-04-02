@@ -14,12 +14,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/immutable"
 )
 
 const verifyTestSchema = `type User {
@@ -76,6 +76,41 @@ func TestVerifySignatures_WithValidSignature_SuccessfullyVerifies(t *testing.T) 
 	require.NoError(t, err)
 
 	err = db.VerifySignatures(ctx, doc.Head().String())
+	require.NoError(t, err)
+}
+
+func TestVerifySignatures_WithUpdateBlock_SuccessfullyVerifies(t *testing.T) {
+	db, ident := setupTestDB(t)
+
+	ctx := identity.WithContext(context.Background(), immutable.Some(ident))
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	docMap := map[string]any{
+		"name": "John",
+		"age":  30,
+	}
+
+	doc, err := client.NewDocFromMap(docMap, col.Definition())
+	require.NoError(t, err)
+
+	err = col.Create(ctx, doc)
+	require.NoError(t, err)
+	createCid := doc.Head()
+
+	err = doc.SetWithJSON([]byte(`{"name": "John Doe"}`))
+	require.NoError(t, err)
+
+	err = col.Update(ctx, doc)
+	require.NoError(t, err)
+	updateCid := doc.Head()
+
+	require.NotEqual(t, createCid, updateCid)
+
+	err = db.VerifySignatures(ctx, createCid.String())
+	require.NoError(t, err)
+
+	err = db.VerifySignatures(ctx, updateCid.String())
 	require.NoError(t, err)
 }
 

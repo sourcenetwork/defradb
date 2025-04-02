@@ -46,11 +46,10 @@ func (db *DB) VerifySignatures(ctx context.Context, blockCID string) error {
 		return err
 	}
 
-	return verifyBlockAndLinks(ctx, &linkSys, block)
+	return verifyIdentityAndBlock(ctx, &linkSys, block)
 }
 
-// verifyBlockAndLinks verifies a block's signature and recursively verifies all linked blocks.
-func verifyBlockAndLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
+func verifyIdentityAndBlock(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
 	if block.Signature == nil {
 		return ErrMissingSignature
 	}
@@ -76,26 +75,5 @@ func verifyBlockAndLinks(ctx context.Context, linkSys *linking.LinkSystem, block
 	}
 
 	_, err = coreblock.VerifyBlockSignature(block, linkSys)
-	if err != nil {
-		return err
-	}
-
-	for _, link := range block.AllLinks() {
-		nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.BlockSchemaPrototype)
-		if err != nil {
-			return err
-		}
-
-		linkedBlock, err := coreblock.GetFromNode(nd)
-		if err != nil {
-			return err
-		}
-
-		err = verifyBlockAndLinks(ctx, linkSys, linkedBlock)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
