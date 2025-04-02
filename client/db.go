@@ -144,6 +144,11 @@ type DB interface {
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+
+	// VerifySignatures verifies the signatures of a block and all its linked blocks.
+	// The context should carry the identity which will be used to verify the signatures.
+	// Returns an error if any signature verification fails.
+	VerifySignatures(ctx context.Context, blockCID string) error
 }
 
 // Store contains the core DefraDB read-write operations.

@@ -113,6 +113,9 @@ const (
 	errGetEmbeddingField                        string = "failed getting vector embedding field"
 	errFieldNotFound                            string = "field not found"
 	errGetDocForEmbedding                       string = "failed to get previous document for embedding generation"
+	errMissingSignature                         string = "block is missing required signature"
+	errSignatureIdentityMismatch                string = "signature was created by a different identity"
+	errNoIdentityInContext                      string = "no identity found in context"
 )
 
 var (
@@ -166,6 +169,9 @@ var (
 	ErrFieldNotFound                            = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
 	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
+	ErrMissingSignature                         = errors.New(errMissingSignature)
+	ErrSignatureIdentityMismatch                = errors.New(errSignatureIdentityMismatch)
+	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -734,4 +740,13 @@ func NewErrEmbeddingFieldNotFound(field string) error {
 
 func NewErrGetDocForEmbedding(inner error) error {
 	return errors.Wrap(errGetDocForEmbedding, inner)
+}
+
+// NewErrSignatureIdentityMismatch returns a new error indicating that the signature was created by a different identity.
+func NewErrSignatureIdentityMismatch(expected, actual string) error {
+	return errors.New(
+		errSignatureIdentityMismatch,
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
 }
