@@ -578,3 +578,17 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	}
 	return immutable.Some(res), nil
 }
+
+func (w *Wrapper) VerifyBlock(ctx context.Context, cid string) error {
+	args := []string{"client", "block", "verify"}
+
+	ident := identity.FromContext(ctx)
+	if ident.HasValue() {
+		args = append(args, "--identity", ident.Value().PublicKey.String())
+	}
+
+	args = append(args, cid)
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}

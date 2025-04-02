@@ -286,3 +286,7 @@ func (w *Wrapper) Host() string {
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	return w.client.GetNodeIdentity(ctx)
 }
+
+func (w *Wrapper) VerifyBlock(ctx context.Context, cid string) error {
+	return w.client.VerifyBlock(ctx, cid)
+}

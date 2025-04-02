@@ -213,9 +213,6 @@ type state struct {
 	// nodes.
 	docIDs [][]client.DocID
 
-	// Valid Cid string values by [UniqueCid] ID.
-	cids map[any]string
-
 	// isBench indicates wether the test is currently being benchmarked.
 	isBench bool
 
@@ -289,7 +286,6 @@ func newState(
 		collectionNames:          collectionNames,
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
-		cids:                     map[any]string{},
 		policyIDs:                [][]string{},
 		isBench:                  false,
 	}

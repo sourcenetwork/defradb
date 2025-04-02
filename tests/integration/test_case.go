@@ -867,3 +867,18 @@ type Wait struct {
 	// Duration is the duration to wait.
 	Duration time.Duration
 }
+
+// VerifyBlock is an action that will verify the signature of the given block.
+type VerifyBlock struct {
+	// The cid of the block to verify the signature of.
+	Cid string
+
+	// The identity of the block to verify the signature of.
+	Identity Identity
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}

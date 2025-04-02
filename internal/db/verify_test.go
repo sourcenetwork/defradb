@@ -75,7 +75,7 @@ func TestVerifySignatures_WithValidSignature_SuccessfullyVerifies(t *testing.T) 
 	doc, err := createTestDoc(t, db, ctx, docMap)
 	require.NoError(t, err)
 
-	err = db.VerifySignatures(ctx, doc.Head().String())
+	err = db.VerifyBlock(ctx, doc.Head().String())
 	require.NoError(t, err)
 }
 
@@ -107,17 +107,17 @@ func TestVerifySignatures_WithUpdateBlock_SuccessfullyVerifies(t *testing.T) {
 
 	require.NotEqual(t, createCid, updateCid)
 
-	err = db.VerifySignatures(ctx, createCid.String())
+	err = db.VerifyBlock(ctx, createCid.String())
 	require.NoError(t, err)
 
-	err = db.VerifySignatures(ctx, updateCid.String())
+	err = db.VerifyBlock(ctx, updateCid.String())
 	require.NoError(t, err)
 }
 
 func TestVerifySignatures_WithInvalidCID_ReturnsError(t *testing.T) {
 	db, _ := setupTestDB(t)
 
-	err := db.VerifySignatures(context.Background(), "invalid-cid")
+	err := db.VerifyBlock(context.Background(), "invalid-cid")
 	require.Error(t, err)
 }
 
@@ -132,7 +132,7 @@ func TestVerifySignatures_WithoutIdentity_ReturnsError(t *testing.T) {
 	doc, err := createTestDoc(t, db, context.Background(), docMap)
 	require.NoError(t, err)
 
-	err = db.VerifySignatures(context.Background(), doc.Head().String())
+	err = db.VerifyBlock(context.Background(), doc.Head().String())
 	require.Error(t, err)
 }
 
@@ -158,7 +158,7 @@ func TestVerifySignatures_WithDifferentIdentity_ReturnsError(t *testing.T) {
 	}
 
 	ctx = identity.WithContext(context.Background(), immutable.Some(ident2))
-	err = db.VerifySignatures(ctx, doc.Head().String())
+	err = db.VerifyBlock(ctx, doc.Head().String())
 	require.Error(t, err)
 }
 
@@ -183,6 +183,6 @@ func TestVerifySignatures_WithDifferentKeyTypes_SuccessfullyVerifies(t *testing.
 	doc, err := createTestDoc(t, db, ctx, docMap)
 	require.NoError(t, err)
 
-	err = db.VerifySignatures(ctx, doc.Head().String())
+	err = db.VerifyBlock(ctx, doc.Head().String())
 	require.NoError(t, err)
 }

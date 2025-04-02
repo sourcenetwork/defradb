@@ -115,6 +115,11 @@ func NewDefraCommand() *cobra.Command {
 		MakeCollectionPatchCommand(),
 	)
 
+	block := MakeBlockCommand()
+	block.AddCommand(
+		MakeBlockVerifyCommand(),
+	)
+
 	client := MakeClientCommand()
 	client.AddCommand(
 		MakePurgeCommand(),
@@ -130,6 +135,7 @@ func NewDefraCommand() *cobra.Command {
 		tx,
 		collection,
 		lens,
+		block,
 	)
 
 	keyring := MakeKeyringCommand()

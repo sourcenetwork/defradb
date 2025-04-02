@@ -523,3 +523,24 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 	}
 	return ident, err
 }
+
+func (c *Client) VerifyBlock(ctx context.Context, cid string) error {
+	methodURL := c.http.baseURL.JoinPath("block", "verify")
+
+	params := url.Values{}
+	params.Add("cid", cid)
+	methodURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.http.setDefaultHeaders(req)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}

@@ -432,6 +432,9 @@ func performAction(
 	case GetNodeIdentity:
 		performGetNodeIdentityAction(s, action)
 
+	case VerifyBlock:
+		performVerifySignatureAction(s, action)
+
 	case SetupComplete:
 		// no-op, just continue.
 
@@ -2519,5 +2522,20 @@ func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *s
 func resetMatchers(s *state) {
 	for _, matcher := range s.statefulMatchers {
 		matcher.ResetMatcherState()
+	}
+}
+
+func performVerifySignatureAction(s *state, action VerifyBlock) {
+	_, nodes := getNodesWithIDs(immutable.None[int](), s.nodes)
+	for i, node := range nodes {
+		ctx := getContextWithIdentity(s.ctx, s, immutable.Some(action.Identity), i)
+		err := node.VerifyBlock(ctx, action.Cid)
+
+		if action.ExpectedError != "" {
+			require.Error(s.t, err, s.testCase.Description)
+			require.Contains(s.t, err.Error(), action.ExpectedError, s.testCase.Description)
+		} else {
+			require.NoError(s.t, err, s.testCase.Description)
+		}
 	}
 }

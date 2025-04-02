@@ -22,10 +22,10 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
-// VerifySignatures verifies the signatures of a block and all its linked blocks.
+// VerifyBlock verifies the signatures of a block.
 // The context should carry the identity which will be used to verify the signatures.
-// Returns an error if any signature verification fails or if required signatures are missing.
-func (db *DB) VerifySignatures(ctx context.Context, blockCID string) error {
+// Returns an error if any signature verification fails.
+func (db *DB) VerifyBlock(ctx context.Context, blockCID string) error {
 	parsedCID, err := cid.Parse(blockCID)
 	if err != nil {
 		return err
