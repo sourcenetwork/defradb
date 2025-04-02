@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -18,28 +20,54 @@ import (
 )
 
 func TestStartReplicatorRetry_NoError(t *testing.T) {
+
+	// Run one command to start the Defra service
 	cmd := NewDefraCommand()
 	args := []string{
 		"start",
 		"--no-keyring",
-		"--url=127.0.0.1:",
 		"--acp-type=local",
 		"--replicator-retry-intervals=10,20,40",
 	}
 	cmd.SetArgs(args)
-
-	// We do not expect the start command to return an error. So we will start
-	// and wait 10 seconds. If it does not return, then we are good
 	done := make(chan error, 1)
 	go func() {
 		done <- cmd.Execute()
 	}()
 
+	// Service runs inside a goroutine
 	select {
-	case <-time.After(10 * time.Second):
-		// Pass
-	case <-done:
-		t.Fail() //Fail the test if the command returns an error
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Start command failed: %v", err)
+		}
+	default:
+	}
+
+	// Wait 5 seconds to give the service time to start
+	time.Sleep(5.0 * time.Second)
+
+	// Run another command to check the peer ID. If it exists, then the service started
+	cmd2 := NewDefraCommand()
+	cmd2.SetArgs([]string{"client", "p2p", "info"})
+	var output bytes.Buffer
+	cmd2.SetOut(&output)
+
+	if err := cmd2.Execute(); err != nil {
+		t.Fatalf("Failed to get peer info: %v", err)
+	}
+
+	var result struct {
+		ID    string   `json:"ID"`
+		Addrs []string `json:"Addrs"`
+	}
+
+	if err := json.Unmarshal(output.Bytes(), &result); err != nil {
+		t.Fatalf("Failed to parse JSON containing peer ID: %v", err)
+	}
+
+	if result.ID == "" {
+		t.Fatal("Peer ID is empty. Service did not start.")
 	}
 }
 
