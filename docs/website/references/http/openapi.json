@@ -932,6 +932,37 @@
                 ]
             }
         },
+        "/block/verify": {
+            "get": {
+                "description": "Verify block signature",
+                "operationId": "verify_block",
+                "parameters": [
+                    {
+                        "description": "Content ID of the block to verify",
+                        "in": "query",
+                        "name": "cid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "block"
+                ]
+            }
+        },
         "/ccip": {
             "post": {
                 "description": "CCIP POST endpoint",
