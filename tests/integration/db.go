@@ -239,9 +239,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 		netOpts: netOpts,
 	}
 
-	if node.Peer != nil {
-		st.peerInfo = node.DB.PeerInfo()
-	}
+	st.peerInfo = node.DB.PeerInfo()
 
 	return st, nil
 }

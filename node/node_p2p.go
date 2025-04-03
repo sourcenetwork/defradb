@@ -37,7 +37,7 @@ func (n *Node) startP2P(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.Peer = peer
+	n.Terminators = append(n.Terminators, peer.Close)
 
 	ident, err := n.DB.GetNodeIdentity(ctx)
 	if err != nil {
