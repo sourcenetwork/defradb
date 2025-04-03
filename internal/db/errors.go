@@ -742,11 +742,11 @@ func NewErrGetDocForEmbedding(inner error) error {
 	return errors.Wrap(errGetDocForEmbedding, inner)
 }
 
-// NewErrSignatureIdentityMismatch returns a new error indicating that the signature was created by a different identity.
-func NewErrSignatureIdentityMismatch(expected, actual string) error {
+// NewErrSignatureIdentityMismatch returns a new error indicating that the signature was created by a
+// different identity.
+func NewErrSignatureIdentityMismatch(identity string) error {
 	return errors.New(
 		errSignatureIdentityMismatch,
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
+		errors.NewKV("Identity", identity),
 	)
 }

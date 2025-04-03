@@ -16,10 +16,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/immutable"
 )
 
 const verifyTestSchema = `type User {

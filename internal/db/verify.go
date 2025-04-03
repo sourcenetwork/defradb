@@ -71,7 +71,7 @@ func verifyIdentityAndBlock(ctx context.Context, linkSys *linking.LinkSystem, bl
 
 	identityStr := string(sigBlock.Header.Identity)
 	if identityStr != ident.Value().PublicKey.String() {
-		return NewErrSignatureIdentityMismatch(ident.Value().PublicKey.String(), identityStr)
+		return NewErrSignatureIdentityMismatch(ident.Value().PublicKey.String())
 	}
 
 	_, err = coreblock.VerifyBlockSignature(block, linkSys)

@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -54,7 +55,9 @@ func (h *blockHandler) verifyBlock(w http.ResponseWriter, r *http.Request) {
 	db := mustGetContextClientDB(r)
 	cid := r.URL.Query().Get(blockCidParam)
 	if cid == "" {
-		responseJSON(w, http.StatusBadRequest, errorResponse{errors.New(errMissingParameter, errors.NewKV("Parameter", "cid"))})
+		responseJSON(w, http.StatusBadRequest, errorResponse{
+			errors.New(errMissingParameter, errors.NewKV("Parameter", "cid")),
+		})
 		return
 	}
 
