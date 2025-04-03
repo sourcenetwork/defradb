@@ -94,7 +94,7 @@ func NewPeer(
 		if p == nil {
 			cancel()
 		} else if err != nil {
-			err = errors.Join(err, p.Close())
+			p.Close()
 		}
 	}()
 
@@ -196,7 +196,7 @@ func NewPeer(
 }
 
 // Close the peer node and all its internal workers/goroutines/loops.
-func (p *Peer) Close() error {
+func (p *Peer) Close() {
 	defer p.cancel()
 
 	if p.bootCloser != nil {
@@ -245,8 +245,6 @@ func (p *Peer) Close() error {
 	case <-stopped:
 		timer.Stop()
 	}
-
-	return nil
 }
 
 // handleMessage loop manages the transition of messages

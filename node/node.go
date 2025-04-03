@@ -12,13 +12,11 @@ package node
 
 import (
 	"context"
-	"io"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
@@ -31,7 +29,7 @@ type Node struct {
 	// DB is the database instance
 	DB *db.DB
 	// Peer is the p2p networking subsystem instance
-	Peer io.Closer
+	Peer interface{ Close() }
 	// api http server instance
 	server *http.Server
 	// kms subsystem instance
@@ -88,7 +86,7 @@ func (n *Node) Close(ctx context.Context) error {
 		err = n.server.Shutdown(ctx)
 	}
 	if n.Peer != nil {
-		err = errors.Join(err, n.Peer.Close())
+		n.Peer.Close()
 	}
 	if n.DB != nil {
 		n.DB.Close()
