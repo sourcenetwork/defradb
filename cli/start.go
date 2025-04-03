@@ -72,7 +72,7 @@ func MakeStartCommand() *cobra.Command {
 			replicatorRetryIntervals := []time.Duration{}
 			for _, interval := range cfg.GetIntSlice("replicator.retryintervals") {
 				if interval <= 0 {
-					return ErrInvalidReplicatorRetryIntervals
+					return ErrNegativeReplicatorRetryIntervals
 				}
 				replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(interval)*time.Second)
 			}
