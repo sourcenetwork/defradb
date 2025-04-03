@@ -28,6 +28,8 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+var stdErr *os.File = os.Stderr
+
 type Action = action.Action
 type Actions = action.Actions
 type Stateful = action.Stateful[*state.State]
@@ -138,18 +140,11 @@ func executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCl
 
 // executeUntil executes a defra command with the given args and will block until it reads the given
 // `until` string in stderr.
-func executeUntil(ctx context.Context, args []string, until string) (string, error) {
+func executeUntil(ctx context.Context, s *state.State, args []string, until string) (string, error) {
 	read, write, err := os.Pipe()
 	if err != nil {
 		return "", err
 	}
-
-	// We cannot simply restore this once `until` was reached whilst the command is still exectuting,
-	// as that would create a race condition between the setting of os.Stderr here, and the writing to
-	// it in the production code.  That is reasonably minor, but the Golang race detector will complain.
-	//
-	// Instead we need to maintain our pipe whilst the command is executing.
-	stdErr := os.Stderr
 
 	cmd := cli.NewDefraCommand()
 	os.Stderr = write
@@ -192,10 +187,12 @@ func executeUntil(ctx context.Context, args []string, until string) (string, err
 		}
 	}()
 
+	var isDoneWg sync.WaitGroup
+	isDoneWg.Add(1)
 	go func() {
 		err := cmd.ExecuteContext(ctx)
 		if err != nil {
-			_, innerErr := write.WriteString(err.Error())
+			_, innerErr := stdErr.WriteString(err.Error())
 			if innerErr != nil {
 				panic(errors.Join(err, innerErr))
 			}
@@ -204,7 +201,20 @@ func executeUntil(ctx context.Context, args []string, until string) (string, err
 		if err != nil {
 			panic(err)
 		}
+		isDoneWg.Done()
 	}()
+
+	originalWait := s.Wait
+	s.Wait = func() {
+		originalWait()
+		// Because we are overwriting a singleton (os.Stderr) we must wait for the full command
+		// to finish executing before we allow the next test to execute, else the next test may
+		// try and overwrite os.Stderr before this execution finishes closing down the database.
+		//
+		// That might not cause any real bother, but the go test `-race` flag will complain.
+		isDoneWg.Wait()
+		os.Stderr = stdErr
+	}
 
 	// Block, until `until` is read from stderr
 	wg.Wait()

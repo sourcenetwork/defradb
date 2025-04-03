@@ -18,6 +18,12 @@ import (
 type State struct {
 	Ctx context.Context
 	T   testing.TB
+	// Wait must be called at the end of the test execution, to block
+	// continuation of the thread until Wait completes.
+	//
+	// Actions that do stuff that must be waited on before the next test
+	// begins (such as mutating global state) should append to this function.
+	Wait func()
 
 	// The root directory in which the defra config file should exist.
 	RootDir string

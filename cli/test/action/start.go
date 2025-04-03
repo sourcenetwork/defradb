@@ -40,7 +40,7 @@ func (a *StartCli) Execute() {
 	logPrefix := "Providing GraphQL endpoint at "
 	exampleUrl := "http://127.0.0.1:42571"
 
-	logLine, err := executeUntil(a.s.Ctx, args, logPrefix)
+	logLine, err := executeUntil(a.s.Ctx, a.s, args, logPrefix)
 
 	startIndex := strings.Index(logLine, logPrefix)
 	// Take the url from the logs so that it may be passed into other commands later.
