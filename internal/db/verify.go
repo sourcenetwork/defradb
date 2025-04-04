@@ -59,21 +59,6 @@ func verifyIdentityAndBlock(ctx context.Context, linkSys *linking.LinkSystem, bl
 		return ErrNoIdentityInContext
 	}
 
-	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, *block.Signature, coreblock.SignatureSchemaPrototype)
-	if err != nil {
-		return coreblock.NewErrCouldNotLoadSignatureBlock(err)
-	}
-
-	sigBlock, err := coreblock.GetSignatureBlockFromNode(nd)
-	if err != nil {
-		return coreblock.NewErrCouldNotLoadSignatureBlock(err)
-	}
-
-	identityStr := string(sigBlock.Header.Identity)
-	if identityStr != ident.Value().PublicKey.String() {
-		return NewErrSignatureIdentityMismatch(ident.Value().PublicKey.String())
-	}
-
-	_, err = coreblock.VerifyBlockSignature(block, linkSys)
+	_, err := coreblock.VerifyBlockSignatureWithKey(block, linkSys, ident.Value().PublicKey)
 	return err
 }

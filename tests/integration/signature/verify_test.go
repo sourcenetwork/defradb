@@ -13,7 +13,7 @@ package signature
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/internal/db"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -73,7 +73,7 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 			testUtils.VerifyBlock{
 				Identity:      testUtils.NodeIdentity(1).Value(),
 				Cid:           "bafyreicwhd5s762awsrx6eowwqkkfpq7r5nnjosiru7blgaxo32wx6enp4",
-				ExpectedError: db.ErrSignatureIdentityMismatch.Error(),
+				ExpectedError: coreblock.ErrSignaturePubKeyMismatch.Error(),
 			},
 		},
 	}

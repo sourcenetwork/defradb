@@ -97,32 +97,91 @@ func (sig *Signature) GenerateNode() ipld.Node {
 	return bindnode.Wrap(sig, SignatureSchema).Representation()
 }
 
-// VerifyBlockSignature verifies the signature of a block.
+// verifySignature performs the cryptographic verification and returns appropriate results
+func verifySignature(pubKey crypto.PublicKey, signedBytes, sigValue []byte) error {
+	valid, err := pubKey.Verify(signedBytes, sigValue)
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return crypto.ErrSignatureVerification
+	}
+	return nil
+}
+
+// VerifyBlockSignature verifies the signature of a block using the link system.
 // The first return value is true if it actually ran cryptographic verification.
 func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) {
 	if block.Signature == nil {
 		return false, nil
 	}
 
+	signedBytes, sigBlock, err := getSignedDataAndSignature(block, lsys)
+	if err != nil {
+		return false, err
+	}
+
+	pubKey, err := getPublicKeyFromSignature(sigBlock)
+	if err != nil {
+		return false, err
+	}
+
+	return true, verifySignature(pubKey, signedBytes, sigBlock.Value)
+}
+
+// VerifyBlockSignatureWithKey verifies the signature of a block using a public key.
+// The first return value is true if it actually ran cryptographic verification.
+func VerifyBlockSignatureWithKey(block *Block, lsys *linking.LinkSystem, pubKey crypto.PublicKey) (bool, error) {
+	if block.Signature == nil {
+		return false, nil
+	}
+
+	signedBytes, sigBlock, err := getSignedDataAndSignature(block, lsys)
+	if err != nil {
+		return false, err
+	}
+
+	// Verify that the identity matches the signature's identity
+	if string(sigBlock.Header.Identity) != pubKey.String() {
+		return false, ErrSignaturePubKeyMismatch
+	}
+
+	return true, verifySignature(pubKey, signedBytes, sigBlock.Value)
+}
+
+func getSignedDataAndSignature(block *Block, lsys *linking.LinkSystem) ([]byte, *Signature, error) {
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
 	if err != nil {
-		return false, NewErrCouldNotLoadSignatureBlock(err)
+		return nil, nil, NewErrCouldNotLoadSignatureBlock(err)
 	}
 
 	sigBlock, err := GetSignatureBlockFromNode(nd)
 	if err != nil {
-		return false, NewErrCouldNotLoadSignatureBlock(err)
+		return nil, nil, NewErrCouldNotLoadSignatureBlock(err)
 	}
+	return signedBytes, sigBlock, nil
+}
 
+// getBlockBytesToSign returns the bytes to sign for a block
+func getBlockBytesToSign(block *Block) ([]byte, error) {
 	blockToVerify := *block
 	blockToVerify.Signature = nil
 
 	signedBytes, err := marshalNode(&blockToVerify, BlockSchema)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	// Convert the hex-encoded public key to a crypto.PublicKey using the new function
+	return signedBytes, nil
+}
+
+// getPublicKeyFromSignature extracts the public key from a signature block
+func getPublicKeyFromSignature(sigBlock *Signature) (crypto.PublicKey, error) {
 	var keyType crypto.KeyType
 	switch sigBlock.Header.Type {
 	case SignatureTypeEd25519:
@@ -130,24 +189,8 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) 
 	case SignatureTypeECDSA256K:
 		keyType = crypto.KeyTypeSecp256k1
 	default:
-		return false, crypto.ErrUnsupportedPrivKeyType
+		return nil, crypto.ErrUnsupportedPrivKeyType
 	}
 
-	pubKey, err := crypto.PublicKeyFromString(keyType, string(sigBlock.Header.Identity))
-	if err != nil {
-		return false, err
-	}
-
-	valid, err := pubKey.Verify(signedBytes, sigBlock.Value)
-
-	if err != nil {
-		// We return true for 'verified' because we did run cryptographic verification
-		return true, err
-	}
-
-	if !valid {
-		return true, crypto.ErrSignatureVerification
-	}
-
-	return true, nil
+	return crypto.PublicKeyFromString(keyType, string(sigBlock.Header.Identity))
 }

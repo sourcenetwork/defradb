@@ -114,7 +114,6 @@ const (
 	errFieldNotFound                            string = "field not found"
 	errGetDocForEmbedding                       string = "failed to get previous document for embedding generation"
 	errMissingSignature                         string = "block is missing required signature"
-	errSignatureIdentityMismatch                string = "signature was created by a different identity"
 	errNoIdentityInContext                      string = "no identity found in context"
 )
 
@@ -170,7 +169,7 @@ var (
 	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
 	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
 	ErrMissingSignature                         = errors.New(errMissingSignature)
-	ErrSignatureIdentityMismatch                = errors.New(errSignatureIdentityMismatch)
+
 	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 )
 
@@ -740,13 +739,4 @@ func NewErrEmbeddingFieldNotFound(field string) error {
 
 func NewErrGetDocForEmbedding(inner error) error {
 	return errors.Wrap(errGetDocForEmbedding, inner)
-}
-
-// NewErrSignatureIdentityMismatch returns a new error indicating that the signature was created by a
-// different identity.
-func NewErrSignatureIdentityMismatch(identity string) error {
-	return errors.New(
-		errSignatureIdentityMismatch,
-		errors.NewKV("Identity", identity),
-	)
 }
