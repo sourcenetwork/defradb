@@ -50,14 +50,14 @@ func (a *StartWithArgsCli) Execute() {
 
 	// If we expect an error, then we will seek for it...
 	if a.expectedError != nil {
-		readLine, err := executeUntil(a.s.Ctx, args, a.expectedError.Error())
+		readLine, err := executeUntil(a.s.Ctx, a.s, args, a.expectedError.Error())
 		require.NoError(a.s.T, err)
 		require.Contains(a.s.T, readLine, a.expectedError.Error())
 		return
 	}
 
 	// ...otherwise, we will seek for the logPrefix indicating that the service has started
-	logLine, err := executeUntil(a.s.Ctx, args, logPrefix)
+	logLine, err := executeUntil(a.s.Ctx, a.s, args, logPrefix)
 	startIndex := strings.Index(logLine, logPrefix)
 	a.s.Url = logLine[startIndex+len(logPrefix) : startIndex+len(logPrefix)+len(exampleUrl)]
 
