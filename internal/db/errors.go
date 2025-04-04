@@ -170,7 +170,7 @@ var (
 	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
 	ErrMissingSignature                         = errors.New(errMissingSignature)
 
-	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
+	ErrNoIdentityInContext = errors.New(errNoIdentityInContext)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
