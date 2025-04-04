@@ -18,14 +18,11 @@ import (
 )
 
 func TestStart_WithReplicatorInterval_NoError(t *testing.T) {
-
 	arguments := []string{"--replicator-retry-intervals=10,20,40"}
-
 	test := &integration.Test{
 		Actions: []action.Action{
 			action.StartWithArgs(arguments, nil),
 		},
 	}
-
 	test.Execute(t)
 }
