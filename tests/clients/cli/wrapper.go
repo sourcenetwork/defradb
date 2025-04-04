@@ -580,7 +580,7 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) VerifyBlock(ctx context.Context, cid string) error {
-	args := []string{"client", "block", "verify"}
+	args := []string{"client", "block", "verify-signature"}
 
 	ident := identity.FromContext(ctx)
 	if ident.HasValue() {

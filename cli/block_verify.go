@@ -11,14 +11,12 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-func MakeBlockVerifyCommand() *cobra.Command {
+func MakeBlockVerifySignatureCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "verify",
+		Use:   "verify-signature",
 		Short: "Verify the signature of a block",
 		Long: `Verify the signature of a block.
 		
@@ -26,11 +24,11 @@ Notes:
   - The identity must be specified.
 
 Example to verify the signature of a block:
-  defradb client block verify -i <identity> <cid>
+  defradb client block verify-signature -i <identity> <cid>
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
-				return fmt.Errorf("cid is required")
+				return NewErrMissingRequiredParameter("cid")
 			}
 
 			db := mustGetContextDB(cmd)
@@ -40,7 +38,7 @@ Example to verify the signature of a block:
 			}
 
 			out := cmd.OutOrStdout()
-			_, err = out.Write([]byte("Block verified\n"))
+			_, err = out.Write([]byte("Block's signature verified\n"))
 			return err
 		},
 	}

@@ -525,7 +525,7 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 }
 
 func (c *Client) VerifyBlock(ctx context.Context, cid string) error {
-	methodURL := c.http.baseURL.JoinPath("block", "verify")
+	methodURL := c.http.baseURL.JoinPath("block", "verify-signature")
 
 	params := url.Values{}
 	params.Add("cid", cid)

@@ -14,16 +14,33 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errMissingParameter = "missing required parameter"
-	blockCidParam       = "cid"
+	blockCidParam string = "cid"
 )
 
 type blockHandler struct{}
+
+// verifyBlock handles block signature verification requests
+func (h *blockHandler) verifyBlock(w http.ResponseWriter, r *http.Request) {
+	db := mustGetContextClientDB(r)
+	cid := r.URL.Query().Get(blockCidParam)
+	if cid == "" {
+		responseJSON(w, http.StatusBadRequest, errorResponse{
+			NewErrMissingRequiredParameter(blockCidParam),
+		})
+		return
+	}
+
+	err := db.VerifyBlock(r.Context(), cid)
+	if err != nil {
+		responseJSON(w, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(w, http.StatusOK, nil)
+}
 
 func (h *blockHandler) bindRoutes(router *Router) {
 	errorResponse := &openapi3.ResponseRef{
@@ -47,25 +64,5 @@ func (h *blockHandler) bindRoutes(router *Router) {
 	verifyBlock.Responses.Set("200", successResponse)
 	verifyBlock.Responses.Set("400", errorResponse)
 
-	router.AddRoute("/block/verify", http.MethodGet, verifyBlock, h.verifyBlock)
-}
-
-// verifyBlock handles block signature verification requests
-func (h *blockHandler) verifyBlock(w http.ResponseWriter, r *http.Request) {
-	db := mustGetContextClientDB(r)
-	cid := r.URL.Query().Get(blockCidParam)
-	if cid == "" {
-		responseJSON(w, http.StatusBadRequest, errorResponse{
-			errors.New(errMissingParameter, errors.NewKV("Parameter", "cid")),
-		})
-		return
-	}
-
-	err := db.VerifyBlock(r.Context(), cid)
-	if err != nil {
-		responseJSON(w, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	responseJSON(w, http.StatusOK, nil)
+	router.AddRoute("/block/verify-signature", http.MethodGet, verifyBlock, h.verifyBlock)
 }
