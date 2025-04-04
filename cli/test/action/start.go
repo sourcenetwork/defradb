@@ -18,12 +18,27 @@ import (
 
 type StartCli struct {
 	stateful
+	inlineArgs    []string
+	expectedError error
 }
 
 var _ Action = (*StartCli)(nil)
 
+// Start with additional CLI arguments, and/or expecting an error (for example, if you
+// are testing with flags that should cause the command to fail)
+func StartWithArgs(args []string, expectedErr error) *StartCli {
+	cli := &StartCli{
+		inlineArgs:    args,
+		expectedError: expectedErr,
+	}
+	return cli
+}
+
+// The minimal Start command will call StartWithArgs using no additional arguments,
+// and will not expect an error. This will cause Execute() to continue until the service
+// has been successfully started.
 func Start() *StartCli {
-	return &StartCli{}
+	return StartWithArgs([]string{}, nil)
 }
 
 func (a *StartCli) Execute() {
@@ -37,15 +52,22 @@ func (a *StartCli) Execute() {
 		"--acp-type=local",
 	}
 
+	args = append(args, a.inlineArgs...)
+
 	logPrefix := "Providing GraphQL endpoint at "
 	exampleUrl := "http://127.0.0.1:42571"
 
-	logLine, err := executeUntil(a.s.Ctx, a.s, args, logPrefix)
+	// If we expect an error, then we will seek for it...
+	if a.expectedError != nil {
+		readLine, err := executeUntil(a.s.Ctx, a.s, args, a.expectedError.Error())
+		require.NoError(a.s.T, err)
+		require.Contains(a.s.T, readLine, a.expectedError.Error())
+		return
+	}
 
+	// ...otherwise, we will seek for the logPrefix indicating that the service has started
+	logLine, err := executeUntil(a.s.Ctx, a.s, args, logPrefix)
 	startIndex := strings.Index(logLine, logPrefix)
-	// Take the url from the logs so that it may be passed into other commands later.
-	// This is quite a lazy solution, if it breaks, strongly consider pulling it from the generated config
-	// file instead.
 	a.s.Url = logLine[startIndex+len(logPrefix) : startIndex+len(logPrefix)+len(exampleUrl)]
 
 	require.NoError(a.s.T, err)
