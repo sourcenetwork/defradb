@@ -23,28 +23,29 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-const verifyTestSchema = `type User {
+const testUserSchema = `type User {
 	name: String
 	age: Int
 }`
 
-func setupTestDB(t *testing.T) (*DB, identity.Identity) {
-	privKey, err := crypto.GenerateKey(crypto.KeyTypeSecp256k1)
-	require.NoError(t, err)
-
-	pubKey := privKey.GetPublic()
-	ident := identity.Identity{
-		PublicKey:  pubKey,
-		PrivateKey: privKey,
-	}
-
+func setupTestDB(t *testing.T) *DB {
 	db, err := newBadgerDB(context.Background())
 	require.NoError(t, err)
 
-	_, err = db.AddSchema(context.Background(), verifyTestSchema)
+	_, err = db.AddSchema(context.Background(), testUserSchema)
 	require.NoError(t, err)
 
-	return db, ident
+	return db
+}
+
+func createIdentity(t *testing.T, keyType crypto.KeyType) identity.Identity {
+	privKey, err := crypto.GenerateKey(keyType)
+	require.NoError(t, err)
+
+	return identity.Identity{
+		PublicKey:  privKey.GetPublic(),
+		PrivateKey: privKey,
+	}
 }
 
 func createTestDoc(t *testing.T, db *DB, ctx context.Context, docMap map[string]any) (*client.Document, error) {
@@ -65,7 +66,8 @@ func createTestDoc(t *testing.T, db *DB, ctx context.Context, docMap map[string]
 }
 
 func TestVerifySignatures_WithValidSignature_SuccessfullyVerifies(t *testing.T) {
-	db, ident := setupTestDB(t)
+	db := setupTestDB(t)
+	ident := createIdentity(t, crypto.KeyTypeSecp256k1)
 
 	docMap := map[string]any{
 		"name": "John",
@@ -81,7 +83,8 @@ func TestVerifySignatures_WithValidSignature_SuccessfullyVerifies(t *testing.T) 
 }
 
 func TestVerifySignatures_WithUpdateBlock_SuccessfullyVerifies(t *testing.T) {
-	db, ident := setupTestDB(t)
+	db := setupTestDB(t)
+	ident := createIdentity(t, crypto.KeyTypeSecp256k1)
 
 	ctx := identity.WithContext(context.Background(), immutable.Some(ident))
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -116,29 +119,32 @@ func TestVerifySignatures_WithUpdateBlock_SuccessfullyVerifies(t *testing.T) {
 }
 
 func TestVerifySignatures_WithInvalidCID_ReturnsError(t *testing.T) {
-	db, _ := setupTestDB(t)
+	db := setupTestDB(t)
 
 	err := db.VerifyBlock(context.Background(), "invalid-cid")
 	require.Error(t, err)
 }
 
 func TestVerifySignatures_WithoutIdentity_ReturnsError(t *testing.T) {
-	db, _ := setupTestDB(t)
+	db := setupTestDB(t)
+	ident := createIdentity(t, crypto.KeyTypeSecp256k1)
 
 	docMap := map[string]any{
 		"name": "John",
 		"age":  30,
 	}
 
-	doc, err := createTestDoc(t, db, context.Background(), docMap)
+	ctx := identity.WithContext(context.Background(), immutable.Some(ident))
+	doc, err := createTestDoc(t, db, ctx, docMap)
 	require.NoError(t, err)
 
 	err = db.VerifyBlock(context.Background(), doc.Head().String())
-	require.Error(t, err)
+	require.ErrorIs(t, err, ErrNoIdentityInContext)
 }
 
 func TestVerifySignatures_WithDifferentIdentity_ReturnsError(t *testing.T) {
-	db, ident1 := setupTestDB(t)
+	db := setupTestDB(t)
+	ident1 := createIdentity(t, crypto.KeyTypeSecp256k1)
 
 	docMap := map[string]any{
 		"name": "John",
@@ -164,16 +170,8 @@ func TestVerifySignatures_WithDifferentIdentity_ReturnsError(t *testing.T) {
 }
 
 func TestVerifySignatures_WithDifferentKeyTypes_SuccessfullyVerifies(t *testing.T) {
-	db, _ := setupTestDB(t)
-
-	privKey, err := crypto.GenerateKey(crypto.KeyTypeEd25519)
-	require.NoError(t, err)
-
-	pubKey := privKey.GetPublic()
-	ident := identity.Identity{
-		PublicKey:  pubKey,
-		PrivateKey: privKey,
-	}
+	db := setupTestDB(t)
+	ident := createIdentity(t, crypto.KeyTypeEd25519)
 
 	docMap := map[string]any{
 		"name": "John",
