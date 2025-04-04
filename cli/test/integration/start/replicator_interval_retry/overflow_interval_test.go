@@ -19,7 +19,6 @@ import (
 )
 
 func TestStart_WithReplicatorInterval_OutOfRangeIntervalError(t *testing.T) {
-
 	arguments := []string{"--replicator-retry-intervals=10,40,55555555555555555555555555555555555555555555555555555555555555555555555"}
 	expectedError := "invalid argument \"10,40,55555555555555555555555555555555555555555555555555555555555555555555555\" " +
 		"for \"--replicator-retry-intervals\" flag: strconv.Atoi: parsing " +
@@ -29,6 +28,5 @@ func TestStart_WithReplicatorInterval_OutOfRangeIntervalError(t *testing.T) {
 			action.StartWithArgs(arguments, errors.New(expectedError)),
 		},
 	}
-
 	test.Execute(t)
 }

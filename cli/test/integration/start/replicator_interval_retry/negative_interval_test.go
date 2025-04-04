@@ -19,14 +19,11 @@ import (
 )
 
 func TestStart_WithReplicatorInterval_NegativeIntervalError(t *testing.T) {
-
 	arguments := []string{"--replicator-retry-intervals=10,-20,40"}
-
 	test := &integration.Test{
 		Actions: []action.Action{
 			action.StartWithArgs(arguments, cli.ErrNegativeReplicatorRetryIntervals),
 		},
 	}
-
 	test.Execute(t)
 }
