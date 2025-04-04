@@ -57,10 +57,14 @@ func (test *Test) Execute(t testing.TB) {
 
 	testo.Log(t, actions)
 
-	testo.ExecuteS(actions, &state.State{
-		T:   t,
-		Ctx: ctx,
-	})
+	state := &state.State{
+		T:    t,
+		Ctx:  ctx,
+		Wait: func() {},
+	}
+	testo.ExecuteS(actions, state)
+
+	state.Wait()
 }
 
 func prependStart(actions action.Actions) action.Actions {
