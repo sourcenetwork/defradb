@@ -26,13 +26,3 @@ func TestStart(t *testing.T) {
 
 	test.Execute(t)
 }
-
-func TestStart2(t *testing.T) {
-	test := &integration.Test{
-		Actions: []action.Action{
-			action.Start(),
-		},
-	}
-
-	test.Execute(t)
-}
