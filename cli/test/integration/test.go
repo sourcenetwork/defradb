@@ -72,6 +72,10 @@ func prependStart(actions action.Actions) action.Actions {
 		return actions
 	}
 
+	if hasType[*action.StartWithArgsCli](actions) {
+		return actions
+	}
+
 	result := make(action.Actions, 1, len(actions)+1)
 	result[0] = action.Start()
 	result = append(result, actions...)
