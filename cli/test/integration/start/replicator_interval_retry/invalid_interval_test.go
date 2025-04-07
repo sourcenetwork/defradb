@@ -23,7 +23,7 @@ func TestStart_WithReplicatorInterval_InvalidIntervalError(t *testing.T) {
 	expectedError := "invalid argument \"garbage\" for \"--replicator-retry-intervals\" flag: strconv.Atoi: parsing \"garbage\": invalid syntax"
 	test := &integration.Test{
 		Actions: []action.Action{
-			action.StartWithArgs(arguments, errors.New(expectedError)),
+			action.StartWithArgsE(arguments, errors.New(expectedError)),
 		},
 	}
 	test.Execute(t)

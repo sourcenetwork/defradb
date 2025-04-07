@@ -24,12 +24,22 @@ type StartCli struct {
 
 var _ Action = (*StartCli)(nil)
 
-// Start with additional CLI arguments, and/or expecting an error (for example, if you
+// Start with additional CLI arguments, and the expected an error (for example, if you
 // are testing with flags that should cause the command to fail)
-func StartWithArgs(args []string, expectedErr error) *StartCli {
+func StartWithArgsE(args []string, expectedErr error) *StartCli {
 	cli := &StartCli{
 		inlineArgs:    args,
 		expectedError: expectedErr,
+	}
+	return cli
+}
+
+// Start with additional CLI arguments, without an expected error (the command should
+// cause the service to start successfully)
+func StartWithArgs(args []string) *StartCli {
+	cli := &StartCli{
+		inlineArgs:    args,
+		expectedError: nil,
 	}
 	return cli
 }
@@ -38,7 +48,7 @@ func StartWithArgs(args []string, expectedErr error) *StartCli {
 // and will not expect an error. This will cause Execute() to continue until the service
 // has been successfully started.
 func Start() *StartCli {
-	return StartWithArgs([]string{}, nil)
+	return StartWithArgs([]string{})
 }
 
 func (a *StartCli) Execute() {

@@ -25,7 +25,7 @@ func TestStart_WithReplicatorInterval_OutOfRangeIntervalError(t *testing.T) {
 		"\"55555555555555555555555555555555555555555555555555555555555555555555555\": value out of range"
 	test := &integration.Test{
 		Actions: []action.Action{
-			action.StartWithArgs(arguments, errors.New(expectedError)),
+			action.StartWithArgsE(arguments, errors.New(expectedError)),
 		},
 	}
 	test.Execute(t)
