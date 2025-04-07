@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/crypto"
 )
 

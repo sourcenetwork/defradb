@@ -11,8 +11,9 @@
 package cli
 
 import (
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 func MakeBlockVerifySignatureCommand() *cobra.Command {
