@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
@@ -67,6 +68,15 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
+			// Parse the retry intervals from the config files from a slice of ints to a slice of time.Durations
+			replicatorRetryIntervals := []time.Duration{}
+			for _, interval := range cfg.GetIntSlice("replicator.retryintervals") {
+				if interval <= 0 {
+					return ErrNegativeReplicatorRetryIntervals
+				}
+				replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(interval)*time.Second)
+			}
+
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
@@ -79,6 +89,7 @@ func MakeStartCommand() *cobra.Command {
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
 				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
@@ -284,7 +295,11 @@ func MakeStartCommand() *cobra.Command {
 	cmd.PersistentFlags().String(
 		"acp-type",
 		cfg.GetString(configFlags["acp.type"]),
-		"Specify the acp engine to use (supported: none (default), local, source-hub)",
+		"Specify the acp engine to use (supported: none (default), local, source-hub)")
+	cmd.PersistentFlags().IntSlice(
+		"replicator-retry-intervals",
+		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),
+		"Retry intervals for the replicator. Format is a comma-separated list of durations. Example: 10,20,40,80,160,320",
 	)
 	return cmd
 }

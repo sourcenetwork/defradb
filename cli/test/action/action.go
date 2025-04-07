@@ -139,7 +139,7 @@ func executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCl
 }
 
 // executeUntil executes a defra command with the given args and will block until it reads the given
-// `until` string in stderr.
+// until string in stderr.
 func executeUntil(ctx context.Context, s *state.State, args []string, until string) (string, error) {
 	read, write, err := os.Pipe()
 	if err != nil {
@@ -211,12 +211,12 @@ func executeUntil(ctx context.Context, s *state.State, args []string, until stri
 		// to finish executing before we allow the next test to execute, else the next test may
 		// try and overwrite os.Stderr before this execution finishes closing down the database.
 		//
-		// That might not cause any real bother, but the go test `-race` flag will complain.
+		// That might not cause any real bother, but the go test -race flag will complain.
 		isDoneWg.Wait()
 		os.Stderr = stdErr
 	}
 
-	// Block, until `until` is read from stderr
+	// Block, until until is read from stderr
 	wg.Wait()
 
 	return targetLine, nil
