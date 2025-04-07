@@ -97,7 +97,7 @@ func (sig *Signature) GenerateNode() ipld.Node {
 	return bindnode.Wrap(sig, SignatureSchema).Representation()
 }
 
-// verifySignature performs the cryptographic verification and returns appropriate results
+// verifySignature performs the cryptographic verification
 func verifySignature(pubKey crypto.PublicKey, signedBytes, sigValue []byte) error {
 	valid, err := pubKey.Verify(signedBytes, sigValue)
 	if err != nil {
@@ -116,7 +116,12 @@ func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) 
 		return false, nil
 	}
 
-	signedBytes, sigBlock, err := getSignedDataAndSignature(block, lsys)
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return false, err
+	}
+
+	sigBlock, err := loadSignatureBlock(block, lsys)
 	if err != nil {
 		return false, err
 	}
@@ -136,7 +141,12 @@ func VerifyBlockSignatureWithKey(block *Block, lsys *linking.LinkSystem, pubKey 
 		return false, nil
 	}
 
-	signedBytes, sigBlock, err := getSignedDataAndSignature(block, lsys)
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return false, err
+	}
+
+	sigBlock, err := loadSignatureBlock(block, lsys)
 	if err != nil {
 		return false, err
 	}
@@ -149,22 +159,17 @@ func VerifyBlockSignatureWithKey(block *Block, lsys *linking.LinkSystem, pubKey 
 	return true, verifySignature(pubKey, signedBytes, sigBlock.Value)
 }
 
-func getSignedDataAndSignature(block *Block, lsys *linking.LinkSystem) ([]byte, *Signature, error) {
-	signedBytes, err := getBlockBytesToSign(block)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func loadSignatureBlock(block *Block, lsys *linking.LinkSystem) (*Signature, error) {
 	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
 	if err != nil {
-		return nil, nil, NewErrCouldNotLoadSignatureBlock(err)
+		return nil, NewErrCouldNotLoadSignatureBlock(err)
 	}
 
 	sigBlock, err := GetSignatureBlockFromNode(nd)
 	if err != nil {
-		return nil, nil, NewErrCouldNotLoadSignatureBlock(err)
+		return nil, NewErrCouldNotLoadSignatureBlock(err)
 	}
-	return signedBytes, sigBlock, nil
+	return sigBlock, nil
 }
 
 // getBlockBytesToSign returns the bytes to sign for a block
@@ -172,12 +177,7 @@ func getBlockBytesToSign(block *Block) ([]byte, error) {
 	blockToVerify := *block
 	blockToVerify.Signature = nil
 
-	signedBytes, err := marshalNode(&blockToVerify, BlockSchema)
-	if err != nil {
-		return nil, err
-	}
-
-	return signedBytes, nil
+	return marshalNode(&blockToVerify, BlockSchema)
 }
 
 // getPublicKeyFromSignature extracts the public key from a signature block

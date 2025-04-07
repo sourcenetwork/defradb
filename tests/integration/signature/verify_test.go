@@ -13,6 +13,7 @@ package signature
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -46,6 +47,36 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 			testUtils.VerifyBlock{
 				Identity: testUtils.NodeIdentity(0).Value(),
 				Cid:      "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
+		},
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+			},
+			testUtils.VerifyBlock{
+				Identity: testUtils.NodeIdentity(0).Value(),
+				Cid:      "bafyreifawqsvcshb77gorqbnopnyg6mi6ft3iz7begvlhm67hnkhyqnfla",
 			},
 		},
 	}

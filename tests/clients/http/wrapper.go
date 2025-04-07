@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -287,6 +288,6 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	return w.client.GetNodeIdentity(ctx)
 }
 
-func (w *Wrapper) VerifyBlock(ctx context.Context, cid string) error {
-	return w.client.VerifyBlock(ctx, cid)
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	return w.client.VerifySignature(ctx, cid, pubKey)
 }

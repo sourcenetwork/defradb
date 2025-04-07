@@ -28,6 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -524,11 +525,13 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 	return ident, err
 }
 
-func (c *Client) VerifyBlock(ctx context.Context, cid string) error {
+func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
 	methodURL := c.http.baseURL.JoinPath("block", "verify-signature")
 
 	params := url.Values{}
 	params.Add("cid", cid)
+	params.Add("public-key", pubKey.String())
+	params.Add("type", string(pubKey.Type()))
 	methodURL.RawQuery = params.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

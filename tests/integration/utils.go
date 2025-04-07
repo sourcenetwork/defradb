@@ -2527,9 +2527,9 @@ func resetMatchers(s *state) {
 
 func performVerifySignatureAction(s *state, action VerifyBlock) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.nodes)
-	for i, node := range nodes {
-		ctx := getContextWithIdentity(s.ctx, s, immutable.Some(action.Identity), i)
-		err := node.VerifyBlock(ctx, action.Cid)
+	for _, node := range nodes {
+		ident := getIdentity(s, immutable.Some(action.Identity))
+		err := node.VerifySignature(s.ctx, action.Cid, ident.PublicKey)
 
 		if action.ExpectedError != "" {
 			require.Error(s.t, err, s.testCase.Description)

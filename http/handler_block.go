@@ -14,10 +14,13 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 const (
-	blockCidParam string = "cid"
+	blockCidParam  string = "cid"
+	publicKeyParam string = "public-key"
+	typeParam      string = "type"
 )
 
 type blockHandler struct{}
@@ -33,7 +36,27 @@ func (h *blockHandler) verifyBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := db.VerifyBlock(r.Context(), cid)
+	publicKey := r.URL.Query().Get(publicKeyParam)
+	if publicKey == "" {
+		responseJSON(w, http.StatusBadRequest, errorResponse{
+			NewErrMissingRequiredParameter(publicKeyParam),
+		})
+		return
+	}
+
+	keyType := crypto.KeyTypeSecp256k1
+	typeStr := r.URL.Query().Get(typeParam)
+	if typeStr != "" {
+		keyType = crypto.KeyType(typeStr)
+	}
+
+	pubKey, err := crypto.PublicKeyFromString(keyType, publicKey)
+	if err != nil {
+		responseJSON(w, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	err = db.VerifySignature(r.Context(), cid, pubKey)
 	if err != nil {
 		responseJSON(w, http.StatusBadRequest, errorResponse{err})
 		return

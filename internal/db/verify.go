@@ -18,15 +18,14 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
-// VerifyBlock verifies the signatures of a block.
-// The context should carry the identity which will be used to verify the signatures.
+// VerifySignature verifies the signatures of a block using a public key.
 // Returns an error if any signature verification fails.
-func (db *DB) VerifyBlock(ctx context.Context, blockCID string) error {
-	parsedCID, err := cid.Parse(blockCID)
+func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	parsedCid, err := cid.Parse(blockCid)
 	if err != nil {
 		return err
 	}
@@ -36,7 +35,7 @@ func (db *DB) VerifyBlock(ctx context.Context, blockCID string) error {
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true
 
-	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: parsedCID}, coreblock.BlockSchemaPrototype)
+	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: parsedCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
 		return err
 	}
@@ -46,19 +45,10 @@ func (db *DB) VerifyBlock(ctx context.Context, blockCID string) error {
 		return err
 	}
 
-	return verifyIdentityAndBlock(ctx, &linkSys, block)
-}
-
-func verifyIdentityAndBlock(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
 	if block.Signature == nil {
 		return ErrMissingSignature
 	}
 
-	ident := identity.FromContext(ctx)
-	if !ident.HasValue() {
-		return ErrNoIdentityInContext
-	}
-
-	_, err := coreblock.VerifyBlockSignatureWithKey(block, linkSys, ident.Value().PublicKey)
+	_, err = coreblock.VerifyBlockSignatureWithKey(block, &linkSys, pubKey)
 	return err
 }

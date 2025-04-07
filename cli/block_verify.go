@@ -11,28 +11,35 @@
 package cli
 
 import (
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/spf13/cobra"
 )
 
 func MakeBlockVerifySignatureCommand() *cobra.Command {
+	var typeStr string
 	var cmd = &cobra.Command{
+		Args:  cobra.ExactArgs(2),
 		Use:   "verify-signature",
 		Short: "Verify the signature of a block",
-		Long: `Verify the signature of a block.
+		Long: `Verify the signature of a block by providing the type and public key of the identity.
 		
 Notes:
-  - The identity must be specified.
+  - If 'type' is not provided, secp256k1 is assumed.
 
 Example to verify the signature of a block:
-  defradb client block verify-signature -i <identity> <cid>
+  defradb client block verify-signature --type <type> <public-key> <cid> 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return NewErrMissingRequiredParameter("cid")
-			}
-
 			db := mustGetContextDB(cmd)
-			err := db.VerifyBlock(cmd.Context(), args[0])
+			keyType := crypto.KeyTypeSecp256k1
+			if typeStr != "" {
+				keyType = crypto.KeyType(typeStr)
+			}
+			pubKey, err := crypto.PublicKeyFromString(keyType, args[0])
+			if err != nil {
+				return err
+			}
+			err = db.VerifySignature(cmd.Context(), args[1], pubKey)
 			if err != nil {
 				return err
 			}
@@ -42,5 +49,6 @@ Example to verify the signature of a block:
 			return err
 		},
 	}
+	cmd.Flags().StringVarP(&typeStr, "type", "t", "", "Type of the identity's public key")
 	return cmd
 }
