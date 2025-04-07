@@ -932,7 +932,7 @@
                 ]
             }
         },
-        "/block/verify": {
+        "/block/verify-signature": {
             "get": {
                 "description": "Verify block signature",
                 "operationId": "verify_block",

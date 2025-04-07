@@ -37,5 +37,5 @@ Manage blocks of a running DefraDB instance.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client block verify](defradb_client_block_verify.md)	 - Verify the signature of a block
+* [defradb client block verify-signature](defradb_client_block_verify-signature.md)	 - Verify the signature of a block
 

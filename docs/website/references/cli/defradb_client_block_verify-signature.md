@@ -1,26 +1,27 @@
-## defradb client block verify
+## defradb client block verify-signature
 
 Verify the signature of a block
 
 ### Synopsis
 
-Verify the signature of a block.
+Verify the signature of a block by providing the type and public key of the identity.
 		
 Notes:
-  - The identity must be specified.
+  - If 'type' is not provided, secp256k1 is assumed.
 
 Example to verify the signature of a block:
-  defradb client block verify -i <identity> <cid>
+  defradb client block verify-signature --type <type> <public-key> <cid> 
 
 
 ```
-defradb client block verify [flags]
+defradb client block verify-signature [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for verify
+  -h, --help          help for verify-signature
+  -t, --type string   Type of the identity's public key
 ```
 
 ### Options inherited from parent commands
