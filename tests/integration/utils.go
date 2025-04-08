@@ -432,7 +432,7 @@ func performAction(
 	case GetNodeIdentity:
 		performGetNodeIdentityAction(s, action)
 
-	case VerifyBlock:
+	case VerifyBlockSignature:
 		performVerifySignatureAction(s, action)
 
 	case SetupComplete:
@@ -2525,11 +2525,12 @@ func resetMatchers(s *state) {
 	}
 }
 
-func performVerifySignatureAction(s *state, action VerifyBlock) {
+func performVerifySignatureAction(s *state, action VerifyBlockSignature) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.nodes)
-	for _, node := range nodes {
-		ident := getIdentity(s, immutable.Some(action.Identity))
-		err := node.VerifySignature(s.ctx, action.Cid, ident.PublicKey)
+	for i, node := range nodes {
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, i)
+		signerIdentity := getIdentity(s, immutable.Some(action.SignerIdentity))
+		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey)
 
 		if action.ExpectedError != "" {
 			require.Error(s.t, err, s.testCase.Description)

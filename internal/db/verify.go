@@ -18,8 +18,11 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
+	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
 // VerifySignature verifies the signatures of a block using a public key.
@@ -47,6 +50,31 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 
 	if block.Signature == nil {
 		return ErrMissingSignature
+	}
+
+	if db.acp.HasValue() {
+		docID := string(block.Delta.GetDocID())
+		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID)
+		if err != nil {
+			return err
+		}
+
+		hasPerm, err := permission.CheckAccessOfDocOnCollectionWithACP(
+			ctx,
+			identity.FromContext(ctx),
+			db.acp.Value(),
+			collection,
+			acp.ReadPermission,
+			docID,
+		)
+
+		if err != nil {
+			return err
+		}
+
+		if !hasPerm {
+			return ErrMissingPermission
+		}
 	}
 
 	_, err = coreblock.VerifyBlockSignatureWithKey(block, &linkSys, pubKey)

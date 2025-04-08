@@ -349,7 +349,7 @@ type CreateDoc struct {
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	Identity immutable.Option[Identity]
 
@@ -421,7 +421,7 @@ type DeleteDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	Identity immutable.Option[Identity]
 
@@ -454,7 +454,7 @@ type UpdateDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	Identity immutable.Option[Identity]
 
@@ -497,7 +497,7 @@ type UpdateWithFilter struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	Identity immutable.Option[Identity]
 
@@ -654,7 +654,7 @@ type Request struct {
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	Identity immutable.Option[Identity]
 
@@ -857,7 +857,7 @@ type GetNodeIdentity struct {
 
 	// ExpectedIdentity holds the identity that is expected to be found.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[Identity]
 }
@@ -868,13 +868,19 @@ type Wait struct {
 	Duration time.Duration
 }
 
-// VerifyBlock is an action that will verify the signature of the given block.
-type VerifyBlock struct {
+// VerifyBlockSignature is an action that will verify the signature of the given block.
+type VerifyBlockSignature struct {
 	// The cid of the block to verify the signature of.
 	Cid string
 
-	// The identity of the block to verify the signature of.
-	Identity Identity
+	// The identity of this request. Optional.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[Identity]
+
+	// The identity of the author of the block to verify the signature of.
+	SignerIdentity Identity
 
 	// Any error expected from the action. Optional.
 	//

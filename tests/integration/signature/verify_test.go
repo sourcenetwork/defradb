@@ -35,18 +35,18 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.VerifyBlock{
-				Identity: testUtils.NodeIdentity(0).Value(),
-				Cid:      "bafyreicwhd5s762awsrx6eowwqkkfpq7r5nnjosiru7blgaxo32wx6enp4",
+			testUtils.VerifyBlockSignature{
+				SignerIdentity: testUtils.NodeIdentity(0).Value(),
+				Cid:            "bafyreicwhd5s762awsrx6eowwqkkfpq7r5nnjosiru7blgaxo32wx6enp4",
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
 					"age": 23
 				}`,
 			},
-			testUtils.VerifyBlock{
-				Identity: testUtils.NodeIdentity(0).Value(),
-				Cid:      "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
+			testUtils.VerifyBlockSignature{
+				SignerIdentity: testUtils.NodeIdentity(0).Value(),
+				Cid:            "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
 			},
 		},
 	}
@@ -74,9 +74,9 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.VerifyBlock{
-				Identity: testUtils.NodeIdentity(0).Value(),
-				Cid:      "bafyreifawqsvcshb77gorqbnopnyg6mi6ft3iz7begvlhm67hnkhyqnfla",
+			testUtils.VerifyBlockSignature{
+				SignerIdentity: testUtils.NodeIdentity(0).Value(),
+				Cid:            "bafyreifawqsvcshb77gorqbnopnyg6mi6ft3iz7begvlhm67hnkhyqnfla",
 			},
 		},
 	}
@@ -101,10 +101,10 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.VerifyBlock{
-				Identity:      testUtils.NodeIdentity(1).Value(),
-				Cid:           "bafyreicwhd5s762awsrx6eowwqkkfpq7r5nnjosiru7blgaxo32wx6enp4",
-				ExpectedError: coreblock.ErrSignaturePubKeyMismatch.Error(),
+			testUtils.VerifyBlockSignature{
+				SignerIdentity: testUtils.NodeIdentity(1).Value(),
+				Cid:            "bafyreicwhd5s762awsrx6eowwqkkfpq7r5nnjosiru7blgaxo32wx6enp4",
+				ExpectedError:  coreblock.ErrSignaturePubKeyMismatch.Error(),
 			},
 		},
 	}
@@ -129,10 +129,10 @@ func TestSignatureVerify_WithWrongCid_ShouldError(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.VerifyBlock{
-				Identity:      testUtils.NodeIdentity(0).Value(),
-				Cid:           "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
-				ExpectedError: "could not find",
+			testUtils.VerifyBlockSignature{
+				SignerIdentity: testUtils.NodeIdentity(0).Value(),
+				Cid:            "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
+				ExpectedError:  "could not find",
 			},
 		},
 	}

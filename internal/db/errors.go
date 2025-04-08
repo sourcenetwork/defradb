@@ -115,6 +115,7 @@ const (
 	errGetDocForEmbedding                       string = "failed to get previous document for embedding generation"
 	errMissingSignature                         string = "block is missing required signature"
 	errNoIdentityInContext                      string = "no identity found in context"
+	errMissingPermission                        string = "missing permission"
 )
 
 var (
@@ -169,8 +170,8 @@ var (
 	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
 	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
 	ErrMissingSignature                         = errors.New(errMissingSignature)
-
-	ErrNoIdentityInContext = errors.New(errNoIdentityInContext)
+	ErrMissingPermission                        = errors.New(errMissingPermission)
+	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
