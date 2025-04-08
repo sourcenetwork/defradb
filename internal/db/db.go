@@ -20,7 +20,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -234,25 +233,6 @@ func (db *DB) AddPolicy(
 	}
 
 	return client.AddPolicyResult{PolicyID: policyID}, nil
-}
-
-// Connect sends peer connection event on the intern event bus. It blocks until the connection is
-// successful or an error is returned.
-func (db *DB) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	err := make(chan error)
-	db.events.Publish(event.NewMessage(
-		event.PeerConnectName,
-		event.PeerConnect{
-			Info: addr,
-			Err:  err,
-		},
-	))
-	select {
-	case e := <-err:
-		return e
-	case <-time.After(10 * time.Second):
-		return ErrTimoutOnPeerConnection
-	}
 }
 
 // publishDocUpdateEvent publishes an update event for a document.

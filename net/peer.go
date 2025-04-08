@@ -24,6 +24,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	libp2pevent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
@@ -189,6 +190,20 @@ func NewPeer(
 			log.ErrorE("Fatal P2P RPC server error", err)
 		}
 	}()
+
+	// There is a possibility for the PeerInfo event to trigger before the PeerInfo has been set for the host.
+	// To avoid this, we wait for the host to indicate that its local address has been updated.
+	sub, err := h.EventBus().Subscribe(&libp2pevent.EvtLocalAddressesUpdated{})
+	if err != nil {
+		return nil, err
+	}
+	select {
+	case <-sub.Out():
+		break
+	case <-time.After(5 * time.Second):
+		// This can only happen if the listening address has been mistakenly set to a zero value.
+		return nil, ErrTimeoutWaitingForPeerInfo
+	}
 
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 

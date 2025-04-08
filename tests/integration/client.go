@@ -101,7 +101,7 @@ func newGoClientWrapper(n *node.Node) *goClientWrapper {
 }
 
 func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.DB.Connect(ctx, addr)
+	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *goClientWrapper) Close() {

@@ -558,7 +558,7 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.DB.Connect(ctx, addr)
+	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

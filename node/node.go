@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
+	"github.com/sourcenetwork/defradb/net"
 )
 
 var log = corelog.NewLogger("node")
@@ -28,9 +29,8 @@ var log = corelog.NewLogger("node")
 type Node struct {
 	// DB is the database instance
 	DB *db.DB
-	// Terminators is a list of simple functions to be called
-	// when closing the node.
-	Terminators []func()
+	// Peer is the p2p networking subsystem instance
+	Peer *net.Peer
 	// api http server instance
 	server *http.Server
 	// kms subsystem instance
@@ -74,8 +74,6 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	n.Terminators = append(n.Terminators, n.DB.Close)
-
 	err = n.startP2P(ctx)
 	if err != nil {
 		return err
@@ -89,8 +87,11 @@ func (n *Node) Close(ctx context.Context) error {
 	if n.server != nil {
 		err = n.server.Shutdown(ctx)
 	}
-	for _, f := range n.Terminators {
-		f()
+	if n.Peer != nil {
+		n.Peer.Close()
+	}
+	if n.DB != nil {
+		n.DB.Close()
 	}
 	return err
 }
