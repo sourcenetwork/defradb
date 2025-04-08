@@ -32,7 +32,7 @@ require (
 	github.com/libp2p/go-libp2p v0.41.1
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.31.0
-	github.com/libp2p/go-libp2p-pubsub v0.13.0
+	github.com/libp2p/go-libp2p-pubsub v0.13.1
 	github.com/libp2p/go-libp2p-record v0.3.1
 	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multiaddr v0.15.0
@@ -67,7 +67,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0
 	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 )
 
 require (
