@@ -26,8 +26,8 @@ const (
 
 type blockHandler struct{}
 
-// verifyBlock handles block signature verification requests
-func (h *blockHandler) verifyBlock(w http.ResponseWriter, r *http.Request) {
+// verifySignature handles block signature verification requests
+func (h *blockHandler) verifySignature(w http.ResponseWriter, r *http.Request) {
 	db := mustGetContextClientDB(r)
 	cid := r.URL.Query().Get(blockCidParam)
 	if cid == "" {
@@ -74,9 +74,19 @@ func (h *blockHandler) bindRoutes(router *Router) {
 		Ref: "#/components/responses/success",
 	}
 
-	cidQueryParam := openapi3.NewQueryParameter("cid").
+	cidQueryParam := openapi3.NewQueryParameter(blockCidParam).
 		WithDescription("Content ID of the block to verify").
 		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema())
+
+	publicKeyQueryParam := openapi3.NewQueryParameter(publicKeyParam).
+		WithDescription("Public key of the block to verify").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema())
+
+	typeQueryParam := openapi3.NewQueryParameter(typeParam).
+		WithDescription("Type of the public key: secp256k1, ed25519").
+		WithRequired(false).
 		WithSchema(openapi3.NewStringSchema())
 
 	verifyBlock := openapi3.NewOperation()
@@ -84,9 +94,11 @@ func (h *blockHandler) bindRoutes(router *Router) {
 	verifyBlock.Description = "Verify block signature"
 	verifyBlock.Tags = []string{"block"}
 	verifyBlock.AddParameter(cidQueryParam)
+	verifyBlock.AddParameter(publicKeyQueryParam)
+	verifyBlock.AddParameter(typeQueryParam)
 	verifyBlock.Responses = openapi3.NewResponses()
 	verifyBlock.Responses.Set("200", successResponse)
 	verifyBlock.Responses.Set("400", errorResponse)
 
-	router.AddRoute("/block/verify-signature", http.MethodGet, verifyBlock, h.verifyBlock)
+	router.AddRoute("/block/verify-signature", http.MethodGet, verifyBlock, h.verifySignature)
 }
