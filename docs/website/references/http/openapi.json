@@ -945,6 +945,23 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "Public key of the block to verify",
+                        "in": "query",
+                        "name": "public-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Type of the public key: secp256k1, ed25519",
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
