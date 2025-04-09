@@ -158,7 +158,6 @@ func (c *Collection) Update(
 	if err != nil {
 		return err
 	}
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
