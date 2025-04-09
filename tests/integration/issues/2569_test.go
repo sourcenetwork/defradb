@@ -11,8 +11,6 @@
 package issues
 
 import (
-	"fmt"
-	"math"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -21,7 +19,7 @@ import (
 )
 
 // These tests document https://github.com/sourcenetwork/defradb/issues/2569
-
+/*
 func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
@@ -163,5 +161,200 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 		},
 	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+*/
+
+func TestP2PUpdate_PositiveInfiniteFloatValuePrevented(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				testUtils.HTTPClientType,
+				testUtils.CLIClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 1.23e+456
+				}`,
+				ExpectedError: "field points must not be NaN, Inf, or -Inf",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_NegativeInfiniteFloatValuePrevented(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				testUtils.HTTPClientType,
+				testUtils.CLIClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": -1.23e+456
+				}`,
+				ExpectedError: "field points must not be NaN, Inf, or -Inf",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_PositiveInfiniteFloatUpdatePrevented(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				testUtils.HTTPClientType,
+				testUtils.CLIClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 1.23e+200
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 1.23e+400
+				}`,
+				ExpectedError: "field points must not be NaN, Inf, or -Inf",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_NegativeInfiniteFloatUpdatePrevented(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				testUtils.HTTPClientType,
+				testUtils.CLIClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": -1.23e+200
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": -1.23e+400
+				}`,
+				ExpectedError: "field points must not be NaN, Inf, or -Inf",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_PNCounterPositiveOverflowError(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				testUtils.HTTPClientType,
+				testUtils.CLIClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: pncounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": 1.50e+308
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": 1.25e+308
+				}`,
+				ExpectedError: "error merging delta: operation results in a NaN, Inf, or -Inf value.",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PUpdate_PNCounterNegativeOverflowError(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				testUtils.HTTPClientType,
+				testUtils.CLIClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: pncounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"points": -1.50e+308
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"points": -1.25e+308
+				}`,
+				ExpectedError: "error merging delta: operation results in a NaN, Inf, or -Inf value.",
+			},
+		},
+	}
 	testUtils.ExecuteTestCase(t, test)
 }

@@ -12,6 +12,7 @@ package client
 
 import (
 	"encoding/json"
+	"math"
 	"regexp"
 	"strings"
 	"sync"
@@ -707,7 +708,7 @@ func (doc *Document) Set(field string, value any) error {
 		if exists && !ofd.IsPrimaryRelation {
 			return NewErrCannotSetRelationFromSecondarySide(field)
 		}
-	} else if fd.Kind.IsObject() && !fd.IsPrimaryRelation {
+	} else if fd.Kind.IsObject() && !fd.Kind.IsArray() && !fd.IsPrimaryRelation {
 		return NewErrCannotSetRelationFromSecondarySide(field)
 	}
 
@@ -724,6 +725,21 @@ func (doc *Document) Set(field string, value any) error {
 	if err != nil {
 		return err
 	}
+	// Reject NaN or infinite float values
+	switch v := val.(type) {
+	case normalFloat64:
+		f := float64(v.val)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return NewErrInfiniteFloatValue(field)
+		}
+	case normalFloat32:
+		f := float64(v.val)
+		if math.IsNaN(float64(f)) || math.IsInf(float64(f), 0) {
+			return NewErrInfiniteFloatValue(field)
+		}
+	default:
+	}
+
 	return doc.setCBOR(fd.Typ, field, val)
 }
 
@@ -744,6 +760,7 @@ func (doc *Document) set(t CType, field string, value *FieldValue) error {
 
 func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 	value := NewFieldValue(t, val)
+
 	return doc.set(t, field, value)
 }
 
@@ -955,7 +972,7 @@ func (doc *Document) generateAndSetDocID() error {
 }
 
 // DocumentStatus represent the state of the document in the DAG store.
-// It can either be `Active“ or `Deleted`.
+// It can either be `Active" or `Deleted`.
 type DocumentStatus uint8
 
 const (

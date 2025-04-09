@@ -143,6 +143,7 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
+
 	// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365 - ACP <> Indexing, possibly also check
 	// and handle the case of when oldDoc == nil (will be nil if inaccessible document).
 	oldDoc, err := c.get(

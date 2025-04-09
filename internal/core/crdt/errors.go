@@ -33,8 +33,9 @@ var (
 	ErrEncodingPriority    = errors.New("error encoding priority")
 	ErrDecodingPriority    = errors.New("error decoding priority")
 	// ErrMismatchedMergeType - Tying to merge two ReplicatedData of different types
-	ErrMismatchedMergeType    = errors.New("given type to merge does not match source")
-	ErrUnsupportedCounterType = errors.New(errUnsupportedCounterType)
+	ErrMismatchedMergeType              = errors.New("given type to merge does not match source")
+	ErrUnsupportedCounterType           = errors.New(errUnsupportedCounterType)
+	errCounterInfiniteOverflowOperation = errors.New("operation results in a NaN, Inf, or -Inf value")
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.

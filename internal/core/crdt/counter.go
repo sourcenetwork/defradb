@@ -149,6 +149,7 @@ func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, er
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
 func (c Counter) Merge(ctx context.Context, delta core.Delta) error {
+
 	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -230,6 +231,20 @@ func validateAndIncrement[T Incrementable](
 	}
 
 	newValue := curValue + value
+
+	// Handle float-specific overflow/NaN for float32 and float64
+	switch any(newValue).(type) {
+	case float32:
+		f := float64(newValue)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return nil, errCounterInfiniteOverflowOperation
+		}
+	case float64:
+		f := float64(newValue)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return nil, errCounterInfiniteOverflowOperation
+		}
+	}
 	return cbor.Marshal(newValue)
 }
 
