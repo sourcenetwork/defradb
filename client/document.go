@@ -724,7 +724,6 @@ func (doc *Document) Set(field string, value any) error {
 	if err != nil {
 		return err
 	}
-
 	return doc.setCBOR(fd.Typ, field, val)
 }
 
@@ -745,7 +744,6 @@ func (doc *Document) set(t CType, field string, value *FieldValue) error {
 
 func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 	value := NewFieldValue(t, val)
-
 	return doc.set(t, field, value)
 }
 
@@ -957,7 +955,7 @@ func (doc *Document) generateAndSetDocID() error {
 }
 
 // DocumentStatus represent the state of the document in the DAG store.
-// It can either be `Active" or `Deleted`.
+// It can either be `Active“ or `Deleted`.
 type DocumentStatus uint8
 
 const (
