@@ -45,7 +45,6 @@ const (
 	errEmptyModelForEmbedding              string = "embedding Model cannot be empty"
 	errUnknownEmbeddingProvider            string = "unknown embedding provider"
 	errEmbeddingFieldEmbedding             string = "embedding fields cannot refer to self or another embedding field"
-	errInfiniteFloatValue                  string = "field %s must not be NaN, Inf, or -Inf"
 )
 
 // Errors returnable from this package.
@@ -242,8 +241,4 @@ func NewErrUnknownEmbeddingProvider(provider string) error {
 
 func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
-}
-
-func NewErrInfiniteFloatValue(fieldName string) error {
-	return errors.New(fmt.Sprintf(errInfiniteFloatValue, fieldName))
 }
