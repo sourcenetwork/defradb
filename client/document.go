@@ -12,7 +12,6 @@ package client
 
 import (
 	"encoding/json"
-	"math"
 	"regexp"
 	"strings"
 	"sync"
@@ -724,20 +723,6 @@ func (doc *Document) Set(field string, value any) error {
 	val, err := validateFieldSchema(value, fd)
 	if err != nil {
 		return err
-	}
-	// Reject NaN or infinite float values
-	switch v := val.(type) {
-	case normalFloat64:
-		f := float64(v.val)
-		if math.IsNaN(f) || math.IsInf(f, 0) {
-			return NewErrInfiniteFloatValue(field)
-		}
-	case normalFloat32:
-		f := float64(v.val)
-		if math.IsNaN(float64(f)) || math.IsInf(float64(f), 0) {
-			return NewErrInfiniteFloatValue(field)
-		}
-	default:
 	}
 
 	return doc.setCBOR(fd.Typ, field, val)
