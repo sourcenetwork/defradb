@@ -33,8 +33,6 @@ const (
 	P2PTopicName = Name("p2p-topic")
 	// PeerInfoName is the name of the network peer info event.
 	PeerInfoName = Name("peer-info")
-	// PeerConnectName is the name of the network peer connection event.
-	PeerConnectName = Name("peer-connect")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
 	// ReplicatorFailureName is the name of the replicator failure event.
@@ -142,13 +140,6 @@ type P2PTopic struct {
 // PeerInfo is an event that is published when the node has updated its peer info.
 type PeerInfo struct {
 	Info peer.AddrInfo
-}
-
-// PeerConnect is an event that is published when initiating a connection to a new peer.
-type PeerConnect struct {
-	Info peer.AddrInfo
-	// Err will receive peer connection errors if any.
-	Err chan error
 }
 
 // Replicator is an event that is published when a replicator is added or updated.

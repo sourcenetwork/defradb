@@ -90,23 +90,26 @@ func setupClient(s *state, node *node.Node) (impl clients.Client, err error) {
 
 type goClientWrapper struct {
 	client.DB
-	node *node.Node
+	peer node.Peer
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		node: n,
+		peer: n.Peer,
 	}
 }
 
 func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
+	if w.peer != nil {
+		return w.peer.Connect(ctx, addr)
+	}
+	return nil
 }
 
 func (w *goClientWrapper) Close() {
-	err := w.node.Close(context.Background())
-	if err != nil {
-		log.ErrorE("error closing goClientWrapper", err)
+	if w.peer != nil {
+		w.peer.Close()
 	}
+	w.DB.Close()
 }

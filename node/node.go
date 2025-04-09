@@ -13,6 +13,7 @@ package node
 import (
 	"context"
 
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -24,6 +25,14 @@ import (
 )
 
 var log = corelog.NewLogger("node")
+
+// Peer defines the minimal p2p network interface.
+type Peer interface {
+	Close()
+	PeerID() peer.ID
+	PeerInfo() peer.AddrInfo
+	Connect(context.Context, peer.AddrInfo) error
+}
 
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
@@ -73,7 +82,6 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	err = n.startP2P(ctx)
 	if err != nil {
 		return err
