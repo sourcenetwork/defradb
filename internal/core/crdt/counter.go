@@ -231,7 +231,7 @@ func validateAndIncrement[T Incrementable](
 
 	newValue := curValue + value
 
-	// Handle float-specific overflow/NaN for float32 and float64
+	// Disallow increments that cause overflow, and throw error
 	switch any(newValue).(type) {
 	case float32:
 		f := float64(newValue)
