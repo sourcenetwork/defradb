@@ -149,7 +149,6 @@ func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, er
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
 func (c Counter) Merge(ctx context.Context, delta core.Delta) error {
-
 	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType

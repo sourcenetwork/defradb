@@ -148,7 +148,6 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-
 	if !c.Description().Name.HasValue() {
 		return client.ErrOperationNotPermittedOnNamelessCols
 	}

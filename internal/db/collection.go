@@ -576,7 +576,6 @@ func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -682,7 +681,6 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-
 			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
 
 			if !fieldExists {

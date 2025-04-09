@@ -708,7 +708,7 @@ func (doc *Document) Set(field string, value any) error {
 		if exists && !ofd.IsPrimaryRelation {
 			return NewErrCannotSetRelationFromSecondarySide(field)
 		}
-	} else if fd.Kind.IsObject() && !fd.Kind.IsArray() && !fd.IsPrimaryRelation {
+	} else if fd.Kind.IsObject() && !fd.IsPrimaryRelation {
 		return NewErrCannotSetRelationFromSecondarySide(field)
 	}
 
