@@ -412,6 +412,12 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 func TestPNCounterCreate_FloatKindWithPositiveInfValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Attempt to set a PN Counter with a value of Inf",
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// Infinite values are not supported in GQL queries
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 		SupportedClientTypes: immutable.Some(
 			[]testUtils.ClientType{
 				// This test only supports the Go client at the moment due to
@@ -443,7 +449,13 @@ func TestPNCounterCreate_FloatKindWithPositiveInfValue(t *testing.T) {
 
 func TestPNCounterCreate_FloatKindWithNegativeInfValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Attempt to set a PN Counter with a value of Inf",
+		Description: "Attempt to set a PN Counter with a value of -Inf",
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// Infinite values are not supported in GQL queries
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
 		SupportedClientTypes: immutable.Some(
 			[]testUtils.ClientType{
 				// This test only supports the Go client at the moment due to
