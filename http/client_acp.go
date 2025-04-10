@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -122,12 +123,12 @@ func (c *Client) DeleteDocActorRelationship(
 		return client.DeleteDocActorRelationshipResult{}, err
 	}
 
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodDelete,
-		methodURL.String(),
-		bytes.NewBuffer(body),
-	)
+	// Encode the parameters to the methodURL
+	query := url.Values{}
+	query.Set("parameters", string(body))
+	methodURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 
 	if err != nil {
 		return client.DeleteDocActorRelationshipResult{}, err

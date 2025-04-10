@@ -11,6 +11,7 @@
 package http
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -68,10 +69,18 @@ func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.R
 func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
+	// Extract the "parameters" query parameter
+	queryParams := req.URL.Query().Get("parameters")
+	if queryParams == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrMissingQueryParameter("parameters")})
+		return
+	}
+
+	// Parse JSON from the query parameter
 	var message deleteDocActorRelationshipRequest
-	err := requestJSON(req, &message)
+	err := json.Unmarshal([]byte(queryParams), &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidQueryParamJSON})
 		return
 	}
 
@@ -106,9 +115,6 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Ref: "#/components/schemas/acp_relationship_add_result",
 	}
 
-	acpRelationshipDeleteRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/acp_relationship_delete_request",
-	}
 	acpRelationshipDeleteResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/acp_relationship_delete_result",
 	}
@@ -147,9 +153,6 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Value: acpAddDocActorRelationshipRequest,
 	}
 
-	acpDeleteDocActorRelationshipRequest := openapi3.NewRequestBody().
-		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(acpRelationshipDeleteRequestSchema))
 	acpDeleteDocActorRelationshipResult := openapi3.NewResponse().
 		WithDescription("Delete acp relationship result").
 		WithJSONSchemaRef(acpRelationshipDeleteResultSchema)
@@ -157,12 +160,30 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	acpDeleteDocActorRelationship.OperationID = "delete relationship"
 	acpDeleteDocActorRelationship.Description = "Delete an actor relationship using acp system"
 	acpDeleteDocActorRelationship.Tags = []string{"acp_relationship"}
+	acpDeleteDocActorRelationshipParam := &openapi3.ParameterRef{
+		Value: &openapi3.Parameter{
+			Name:        "parameters",
+			In:          "query",
+			Description: "Parameters for the delete request",
+			Required:    true,
+			Schema: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Type:   openapi3.NewStringSchema().Type,
+					Format: "",
+					Example: `{
+						"CollectionName": "Users",
+						"DocID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+						"Relation": "owner",
+						"TargetActor": "did:key:z7r8oqkfiiVe4bHLYBjHZTJqGiUqCuM..."
+					}`,
+				},
+			},
+		},
+	}
+	acpDeleteDocActorRelationship.AddParameter(acpDeleteDocActorRelationshipParam.Value)
 	acpDeleteDocActorRelationship.Responses = openapi3.NewResponses()
 	acpDeleteDocActorRelationship.AddResponse(200, acpDeleteDocActorRelationshipResult)
 	acpDeleteDocActorRelationship.Responses.Set("400", errorResponse)
-	acpDeleteDocActorRelationship.RequestBody = &openapi3.RequestBodyRef{
-		Value: acpDeleteDocActorRelationshipRequest,
-	}
 
 	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
 	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)

@@ -11,7 +11,9 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 
@@ -56,16 +58,26 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	var rep client.ReplicatorParams
-	if err := requestJSON(req, &rep); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+	// Extract the replicator from the query parameter
+	query := req.URL.Query().Get("replicator")
+	if query == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{NewErrMissingQueryParameter("replicator")})
 		return
 	}
+
+	// Decode JSON from the query parameter
+	var rep client.ReplicatorParams
+	if err := json.Unmarshal([]byte(query), &rep); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidQueryParamJSON})
+		return
+	}
+
 	err := p2p.DeleteReplicator(req.Context(), rep)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -111,16 +123,20 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	// The parameter IDs will contain a comma-separated list of collection IDs for us to extract
+	q := req.URL.Query()
+	idsParam := q.Get("IDs")
 	var collectionIDs []string
-	if err := requestJSON(req, &collectionIDs); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
+	if idsParam != "" {
+		collectionIDs = strings.Split(idsParam, ",")
 	}
+
 	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -198,9 +214,21 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	deleteReplicator.Description = "Delete peer replicators"
 	deleteReplicator.OperationID = "peer_replicator_delete"
 	deleteReplicator.Tags = []string{"p2p"}
-	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
-		Value: replicatorRequest,
+	deleteReplicatorParam := &openapi3.ParameterRef{
+		Value: &openapi3.Parameter{
+			Name:        "replicator",
+			In:          "query",
+			Description: "Replicator to delete",
+			Required:    true,
+			Schema: &openapi3.SchemaRef{
+				Value: &openapi3.Schema{
+					Type:   openapi3.NewStringSchema().Type,
+					Format: "",
+				},
+			},
+		},
 	}
+	deleteReplicator.AddParameter(deleteReplicatorParam.Value)
 	deleteReplicator.Responses = openapi3.NewResponses()
 	deleteReplicator.Responses.Set("200", successResponse)
 	deleteReplicator.Responses.Set("400", errorResponse)
@@ -238,9 +266,27 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	removePeerCollections.Description = "Remove peer collections"
 	removePeerCollections.OperationID = "peer_collection_remove"
 	removePeerCollections.Tags = []string{"p2p"}
-	removePeerCollections.RequestBody = &openapi3.RequestBodyRef{
-		Value: peerCollectionRequest,
+
+	// Define query parameter "IDs" as a required string (comma-separated list)
+	removePeerCollections.Parameters = openapi3.Parameters{
+		&openapi3.ParameterRef{
+			Value: &openapi3.Parameter{
+				Name:        "IDs",
+				In:          "query",
+				Description: "Comma-separated list of collection IDs to remove",
+				Required:    true,
+				Schema: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Type:    openapi3.NewStringSchema().Type,
+						Format:  "",
+						Example: "col1,col2,col3",
+					},
+				},
+			},
+		},
 	}
+
+	// Remove the request body since we're using query parameters
 	removePeerCollections.Responses = openapi3.NewResponses()
 	removePeerCollections.Responses.Set("200", successResponse)
 	removePeerCollections.Responses.Set("400", errorResponse)

@@ -15,6 +15,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -53,11 +55,16 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams)
 func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(rep)
+	// Append the rep to the methodURL as a query parameter
+	repJSON, err := json.Marshal(rep)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	query := url.Values{}
+	query.Set("replicator", string(repJSON))
+	methodURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -97,14 +104,16 @@ func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) 
 func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
 	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
 
-	body, err := json.Marshal(collectionIDs)
+	// Append query parameters to the URL
+	query := url.Values{}
+	query.Set("IDs", strings.Join(collectionIDs, ","))
+	methodURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
+
 	_, err = c.http.request(req)
 	return err
 }

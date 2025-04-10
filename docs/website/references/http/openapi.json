@@ -804,16 +804,18 @@
             "delete": {
                 "description": "Delete an actor relationship using acp system",
                 "operationId": "delete relationship",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/acp_relationship_delete_request"
-                            }
+                "parameters": [
+                    {
+                        "description": "Parameters for the delete request",
+                        "in": "query",
+                        "name": "parameters",
+                        "required": true,
+                        "schema": {
+                            "example": "{\n\t\t\t\t\t\t\"CollectionName\": \"Users\",\n\t\t\t\t\t\t\"DocID\": \"bae-9d443d0c-52f6-568b-8f74-e8ff0825697b\",\n\t\t\t\t\t\t\"Relation\": \"owner\",\n\t\t\t\t\t\t\"TargetActor\": \"did:key:z7r8oqkfiiVe4bHLYBjHZTJqGiUqCuM...\"\n\t\t\t\t\t}",
+                            "type": "string"
                         }
-                    },
-                    "required": true
-                },
+                    }
+                ],
                 "responses": {
                     "200": {
                         "content": {
@@ -1126,18 +1128,17 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "Filter expression to determine which documents to delete",
+                        "in": "query",
+                        "name": "filter",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/collection_delete"
-                            }
-                        }
-                    },
-                    "required": true
-                },
                 "responses": {
                     "200": {
                         "content": {
@@ -1847,19 +1848,18 @@
             "delete": {
                 "description": "Remove peer collections",
                 "operationId": "peer_collection_remove",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            }
+                "parameters": [
+                    {
+                        "description": "Comma-separated list of collection IDs to remove",
+                        "in": "query",
+                        "name": "IDs",
+                        "required": true,
+                        "schema": {
+                            "example": "col1,col2,col3",
+                            "type": "string"
                         }
-                    },
-                    "required": true
-                },
+                    }
+                ],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -1965,16 +1965,17 @@
             "delete": {
                 "description": "Delete peer replicators",
                 "operationId": "peer_replicator_delete",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
-                            }
+                "parameters": [
+                    {
+                        "description": "Replicator to delete",
+                        "in": "query",
+                        "name": "replicator",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
-                    },
-                    "required": true
-                },
+                    }
+                ],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
