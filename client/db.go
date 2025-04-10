@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -144,6 +145,10 @@ type DB interface {
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+
+	// VerifySignature verifies the signatures of a block using a public key.
+	// Returns an error if any signature verification fails.
+	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
 }
 
 // Store contains the core DefraDB read-write operations.

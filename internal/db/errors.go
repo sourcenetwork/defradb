@@ -113,6 +113,9 @@ const (
 	errGetEmbeddingField                        string = "failed getting vector embedding field"
 	errFieldNotFound                            string = "field not found"
 	errGetDocForEmbedding                       string = "failed to get previous document for embedding generation"
+	errMissingSignature                         string = "block is missing required signature"
+	errNoIdentityInContext                      string = "no identity found in context"
+	errMissingPermission                        string = "missing permission"
 )
 
 var (
@@ -166,6 +169,9 @@ var (
 	ErrFieldNotFound                            = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                       = errors.New(errGetDocForEmbedding)
 	ErrGetEmbeddingFunc                         = errors.New(errGetEmbeddingFunc)
+	ErrMissingSignature                         = errors.New(errMissingSignature)
+	ErrMissingPermission                        = errors.New(errMissingPermission)
+	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

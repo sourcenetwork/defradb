@@ -40,6 +40,7 @@ func NewApiRouter() (*Router, error) {
 	lens_handler := &lensHandler{}
 	ccip_handler := &ccipHandler{}
 	extras_handler := &extrasHandler{}
+	block_handler := &blockHandler{}
 
 	router, err := NewRouter()
 	if err != nil {
@@ -52,6 +53,7 @@ func NewApiRouter() (*Router, error) {
 	p2p_handler.bindRoutes(router)
 	ccip_handler.bindRoutes(router)
 	extras_handler.bindRoutes(router)
+	block_handler.bindRoutes(router)
 
 	router.AddRouteGroup(func(r *Router) {
 		r.AddMiddleware(CollectionMiddleware)

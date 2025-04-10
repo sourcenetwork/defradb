@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -577,4 +578,14 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	args := []string{"client", "block", "verify-signature"}
+
+	args = append(args, "--type", string(pubKey.Type()))
+	args = append(args, pubKey.String(), cid)
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }

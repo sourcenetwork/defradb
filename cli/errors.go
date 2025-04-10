@@ -21,9 +21,10 @@ const (
 	errSchemaVersionNotOfSchema     string = "the given schema version is from a different schema"
 	errRequiredFlag                 string = "the required flag [--%s|-%s] is %s"
 	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
-	errInvalidInxedFieldDescription string = "invalid or malformed field description"
+	errInvalidIndexFieldDescription string = "invalid or malformed field description"
 	errEmptySchemaString            string = "schema cannot be empty"
 	errMissingRequiredFlag          string = "missing required flag"
+	errMissingRequiredParameter     string = "required parameter %s is missing"
 )
 
 var (
@@ -67,8 +68,8 @@ func NewErrInvalidAscensionOrder(fieldName string) error {
 	return errors.New(errInvalidAscensionOrder, errors.NewKV("Field", fieldName))
 }
 
-func NewErrInvalidInxedFieldDescription(fieldName string) error {
-	return errors.New(errInvalidInxedFieldDescription, errors.NewKV("Field", fieldName))
+func NewErrInvalidIndexFieldDescription(fieldName string) error {
+	return errors.New(errInvalidIndexFieldDescription, errors.NewKV("Field", fieldName))
 }
 
 func NewErrFailedToReadSchemaFile(schemaFile string, inner error) error {
@@ -85,4 +86,8 @@ func NewErrFailedToAddSchema(inner error) error {
 
 func NewErrMissingRequiredFlag(flag string) error {
 	return errors.New(errMissingRequiredFlag, errors.NewKV("Flag", flag))
+}
+
+func NewErrMissingRequiredParameter(paramName string) error {
+	return errors.New(fmt.Sprintf(errMissingRequiredParameter, paramName))
 }

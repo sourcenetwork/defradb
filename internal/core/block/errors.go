@@ -25,6 +25,7 @@ const (
 	errInvalidBlockEncryptionKeyID string = "invalid block encryption key id"
 	errCouldNotLoadSignatureBlock  string = "could not load signature block"
 	errSignatureVerification       string = "signature verification failed"
+	errSignaturePubKeyMismatch     string = "signature was created by a different key"
 )
 
 // Errors returnable from this package.
@@ -39,6 +40,7 @@ var (
 	ErrInvalidBlockEncryptionType  = errors.New(errInvalidBlockEncryptionType)
 	ErrInvalidBlockEncryptionKeyID = errors.New(errInvalidBlockEncryptionKeyID)
 	ErrSignatureVerification       = errors.New(errSignatureVerification)
+	ErrSignaturePubKeyMismatch     = errors.New(errSignaturePubKeyMismatch)
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.
