@@ -48,6 +48,11 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
 			},
+			testUtils.DeleteDoc{},
+			testUtils.VerifyBlockSignature{
+				SignerIdentity: testUtils.NodeIdentity(0).Value(),
+				Cid:            "bafyreih3xjkq7vmfxjajfshr56nbuw6p2bfx4ow4bqayoaih55wq26vsuq",
+			},
 		},
 	}
 

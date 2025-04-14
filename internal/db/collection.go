@@ -654,6 +654,10 @@ func (c *collection) save(
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
+	if !c.db.signingDisabled {
+		ctx = clock.ContextWithSigning(ctx, c.db.fallbackSigner)
+	}
+
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
 	// wait, and just did it here, then *if* the commit fails down
@@ -662,10 +666,6 @@ func (c *collection) save(
 	txn.OnSuccess(func() {
 		doc.Clean()
 	})
-
-	if !c.db.signingDisabled {
-		ctx = clock.ContextWithSigning(ctx, c.db.fallbackSigner)
-	}
 
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker

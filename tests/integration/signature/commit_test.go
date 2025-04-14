@@ -213,6 +213,67 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
+	uniqueSignature := testUtils.NewUniqueValue()
+
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.DeleteDoc{},
+			testUtils.Request{
+				Request: `
+					query {
+						commits(order: {height: DESC}, fieldId: "C") {
+							fieldName
+							height
+							signature {
+								type
+								identity
+								value
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"fieldName": nil,
+							"height":    2,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+								"value":    uniqueSignature,
+							},
+						},
+						{
+							"fieldName": nil,
+							"height":    1,
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+								"value":    uniqueSignature,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
