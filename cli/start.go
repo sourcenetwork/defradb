@@ -292,7 +292,8 @@ func MakeStartCommand() *cobra.Command {
 	cmd.Flags().Bool(
 		"use-fallback-signer",
 		cfg.GetBool(configFlags["use-fallback-signer"]),
-		"Use the node's identity as a fallback signer if a request identity does not have a private key. This is relevant when creating or updating documents via HTTP.")
+		"Use the node's identity as a fallback signer if a request identity does not have a private key. "+
+			"This is relevant when creating or updating documents via HTTP.")
 	cmd.Flags().String(
 		"default-key-type",
 		cfg.GetString(configFlags["default-key-type"]),

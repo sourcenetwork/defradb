@@ -13,9 +13,10 @@ package signature
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestSignature_IfIdentityHasNoPrivateKeyButFallbackSignerIsSet_ShouldUseFallbackSigner(t *testing.T) {
