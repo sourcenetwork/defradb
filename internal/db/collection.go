@@ -655,7 +655,10 @@ func (c *collection) save(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = clock.ContextWithSigning(ctx, c.db.fallbackSigner)
+		ctx = clock.ContextWithEnabledSigning(ctx)
+		if c.db.fallbackSigner.HasValue() {
+			ctx = clock.ContextWithFallbackSigner(ctx, c.db.fallbackSigner.Value())
+		}
 	}
 
 	// NOTE: We delay the final Clean() call until we know

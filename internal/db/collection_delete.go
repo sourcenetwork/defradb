@@ -152,7 +152,10 @@ func (c *collection) applyDelete(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = clock.ContextWithSigning(ctx, c.db.fallbackSigner)
+		ctx = clock.ContextWithEnabledSigning(ctx)
+		if c.db.fallbackSigner.HasValue() {
+			ctx = clock.ContextWithFallbackSigner(ctx, c.db.fallbackSigner.Value())
+		}
 	}
 
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
