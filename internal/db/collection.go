@@ -664,7 +664,7 @@ func (c *collection) save(
 	})
 
 	if !c.db.signingDisabled {
-		ctx = clock.ContextWithEnabledSigning(ctx)
+		ctx = clock.ContextWithSigning(ctx, c.db.fallbackSigner)
 	}
 
 	// New batch transaction/store (optional/todo)

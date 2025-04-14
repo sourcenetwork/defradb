@@ -112,8 +112,9 @@ func (mc *MerkleClock) AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	if EnabledSigningFromContext(ctx) {
-		err = mc.signBlock(ctx, dagBlock)
+	signingEnabled, fallbackSigner := SigningFromContext(ctx)
+	if signingEnabled {
+		err = mc.signBlock(ctx, dagBlock, fallbackSigner)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
@@ -221,6 +222,7 @@ func encryptBlock(
 func (mc *MerkleClock) signBlock(
 	ctx context.Context,
 	block *coreblock.Block,
+	fallbackSigner immutable.Option[identity.Identity],
 ) error {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
@@ -238,18 +240,30 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
+	var privKey crypto.PrivateKey
+	var pubKey crypto.PublicKey
+	if ident.Value().PrivateKey != nil {
+		privKey = ident.Value().PrivateKey
+		pubKey = ident.Value().PublicKey
+	} else if fallbackSigner.HasValue() {
+		privKey = fallbackSigner.Value().PrivateKey
+		pubKey = fallbackSigner.Value().PublicKey
+	} else {
+		return ErrIdentityWithoutPrivateKeyForSigning
+	}
+
 	var sigType string
 
-	switch ident.Value().PrivateKey.Type() {
+	switch privKey.Type() {
 	case crypto.KeyTypeSecp256k1:
 		sigType = coreblock.SignatureTypeECDSA256K
 	case crypto.KeyTypeEd25519:
 		sigType = coreblock.SignatureTypeEd25519
 	default:
-		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
+		return NewErrUnsupportedKeyForSigning(privKey.Type())
 	}
 
-	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
+	sigBytes, err := privKey.Sign(blockBytes)
 	if err != nil {
 		return err
 	}
@@ -257,7 +271,7 @@ func (mc *MerkleClock) signBlock(
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
 			Type:     sigType,
-			Identity: []byte(ident.Value().PublicKey.String()),
+			Identity: []byte(pubKey.String()),
 		},
 		Value: sigBytes,
 	}
@@ -350,16 +364,16 @@ func (mc *MerkleClock) Heads() *heads {
 
 type enabledSigningContextKey struct{}
 
-// ContextWithEnabledSigning returns a context with block signing enabled.
-func ContextWithEnabledSigning(ctx context.Context) context.Context {
-	return context.WithValue(ctx, enabledSigningContextKey{}, true)
+// ContextWithSigning returns a context with block signing enabled and a fallback signer.
+func ContextWithSigning(ctx context.Context, fallbackSigner immutable.Option[identity.Identity]) context.Context {
+	return context.WithValue(ctx, enabledSigningContextKey{}, fallbackSigner)
 }
 
-// EnabledSigningFromContext returns true if block signing is enabled in the context.
-func EnabledSigningFromContext(ctx context.Context) bool {
+// SigningFromContext returns true if block signing is enabled in the context.
+func SigningFromContext(ctx context.Context) (bool, immutable.Option[identity.Identity]) {
 	val := ctx.Value(enabledSigningContextKey{})
 	if val == nil {
-		return false
+		return false, immutable.None[identity.Identity]()
 	}
-	return val.(bool)
+	return true, val.(immutable.Option[identity.Identity])
 }
