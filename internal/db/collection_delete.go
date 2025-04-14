@@ -14,11 +14,13 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
@@ -143,6 +145,18 @@ func (c *collection) applyDelete(
 	}
 
 	txn := mustGetContextTxn(ctx)
+
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
+
+	if !c.db.signingDisabled {
+		ctx = clock.ContextWithEnabledSigning(ctx)
+		if c.db.fallbackSigner.HasValue() {
+			ctx = clock.ContextWithFallbackSigner(ctx, c.db.fallbackSigner.Value())
+		}
+	}
 
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,

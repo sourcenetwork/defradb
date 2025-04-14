@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -132,7 +133,7 @@ func MakeStartCommand() *cobra.Command {
 					}
 				}
 
-				opts, err = getOrCreateIdentity(kr, opts, cfg.GetString("datastore.defaultkeytype"))
+				opts, err = getOrCreateIdentity(kr, opts, cfg)
 				if err != nil {
 					return err
 				}
@@ -147,6 +148,8 @@ func MakeStartCommand() *cobra.Command {
 					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
 				}
 			}
+
+			opts = append(opts, db.WithEnabledSigning(!cfg.GetBool("datastore.nosigning")))
 
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
@@ -286,6 +289,11 @@ func MakeStartCommand() *cobra.Command {
 		"no-signing",
 		cfg.GetBool(configFlags["no-signing"]),
 		"Disable signing of commits.")
+	cmd.Flags().Bool(
+		"use-fallback-signer",
+		cfg.GetBool(configFlags["use-fallback-signer"]),
+		"Use the node's identity as a fallback signer if a request identity does not have a private key. "+
+			"This is relevant when creating or updating documents via HTTP.")
 	cmd.Flags().String(
 		"default-key-type",
 		cfg.GetString(configFlags["default-key-type"]),
@@ -342,18 +350,19 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	return append(opts, net.WithPrivateKey(peerKey)), nil
 }
 
-func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, keyTypeToCreate string) ([]node.Option, error) {
+func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Viper) ([]node.Option, error) {
 	identityBytes, err := kr.Get(nodeIdentityKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
 			return nil, err
 		}
-		ident, err := generateIdentity(keyTypeToCreate)
+		keyType := cfg.GetString("datastore.defaultkeytype")
+		ident, err := generateIdentity(keyType)
 		if err != nil {
 			return nil, err
 		}
 		rawKey := ident.PrivateKey.Raw()
-		err = kr.Set(nodeIdentityKeyName, append([]byte(keyTypeToCreate+":"), rawKey...))
+		err = kr.Set(nodeIdentityKeyName, append([]byte(keyType+":"), rawKey...))
 		if err != nil {
 			return nil, err
 		}
@@ -368,7 +377,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, keyTypeToCreate
 		if err != nil {
 			return nil, err
 		}
-		return getOrCreateIdentity(kr, opts, keyTypeToCreate)
+		return getOrCreateIdentity(kr, opts, cfg)
 	}
 	keyType := string(identityBytes[:sepPos])
 	privateKey, err := crypto.PrivateKeyFromBytes(crypto.KeyType(keyType), identityBytes[sepPos+1:])
@@ -378,6 +387,10 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, keyTypeToCreate
 	ident, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
+	}
+
+	if cfg.GetBool("datastore.usefallbacksigner") {
+		opts = append(opts, db.WithFallbackSigner(ident))
 	}
 
 	return append(opts, db.WithNodeIdentity(ident)), nil

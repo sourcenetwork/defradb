@@ -151,6 +151,9 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	opts = append(defaultOpts, opts...)
 
 	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
+	if s.testCase.FallbackSigner.HasValue() {
+		opts = append(opts, db.WithFallbackSigner(getIdentity(s, s.testCase.FallbackSigner)))
+	}
 
 	switch acpType {
 	case LocalACPType:

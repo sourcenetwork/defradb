@@ -238,18 +238,33 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
+	var privKey crypto.PrivateKey
+	var pubKey crypto.PublicKey
+	if ident.Value().PrivateKey != nil {
+		privKey = ident.Value().PrivateKey
+		pubKey = ident.Value().PublicKey
+	} else {
+		fallbackSigner := FallbackSigningFromContext(ctx)
+		if fallbackSigner.HasValue() {
+			privKey = fallbackSigner.Value().PrivateKey
+			pubKey = fallbackSigner.Value().PublicKey
+		} else {
+			return ErrIdentityWithoutPrivateKeyForSigning
+		}
+	}
+
 	var sigType string
 
-	switch ident.Value().PrivateKey.Type() {
+	switch privKey.Type() {
 	case crypto.KeyTypeSecp256k1:
 		sigType = coreblock.SignatureTypeECDSA256K
 	case crypto.KeyTypeEd25519:
 		sigType = coreblock.SignatureTypeEd25519
 	default:
-		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
+		return NewErrUnsupportedKeyForSigning(privKey.Type())
 	}
 
-	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
+	sigBytes, err := privKey.Sign(blockBytes)
 	if err != nil {
 		return err
 	}
@@ -257,7 +272,7 @@ func (mc *MerkleClock) signBlock(
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
 			Type:     sigType,
-			Identity: []byte(ident.Value().PublicKey.String()),
+			Identity: []byte(pubKey.String()),
 		},
 		Value: sigBytes,
 	}
@@ -362,4 +377,20 @@ func EnabledSigningFromContext(ctx context.Context) bool {
 		return false
 	}
 	return val.(bool)
+}
+
+type fallbackSignerContextKey struct{}
+
+// ContextWithFallbackSigner returns a context with a fallback signer.
+func ContextWithFallbackSigner(ctx context.Context, fallbackSigner identity.Identity) context.Context {
+	return context.WithValue(ctx, fallbackSignerContextKey{}, fallbackSigner)
+}
+
+// FallbackSigningFromContext returns the fallback signer from the context.
+func FallbackSigningFromContext(ctx context.Context) immutable.Option[identity.Identity] {
+	val := ctx.Value(fallbackSignerContextKey{})
+	if val == nil {
+		return immutable.None[identity.Identity]()
+	}
+	return immutable.Some(val.(identity.Identity))
 }
