@@ -29,7 +29,7 @@ defradb start [flags]
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
       --pubkeypath string                 Path to the public key for tls
-      --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of durations. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
+      --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
       --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
       --use-fallback-signer               Use the node's identity as a fallback signer if a request identity does not have a private key. This is relevant when creating or updating documents via HTTP.
       --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
