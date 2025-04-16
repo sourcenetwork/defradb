@@ -32,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
-	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
@@ -408,13 +407,6 @@ func (db *DB) initialize(ctx context.Context) error {
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.
 		return txn.Commit(ctx)
-	}
-
-	// init meta data
-	// collection sequence
-	_, err = db.getSequence(ctx, keys.CollectionIDSequenceKey{})
-	if err != nil {
-		return err
 	}
 
 	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
