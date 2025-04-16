@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package sequence
 
 import (
 	"context"
@@ -16,24 +16,25 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-type sequence struct {
+type Sequence struct {
 	key keys.Key
 	val uint64
 }
 
-func (db *DB) getSequence(ctx context.Context, key keys.Key) (*sequence, error) {
-	seq := &sequence{
+func Get(ctx context.Context, txn datastore.Txn, key keys.Key) (*Sequence, error) {
+	seq := &Sequence{
 		key: key,
 		val: uint64(0),
 	}
 
-	_, err := seq.get(ctx)
+	_, err := seq.Get(ctx, txn)
 	if errors.Is(err, corekv.ErrNotFound) {
-		err = seq.update(ctx)
+		err = seq.Update(ctx, txn)
 		if err != nil {
 			return nil, err
 		}
@@ -44,9 +45,7 @@ func (db *DB) getSequence(ctx context.Context, key keys.Key) (*sequence, error) 
 	return seq, nil
 }
 
-func (seq *sequence) get(ctx context.Context) (uint64, error) {
-	txn := mustGetContextTxn(ctx)
-
+func (seq *Sequence) Get(ctx context.Context, txn datastore.Txn) (uint64, error) {
 	val, err := txn.Systemstore().Get(ctx, seq.key.Bytes())
 	if err != nil {
 		return 0, err
@@ -56,9 +55,7 @@ func (seq *sequence) get(ctx context.Context) (uint64, error) {
 	return seq.val, nil
 }
 
-func (seq *sequence) update(ctx context.Context) error {
-	txn := mustGetContextTxn(ctx)
-
+func (seq *Sequence) Update(ctx context.Context, txn datastore.Txn) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
 	if err := txn.Systemstore().Set(ctx, seq.key.Bytes(), buf[:]); err != nil {
@@ -68,12 +65,12 @@ func (seq *sequence) update(ctx context.Context) error {
 	return nil
 }
 
-func (seq *sequence) next(ctx context.Context) (uint64, error) {
-	_, err := seq.get(ctx)
+func (seq *Sequence) Next(ctx context.Context, txn datastore.Txn) (uint64, error) {
+	_, err := seq.Get(ctx, txn)
 	if err != nil {
 		return 0, err
 	}
 
 	seq.val++
-	return seq.val, seq.update(ctx)
+	return seq.val, seq.Update(ctx, txn)
 }

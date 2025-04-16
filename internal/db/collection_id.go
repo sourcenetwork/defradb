@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -33,7 +34,9 @@ func (db *DB) setCollectionIDs(ctx context.Context, newCollections []client.Coll
 // setCollectionID sets the IDs directly on a collection description, excluding stuff like field IDs,
 // mutating the input set.
 func (db *DB) setCollectionID(ctx context.Context, newCollections []client.CollectionDefinition) error {
-	colSeq, err := db.getSequence(ctx, keys.CollectionIDSequenceKey{})
+	txn := mustGetContextTxn(ctx)
+
+	colSeq, err := sequence.Get(ctx, txn, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}
@@ -44,7 +47,7 @@ func (db *DB) setCollectionID(ctx context.Context, newCollections []client.Colle
 			continue
 		}
 
-		colID, err := colSeq.next(ctx)
+		colID, err := colSeq.Next(ctx, txn)
 		if err != nil {
 			return err
 		}
@@ -65,6 +68,8 @@ func (db *DB) setCollectionID(ctx context.Context, newCollections []client.Colle
 
 // setFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
 func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDefinition) error {
+	txn := mustGetContextTxn(ctx)
+
 	collectionsByName := map[string]client.CollectionDescription{}
 	schemasByName := map[string]client.SchemaDescription{}
 	for _, def := range definitions {
@@ -75,7 +80,7 @@ func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDe
 	}
 
 	for i := range definitions {
-		fieldSeq, err := db.getSequence(ctx, keys.NewFieldIDSequenceKey(definitions[i].Description.RootID))
+		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Description.RootID))
 		if err != nil {
 			return err
 		}
@@ -90,7 +95,7 @@ func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDe
 				// queries too.
 				fieldID = 0
 			} else {
-				nextID, err := fieldSeq.next(ctx)
+				nextID, err := fieldSeq.Next(ctx, txn)
 				if err != nil {
 					return err
 				}

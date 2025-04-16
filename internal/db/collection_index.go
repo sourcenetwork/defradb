@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
@@ -258,14 +259,17 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	colSeq, err := c.db.getSequence(
+	txn := mustGetContextTxn(ctx)
+
+	colSeq, err := sequence.Get(
 		ctx,
+		txn,
 		keys.NewIndexIDSequenceKey(c.Description().RootID),
 	)
 	if err != nil {
 		return nil, err
 	}
-	colID, err := colSeq.next(ctx)
+	colID, err := colSeq.Next(ctx, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +286,6 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	txn := mustGetContextTxn(ctx)
 	err = txn.Systemstore().Set(ctx, indexKey.Bytes(), buf)
 	if err != nil {
 		return nil, err
