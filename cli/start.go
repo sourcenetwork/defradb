@@ -363,7 +363,9 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 			return nil, err
 		}
 		rawKey := ident.PrivateKey.Raw()
-		err = kr.Set(nodeIdentityKeyName, append([]byte(keyType+":"), rawKey...))
+		// Make sure the outerscope knows about the newly created identity
+		identityBytes = append([]byte(keyType+":"), rawKey...)
+		err = kr.Set(nodeIdentityKeyName, identityBytes)
 		if err != nil {
 			return nil, err
 		}
