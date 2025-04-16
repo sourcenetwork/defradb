@@ -24,7 +24,7 @@ import (
 func setupLWWRegister() LWWRegister {
 	store := memory.NewDatastore(context.TODO())
 	key := keys.DataStoreKey{DocID: "AAAA-BBBB"}
-	return NewLWWRegister(store, keys.CollectionSchemaVersionKey{}, key, "")
+	return NewLWWRegister(store, "", key, "")
 }
 
 func TestLWWRegisterAddDelta(t *testing.T) {

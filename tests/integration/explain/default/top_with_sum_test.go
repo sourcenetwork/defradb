@@ -63,7 +63,7 @@ func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -122,7 +122,7 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{

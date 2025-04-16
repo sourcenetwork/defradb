@@ -51,7 +51,7 @@ func MakeCollectionCommand() *cobra.Command {
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
-				options.SchemaVersionID = immutable.Some(versionID)
+				options.ID = immutable.Some(versionID)
 			}
 			if schemaRoot != "" {
 				options.SchemaRoot = immutable.Some(schemaRoot)

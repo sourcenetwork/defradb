@@ -11,8 +11,6 @@
 package keys
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 
 	ds "github.com/ipfs/go-datastore"
@@ -21,17 +19,17 @@ import (
 
 // CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
-	// CollectionID is the id of the collection that the index is on
-	CollectionID immutable.Option[uint32]
+	// RootID is the root identifier id of the collection that the index is on
+	RootID immutable.Option[string]
 	// IndexName is the name of the index
 	IndexName string
 }
 
 var _ Key = (*CollectionIndexKey)(nil)
 
-// NewCollectionIndexKey creates a new CollectionIndexKey from a collection name and index name.
-func NewCollectionIndexKey(colID immutable.Option[uint32], indexName string) CollectionIndexKey {
-	return CollectionIndexKey{CollectionID: colID, IndexName: indexName}
+// NewCollectionIndexKey creates a new CollectionIndexKey from a collection root and index name.
+func NewCollectionIndexKey(rootID immutable.Option[string], indexName string) CollectionIndexKey {
+	return CollectionIndexKey{RootID: rootID, IndexName: indexName}
 }
 
 // NewCollectionIndexKeyFromString creates a new CollectionIndexKey from a string.
@@ -46,12 +44,7 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
 
-	colID, err := strconv.Atoi(keyArr[3])
-	if err != nil {
-		return CollectionIndexKey{}, err
-	}
-
-	result := CollectionIndexKey{CollectionID: immutable.Some(uint32(colID))}
+	result := CollectionIndexKey{RootID: immutable.Some(keyArr[3])}
 	if len(keyArr) == 5 {
 		result.IndexName = keyArr[4]
 	}
@@ -65,8 +58,8 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 func (k CollectionIndexKey) ToString() string {
 	result := COLLECTION_INDEX
 
-	if k.CollectionID.HasValue() {
-		result = result + "/" + fmt.Sprint(k.CollectionID.Value())
+	if k.RootID.HasValue() {
+		result = result + "/" + k.RootID.Value()
 		if k.IndexName != "" {
 			result = result + "/" + k.IndexName
 		}

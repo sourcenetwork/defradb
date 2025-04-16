@@ -24,12 +24,12 @@ import (
 // It is stored in the format `/collection/root/[RootID]/[CollectionID]`.
 type CollectionRootKey struct {
 	RootID       uint32
-	CollectionID uint32
+	CollectionID string
 }
 
 var _ Key = (*CollectionRootKey)(nil)
 
-func NewCollectionRootKey(rootID uint32, collectionID uint32) CollectionRootKey {
+func NewCollectionRootKey(rootID uint32, collectionID string) CollectionRootKey {
 	return CollectionRootKey{
 		RootID:       rootID,
 		CollectionID: collectionID,
@@ -49,14 +49,9 @@ func NewCollectionRootKeyFromString(key string) (CollectionRootKey, error) {
 		return CollectionRootKey{}, err
 	}
 
-	collectionID, err := strconv.Atoi(keyArr[4])
-	if err != nil {
-		return CollectionRootKey{}, err
-	}
-
 	return CollectionRootKey{
 		RootID:       uint32(rootID),
-		CollectionID: uint32(collectionID),
+		CollectionID: keyArr[4],
 	}, nil
 }
 
@@ -67,8 +62,8 @@ func (k CollectionRootKey) ToString() string {
 		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.RootID)))
 	}
 
-	if k.CollectionID != 0 {
-		result = fmt.Sprintf("%s/%s", result, strconv.Itoa(int(k.CollectionID)))
+	if k.CollectionID != "" {
+		result = fmt.Sprintf("%s/%s", result, k.CollectionID)
 	}
 
 	return result

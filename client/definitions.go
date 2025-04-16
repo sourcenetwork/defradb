@@ -267,10 +267,6 @@ func GetDefinition(
 		def, ok := cache.DefinitionsBySchemaRoot[typedKind.Root]
 		return def, ok
 
-	case *CollectionKind:
-		def, ok := cache.DefinitionsByCollectionRoot[typedKind.Root]
-		return def, ok
-
 	case *SelfKind:
 		if host.Description.RootID != 0 {
 			return host, true
@@ -326,25 +322,28 @@ func GetDefinitionFromStore(
 		return col.Definition(), true, nil
 
 	case *SchemaKind:
-		schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
-			Root: immutable.Some(typedKind.Root),
+		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
+			SchemaRoot: immutable.Some(typedKind.Root),
 		})
-		if len(schemas) == 0 || err != nil {
-			return CollectionDefinition{}, false, err
+
+		if len(cols) == 0 || errors.Is(err, ErrNotFound) {
+			// If no collections were found, check for schema-only collections
+			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
+				Root: immutable.Some(typedKind.Root),
+			})
+
+			if len(schemas) == 0 || err != nil {
+				return CollectionDefinition{}, false, err
+			}
+
+			return CollectionDefinition{
+				// todo - returning the first is a temporary simplification until
+				// https://github.com/sourcenetwork/defradb/issues/2934
+				Schema: schemas[0],
+			}, true, nil
 		}
 
-		return CollectionDefinition{
-			// todo - returning the first is a temporary simplification until
-			// https://github.com/sourcenetwork/defradb/issues/2934
-			Schema: schemas[0],
-		}, true, nil
-
-	case *CollectionKind:
-		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			Root: immutable.Some(typedKind.Root),
-		})
-
-		if len(cols) == 0 || err != nil {
+		if err != nil {
 			return CollectionDefinition{}, false, err
 		}
 

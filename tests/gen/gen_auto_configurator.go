@@ -48,7 +48,7 @@ type docsGenConfigurator struct {
 	random       *rand.Rand
 }
 
-type collectionID = uint32
+type collectionID = string
 
 // typeUsageCounters is a map of primary type to secondary type to field name to
 // relation usage. This is used to keep track of the usage of each relation.
@@ -74,9 +74,9 @@ func (c *typeUsageCounters) addRelationUsage(
 	field client.FieldDefinition,
 	minPerDoc, maxPerDoc, numDocs int,
 ) {
-	var collectionRoot uint32
+	var collectionRoot string
 	switch kind := field.Kind.(type) {
-	case *client.CollectionKind:
+	case *client.SchemaKind:
 		collectionRoot = kind.Root
 
 	default:
@@ -96,9 +96,9 @@ func (c *typeUsageCounters) addRelationUsage(
 
 // getNextTypeIndForField returns the next index to be used for a foreign field.
 func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.FieldDefinition) int {
-	var collectionRoot uint32
+	var collectionRoot string
 	switch kind := field.Kind.(type) {
-	case *client.CollectionKind:
+	case *client.SchemaKind:
 		collectionRoot = kind.Root
 	}
 
@@ -281,7 +281,7 @@ func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
 
 		def := g.types[typeName]
 
-		for _, usage := range g.usageCounter.m[def.Description.RootID] {
+		for _, usage := range g.usageCounter.m[def.Schema.Root] {
 			for _, field := range usage {
 				if field.numAvailablePrimaryDocs == math.MaxInt {
 					field.numAvailablePrimaryDocs = max
@@ -304,13 +304,13 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 	secondaryTypeDef := g.types[secondaryType]
 
 	for _, field := range primaryTypeDef.GetFields() {
-		var otherRoot immutable.Option[uint32]
+		var otherRoot immutable.Option[string]
 		switch kind := field.Kind.(type) {
-		case *client.CollectionKind:
+		case *client.SchemaKind:
 			otherRoot = immutable.Some(kind.Root)
 		}
 
-		if otherRoot.HasValue() && otherRoot.Value() == secondaryTypeDef.Description.RootID {
+		if otherRoot.HasValue() && otherRoot.Value() == secondaryTypeDef.Schema.Root {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
 
@@ -441,13 +441,13 @@ func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType stri
 	secondaryTypeDef := g.types[secondaryType]
 	primaryTypeDef := g.types[primaryType]
 	for _, secondaryTypeField := range secondaryTypeDef.GetFields() {
-		var otherRoot immutable.Option[uint32]
+		var otherRoot immutable.Option[string]
 		switch kind := secondaryTypeField.Kind.(type) {
-		case *client.CollectionKind:
+		case *client.SchemaKind:
 			otherRoot = immutable.Some(kind.Root)
 		}
 
-		if otherRoot.HasValue() && otherRoot.Value() == primaryTypeDef.Description.RootID {
+		if otherRoot.HasValue() && otherRoot.Value() == primaryTypeDef.Schema.Root {
 			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, minPerDoc,
 				maxPerDoc, g.docsDemand[primaryType].getAverage())
 		}

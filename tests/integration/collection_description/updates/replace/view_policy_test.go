@@ -84,7 +84,11 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/2/IsMaterialized", "value": true }
+						{
+							"op": "replace",
+							"path": "/bafkreibdmvzu7gv4iecgms5odn4t7g66jrrgphjqsnnv666ptmx4xgk5my/IsMaterialized",
+							"value": true
+						}
 					]
 				`,
 				ExpectedError: "materialized views do not support ACP. Collection: UserView",

@@ -12,7 +12,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 
 	"github.com/lens-vm/lens/host-go/config/model"
@@ -37,11 +36,6 @@ type CollectionDescription struct {
 	// is no means to update the local value so that it differs from the (global) schema name.
 	Name immutable.Option[string]
 
-	// ID is the local identifier of this collection.
-	//
-	// It is immutable.
-	ID uint32
-
 	// RootID is the local root identifier of this collection, linking together a chain of
 	// collection instances on different schema versions.
 	//
@@ -50,8 +44,8 @@ type CollectionDescription struct {
 	// migrate between schema versions when provided.
 	RootID uint32
 
-	// The ID of the schema version that this collection is at.
-	SchemaVersionID string
+	// The immutable ID of this collection version.
+	ID string
 
 	// Sources is the set of sources from which this collection draws data.
 	//
@@ -143,7 +137,7 @@ type CollectionSource struct {
 	//
 	// This is a bi-directional relationship, and documents in the host collection instance will also
 	// be available to the source collection instance.
-	SourceCollectionID uint32
+	SourceCollectionID string
 
 	// Transform is a optional Lens configuration.  If specified, data drawn from the source will have the
 	// transform applied before being returned by any operation on the host collection instance.
@@ -151,11 +145,6 @@ type CollectionSource struct {
 	// If the transform supports an inverse operation, that inverse will be applied when the source collection
 	// draws data from this host.
 	Transform immutable.Option[model.Lens]
-}
-
-// IDString returns the collection ID as a string.
-func (col CollectionDescription) IDString() string {
-	return fmt.Sprint(col.ID)
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
@@ -210,9 +199,8 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
 	Name             immutable.Option[string]
-	ID               uint32
+	ID               string
 	RootID           uint32
-	SchemaVersionID  string
 	IsMaterialized   bool
 	IsBranchable     bool
 	Policy           immutable.Option[PolicyDescription]
@@ -232,9 +220,8 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	c.Name = descMap.Name
-	c.ID = descMap.ID
 	c.RootID = descMap.RootID
-	c.SchemaVersionID = descMap.SchemaVersionID
+	c.ID = descMap.ID
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable
 	c.Indexes = descMap.Indexes

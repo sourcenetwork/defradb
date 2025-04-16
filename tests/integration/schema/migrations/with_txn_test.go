@@ -50,17 +50,11 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:              1,
-						SchemaVersionID: "does not exist",
-						IsMaterialized:  true,
-					},
-					{
-						ID:              2,
-						SchemaVersionID: "also does not exist",
-						IsMaterialized:  true,
+						ID:             "also does not exist",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -76,6 +70,10 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						ID:             "does not exist",
+						IsMaterialized: true,
 					},
 				},
 			},

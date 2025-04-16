@@ -66,13 +66,9 @@ func (delta *LWWRegDelta) SetPriority(prio uint64) {
 // LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
 // of an arbitrary data type that ensures convergence.
 type LWWRegister struct {
-	store datastore.DSReaderWriter
-	key   keys.DataStoreKey
-
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey keys.CollectionSchemaVersionKey
+	store           datastore.DSReaderWriter
+	key             keys.DataStoreKey
+	schemaVersionID string
 
 	// fieldName holds the name of the field hosting this CRDT, if this is a field level
 	// commit.
@@ -84,15 +80,15 @@ var _ core.ReplicatedData = (*LWWRegister)(nil)
 // NewLWWRegister returns a new instance of the LWWReg with the given ID.
 func NewLWWRegister(
 	store datastore.DSReaderWriter,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) LWWRegister {
 	return LWWRegister{
-		store:            store,
-		key:              key,
-		schemaVersionKey: schemaVersionKey,
-		fieldName:        fieldName,
+		store:           store,
+		key:             key,
+		schemaVersionID: schemaVersionID,
+		fieldName:       fieldName,
 	}
 }
 
@@ -103,7 +99,7 @@ func (reg LWWRegister) Set(value []byte) *LWWRegDelta {
 		Data:            value,
 		DocID:           []byte(reg.key.DocID),
 		FieldName:       reg.fieldName,
-		SchemaVersionID: reg.schemaVersionKey.SchemaVersionID,
+		SchemaVersionID: reg.schemaVersionID,
 	}
 }
 

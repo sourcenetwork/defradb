@@ -78,7 +78,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
 }
 
-func (db *DB) getCollectionByID(ctx context.Context, id uint32) (client.Collection, error) {
+func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
 	txn := mustGetContextTxn(ctx)
 
 	col, err := description.GetCollectionByID(ctx, txn, id)
@@ -86,7 +86,7 @@ func (db *DB) getCollectionByID(ctx context.Context, id uint32) (client.Collecti
 		return nil, err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+	schema, err := description.GetSchemaVersion(ctx, txn, id)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +110,10 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 	cols, err := db.getCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
+	}
+
+	if len(cols) == 0 {
+		return nil, corekv.ErrNotFound
 	}
 
 	// cols will always have length == 1 here
@@ -138,17 +142,17 @@ func (db *DB) getCollections(
 
 	case options.Name.HasValue():
 		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
-		if err != nil {
+		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.SchemaVersionID.HasValue():
-		var err error
-		cols, err = description.GetCollectionsBySchemaVersionID(ctx, txn, options.SchemaVersionID.Value())
+	case options.ID.HasValue():
+		col, err := description.GetCollectionByID(ctx, txn, options.ID.Value())
 		if err != nil {
 			return nil, err
 		}
+		cols = append(cols, col)
 
 	case options.SchemaRoot.HasValue():
 		var err error
@@ -175,8 +179,8 @@ func (db *DB) getCollections(
 
 	collections := []client.Collection{}
 	for _, col := range cols {
-		if options.SchemaVersionID.HasValue() {
-			if col.SchemaVersionID != options.SchemaVersionID.Value() {
+		if options.ID.HasValue() {
+			if col.ID != options.ID.Value() {
 				continue
 			}
 		}
@@ -188,11 +192,11 @@ func (db *DB) getCollections(
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.SchemaVersionID.HasValue() {
+		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.ID.HasValue() {
 			continue
 		}
 
-		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+		schema, err := description.GetSchemaVersion(ctx, txn, col.ID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
@@ -230,7 +234,7 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 
 	definitions := make([]client.CollectionDefinition, len(cols))
 	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.SchemaVersionID)
+		schema, err := description.GetSchemaVersion(ctx, txn, col.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -375,7 +379,7 @@ func (c *collection) Schema() client.SchemaDescription {
 }
 
 // ID returns the ID of the collection.
-func (c *collection) ID() uint32 {
+func (c *collection) ID() string {
 	return c.Description().ID
 }
 
@@ -708,7 +712,7 @@ func (c *collection) save(
 
 			merkleCRDT, err := merklecrdt.FieldLevelCRDTWithStore(
 				txn,
-				keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+				c.Schema().VersionID,
 				val.Type(),
 				fieldDescription.Kind,
 				fieldKey,
@@ -729,7 +733,7 @@ func (c *collection) save(
 
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,
-		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
@@ -756,7 +760,7 @@ func (c *collection) save(
 	if c.def.Description.IsBranchable {
 		collectionCRDT := merklecrdt.NewMerkleCollection(
 			txn,
-			keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(c.def.Description.RootID),
 		)
 

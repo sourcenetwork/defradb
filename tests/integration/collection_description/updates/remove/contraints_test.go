@@ -29,10 +29,13 @@ func TestColDescrUpdate_FieldFieldSizeContraint_ShouldError(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/1/Fields/1/Size"}
+						{
+							"op": "remove",
+							"path": "/bafkreiegxruspmodnptoor6w5z6h42wjcao6souorcd2e5q3xtxxryxchu/Fields/1/Size"
+						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection fields cannot be mutated.",
 			},
 		},
 	}

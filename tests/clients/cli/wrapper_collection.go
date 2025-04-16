@@ -42,7 +42,7 @@ func (c *Collection) Schema() client.SchemaDescription {
 	return c.def.Schema
 }
 
-func (c *Collection) ID() uint32 {
+func (c *Collection) ID() string {
 	return c.Description().ID
 }
 

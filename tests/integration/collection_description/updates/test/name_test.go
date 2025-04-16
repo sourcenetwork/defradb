@@ -27,7 +27,11 @@ func TestColDescrUpdateTestName(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "test", "path": "/1/Name", "value": "Users" }
+						{
+							"op": "test",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"value": "Users"
+						}
 					]
 				`,
 			},
@@ -48,10 +52,14 @@ func TestColDescrUpdateTestName_Fails(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "test", "path": "/1/Name", "value": "Dogs" }
+						{
+							"op": "test",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"value": "Dogs"
+						}
 					]
 				`,
-				ExpectedError: "testing value /1/Name failed: test failed",
+				ExpectedError: "testing value /bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name failed: test failed",
 			},
 		},
 	}

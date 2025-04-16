@@ -402,8 +402,8 @@ type RequestResult struct {
 
 // CollectionFetchOptions represents a set of options used for fetching collections.
 type CollectionFetchOptions struct {
-	// If provided, only collections with this schema version id will be returned.
-	SchemaVersionID immutable.Option[string]
+	// If provided, only collections with this version id will be returned.
+	ID immutable.Option[string]
 
 	// If provided, only collections with schemas of this root will be returned.
 	SchemaRoot immutable.Option[string]

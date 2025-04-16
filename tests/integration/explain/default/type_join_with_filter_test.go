@@ -71,7 +71,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -158,7 +158,7 @@ func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{

@@ -90,7 +90,7 @@ const (
 	errCollectionPolicyCannotBeMutated          string = "collection policy cannot be mutated"
 	errCollectionRootIDCannotBeMutated          string = "collection root ID cannot be mutated"
 	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
-	errCollectionIDCannotBeZero                 string = "collection ID cannot be zero"
+	errCollectionIDCannotBeEmpty                string = "collection ID cannot be empty"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
 	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
 	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
@@ -143,7 +143,7 @@ var (
 	ErrCollectionFieldsCannotBeMutated          = errors.New(errCollectionFieldsCannotBeMutated)
 	ErrCollectionRootIDCannotBeMutated          = errors.New(errCollectionRootIDCannotBeMutated)
 	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
-	ErrCollectionIDCannotBeZero                 = errors.New(errCollectionIDCannotBeZero)
+	ErrCollectionIDCannotBeEmpty                = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
 	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
 	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
@@ -275,14 +275,14 @@ func NewErrAddSchemaWithPatch(name string) error {
 	)
 }
 
-func NewErrAddCollectionIDWithPatch(id uint32) error {
+func NewErrAddCollectionIDWithPatch(id string) error {
 	return errors.New(
 		errAddCollectionWithPatch,
 		errors.NewKV("ID", id),
 	)
 }
 
-func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID uint32) error {
+func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID string) error {
 	return errors.New(
 		errCollectionIDDoesntMatch,
 		errors.NewKV("Name", name),
@@ -578,14 +578,14 @@ func NewErrCollectionAlreadyExists(name string) error {
 	)
 }
 
-func NewErrCollectionIDAlreadyExists(id uint32) error {
+func NewErrCollectionIDAlreadyExists(id string) error {
 	return errors.New(
 		errCollectionAlreadyExists,
 		errors.NewKV("ID", id),
 	)
 }
 
-func NewErrMultipleActiveCollectionVersions(name string, root uint32) error {
+func NewErrMultipleActiveCollectionVersions(name string, root string) error {
 	return errors.New(
 		errMultipleActiveCollectionVersions,
 		errors.NewKV("Name", name),
@@ -593,14 +593,14 @@ func NewErrMultipleActiveCollectionVersions(name string, root uint32) error {
 	)
 }
 
-func NewErrCollectionSourcesCannotBeAddedRemoved(colID uint32) error {
+func NewErrCollectionSourcesCannotBeAddedRemoved(colID string) error {
 	return errors.New(
 		errCollectionSourcesCannotBeAddedRemoved,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionSourceIDMutated(colID uint32, newSrcID uint32, oldSrcID uint32) error {
+func NewErrCollectionSourceIDMutated(colID string, newSrcID string, oldSrcID string) error {
 	return errors.New(
 		errCollectionSourceIDMutated,
 		errors.NewKV("CollectionID", colID),
@@ -609,42 +609,42 @@ func NewErrCollectionSourceIDMutated(colID uint32, newSrcID uint32, oldSrcID uin
 	)
 }
 
-func NewErrCollectionIndexesCannotBeMutated(colID uint32) error {
+func NewErrCollectionIndexesCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionIndexesCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionFieldsCannotBeMutated(colID uint32) error {
+func NewErrCollectionFieldsCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionFieldsCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionPolicyCannotBeMutated(colID uint32) error {
+func NewErrCollectionPolicyCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionPolicyCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionRootIDCannotBeMutated(colID uint32) error {
+func NewErrCollectionRootIDCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionRootIDCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionSchemaVersionIDCannotBeMutated(colID uint32) error {
+func NewErrCollectionSchemaVersionIDCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionSchemaVersionIDCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionsCannotBeDeleted(colID uint32) error {
+func NewErrCollectionsCannotBeDeleted(colID string) error {
 	return errors.New(
 		errCollectionsCannotBeDeleted,
 		errors.NewKV("CollectionID", colID),

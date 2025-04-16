@@ -70,7 +70,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "3",
+								"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -90,7 +90,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "4",
+										"collectionID":   "bafkreid5ciigzzwckygf4jskcvr2mkam45p6xpaszii3nycqwsz2fxmqn4",
 										"collectionName": "AuthorContact",
 										"prefixes": []string{
 											"/4",
@@ -174,7 +174,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "3",
+								"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -204,7 +204,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "4",
+								"collectionID":   "bafkreid5ciigzzwckygf4jskcvr2mkam45p6xpaszii3nycqwsz2fxmqn4",
 								"collectionName": "AuthorContact",
 								"prefixes": []string{
 									"/4",
@@ -223,7 +223,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "5",
+										"collectionID":   "bafkreienr7idffhd72pfj2oxdob7bpdyzgxwfjalbkpallc42nszjyctqi",
 										"collectionName": "ContactAddress",
 										"prefixes": []string{
 											"/5",

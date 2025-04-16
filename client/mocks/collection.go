@@ -663,18 +663,18 @@ func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(context.Context) ([]
 }
 
 // ID provides a mock function with given fields:
-func (_m *Collection) ID() uint32 {
+func (_m *Collection) ID() string {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for ID")
 	}
 
-	var r0 uint32
-	if rf, ok := ret.Get(0).(func() uint32); ok {
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(uint32)
+		r0 = ret.Get(0).(string)
 	}
 
 	return r0
@@ -697,12 +697,12 @@ func (_c *Collection_ID_Call) Run(run func()) *Collection_ID_Call {
 	return _c
 }
 
-func (_c *Collection_ID_Call) Return(_a0 uint32) *Collection_ID_Call {
+func (_c *Collection_ID_Call) Return(_a0 string) *Collection_ID_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Collection_ID_Call) RunAndReturn(run func() uint32) *Collection_ID_Call {
+func (_c *Collection_ID_Call) RunAndReturn(run func() string) *Collection_ID_Call {
 	_c.Call.Return(run)
 	return _c
 }

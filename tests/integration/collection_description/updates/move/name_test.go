@@ -38,7 +38,11 @@ func TestColDescrUpdateMoveName(t *testing.T) {
 				// Make the second collection the active one by moving its name from the first to the second
 				Patch: `
 					[
-						{ "op": "move", "from": "/1/Name", "path": "/2/Name" }
+						{
+							"op": "move",
+							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
+						}
 					]
 				`,
 			},

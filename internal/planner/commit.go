@@ -332,7 +332,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		n.planner.ctx,
 		client.CollectionFetchOptions{
 			IncludeInactive: immutable.Some(true),
-			SchemaVersionID: immutable.Some(schemaVersionId),
+			ID:              immutable.Some(schemaVersionId),
 		},
 	)
 	if err != nil {

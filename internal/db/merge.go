@@ -381,7 +381,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(dagBlock.Delta)
+		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -441,12 +441,7 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
-	schemaVersionKey := keys.CollectionSchemaVersionKey{
-		SchemaVersionID: mp.col.Schema().VersionID,
-		CollectionID:    mp.col.ID(),
-	}
-
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
 	switch {
 	case crdt.IsComposite():
 		docID := string(crdt.GetDocID())
@@ -454,14 +449,14 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 
 		return merklecrdt.NewMerkleCompositeDAG(
 			mp.txn,
-			schemaVersionKey,
+			mp.col.Schema().VersionID,
 			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
 	case crdt.IsCollection():
 		return merklecrdt.NewMerkleCollection(
 			mp.txn,
-			schemaVersionKey,
+			mp.col.Schema().VersionID,
 			keys.NewHeadstoreColKey(mp.col.Description().RootID),
 		), nil
 
@@ -478,7 +473,7 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 
 		return merklecrdt.FieldLevelCRDTWithStore(
 			mp.txn,
-			schemaVersionKey,
+			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
 			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(fd.ID.String()),

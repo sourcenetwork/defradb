@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColDescrUpdateReplaceID_WithZero_Errors(t *testing.T) {
+func TestColDescrUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -27,10 +27,14 @@ func TestColDescrUpdateReplaceID_WithZero_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/ID", "value": 0 }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/ID",
+							"value": ""
+						}
 					]
 				`,
-				ExpectedError: "collections cannot be deleted. CollectionID: 1",
+				ExpectedError: "collections cannot be deleted.",
 			},
 		},
 	}
@@ -54,10 +58,14 @@ func TestColDescrUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/ID", "value": 2 }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/ID",
+							"value": "fdsahasgsag"
+						}
 					]
 				`,
-				ExpectedError: "collection already exists. ID: 2",
+				ExpectedError: "adding collections via patch is not supported",
 			},
 		},
 	}
@@ -83,8 +91,16 @@ func TestColDescrUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/ID", "value": 2 },
-						{ "op": "replace", "path": "/2/ID", "value": 1 }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/ID",
+							"value": "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
+						},
+						{
+							"op": "replace",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/ID",
+							"value": "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+						}
 					]
 				`,
 				ExpectedError: "collection sources cannot be added or removed.",
@@ -111,11 +127,19 @@ func TestColDescrUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T) 
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/ID", "value": 2 },
-						{ "op": "replace", "path": "/2/ID", "value": 1 }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/ID",
+							"value": "bafkreibifvyfr6qvb6wx4v4cogvcdksb3v7vniaon7hdzzqb62cotpmlc4"
+						},
+						{
+							"op": "replace",
+							"path": "/bafkreibifvyfr6qvb6wx4v4cogvcdksb3v7vniaon7hdzzqb62cotpmlc4/ID",
+							"value": "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+						}
 					]
 				`,
-				ExpectedError: "collection root ID cannot be mutated. CollectionID:",
+				ExpectedError: "collection root ID cannot be mutated.",
 			},
 		},
 	}
@@ -134,10 +158,14 @@ func TestColDescrUpdateReplaceID_WithNew_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/ID", "value": 2 }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/ID",
+							"value": "bafkreibifvyfr6qvb6wx4v4cogvcdksb3v7vniaon7hdzzqb62cotpmlc4"
+						}
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported. ID: 2",
+				ExpectedError: "adding collections via patch is not supported.",
 			},
 		},
 	}

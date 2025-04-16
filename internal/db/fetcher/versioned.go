@@ -311,14 +311,14 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(
 			vf.store,
-			keys.NewCollectionSchemaVersionKey(vf.col.Description().SchemaVersionID, vf.col.Description().ID),
+			vf.col.Description().ID,
 			keys.NewHeadstoreColKey(vf.col.Description().RootID),
 		)
 
 	case block.Delta.IsComposite():
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			vf.store,
-			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
 				CollectionRootID: vf.col.Description().RootID,
 				DocID:            string(block.Delta.GetDocID()),
@@ -334,7 +334,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
 			vf.store,
-			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			block.Delta.GetSchemaVersionID(),
 			field.Typ,
 			field.Kind,
 			keys.DataStoreKey{

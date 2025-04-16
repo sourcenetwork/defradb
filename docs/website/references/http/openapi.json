@@ -161,9 +161,7 @@
                         "type": "array"
                     },
                     "ID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Indexes": {
                         "items": {
@@ -210,9 +208,6 @@
                         "maximum": 4294967295,
                         "minimum": 0,
                         "type": "integer"
-                    },
-                    "SchemaVersionID": {
-                        "type": "string"
                     },
                     "Sources": {
                         "items": {},
@@ -277,9 +272,7 @@
                                 "type": "array"
                             },
                             "ID": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
+                                "type": "string"
                             },
                             "Indexes": {
                                 "items": {
@@ -326,9 +319,6 @@
                                 "maximum": 4294967295,
                                 "minimum": 0,
                                 "type": "integer"
-                            },
-                            "SchemaVersionID": {
-                                "type": "string"
                             },
                             "Sources": {
                                 "items": {},
@@ -563,9 +553,7 @@
             "migrate_request": {
                 "properties": {
                     "CollectionID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Data": {
                         "items": {
@@ -699,9 +687,7 @@
             "set_migration_request": {
                 "properties": {
                     "CollectionID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Config": {
                         "properties": {

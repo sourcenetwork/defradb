@@ -24,7 +24,7 @@ type CollectionDescribe struct {
 
 	// The expected results.
 	//
-	// Each item will be compared individually, if ID, RootID or SchemaVersionID on the
+	// Each item will be compared individually, if ID or RootID on the
 	// expected item are default they will not be compared with the actual.
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
@@ -47,14 +47,11 @@ func (a *CollectionDescribe) Execute() {
 	for i, expected := range a.Expected {
 		actual := result[i]
 
-		if expected.Description.ID != 0 {
-			require.Equal(a.s.T, expected.Description.ID, actual.Description.ID)
-		}
 		if expected.Description.RootID != 0 {
 			require.Equal(a.s.T, expected.Description.RootID, actual.Description.RootID)
 		}
-		if expected.Description.SchemaVersionID != "" {
-			require.Equal(a.s.T, expected.Description.SchemaVersionID, actual.Description.SchemaVersionID)
+		if expected.Description.ID != "" {
+			require.Equal(a.s.T, expected.Description.ID, actual.Description.ID)
 		}
 
 		require.Equal(a.s.T, expected.Description.Name, actual.Description.Name)

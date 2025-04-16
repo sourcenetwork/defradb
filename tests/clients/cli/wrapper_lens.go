@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -30,14 +29,14 @@ type LensRegistry struct {
 
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
-func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
+func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
 	args := []string{"client", "lens", "set-registry"}
 
 	lenses, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
-	args = append(args, strconv.FormatUint(uint64(collectionID), 10))
+	args = append(args, collectionID)
 	args = append(args, string(lenses))
 
 	_, err = w.cmd.execute(ctx, args)
@@ -54,7 +53,7 @@ func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
 func (w *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	args := []string{"client", "lens", "up"}
 	args = append(args, "--collection", fmt.Sprint(collectionID))
@@ -86,7 +85,7 @@ func (w *LensRegistry) MigrateUp(
 func (w *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	args := []string{"client", "lens", "down"}
 	args = append(args, "--collection", fmt.Sprint(collectionID))

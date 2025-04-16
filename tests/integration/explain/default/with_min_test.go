@@ -70,7 +70,7 @@ func TestDefaultExplainRequest_WithMinOnInlineArrayField_ChildFieldWillBeEmpty(t
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "2",
+							"collectionID":   "bafkreictgwjdhpmwh6a7uu65oggzcgolwiq5vb53x2ehhijh2yqzgwzjwu",
 							"collectionName": "Book",
 							"filter":         nil,
 							"prefixes": []string{

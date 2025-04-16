@@ -69,7 +69,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -121,7 +121,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -171,7 +171,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -225,7 +225,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -274,7 +274,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -346,7 +346,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_and": []any{
