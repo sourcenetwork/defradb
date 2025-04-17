@@ -38,7 +38,7 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 						commits(
 							fieldId: null
 						) {
-							collectionID
+							schemaVersionId
 							docID
 							fieldId
 						}
@@ -47,9 +47,9 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 					"commits": []map[string]any{
 						{
 							// Extra params are used to verify this is a collection level cid
-							"collectionID": int64(1),
-							"docID":        nil,
-							"fieldId":      nil,
+							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+							"docID":           nil,
+							"fieldId":         nil,
 						},
 					},
 				},

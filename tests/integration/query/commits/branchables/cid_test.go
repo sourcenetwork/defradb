@@ -39,7 +39,6 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 							cid: "bafyreifi7borlnkazxrcohgl7r36cm5ga7moyiiajov3om7urexbx7cyl4"
 						) {
 							cid
-							collectionID
 							docID
 							fieldName
 						}
@@ -49,9 +48,8 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 						{
 							"cid": "bafyreifi7borlnkazxrcohgl7r36cm5ga7moyiiajov3om7urexbx7cyl4",
 							// Extra params are used to verify this is a collection level cid
-							"collectionID": int64(1),
-							"docID":        nil,
-							"fieldName":    nil,
+							"docID":     nil,
+							"fieldName": nil,
 						},
 					},
 				},
