@@ -55,7 +55,6 @@ var configFlags = map[string]string{
 	"store":                      "datastore.store",
 	"no-encryption":              "datastore.noencryption",
 	"no-signing":                 "datastore.nosigning",
-	"use-fallback-signer":        "datastore.usefallbacksigner",
 	"default-key-type":           "datastore.defaultkeytype",
 	"valuelogfilesize":           "datastore.badger.valuelogfilesize",
 	"peers":                      "net.peers",

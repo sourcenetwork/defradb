@@ -650,15 +650,12 @@ func (c *collection) save(
 	txn := mustGetContextTxn(ctx)
 
 	ident := identity.FromContext(ctx)
-	if !ident.HasValue() && c.db.nodeIdentity.HasValue() {
+	if !ident.HasValue() && ident.Value().PrivateKey == nil && c.db.nodeIdentity.HasValue() {
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
 	if !c.db.signingDisabled {
 		ctx = clock.ContextWithEnabledSigning(ctx)
-		if c.db.fallbackSigner.HasValue() {
-			ctx = clock.ContextWithFallbackSigner(ctx, c.db.fallbackSigner.Value())
-		}
 	}
 
 	// NOTE: We delay the final Clean() call until we know

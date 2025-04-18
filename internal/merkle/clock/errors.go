@@ -18,33 +18,31 @@ import (
 )
 
 const (
-	errCreatingBlock                       = "error creating block"
-	errWritingBlock                        = "error writing block"
-	errGettingHeads                        = "error getting heads"
-	errMergingDelta                        = "error merging delta"
-	errAddingHead                          = "error adding head"
-	errCheckingHead                        = "error checking if is head"
-	errReplacingHead                       = "error replacing head"
-	errCouldNotFindBlock                   = "error checking for known block "
-	errFailedToGetNextQResult              = "failed to get next query result"
-	errCouldNotGetEncKey                   = "could not get encryption key"
-	errUnsupportedKeyForSigning            = "unsupported key type for signing"
-	errIdentityWithoutPrivateKeyForSigning = "identity does not have a private key for signing"
+	errCreatingBlock            = "error creating block"
+	errWritingBlock             = "error writing block"
+	errGettingHeads             = "error getting heads"
+	errMergingDelta             = "error merging delta"
+	errAddingHead               = "error adding head"
+	errCheckingHead             = "error checking if is head"
+	errReplacingHead            = "error replacing head"
+	errCouldNotFindBlock        = "error checking for known block "
+	errFailedToGetNextQResult   = "failed to get next query result"
+	errCouldNotGetEncKey        = "could not get encryption key"
+	errUnsupportedKeyForSigning = "unsupported key type for signing"
 )
 
 var (
-	ErrCreatingBlock                       = errors.New(errCreatingBlock)
-	ErrWritingBlock                        = errors.New(errWritingBlock)
-	ErrGettingHeads                        = errors.New(errGettingHeads)
-	ErrMergingDelta                        = errors.New(errMergingDelta)
-	ErrAddingHead                          = errors.New(errAddingHead)
-	ErrCheckingHead                        = errors.New(errCheckingHead)
-	ErrReplacingHead                       = errors.New(errReplacingHead)
-	ErrCouldNotFindBlock                   = errors.New(errCouldNotFindBlock)
-	ErrFailedToGetNextQResult              = errors.New(errFailedToGetNextQResult)
-	ErrDecodingHeight                      = errors.New("error decoding height")
-	ErrCouldNotGetEncKey                   = errors.New(errCouldNotGetEncKey)
-	ErrIdentityWithoutPrivateKeyForSigning = errors.New(errIdentityWithoutPrivateKeyForSigning)
+	ErrCreatingBlock          = errors.New(errCreatingBlock)
+	ErrWritingBlock           = errors.New(errWritingBlock)
+	ErrGettingHeads           = errors.New(errGettingHeads)
+	ErrMergingDelta           = errors.New(errMergingDelta)
+	ErrAddingHead             = errors.New(errAddingHead)
+	ErrCheckingHead           = errors.New(errCheckingHead)
+	ErrReplacingHead          = errors.New(errReplacingHead)
+	ErrCouldNotFindBlock      = errors.New(errCouldNotFindBlock)
+	ErrFailedToGetNextQResult = errors.New(errFailedToGetNextQResult)
+	ErrDecodingHeight         = errors.New("error decoding height")
+	ErrCouldNotGetEncKey      = errors.New(errCouldNotGetEncKey)
 )
 
 func NewErrCreatingBlock(inner error) error {

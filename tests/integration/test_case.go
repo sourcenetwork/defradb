@@ -79,10 +79,6 @@ type TestCase struct {
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[Identity]crypto.KeyType
-
-	// FallbackSigner is the identity that will be used to sign blocks if provided identity
-	// is missing the private key. This is a case for HTTP
-	FallbackSigner immutable.Option[Identity]
 }
 
 // KMS contains the configuration for KMS to be used in the test

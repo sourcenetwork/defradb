@@ -97,9 +97,6 @@ type DB struct {
 
 	// If true, block signing is disabled. By default, block signing is enabled.
 	signingDisabled bool
-
-	// The fallback signer for the db.
-	fallbackSigner immutable.Option[identity.Identity]
 }
 
 var _ client.DB = (*DB)(nil)
@@ -154,7 +151,6 @@ func newDB(
 
 	db.nodeIdentity = opts.identity
 	db.signingDisabled = opts.disableSigning
-	db.fallbackSigner = opts.fallbackSigner
 
 	if lens != nil {
 		lens.Init(db)
