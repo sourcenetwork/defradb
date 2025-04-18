@@ -15,8 +15,11 @@ package node
 import (
 	"context"
 
+	badgerds "github.com/dgraph-io/badger/v4"
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/badger"
+
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/badger/v4"
 )
 
 // BadgerStore specifies the badger datastore
@@ -24,7 +27,13 @@ const BadgerStore = StoreType("badger")
 
 func init() {
 	constructor := func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error) {
-		badgerOpts := badger.DefaultOptions
+		var path string
+		if !options.badgerInMemory {
+			// Badger will error if we give it a path and set `InMemory` to true
+			path = options.path
+		}
+
+		badgerOpts := badgerds.DefaultOptions(path)
 		badgerOpts.InMemory = options.badgerInMemory
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
@@ -36,14 +45,14 @@ func init() {
 			badgerOpts.IndexCacheSize = 100 << 20
 		}
 
-		return badger.NewDatastore(options.path, &badgerOpts)
+		return badger.NewDatastore(path, badgerOpts)
 	}
 	purge := func(ctx context.Context, options *StoreOptions) error {
 		store, err := constructor(ctx, options)
 		if err != nil {
 			return err
 		}
-		err = store.(*badger.Datastore).DB.DropAll()
+		err = store.(corekv.Dropable).DropAll()
 		if err != nil {
 			return err
 		}

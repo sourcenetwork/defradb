@@ -93,7 +93,7 @@ type ACP interface {
 	// Otherwise if check failed then an error is returned (and the boolean result should not be used).
 	//
 	// Note(s):
-	// - permission here is a valid DPI permission we are checking for ("read" or "write").
+	// - permission here is a valid DPI permission we are checking for ("read" or "update" or "delete").
 	CheckDocAccess(
 		ctx context.Context,
 		permission DPIPermission,

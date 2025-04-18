@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -19,12 +18,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
+func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor twice, no-op",
+		Description: "Test acp, owner gives update access to another actor twice, no-op",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -50,10 +47,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -67,7 +67,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -81,22 +85,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -155,7 +159,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
@@ -169,7 +173,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: true, // is a no-op
 			},
@@ -179,12 +183,10 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActorTwice_ShowThatTheRelations
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
+func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor",
+		Description: "Test acp, owner gives update access to another actor",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -210,10 +212,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -227,7 +232,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -241,22 +250,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -315,7 +324,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
@@ -363,12 +372,10 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdate(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwner(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
+func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwner(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write(update) access to another actor, both can read",
+		Description: "Test acp, owner gives update access to another actor, both can read",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -387,10 +394,13 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -404,7 +414,11 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -418,22 +432,22 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -458,7 +472,7 @@ func TestACP_OwnerGivesUpdateWriteAccessToAnotherActor_OtherActorCanUpdateSoCanT
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},

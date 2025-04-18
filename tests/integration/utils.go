@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,9 +22,13 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/matchers"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
@@ -271,6 +276,11 @@ func executeTestCase(
 		performAction(s, i, testCase.Actions[i])
 	}
 
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
+	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
+	// by them. So the matchers need to be reset between the test runs.
+	resetMatchers(s)
+
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.allActionsDone)
 
@@ -421,6 +431,9 @@ func performAction(
 
 	case GetNodeIdentity:
 		performGetNodeIdentityAction(s, action)
+
+	case VerifyBlockSignature:
+		performVerifySignatureAction(s, action)
 
 	case SetupComplete:
 		// no-op, just continue.
@@ -725,7 +738,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.isNetworkEnabled {
-		st, err := setupNode(s)
+		st, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
 		require.Nil(s.t, err)
 		s.nodes = append(s.nodes, st)
 	}
@@ -1010,9 +1023,53 @@ func updateSchema(
 	s *state,
 	action SchemaUpdate,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
-		results, err := node.AddSchema(s.ctx, action.Schema)
+	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
+	if len(action.Replace) > 0 {
+		for substituteLabel := range action.Replace {
+			if substituteLabel == "" {
+				require.Fail(s.t, "Empty substitution label.", s.testCase.Description)
+			}
+
+			howManyLabelsToSub := strings.Count(action.Schema, substituteLabel)
+			if howManyLabelsToSub == 0 {
+				require.Fail(
+					s.t,
+					"Can't do substitution because no label: "+substituteLabel,
+					s.testCase.Description,
+				)
+			}
+		}
+	}
+
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		// This schema might be modified if the caller needs some substitution magic done.
+		var modifiedSchema = action.Schema
+
+		// We need to substitute the policyIDs into the `%policyID% place holders.
+		if len(action.Replace) > 0 {
+			nodeID := nodeIDs[index]
+			nodesPolicyIDs := s.policyIDs[nodeID]
+			templateData := map[string]string{}
+			// Build template with the replacing values.
+			for substituteLabel, replaceWith := range action.Replace {
+				replacer, err := replaceWith.Replacer(nodesPolicyIDs)
+				require.NoError(s.t, err)
+				templateData[substituteLabel] = replacer
+			}
+
+			// Template should be built now, so execute it.
+			tmpl := template.Must(template.New("schema").Parse(modifiedSchema))
+			var renderedSchema bytes.Buffer
+			err := tmpl.Execute(&renderedSchema, templateData)
+			if err != nil {
+				require.Fail(s.t, "Template execution for schema update failed.", s.testCase.Description)
+			}
+
+			modifiedSchema = renderedSchema.String()
+		}
+
+		results, err := node.AddSchema(s.ctx, modifiedSchema)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1419,7 +1476,7 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[identity]())
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[Identity]())
 	}
 }
 
@@ -1469,7 +1526,7 @@ func updateDoc(
 			action.NodeID,
 			action.CollectionID,
 			getEventsForUpdateDoc(s, action),
-			immutable.None[identity](),
+			immutable.None[Identity](),
 		)
 	}
 }
@@ -1575,7 +1632,7 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 			action.NodeID,
 			action.CollectionID,
 			getEventsForUpdateWithFilter(s, action, res),
-			immutable.None[identity](),
+			immutable.None[Identity](),
 		)
 	}
 }
@@ -1725,7 +1782,7 @@ func withRetryOnNode(
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
 		err := action()
-		if errors.Is(err, datastore.ErrTxnConflict) {
+		if errors.Is(err, corekv.ErrTxnConflict) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -1936,6 +1993,7 @@ func assertRequestResults(
 	asserter ResultAsserter,
 	nodeID int,
 ) bool {
+	s.currentNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if AssertErrors(s.t, s.testCase.Description, result.Errors, expectedError) || s.isBench {
 		return true
@@ -1983,8 +2041,8 @@ func assertRequestResults(
 				stack,
 			)
 
-		case Validator:
-			exp.Validate(s, actual)
+		case gomega.OmegaMatcher:
+			execGomegaMatcher(exp, s, actual, stack)
 
 		default:
 			assertResultsEqual(
@@ -2027,49 +2085,64 @@ func assertRequestResultDocs(
 			),
 		)
 
-		for field, actualValue := range actualDoc {
-			stack.pushMap(field)
-			pathInfo := fmt.Sprintf("node: %v, path: %s", nodeID, stack)
+		assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack)
 
-			switch expectedValue := expectedDoc[field].(type) {
-			case Validator:
-				expectedValue.Validate(s, actualValue, pathInfo)
-
-			case DocIndex:
-				expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					expectedDocID,
-					actualValue,
-					pathInfo,
-				)
-			case []map[string]any:
-				actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
-
-				assertRequestResultDocs(
-					s,
-					nodeID,
-					expectedValue,
-					actualValueMap,
-					stack,
-				)
-
-			default:
-				assertResultsEqual(
-					s.t,
-					s.clientType,
-					expectedValue,
-					actualValue,
-					pathInfo,
-				)
-			}
-			stack.pop()
-		}
 		stack.pop()
 	}
 
 	return false
+}
+
+func assertRequestResultDoc(
+	s *state,
+	nodeID int,
+	actualDoc map[string]any,
+	expectedDoc map[string]any,
+	stack *assertStack,
+) {
+	for field, actualValue := range actualDoc {
+		stack.pushMap(field)
+
+		switch expectedValue := expectedDoc[field].(type) {
+		case gomega.OmegaMatcher:
+			execGomegaMatcher(expectedValue, s, actualValue, stack)
+
+		case DocIndex:
+			expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expectedDocID,
+				actualValue,
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+			)
+		case []map[string]any:
+			actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
+
+			assertRequestResultDocs(
+				s,
+				nodeID,
+				expectedValue,
+				actualValueMap,
+				stack,
+			)
+
+		case map[string]any:
+			actualMap, ok := actualValue.(map[string]any)
+			require.True(s.t, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack)
+
+		default:
+			assertResultsEqual(
+				s.t,
+				s.clientType,
+				expectedValue,
+				actualValue,
+				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+			)
+		}
+		stack.pop()
+	}
 }
 
 func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {
@@ -2337,7 +2410,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 }
 
-// skipVectorEmbeddingTest skips the current test if the given actions
+// skipIfVectorEmbeddingTest skips the current test if the given actions
 // contain a schema with vector embedding generation and skipVectoEmbeeddingTest is true.
 func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
@@ -2401,4 +2474,69 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
 	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+}
+
+// execGomegaMatcher executes the given gomega matcher and asserts the result.
+func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
+	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
+
+	success, err := exp.Match(actual)
+	if err != nil {
+		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
+	}
+
+	if !success {
+		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+	}
+
+	traverseGomegaMatchers(exp, s, func(m StatefulMatcher) {
+		if !slices.Contains(s.statefulMatchers, m) {
+			s.statefulMatchers = append(s.statefulMatchers, m)
+		}
+	})
+}
+
+// traverseGomegaMatchers traverses the given gomega matcher and calls the given function
+// for each matcher found with the type T.
+func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *state, f func(T)) {
+	if m, ok := exp.(T); ok {
+		f(m)
+		return
+	}
+
+	switch exp := exp.(type) {
+	case *matchers.AndMatcher:
+		for _, m := range exp.Matchers {
+			traverseGomegaMatchers(m, s, f)
+		}
+	case *matchers.OrMatcher:
+		for _, m := range exp.Matchers {
+			traverseGomegaMatchers(m, s, f)
+		}
+	case *matchers.NotMatcher:
+		traverseGomegaMatchers(exp.Matcher, s, f)
+	}
+}
+
+// resetMatchers resets the state of all stateful matchers.
+func resetMatchers(s *state) {
+	for _, matcher := range s.statefulMatchers {
+		matcher.ResetMatcherState()
+	}
+}
+
+func performVerifySignatureAction(s *state, action VerifyBlockSignature) {
+	_, nodes := getNodesWithIDs(immutable.None[int](), s.nodes)
+	for i, node := range nodes {
+		ctx := getContextWithIdentity(s.ctx, s, action.Identity, i)
+		signerIdentity := getIdentity(s, immutable.Some(action.SignerIdentity))
+		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey)
+
+		if action.ExpectedError != "" {
+			require.Error(s.t, err, s.testCase.Description)
+			require.Contains(s.t, err.Error(), action.ExpectedError, s.testCase.Description)
+		} else {
+			require.NoError(s.t, err, s.testCase.Description)
+		}
+	}
 }

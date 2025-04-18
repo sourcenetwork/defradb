@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, specify basic policy that was added in YAML format, accept schema",
@@ -42,7 +39,9 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -51,22 +50,22 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -114,8 +113,6 @@ func TestACP_AddDPISchema_BasicYAML_SchemaAccepted(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
-	policyIDOfValidDPI := "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, specify basic policy that was added in JSON format, accept schema",
@@ -135,7 +132,10 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 					        "read": {
 					          "expr": "owner"
 					        },
-					        "write": {
+					        "update": {
+					          "expr": "owner"
+					        },
+					        "delete": {
 					          "expr": "owner"
 					        }
 					      },
@@ -153,22 +153,22 @@ func TestACP_AddDPISchema_BasicJSON_SchemaAccepted(t *testing.T) {
 					  }
 					}
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

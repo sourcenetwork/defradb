@@ -18,12 +18,13 @@ import (
 	"time"
 
 	"github.com/ipfs/boxo/bitswap"
-	"github.com/ipfs/boxo/bitswap/network"
+	"github.com/ipfs/boxo/bitswap/network/bsnet"
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/bootstrap"
 	blocks "github.com/ipfs/go-block-format"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	libp2pevent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
@@ -73,7 +74,7 @@ type Peer struct {
 	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
-	bserv blockservice.BlockService
+	blockService blockservice.BlockService
 
 	acp immutable.Option[acp.ACP]
 	db  DB
@@ -162,9 +163,9 @@ func NewPeer(
 		return nil, err
 	}
 
-	bswapnet := network.NewFromIpfsHost(h)
+	bswapnet := bsnet.NewFromIpfsHost(h)
 	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
-	p.bserv = blockservice.New(db.Blockstore(), bswap)
+	p.blockService = blockservice.New(db.Blockstore(), bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
@@ -184,6 +185,20 @@ func NewPeer(
 			log.ErrorE("Fatal P2P RPC server error", err)
 		}
 	}()
+
+	// There is a possibility for the PeerInfo event to trigger before the PeerInfo has been set for the host.
+	// To avoid this, we wait for the host to indicate that its local address has been updated.
+	sub, err := h.EventBus().Subscribe(&libp2pevent.EvtLocalAddressesUpdated{})
+	if err != nil {
+		return nil, err
+	}
+	select {
+	case <-sub.Out():
+		break
+	case <-time.After(5 * time.Second):
+		// This can only happen if the listening address has been mistakenly set to a zero value.
+		return nil, ErrTimeoutWaitingForPeerInfo
+	}
 
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
@@ -219,7 +234,7 @@ func (p *Peer) Close() {
 		p.bus.Unsubscribe(p.updateSub)
 	}
 
-	if err := p.bserv.Close(); err != nil {
+	if err := p.blockService.Close(); err != nil {
 		log.ErrorE("Error closing block service", err)
 	}
 
@@ -309,7 +324,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 func (p *Peer) pushLogToReplicators(lg event.Update) {
 	// let the exchange know we have this block
 	// this should speed up the dag sync process
-	err := p.bserv.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
+	err := p.blockService.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
 	if err != nil {
 		log.ErrorE("Failed to notify new blocks", err)
 	}

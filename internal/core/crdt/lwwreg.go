@@ -14,7 +14,7 @@ import (
 	"bytes"
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -130,8 +130,8 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	// else if the current value is lexicographically
 	// greater than the new then ignore
 	key := reg.key.WithValueFlag()
-	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().ToDS())
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().Bytes())
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
@@ -140,7 +140,7 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, err := reg.store.Get(ctx, key.ToDS())
+		curValue, err := reg.store.Get(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
@@ -155,12 +155,12 @@ func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = reg.store.Delete(ctx, key.ToDS())
+		err = reg.store.Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
 	} else {
-		err = reg.store.Put(ctx, key.ToDS(), val)
+		err = reg.store.Set(ctx, key.Bytes(), val)
 		if err != nil {
 			return NewErrFailedToStoreValue(err)
 		}

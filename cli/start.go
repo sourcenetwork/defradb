@@ -11,13 +11,15 @@
 package cli
 
 import (
+	"bytes"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -67,6 +69,15 @@ func MakeStartCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
 
+			// Parse the retry intervals from the config files from a slice of ints to a slice of time.Durations
+			replicatorRetryIntervals := []time.Duration{}
+			for _, interval := range cfg.GetIntSlice("replicator.retryintervals") {
+				if interval <= 0 {
+					return ErrNegativeReplicatorRetryIntervals
+				}
+				replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(interval)*time.Second)
+			}
+
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
 				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
@@ -79,6 +90,7 @@ func MakeStartCommand() *cobra.Command {
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
 				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
@@ -121,7 +133,7 @@ func MakeStartCommand() *cobra.Command {
 					}
 				}
 
-				opts, err = getOrCreateIdentity(kr, opts)
+				opts, err = getOrCreateIdentity(kr, opts, cfg)
 				if err != nil {
 					return err
 				}
@@ -137,18 +149,22 @@ func MakeStartCommand() *cobra.Command {
 				}
 			}
 
+			opts = append(opts, db.WithEnabledSigning(!cfg.GetBool("datastore.nosigning")))
+
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
 			if isDevMode {
 				cmd.Printf(devModeBanner)
 				if cfg.GetBool("keyring.disabled") {
 					var err error
+					// Generate an ephemeral identity for the node
 					// TODO: we want to persist this identity so we can restart the node with the same identity
 					// even in development mode. https://github.com/sourcenetwork/defradb/issues/3148
-					opts, err = addEphemeralIdentity(opts)
+					ident, err := generateIdentity(cfg.GetString("datastore.defaultkeytype"))
 					if err != nil {
 						return err
 					}
+					opts = append(opts, db.WithNodeIdentity(ident))
 				}
 			}
 
@@ -269,6 +285,26 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetBool(configFlags["no-telemetry"]),
 		"Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.",
 	)
+	cmd.Flags().Bool(
+		"no-signing",
+		cfg.GetBool(configFlags["no-signing"]),
+		"Disable signing of commits.")
+	cmd.Flags().String(
+		"default-key-type",
+		cfg.GetString(configFlags["default-key-type"]),
+		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
+			"Valid values are 'secp256k1' and 'ed25519'. "+
+			"If not specified, the default key type will be 'secp256k1'.")
+	cmd.PersistentFlags().String(
+		"acp-type",
+		cfg.GetString(configFlags["acp.type"]),
+		"Specify the acp engine to use (supported: none (default), local, source-hub)")
+	cmd.PersistentFlags().IntSlice(
+		"replicator-retry-intervals",
+		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),
+		"Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. "+
+			"Example: 10,20,40,80,160,320",
+	)
 	return cmd
 }
 
@@ -310,41 +346,60 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	return append(opts, net.WithPrivateKey(peerKey)), nil
 }
 
-func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Viper) ([]node.Option, error) {
 	identityBytes, err := kr.Get(nodeIdentityKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
 			return nil, err
 		}
-		privateKey, err := crypto.GenerateSecp256k1()
+		keyType := cfg.GetString("datastore.defaultkeytype")
+		ident, err := generateIdentity(keyType)
 		if err != nil {
 			return nil, err
 		}
-		identityBytes := privateKey.Serialize()
+		rawKey := ident.PrivateKey.Raw()
+		// Make sure the outerscope knows about the newly created identity
+		identityBytes = append([]byte(keyType+":"), rawKey...)
 		err = kr.Set(nodeIdentityKeyName, identityBytes)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(identityBytes))
+	sepPos := bytes.Index(identityBytes, []byte(":"))
+	// the separator might not exist, because of the old format of storing it
+	// we turn it into the new format and try again
+	if sepPos == -1 {
+		identityBytes = append([]byte(crypto.KeyTypeSecp256k1+":"), identityBytes...)
+		err = kr.Set(nodeIdentityKeyName, identityBytes)
+		if err != nil {
+			return nil, err
+		}
+		return getOrCreateIdentity(kr, opts, cfg)
+	}
+	keyType := string(identityBytes[:sepPos])
+	privateKey, err := crypto.PrivateKeyFromBytes(crypto.KeyType(keyType), identityBytes[sepPos+1:])
+	if err != nil {
+		return nil, err
+	}
+	ident, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
+	return append(opts, db.WithNodeIdentity(ident)), nil
 }
 
-func addEphemeralIdentity(opts []node.Option) ([]node.Option, error) {
-	privateKey, err := crypto.GenerateSecp256k1()
+func generateIdentity(keyType string) (identity.Identity, error) {
+	privateKey, err := crypto.GenerateKey(crypto.KeyType(keyType))
 	if err != nil {
-		return nil, err
+		return identity.Identity{}, err
 	}
 
-	nodeIdentity, err := identity.FromPrivateKey(secp256k1.PrivKeyFromBytes(privateKey.Serialize()))
+	nodeIdentity, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
-		return nil, err
+		return identity.Identity{}, err
 	}
 
-	return append(opts, db.WithNodeIdentity(nodeIdentity)), nil
+	return nodeIdentity, nil
 }

@@ -14,38 +14,26 @@ import (
 	"context"
 	"testing"
 
-	badger "github.com/sourcenetwork/badger/v4"
+	badgerds "github.com/dgraph-io/badger/v4"
+	"github.com/sourcenetwork/corekv/badger"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
-	badgerds "github.com/sourcenetwork/defradb/datastore/badger/v4"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
-func newMemoryDB(ctx context.Context) (*DB, error) {
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
+func newBadgerDB(ctx context.Context) (*DB, error) {
+	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	if err != nil {
 		return nil, err
 	}
 	return newDB(ctx, rootstore, acp.NoACP, nil)
 }
 
-func newDefraMemoryDB(ctx context.Context) (*DB, error) {
-	rootstore := memory.NewDatastore(ctx)
-	return newDB(ctx, rootstore, acp.NoACP, nil)
-}
-
 func TestNewDB(t *testing.T) {
 	ctx := context.Background()
-	opts := badgerds.Options{Options: badger.DefaultOptions("").WithInMemory(true)}
-	rootstore, err := badgerds.NewDatastore("", &opts)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
 
 	_, err = NewDB(ctx, rootstore, acp.NoACP, nil)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 }

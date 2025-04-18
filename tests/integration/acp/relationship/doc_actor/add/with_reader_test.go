@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to another actor twice, no-op",
@@ -43,10 +40,13 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -60,7 +60,11 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -74,22 +78,22 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -157,8 +161,6 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 }
 
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to another actor",
@@ -180,10 +182,13 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -197,7 +202,11 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -211,22 +220,22 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -306,8 +315,6 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 // Note: Testing that owner can still read after the relationship was formed is to ensure
 // that no transfer of ownership has taken place.
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to another actor, both can read",
@@ -329,10 +336,13 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -346,7 +356,11 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -360,22 +374,22 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -459,8 +473,6 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 }
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdate(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
@@ -488,10 +500,13 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -505,7 +520,11 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -519,22 +538,22 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -644,8 +663,6 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 }
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelete(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to another actor, but the other actor can't delete",
@@ -667,10 +684,13 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -684,7 +704,11 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -698,22 +722,22 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

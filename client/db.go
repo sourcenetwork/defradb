@@ -15,11 +15,12 @@ import (
 	"context"
 	"encoding/json"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -66,7 +67,7 @@ type DB interface {
 	// Headstore returns the headstore where the current heads of the database are stored.
 	//
 	// It is read-only and sits within the rootstore returned by [Root].
-	Headstore() ds.Read
+	Headstore() corekv.Reader
 
 	// Close closes the database instance and releases any resources held.
 	//
@@ -144,6 +145,10 @@ type DB interface {
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+
+	// VerifySignature verifies the signatures of a block using a public key.
+	// Returns an error if any signature verification fails.
+	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
 }
 
 // Store contains the core DefraDB read-write operations.

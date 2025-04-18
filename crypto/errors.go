@@ -25,12 +25,34 @@ const (
 	errVerificationWithHMACFailed      string = "verification with HMAC failed"
 	errFailedToDecrypt                 string = "failed to decrypt"
 	errNoPublicKeyForDecryption        string = "no public key provided for decryption"
+	errInvalidECDSAPrivKeyBytes        string = "invalid ECDSA private key bytes"
+	errNilKey                          string = "received nil key"
+	errInvalidECDSASignature           string = "invalid ECDSA signature"
+	errInvalidECDSAPubKey              string = "invalid secp256k1 public key"
+	errInvalidEd25519PrivKeyLength     string = "invalid Ed25519 private key length"
+	errInvalidEd25519PubKeyLength      string = "invalid Ed25519 public key length"
+	errInvalidEd25519PubKey            string = "invalid Ed25519 public key"
+	errSignatureVerification           string = "signature verification failed"
+	errUnsupportedPrivKeyType          string = "unsupported private key type"
+	errUnsupportedPubKeyType           string = "unsupported public key type"
+	errFailedToCreateDIDKey            string = "failed to create DID key"
+	errUnsupportedKeyType              string = "unsupported key type"
 )
 
 var (
-	ErrCipherTextTooShort         = errors.New(errCipherTextTooShort)
-	ErrVerificationWithHMACFailed = errors.New(errVerificationWithHMACFailed)
-	ErrNoPublicKeyForDecryption   = errors.New(errNoPublicKeyForDecryption)
+	ErrCipherTextTooShort          = errors.New(errCipherTextTooShort)
+	ErrVerificationWithHMACFailed  = errors.New(errVerificationWithHMACFailed)
+	ErrNoPublicKeyForDecryption    = errors.New(errNoPublicKeyForDecryption)
+	ErrInvalidECDSAPrivKeyBytes    = errors.New(errInvalidECDSAPrivKeyBytes)
+	ErrNilKey                      = errors.New(errNilKey)
+	ErrInvalidECDSASignature       = errors.New(errInvalidECDSASignature)
+	ErrInvalidECDSAPubKey          = errors.New(errInvalidECDSAPubKey)
+	ErrInvalidEd25519PrivKeyLength = errors.New(errInvalidEd25519PrivKeyLength)
+	ErrInvalidEd25519PubKeyLength  = errors.New(errInvalidEd25519PubKeyLength)
+	ErrInvalidEd25519PubKey        = errors.New(errInvalidEd25519PubKey)
+	ErrUnsupportedPrivKeyType      = errors.New(errUnsupportedPrivKeyType)
+	ErrUnsupportedPubKeyType       = errors.New(errUnsupportedPubKeyType)
+	ErrSignatureVerification       = errors.New(errSignatureVerification)
 )
 
 func NewErrFailedToGenerateEphemeralKey(inner error) error {
@@ -59,4 +81,12 @@ func NewErrFailedToParseEphemeralPublicKey(inner error) error {
 
 func NewErrFailedToDecrypt(inner error) error {
 	return errors.Wrap(errFailedToDecrypt, inner)
+}
+
+func NewErrFailedToCreateDIDKey(inner error) error {
+	return errors.Wrap(errFailedToCreateDIDKey, inner)
+}
+
+func NewErrUnsupportedKeyType(keyType KeyType) error {
+	return errors.New(errUnsupportedKeyType, errors.NewKV("KeyType", keyType))
 }

@@ -40,3 +40,28 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdatesMoveFieldErrorsMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Test schema update, move field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						email: String
+					}
+				`,
+			},
+			testUtils.SchemaPatch{
+				Patch: `
+					[
+						{ "op": "move", "from": "/Users/Fields/1", "path": "/Users/Fields/-" }
+					]
+				`,
+				ExpectedError: "moving fields is not currently supported. Name: name, ProposedIndex: 1, ExistingIndex: 2\nmoving fields is not currently supported. Name: email, ProposedIndex: 2, ExistingIndex: 1",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

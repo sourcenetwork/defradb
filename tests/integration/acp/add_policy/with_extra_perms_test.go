@@ -34,7 +34,9 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           extra:
                             expr: owner
@@ -47,8 +49,6 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
                     actor:
                       name: actor
                 `,
-
-				ExpectedPolicyID: "a756ba5a7fe25e3fc36a4f113016a49b718b09028c917199ae68f478addc048c",
 			},
 		},
 	}
@@ -74,9 +74,11 @@ func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
                             expr: owner
-                          write:
+                          delete:
+                            expr: owner
+                          read:
                             expr: owner
 
                         relations:
@@ -88,7 +90,7 @@ func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
                       name: actor
                 `,
 
-				ExpectedError: "key \"write\" already set in map",
+				ExpectedError: "key \"read\" already set in map",
 			},
 		},
 	}

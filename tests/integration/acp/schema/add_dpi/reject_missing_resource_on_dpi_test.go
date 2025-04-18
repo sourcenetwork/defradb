@@ -11,15 +11,12 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_AddDPISchema_SpecifiedResourceDoesNotExistOnDPI_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but specified resource does not exist on DPI, reject schema",
@@ -42,7 +39,9 @@ func TestACP_AddDPISchema_SpecifiedResourceDoesNotExistOnDPI_SchemaRejected(t *t
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -53,22 +52,22 @@ func TestACP_AddDPISchema_SpecifiedResourceDoesNotExistOnDPI_SchemaRejected(t *t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "doesntExist"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 
 				ExpectedError: "resource does not exist on the specified policy",
 			},

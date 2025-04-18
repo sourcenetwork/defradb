@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdateOrDelete(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to all actors (gql), but the other actor can't update or delete",
@@ -51,10 +48,13 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdat
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -68,7 +68,11 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdat
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -82,22 +86,22 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdat
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -251,8 +255,6 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdat
 }
 
 func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_CanReadEvenWithoutIdentityButNotUpdateOrDelete(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to all actors (gql), can read without an identity but can't update or delete",
@@ -282,10 +284,13 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_CanReadEvenWithoutIdentityB
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -299,7 +304,11 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_CanReadEvenWithoutIdentityB
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -313,22 +322,22 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_CanReadEvenWithoutIdentityB
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

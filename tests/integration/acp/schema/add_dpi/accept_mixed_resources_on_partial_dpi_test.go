@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema(t *testing.T) {
-	policyIDOfPartiallyValidDPI := "d0093bc2d984f42a498dff029df5c931bae5f8cb79b24d36243ab9b84547023d"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, has both valid & invalid resources, but use only valid resource, schema accepted",
@@ -43,7 +40,9 @@ func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -58,7 +57,9 @@ func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema
                         permissions:
                           read:
                             expr: reader - owner
-                          write:
+                          update:
+                            expr: reader
+                          delete:
                             expr: reader
 
                         relations:
@@ -69,22 +70,22 @@ func TestACP_AddDPISchema_PartialValidDPIButUseOnlyValidDPIResource_AcceptSchema
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfPartiallyValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "usersValid"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfPartiallyValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

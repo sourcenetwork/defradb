@@ -11,15 +11,12 @@
 package test_acp_relationship_doc_actor_delete
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, delete doc actor relationship on a public document, return error",
@@ -41,10 +38,13 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -58,7 +58,11 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -72,22 +76,22 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{ // Note: Is a public document (without an identity).

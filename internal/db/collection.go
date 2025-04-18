@@ -17,11 +17,11 @@ import (
 	"strconv"
 	"strings"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -34,6 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
@@ -195,7 +196,7 @@ func (db *DB) getCollections(
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
-			if !errors.Is(err, ds.ErrNotFound) {
+			if !errors.Is(err, corekv.ErrNotFound) {
 				return nil, err
 			}
 		}
@@ -285,8 +286,8 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionRootID: c.Description().RootID,
 	}
-	q, err := txn.Datastore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
 	if err != nil {
@@ -296,13 +297,13 @@ func (c *collection) getAllDocIDsChan(
 	resCh := make(chan client.DocIDResult)
 	go func() {
 		defer func() {
-			if err := q.Close(); err != nil {
+			if err := iter.Close(); err != nil {
 				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
 			close(resCh)
 			txn.Discard(ctx)
 		}()
-		for res := range q.Next() {
+		for {
 			// check for Done on context first
 			select {
 			case <-ctx.Done():
@@ -311,14 +312,21 @@ func (c *collection) getAllDocIDsChan(
 			default:
 				// noop, just continue on the with the for loop
 			}
-			if res.Error != nil {
+
+			hasNext, err := iter.Next()
+			if err != nil {
 				resCh <- client.DocIDResult{
-					Err: res.Error,
+					Err: err,
 				}
 				return
 			}
+			if !hasNext {
+				break
+			}
 
-			rawDocID := ds.NewKey(res.Key).BaseNamespace()
+			splitString := strings.Split(string(iter.Key()), "/")
+			rawDocID := splitString[len(splitString)-1]
+
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
 				resCh <- client.DocIDResult{
@@ -472,7 +480,7 @@ func (c *collection) create(
 	if len(doc.Values()) == 0 {
 		txn := mustGetContextTxn(ctx)
 		valueKey := c.getDataStoreKeyFromDocID(docID)
-		err = txn.Datastore().Put(ctx, valueKey.ToDS(), []byte{base.ObjectMarker})
+		err = txn.Datastore().Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -540,7 +548,7 @@ func (c *collection) update(
 	// Stop the update if the correct permissions aren't there.
 	canUpdate, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.WritePermission,
+		acp.UpdatePermission,
 		doc.ID().String(),
 	)
 	if err != nil {
@@ -640,6 +648,15 @@ func (c *collection) save(
 		}
 	}
 	txn := mustGetContextTxn(ctx)
+
+	ident := identity.FromContext(ctx)
+	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
+
+	if !c.db.signingDisabled {
+		ctx = clock.ContextWithEnabledSigning(ctx)
+	}
 
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
@@ -905,7 +922,7 @@ func (c *collection) Exists(
 
 	primaryKey := c.getPrimaryKeyFromDocID(docID)
 	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return false, err
 	}
 	return exists && !isDeleted, txn.Commit(ctx)
@@ -928,8 +945,8 @@ func (c *collection) exists(
 	}
 
 	txn := mustGetContextTxn(ctx)
-	val, err := txn.Datastore().Get(ctx, primaryKey.ToDS())
-	if err != nil && errors.Is(err, ds.ErrNotFound) {
+	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
+	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
 		return false, false, err

@@ -11,15 +11,12 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_AddDPISchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but no resource was specified on schema, reject schema",
@@ -42,7 +39,9 @@ func TestACP_AddDPISchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testi
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -53,19 +52,15 @@ func TestACP_AddDPISchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testi
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-					type Users @policy(id: "%s") {
+				Schema: `
+				type Users @policy(id: "{{.Policy0}}") {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
 				ExpectedError: "resource name must not be empty",
 			},
 
@@ -95,8 +90,6 @@ func TestACP_AddDPISchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testi
 }
 
 func TestACP_AddDPISchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, specified resource arg on schema is empty, reject schema",
@@ -119,7 +112,9 @@ func TestACP_AddDPISchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -130,19 +125,20 @@ func TestACP_AddDPISchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-					type Users @policy(id: "%s", resource: "") {
+				Schema: `
+				type Users @policy(id: "{{.Policy0}}", resource: "") {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
+
 				ExpectedError: "resource name must not be empty",
 			},
 

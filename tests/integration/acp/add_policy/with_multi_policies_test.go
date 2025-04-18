@@ -13,6 +13,8 @@ package test_acp_add_policy
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -37,7 +39,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -46,8 +50,6 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "2eb8b503c9fc0b7c1f7b04d68a6faa0f82a299db0ae02fed68f9897612439cb6",
 			},
 
 			testUtils.AddPolicy{
@@ -65,7 +67,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -81,8 +85,6 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "6b766a9aafabf0bf65102f73b7cd81963b65e1fd87ce763f386cc685147325ee",
 			},
 		},
 	}
@@ -112,7 +114,10 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                             "read": {
                               "expr": "owner"
                             },
-                            "write": {
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
                               "expr": "owner"
                             }
                           },
@@ -128,7 +133,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                     }
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: immutable.Some(
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+				),
 			},
 
 			testUtils.AddPolicy{
@@ -146,7 +153,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -163,7 +172,9 @@ func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyID
                               - actor
                 `,
 
-				ExpectedPolicyID: "757c772e9c4418de530ecd72cbc56dfc4e0c22aa2f3b2d219afa7663b2f0af00",
+				ExpectedPolicyID: immutable.Some(
+					"32371d1285f8662ba54c8d63439f823b72e3347d517aa00cd7e305d73df57dcc",
+				),
 			},
 		},
 	}
@@ -184,8 +195,10 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
             permissions:
               read:
                 expr: owner
-              write:
-                expr: owner
+			  update:
+				expr: owner
+			  delete:
+				expr: owner
 
             relations:
               owner:
@@ -203,7 +216,9 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 				Policy: policyUsedByBoth,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: immutable.Some(
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+				),
 			},
 
 			testUtils.AddPolicy{
@@ -211,7 +226,9 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 				Policy: policyUsedByBoth,
 
-				ExpectedPolicyID: "ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+				ExpectedPolicyID: immutable.Some(
+					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+				),
 			},
 		},
 	}
@@ -240,7 +257,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -250,7 +269,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: immutable.Some(
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+				),
 			},
 
 			testUtils.AddPolicy{
@@ -268,7 +289,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -278,7 +301,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 
                 `,
 
-				ExpectedPolicyID: "ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+				ExpectedPolicyID: immutable.Some(
+					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+				),
 			},
 		},
 	}
@@ -307,7 +332,9 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -316,42 +343,49 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
                               - actor
                 `,
 
-				ExpectedPolicyID: "66f3e364004a181e9b129f65dea317322d2285226e926d7e8cdfd644954e4262",
+				ExpectedPolicyID: immutable.Some(
+					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+				),
 			},
 
 			testUtils.AddPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                   {
-                     "name": "test",
-                     "description": "a policy",
-                     "actor": {
-                       "name": "actor"
-                     },
-                     "resources": {
-                       "users": {
-                         "permissions": {
-                           "read": {
-                             "expr": "owner"
-                           },
-                           "write": {
-                             "expr": "owner"
-                           }
-                         },
-                         "relations": {
-                           "owner": {
-                             "types": [
-                               "actor"
-                             ]
-                           }
-                         }
-                       }
-                     }
-                   }
+                    {
+                      "name": "test",
+                      "description": "a policy",
+                      "actor": {
+                        "name": "actor"
+                      },
+                      "resources": {
+                        "users": {
+                          "permissions": {
+                            "read": {
+                              "expr": "owner"
+                            },
+                            "update": {
+                              "expr": "owner"
+                            },
+                            "delete": {
+                              "expr": "owner"
+                            }
+                          },
+                          "relations": {
+                            "owner": {
+                              "types": [
+                                "actor"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
                `,
 
-				ExpectedPolicyID: "ec02815cb630850678bda5e2d75cfacebc96f5610e32a602f7bfc414e21474ad",
+				ExpectedPolicyID: immutable.Some(
+					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+				),
 			},
 		},
 	}

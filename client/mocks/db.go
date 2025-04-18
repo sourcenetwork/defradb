@@ -7,11 +7,13 @@ import (
 
 	client "github.com/sourcenetwork/defradb/client"
 
+	corekv "github.com/sourcenetwork/corekv"
+
+	crypto "github.com/sourcenetwork/defradb/crypto"
+
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
 	event "github.com/sourcenetwork/defradb/event"
-
-	go_datastore "github.com/ipfs/go-datastore"
 
 	identity "github.com/sourcenetwork/defradb/acp/identity"
 
@@ -1224,19 +1226,19 @@ func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context.Context, client.Sche
 }
 
 // Headstore provides a mock function with given fields:
-func (_m *DB) Headstore() go_datastore.Read {
+func (_m *DB) Headstore() corekv.Reader {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Headstore")
 	}
 
-	var r0 go_datastore.Read
-	if rf, ok := ret.Get(0).(func() go_datastore.Read); ok {
+	var r0 corekv.Reader
+	if rf, ok := ret.Get(0).(func() corekv.Reader); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(go_datastore.Read)
+			r0 = ret.Get(0).(corekv.Reader)
 		}
 	}
 
@@ -1260,12 +1262,12 @@ func (_c *DB_Headstore_Call) Run(run func()) *DB_Headstore_Call {
 	return _c
 }
 
-func (_c *DB_Headstore_Call) Return(_a0 go_datastore.Read) *DB_Headstore_Call {
+func (_c *DB_Headstore_Call) Return(_a0 corekv.Reader) *DB_Headstore_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_Headstore_Call) RunAndReturn(run func() go_datastore.Read) *DB_Headstore_Call {
+func (_c *DB_Headstore_Call) RunAndReturn(run func() corekv.Reader) *DB_Headstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1992,6 +1994,54 @@ func (_c *DB_SetReplicator_Call) Return(_a0 error) *DB_SetReplicator_Call {
 }
 
 func (_c *DB_SetReplicator_Call) RunAndReturn(run func(context.Context, client.ReplicatorParams) error) *DB_SetReplicator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VerifySignature provides a mock function with given fields: ctx, blockCid, pubKey
+func (_m *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	ret := _m.Called(ctx, blockCid, pubKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifySignature")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, crypto.PublicKey) error); ok {
+		r0 = rf(ctx, blockCid, pubKey)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_VerifySignature_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifySignature'
+type DB_VerifySignature_Call struct {
+	*mock.Call
+}
+
+// VerifySignature is a helper method to define mock.On call
+//   - ctx context.Context
+//   - blockCid string
+//   - pubKey crypto.PublicKey
+func (_e *DB_Expecter) VerifySignature(ctx interface{}, blockCid interface{}, pubKey interface{}) *DB_VerifySignature_Call {
+	return &DB_VerifySignature_Call{Call: _e.mock.On("VerifySignature", ctx, blockCid, pubKey)}
+}
+
+func (_c *DB_VerifySignature_Call) Run(run func(ctx context.Context, blockCid string, pubKey crypto.PublicKey)) *DB_VerifySignature_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(crypto.PublicKey))
+	})
+	return _c
+}
+
+func (_c *DB_VerifySignature_Call) Return(_a0 error) *DB_VerifySignature_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_VerifySignature_Call) RunAndReturn(run func(context.Context, string, crypto.PublicKey) error) *DB_VerifySignature_Call {
 	_c.Call.Return(run)
 	return _c
 }

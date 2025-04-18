@@ -84,7 +84,7 @@ func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
 	s.nodes[cfg.SourceNodeID].p2p.replicators[cfg.TargetNodeID] = struct{}{}
 }
 
-// waitForReplicatorConfigureEvent waits for a node to publish a
+// waitForReplicatorDeleteEvent waits for a node to publish a
 // replicator completed event on the local event bus.
 func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
 	select {
@@ -126,7 +126,7 @@ func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
 	}
 }
 
-// waitForSubscribeToCollectionEvent waits for a node to publish a
+// waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollection) {
 	select {
@@ -156,7 +156,7 @@ func waitForUpdateEvents(
 	nodeID immutable.Option[int],
 	collectionIndex int,
 	docIDs map[string]struct{},
-	ident immutable.Option[identity],
+	ident immutable.Option[Identity],
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -273,7 +273,7 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[identity]) {
+func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[Identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {

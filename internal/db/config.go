@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -27,6 +27,7 @@ type dbOptions struct {
 	maxTxnRetries  immutable.Option[int]
 	RetryIntervals []time.Duration
 	identity       immutable.Option[identity.Identity]
+	disableSigning bool
 }
 
 // defaultOptions returns the default db options.
@@ -66,5 +67,13 @@ func WithRetryInterval(interval []time.Duration) Option {
 func WithNodeIdentity(ident identity.Identity) Option {
 	return func(opts *dbOptions) {
 		opts.identity = immutable.Some(ident)
+	}
+}
+
+// WithEnabledSigning sets the signing algorithm to use for DAG blocks.
+// If false, block signing is disabled. By default, block signing is enabled.
+func WithEnabledSigning(value bool) Option {
+	return func(opts *dbOptions) {
+		opts.disableSigning = !value
 	}
 }

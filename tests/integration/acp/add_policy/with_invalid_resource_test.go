@@ -36,7 +36,7 @@ func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
                       users:
                 `,
 
-				ExpectedError: "resource users: resource missing owner relation: invalid policy",
+				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}

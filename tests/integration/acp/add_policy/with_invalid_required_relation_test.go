@@ -35,7 +35,9 @@ func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: reader
+                          delete:
                             expr: reader
                           read:
                             expr: reader
@@ -46,7 +48,7 @@ func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedError: "resource users: resource missing owner relation: invalid policy",
+				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}
@@ -72,7 +74,9 @@ func TestACP_AddPolicy_DuplicateOwnerRelation_Error(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

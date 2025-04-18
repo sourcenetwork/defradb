@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,9 +16,9 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
@@ -71,6 +71,14 @@ type TestCase struct {
 
 	// Configuration for KMS to be used in the test
 	KMS KMS
+
+	// EnableSigning indicates if signing should be enabled for the test.
+	// Use [IdentityTypes] to customize the key type that is used for identity and signing.
+	EnableSigning bool
+
+	// IdentityTypes is a map of identity to key type.
+	// Use it to customize the key type that is used for identity and signing.
+	IdentityTypes map[Identity]crypto.KeyType
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -130,6 +138,51 @@ type SchemaUpdate struct {
 
 	// The schema update.
 	Schema string
+
+	// Replace is an optional map argument which makes it easier to substitute/replace different elements
+	// into the schema string where template labels are match.
+	//
+	// Note:
+	// - Will match and replace multiple occurances.
+	// - The indexes must be valid.
+	// - The substitution type must be valid.
+	// - If this map is empty, nothing is done.
+	//
+	// Example:
+	//
+	// Consider we have one policy that was added resulting in the following policyID:
+	// PolicyID="94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454"
+	//
+	// Then using this attribute like:
+	// Replace: map[string]string{
+	//     "policy0": NewPolicyIndex(0),
+	// },
+	//
+	// On a Schema string like:
+	// ```
+	//	type Users1 @policy(id: "{{.policy0}}", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	//
+	//	type Users2 @policy(id: "{{.policy0}}", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	// ```
+	// The Schema that will be loaded will be this modified one:
+	// ```
+	//	type Users1 @policy(id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	//
+	//	type Users2 @policy(id: "94eb195c0e459aa79e02a1986c7e731c5015721c18a373f2b2a0ed140a04b454", resource: "users") {
+	//		name: String
+	//		age: Int
+	//	}
+	// ```
+	Replace map[string]ReplaceType
 
 	// Optionally, the expected results.
 	//
@@ -296,9 +349,9 @@ type CreateDoc struct {
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -368,9 +421,9 @@ type DeleteDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -401,9 +454,9 @@ type UpdateDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -444,9 +497,9 @@ type UpdateWithFilter struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -601,9 +654,9 @@ type Request struct {
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -804,9 +857,9 @@ type GetNodeIdentity struct {
 
 	// ExpectedIdentity holds the identity that is expected to be found.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity immutable.Option[identity]
+	ExpectedIdentity immutable.Option[Identity]
 }
 
 // Wait is an action that will wait for the given duration.
@@ -815,27 +868,23 @@ type Wait struct {
 	Duration time.Duration
 }
 
-// ArrayDescription represents an array field.
-//
-// The test harness will call the Validate method to ensure that the returned array size and type
-// match what is described by this struct.
-type ArrayDescription[T any] struct {
-	// Size of the array
-	Size int
-}
+// VerifyBlockSignature is an action that will verify the signature of the given block.
+type VerifyBlockSignature struct {
+	// The cid of the block to verify the signature of.
+	Cid string
 
-// NewArrayDescription creates a new [ArrayDescription] instance allowing validation of the array
-// characteristics instead of the content of the array itself.
-func NewArrayDescription[T any](size int) ArrayDescription[T] {
-	return ArrayDescription[T]{
-		Size: size,
-	}
-}
+	// The identity of this request. Optional.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[Identity]
 
-func (d ArrayDescription[T]) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	var expT []T
-	require.IsType(s.t, expT, actualValue, msgAndArgs)
-	typedActualValue, ok := actualValue.([]T)
-	require.True(s.t, ok)
-	require.Equal(s.t, d.Size, len(typedActualValue), msgAndArgs)
+	// The identity of the author of the block to verify the signature of.
+	SignerIdentity Identity
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }

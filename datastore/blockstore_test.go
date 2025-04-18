@@ -17,11 +17,11 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/require"
 
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
-
-	"github.com/sourcenetwork/defradb/datastore/memory"
 )
 
 var (
@@ -32,10 +32,9 @@ var (
 func TestBStoreGet(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	cID, err := ccid.NewSHA256CidV1(data)
@@ -54,10 +53,9 @@ func TestBStoreGet(t *testing.T) {
 func TestBStoreGetWithUndefinedCID(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	cID, err := ccid.NewSHA256CidV1(data)
@@ -74,10 +72,9 @@ func TestBStoreGetWithUndefinedCID(t *testing.T) {
 func TestBStoreGetWithStoreClosed(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	cID, err := ccid.NewSHA256CidV1(data)
@@ -91,16 +88,15 @@ func TestBStoreGetWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = bs.Get(ctx, cID)
-	require.ErrorIs(t, err, ErrClosed)
+	require.ErrorIs(t, err, corekv.ErrDBClosed)
 }
 
 func TestBStoreGetWithReHash(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	bs.HashOnRead(true)
@@ -121,10 +117,9 @@ func TestBStoreGetWithReHash(t *testing.T) {
 func TestPutMany(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	cID, err := ccid.NewSHA256CidV1(data)
@@ -144,10 +139,9 @@ func TestPutMany(t *testing.T) {
 func TestPutManyWithExists(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	cID, err := ccid.NewSHA256CidV1(data)
@@ -170,10 +164,9 @@ func TestPutManyWithExists(t *testing.T) {
 func TestPutManyWithStoreClosed(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	dsRW := AsDSReaderWriter(rootstore)
 
 	bs := bstore{
-		store: dsRW,
+		store: rootstore,
 	}
 
 	cID, err := ccid.NewSHA256CidV1(data)
@@ -190,5 +183,5 @@ func TestPutManyWithStoreClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	err = bs.PutMany(ctx, []blocks.Block{b, b2})
-	require.ErrorIs(t, err, ErrClosed)
+	require.ErrorIs(t, err, corekv.ErrDBClosed)
 }

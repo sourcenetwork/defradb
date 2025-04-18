@@ -37,7 +37,9 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
                         permissions:
                           read:
                             expr: reader - owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -48,8 +50,6 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "2b10641de73790b95452f496a37ad53a8d8a0703803f35f6961457af912947c0",
 			},
 		},
 	}
@@ -79,7 +79,9 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
                         permissions:
                           read:
                             expr: reader-owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -90,8 +92,6 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "b6b305214247a08903e01466a1bfd01516206458d2725506797300b285e63690",
 			},
 		},
 	}

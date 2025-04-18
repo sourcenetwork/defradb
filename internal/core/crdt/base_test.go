@@ -14,15 +14,10 @@ import (
 	"context"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv/memory"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
-
-func newDS() datastore.DSReaderWriter {
-	return datastore.AsDSReaderWriter(ds.NewMapDatastore())
-}
 
 func TestBaseCRDTvalueKey(t *testing.T) {
 	vk := keys.DataStoreKey{}.WithDocID("mykey").WithValueFlag()
@@ -39,9 +34,9 @@ func TestBaseCRDTprioryKey(t *testing.T) {
 }
 
 func TestBaseCRDTSetGetPriority(t *testing.T) {
-	store := newDS()
-
 	ctx := context.Background()
+	store := memory.NewDatastore(ctx)
+
 	err := setPriority(ctx, store, keys.DataStoreKey{}.WithDocID("mykey"), 10)
 	if err != nil {
 		t.Errorf("baseCRDT failed to set Priority. err: %v", err)

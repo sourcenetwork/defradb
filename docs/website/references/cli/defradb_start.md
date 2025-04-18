@@ -13,21 +13,25 @@ defradb start [flags]
 ### Options
 
 ```
-      --allowed-origins stringArray   List of origins to allow for CORS requests
-      --development                   Enables a set of features that make development easier but should not be enabled in production:
-                                       - allows purging of all persisted data 
-                                       - generates temporary node identity if keyring is disabled
-  -h, --help                          help for start
-      --max-txn-retries int           Specify the maximum number of retries per transaction (default 5)
-      --no-encryption                 Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
-      --no-p2p                        Disable the peer-to-peer network synchronization system
-      --no-telemetry                  Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
-      --p2paddr strings               Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
-      --peers stringArray             List of peers to connect to
-      --privkeypath string            Path to the private key for tls
-      --pubkeypath string             Path to the public key for tls
-      --store string                  Specify the datastore to use (supported: badger, memory) (default "badger")
-      --valuelogfilesize int          Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
+      --acp-type string                   Specify the acp engine to use (supported: none (default), local, source-hub)
+      --allowed-origins stringArray       List of origins to allow for CORS requests
+      --default-key-type string           Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
+      --development                       Enables a set of features that make development easier but should not be enabled in production:
+                                           - allows purging of all persisted data 
+                                           - generates temporary node identity if keyring is disabled
+  -h, --help                              help for start
+      --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
+      --no-encryption                     Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
+      --no-p2p                            Disable the peer-to-peer network synchronization system
+      --no-signing                        Disable signing of commits.
+      --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
+      --p2paddr strings                   Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
+      --peers stringArray                 List of peers to connect to
+      --privkeypath string                Path to the private key for tls
+      --pubkeypath string                 Path to the public key for tls
+      --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
+      --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
+      --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)
 ```
 
 ### Options inherited from parent commands

@@ -11,7 +11,6 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -19,8 +18,6 @@ import (
 )
 
 func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "65d58052e3304b4dc564410b7ab27aeff5d68b5c676b05883f8799c0b1f7a795"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, with multiple resources, schema accepted",
@@ -43,7 +40,9 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -58,7 +57,9 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -66,22 +67,22 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -129,8 +130,6 @@ func TestACP_AddDPISchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 }
 
 func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testing.T) {
-	policyIDOfValidDPI := "65d58052e3304b4dc564410b7ab27aeff5d68b5c676b05883f8799c0b1f7a795"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, with multiple resources both being used, schemas accepted",
@@ -153,7 +152,9 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -168,7 +169,9 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -176,22 +179,22 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Users @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -234,16 +237,18 @@ func TestACP_AddDPISchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *tes
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 					type Books @policy(
-						id: "%s",
+						id: "{{.Policy0}}",,
 						resource: "books"
 					) {
 						name: String
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{

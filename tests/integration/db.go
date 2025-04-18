@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/net"
 	"github.com/sourcenetwork/defradb/node"
@@ -69,7 +70,7 @@ func init() {
 		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
-		inMemoryStore = true
+		inMemoryStore = false
 	}
 }
 
@@ -148,6 +149,8 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	}
 
 	opts = append(defaultOpts, opts...)
+
+	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 
 	switch acpType {
 	case LocalACPType:

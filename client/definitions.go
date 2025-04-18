@@ -15,10 +15,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -306,7 +306,7 @@ func GetDefinitionFromStore(
 	switch typedKind := kind.(type) {
 	case *NamedKind:
 		col, err := store.GetCollectionByName(ctx, typedKind.Name)
-		if errors.Is(err, datastore.ErrNotFound) {
+		if errors.Is(err, corekv.ErrNotFound) {
 			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
 				Name: immutable.Some(typedKind.Name),
 			})

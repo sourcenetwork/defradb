@@ -13,10 +13,14 @@ package tests
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
-	"github.com/ipfs/go-cid"
+	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
+
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,38 +28,166 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// Validator instances can be substituted in place of concrete values
-// and will be asserted on using their [Validate] function instead of
-// asserting direct equality.
-//
-// They may mutate test state.
-//
-// Todo: This does not currently support chaining/nesting of Validators,
-// although we would like that long term:
-// https://github.com/sourcenetwork/defradb/issues/3189
-type Validator interface {
-	Validate(s *state, actualValue any, msgAndArgs ...any)
+type testStateMatcher struct {
+	s TestState
+}
+
+func (matcher *testStateMatcher) SetTestState(s TestState) {
+	matcher.s = s
+}
+
+// TestStateMatcher is a matcher that requires access to the test state.
+type TestStateMatcher interface {
+	types.GomegaMatcher
+	// SetTestState sets the test state.
+	SetTestState(s TestState)
+}
+
+// StatefulMatcher is a matcher that requires state to be reset between tests.
+type StatefulMatcher interface {
+	types.GomegaMatcher
+	// ResetMatcherState resets the state of the matcher.
+	ResetMatcherState()
 }
 
 // AnyOf may be used as `Results` field where the value may
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
-type AnyOf []any
+func AnyOf(values ...any) *anyOf {
+	return &anyOf{
+		Values: values,
+	}
+}
 
-var _ Validator = (AnyOf)(nil)
+type anyOf struct {
+	testStateMatcher
+	Values []any
+}
 
-// Validate asserts that actual result is equal to at least one of the expected results.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func (a AnyOf) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	switch s.clientType {
+var _ TestStateMatcher = (*anyOf)(nil)
+
+func (matcher *anyOf) Match(actual any) (bool, error) {
+	switch matcher.s.GetClientType() {
 	case HTTPClientType, CLIClientType:
-		if !areResultsAnyOf(a, actualValue) {
-			assert.Contains(s.t, a, actualValue, msgAndArgs...)
+		if !areResultsAnyOf(matcher.Values, actual) {
+			return gomega.ContainElement(actual).Match(matcher.Values)
 		}
 	default:
-		assert.Contains(s.t, a, actualValue, msgAndArgs...)
+		return gomega.ContainElement(actual).Match(matcher.Values)
 	}
+	return true, nil
+}
+
+func (matcher *anyOf) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be one of\n\t%v", actual, matcher.Values)
+}
+
+func (matcher *anyOf) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be one of\n\t%v", actual, matcher.Values)
+}
+
+// UniqueValue ensures that values passed to Match are unique across all calls.
+// It fails if the same value is seen more than once.
+// An instance of this matcher should be given to at least 2 assert result places, otherwise
+// the matcher makes no sense.
+type UniqueValue struct {
+	testStateMatcher
+	seenValues       []map[any]bool
+	invalidValueType any
+}
+
+var _ StatefulMatcher = (*UniqueValue)(nil)
+
+// NewUniqueValue creates a new matcher that verifies each value is unique.
+// This matcher will track values across all Match calls and fail if a duplicate is found.
+func NewUniqueValue() *UniqueValue {
+	return &UniqueValue{}
+}
+
+func (matcher *UniqueValue) ResetMatcherState() {
+	matcher.seenValues = nil
+}
+
+func (matcher *UniqueValue) Match(actual any) (bool, error) {
+	nodeID := matcher.s.GetCurrentNodeID()
+	for nodeID >= len(matcher.seenValues) {
+		matcher.seenValues = append(matcher.seenValues, make(map[any]bool))
+	}
+
+	var key any
+
+	if !reflect.TypeOf(actual).Comparable() {
+		key = fmt.Sprintf("%v", actual)
+	} else {
+		key = actual
+	}
+
+	if matcher.seenValues[nodeID][key] {
+		return false, nil
+	}
+
+	matcher.seenValues[nodeID][key] = true
+	return true, nil
+}
+
+func (matcher *UniqueValue) FailureMessage(actual any) string {
+	if matcher.invalidValueType != nil {
+		return fmt.Sprintf("Expected value to be of type %T, but received: %v", matcher.invalidValueType, actual)
+	}
+	return fmt.Sprintf("Expected unique value, but received duplicate: %v", actual)
+}
+
+func (matcher *UniqueValue) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be a duplicate, but was unique: %v", actual)
+}
+
+// SameValue ensures that values passed to Match are the same as the previous value.
+// An instance of this matcher should be given to at least 2 assert result places, otherwise
+// the matcher makes no sense.
+type SameValue struct {
+	value any
+}
+
+var _ StatefulMatcher = (*SameValue)(nil)
+
+// NewSameValue creates a new matcher that verifies each value is the same as the previous value.
+func NewSameValue() *SameValue {
+	return &SameValue{}
+}
+
+func (matcher *SameValue) ResetMatcherState() {
+	matcher.value = nil
+}
+
+func (matcher *SameValue) Match(actual any) (bool, error) {
+	var newValue any
+
+	if !reflect.TypeOf(actual).Comparable() {
+		newValue = fmt.Sprintf("%v", actual)
+	} else {
+		newValue = actual
+	}
+
+	if matcher.value == nil {
+		matcher.value = newValue
+		return true, nil
+	}
+
+	if matcher.value != newValue {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (matcher *SameValue) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be the same as the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
+		matcher.value, actual)
+}
+
+func (matcher *SameValue) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be different from the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
+		matcher.value, actual)
 }
 
 // assertResultsEqual asserts that actual result is equal to the expected result.
@@ -75,65 +207,13 @@ func assertResultsEqual(t testing.TB, client ClientType, expected any, actual an
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.
-func areResultsAnyOf(expected AnyOf, actual any) bool {
+func areResultsAnyOf(expected []any, actual any) bool {
 	for _, v := range expected {
 		if areResultsEqual(v, actual) {
 			return true
 		}
 	}
 	return false
-}
-
-// UniqueCid allows the referencing of Cids by an arbitrary test-defined ID.
-//
-// Instead of asserting on a specific Cid value, this type will assert that
-// no other [UniqueCid]s with different [ID]s has the first Cid value that this instance
-// describes.
-//
-// It will also ensure that all Cids described by this [UniqueCid] have the same
-// valid, Cid value.
-type UniqueCid struct {
-	// ID is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
-	ID any
-}
-
-var _ Validator = (*UniqueCid)(nil)
-
-// NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
-// id.
-//
-// All results described by [UniqueCid]s with the given id must have the same valid Cid value.
-// No other [UniqueCid] ids may describe the same Cid value.
-func NewUniqueCid(id any) *UniqueCid {
-	return &UniqueCid{
-		ID: id,
-	}
-}
-
-func (ucid *UniqueCid) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	isNew := true
-	for id, value := range s.cids {
-		if id == ucid.ID {
-			require.Equal(s.t, value, actualValue)
-			isNew = false
-		} else {
-			require.NotEqual(s.t, value, actualValue, "UniqueCid must be unique!", msgAndArgs)
-		}
-	}
-
-	if isNew {
-		value, ok := actualValue.(string)
-		if !ok {
-			require.Fail(s.t, "UniqueCid actualValue string cast failed")
-		}
-
-		cid, err := cid.Decode(value)
-		if err != nil {
-			require.NoError(s.t, err)
-		}
-
-		s.cids[ucid.ID] = cid.String()
-	}
 }
 
 // areResultsEqual returns true if the expected and actual results are of equal value.

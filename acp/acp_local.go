@@ -17,8 +17,9 @@ import (
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/acp_core/pkg/auth"
-	"github.com/sourcenetwork/acp_core/pkg/engine"
+	acpErrors "github.com/sourcenetwork/acp_core/pkg/errors"
 	"github.com/sourcenetwork/acp_core/pkg/runtime"
+	"github.com/sourcenetwork/acp_core/pkg/services"
 	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
 
@@ -101,7 +102,7 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 	}
 
 	l.manager = manager
-	l.engine = engine.NewACPEngine(manager)
+	l.engine = services.NewACPEngine(manager)
 	return nil
 }
 
@@ -157,16 +158,15 @@ func (l *ACPLocal) AddPolicy(
 	marshalType policyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	principal, err := auth.NewDIDPrincipal(creator.DID)
+	principal, err := types.NewDIDPrincipal(creator.DID)
 	if err != nil {
 		return "", newErrInvalidActorID(err, creator.DID)
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
 	createPolicy := types.CreatePolicyRequest{
-		Policy:       policy,
-		MarshalType:  types.PolicyMarshalingType(marshalType),
-		CreationTime: protoTypes.TimestampNow(),
+		Policy:      policy,
+		MarshalType: types.PolicyMarshalingType(marshalType),
 	}
 
 	response, err := l.engine.CreatePolicy(ctx, &createPolicy)
@@ -174,7 +174,7 @@ func (l *ACPLocal) AddPolicy(
 		return "", err
 	}
 
-	return response.Policy.Id, nil
+	return response.Record.Policy.Id, nil
 }
 
 func (l *ACPLocal) Policy(
@@ -187,13 +187,13 @@ func (l *ACPLocal) Policy(
 	response, err := l.engine.GetPolicy(ctx, &request)
 
 	if err != nil {
-		if errors.Is(err, types.ErrPolicyNotFound) {
+		if errors.Is(err, acpErrors.ErrorType_NOT_FOUND) {
 			return none, nil
 		}
 		return none, err
 	}
 
-	policy := mapACPCorePolicy(response.Policy)
+	policy := mapACPCorePolicy(response.Record.Policy)
 	return immutable.Some(policy), nil
 }
 
@@ -204,27 +204,20 @@ func (l *ACPLocal) RegisterObject(
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
-) (RegistrationResult, error) {
-	principal, err := auth.NewDIDPrincipal(identity.DID)
+) error {
+	principal, err := types.NewDIDPrincipal(identity.DID)
 	if err != nil {
-		return RegistrationResult_NoOp, newErrInvalidActorID(err, identity.DID)
+		return newErrInvalidActorID(err, identity.DID)
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)
 	req := types.RegisterObjectRequest{
-		PolicyId:     policyID,
-		Object:       types.NewObject(resourceName, objectID),
-		CreationTime: creationTime,
+		PolicyId: policyID,
+		Object:   types.NewObject(resourceName, objectID),
 	}
 
-	registerDocResponse, err := l.engine.RegisterObject(ctx, &req)
-
-	if err != nil {
-		return RegistrationResult_NoOp, err
-	}
-
-	result := RegistrationResult(registerDocResponse.Result)
-	return result, nil
+	_, err = l.engine.RegisterObject(ctx, &req)
+	return err
 }
 
 func (l *ACPLocal) ObjectOwner(
@@ -292,7 +285,7 @@ func (l *ACPLocal) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	principal, err := auth.NewDIDPrincipal(requester.DID)
+	principal, err := types.NewDIDPrincipal(requester.DID)
 	if err != nil {
 		return false, newErrInvalidActorID(err, requester.DID)
 	}
@@ -318,7 +311,6 @@ func (l *ACPLocal) AddActorRelationship(
 	setRelationshipRequest := types.SetRelationshipRequest{
 		PolicyId:     policyID,
 		Relationship: newActorRelationship,
-		CreationTime: creationTime,
 	}
 
 	setRelationshipResponse, err := l.engine.SetRelationship(ctx, &setRelationshipRequest)
@@ -339,7 +331,7 @@ func (l *ACPLocal) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	principal, err := auth.NewDIDPrincipal(requester.DID)
+	principal, err := types.NewDIDPrincipal(requester.DID)
 	if err != nil {
 		return false, newErrInvalidActorID(err, requester.DID)
 	}

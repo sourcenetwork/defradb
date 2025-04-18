@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -17,6 +17,9 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/immutable"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
@@ -173,10 +176,15 @@ type state struct {
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[identity]*identityHolder
+	identities map[Identity]*identityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
 	nextIdentityGenSeed int
+
+	// Policy IDs, by node index, by policyID index (in the order they were added).
+	//
+	// Note: In case acp type is sourcehub, all nodes will have the same state of policyIDs.
+	policyIDs [][]string
 
 	// Will receive an item once all actions have finished processing.
 	allActionsDone chan struct{}
@@ -205,9 +213,6 @@ type state struct {
 	// nodes.
 	docIDs [][]client.DocID
 
-	// Valid Cid string values by [UniqueCid] ID.
-	cids map[any]string
-
 	// isBench indicates wether the test is currently being benchmarked.
 	isBench bool
 
@@ -216,7 +221,43 @@ type state struct {
 
 	// isNetworkEnabled indicates whether the network is enabled.
 	isNetworkEnabled bool
+
+	// statefulMatchers contains all stateful matchers that have been executed during a single
+	// test run. After a single test run, the statefulMatchers are reset.
+	statefulMatchers []StatefulMatcher
+
+	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
+	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
+	// called with a value that it didn't see before, but the value should be the same for different
+	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
+	// should have the same Cid.
+	currentNodeID int
 }
+
+func (s *state) GetClientType() ClientType {
+	return s.clientType
+}
+
+func (s *state) GetCurrentNodeID() int {
+	return s.currentNodeID
+}
+
+func (s *state) GetIdentity(ident Identity) acpIdentity.Identity {
+	return getIdentity(s, immutable.Some(ident))
+}
+
+// TestState is read-only interface for test state. It allows passing the state to custom matchers
+// without allowing them to modify the state.
+type TestState interface {
+	// GetClientType returns the client type of the test.
+	GetClientType() ClientType
+	// GetCurrentNodeID returns the node id that is currently being asserted.
+	GetCurrentNodeID() int
+	// GetIdentity returns the identity for the given node index.
+	GetIdentity(Identity) acpIdentity.Identity
+}
+
+var _ TestState = &state{}
 
 // newState returns a new fresh state for the given testCase.
 func newState(
@@ -228,7 +269,7 @@ func newState(
 	clientType ClientType,
 	collectionNames []string,
 ) *state {
-	return &state{
+	s := &state{
 		ctx:                      ctx,
 		t:                        t,
 		testCase:                 testCase,
@@ -236,13 +277,17 @@ func newState(
 		dbt:                      dbt,
 		clientType:               clientType,
 		txns:                     []datastore.Txn{},
+		identities:               map[Identity]*identityHolder{},
+		nextIdentityGenSeed:      0,
 		allActionsDone:           make(chan struct{}),
-		identities:               map[identity]*identityHolder{},
 		subscriptionResultsChans: []chan func(){},
+		nodes:                    []*nodeState{},
+		acpOptions:               []node.ACPOpt{},
 		collectionNames:          collectionNames,
 		collectionIndexesByRoot:  map[uint32]int{},
 		docIDs:                   [][]client.DocID{},
-		cids:                     map[any]string{},
+		policyIDs:                [][]string{},
 		isBench:                  false,
 	}
+	return s
 }

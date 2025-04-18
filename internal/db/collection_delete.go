@@ -14,11 +14,13 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
@@ -131,7 +133,7 @@ func (c *collection) applyDelete(
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.WritePermission,
+		acp.DeletePermission,
 		primaryKey.DocID,
 	)
 
@@ -143,6 +145,15 @@ func (c *collection) applyDelete(
 	}
 
 	txn := mustGetContextTxn(ctx)
+
+	ident := identity.FromContext(ctx)
+	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
+
+	if !c.db.signingDisabled {
+		ctx = clock.ContextWithEnabledSigning(ctx)
+	}
 
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,

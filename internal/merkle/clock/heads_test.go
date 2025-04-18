@@ -20,8 +20,9 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/corekv/memory"
+	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -41,10 +42,10 @@ func newRandomCID() cid.Cid {
 }
 
 func newHeadSet() *heads {
-	s := newDS()
+	s := memory.NewDatastore(context.Background())
 
 	return NewHeadSet(
-		datastore.AsDSReaderWriter(s),
+		s,
 		keys.HeadstoreDocKey{}.WithDocID("myDocID").WithFieldID("1"),
 	)
 }
@@ -105,13 +106,13 @@ func TestHeadsAdd(t *testing.T) {
 	}
 }
 
-func TestHeaddsList(t *testing.T) {
+func TestHeadsList(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
 	c2 := newRandomCID()
-	heads.Write(ctx, c1, uint64(1))
-	heads.Write(ctx, c2, uint64(2))
+	require.NoError(t, heads.Write(ctx, c1, uint64(1)))
+	require.NoError(t, heads.Write(ctx, c2, uint64(2)))
 
 	list, h, err := heads.List(ctx)
 	if err != nil {

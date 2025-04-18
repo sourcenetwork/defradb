@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -17,12 +17,15 @@ import (
 	"context"
 
 	cid "github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -60,27 +63,14 @@ func NewMerkleClock(
 	}
 }
 
-func (mc *MerkleClock) putBlock(
+func putBlock(
 	ctx context.Context,
-	block *coreblock.Block,
+	blockstore datastore.Blockstore,
+	block interface{ GenerateNode() ipld.Node },
 ) (cidlink.Link, error) {
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(mc.blockstore.AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.AsIPLDStorage())
 	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
-	if err != nil {
-		return cidlink.Link{}, NewErrWritingBlock(err)
-	}
-
-	return link.(cidlink.Link), nil
-}
-
-func (mc *MerkleClock) putEncBlock(
-	ctx context.Context,
-	encBlock *coreblock.Encryption,
-) (cidlink.Link, error) {
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(mc.encstore.AsIPLDStorage())
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), encBlock.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
@@ -122,7 +112,14 @@ func (mc *MerkleClock) AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	link, err := mc.putBlock(ctx, dagBlock)
+	if EnabledSigningFromContext(ctx) {
+		err = mc.signBlock(ctx, dagBlock)
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+	}
+
+	link, err := putBlock(ctx, mc.blockstore, dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -164,7 +161,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 				encBlock.Key = encKey
 			}
 
-			link, err := mc.putEncBlock(ctx, encBlock)
+			link, err := putBlock(ctx, mc.encstore, encBlock)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
@@ -219,6 +216,60 @@ func encryptBlock(
 	}
 	clonedCRDT.SetData(bytes)
 	return &coreblock.Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
+}
+
+func (mc *MerkleClock) signBlock(
+	ctx context.Context,
+	block *coreblock.Block,
+) error {
+	// We sign only the first field blocks just to add entropy and prevent any collisions.
+	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
+	if block.Delta.IsField() && block.Delta.GetPriority() > 1 {
+		return nil
+	}
+
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() {
+		return nil
+	}
+
+	blockBytes, err := block.Marshal()
+	if err != nil {
+		return err
+	}
+
+	var sigType string
+
+	switch ident.Value().PrivateKey.Type() {
+	case crypto.KeyTypeSecp256k1:
+		sigType = coreblock.SignatureTypeECDSA256K
+	case crypto.KeyTypeEd25519:
+		sigType = coreblock.SignatureTypeEd25519
+	default:
+		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
+	}
+
+	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
+	if err != nil {
+		return err
+	}
+
+	sig := &coreblock.Signature{
+		Header: coreblock.SignatureHeader{
+			Type:     sigType,
+			Identity: []byte(ident.Value().PublicKey.String()),
+		},
+		Value: sigBytes,
+	}
+
+	sigBlockLink, err := putBlock(ctx, mc.blockstore, sig)
+	if err != nil {
+		return err
+	}
+
+	block.Signature = &sigBlockLink
+
+	return nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
@@ -295,4 +346,20 @@ func (mc *MerkleClock) updateHeads(
 // Heads returns the current heads of the MerkleClock.
 func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
+}
+
+type enabledSigningContextKey struct{}
+
+// ContextWithEnabledSigning returns a context with block signing enabled.
+func ContextWithEnabledSigning(ctx context.Context) context.Context {
+	return context.WithValue(ctx, enabledSigningContextKey{}, true)
+}
+
+// EnabledSigningFromContext returns true if block signing is enabled in the context.
+func EnabledSigningFromContext(ctx context.Context) bool {
+	val := ctx.Value(enabledSigningContextKey{})
+	if val == nil {
+		return false
+	}
+	return val.(bool)
 }

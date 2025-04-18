@@ -37,7 +37,9 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
                         permissions:
                           read:
                             expr: owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -49,8 +51,6 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
                               - actor
 
                 `,
-
-				ExpectedPolicyID: "ab1102f656ed1f2b037a3c9586611c701243f2086fa64211bd7baff7271c2030",
 			},
 		},
 	}

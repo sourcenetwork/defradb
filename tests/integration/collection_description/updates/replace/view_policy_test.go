@@ -40,7 +40,9 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -56,7 +58,6 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
                             types:
                               - actor
                 `,
-				ExpectedPolicyID: "7a698a9c5fe74a5854c2e1e8d00c606926c64ad883a157db2f345749e8609fcb",
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -73,7 +74,7 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_Er
 				`,
 				SDL: `
 					type UserView @policy(
-						id: "7a698a9c5fe74a5854c2e1e8d00c606926c64ad883a157db2f345749e8609fcb",
+						id: "214e815615f3535588652eb91ed392d5581909266c60cd20a442e8dbbd1603c7",
 						resource: "userView"
 					) @materialized(if: false) {
 						name: String

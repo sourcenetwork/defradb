@@ -592,7 +592,10 @@
             "peer_info": {
                 "properties": {
                     "Addrs": {
-                        "items": {},
+                        "items": {
+                            "items": {},
+                            "type": "array"
+                        },
                         "type": "array"
                     },
                     "ID": {
@@ -606,7 +609,10 @@
                     "Info": {
                         "properties": {
                             "Addrs": {
-                                "items": {},
+                                "items": {
+                                    "items": {},
+                                    "type": "array"
+                                },
                                 "type": "array"
                             },
                             "ID": {
@@ -644,7 +650,10 @@
                     "Info": {
                         "properties": {
                             "Addrs": {
-                                "items": {},
+                                "items": {
+                                    "items": {},
+                                    "type": "array"
+                                },
                                 "type": "array"
                             },
                             "ID": {
@@ -920,6 +929,54 @@
                 },
                 "tags": [
                     "backup"
+                ]
+            }
+        },
+        "/block/verify-signature": {
+            "get": {
+                "description": "Verify block signature",
+                "operationId": "verify_block",
+                "parameters": [
+                    {
+                        "description": "Content ID of the block to verify",
+                        "in": "query",
+                        "name": "cid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Public key of the block to verify",
+                        "in": "query",
+                        "name": "public-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Type of the public key: secp256k1, ed25519",
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "block"
                 ]
             }
         },

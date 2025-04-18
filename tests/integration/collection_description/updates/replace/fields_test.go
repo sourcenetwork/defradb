@@ -37,7 +37,6 @@ func TestColDescrUpdateReplaceFields_Errors(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
 func TestColDescrUpdateReplaceDefaultValue_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

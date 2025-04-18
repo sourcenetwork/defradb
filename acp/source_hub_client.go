@@ -17,7 +17,6 @@ import (
 	protoTypes "github.com/cosmos/gogoproto/types"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/sourcehub/sdk"
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -64,7 +63,7 @@ type sourceHubClient interface {
 		resourceName string,
 		objectID string,
 		creationTime *protoTypes.Timestamp,
-	) (RegistrationResult, error)
+	) error
 
 	// ObjectOwner returns the owner of the object of the given objectID.
 	ObjectOwner(
@@ -138,31 +137,17 @@ type sourceHubClient interface {
 // sourceHubBridge wraps a sourceHubClient, hosting the Defra-specific logic away from client-specific
 // code.
 type sourceHubBridge struct {
-	client sourceHubClient
+	client      sourceHubClient
+	supportsP2P bool
 }
 
 var _ ACP = (*sourceHubBridge)(nil)
 
 func NewLocalACP() ACP {
 	return &sourceHubBridge{
-		client: &ACPLocal{},
+		client:      &ACPLocal{},
+		supportsP2P: false,
 	}
-}
-
-func NewSourceHubACP(
-	chainID string,
-	grpcAddress string,
-	cometRPCAddress string,
-	signer sdk.TxSigner,
-) (ACP, error) {
-	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, signer)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sourceHubBridge{
-		client: acpSourceHub,
-	}, nil
 }
 
 func (a *sourceHubBridge) Init(ctx context.Context, path string) {
@@ -276,7 +261,7 @@ func (a *sourceHubBridge) RegisterDocObject(
 	resourceName string,
 	docID string,
 ) error {
-	registerDocResult, err := a.client.RegisterObject(
+	err := a.client.RegisterObject(
 		ctx,
 		identity,
 		policyID,
@@ -289,34 +274,7 @@ func (a *sourceHubBridge) RegisterDocObject(
 		return NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID, resourceName, docID)
 	}
 
-	switch registerDocResult {
-	case RegistrationResult_NoOp:
-		return ErrObjectDidNotRegister
-
-	case RegistrationResult_Registered:
-		log.InfoContext(
-			ctx,
-			"Document registered with local acp",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("Creator", identity.DID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return nil
-
-	case RegistrationResult_Unarchived:
-		log.InfoContext(
-			ctx,
-			"Document re-registered (unarchived object) with local acp",
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("Creator", identity.DID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("DocID", docID),
-		)
-		return nil
-	}
-
-	return ErrObjectDidNotRegister
+	return nil
 }
 
 func (a *sourceHubBridge) IsDocRegistered(
@@ -557,8 +515,7 @@ func (a *sourceHubBridge) DeleteDocActorRelationship(
 }
 
 func (a *sourceHubBridge) SupportsP2P() bool {
-	_, ok := a.client.(*acpSourceHub)
-	return ok
+	return a.supportsP2P
 }
 
 func (a *sourceHubBridge) Close() error {

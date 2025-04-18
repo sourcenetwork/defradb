@@ -20,15 +20,16 @@ import (
 	"strconv"
 	"strings"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -282,7 +283,7 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
-	args := []string{"client", "schema", "migration", "set"}
+	args := []string{"client", "lens", "set"}
 
 	lenses, err := json.Marshal(config.Lens)
 	if err != nil {
@@ -528,7 +529,7 @@ func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }
 
-func (w *Wrapper) Headstore() ds.Read {
+func (w *Wrapper) Headstore() corekv.Reader {
 	return w.node.DB.Headstore()
 }
 
@@ -577,4 +578,14 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	args := []string{"client", "block", "verify-signature"}
+
+	args = append(args, "--type", string(pubKey.Type()))
+	args = append(args, pubKey.String(), cid)
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }

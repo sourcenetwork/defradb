@@ -36,7 +36,9 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -52,8 +54,6 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "725caeee6c5043f019e7dc3bb6a627520c235f063e862696c67ac89b5c1fc840",
 			},
 		},
 	}

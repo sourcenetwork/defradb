@@ -11,7 +11,6 @@
 package test_acp_relationship_doc_actor_add
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,8 +19,6 @@ import (
 )
 
 func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner gives read access to another actor",
@@ -43,10 +40,13 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -60,7 +60,11 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -74,22 +78,22 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -207,11 +211,9 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 }
 
 func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives write access to another actor",
+		Description: "Test acp, owner gives write (update and delete) access to another actor",
 
 		Actions: []any{
 			testUtils.AddPolicy{
@@ -230,10 +232,13 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -247,13 +252,18 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
                           admin:
                             manages:
-                              - writer
+                              - updater
+                              - deleter
                             types:
                               - actor
 
@@ -261,22 +271,22 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -324,7 +334,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Admin makes another actor a writer
+			testUtils.AddDocActorRelationship{ // Admin makes another actor an updater
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -333,7 +343,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
@@ -376,6 +386,20 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 				},
 			},
 
+			testUtils.AddDocActorRelationship{ // Admin makes another actor a deleter
+				RequestorIdentity: testUtils.ClientIdentity(2),
+
+				TargetIdentity: testUtils.ClientIdentity(3),
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "deleter",
+
+				ExpectedExistence: false,
+			},
+
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
@@ -408,8 +432,6 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 }
 
 func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, owner makes a manager that gives itself read access",
@@ -431,10 +453,13 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -448,7 +473,11 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -462,22 +491,22 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -595,11 +624,9 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 }
 
 func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadAndWrite(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner makes a manager that gives itself read and write access",
+		Description: "Test acp, owner makes a manager that gives itself read and write (update and delete) access",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -625,10 +652,13 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -642,14 +672,19 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
                           admin:
                             manages:
                               - reader
-                              - writer
+                              - updater
+                              - deleter
                             types:
                               - actor
 
@@ -657,22 +692,22 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -746,7 +781,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager makes itself a writer
+			testUtils.AddDocActorRelationship{ // Manager makes itself an updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -755,12 +790,12 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
 				ExpectedExistence: false,
 			},
 
-			// Note: It is not neccesary to make itself a reader, as becoming a writer allows reading.
+			// Note: It is not neccesary to make itself a reader, as becoming an updater allows reading.
 			testUtils.AddDocActorRelationship{ // Manager makes itself a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
@@ -816,6 +851,30 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 
+				Identity: testUtils.ClientIdentity(2), // Manager can still not delete yet.
+
+				DocID: 0,
+
+				ExpectedError: "document not found or not authorized to access",
+			},
+
+			testUtils.AddDocActorRelationship{ // Manager makes itself a deleter.
+				RequestorIdentity: testUtils.ClientIdentity(2),
+
+				TargetIdentity: testUtils.ClientIdentity(2),
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "deleter",
+
+				ExpectedExistence: false,
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+
 				Identity: testUtils.ClientIdentity(2), // Manager can now delete.
 
 				DocID: 0,
@@ -845,8 +904,6 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 }
 
 func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, manager adds relationship with relation it does not manage according to policy, error",
@@ -875,10 +932,13 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -892,7 +952,11 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -906,22 +970,22 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -951,7 +1015,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a writer
+			testUtils.AddDocActorRelationship{ // Admin tries to make another actor an updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -960,9 +1024,23 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 
 				DocID: 0,
 
-				Relation: "writer",
+				Relation: "updater",
 
-				ExpectedError: "acp protocol violation",
+				ExpectedError: "UNAUTHORIZED",
+			},
+
+			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a deleter.
+				RequestorIdentity: testUtils.ClientIdentity(2),
+
+				TargetIdentity: testUtils.ClientIdentity(3),
+
+				CollectionID: 0,
+
+				DocID: 0,
+
+				Relation: "deleter",
+
+				ExpectedError: "UNAUTHORIZED",
 			},
 
 			testUtils.Request{
@@ -1015,11 +1093,9 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 }
 
 func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadOrWrite(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner makes a manager, manager can't read or write",
+		Description: "Test acp, owner makes a manager, manager can't read or write (update or delete)",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -1045,10 +1121,13 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -1062,7 +1141,11 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -1076,22 +1159,22 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{
@@ -1185,8 +1268,6 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 }
 
 func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
-	expectedPolicyID := "fc56b7509c20ac8ce682b3b9b4fdaad868a9c70dda6ec16720298be64f16e9a4"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, cant make relation if identity doesn't own or manage object, return error",
@@ -1208,10 +1289,13 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
                       users:
                         permissions:
                           read:
-                            expr: owner + reader + writer
+                            expr: owner + reader + updater + deleter
 
-                          write:
-                            expr: owner + writer
+                          update:
+                            expr: owner + updater
+
+                          delete:
+                            expr: owner + deleter
 
                           nothing:
                             expr: dummy
@@ -1225,7 +1309,11 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
                             types:
                               - actor
 
-                          writer:
+                          updater:
+                            types:
+                              - actor
+
+                          deleter:
                             types:
                               - actor
 
@@ -1239,22 +1327,22 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: expectedPolicyID,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
+				Schema: `
 						type Users @policy(
-							id: "%s",
+							id: "{{.Policy0}}",
 							resource: "users"
 						) {
 							name: String
 							age: Int
 						}
 					`,
-					expectedPolicyID,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.CreateDoc{

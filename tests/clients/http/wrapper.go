@@ -14,14 +14,15 @@ import (
 	"context"
 	"net/http/httptest"
 
-	ds "github.com/ipfs/go-datastore"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -249,7 +250,7 @@ func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }
 
-func (w *Wrapper) Headstore() ds.Read {
+func (w *Wrapper) Headstore() corekv.Reader {
 	return w.node.DB.Headstore()
 }
 
@@ -285,4 +286,8 @@ func (w *Wrapper) Host() string {
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	return w.client.GetNodeIdentity(ctx)
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	return w.client.VerifySignature(ctx, cid, pubKey)
 }

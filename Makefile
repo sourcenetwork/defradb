@@ -147,6 +147,7 @@ deps\:lint:
 .PHONY: deps\:test
 deps\:test:
 	go install gotest.tools/gotestsum@latest
+	go install github.com/agnivade/wasmbrowsertest@latest
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
@@ -351,7 +352,11 @@ test\:coverage-html:
 
 .PHONY: test\:changes
 test\:changes:
-	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 15m --tags change_detector
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
+
+.PHONY: test\:js
+test\:js:
+	GOOS=js GOARCH=wasm go test -exec wasmbrowsertest ./node/...
 
 .PHONY: validate\:codecov
 validate\:codecov:

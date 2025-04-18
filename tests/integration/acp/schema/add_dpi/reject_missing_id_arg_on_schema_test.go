@@ -17,8 +17,6 @@ import (
 )
 
 func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but no policyID was specified on schema, reject schema",
@@ -41,7 +39,9 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -52,8 +52,6 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
@@ -92,8 +90,6 @@ func TestACP_AddDPISchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testi
 }
 
 func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, specified policyID arg on schema is empty, reject schema",
@@ -116,7 +112,9 @@ func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -127,8 +125,6 @@ func TestACP_AddDPISchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{

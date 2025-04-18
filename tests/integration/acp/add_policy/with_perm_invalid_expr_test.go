@@ -37,7 +37,9 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
                         permissions:
                           read:
                             expr:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -78,7 +80,9 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
                         permissions:
                           read:
                             expr: reader ^ owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -119,7 +123,9 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpac
                         permissions:
                           read:
                             expr: reader^owner
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:

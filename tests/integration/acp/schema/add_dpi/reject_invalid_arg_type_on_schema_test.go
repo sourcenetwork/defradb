@@ -11,15 +11,12 @@
 package test_acp_schema_add_dpi
 
 import (
-	"fmt"
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_AddDPISchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but invalid policyID arg type was specified on schema, reject schema",
@@ -42,7 +39,9 @@ func TestACP_AddDPISchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejec
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -53,8 +52,6 @@ func TestACP_AddDPISchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejec
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
@@ -93,8 +90,6 @@ func TestACP_AddDPISchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejec
 }
 
 func TestACP_AddDPISchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
-	policyIDOfValidDPI := "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add dpi schema, but invalid resource arg type was specified on schema, reject schema",
@@ -117,7 +112,9 @@ func TestACP_AddDPISchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejec
                         permissions:
                           read:
                             expr: owner + reader
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
 
                         relations:
@@ -128,19 +125,19 @@ func TestACP_AddDPISchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejec
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: policyIDOfValidDPI,
 			},
 
 			testUtils.SchemaUpdate{
-				Schema: fmt.Sprintf(`
-					type Users @policy(id: "%s" , resource: 123) {
+				Schema: `
+				type Users @policy(id: "{{.Policy0}}" , resource: 123) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfValidDPI,
-				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 
 				ExpectedError: `Argument "resource" has invalid value 123`,
 			},

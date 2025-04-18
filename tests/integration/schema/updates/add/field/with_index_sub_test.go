@@ -107,7 +107,6 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedI
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
-
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field, index by name, and test-op via name-index",

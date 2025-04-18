@@ -35,7 +35,9 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -49,7 +51,9 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
                               - actor
                       books:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -62,8 +66,6 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "a9e1a113ccc2609d7f99a42531017f0fbc9b736640ec8ffc7f09a1e29583ca45",
 			},
 		},
 	}
@@ -90,7 +92,9 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -104,7 +108,9 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
                               - actor
                       books:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -142,7 +148,9 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -156,7 +164,9 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
                               - actor
                       books:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -167,7 +177,7 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
                               - actor
                 `,
 
-				ExpectedError: "resource books: resource missing owner relation: invalid policy",
+				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}

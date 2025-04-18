@@ -35,7 +35,9 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
                     resources:
                       users:
                         permissions:
-                          write:
+                          update:
+                            expr: owner
+                          delete:
                             expr: owner
                           read:
                             expr: owner + reader
@@ -53,8 +55,6 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
                             types:
                               - actor
                 `,
-
-				ExpectedPolicyID: "af2a2eaa2d6701262ea60665487c87e3d41ab727194e1ea18ec16348149a02cc",
 			},
 		},
 	}

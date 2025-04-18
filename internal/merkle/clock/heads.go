@@ -17,10 +17,11 @@ import (
 	"sort"
 
 	cid "github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -45,12 +46,12 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 
-	return hh.store.Put(ctx, hh.key(c).ToDS(), buf[0:n])
+	return hh.store.Set(ctx, hh.key(c).Bytes(), buf[0:n])
 }
 
 // IsHead returns if a given cid is among the current heads.
 func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
-	return hh.store.Has(ctx, hh.key(c).ToDS())
+	return hh.store.Has(ctx, hh.key(c).Bytes())
 }
 
 // Replace replaces a head with a new CID.
@@ -62,7 +63,7 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 		corelog.Any("CID", new),
 		corelog.Uint64("Height", height))
 
-	err := hh.store.Delete(ctx, hh.key(old).ToDS())
+	err := hh.store.Delete(ctx, hh.key(old).Bytes())
 	if err != nil {
 		return err
 	}
@@ -78,38 +79,37 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
-	q := query.Query{
-		Prefix:   hh.namespace.ToString(),
-		KeysOnly: false,
-	}
-
-	results, err := hh.store.Query(ctx, q)
+	iter, err := hh.store.Iterator(ctx, corekv.IterOptions{
+		Prefix: hh.namespace.Bytes(),
+	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	defer func() {
-		err := results.Close()
-		if err != nil {
-			log.ErrorContextE(ctx, "Error closing results", err)
-		}
-	}()
-
 	heads := make([]cid.Cid, 0)
 	var maxHeight uint64
-	for r := range results.Next() {
-		if r.Error != nil {
-			return nil, 0, NewErrFailedToGetNextQResult(r.Error)
-		}
-
-		headKey, err := keys.NewHeadstoreKey(r.Key)
+	for {
+		hasNext, err := iter.Next()
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, errors.Join(NewErrFailedToGetNextQResult(err), iter.Close())
+		}
+		if !hasNext {
+			break
 		}
 
-		height, n := binary.Uvarint(r.Value)
+		headKey, err := keys.NewHeadstoreKey(string(iter.Key()))
+		if err != nil {
+			return nil, 0, errors.Join(err, iter.Close())
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return nil, 0, errors.Join(err, iter.Close())
+		}
+
+		height, n := binary.Uvarint(value)
 		if n <= 0 {
-			return nil, 0, ErrDecodingHeight
+			return nil, 0, errors.Join(ErrDecodingHeight, iter.Close())
 		}
 		heads = append(heads, headKey.GetCid())
 		if height > maxHeight {
@@ -122,5 +122,5 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		return bytes.Compare(ci, cj) < 0
 	})
 
-	return heads, maxHeight, nil
+	return heads, maxHeight, iter.Close()
 }

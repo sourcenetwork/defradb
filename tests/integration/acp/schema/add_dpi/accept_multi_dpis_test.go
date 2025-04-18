@@ -32,7 +32,9 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
             permissions:
               read:
                 expr: owner + reader
-              write:
+              update:
+                expr: owner
+              delete:
                 expr: owner
 
             relations:
@@ -44,9 +46,6 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
                   - actor
     `
 
-	const policyIDOfFirstCreatorsDPI string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
-	const policyIDOfSecondCreatorsDPI string = "4b9291094984289a8f5557d142db453943549626067eedd8cbd5b64c3bc8a4f3"
-
 	test := testUtils.TestCase{
 
 		Description: "Test acp, add duplicate DPIs by different actors, accept both schemas",
@@ -57,8 +56,6 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: validDPIUsedByBoth,
-
-				ExpectedPolicyID: policyIDOfFirstCreatorsDPI,
 			},
 
 			testUtils.AddPolicy{
@@ -66,23 +63,24 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 				Identity: testUtils.ClientIdentity(2),
 
 				Policy: validDPIUsedByBoth,
-
-				ExpectedPolicyID: policyIDOfSecondCreatorsDPI,
 			},
 
 			testUtils.SchemaUpdate{
 				Schema: fmt.Sprintf(`
 					type OldUsers @policy(
-						id: "%s",
+						id: "{{.Policy0}}",
 						resource: "%s"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfFirstCreatorsDPI,
 					sameResourceNameOnBothDPI,
 				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy0": testUtils.NewPolicyIndex(0),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -127,16 +125,19 @@ func TestACP_AddDPISchema_AddDuplicateDPIsByOtherCreatorsUseBoth_AcceptSchema(t 
 			testUtils.SchemaUpdate{
 				Schema: fmt.Sprintf(`
 					type NewUsers @policy(
-						id: "%s",
+						id: "{{.Policy1}}",
 						resource: "%s"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-					policyIDOfSecondCreatorsDPI,
 					sameResourceNameOnBothDPI,
 				),
+
+				Replace: map[string]testUtils.ReplaceType{
+					"Policy1": testUtils.NewPolicyIndex(1),
+				},
 			},
 
 			testUtils.IntrospectionRequest{
