@@ -650,7 +650,7 @@ func (c *collection) save(
 	txn := mustGetContextTxn(ctx)
 
 	ident := identity.FromContext(ctx)
-	if !ident.HasValue() && ident.Value().PrivateKey == nil && c.db.nodeIdentity.HasValue() {
+	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
