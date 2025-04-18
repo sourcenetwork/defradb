@@ -28,7 +28,6 @@ type dbOptions struct {
 	RetryIntervals []time.Duration
 	identity       immutable.Option[identity.Identity]
 	disableSigning bool
-	fallbackSigner immutable.Option[identity.Identity]
 }
 
 // defaultOptions returns the default db options.
@@ -76,14 +75,5 @@ func WithNodeIdentity(ident identity.Identity) Option {
 func WithEnabledSigning(value bool) Option {
 	return func(opts *dbOptions) {
 		opts.disableSigning = !value
-	}
-}
-
-// WithFallbackSigner sets the fallback signer for the db.
-// If a provided identity for any db request is missing the private key, the fallback signer will
-// be used to sign the block.
-func WithFallbackSigner(ident identity.Identity) Option {
-	return func(opts *dbOptions) {
-		opts.fallbackSigner = immutable.Some(ident)
 	}
 }

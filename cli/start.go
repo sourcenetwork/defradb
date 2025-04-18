@@ -289,11 +289,6 @@ func MakeStartCommand() *cobra.Command {
 		"no-signing",
 		cfg.GetBool(configFlags["no-signing"]),
 		"Disable signing of commits.")
-	cmd.Flags().Bool(
-		"use-fallback-signer",
-		cfg.GetBool(configFlags["use-fallback-signer"]),
-		"Use the node's identity as a fallback signer if a request identity does not have a private key. "+
-			"This is relevant when creating or updating documents via HTTP.")
 	cmd.Flags().String(
 		"default-key-type",
 		cfg.GetString(configFlags["default-key-type"]),
@@ -390,10 +385,6 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 	ident, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
 		return nil, err
-	}
-
-	if cfg.GetBool("datastore.usefallbacksigner") {
-		opts = append(opts, db.WithFallbackSigner(ident))
 	}
 
 	return append(opts, db.WithNodeIdentity(ident)), nil

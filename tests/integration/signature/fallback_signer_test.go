@@ -15,15 +15,13 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSignature_IfIdentityHasNoPrivateKeyButFallbackSignerIsSet_ShouldUseFallbackSigner(t *testing.T) {
+func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning:  true,
-		FallbackSigner: testUtils.NodeIdentity(0),
-		// Fallback signer can be only tested with HTTP and CLI clients, because with Go client
+		EnableSigning: true,
+		// Default signer can be only tested with HTTP and CLI clients, because with Go client
 		// when providing an identity, it includes the private key.
 		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
 			testUtils.HTTPClientType,
@@ -57,37 +55,6 @@ func TestSignature_IfIdentityHasNoPrivateKeyButFallbackSignerIsSet_ShouldUseFall
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreidenvkbjuqismfbng463tfxsjmapvnvdyh4hmdx74ec5skj63ma2a",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSignature_IfIdentityHasNoPrivateKey_ShouldFail(t *testing.T) {
-	test := testUtils.TestCase{
-		EnableSigning: true,
-		// Fallback signer can be only tested with HTTP and CLI clients, because with Go client
-		// when providing an identity, it includes the private key.
-		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
-			testUtils.HTTPClientType,
-			testUtils.CLIClientType,
-		}),
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						age: Int 
-					}`,
-			},
-			testUtils.CreateDoc{
-				Identity: testUtils.ClientIdentity(0),
-				DocMap: map[string]any{
-					"name": "John",
-					"age":  21,
-				},
-				ExpectedError: clock.ErrIdentityWithoutPrivateKeyForSigning.Error(),
 			},
 		},
 	}
