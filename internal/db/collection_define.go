@@ -46,6 +46,7 @@ func (db *DB) createCollections(
 
 	for i := range newDefinitions {
 		newDefinitions[i].Description.ID = newSchemas[i].VersionID
+		newDefinitions[i].Description.CollectionID = newSchemas[i].Root
 		newDefinitions[i].Schema = newSchemas[i]
 	}
 

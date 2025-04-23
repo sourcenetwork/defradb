@@ -277,7 +277,7 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {
-		if c.SchemaRoot() == evt.SchemaRoot {
+		if c.Description().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
 	}
@@ -363,7 +363,7 @@ func getEventsForUpdateWithFilter(
 // returned.  If it is scoped to a schema, the schema root will be returned.
 func getUpdateEventKey(evt event.Update) string {
 	if evt.DocID == "" {
-		return evt.SchemaRoot
+		return evt.CollectionID
 	}
 
 	return evt.DocID
@@ -375,7 +375,7 @@ func getUpdateEventKey(evt event.Update) string {
 // returned.  If it is scoped to a schema, the schema root will be returned.
 func getMergeEventKey(evt event.Merge) string {
 	if evt.DocID == "" {
-		return evt.SchemaRoot
+		return evt.CollectionID
 	}
 
 	return evt.DocID

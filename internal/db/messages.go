@@ -39,7 +39,7 @@ func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
 			switch evt := msg.Data.(type) {
 			case event.Merge:
 				go func() {
-					col, err := getCollectionFromRootSchema(ctx, db, evt.SchemaRoot)
+					col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 					if err != nil {
 						log.ErrorContextE(
 							ctx,
@@ -53,8 +53,8 @@ func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
 						// As collection commits link to document composite commits, all events
 						// recieved for branchable collections must be processed serially else
 						// they may otherwise cause a transaction conflict.
-						schemaRootQueue.add(evt.SchemaRoot)
-						defer schemaRootQueue.done(evt.SchemaRoot)
+						schemaRootQueue.add(evt.CollectionID)
+						defer schemaRootQueue.done(evt.CollectionID)
 					} else {
 						// ensure only one merge per docID
 						docIDQueue.add(evt.DocID)

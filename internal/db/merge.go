@@ -482,7 +482,7 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 	}
 }
 
-func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string) (*collection, error) {
+func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -492,14 +492,14 @@ func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string)
 	cols, err := db.getCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(rootSchema),
+			SchemaRoot: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(rootSchema)
+		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
 	}
 	// We currently only support one active collection per root schema
 	// so it is safe to return the first one.

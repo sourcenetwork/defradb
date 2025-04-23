@@ -439,6 +439,7 @@ func (db *DB) updateSchema(
 					if existingCol.RootID == client.OrphanRootID {
 						existingCol.RootID = col.RootID
 					}
+					existingCol.CollectionID = schema.Root
 
 					for _, globalField := range schema.Fields {
 						var fieldID client.FieldID
@@ -473,6 +474,7 @@ func (db *DB) updateSchema(
 			// they will be activated later along with any existing collection versions.
 			col.Name = immutable.None[string]()
 			col.ID = schema.VersionID
+			col.CollectionID = schema.Root
 			col.Sources = []any{
 				&client.CollectionSource{
 					SourceCollectionID: previousID,

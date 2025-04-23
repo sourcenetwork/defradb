@@ -168,10 +168,10 @@ func (c *collection) applyDelete(
 
 	// publish an update event if the txn succeeds
 	updateEvent := event.Update{
-		DocID:      primaryKey.DocID,
-		Cid:        link.Cid,
-		SchemaRoot: c.Schema().Root,
-		Block:      b,
+		DocID:        primaryKey.DocID,
+		Cid:          link.Cid,
+		CollectionID: c.Description().CollectionID,
+		Block:        b,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
@@ -190,9 +190,9 @@ func (c *collection) applyDelete(
 		}
 
 		updateEvent := event.Update{
-			Cid:        link.Cid,
-			SchemaRoot: c.Schema().Root,
-			Block:      headNode,
+			Cid:          link.Cid,
+			CollectionID: c.Description().CollectionID,
+			Block:        headNode,
 		}
 
 		txn.OnSuccess(func() {

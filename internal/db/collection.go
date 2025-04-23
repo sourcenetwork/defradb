@@ -744,10 +744,10 @@ func (c *collection) save(
 
 	// publish an update event when the txn succeeds
 	updateEvent := event.Update{
-		DocID:      doc.ID().String(),
-		Cid:        link.Cid,
-		SchemaRoot: c.Schema().Root,
-		Block:      headNode,
+		DocID:        doc.ID().String(),
+		Cid:          link.Cid,
+		CollectionID: c.Description().CollectionID,
+		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
@@ -770,9 +770,9 @@ func (c *collection) save(
 		}
 
 		updateEvent := event.Update{
-			Cid:        link.Cid,
-			SchemaRoot: c.Schema().Root,
-			Block:      headNode,
+			Cid:          link.Cid,
+			CollectionID: c.Description().CollectionID,
+			Block:        headNode,
 		}
 
 		txn.OnSuccess(func() {

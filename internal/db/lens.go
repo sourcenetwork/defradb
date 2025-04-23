@@ -116,6 +116,13 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 				if err != nil {
 					return err
 				}
+
+				dstCol.CollectionID = schema.Root
+
+				dstCol, err = description.SaveCollection(ctx, txn, dstCol)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
