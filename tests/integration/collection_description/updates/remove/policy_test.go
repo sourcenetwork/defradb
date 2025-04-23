@@ -74,10 +74,13 @@ func TestColDescrUpdateRemovePolicy_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/1/Policy" }
+						{
+							"op": "remove",
+							"path": "/bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq/Policy"
+						}
 					]
 				`,
-				ExpectedError: "collection policy cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection policy cannot be mutated.",
 			},
 		},
 	}

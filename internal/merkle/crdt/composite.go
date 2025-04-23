@@ -35,12 +35,12 @@ var _ MerkleCRDT = (*MerkleCompositeDAG)(nil)
 // backed by a CompositeDAG CRDT.
 func NewMerkleCompositeDAG(
 	store Stores,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.DataStoreKey,
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
 		store.Datastore(),
-		schemaVersionKey,
+		schemaVersionID,
 		key,
 	)
 

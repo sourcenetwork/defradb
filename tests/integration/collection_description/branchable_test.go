@@ -30,7 +30,6 @@ func TestColDescr_Branchable(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             1,
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
 						IsBranchable:   true,
@@ -54,7 +53,6 @@ func TestColDescr_BranchableIfTrue(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             1,
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
 						IsBranchable:   true,
@@ -78,7 +76,6 @@ func TestColDescr_BranchableIfFalse(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             1,
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
 						IsBranchable:   false,

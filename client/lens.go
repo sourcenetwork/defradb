@@ -60,7 +60,7 @@ type LensRegistry interface {
 	//
 	// Migrations will only run if there is a complete path from the document schema version to the latest local
 	// schema version.
-	SetMigration(context.Context, uint32, model.Lens) error
+	SetMigration(context.Context, string, model.Lens) error
 
 	// ReloadLenses clears any cached migrations, loads their configurations from the database and re-initializes
 	// them.  It is run on database start if the database already existed.
@@ -71,7 +71,7 @@ type LensRegistry interface {
 	MigrateUp(
 		context.Context,
 		enumerable.Enumerable[map[string]any],
-		uint32,
+		string,
 	) (enumerable.Enumerable[map[string]any], error)
 
 	// MigrateDown returns an enumerable that feeds the given source through the Lens migration for the given
@@ -81,6 +81,6 @@ type LensRegistry interface {
 	MigrateDown(
 		context.Context,
 		enumerable.Enumerable[map[string]any],
-		uint32,
+		string,
 	) (enumerable.Enumerable[map[string]any], error)
 }

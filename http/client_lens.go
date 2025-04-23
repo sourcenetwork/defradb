@@ -31,13 +31,13 @@ type LensRegistry struct {
 }
 
 type setMigrationRequest struct {
-	CollectionID uint32
+	CollectionID string
 	Config       model.Lens
 }
 
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
-func (c *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
+func (c *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
 	methodURL := c.http.baseURL.JoinPath("lens", "registry")
 
 	body, err := json.Marshal(setMigrationRequest{
@@ -67,14 +67,14 @@ func (c *LensRegistry) ReloadLenses(ctx context.Context) error {
 }
 
 type migrateRequest struct {
-	CollectionID uint32
+	CollectionID string
 	Data         []map[string]any
 }
 
 func (c *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	methodURL := c.http.baseURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "up")
 
@@ -109,7 +109,7 @@ func (c *LensRegistry) MigrateUp(
 func (c *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	methodURL := c.http.baseURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "down")
 

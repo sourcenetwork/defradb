@@ -29,10 +29,13 @@ func TestColDescrUpdateRemoveCollections(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/1" }
+						{
+							"op": "remove",
+							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+						}
 					]
 				`,
-				ExpectedError: `collections cannot be deleted. CollectionID: 1`,
+				ExpectedError: `collections cannot be deleted.`,
 			},
 		},
 	}

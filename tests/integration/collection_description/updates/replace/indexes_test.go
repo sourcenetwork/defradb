@@ -27,10 +27,14 @@ func TestColDescrUpdateReplaceIndexes_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Indexes", "value": [{}] }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Indexes",
+							"value": [{}]
+						}
 					]
 				`,
-				ExpectedError: "collection indexes cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection indexes cannot be mutated.",
 			},
 		},
 	}

@@ -157,7 +157,7 @@ func (c *collection) applyDelete(
 
 	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
 		txn,
-		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
@@ -180,7 +180,7 @@ func (c *collection) applyDelete(
 	if c.def.Description.IsBranchable {
 		collectionCRDT := merklecrdt.NewMerkleCollection(
 			txn,
-			keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(c.def.Description.RootID),
 		)
 

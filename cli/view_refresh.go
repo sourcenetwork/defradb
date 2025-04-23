@@ -49,7 +49,7 @@ Example: refresh views by version id. This will also return inactive views
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
-				options.SchemaVersionID = immutable.Some(versionID)
+				options.ID = immutable.Some(versionID)
 			}
 			if schemaRoot != "" {
 				options.SchemaRoot = immutable.Some(schemaRoot)

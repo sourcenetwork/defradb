@@ -217,7 +217,7 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 }
 
 func validateDefinitions(definitions []client.CollectionDefinition) error {
-	colIDs := make(map[uint32]struct{})
+	colIDs := make(map[string]struct{})
 	colNames := make(map[string]struct{})
 	defCache := client.NewDefinitionCache(definitions)
 

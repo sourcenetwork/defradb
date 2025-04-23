@@ -332,7 +332,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		n.planner.ctx,
 		client.CollectionFetchOptions{
 			IncludeInactive: immutable.Some(true),
-			SchemaVersionID: immutable.Some(schemaVersionId),
+			ID:              immutable.Some(schemaVersionId),
 		},
 	)
 	if err != nil {
@@ -391,12 +391,6 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 			string(docID),
 		)
 	}
-
-	// WARNING: This will become incorrect once we allow multiple collections to share the same schema,
-	// we should by then instead fetch the collection be global collection ID:
-	// https://github.com/sourcenetwork/defradb/issues/1085
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit,
-		request.CollectionIDFieldName, int64(cols[0].ID()))
 
 	// links
 	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]

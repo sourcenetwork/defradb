@@ -32,11 +32,11 @@ var _ FieldLevelMerkleCRDT = (*MerkleLWWRegister)(nil)
 // backed by a LWWRegister CRDT.
 func NewMerkleLWWRegister(
 	store Stores,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) *MerkleLWWRegister {
-	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionKey, key, fieldName)
+	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionID, key, fieldName)
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
 		register)
 

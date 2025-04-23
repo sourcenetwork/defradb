@@ -34,7 +34,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldError(t *te
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "foo"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "foo"}
+						}
 					]
 				`,
 				ExpectedError: "the given field does not exist. Vector field: foo",
@@ -59,8 +63,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldErrorMultip
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "foo"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "bar"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "foo"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "bar"}
+						}
 					]
 				`,
 				ExpectedError: "the given field does not exist. Vector field: foo\nthe given field does not exist. Vector field: bar",
@@ -85,7 +97,10 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_Sh
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "foo"]} }
+						{
+							"op": "add", "path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "foo"]}
+						}
 					]
 				`,
 				ExpectedError: "the given field does not exist. Embedding generation field: foo",
@@ -110,8 +125,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_Sh
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "foo"]} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "bar"]} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "foo"]}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "bar"]}
+						}
 					]
 				`,
 				ExpectedError: "the given field does not exist. Embedding generation field: foo\nthe given field does not exist. Embedding generation field: bar",
@@ -136,7 +159,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithInvalidEmbeddingGenerationFieldKin
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "custom"]} }
+						{
+							"op": "add",
+							"path": "/bafkreidjpk55vtz3l5ouzkgfbxv2rnt3xekjb5aide7i246ngsqtgcbroa/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "custom"]}
+						}
 					]
 				`,
 				ExpectedError: "invalid field type for vector embedding generation. Actual: JSON",
@@ -161,7 +188,11 @@ func TestColDescrUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 			},
@@ -202,7 +233,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldError(t *te
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding FieldName cannot be empty",
@@ -227,8 +262,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldErrorMultip
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding FieldName cannot be empty\nembedding FieldName cannot be empty",
@@ -253,7 +296,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *testi
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding Fields cannot be empty",
@@ -278,8 +325,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingFields_ShouldErrorMultiple(
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding Fields cannot be empty\nembedding Fields cannot be empty",
@@ -304,7 +359,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *tes
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding Provider cannot be empty",
@@ -329,8 +388,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingProvider_ShouldErrorMultipl
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding Provider cannot be empty\nunknown embedding provider. Provider: \nembedding Provider cannot be empty\nunknown embedding provider. Provider:",
@@ -355,7 +422,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(t 
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "unknown embedding provider",
@@ -380,8 +451,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldErrorMul
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "unknown embedding provider. Provider: deepseek\nunknown embedding provider. Provider: deepseek",
@@ -406,7 +485,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *testin
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding Model cannot be empty",
@@ -431,8 +514,16 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingModel_ShouldErrorMultiple(t
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding Model cannot be empty\nembedding Model cannot be empty",
@@ -457,7 +548,11 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *testin
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text"}
+						}
 					]
 				`,
 			},
@@ -500,7 +595,11 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToSelf_ShouldError(t *testing
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v",
@@ -525,8 +624,16 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToSelf_ShouldErrorMultiple(t 
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v\nembedding fields cannot refer to self or another embedding field. Field: name_v",
@@ -552,7 +659,11 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErro
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: about_v",
@@ -579,8 +690,16 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldErro
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "desc_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreic752dfcii7xhss3d2d6knx7cbonxsgtuknd7bcvmx6e6i5c64cm4/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreic752dfcii7xhss3d2d6knx7cbonxsgtuknd7bcvmx6e6i5c64cm4/VectorEmbeddings/-",
+							"value": {"FieldName": "desc_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						}
 
 					]
 				`,
@@ -607,8 +726,16 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_Sho
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v",
@@ -634,9 +761,21 @@ func TestColDescrUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_Sho
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} },
-						{ "op": "add", "path": "/1/VectorEmbeddings/-", "value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"} }
+						{
+							"op": "add",
+							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						},
+						{
+							"op": "add",
+							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
+						}
 					]
 				`,
 				ExpectedError: "embedding fields cannot refer to self or another embedding field. Field: name_v\ninvalid field type for vector embedding generation. Actual: [Float32!]\nembedding fields cannot refer to self or another embedding field. Field: name_v",

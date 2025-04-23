@@ -46,7 +46,7 @@ func (r *explicitTxnLensRegistry) WithTxn(txn datastore.Txn) client.LensRegistry
 	}
 }
 
-func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID uint32, cfg model.Lens) error {
+func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID string, cfg model.Lens) error {
 	txn, err := r.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID
 	return txn.Commit(ctx)
 }
 
-func (r *explicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID uint32, cfg model.Lens) error {
+func (r *explicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID string, cfg model.Lens) error {
 	return r.registry.setMigration(ctx, r.registry.getCtx(r.txn, false), collectionID, cfg)
 }
 
@@ -89,7 +89,7 @@ func (r *explicitTxnLensRegistry) ReloadLenses(ctx context.Context) error {
 func (r *implicitTxnLensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	txn, err := r.db.NewTxn(ctx, true)
 	if err != nil {
@@ -104,7 +104,7 @@ func (r *implicitTxnLensRegistry) MigrateUp(
 func (r *explicitTxnLensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	return r.registry.migrateUp(r.registry.getCtx(r.txn, true), src, collectionID)
 }
@@ -112,7 +112,7 @@ func (r *explicitTxnLensRegistry) MigrateUp(
 func (r *implicitTxnLensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	txn, err := r.db.NewTxn(ctx, true)
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *implicitTxnLensRegistry) MigrateDown(
 func (r *explicitTxnLensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	return r.registry.migrateDown(r.registry.getCtx(r.txn, true), src, collectionID)
 }

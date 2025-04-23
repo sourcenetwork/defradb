@@ -76,26 +76,22 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	store datastore.DSReaderWriter
-	key   keys.DataStoreKey
-
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey keys.CollectionSchemaVersionKey
+	store           datastore.DSReaderWriter
+	key             keys.DataStoreKey
+	schemaVersionID string
 }
 
 var _ core.ReplicatedData = (*CompositeDAG)(nil)
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
-		store:            store,
-		key:              key,
-		schemaVersionKey: schemaVersionKey,
+		store:           store,
+		key:             key,
+		schemaVersionID: schemaVersionID,
 	}
 }
 
@@ -103,7 +99,7 @@ func NewCompositeDAG(
 func (c CompositeDAG) NewDelta(status client.DocumentStatus) *CompositeDAGDelta {
 	return &CompositeDAGDelta{
 		DocID:           []byte(c.key.DocID),
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
+		SchemaVersionID: c.schemaVersionID,
 		Status:          status,
 	}
 }
@@ -143,7 +139,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 		// been migrated yet locally.
 		schemaVersionId = dagDelta.SchemaVersionID
 	} else {
-		schemaVersionId = c.schemaVersionKey.SchemaVersionID
+		schemaVersionId = c.schemaVersionID
 	}
 
 	err = c.store.Set(ctx, versionKey.Bytes(), []byte(schemaVersionId))
