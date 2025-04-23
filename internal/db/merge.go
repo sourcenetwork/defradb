@@ -381,7 +381,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
+		crdt, err := mp.initCRDTForType(dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -441,7 +441,7 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
+func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
 	switch {
 	case crdt.IsComposite():
 		docID := string(crdt.GetDocID())
