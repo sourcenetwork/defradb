@@ -222,25 +222,19 @@ type DefinitionCache struct {
 
 	// The cached Definitions mapped by the Root of their [SchemaDescription]
 	DefinitionsBySchemaRoot map[string]CollectionDefinition
-
-	// The cached Definitions mapped by the Root of their [CollectionDescription]
-	DefinitionsByCollectionRoot map[uint32]CollectionDefinition
 }
 
 // NewDefinitionCache creates a new [DefinitionCache] populated with the given [CollectionDefinition]s.
 func NewDefinitionCache(definitions []CollectionDefinition) DefinitionCache {
 	definitionsBySchemaRoot := make(map[string]CollectionDefinition, len(definitions))
-	definitionsByCollectionRoot := make(map[uint32]CollectionDefinition, len(definitions))
 
 	for _, def := range definitions {
 		definitionsBySchemaRoot[def.Schema.Root] = def
-		definitionsByCollectionRoot[def.Description.RootID] = def
 	}
 
 	return DefinitionCache{
-		Definitions:                 definitions,
-		DefinitionsBySchemaRoot:     definitionsBySchemaRoot,
-		DefinitionsByCollectionRoot: definitionsByCollectionRoot,
+		Definitions:             definitions,
+		DefinitionsBySchemaRoot: definitionsBySchemaRoot,
 	}
 }
 
