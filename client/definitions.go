@@ -262,10 +262,6 @@ func GetDefinition(
 		return def, ok
 
 	case *SelfKind:
-		if host.Description.RootID != 0 {
-			return host, true
-		}
-
 		if typedKind.RelativeID == "" {
 			return host, true
 		}
@@ -344,10 +340,6 @@ func GetDefinitionFromStore(
 		return cols[0].Definition(), true, nil
 
 	case *SelfKind:
-		if host.Description.RootID != 0 {
-			return host, true, nil
-		}
-
 		if typedKind.RelativeID == "" {
 			return host, true, nil
 		}
