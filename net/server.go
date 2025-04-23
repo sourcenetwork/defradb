@@ -569,7 +569,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	cols, err := s.peer.db.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(p2pID),
+			CollectionID: immutable.Some(p2pID),
 		},
 	)
 	if err != nil {

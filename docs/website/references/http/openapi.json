@@ -138,6 +138,9 @@
             },
             "collection": {
                 "properties": {
+                    "CollectionID": {
+                        "type": "string"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
@@ -249,6 +252,9 @@
                 "properties": {
                     "description": {
                         "properties": {
+                            "CollectionID": {
+                                "type": "string"
+                            },
                             "Fields": {
                                 "items": {
                                     "properties": {

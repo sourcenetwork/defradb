@@ -185,6 +185,35 @@ func GetCollectionsByRoot(
 	return cols, iter.Close()
 }
 
+// GetCollectionsByCollectionID returns all collection versions for the given id.
+//
+// If no collections are found an empty set will be returned.
+func GetCollectionsByCollectionID(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionID string,
+) ([]client.CollectionDescription, error) { //todo - this should not be dependent on matching to schema root?
+	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, txn, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	cols := []client.CollectionDescription{}
+	for _, schemaVersionID := range schemaVersionIDs {
+		versionCol, err := GetCollectionByID(ctx, txn, schemaVersionID)
+		if err != nil {
+			if errors.Is(err, corekv.ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+
+		cols = append(cols, versionCol)
+	}
+
+	return cols, nil
+}
+
 // GetCollectionsBySchemaRoot returns all collections that use the given
 // schema root.
 //

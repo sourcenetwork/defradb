@@ -339,7 +339,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		return core.Doc{}, err
 	}
 	if len(cols) == 0 {
-		return core.Doc{}, client.NewErrCollectionNotFoundForSchemaVersion(schemaVersionId)
+		return core.Doc{}, client.NewErrCollectionNotFoundForCollectionVersion(schemaVersionId)
 	}
 
 	var fieldName any

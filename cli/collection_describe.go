@@ -19,7 +19,7 @@ import (
 
 func MakeCollectionDescribeCommand() *cobra.Command {
 	var name string
-	var schemaRoot string
+	var collectionID string
 	var versionID string
 	var getInactive bool
 	var cmd = &cobra.Command{
@@ -33,8 +33,8 @@ Example: view all collections
 Example: view collection by name
   defradb client collection describe --name User
 		
-Example: view collection by schema root id
-  defradb client collection describe --schema bae123
+Example: view collection by collection id
+  defradb client collection describe --collection-id bae123
 		
 Example: view collection by version id. This will also return inactive collections
   defradb client collection describe --version bae123
@@ -46,8 +46,8 @@ Example: view collection by version id. This will also return inactive collectio
 			if versionID != "" {
 				options.ID = immutable.Some(versionID)
 			}
-			if schemaRoot != "" {
-				options.SchemaRoot = immutable.Some(schemaRoot)
+			if collectionID != "" {
+				options.CollectionID = immutable.Some(collectionID)
 			}
 			if name != "" {
 				options.Name = immutable.Some(name)
@@ -71,7 +71,7 @@ Example: view collection by version id. This will also return inactive collectio
 		},
 	}
 	cmd.Flags().StringVar(&name, "name", "", "Collection name")
-	cmd.Flags().StringVar(&schemaRoot, "schema", "", "Collection schema Root")
+	cmd.Flags().StringVar(&collectionID, "collection-id", "", "Collection P2P identifier")
 	cmd.Flags().StringVar(&versionID, "version", "", "Collection version ID")
 	cmd.Flags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd

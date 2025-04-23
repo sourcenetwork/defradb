@@ -133,13 +133,6 @@ func (db *DB) getCollections(
 
 	var cols []client.CollectionDescription
 	switch {
-	case options.Root.HasValue():
-		var err error
-		cols, err = description.GetCollectionsByRoot(ctx, txn, options.Root.Value())
-		if err != nil {
-			return nil, err
-		}
-
 	case options.Name.HasValue():
 		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
@@ -154,9 +147,9 @@ func (db *DB) getCollections(
 		}
 		cols = append(cols, col)
 
-	case options.SchemaRoot.HasValue():
+	case options.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsBySchemaRoot(ctx, txn, options.SchemaRoot.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, txn, options.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -185,12 +178,6 @@ func (db *DB) getCollections(
 			}
 		}
 
-		if options.Root.HasValue() {
-			if col.RootID != options.Root.Value() {
-				continue
-			}
-		}
-
 		// By default, we don't return inactive collections unless a specific version is requested.
 		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.ID.HasValue() {
 			continue
@@ -202,12 +189,6 @@ func (db *DB) getCollections(
 			// a migration is registered before the schema is declared locally.
 			if !errors.Is(err, corekv.ErrNotFound) {
 				return nil, err
-			}
-		}
-
-		if options.SchemaRoot.HasValue() {
-			if schema.Root != options.SchemaRoot.Value() {
-				continue
 			}
 		}
 

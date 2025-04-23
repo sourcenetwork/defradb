@@ -492,7 +492,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 	cols, err := db.getCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(collectionID),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {

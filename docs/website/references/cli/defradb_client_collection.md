@@ -9,13 +9,13 @@ Create, read, update, and delete documents within a collection.
 ### Options
 
 ```
-      --get-inactive      Get inactive collections as well as active
-  -h, --help              help for collection
-  -i, --identity string   Hex formatted private key used to authenticate with ACP
-      --name string       Collection name
-      --schema string     Collection schema Root
-      --tx uint           Transaction ID
-      --version string    Collection version ID
+      --collection-id string   Collection ID
+      --get-inactive           Get inactive collections as well as active
+  -h, --help                   help for collection
+  -i, --identity string        Hex formatted private key used to authenticate with ACP
+      --name string            Collection name
+      --tx uint                Transaction ID
+      --version string         Collection version ID
 ```
 
 ### Options inherited from parent commands

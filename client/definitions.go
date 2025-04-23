@@ -313,7 +313,7 @@ func GetDefinitionFromStore(
 
 	case *SchemaKind:
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			SchemaRoot: immutable.Some(typedKind.Root),
+			CollectionID: immutable.Some(typedKind.Root),
 		})
 
 		if len(cols) == 0 || errors.Is(err, ErrNotFound) {
@@ -348,7 +348,7 @@ func GetDefinitionFromStore(
 		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
 
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			SchemaRoot: immutable.Some(targetID),
+			CollectionID: immutable.Some(targetID),
 		})
 		if len(cols) == 0 || err != nil {
 			return CollectionDefinition{}, false, err
