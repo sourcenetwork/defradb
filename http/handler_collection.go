@@ -282,7 +282,7 @@ func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 	}
 	indexes, err := col.GetIndexes(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
