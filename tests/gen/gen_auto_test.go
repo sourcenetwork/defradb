@@ -1308,9 +1308,8 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Description: client.CollectionDescription{
-				Name:   immutable.Some("User"),
-				ID:     "a",
-				RootID: 0,
+				Name: immutable.Some("User"),
+				ID:   "a",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "name",
@@ -1349,9 +1348,8 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 		},
 		{
 			Description: client.CollectionDescription{
-				Name:   immutable.Some("Device"),
-				ID:     "b",
-				RootID: 1,
+				Name: immutable.Some("Device"),
+				ID:   "b",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "model",

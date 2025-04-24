@@ -809,12 +809,12 @@ func refreshCollections(
 		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
 				if collection.Name().Value() == collectionName {
-					if _, ok := s.collectionIndexesByRoot[collection.Description().RootID]; !ok {
+					if _, ok := s.collectionIndexesByCollectionID[collection.Description().CollectionID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
 						// we still wish to preserve the original index so test maintainers can reference
 						// them in a convenient manner.
-						s.collectionIndexesByRoot[collection.Description().RootID] = i
+						s.collectionIndexesByCollectionID[collection.Description().CollectionID] = i
 					}
 					break
 				}
@@ -822,7 +822,7 @@ func refreshCollections(
 		}
 
 		for _, collection := range allCollections {
-			if index, ok := s.collectionIndexesByRoot[collection.Description().RootID]; ok {
+			if index, ok := s.collectionIndexesByCollectionID[collection.Description().CollectionID]; ok {
 				node.collections[index] = collection
 			}
 		}

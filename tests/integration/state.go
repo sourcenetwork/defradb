@@ -202,10 +202,10 @@ type state struct {
 	// Indexes matches that of initial collections.
 	collectionNames []string
 
-	// A map of the collection indexes by their Root, this allows easier
+	// A map of the collection indexes by their CollectionID, this allows easier
 	// identification of collections in a natural, human readable, order
 	// even when they are renamed.
-	collectionIndexesByRoot map[uint32]int
+	collectionIndexesByCollectionID map[string]int
 
 	// Document IDs by index, by collection index.
 	//
@@ -270,24 +270,24 @@ func newState(
 	collectionNames []string,
 ) *state {
 	s := &state{
-		ctx:                      ctx,
-		t:                        t,
-		testCase:                 testCase,
-		kms:                      kms,
-		dbt:                      dbt,
-		clientType:               clientType,
-		txns:                     []datastore.Txn{},
-		identities:               map[Identity]*identityHolder{},
-		nextIdentityGenSeed:      0,
-		allActionsDone:           make(chan struct{}),
-		subscriptionResultsChans: []chan func(){},
-		nodes:                    []*nodeState{},
-		acpOptions:               []node.ACPOpt{},
-		collectionNames:          collectionNames,
-		collectionIndexesByRoot:  map[uint32]int{},
-		docIDs:                   [][]client.DocID{},
-		policyIDs:                [][]string{},
-		isBench:                  false,
+		ctx:                             ctx,
+		t:                               t,
+		testCase:                        testCase,
+		kms:                             kms,
+		dbt:                             dbt,
+		clientType:                      clientType,
+		txns:                            []datastore.Txn{},
+		identities:                      map[Identity]*identityHolder{},
+		nextIdentityGenSeed:             0,
+		allActionsDone:                  make(chan struct{}),
+		subscriptionResultsChans:        []chan func(){},
+		nodes:                           []*nodeState{},
+		acpOptions:                      []node.ACPOpt{},
+		collectionNames:                 collectionNames,
+		collectionIndexesByCollectionID: map[string]int{},
+		docIDs:                          [][]client.DocID{},
+		policyIDs:                       [][]string{},
+		isBench:                         false,
 	}
 	return s
 }
