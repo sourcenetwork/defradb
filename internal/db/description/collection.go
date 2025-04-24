@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -31,19 +31,12 @@ func SaveCollection(
 	txn datastore.Txn,
 	desc client.CollectionDescription,
 ) (client.CollectionDescription, error) {
-	if desc.RootID == 0 {
-		colSeq, err := sequence.Get(ctx, txn, keys.CollectionIDSequenceKey{})
+	if desc.CollectionID != "" {
+		// Set the collection short id
+		_, err := id.ShortCollectionID(ctx, txn, desc.CollectionID)
 		if err != nil {
 			return client.CollectionDescription{}, err
 		}
-
-		colID, err := colSeq.Next(ctx, txn)
-		if err != nil {
-			return client.CollectionDescription{}, err
-		}
-
-		// This is temporary, RootID will be removed soon
-		desc.RootID = uint32(colID)
 	}
 
 	existing, err := GetCollectionByID(ctx, txn, desc.ID)

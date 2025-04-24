@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
@@ -150,11 +151,17 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
+
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
+	if err != nil {
+		return err
+	}
+
 	// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365 - ACP <> Indexing, possibly also check
 	// and handle the case of when oldDoc == nil (will be nil if inaccessible document).
 	oldDoc, err := c.get(
 		ctx,
-		c.getPrimaryKeyFromDocID(doc.ID()),
+		primaryKey,
 		c.Definition().CollectIndexedFields(),
 		false,
 	)
@@ -194,11 +201,16 @@ func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
 ) error {
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return err
+	}
+
 	// we need to fetch the document to delete it from the indexes, because in order to do so
 	// we need to know the values of the fields that are indexed.
 	doc, err := c.get(
 		ctx,
-		c.getPrimaryKeyFromDocID(docID),
+		primaryKey,
 		c.Definition().CollectIndexedFields(),
 		false,
 	)
@@ -333,8 +345,14 @@ func (c *collection) iterateAllDocs(
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}
+
+	shortID, err := id.ShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	prefix := keys.DataStoreKey{
-		CollectionRootID: c.Description().RootID,
+		CollectionShortID: shortID,
 	}
 	err = df.Start(ctx, prefix)
 	if err != nil {

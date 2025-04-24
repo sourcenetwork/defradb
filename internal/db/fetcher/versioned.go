@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -306,13 +307,18 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
+	shortID, err := id.ShortCollectionID(vf.ctx, vf.txn, vf.col.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	var mcrdt merklecrdt.MerkleCRDT
 	switch {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(
 			vf.store,
 			vf.col.Description().ID,
-			keys.NewHeadstoreColKey(vf.col.Description().RootID),
+			keys.NewHeadstoreColKey(shortID),
 		)
 
 	case block.Delta.IsComposite():
@@ -320,9 +326,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			vf.store,
 			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
-				CollectionRootID: vf.col.Description().RootID,
-				DocID:            string(block.Delta.GetDocID()),
-				FieldID:          fmt.Sprint(core.COMPOSITE_NAMESPACE),
+				CollectionShortID: shortID,
+				DocID:             string(block.Delta.GetDocID()),
+				FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 			},
 		)
 
@@ -338,9 +344,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			field.Typ,
 			field.Kind,
 			keys.DataStoreKey{
-				CollectionRootID: vf.col.Description().RootID,
-				DocID:            string(block.Delta.GetDocID()),
-				FieldID:          fmt.Sprint(field.ID),
+				CollectionShortID: shortID,
+				DocID:             string(block.Delta.GetDocID()),
+				FieldID:           fmt.Sprint(field.ID),
 			},
 			field.Name,
 		)

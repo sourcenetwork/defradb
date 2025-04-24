@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
@@ -187,6 +188,8 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 }
 
 func (index *collectionBaseIndex) getDocumentsIndexKey(
+	ctx context.Context,
+	txn datastore.Txn,
 	doc *client.Document,
 	appendDocID bool,
 ) (keys.IndexDataStoreKey, error) {
@@ -204,7 +207,13 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	if appendDocID {
 		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
-	return keys.NewIndexDataStoreKey(index.collection.Description().RootID, index.desc.ID, fields), nil
+
+	shortID, err := id.ShortCollectionID(ctx, txn, index.collection.Description().CollectionID)
+	if err != nil {
+		return keys.IndexDataStoreKey{}, err
+	}
+
+	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -225,8 +234,13 @@ func (index *collectionBaseIndex) deleteIndexKey(
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
 // field values for all documents.
 func (index *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
+	shortID, err := id.ShortCollectionID(ctx, txn, index.collection.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionID = index.collection.Description().RootID
+	prefixKey.CollectionShortID = shortID
 	prefixKey.IndexID = index.desc.ID
 
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.Bytes(), txn.Datastore())
@@ -257,12 +271,14 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 // generateKeysAndProcess generates index keys for the given document and calls the provided function
 // for each generated key
 func (index *collectionBaseIndex) generateKeysAndProcess(
+	ctx context.Context,
+	txn datastore.Txn,
 	doc *client.Document,
 	appendDocID bool,
 	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
-	baseKey, err := index.getDocumentsIndexKey(doc, appendDocID)
+	baseKey, err := index.getDocumentsIndexKey(ctx, txn, doc, appendDocID)
 	if err != nil {
 		return err
 	}
@@ -311,7 +327,7 @@ func (index *collectionSimpleIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(ctx, txn, doc, true, func(key keys.IndexDataStoreKey) error {
 		return txn.Datastore().Set(ctx, key.Bytes(), []byte{})
 	})
 }
@@ -334,7 +350,7 @@ func (index *collectionSimpleIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(ctx, txn, doc, true, func(key keys.IndexDataStoreKey) error {
 		return index.deleteIndexKey(ctx, txn, key)
 	})
 }
@@ -360,7 +376,7 @@ func (index *collectionUniqueIndex) Save(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(ctx, txn, doc, false, func(key keys.IndexDataStoreKey) error {
 		return addNewUniqueKey(ctx, txn, doc, key, index.fieldsDescs)
 	})
 }
@@ -442,7 +458,7 @@ func (index *collectionUniqueIndex) Delete(
 	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
+	return index.generateKeysAndProcess(ctx, txn, doc, false, func(key keys.IndexDataStoreKey) error {
 		key, _, err := makeUniqueKeyValueRecord(key, doc)
 		if err != nil {
 			return err

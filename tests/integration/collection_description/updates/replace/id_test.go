@@ -139,7 +139,7 @@ func TestColDescrUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T) 
 						}
 					]
 				`,
-				ExpectedError: "collection root ID cannot be mutated.",
+				ExpectedError: "collection ID cannot be mutated.",
 			},
 		},
 	}

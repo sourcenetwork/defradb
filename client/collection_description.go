@@ -12,21 +12,12 @@ package client
 
 import (
 	"encoding/json"
-	"math"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
-
-// CollectionDescription with no known root will take this ID as their temporary RootID.
-//
-// Orphan CollectionDescriptions are typically created when setting migrations from schema versions
-// that do not yet exist.  The OrphanRootID will be replaced with the actual RootID once a full chain
-// of schema versions leading back to a schema version used by a collection with a non-orphan RootID
-// has been established.
-const OrphanRootID uint32 = math.MaxUint32
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
@@ -35,14 +26,6 @@ type CollectionDescription struct {
 	// It is conceptually local to the node hosting the DefraDB instance, but currently there
 	// is no means to update the local value so that it differs from the (global) schema name.
 	Name immutable.Option[string]
-
-	// RootID is the local root identifier of this collection, linking together a chain of
-	// collection instances on different schema versions.
-	//
-	// Collections sharing the same RootID will be compatable with each other, with the documents
-	// within them shared and yielded as if they were in the same set, using Lens transforms to
-	// migrate between schema versions when provided.
-	RootID uint32
 
 	// The immutable ID of this collection version.
 	ID string
@@ -224,7 +207,6 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	c.Name = descMap.Name
-	c.RootID = descMap.RootID
 	c.ID = descMap.ID
 	c.CollectionID = descMap.CollectionID
 	c.IsMaterialized = descMap.IsMaterialized

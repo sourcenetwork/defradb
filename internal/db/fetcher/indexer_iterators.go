@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -341,7 +342,10 @@ func (f *indexFetcher) newPrefixIteratorFromConditions(
 		matchers[0] = &anyMatcher{}
 	}
 
-	key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+	key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+	if err != nil {
+		return nil, err
+	}
 	return f.newPrefixIterator(key, matchers, f.execInfo), nil
 }
 
@@ -383,10 +387,16 @@ func (f *indexFetcher) newInIndexIterator(
 			keyFieldValues[i] = fieldConditions[i].val
 		}
 
-		key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+		key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+		if err != nil {
+			return nil, err
+		}
 		iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 	} else {
-		indexKey := f.newIndexDataStoreKey()
+		indexKey, err := f.newIndexDataStoreKey()
+		if err != nil {
+			return nil, err
+		}
 		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
 		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo)
@@ -394,17 +404,28 @@ func (f *indexFetcher) newInIndexIterator(
 	return &inIndexIterator{indexIterator: iter, inValues: inValues}, nil
 }
 
-func (f *indexFetcher) newIndexDataStoreKey() keys.IndexDataStoreKey {
-	return keys.IndexDataStoreKey{CollectionID: f.col.Description().RootID, IndexID: f.indexDesc.ID}
+func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
+	shortID, err := id.ShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	if err != nil {
+		return keys.IndexDataStoreKey{}, err
+	}
+
+	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID}, nil
 }
 
-func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) keys.IndexDataStoreKey {
+func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
-	return keys.NewIndexDataStoreKey(f.col.Description().RootID, f.indexDesc.ID, fields)
+
+	shortID, err := id.ShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	if err != nil {
+		return keys.IndexDataStoreKey{}, err
+	}
+
+	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
 }
 
 func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
@@ -432,7 +453,10 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 				keyFieldValues[i] = fieldConditions[i].val
 			}
 
-			key := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+			key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+			if err != nil {
+				return nil, err
+			}
 			iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 		} else {
 			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
@@ -440,7 +464,10 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
 	} else {
-		key := f.newIndexDataStoreKey()
+		key, err := f.newIndexDataStoreKey()
+		if err != nil {
+			return nil, err
+		}
 		// if the first field is JSON, we want to add the JSON path prefix to scope the search
 		if fieldConditions[0].kind == client.FieldKind_NILLABLE_JSON {
 			key.Fields = []keys.IndexedField{{

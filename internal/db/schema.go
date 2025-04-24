@@ -437,9 +437,6 @@ func (db *DB) updateSchema(
 				// Make sure that this collection is the parent of the current [col], and not part of
 				// another collection set that happens to be using the same schema.
 				if source.SourceCollectionID == previousID {
-					if existingCol.RootID == client.OrphanRootID {
-						existingCol.RootID = col.RootID
-					}
 					existingCol.CollectionID = schema.Root
 
 					for _, globalField := range schema.Fields {

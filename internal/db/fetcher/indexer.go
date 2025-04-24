@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -120,9 +121,15 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	if !f.currentDocID.HasValue() {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
+
+	shortID, err := id.ShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	if err != nil {
+		return immutable.None[EncodedDocument](), err
+	}
+
 	prefix := keys.DataStoreKey{
-		CollectionRootID: f.col.Description().RootID,
-		DocID:            f.currentDocID.Value(),
+		CollectionShortID: shortID,
+		DocID:             f.currentDocID.Value(),
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)

@@ -47,7 +47,6 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 	if !srcFound {
 		desc := client.CollectionDescription{
-			RootID:         client.OrphanRootID,
 			ID:             cfg.SourceSchemaVersionID,
 			IsMaterialized: true,
 		}
@@ -81,9 +80,9 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 	if !isDstCollectionFound {
 		desc := client.CollectionDescription{
-			RootID:         sourceCol.RootID,
 			ID:             cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
+			CollectionID:   sourceCol.CollectionID,
 			Sources: []any{
 				&client.CollectionSource{
 					SourceCollectionID: sourceCol.ID,
@@ -98,7 +97,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			return err
 		}
 
-		if desc.RootID != client.OrphanRootID {
+		if desc.CollectionID != "" { // todo- this makes no sense
 			var schemaFound bool
 			// If the root schema id is known, we need to add it to the index, even if the schema is not known locally
 			schema, err := description.GetSchemaVersion(ctx, txn, cfg.SourceSchemaVersionID)

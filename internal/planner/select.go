@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -283,6 +284,11 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 				},
 			)
 		} else if n.selectReq.DocIDs.HasValue() {
+			shortID, err := id.ShortCollectionID(n.planner.ctx, n.planner.txn, sourcePlan.collection.Description().CollectionID)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
 			// if we have a FindByDocID filter, create a prefix for it
 			// and propagate it to the scanNode
@@ -290,10 +296,11 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+
 			for i, docID := range n.selectReq.DocIDs.Value() {
 				prefixes[i] = keys.DataStoreKey{
-					CollectionRootID: sourcePlan.collection.Description().RootID,
-					DocID:            docID,
+					CollectionShortID: shortID,
+					DocID:             docID,
 				}
 			}
 			origScan.Prefixes(prefixes)

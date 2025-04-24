@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
@@ -77,6 +78,8 @@ func (c *collection) deleteWithFilter(
 		DocIDs: make([]string, 0),
 	}
 
+	txn := mustGetContextTxn(ctx)
+
 	// Keep looping until results from the selection plan have been iterated through.
 	for {
 		next, err := selectionPlan.Next()
@@ -94,9 +97,14 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
+		shortID, err := id.ShortCollectionID(ctx, txn, c.Description().CollectionID)
+		if err != nil {
+			return nil, err
+		}
+
 		primaryKey := keys.PrimaryDataStoreKey{
-			CollectionRootID: c.Description().RootID,
-			DocID:            docID,
+			CollectionShortID: shortID,
+			DocID:             docID,
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
@@ -178,10 +186,15 @@ func (c *collection) applyDelete(
 	})
 
 	if c.def.Description.IsBranchable {
+		shortID, err := id.ShortCollectionID(ctx, txn, c.Description().CollectionID)
+		if err != nil {
+			return err
+		}
+
 		collectionCRDT := merklecrdt.NewMerkleCollection(
 			txn,
 			c.Schema().VersionID,
-			keys.NewHeadstoreColKey(c.def.Description.RootID),
+			keys.NewHeadstoreColKey(shortID),
 		)
 
 		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})

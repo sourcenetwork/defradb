@@ -88,7 +88,7 @@ const (
 	errCollectionIndexesCannotBeMutated         string = "collection indexes cannot be mutated"
 	errCollectionFieldsCannotBeMutated          string = "collection fields cannot be mutated"
 	errCollectionPolicyCannotBeMutated          string = "collection policy cannot be mutated"
-	errCollectionRootIDCannotBeMutated          string = "collection root ID cannot be mutated"
+	errCollectionIDCannotBeMutated              string = "collection ID cannot be mutated"
 	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
 	errCollectionIDCannotBeEmpty                string = "collection ID cannot be empty"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
@@ -141,7 +141,7 @@ var (
 	ErrCollectionSourceIDMutated                = errors.New(errCollectionSourceIDMutated)
 	ErrCollectionIndexesCannotBeMutated         = errors.New(errCollectionIndexesCannotBeMutated)
 	ErrCollectionFieldsCannotBeMutated          = errors.New(errCollectionFieldsCannotBeMutated)
-	ErrCollectionRootIDCannotBeMutated          = errors.New(errCollectionRootIDCannotBeMutated)
+	ErrCollectionCollectionIDCannotBeMutated    = errors.New(errCollectionIDCannotBeMutated)
 	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeEmpty                = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
@@ -630,10 +630,10 @@ func NewErrCollectionPolicyCannotBeMutated(colID string) error {
 	)
 }
 
-func NewErrCollectionRootIDCannotBeMutated(colID string) error {
+func NewErrCollectionIDCannotBeMutated(collectionVersionID string) error {
 	return errors.New(
-		errCollectionRootIDCannotBeMutated,
-		errors.NewKV("CollectionID", colID),
+		errCollectionIDCannotBeMutated,
+		errors.NewKV("CollectionVersionID", collectionVersionID),
 	)
 }
 

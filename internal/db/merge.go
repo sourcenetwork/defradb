@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -49,7 +50,12 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 			FieldID: core.COMPOSITE_NAMESPACE,
 		}
 	} else {
-		key = keys.NewHeadstoreColKey(col.Description().RootID)
+		shortID, err := id.ShortCollectionID(ctx, txn, col.Description().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		key = keys.NewHeadstoreColKey(shortID)
 	}
 
 	mt, err := getHeadsAsMergeTarget(ctx, txn, key)
@@ -380,7 +386,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(dagBlock.Delta)
+		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -440,7 +446,12 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
+	shortID, err := id.ShortCollectionID(ctx, mp.txn, mp.col.Description().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	switch {
 	case crdt.IsComposite():
 		docID := string(crdt.GetDocID())
@@ -450,8 +461,8 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 			mp.txn,
 			mp.col.Schema().VersionID,
 			keys.DataStoreKey{
-				CollectionRootID: mp.col.Description().RootID,
-				DocID:            docID,
+				CollectionShortID: shortID,
+				DocID:             docID,
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
@@ -459,7 +470,7 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 		return merklecrdt.NewMerkleCollection(
 			mp.txn,
 			mp.col.Schema().VersionID,
-			keys.NewHeadstoreColKey(mp.col.Description().RootID),
+			keys.NewHeadstoreColKey(shortID),
 		), nil
 
 	default:
@@ -479,8 +490,8 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{
-				CollectionRootID: mp.col.Description().RootID,
-				DocID:            docID,
+				CollectionShortID: shortID,
+				DocID:             docID,
 			}.WithFieldID(fd.ID.String()),
 			field,
 		)
