@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
@@ -59,16 +58,9 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents a bug where requesting the list of indexes for a given collection
-// returns the list of all indexes on the database. This happens over HTTP which affects
-// the CLI client as well.
 func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Getting indexes should return empty list if there are no indexes",
-		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
-			testUtils.HTTPClientType,
-			testUtils.CLIClientType,
-		}),
+		Description: "Getting indexes for a collection should return only the indexes on that collection",
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -84,9 +76,7 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 				`,
 			},
 			testUtils.GetIndexes{
-				// Asking for the indexes on User specifically
 				CollectionID: 0,
-				// Returns all indexes
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name: "User_age_ASC",
@@ -99,6 +89,11 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 						},
 						Unique: false,
 					},
+				},
+			},
+			testUtils.GetIndexes{
+				CollectionID: 1,
+				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name: "Address_postalCode_ASC",
 						ID:   1,
