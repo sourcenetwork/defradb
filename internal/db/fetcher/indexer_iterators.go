@@ -448,7 +448,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 				Value:      client.NewNormalJSON(client.MakeVoidJSON(fieldConditions[0].jsonPath)),
 			}}
 		}
-		iter, err = f.newPrefixIterator(key, matchers, f.execInfo), nil
+		iter = f.newPrefixIterator(key, matchers, f.execInfo)
 	}
 
 	if err != nil {
