@@ -25,17 +25,13 @@ import (
 func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
 
-	collectionsByName := map[string]client.CollectionDescription{}
 	schemasByName := map[string]client.SchemaDescription{}
 	for _, def := range definitions {
-		if def.Description.Name.HasValue() {
-			collectionsByName[def.Description.Name.Value()] = def.Description
-		}
 		schemasByName[def.Schema.Name] = def.Schema
 	}
 
 	for i := range definitions {
-		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Schema.Root))
+		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Description.CollectionID))
 		if err != nil {
 			return err
 		}
