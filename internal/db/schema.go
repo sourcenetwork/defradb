@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const (
@@ -500,7 +501,7 @@ func (db *DB) updateSchema(
 			})
 		}
 
-		err = db.setFieldIDs(ctx, definitions)
+		err = id.SetFieldIDs(ctx, txn, definitions)
 		if err != nil {
 			return err
 		}
