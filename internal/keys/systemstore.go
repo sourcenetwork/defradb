@@ -12,7 +12,6 @@ package keys
 
 const (
 	COLLECTION                = "collection"
-	COLLECTION_ROOT           = "/collection/root"
 	COLLECTION_INDEX          = "/collection/index"
 	COLLECTION_NAME           = "/collection/name"
 	COLLECTION_SCHEMA_VERSION = "/collection/version"

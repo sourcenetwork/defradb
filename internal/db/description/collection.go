@@ -93,12 +93,6 @@ func SaveCollection(
 		}
 	}
 
-	rootKey := keys.NewCollectionRootKey(desc.RootID, desc.ID)
-	err = txn.Systemstore().Set(ctx, rootKey.Bytes(), []byte{})
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
 	return desc, nil
 }
 
@@ -137,52 +131,6 @@ func GetCollectionByName(
 	}
 
 	return GetCollectionByID(ctx, txn, string(idBuf))
-}
-
-func GetCollectionsByRoot(
-	ctx context.Context,
-	txn datastore.Txn,
-	root uint32,
-) ([]client.CollectionDescription, error) {
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewCollectionRootKey(root, "").Bytes(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cols := []client.CollectionDescription{}
-	for {
-		hasValue, err := iter.Next()
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, err
-		}
-
-		if !hasValue {
-			break
-		}
-
-		rootKey, err := keys.NewCollectionRootKeyFromString(string(iter.Key()))
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, err
-		}
-
-		col, err := GetCollectionByID(ctx, txn, rootKey.CollectionID)
-		if err != nil {
-			return nil, errors.Join(err, iter.Close())
-		}
-
-		cols = append(cols, col)
-	}
-
-	return cols, iter.Close()
 }
 
 // GetCollectionsByCollectionID returns all collection versions for the given id.
