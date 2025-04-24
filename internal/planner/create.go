@@ -13,7 +13,6 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -59,7 +58,10 @@ func (n *createNode) Init() error { return nil }
 func docIDsToPrefixes(ids []string, desc client.CollectionDescription) []keys.Walkable {
 	prefixes := make([]keys.Walkable, len(ids))
 	for i, id := range ids {
-		prefixes[i] = base.MakeDataStoreKeyWithCollectionAndDocID(desc, id)
+		prefixes[i] = keys.DataStoreKey{
+			CollectionRootID: desc.RootID,
+			DocID:            id,
+		}
 	}
 	return prefixes
 }

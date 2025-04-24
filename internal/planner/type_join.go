@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -447,7 +446,10 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	if scan == nil {
 		return immutable.None[core.Doc](), nil
 	}
-	dsKey := base.MakeDataStoreKeyWithCollectionAndDocID(scan.col.Description(), docID)
+	dsKey := keys.DataStoreKey{
+		CollectionRootID: scan.col.Description().RootID,
+		DocID:            docID,
+	}
 
 	prefixes := []keys.Walkable{dsKey}
 

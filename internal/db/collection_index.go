@@ -24,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
@@ -334,7 +333,9 @@ func (c *collection) iterateAllDocs(
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}
-	prefix := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
+	prefix := keys.DataStoreKey{
+		CollectionRootID: c.Description().RootID,
+	}
 	err = df.Start(ctx, prefix)
 	if err != nil {
 		return errors.Join(err, df.Close())

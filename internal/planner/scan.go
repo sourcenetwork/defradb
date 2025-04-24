@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -175,7 +174,9 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.prefixes) == 0 {
-		prefix := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
+		prefix := keys.DataStoreKey{
+			CollectionRootID: n.col.Description().RootID,
+		}
 		n.prefixes = []keys.Walkable{prefix}
 	}
 

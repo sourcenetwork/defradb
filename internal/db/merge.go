@@ -29,7 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -450,7 +449,10 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 		return merklecrdt.NewMerkleCompositeDAG(
 			mp.txn,
 			mp.col.Schema().VersionID,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(core.COMPOSITE_NAMESPACE),
+			keys.DataStoreKey{
+				CollectionRootID: mp.col.Description().RootID,
+				DocID:            docID,
+			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
 	case crdt.IsCollection():
@@ -476,7 +478,10 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(fd.ID.String()),
+			keys.DataStoreKey{
+				CollectionRootID: mp.col.Description().RootID,
+				DocID:            docID,
+			}.WithFieldID(fd.ID.String()),
 			field,
 		)
 	}
