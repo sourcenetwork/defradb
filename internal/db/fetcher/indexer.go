@@ -39,6 +39,7 @@ type indexFetcher struct {
 	indexIter     indexIterator
 	currentDocID  immutable.Option[string]
 	execInfo      *ExecInfo
+	ordering      []mapper.OrderCondition
 }
 
 var _ fetcher = (*indexFetcher)(nil)
@@ -54,6 +55,7 @@ func newIndexFetcher(
 	col client.Collection,
 	docMapper *core.DocumentMapping,
 	execInfo *ExecInfo,
+	ordering []mapper.OrderCondition,
 ) (*indexFetcher, error) {
 	f := &indexFetcher{
 		ctx:        ctx,
@@ -63,6 +65,7 @@ func newIndexFetcher(
 		indexDesc:  indexDesc,
 		fieldsByID: fieldsByID,
 		execInfo:   execInfo,
+		ordering:   ordering,
 	}
 
 	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))

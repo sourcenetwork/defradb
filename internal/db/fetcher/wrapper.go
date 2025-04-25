@@ -40,6 +40,7 @@ type wrappingFetcher struct {
 	col         client.Collection
 	fields      []client.FieldDefinition
 	filter      *mapper.Filter
+	ordering    []mapper.OrderCondition
 	docMapper   *core.DocumentMapping
 	showDeleted bool
 }
@@ -59,6 +60,7 @@ func (f *wrappingFetcher) Init(
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 	docMapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -69,6 +71,7 @@ func (f *wrappingFetcher) Init(
 	f.col = col
 	f.fields = fields
 	f.filter = filter
+	f.ordering = ordering
 	f.docMapper = docMapper
 	f.showDeleted = showDeleted
 
@@ -125,7 +128,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	var top fetcher
 	if f.index.HasValue() {
 		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
-			f.docMapper, &f.execInfo)
+			f.docMapper, &f.execInfo, f.ordering)
 		if err != nil {
 			return err
 		}

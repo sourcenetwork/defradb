@@ -72,7 +72,7 @@ func (c *collection) get(
 	df := c.newFetcher()
 	// initialize it with the primary index
 	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, immutable.Option[client.IndexDescription]{},
-		c, fields, nil, nil, showDeleted)
+		c, fields, nil, nil, nil, showDeleted)
 	if err != nil {
 		_ = df.Close()
 		return nil, err

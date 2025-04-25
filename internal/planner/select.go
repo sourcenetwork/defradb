@@ -262,6 +262,9 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	if isScanNode {
 		origScan.showDeleted = n.selectReq.ShowDeleted
 		origScan.filter = n.filter
+		if n.selectReq.OrderBy != nil {
+			origScan.ordering = n.selectReq.OrderBy.Conditions
+		}
 		n.filter = nil
 
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
@@ -326,6 +329,14 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
 	if scanNode.filter == nil {
+		if len(scanNode.ordering) > 0 {
+			colDesc := scanNode.col.Description()
+			orderField := colDesc.Fields[scanNode.ordering[0].FieldIndexes[0]]
+			indexes := colDesc.GetIndexesOnField(orderField.Name)
+			if len(indexes) > 0 {
+				return immutable.Some(indexes[0])
+			}
+		}
 		return immutable.None[client.IndexDescription]()
 	}
 	colDesc := scanNode.col.Description()

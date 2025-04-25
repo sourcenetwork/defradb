@@ -79,6 +79,7 @@ type indexPrefixIterator struct {
 	resultIter    corekv.Iterator
 	ctx           context.Context
 	store         datastore.DSReaderWriter
+	reverse       bool
 }
 
 var _ indexIterator = (*indexPrefixIterator)(nil)
@@ -98,7 +99,8 @@ func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSRea
 func (iter *indexPrefixIterator) checkResultIterator() error {
 	if iter.resultIter == nil {
 		iterator, err := iter.store.Iterator(iter.ctx, corekv.IterOptions{
-			Prefix: iter.indexKey.Bytes(),
+			Prefix:  iter.indexKey.Bytes(),
+			Reverse: iter.reverse,
 		})
 		if err != nil {
 			return err
@@ -346,13 +348,14 @@ func (f *indexFetcher) newPrefixIteratorFromConditions(
 	if err != nil {
 		return nil, err
 	}
-	return f.newPrefixIterator(key, matchers, f.execInfo), nil
+	return f.newPrefixIterator(key, matchers, f.execInfo, false), nil
 }
 
 func (f *indexFetcher) newPrefixIterator(
 	indexKey keys.IndexDataStoreKey,
 	matchers []valueMatcher,
 	execInfo *ExecInfo,
+	reverse bool,
 ) *indexPrefixIterator {
 	return &indexPrefixIterator{
 		indexDesc:     f.indexDesc,
@@ -360,6 +363,7 @@ func (f *indexFetcher) newPrefixIterator(
 		indexKey:      indexKey,
 		matchers:      matchers,
 		execInfo:      execInfo,
+		reverse:       reverse,
 	}
 }
 
@@ -399,7 +403,7 @@ func (f *indexFetcher) newInIndexIterator(
 		}
 		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
 
-		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo)
+		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo, false)
 	}
 	return &inIndexIterator{indexIterator: iter, inValues: inValues}, nil
 }
@@ -428,7 +432,29 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
 }
 
+func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
+	if f.indexFilter == nil && len(f.ordering) > 0 {
+		orderField := f.col.Description().Fields[f.ordering[0].FieldIndexes[0]]
+		indexField := f.indexDesc.Fields[0]
+		if indexField.Name == orderField.Name {
+			key, err := f.newIndexDataStoreKey()
+			if err != nil {
+				return nil, err
+			}
+			reverse := f.ordering[0].Direction == mapper.DESC && !indexField.Descending
+			iter := f.newPrefixIterator(key, nil, f.execInfo, reverse)
+			return iter, nil
+		}
+	}
+	return nil, nil
+}
+
 func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
+	iter, err := f.tryCreateOrderedIndexIterator()
+	if err != nil || iter != nil {
+		return iter, err
+	}
+
 	fieldConditions, err := f.determineFieldFilterConditions()
 	if err != nil {
 		return nil, err
@@ -444,8 +470,6 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 		return nil, err
 	}
 
-	var iter indexIterator
-
 	if fieldConditions[0].op == opEq {
 		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
 			keyFieldValues := make([]client.NormalValue, len(fieldConditions))
@@ -460,9 +484,15 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 			iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 		} else {
 			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		key, err := f.newIndexDataStoreKey()
 		if err != nil {
@@ -475,7 +505,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 				Value:      client.NewNormalJSON(client.MakeVoidJSON(fieldConditions[0].jsonPath)),
 			}}
 		}
-		iter = f.newPrefixIterator(key, matchers, f.execInfo)
+		iter = f.newPrefixIterator(key, matchers, f.execInfo, false)
 	}
 
 	if err != nil {
