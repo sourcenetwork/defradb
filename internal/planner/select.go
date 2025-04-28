@@ -328,7 +328,28 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	if scanNode.filter == nil {
+	var indexCandidates []client.IndexDescription
+
+	if scanNode.filter != nil {
+		colDesc := scanNode.col.Description()
+		conditions := scanNode.filter.ExternalConditions
+		filter.TraverseFields(conditions, func(path []string, val any) bool {
+			for _, field := range scanNode.col.Schema().Fields {
+				if field.Name != path[0] {
+					continue
+				}
+				indexes := colDesc.GetIndexesOnField(field.Name)
+				if len(indexes) > 0 {
+					indexCandidates = append(indexCandidates, indexes...)
+					return true
+				}
+			}
+			return true
+		})
+	}
+
+	if len(indexCandidates) == 0 {
+		// if we can not use index for filtering, try to use index for ordering
 		if len(scanNode.ordering) > 0 {
 			colDesc := scanNode.col.Description()
 			orderField := colDesc.Fields[scanNode.ordering[0].FieldIndexes[0]]
@@ -337,26 +358,6 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 				return immutable.Some(indexes[0])
 			}
 		}
-		return immutable.None[client.IndexDescription]()
-	}
-	colDesc := scanNode.col.Description()
-
-	conditions := scanNode.filter.ExternalConditions
-	var indexCandidates []client.IndexDescription
-	filter.TraverseFields(conditions, func(path []string, val any) bool {
-		for _, field := range scanNode.col.Schema().Fields {
-			if field.Name != path[0] {
-				continue
-			}
-			indexes := colDesc.GetIndexesOnField(field.Name)
-			if len(indexes) > 0 {
-				indexCandidates = append(indexCandidates, indexes...)
-				return true
-			}
-		}
-		return true
-	})
-	if len(indexCandidates) == 0 {
 		return immutable.None[client.IndexDescription]()
 	}
 

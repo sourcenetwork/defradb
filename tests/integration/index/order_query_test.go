@@ -188,3 +188,92 @@ func TestOrderQueryWithIndex_WithLimitAscending_ShouldUseIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestOrderQueryWithIndex_WithFilterOnNonIndexedFieldAscending_ShouldUseIndexForOrdering(t *testing.T) {
+	req := `query {
+		User(order: {age: ASC}, filter: {name: {_like: "A%"}}) {
+			name
+			age
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Andy",
+							"age":  int64(33),
+						},
+						{
+							"name": "Addo",
+							"age":  int64(42),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				// we fetch all available docs with index
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(10),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithIndex_WithFilterOnNonIndexedFieldDescending_ShouldUseIndexForOrdering(t *testing.T) {
+	req := `query {
+		User(order: {age: DESC}, filter: {name: {_like: "A%"}}) {
+			name
+			age
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Addo",
+							"age":  int64(42),
+						},
+						{
+							"name": "Andy",
+							"age":  int64(33),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				// we fetch all available docs with index
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(10),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
