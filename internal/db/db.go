@@ -253,10 +253,10 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		}
 
 		updateEvent := event.Update{
-			DocID:      docID,
-			Cid:        headsIterator.CurrentCid(),
-			SchemaRoot: collection.Schema().Root,
-			Block:      headsIterator.CurrentRawBlock(),
+			DocID:        docID,
+			Cid:          headsIterator.CurrentCid(),
+			CollectionID: collection.Description().CollectionID,
+			Block:        headsIterator.CurrentRawBlock(),
 		}
 		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	}

@@ -158,10 +158,10 @@ func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
 
-func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
+func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaVersionID", schemaVersionID),
+		errors.NewKV("CollectionVersionID", collectionVersionID),
 	)
 }
 

@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -210,7 +211,12 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		itemKey := keys.NewViewCacheKey(col.Description.RootID, itemID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, col.Description.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		itemKey := keys.NewViewCacheKey(shortID, itemID)
 		err = txn.Datastore().Set(ctx, itemKey.Bytes(), serializedItem)
 		if err != nil {
 			return err
@@ -228,8 +234,13 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
 
+	shortID, err := id.GetShortCollectionID(ctx, txn, col.Description.CollectionID)
+	if err != nil {
+		return err
+	}
+
 	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewViewCacheColPrefix(col.Description.RootID).Bytes(),
+		Prefix:   keys.NewViewCacheColPrefix(shortID).Bytes(),
 		KeysOnly: true,
 	})
 	if err != nil {

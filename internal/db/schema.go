@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const (
@@ -436,9 +437,7 @@ func (db *DB) updateSchema(
 				// Make sure that this collection is the parent of the current [col], and not part of
 				// another collection set that happens to be using the same schema.
 				if source.SourceCollectionID == previousID {
-					if existingCol.RootID == client.OrphanRootID {
-						existingCol.RootID = col.RootID
-					}
+					existingCol.CollectionID = schema.Root
 
 					for _, globalField := range schema.Fields {
 						var fieldID client.FieldID
@@ -473,6 +472,7 @@ func (db *DB) updateSchema(
 			// they will be activated later along with any existing collection versions.
 			col.Name = immutable.None[string]()
 			col.ID = schema.VersionID
+			col.CollectionID = schema.Root
 			col.Sources = []any{
 				&client.CollectionSource{
 					SourceCollectionID: previousID,
@@ -498,7 +498,7 @@ func (db *DB) updateSchema(
 			})
 		}
 
-		err = db.setFieldIDs(ctx, definitions)
+		err = id.SetFieldIDs(ctx, txn, definitions)
 		if err != nil {
 			return err
 		}

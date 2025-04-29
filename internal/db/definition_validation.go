@@ -88,8 +88,8 @@ var updateOnlyValidators = []definitionValidator{
 	validatePolicyNotModified,
 	validateIDNotEmpty,
 	validateIDUnique,
-	validateRootIDNotMutated,
 	validateSingleVersionActive,
+	validateCollectionIDNotMutated,
 	validateSchemaNotAdded,
 	validateSchemaFieldNotDeleted,
 	validateFieldNotMutated,
@@ -569,7 +569,7 @@ func validateIDExists(
 	return errors.Join(errs...)
 }
 
-func validateRootIDNotMutated(
+func validateCollectionIDNotMutated(
 	ctx context.Context,
 	db *DB,
 	newState *definitionState,
@@ -582,23 +582,8 @@ func validateRootIDNotMutated(
 			continue
 		}
 
-		if newCol.RootID != oldCol.RootID {
-			errs = append(errs, NewErrCollectionRootIDCannotBeMutated(newCol.ID))
-		}
-	}
-
-	for _, newSchema := range newState.schemaByName {
-		oldSchema, ok := oldState.schemaByName[newSchema.Name]
-		if !ok {
-			continue
-		}
-
-		if newSchema.Root != oldSchema.Root {
-			errs = append(errs, NewErrSchemaRootDoesntMatch(
-				newSchema.Name,
-				oldSchema.Root,
-				newSchema.Root,
-			))
+		if newCol.CollectionID != oldCol.CollectionID {
+			errs = append(errs, NewErrCollectionIDCannotBeMutated(newCol.ID))
 		}
 	}
 

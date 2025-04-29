@@ -19,8 +19,8 @@ import (
 
 // CollectionIndexKey to a stored description of an index
 type CollectionIndexKey struct {
-	// RootID is the root identifier id of the collection that the index is on
-	RootID immutable.Option[string]
+	// CollectionID is the root identifier id of the collection that the index is on
+	CollectionID immutable.Option[string]
 	// IndexName is the name of the index
 	IndexName string
 }
@@ -28,8 +28,8 @@ type CollectionIndexKey struct {
 var _ Key = (*CollectionIndexKey)(nil)
 
 // NewCollectionIndexKey creates a new CollectionIndexKey from a collection root and index name.
-func NewCollectionIndexKey(rootID immutable.Option[string], indexName string) CollectionIndexKey {
-	return CollectionIndexKey{RootID: rootID, IndexName: indexName}
+func NewCollectionIndexKey(collectionID immutable.Option[string], indexName string) CollectionIndexKey {
+	return CollectionIndexKey{CollectionID: collectionID, IndexName: indexName}
 }
 
 // NewCollectionIndexKeyFromString creates a new CollectionIndexKey from a string.
@@ -44,7 +44,7 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 		return CollectionIndexKey{}, ErrInvalidKey
 	}
 
-	result := CollectionIndexKey{RootID: immutable.Some(keyArr[3])}
+	result := CollectionIndexKey{CollectionID: immutable.Some(keyArr[3])}
 	if len(keyArr) == 5 {
 		result.IndexName = keyArr[4]
 	}
@@ -58,8 +58,8 @@ func NewCollectionIndexKeyFromString(key string) (CollectionIndexKey, error) {
 func (k CollectionIndexKey) ToString() string {
 	result := COLLECTION_INDEX
 
-	if k.RootID.HasValue() {
-		result = result + "/" + k.RootID.Value()
+	if k.CollectionID.HasValue() {
+		result = result + "/" + k.CollectionID.Value()
 		if k.IndexName != "" {
 			result = result + "/" + k.IndexName
 		}

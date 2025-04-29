@@ -47,7 +47,7 @@ type server struct {
 	opts []grpc.DialOption
 
 	topics map[string]pubsubTopic
-	// replicators is a map from collectionName => peerId
+	// replicators is a map from collection CollectionID => peerId
 	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
 
@@ -125,7 +125,7 @@ func (s *server) processPushlog(
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := s.trySelfHasAccess(block, req.SchemaRoot)
+		mightHaveAccess, err := s.trySelfHasAccess(block, req.CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -151,7 +151,7 @@ func (s *server) processPushlog(
 
 	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
 	// subscribed to the collection.
-	if !s.hasPubSubTopicAndSubscribed(req.SchemaRoot) && req.DocID != "" {
+	if !s.hasPubSubTopicAndSubscribed(req.CollectionID) && req.DocID != "" {
 		_, err = s.addPubSubTopic(req.DocID, true, nil)
 		if err != nil {
 			return nil, err
@@ -159,11 +159,11 @@ func (s *server) processPushlog(
 	}
 
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
-		DocID:      req.DocID,
-		ByPeer:     byPeer,
-		FromPeer:   pid,
-		Cid:        headCID,
-		SchemaRoot: req.SchemaRoot,
+		DocID:        req.DocID,
+		ByPeer:       byPeer,
+		FromPeer:     pid,
+		Cid:          headCID,
+		CollectionID: req.CollectionID,
 	}))
 
 	return &pushLogReply{}, nil
@@ -291,7 +291,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	t, ok := s.topics[topic]
 	s.mu.Unlock()
 	if !ok {
-		subscribe := topic != req.SchemaRoot && !s.hasPubSubTopicAndSubscribed(req.SchemaRoot)
+		subscribe := topic != req.CollectionID && !s.hasPubSubTopicAndSubscribed(req.CollectionID)
 		_, err := s.addPubSubTopic(topic, subscribe, nil)
 		if err != nil {
 			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
@@ -299,7 +299,7 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 		return s.publishLog(ctx, topic, req)
 	}
 
-	if topic == req.SchemaRoot && req.DocID == "" && !t.subscribed {
+	if topic == req.CollectionID && req.DocID == "" && !t.subscribed {
 		// If the push log request is scoped to the schema and not to a document, subscribe to the
 		// schema.
 		var err error
@@ -561,7 +561,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
-func (s *server) trySelfHasAccess(block *coreblock.Block, schemaRoot string) (bool, error) {
+func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, error) {
 	if !s.peer.acp.HasValue() {
 		return true, nil
 	}
@@ -569,7 +569,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, schemaRoot string) (bo
 	cols, err := s.peer.db.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(schemaRoot),
+			CollectionID: immutable.Some(p2pID),
 		},
 	)
 	if err != nil {

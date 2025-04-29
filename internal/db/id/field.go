@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package id
 
 import (
 	"context"
@@ -17,25 +17,20 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// setFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
-func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDefinition) error {
-	txn := mustGetContextTxn(ctx)
-
-	collectionsByName := map[string]client.CollectionDescription{}
+// SetFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
+func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.CollectionDefinition) error {
 	schemasByName := map[string]client.SchemaDescription{}
 	for _, def := range definitions {
-		if def.Description.Name.HasValue() {
-			collectionsByName[def.Description.Name.Value()] = def.Description
-		}
 		schemasByName[def.Schema.Name] = def.Schema
 	}
 
 	for i := range definitions {
-		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Schema.Root))
+		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Description.CollectionID))
 		if err != nil {
 			return err
 		}

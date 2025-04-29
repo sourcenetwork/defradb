@@ -24,9 +24,9 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
@@ -79,7 +79,7 @@ func (db *DB) getAllIndexDescriptions(
 			return nil, NewErrInvalidStoredIndexKey(indexKey.ToString())
 		}
 
-		cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, indexKey.RootID.Value())
+		cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, indexKey.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -102,11 +102,11 @@ func (db *DB) getAllIndexDescriptions(
 
 func (db *DB) fetchCollectionIndexDescriptions(
 	ctx context.Context,
-	rootID string,
+	collectionID string,
 ) ([]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
 	txn := mustGetContextTxn(ctx)
-	prefix := keys.NewCollectionIndexKey(immutable.Some(rootID), "")
+	prefix := keys.NewCollectionIndexKey(immutable.Some(collectionID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
 		ctx,
 		prefix.Bytes(),
@@ -151,11 +151,17 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
+
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
+	if err != nil {
+		return err
+	}
+
 	// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/2365 - ACP <> Indexing, possibly also check
 	// and handle the case of when oldDoc == nil (will be nil if inaccessible document).
 	oldDoc, err := c.get(
 		ctx,
-		c.getPrimaryKeyFromDocID(doc.ID()),
+		primaryKey,
 		c.Definition().CollectIndexedFields(),
 		false,
 	)
@@ -195,11 +201,16 @@ func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
 ) error {
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return err
+	}
+
 	// we need to fetch the document to delete it from the indexes, because in order to do so
 	// we need to know the values of the fields that are indexed.
 	doc, err := c.get(
 		ctx,
-		c.getPrimaryKeyFromDocID(docID),
+		primaryKey,
 		c.Definition().CollectIndexedFields(),
 		false,
 	)
@@ -271,7 +282,7 @@ func (c *collection) createIndex(
 	colSeq, err := sequence.Get(
 		ctx,
 		txn,
-		keys.NewIndexIDSequenceKey(c.Description().RootID),
+		keys.NewIndexIDSequenceKey(c.Description().CollectionID),
 	)
 	if err != nil {
 		return nil, err
@@ -334,7 +345,15 @@ func (c *collection) iterateAllDocs(
 	if err != nil {
 		return errors.Join(err, df.Close())
 	}
-	prefix := base.MakeDataStoreKeyWithCollectionDescription(c.Description())
+
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
+	prefix := keys.DataStoreKey{
+		CollectionShortID: shortID,
+	}
 	err = df.Start(ctx, prefix)
 	if err != nil {
 		return errors.Join(err, df.Close())
@@ -431,7 +450,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 			break
 		}
 	}
-	key := keys.NewCollectionIndexKey(immutable.Some(c.SchemaRoot()), indexName)
+	key := keys.NewCollectionIndexKey(immutable.Some(c.Description().CollectionID), indexName)
 	err = txn.Systemstore().Delete(ctx, key.Bytes())
 	if err != nil {
 		return err
@@ -441,7 +460,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *collection) loadIndexes(ctx context.Context) error {
-	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.SchemaRoot())
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.Description().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -506,7 +525,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.SchemaRoot()), desc.Name)
+			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().CollectionID), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.Bytes())
 			if err != nil {
 				return keys.CollectionIndexKey{}, err
@@ -517,7 +536,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.SchemaRoot()), desc.Name)
+		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().CollectionID), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.Bytes())
 		if err != nil {
 			return keys.CollectionIndexKey{}, err
@@ -549,7 +568,7 @@ func generateIndexName(col client.Collection, fields []client.IndexedFieldDescri
 	if col.Name().HasValue() {
 		sb.WriteString(col.Name().Value())
 	} else {
-		sb.WriteString(fmt.Sprint(col.Description().RootID))
+		sb.WriteString(fmt.Sprint(col.Description().CollectionID))
 	}
 	sb.WriteByte('_')
 	// we can safely assume that there is at least one field in the slice

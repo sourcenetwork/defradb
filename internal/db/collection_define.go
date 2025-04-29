@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 func (db *DB) createCollections(
@@ -46,10 +47,12 @@ func (db *DB) createCollections(
 
 	for i := range newDefinitions {
 		newDefinitions[i].Description.ID = newSchemas[i].VersionID
+		newDefinitions[i].Description.CollectionID = newSchemas[i].Root
 		newDefinitions[i].Schema = newSchemas[i]
 	}
 
-	err = db.setFieldIDs(ctx, newDefinitions)
+	txn := mustGetContextTxn(ctx)
+	err = id.SetFieldIDs(ctx, txn, newDefinitions)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +71,6 @@ func (db *DB) createCollections(
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 
 	for _, def := range newDefinitions {
 		_, err := description.CreateSchemaVersion(ctx, txn, def.Schema)

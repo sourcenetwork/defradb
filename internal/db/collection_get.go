@@ -17,8 +17,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -36,7 +36,10 @@ func (c *collection) Get(
 		return nil, err
 	}
 	defer txn.Discard(ctx)
-	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
 
 	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
@@ -75,8 +78,16 @@ func (c *collection) get(
 		return nil, err
 	}
 
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	// construct target DS key from DocID.
-	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
+	targetKey := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             primaryKey.DocID,
+	}
 	// run the doc fetcher
 	err = df.Start(ctx, targetKey)
 	if err != nil {

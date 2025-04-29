@@ -71,14 +71,14 @@ func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
 func TestNewIndexKeyFromString_IfOnlyCollectionName_ReturnKey(t *testing.T) {
 	key, err := NewCollectionIndexKeyFromString("/collection/index/a")
 	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some("a"), key.RootID)
+	assert.Equal(t, immutable.Some("a"), key.CollectionID)
 	assert.Equal(t, "", key.IndexName)
 }
 
 func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
 	key, err := NewCollectionIndexKeyFromString("/collection/index/a/idx")
 	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some("a"), key.RootID)
+	assert.Equal(t, immutable.Some("a"), key.CollectionID)
 	assert.Equal(t, "idx", key.IndexName)
 }
 
@@ -187,8 +187,8 @@ func TestIndexDatastoreKey_ToDS(t *testing.T) {
 
 func TestCollectionIndexKey_Bytes(t *testing.T) {
 	key := CollectionIndexKey{
-		RootID:    immutable.Some("a"),
-		IndexName: "idx",
+		CollectionID: immutable.Some("a"),
+		IndexName:    "idx",
 	}
 	assert.Equal(t, []byte(COLLECTION_INDEX+"/a/idx"), key.Bytes())
 }

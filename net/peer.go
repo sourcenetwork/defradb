@@ -300,11 +300,11 @@ func (p *Peer) handleLog(evt event.Update) error {
 	// Retries are for replicators only and should not polluting the pubsub network.
 	if !evt.IsRetry {
 		req := &pushLogRequest{
-			DocID:      evt.DocID,
-			CID:        evt.Cid.Bytes(),
-			SchemaRoot: evt.SchemaRoot,
-			Creator:    p.host.ID().String(),
-			Block:      evt.Block,
+			DocID:        evt.DocID,
+			CID:          evt.Cid.Bytes(),
+			CollectionID: evt.CollectionID,
+			Creator:      p.host.ID().String(),
+			Block:        evt.Block,
 		}
 
 		if evt.DocID != "" {
@@ -313,8 +313,8 @@ func (p *Peer) handleLog(evt event.Update) error {
 			}
 		}
 
-		if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
+		if err := p.server.publishLog(p.ctx, evt.CollectionID, req); err != nil {
+			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
 		}
 	}
 
@@ -330,7 +330,7 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	}
 
 	p.server.mu.Lock()
-	reps, exists := p.server.replicators[lg.SchemaRoot]
+	reps, exists := p.server.replicators[lg.CollectionID]
 	p.server.mu.Unlock()
 
 	if exists {

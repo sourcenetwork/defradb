@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -133,13 +134,6 @@ func (db *DB) getCollections(
 
 	var cols []client.CollectionDescription
 	switch {
-	case options.Root.HasValue():
-		var err error
-		cols, err = description.GetCollectionsByRoot(ctx, txn, options.Root.Value())
-		if err != nil {
-			return nil, err
-		}
-
 	case options.Name.HasValue():
 		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
@@ -154,9 +148,9 @@ func (db *DB) getCollections(
 		}
 		cols = append(cols, col)
 
-	case options.SchemaRoot.HasValue():
+	case options.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsBySchemaRoot(ctx, txn, options.SchemaRoot.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, txn, options.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -185,12 +179,6 @@ func (db *DB) getCollections(
 			}
 		}
 
-		if options.Root.HasValue() {
-			if col.RootID != options.Root.Value() {
-				continue
-			}
-		}
-
 		// By default, we don't return inactive collections unless a specific version is requested.
 		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.ID.HasValue() {
 			continue
@@ -202,12 +190,6 @@ func (db *DB) getCollections(
 			// a migration is registered before the schema is declared locally.
 			if !errors.Is(err, corekv.ErrNotFound) {
 				return nil, err
-			}
-		}
-
-		if options.SchemaRoot.HasValue() {
-			if schema.Root != options.SchemaRoot.Value() {
-				continue
 			}
 		}
 
@@ -287,8 +269,13 @@ func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
 	txn := mustGetContextTxn(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if err != nil {
+		return nil, err
+	}
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionRootID: c.Description().RootID,
+		CollectionShortID: shortID,
 	}
 	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix.Bytes(),
@@ -439,6 +426,7 @@ func (c *collection) CreateMany(
 }
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
+	ctx context.Context,
 	doc *client.Document,
 ) (client.DocID, keys.PrimaryDataStoreKey, error) {
 	docID, err := doc.GenerateDocID()
@@ -446,7 +434,11 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
 	}
 
-	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
+	}
+
 	if primaryKey.DocID != doc.ID().String() {
 		return client.DocID{}, keys.PrimaryDataStoreKey{},
 			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
@@ -463,7 +455,7 @@ func (c *collection) create(
 		return err
 	}
 
-	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(doc)
+	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(ctx, doc)
 	if err != nil {
 		return err
 	}
@@ -483,7 +475,18 @@ func (c *collection) create(
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
 		txn := mustGetContextTxn(ctx)
-		valueKey := c.getDataStoreKeyFromDocID(docID)
+
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		valueKey := keys.DataStoreKey{
+			CollectionShortID: shortID,
+			DocID:             docID.String(),
+			InstanceType:      keys.ValueKey,
+		}
+
 		err = txn.Datastore().Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
@@ -520,7 +523,11 @@ func (c *collection) Update(
 	}
 	defer txn.Discard(ctx)
 
-	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
+	if err != nil {
+		return err
+	}
+
 	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return err
@@ -590,7 +597,11 @@ func (c *collection) Save(
 	defer txn.Discard(ctx)
 
 	// Check if document already exists with primary DS key.
-	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
+	if err != nil {
+		return err
+	}
+
 	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
 		return err
@@ -671,12 +682,21 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	// New batch transaction/store (optional/todo)
 	// Ensute/Set doc object marker
 	// Loop through doc values
 	//	=> 		instantiate MerkleCRDT objects
 	//	=> 		Set/Publish new CRDT values
-	primaryKey := c.getPrimaryKeyFromDocID(doc.ID())
+	primaryKey := keys.PrimaryDataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             doc.ID().String(),
+	}
+
 	links := make([]coreblock.DAGLink, 0)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
@@ -685,10 +705,14 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldKey, fieldExists := c.tryGetFieldKey(primaryKey, k)
-
+			fieldID, fieldExists := c.tryGetFieldID(k)
 			if !fieldExists {
 				return client.NewErrFieldNotExist(k)
+			}
+			fieldKey := keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             primaryKey.DocID,
+				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
 			}
 
 			fieldDescription, valid := c.Definition().GetFieldByName(k)
@@ -744,10 +768,10 @@ func (c *collection) save(
 
 	// publish an update event when the txn succeeds
 	updateEvent := event.Update{
-		DocID:      doc.ID().String(),
-		Cid:        link.Cid,
-		SchemaRoot: c.Schema().Root,
-		Block:      headNode,
+		DocID:        doc.ID().String(),
+		Cid:          link.Cid,
+		CollectionID: c.Description().CollectionID,
+		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
@@ -758,10 +782,14 @@ func (c *collection) save(
 	})
 
 	if c.def.Description.IsBranchable {
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+		if err != nil {
+			return err
+		}
 		collectionCRDT := merklecrdt.NewMerkleCollection(
 			txn,
 			c.Schema().VersionID,
-			keys.NewHeadstoreColKey(c.def.Description.RootID),
+			keys.NewHeadstoreColKey(shortID),
 		)
 
 		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})
@@ -770,9 +798,9 @@ func (c *collection) save(
 		}
 
 		updateEvent := event.Update{
-			Cid:        link.Cid,
-			SchemaRoot: c.Schema().Root,
-			Block:      headNode,
+			Cid:          link.Cid,
+			CollectionID: c.Description().CollectionID,
+			Block:        headNode,
 		}
 
 		txn.OnSuccess(func() {
@@ -896,7 +924,10 @@ func (c *collection) Delete(
 	}
 	defer txn.Discard(ctx)
 
-	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return false, err
+	}
 
 	err = c.deleteIndexedDocWithID(ctx, docID)
 	if err != nil {
@@ -924,7 +955,11 @@ func (c *collection) Exists(
 	}
 	defer txn.Discard(ctx)
 
-	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return false, err
+	}
+
 	exists, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return false, err
@@ -962,32 +997,21 @@ func (c *collection) exists(
 	return true, false, nil
 }
 
-func (c *collection) getPrimaryKeyFromDocID(docID client.DocID) keys.PrimaryDataStoreKey {
+func (c *collection) getPrimaryKeyFromDocID(
+	ctx context.Context,
+	docID client.DocID,
+) (keys.PrimaryDataStoreKey, error) {
+	txn := mustGetContextTxn(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if err != nil {
+		return keys.PrimaryDataStoreKey{}, err
+	}
+
 	return keys.PrimaryDataStoreKey{
-		CollectionRootID: c.Description().RootID,
-		DocID:            docID.String(),
-	}
-}
-
-func (c *collection) getDataStoreKeyFromDocID(docID client.DocID) keys.DataStoreKey {
-	return keys.DataStoreKey{
-		CollectionRootID: c.Description().RootID,
-		DocID:            docID.String(),
-		InstanceType:     keys.ValueKey,
-	}
-}
-
-func (c *collection) tryGetFieldKey(primaryKey keys.PrimaryDataStoreKey, fieldName string) (keys.DataStoreKey, bool) {
-	fieldID, hasField := c.tryGetFieldID(fieldName)
-	if !hasField {
-		return keys.DataStoreKey{}, false
-	}
-
-	return keys.DataStoreKey{
-		CollectionRootID: c.Description().RootID,
-		DocID:            primaryKey.DocID,
-		FieldID:          strconv.FormatUint(uint64(fieldID), 10),
-	}, true
+		CollectionShortID: shortID,
+		DocID:             docID.String(),
+	}, nil
 }
 
 // tryGetFieldID returns the FieldID of the given fieldName.

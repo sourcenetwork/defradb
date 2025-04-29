@@ -222,25 +222,19 @@ type DefinitionCache struct {
 
 	// The cached Definitions mapped by the Root of their [SchemaDescription]
 	DefinitionsBySchemaRoot map[string]CollectionDefinition
-
-	// The cached Definitions mapped by the Root of their [CollectionDescription]
-	DefinitionsByCollectionRoot map[uint32]CollectionDefinition
 }
 
 // NewDefinitionCache creates a new [DefinitionCache] populated with the given [CollectionDefinition]s.
 func NewDefinitionCache(definitions []CollectionDefinition) DefinitionCache {
 	definitionsBySchemaRoot := make(map[string]CollectionDefinition, len(definitions))
-	definitionsByCollectionRoot := make(map[uint32]CollectionDefinition, len(definitions))
 
 	for _, def := range definitions {
 		definitionsBySchemaRoot[def.Schema.Root] = def
-		definitionsByCollectionRoot[def.Description.RootID] = def
 	}
 
 	return DefinitionCache{
-		Definitions:                 definitions,
-		DefinitionsBySchemaRoot:     definitionsBySchemaRoot,
-		DefinitionsByCollectionRoot: definitionsByCollectionRoot,
+		Definitions:             definitions,
+		DefinitionsBySchemaRoot: definitionsBySchemaRoot,
 	}
 }
 
@@ -268,10 +262,6 @@ func GetDefinition(
 		return def, ok
 
 	case *SelfKind:
-		if host.Description.RootID != 0 {
-			return host, true
-		}
-
 		if typedKind.RelativeID == "" {
 			return host, true
 		}
@@ -323,7 +313,7 @@ func GetDefinitionFromStore(
 
 	case *SchemaKind:
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			SchemaRoot: immutable.Some(typedKind.Root),
+			CollectionID: immutable.Some(typedKind.Root),
 		})
 
 		if len(cols) == 0 || errors.Is(err, ErrNotFound) {
@@ -350,10 +340,6 @@ func GetDefinitionFromStore(
 		return cols[0].Definition(), true, nil
 
 	case *SelfKind:
-		if host.Description.RootID != 0 {
-			return host, true, nil
-		}
-
 		if typedKind.RelativeID == "" {
 			return host, true, nil
 		}
@@ -362,7 +348,7 @@ func GetDefinitionFromStore(
 		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
 
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			SchemaRoot: immutable.Some(targetID),
+			CollectionID: immutable.Some(targetID),
 		})
 		if len(cols) == 0 || err != nil {
 			return CollectionDefinition{}, false, err

@@ -12,21 +12,12 @@ package client
 
 import (
 	"encoding/json"
-	"math"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
-
-// CollectionDescription with no known root will take this ID as their temporary RootID.
-//
-// Orphan CollectionDescriptions are typically created when setting migrations from schema versions
-// that do not yet exist.  The OrphanRootID will be replaced with the actual RootID once a full chain
-// of schema versions leading back to a schema version used by a collection with a non-orphan RootID
-// has been established.
-const OrphanRootID uint32 = math.MaxUint32
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
@@ -36,16 +27,11 @@ type CollectionDescription struct {
 	// is no means to update the local value so that it differs from the (global) schema name.
 	Name immutable.Option[string]
 
-	// RootID is the local root identifier of this collection, linking together a chain of
-	// collection instances on different schema versions.
-	//
-	// Collections sharing the same RootID will be compatable with each other, with the documents
-	// within them shared and yielded as if they were in the same set, using Lens transforms to
-	// migrate between schema versions when provided.
-	RootID uint32
-
 	// The immutable ID of this collection version.
 	ID string
+
+	// The immutable ID of this collection, consistent across all versions.
+	CollectionID string
 
 	// Sources is the set of sources from which this collection draws data.
 	//
@@ -200,6 +186,7 @@ type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
 	Name             immutable.Option[string]
 	ID               string
+	CollectionID     string
 	RootID           uint32
 	IsMaterialized   bool
 	IsBranchable     bool
@@ -220,8 +207,8 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	c.Name = descMap.Name
-	c.RootID = descMap.RootID
 	c.ID = descMap.ID
+	c.CollectionID = descMap.CollectionID
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable
 	c.Indexes = descMap.Indexes

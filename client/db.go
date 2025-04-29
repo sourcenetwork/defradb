@@ -405,11 +405,8 @@ type CollectionFetchOptions struct {
 	// If provided, only collections with this version id will be returned.
 	ID immutable.Option[string]
 
-	// If provided, only collections with schemas of this root will be returned.
-	SchemaRoot immutable.Option[string]
-
-	// If provided, only collections with this root will be returned.
-	Root immutable.Option[uint32]
+	// If provided, only collections with this CollectionID will be returned.
+	CollectionID immutable.Option[string]
 
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]

@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -31,19 +31,12 @@ func SaveCollection(
 	txn datastore.Txn,
 	desc client.CollectionDescription,
 ) (client.CollectionDescription, error) {
-	if desc.RootID == 0 {
-		colSeq, err := sequence.Get(ctx, txn, keys.CollectionIDSequenceKey{})
+	if desc.CollectionID != "" {
+		// Set the collection short id
+		err := id.SetShortCollectionID(ctx, txn, desc.CollectionID)
 		if err != nil {
 			return client.CollectionDescription{}, err
 		}
-
-		colID, err := colSeq.Next(ctx, txn)
-		if err != nil {
-			return client.CollectionDescription{}, err
-		}
-
-		// This is temporary, RootID will be removed soon
-		desc.RootID = uint32(colID)
 	}
 
 	existing, err := GetCollectionByID(ctx, txn, desc.ID)
@@ -93,12 +86,6 @@ func SaveCollection(
 		}
 	}
 
-	rootKey := keys.NewCollectionRootKey(desc.RootID, desc.ID)
-	err = txn.Systemstore().Set(ctx, rootKey.Bytes(), []byte{})
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
 	return desc, nil
 }
 
@@ -139,50 +126,33 @@ func GetCollectionByName(
 	return GetCollectionByID(ctx, txn, string(idBuf))
 }
 
-func GetCollectionsByRoot(
+// GetCollectionsByCollectionID returns all collection versions for the given id.
+//
+// If no collections are found an empty set will be returned.
+func GetCollectionsByCollectionID(
 	ctx context.Context,
 	txn datastore.Txn,
-	root uint32,
-) ([]client.CollectionDescription, error) {
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewCollectionRootKey(root, "").Bytes(),
-		KeysOnly: true,
-	})
+	collectionID string,
+) ([]client.CollectionDescription, error) { //todo - this should not be dependent on matching to schema root?
+	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, txn, collectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	cols := []client.CollectionDescription{}
-	for {
-		hasValue, err := iter.Next()
+	for _, schemaVersionID := range schemaVersionIDs {
+		versionCol, err := GetCollectionByID(ctx, txn, schemaVersionID)
 		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
+			if errors.Is(err, corekv.ErrNotFound) {
+				continue
 			}
 			return nil, err
 		}
 
-		if !hasValue {
-			break
-		}
-
-		rootKey, err := keys.NewCollectionRootKeyFromString(string(iter.Key()))
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, err
-		}
-
-		col, err := GetCollectionByID(ctx, txn, rootKey.CollectionID)
-		if err != nil {
-			return nil, errors.Join(err, iter.Close())
-		}
-
-		cols = append(cols, col)
+		cols = append(cols, versionCol)
 	}
 
-	return cols, iter.Close()
+	return cols, nil
 }
 
 // GetCollectionsBySchemaRoot returns all collections that use the given

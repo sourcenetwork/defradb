@@ -138,6 +138,9 @@
             },
             "collection": {
                 "properties": {
+                    "CollectionID": {
+                        "type": "string"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
@@ -204,11 +207,6 @@
                     },
                     "Name": {},
                     "Policy": {},
-                    "RootID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
-                    },
                     "Sources": {
                         "items": {},
                         "type": "array"
@@ -249,6 +247,9 @@
                 "properties": {
                     "description": {
                         "properties": {
+                            "CollectionID": {
+                                "type": "string"
+                            },
                             "Fields": {
                                 "items": {
                                     "properties": {
@@ -315,11 +316,6 @@
                             },
                             "Name": {},
                             "Policy": {},
-                            "RootID": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
-                            },
                             "Sources": {
                                 "items": {},
                                 "type": "array"

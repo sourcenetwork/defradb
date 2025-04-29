@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -55,9 +56,14 @@ func newPrefixFetcher(
 	execInfo *ExecInfo,
 ) (*prefixFetcher, error) {
 	if len(prefixes) == 0 {
+		shortID, err := id.GetShortCollectionID(ctx, txn, col.Description().CollectionID)
+		if err != nil {
+			return nil, err
+		}
+
 		// If no prefixes are provided, scan the entire collection.
 		prefixes = append(prefixes, keys.DataStoreKey{
-			CollectionRootID: col.Description().RootID,
+			CollectionShortID: shortID,
 		})
 	} else {
 		uniquePrefixes := make(map[keys.DataStoreKey]struct{}, len(prefixes))

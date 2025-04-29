@@ -47,8 +47,8 @@ func (a *CollectionDescribe) Execute() {
 	for i, expected := range a.Expected {
 		actual := result[i]
 
-		if expected.Description.RootID != 0 {
-			require.Equal(a.s.T, expected.Description.RootID, actual.Description.RootID)
+		if expected.Description.CollectionID != "" {
+			require.Equal(a.s.T, expected.Description.CollectionID, actual.Description.CollectionID)
 		}
 		if expected.Description.ID != "" {
 			require.Equal(a.s.T, expected.Description.ID, actual.Description.ID)
