@@ -284,7 +284,11 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 				},
 			)
 		} else if n.selectReq.DocIDs.HasValue() {
-			shortID, err := id.ShortCollectionID(n.planner.ctx, n.planner.txn, sourcePlan.collection.Description().CollectionID)
+			shortID, err := id.GetShortCollectionID(
+				n.planner.ctx,
+				n.planner.txn,
+				sourcePlan.collection.Description().CollectionID,
+			)
 			if err != nil {
 				return nil, nil, err
 			}

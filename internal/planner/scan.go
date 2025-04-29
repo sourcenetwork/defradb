@@ -175,7 +175,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.prefixes) == 0 {
-		shortID, err := id.ShortCollectionID(n.p.ctx, n.p.txn, n.col.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, n.col.Description().CollectionID)
 		if err != nil {
 			return err
 		}

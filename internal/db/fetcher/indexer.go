@@ -122,7 +122,7 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
 
-	shortID, err := id.ShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}

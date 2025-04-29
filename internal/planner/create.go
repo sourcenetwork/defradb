@@ -57,7 +57,7 @@ func (n *createNode) Kind() string { return "createNode" }
 func (n *createNode) Init() error { return nil }
 
 func (n *createNode) docIDsToPrefixes(ids []string, desc client.CollectionDescription) ([]keys.Walkable, error) {
-	shortID, err := id.ShortCollectionID(n.p.ctx, n.p.txn, desc.CollectionID)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, desc.CollectionID)
 	if err != nil {
 		return nil, err
 	}

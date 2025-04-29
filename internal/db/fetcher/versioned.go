@@ -341,7 +341,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	shortID, err := id.ShortCollectionID(vf.ctx, vf.txn, vf.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(vf.ctx, vf.txn, vf.col.Description().CollectionID)
 	if err != nil {
 		return err
 	}

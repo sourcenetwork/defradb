@@ -100,7 +100,7 @@ func (n *upsertNode) Next() (bool, error) {
 }
 
 func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionDescription) ([]keys.Walkable, error) {
-	shortID, err := id.ShortCollectionID(n.p.ctx, n.p.txn, desc.CollectionID)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, desc.CollectionID)
 	if err != nil {
 		return nil, err
 	}

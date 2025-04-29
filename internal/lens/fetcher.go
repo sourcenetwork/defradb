@@ -296,7 +296,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		return core.ErrInvalidKey
 	}
 
-	shortID, err := id.ShortCollectionID(ctx, f.txn, f.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, f.txn, f.col.Description().CollectionID)
 	if err != nil {
 		return err
 	}

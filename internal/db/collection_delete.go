@@ -97,7 +97,7 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		shortID, err := id.ShortCollectionID(ctx, txn, c.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +186,7 @@ func (c *collection) applyDelete(
 	})
 
 	if c.def.Description.IsBranchable {
-		shortID, err := id.ShortCollectionID(ctx, txn, c.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
 		if err != nil {
 			return err
 		}

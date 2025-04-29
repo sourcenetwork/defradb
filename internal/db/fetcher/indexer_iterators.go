@@ -405,7 +405,7 @@ func (f *indexFetcher) newInIndexIterator(
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
-	shortID, err := id.ShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
@@ -420,7 +420,7 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
 
-	shortID, err := id.ShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}

@@ -78,7 +78,7 @@ func (c *collection) get(
 		return nil, err
 	}
 
-	shortID, err := id.ShortCollectionID(ctx, txn, c.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
 	if err != nil {
 		return nil, err
 	}

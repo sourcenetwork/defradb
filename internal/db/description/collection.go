@@ -33,7 +33,7 @@ func SaveCollection(
 ) (client.CollectionDescription, error) {
 	if desc.CollectionID != "" {
 		// Set the collection short id
-		_, err := id.ShortCollectionID(ctx, txn, desc.CollectionID)
+		err := id.SetShortCollectionID(ctx, txn, desc.CollectionID)
 		if err != nil {
 			return client.CollectionDescription{}, err
 		}

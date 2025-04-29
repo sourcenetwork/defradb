@@ -201,7 +201,7 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	shortID, err := id.ShortCollectionID(n.p.ctx, n.p.txn, n.def.Description.CollectionID)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, n.def.Description.CollectionID)
 	if err != nil {
 		return err
 	}

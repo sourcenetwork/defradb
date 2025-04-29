@@ -14,19 +14,14 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// ShortCollectionID returns the local, shortened, internal, collection id, which is used
+// GetShortCollectionID returns the local, shortened, internal, collection id, which is used
 // only in locations where using the full CID would be a waste of storage space.
-//
-// If there is no short id found for the given full id, a new one will be generated and saved.
-func ShortCollectionID(
+func GetShortCollectionID(
 	ctx context.Context,
 	txn datastore.Txn,
 	collectionID string,
@@ -35,26 +30,7 @@ func ShortCollectionID(
 
 	valueBytes, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
-		if errors.Is(err, corekv.ErrNotFound) {
-			colSeq, err := sequence.Get(ctx, txn, keys.CollectionIDSequenceKey{})
-			if err != nil {
-				return 0, err
-			}
-
-			shortID, err := colSeq.Next(ctx, txn)
-			if err != nil {
-				return 0, err
-			}
-
-			err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
-			if err != nil {
-				return 0, err
-			}
-
-			return uint32(shortID), nil
-		} else {
-			return 0, err
-		}
+		return 0, err
 	}
 
 	v, err := strconv.ParseUint(string(valueBytes), 10, 0)
@@ -62,4 +38,33 @@ func ShortCollectionID(
 		return 0, err
 	}
 	return uint32(v), nil
+}
+
+// SetShortCollectionID sets and stores the short collection id, if it does not already exist.
+func SetShortCollectionID(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionID string,
+) error {
+	key := keys.NewCollectionID(collectionID)
+
+	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
+	if err != nil {
+		return err
+	}
+	if hasShortID {
+		return nil
+	}
+
+	colSeq, err := sequence.Get(ctx, txn, keys.CollectionIDSequenceKey{})
+	if err != nil {
+		return err
+	}
+
+	shortID, err := colSeq.Next(ctx, txn)
+	if err != nil {
+		return err
+	}
+
+	return txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
 }
