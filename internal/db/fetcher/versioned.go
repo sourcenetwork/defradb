@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
@@ -25,6 +26,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -118,6 +120,38 @@ func (vf *VersionedFetcher) Init(
 	// create store
 	root := memory.NewDatastore(ctx)
 	vf.root = root
+
+	// Copy the entire system store into the temp store so that important stuff
+	// such as collection definitions and short-ids are available.
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
+	if err != nil {
+		return err
+	}
+	dst := datastore.MultiStoreFrom(root).Systemstore()
+	for {
+		hasValue, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if !hasValue {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		err = dst.Set(ctx, iter.Key(), value)
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+	}
+	err = iter.Close()
+	if err != nil {
+		return err
+	}
 
 	vf.store = datastore.NewTxnFrom(
 		ctx,
@@ -393,5 +427,9 @@ func (vf *VersionedFetcher) Close() error {
 		return err
 	}
 
-	return vf.Fetcher.Close()
+	if vf.Fetcher != nil {
+		return vf.Fetcher.Close()
+	}
+
+	return nil
 }
