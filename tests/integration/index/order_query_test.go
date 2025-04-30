@@ -455,3 +455,83 @@ func TestOrderQueryWithIndex_WithOrderOnNestedField_ShouldUseIndexForOrdering(t 
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrdering(t *testing.T) {
+	req := `query {
+		Device(order: {owner_id: ASC}) {
+			model
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						device: Device 
+					}
+
+					type Device {
+						model: String 
+						owner: User @primary @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Fred"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Addo"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Shahzad"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "walkman",
+					"owner": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "iPhone",
+					"owner": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "pixel",
+					"owner": testUtils.NewDocIndex(0, 2),
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"Device": []map[string]any{
+						{"model": "pixel"},
+						{"model": "walkman"},
+						{"model": "iPhone"},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

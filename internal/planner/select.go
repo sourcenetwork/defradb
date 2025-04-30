@@ -322,6 +322,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	if isScanNode {
 		origScan.index = findIndexByFilteringField(origScan)
 		if !origScan.index.HasValue() {
+			// if we can not use index for filtering, try to use index for ordering
 			origScan.index = findIndexByOrderingField(origScan)
 		}
 		origScan.initFetcher(n.selectReq.Cid)
@@ -364,7 +365,6 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 }
 
 func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	// if we can not use index for filtering, try to use index for ordering
 	if len(scanNode.ordering) > 0 {
 		colDesc := scanNode.col.Description()
 

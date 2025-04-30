@@ -221,8 +221,7 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 
 	p.expandAggregatePlans(plan)
 
-	// if we have an order node, but the we have an index that can take over ordering,
-	// then we ignore the order node
+	// if we have an index that can take over ordering, we ignore the order node
 	if plan.order != nil && !isOrderedByIndex(plan.selectNode.source) {
 		plan.order.plan = plan.planNode
 		plan.planNode = plan.order
@@ -314,6 +313,8 @@ func findOrderedByRelationFields(
 
 	if fieldIndex < len(mapping.ChildMappings) {
 		if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+			// if fieldIndex is from child mapping, then we need to get the sub field index
+			// is must exist, otherwise the query would ill-formed
 			subFieldIndex := ordering.FieldIndexes[1]
 			childFieldName, found := childMapping.TryToFindNameFromIndex(subFieldIndex)
 			if !found {
@@ -385,10 +386,6 @@ func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, rel
 
 // expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
 func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
-	if parentPlan.selectNode.filter == nil && (parentPlan.order == nil || len(parentPlan.order.ordering) == 0) {
-		return p.expandPlan(node.childSide.plan, parentPlan)
-	}
-
 	err := p.tryOptimizeJoinDirection(node, parentPlan)
 	if err != nil {
 		return err

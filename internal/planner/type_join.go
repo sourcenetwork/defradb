@@ -831,7 +831,7 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 func isOrderedByIndex(plan planNode) bool {
 	var scan *scanNode
 	// the typeIndexJoin has 2 scan nodes for every side of the join
-	// so we need to make sure we the scan node that is scheduled first, that is more optimal
+	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
 	typeJoin := getNode[*typeIndexJoin](plan)
 	if typeJoin != nil {
 		if j, ok := typeJoin.joinPlan.(*typeJoinOne); ok {
