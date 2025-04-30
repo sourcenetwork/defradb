@@ -84,7 +84,7 @@ type CollectionDescription struct {
 	// that will change in the future.
 	IsBranchable bool
 
-	// IsBranchable defines whether this collection exists only as a child object embedded within
+	// IsEmbeddedOnly defines whether this collection exists only as a child object embedded within
 	// another collection or not.
 	//
 	// If true, it will not be directly queriable.
