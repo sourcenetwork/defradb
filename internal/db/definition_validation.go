@@ -281,7 +281,7 @@ func validateSecondaryFieldsPairUp(
 				continue
 			}
 
-			if len(otherDef.Description.Fields) == 0 {
+			if otherDef.Description.IsEmbeddedOnly {
 				// Views/embedded objects do not require both sides of the relation to be defined.
 				continue
 			}

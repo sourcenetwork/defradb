@@ -71,7 +71,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 						bookName: String
 					}
 				`,
-				ExpectedError: "schema type already exists. Name: BookView",
+				ExpectedError: "collection already exists. Name: BookView",
 			},
 			testUtils.IntrospectionRequest{
 				Request: `
