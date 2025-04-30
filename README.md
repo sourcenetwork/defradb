@@ -40,6 +40,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Contributors](#contributors)
 <!--te-->
 
+DISCLAIMER: The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, and when you plan to deploy it to production, please thoroughly test your integrations.
+
 ## Install
 
 Install `defradb` by [downloading an executable](https://github.com/sourcenetwork/defradb/releases) or building it locally using the [Go toolchain](https://golang.org/):
