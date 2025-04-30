@@ -202,6 +202,9 @@
                     "IsBranchable": {
                         "type": "boolean"
                     },
+                    "IsEmbeddedOnly": {
+                        "type": "boolean"
+                    },
                     "IsMaterialized": {
                         "type": "boolean"
                     },
@@ -309,6 +312,9 @@
                                 "type": "array"
                             },
                             "IsBranchable": {
+                                "type": "boolean"
+                            },
+                            "IsEmbeddedOnly": {
                                 "type": "boolean"
                             },
                             "IsMaterialized": {

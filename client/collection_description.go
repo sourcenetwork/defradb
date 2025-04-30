@@ -84,6 +84,12 @@ type CollectionDescription struct {
 	// that will change in the future.
 	IsBranchable bool
 
+	// IsBranchable defines whether this collection exists only as a child object embedded within
+	// another collection or not.
+	//
+	// If true, it will not be directly queriable.
+	IsEmbeddedOnly bool
+
 	// VectorEmbeddings contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
@@ -190,6 +196,7 @@ type collectionDescription struct {
 	RootID           uint32
 	IsMaterialized   bool
 	IsBranchable     bool
+	IsEmbeddedOnly   bool
 	Policy           immutable.Option[PolicyDescription]
 	Indexes          []IndexDescription
 	Fields           []CollectionFieldDescription
@@ -211,6 +218,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.CollectionID = descMap.CollectionID
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable
+	c.IsEmbeddedOnly = descMap.IsEmbeddedOnly
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))

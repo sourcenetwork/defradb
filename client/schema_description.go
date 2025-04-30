@@ -37,9 +37,6 @@ type SchemaDescription struct {
 	// set that contains all of these fields, plus any local only fields (such as the secondary side
 	// of a relation).
 	//
-	// Embedded objects (including within Views) are schema-only, and as such fields of embedded
-	// objects will not have a corresponding [CollectionFieldDescription].
-	//
 	// Currently new fields may be added after initial declaration, but they cannot be removed.
 	Fields []SchemaFieldDescription
 }
