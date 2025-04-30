@@ -62,9 +62,6 @@ type orderNode struct {
 	// consuming and sorting data.
 	needSort bool
 
-	// indicates if we should ignore sorting
-	ignoreSorting bool
-
 	execInfo orderExecInfo
 }
 
@@ -99,19 +96,6 @@ func (n *orderNode) Init() error {
 	n.needSort = true
 	n.orderStrategy = nil
 
-	scanNode := getScanNode(n.plan)
-	if scanNode != nil && scanNode.index.HasValue() {
-		colDesc := scanNode.col.Description()
-		orderField := colDesc.Fields[n.ordering[0].FieldIndexes[0]]
-		indexes := colDesc.GetIndexesOnField(orderField.Name)
-		if len(indexes) == 0 {
-			return nil
-		}
-		if indexes[0].ID == scanNode.index.Value().ID {
-			n.ignoreSorting = true
-		}
-	}
-
 	return n.plan.Init()
 }
 
@@ -120,9 +104,6 @@ func (n *orderNode) Start() error { return n.plan.Start() }
 func (n *orderNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
 
 func (n *orderNode) Value() core.Doc {
-	if n.ignoreSorting {
-		return n.plan.Value()
-	}
 	return n.valueIter.Value()
 }
 
@@ -180,10 +161,6 @@ func (n *orderNode) Explain(explainType request.ExplainType) (map[string]any, er
 }
 
 func (n *orderNode) Next() (bool, error) {
-	if n.ignoreSorting {
-		return n.plan.Next()
-	}
-
 	n.execInfo.iterations++
 
 	for n.needSort {

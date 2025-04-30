@@ -321,6 +321,9 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 
 	if isScanNode {
 		origScan.index = findIndexByFilteringField(origScan)
+		if !origScan.index.HasValue() {
+			origScan.index = findIndexByOrderingField(origScan)
+		}
 		origScan.initFetcher(n.selectReq.Cid)
 	}
 
@@ -349,15 +352,6 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	}
 
 	if len(indexCandidates) == 0 {
-		// if we can not use index for filtering, try to use index for ordering
-		if len(scanNode.ordering) > 0 {
-			colDesc := scanNode.col.Description()
-			orderField := colDesc.Fields[scanNode.ordering[0].FieldIndexes[0]]
-			indexes := colDesc.GetIndexesOnField(orderField.Name)
-			if len(indexes) > 0 {
-				return immutable.Some(indexes[0])
-			}
-		}
 		return immutable.None[client.IndexDescription]()
 	}
 
@@ -367,6 +361,35 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	// we return the first found index. We will optimize it later.
 	// https://github.com/sourcenetwork/defradb/issues/2680
 	return immutable.Some(indexCandidates[0])
+}
+
+func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
+	// if we can not use index for filtering, try to use index for ordering
+	if len(scanNode.ordering) > 0 {
+		colDesc := scanNode.col.Description()
+
+		fieldNames := []string{}
+		mapping := scanNode.documentMapping
+		for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
+			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
+			if !found {
+				return immutable.None[client.IndexDescription]()
+			}
+
+			fieldNames = append(fieldNames, fieldName)
+			if fieldIndex < len(mapping.ChildMappings) {
+				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+					mapping = childMapping
+				}
+			}
+		}
+
+		indexes := colDesc.GetIndexesOnField(fieldNames[0])
+		if len(indexes) > 0 {
+			return immutable.Some(indexes[0])
+		}
+	}
+	return immutable.None[client.IndexDescription]()
 }
 
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
