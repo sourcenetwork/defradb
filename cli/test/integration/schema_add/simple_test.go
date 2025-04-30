@@ -13,8 +13,6 @@ package schema_add
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/cli/test/action"
 	"github.com/sourcenetwork/defradb/cli/test/integration"
 	"github.com/sourcenetwork/defradb/client"
@@ -32,7 +30,7 @@ func TestSchemaAdd(t *testing.T) {
 				Expected: []client.CollectionDefinition{
 					{
 						Description: client.CollectionDescription{
-							Name:           immutable.Some("User"),
+							Name:           "User",
 							IsMaterialized: true,
 						},
 					},

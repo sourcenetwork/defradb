@@ -217,7 +217,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var isReadOnly bool
 		var collectionFound bool
 		for _, definition := range collections {
-			if t.Name() == definition.Description.Name.Value() {
+			if t.Name() == definition.Description.Name {
 				isReadOnly = len(definition.Description.QuerySources()) > 0
 				collectionFound = true
 				break
@@ -443,7 +443,7 @@ func (g *Generator) buildTypes(
 			// If this is an embedded object, take the type name from the Schema
 			objectName = collection.Schema.Name
 		} else {
-			objectName = collection.Description.Name.Value()
+			objectName = collection.Description.Name
 		}
 
 		// check if type exists
@@ -550,7 +550,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 			continue
 		}
 
-		mutationInputName := collection.Description.Name.Value() + mutationInputNameSuffix
+		mutationInputName := collection.Description.Name + mutationInputNameSuffix
 
 		// check if mutation input type exists
 		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {

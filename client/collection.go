@@ -12,8 +12,6 @@ package client
 
 import (
 	"context"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 // Collection represents a defradb collection.
@@ -24,7 +22,7 @@ import (
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
 	// Name returns the name of this collection.
-	Name() immutable.Option[string]
+	Name() string
 
 	// ID returns the ID of this Collection.
 	ID() string

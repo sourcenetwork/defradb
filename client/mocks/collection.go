@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/immutable"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -702,18 +701,18 @@ func (_c *Collection_ID_Call) RunAndReturn(run func() string) *Collection_ID_Cal
 }
 
 // Name provides a mock function for the type Collection
-func (_mock *Collection) Name() immutable.Option[string] {
+func (_mock *Collection) Name() string {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Name")
 	}
 
-	var r0 immutable.Option[string]
-	if returnFunc, ok := ret.Get(0).(func() immutable.Option[string]); ok {
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
 		r0 = returnFunc()
 	} else {
-		r0 = ret.Get(0).(immutable.Option[string])
+		r0 = ret.Get(0).(string)
 	}
 	return r0
 }
@@ -735,12 +734,12 @@ func (_c *Collection_Name_Call) Run(run func()) *Collection_Name_Call {
 	return _c
 }
 
-func (_c *Collection_Name_Call) Return(option immutable.Option[string]) *Collection_Name_Call {
-	_c.Call.Return(option)
+func (_c *Collection_Name_Call) Return(s string) *Collection_Name_Call {
+	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *Collection_Name_Call) RunAndReturn(run func() immutable.Option[string]) *Collection_Name_Call {
+func (_c *Collection_Name_Call) RunAndReturn(run func() string) *Collection_Name_Call {
 	_c.Call.Return(run)
 	return _c
 }

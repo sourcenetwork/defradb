@@ -85,10 +85,7 @@ func (def CollectionDefinition) GetFields() []FieldDefinition {
 // If the collection description has a name (e.g. it is an active collection) it will return that,
 // otherwise it will return the schema name.
 func (def CollectionDefinition) GetName() string {
-	if def.Description.Name.HasValue() {
-		return def.Description.Name.Value()
-	}
-	return def.Schema.Name
+	return def.Description.Name
 }
 
 // FieldDefinition describes the combined local and global set of properties that constitutes

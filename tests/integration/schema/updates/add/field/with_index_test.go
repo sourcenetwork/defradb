@@ -13,8 +13,6 @@ package field
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -57,7 +55,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						Indexes: []client.IndexDescription{
 							{
@@ -155,7 +153,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						Indexes: []client.IndexDescription{
 							{

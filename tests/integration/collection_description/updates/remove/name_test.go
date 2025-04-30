@@ -35,15 +35,7 @@ func TestColDescrUpdateRemoveName(t *testing.T) {
 						}
 					]
 				`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				// The Users collection has been deactivated and is no longer accessible
-				ExpectedError: `Cannot query field "Users" on type "Query".`,
+				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}

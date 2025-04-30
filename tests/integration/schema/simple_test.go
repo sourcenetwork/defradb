@@ -31,7 +31,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				`,
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{

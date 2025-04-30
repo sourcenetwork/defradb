@@ -80,7 +80,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("User"),
+						Name:           "User",
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{

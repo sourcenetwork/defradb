@@ -282,7 +282,7 @@ func (db *DB) setActiveSchemaVersion(
 		}
 	}
 
-	if col.Name.HasValue() {
+	if col.IsActive {
 		// The collection is already active, so we can skip it and continue
 		return db.loadSchema(ctx)
 	}
@@ -302,24 +302,14 @@ func (db *DB) setActiveSchemaVersion(
 		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.ID)
 	}
 
-	var newName string
-	if isActiveFound {
-		newName = activeCol.Name.Value()
-	} else {
-		// If there are no active versions in the collection set, take the name of the schema to be the name of the
-		// collection.
-		newName = schema.Name
-	}
-	col.Name = immutable.Some(newName)
-
+	col.IsActive = true
 	_, err = description.SaveCollection(ctx, txn, col)
 	if err != nil {
 		return err
 	}
 
 	if isActiveFound {
-		// Deactivate the currently active collection by setting its name to none.
-		activeCol.Name = immutable.None[string]()
+		activeCol.IsActive = false
 		_, err = description.SaveCollection(ctx, txn, activeCol)
 		if err != nil {
 			return err
@@ -340,7 +330,7 @@ func (db *DB) getActiveCollectionDown(
 		return client.CollectionDescription{}, client.CollectionDescription{}, false
 	}
 
-	if col.Name.HasValue() {
+	if col.IsActive {
 		return col, client.CollectionDescription{}, true
 	}
 
@@ -369,7 +359,7 @@ func (db *DB) getActiveCollectionUp(
 	}
 
 	for _, col := range cols {
-		if col.Name.HasValue() {
+		if col.IsActive {
 			return col, true
 		}
 		activeCol, isFound := db.getActiveCollectionUp(ctx, colsBySourceID, col.ID)

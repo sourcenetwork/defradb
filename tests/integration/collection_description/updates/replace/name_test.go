@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -44,72 +43,7 @@ func TestColDescrUpdateReplaceName_GivenExistingName(t *testing.T) {
 						}
 					]
 				`,
-			},
-			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
-					{
-						Name:           immutable.Some("Actors"),
-						IsMaterialized: true,
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				ExpectedError: `Cannot query field "Users" on type "Query".`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Actors {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Actors": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestColDescrUpdateReplaceName_GivenInactiveCollectionWithSameName_Errors(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "String"} }
-					]
-				`,
-				SetAsDefaultVersion: immutable.Some(false),
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{
-							"op": "replace",
-							"path": "/bafkreigtjpibdyrvmwvu7wbzatqpgavczrauj4huog2cvskwrgak6m7qgi/Name",
-							"value": "Users"
-						}
-					]
-				`,
-				ExpectedError: "collection already exists. Name: Users",
+				ExpectedError: "collection name cannot be mutated.",
 			},
 		},
 	}
@@ -145,9 +79,7 @@ func TestColDescrUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T) 
 						}
 					]
 				`,
-				// The params at the end of the error message is dependant on the order Go decides to iterate through
-				// a map and so is not included in the test.
-				ExpectedError: "multiple versions of same collection cannot be active",
+				ExpectedError: "collection name cannot be mutated.",
 			},
 		},
 	}
@@ -192,39 +124,7 @@ func TestColDescrUpdateReplaceName_RemoveExistingName(t *testing.T) {
 						}
 					]
 				`,
-			},
-			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
-				ExpectedResults: []client.CollectionDescription{
-					{
-						IsMaterialized: true,
-					},
-					{
-						Name:           immutable.Some("Actors"),
-						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-							},
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Actors {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Actors": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
-				},
+				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}

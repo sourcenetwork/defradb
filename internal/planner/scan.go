@@ -260,7 +260,7 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the collection attributes.
-	simpleExplainMap[collectionNameLabel] = n.col.Name().Value()
+	simpleExplainMap[collectionNameLabel] = n.col.Name()
 	simpleExplainMap[collectionIDLabel] = n.col.Description().ID
 
 	// Add the prefixes attribute.

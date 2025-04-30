@@ -15,8 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
@@ -38,7 +36,7 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
 							{

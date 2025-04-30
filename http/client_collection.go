@@ -18,7 +18,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -39,7 +38,7 @@ func (c *Collection) Description() client.CollectionDescription {
 	return c.def.Description
 }
 
-func (c *Collection) Name() immutable.Option[string] {
+func (c *Collection) Name() string {
 	return c.Description().Name
 }
 
@@ -63,11 +62,7 @@ func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	body, err := doc.String()
 	if err != nil {
@@ -93,10 +88,7 @@ func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	var docMapList []json.RawMessage
 	for _, doc := range docs {
@@ -148,11 +140,7 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), doc.ID().String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
 	if err != nil {
@@ -189,11 +177,7 @@ func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	if !c.Description().Name.HasValue() {
-		return false, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), docID.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -223,11 +207,7 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	request := CollectionUpdateRequest{
 		Filter:  filter,
@@ -254,11 +234,7 @@ func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	request := CollectionDeleteRequest{
 		Filter: filter,
@@ -286,16 +262,12 @@ func (c *Collection) Get(
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	query := url.Values{}
 	if showDeleted {
 		query.Add("show_deleted", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), docID.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docID.String())
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -322,11 +294,7 @@ func (c *Collection) Get(
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -382,11 +350,7 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
-	if !c.Description().Name.HasValue() {
-		return client.IndexDescription{}, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
 	if err != nil {
@@ -404,11 +368,7 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes", indexName)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -419,11 +379,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

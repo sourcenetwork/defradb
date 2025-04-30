@@ -56,7 +56,7 @@ func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.Co
 				switch kind := definitions[i].Description.Fields[j].Kind.Value().(type) {
 				case *client.NamedKind:
 					var newKind client.FieldKind
-					if kind.Name == definitions[i].Description.Name.Value() {
+					if kind.Name == definitions[i].Description.Name {
 						newKind = client.NewSelfKind("", kind.IsArray())
 					} else if otherSchema, ok := schemasByName[kind.Name]; ok {
 						newKind = client.NewSchemaKind(otherSchema.Root, kind.IsArray())
