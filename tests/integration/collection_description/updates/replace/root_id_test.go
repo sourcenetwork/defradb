@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColDescrUpdateReplaceRootID_Errors(t *testing.T) {
+func TestColDescrUpdateReplaceCollectionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -27,10 +27,14 @@ func TestColDescrUpdateReplaceRootID_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/RootID", "value": 2 }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/CollectionID",
+							"value": "drgsagasga"
+						}
 					]
 				`,
-				ExpectedError: "collection root ID cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection ID cannot be mutated.",
 			},
 		},
 	}

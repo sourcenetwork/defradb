@@ -47,7 +47,11 @@ func TestColDescrUpdateReplaceNameOneToMany_GivenExistingName(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Name", "value": "Writer" }
+						{
+							"op": "replace",
+							"path": "/bafkreifusksmaa5pzrz3s7l5empvmixh6vgekpbztuqc2jwpmvsagwy75a/Name",
+							"value": "Writer"
+						}
 					]
 				`,
 			},
@@ -108,7 +112,11 @@ func TestColDescrUpdateReplaceNameOneToMany_GivenExistingNameReplacedBeforeAndAf
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Name", "value": "Writer" }
+						{
+							"op": "replace",
+							"path": "/bafkreifusksmaa5pzrz3s7l5empvmixh6vgekpbztuqc2jwpmvsagwy75a/Name",
+							"value": "Writer"
+						}
 					]
 				`,
 			},

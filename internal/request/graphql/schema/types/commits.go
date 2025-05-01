@@ -55,10 +55,6 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.CollectionIDFieldName: &gql.Field{
-				Description: commitCollectionIDFieldDescription,
-				Type:        gql.Int,
-			},
 			request.SchemaVersionIDFieldName: &gql.Field{
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
@@ -162,10 +158,6 @@ func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 					Description: commitDocIDFieldDescription,
 					Type:        orderEnum,
 				},
-				"collectionID": &gql.InputObjectFieldConfig{
-					Description: commitCollectionIDFieldDescription,
-					Type:        orderEnum,
-				},
 			},
 		},
 	)
@@ -200,10 +192,6 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 									request.DocIDArgName: &gql.EnumValueConfig{
 										Value:       request.DocIDArgName,
 										Description: commitDocIDFieldDescription,
-									},
-									"collectionID": &gql.EnumValueConfig{
-										Value:       "collectionID",
-										Description: commitCollectionIDFieldDescription,
 									},
 									"fieldName": &gql.EnumValueConfig{
 										Value:       "fieldName",

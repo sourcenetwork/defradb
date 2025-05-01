@@ -31,11 +31,11 @@ defradb client view refresh [flags]
 ### Options
 
 ```
-      --get-inactive     Get inactive views as well as active
-  -h, --help             help for refresh
-      --name string      View name
-      --schema string    View schema Root
-      --version string   View version ID
+      --collection-id string   View collection ID
+      --get-inactive           Get inactive views as well as active
+  -h, --help                   help for refresh
+      --name string            View name
+      --version string         View version ID
 ```
 
 ### Options inherited from parent commands

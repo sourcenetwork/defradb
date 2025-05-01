@@ -14,24 +14,20 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // Collection is a simple CRDT type that tracks changes to the contents of a
 // collection in a similar way to a document composite commit, only simpler,
 // without the need to track status and a simpler [Merge] function.
 type Collection struct {
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey keys.CollectionSchemaVersionKey
+	schemaVersionID string
 }
 
 var _ core.ReplicatedData = (*Collection)(nil)
 
-func NewCollection(schemaVersionKey keys.CollectionSchemaVersionKey) *Collection {
+func NewCollection(schemaVersionID string) *Collection {
 	return &Collection{
-		schemaVersionKey: schemaVersionKey,
+		schemaVersionID: schemaVersionID,
 	}
 }
 
@@ -43,16 +39,12 @@ func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
 
 func (c *Collection) NewDelta() *CollectionDelta {
 	return &CollectionDelta{
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
+		SchemaVersionID: c.schemaVersionID,
 	}
 }
 
 type CollectionDelta struct {
-	Priority uint64
-
-	// As we do not yet have a global collection id we temporarily rely on the schema
-	// version id for tracking which collection this belongs to.  See:
-	// https://github.com/sourcenetwork/defradb/issues/3215
+	Priority        uint64
 	SchemaVersionID string
 }
 

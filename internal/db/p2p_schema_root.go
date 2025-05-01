@@ -44,7 +44,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		storeCol, err := db.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
-				SchemaRoot: immutable.Some(col),
+				CollectionID: immutable.Some(col),
 			},
 		)
 		if err != nil {
@@ -114,7 +114,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 		storeCol, err := db.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
-				SchemaRoot: immutable.Some(col),
+				CollectionID: immutable.Some(col),
 			},
 		)
 		if err != nil {

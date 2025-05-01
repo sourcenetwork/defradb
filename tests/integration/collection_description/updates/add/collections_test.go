@@ -27,7 +27,7 @@ func TestColDescrUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/2", "value": {"Name": "Dogs"} }
+						{ "op": "add", "path": "/hgfgsagasga", "value": {"Name": "Dogs"} }
 					]
 				`,
 				ExpectedError: "schema name can't be empty",
@@ -38,7 +38,7 @@ func TestColDescrUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColDescrUpdateAddCollections_WithZeroedID_Errors(t *testing.T) {
+func TestColDescrUpdateAddCollections_WithEmptyID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -49,7 +49,7 @@ func TestColDescrUpdateAddCollections_WithZeroedID_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/2", "value": {"ID": 0, "Name": "Dogs"} }
+						{ "op": "add", "path": "/hgfgsagasga", "value": {"ID": "", "Name": "Dogs"} }
 					]
 				`,
 				ExpectedError: "schema name can't be empty",
@@ -71,10 +71,14 @@ func TestColDescrUpdateAddCollections_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/2", "value": {"ID": 2, "Name": "Dogs"} }
+						{
+							"op": "add",
+							"path": "/hgfgsagasga",
+							"value": {"ID": "hgfgsagasga", "Name": "Dogs"}
+						}
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported. ID: 2",
+				ExpectedError: "adding collections via patch is not supported.",
 			},
 		},
 	}
@@ -94,10 +98,10 @@ func TestColDescrUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 					[
 						{ "op": "add", "path": "/-", "value": {"Name": "Dogs"} }
 					]
-				`,
+				`, // todo - doc properly
 				// We get this error because we are marshalling into a map[uint32]CollectionDescription,
 				// we will need to handle `-` when we allow adding collections via patches.
-				ExpectedError: "json: cannot unmarshal number - into Go value of type uint32",
+				ExpectedError: "schema name can't be empty",
 			},
 		},
 	}

@@ -227,11 +227,11 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		params.Add("version_id", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		params.Add("schema_root", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		params.Add("collection_id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -287,11 +287,11 @@ func (c *Client) GetCollections(
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		params.Add("version_id", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		params.Add("schema_root", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		params.Add("collection_id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))

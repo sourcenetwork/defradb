@@ -78,7 +78,7 @@ func getTargetedCollectionHistory(
 	targetLink := &targetedCollectionHistoryLink{
 		collection: targetHistoryItem.collection,
 	}
-	result[targetLink.collection.SchemaVersionID] = targetLink
+	result[targetLink.collection.ID] = targetLink
 
 	linkForwards(targetLink, targetHistoryItem, result)
 	linkBackwards(targetLink, targetHistoryItem, result)
@@ -96,7 +96,7 @@ func linkForwards(
 	result map[schemaVersionID]*targetedCollectionHistoryLink,
 ) {
 	for _, nextHistoryItem := range currentHistoryItem.next {
-		if _, ok := result[nextHistoryItem.collection.SchemaVersionID]; ok {
+		if _, ok := result[nextHistoryItem.collection.ID]; ok {
 			// As the history forms a DAG, this should only ever happen when
 			// iterating through the item we were at immediately before the current.
 			continue
@@ -106,7 +106,7 @@ func linkForwards(
 			collection: nextHistoryItem.collection,
 			previous:   immutable.Some(currentLink),
 		}
-		result[nextLink.collection.SchemaVersionID] = nextLink
+		result[nextLink.collection.ID] = nextLink
 
 		linkForwards(nextLink, nextHistoryItem, result)
 		linkBackwards(nextLink, nextHistoryItem, result)
@@ -123,7 +123,7 @@ func linkBackwards(
 	result map[schemaVersionID]*targetedCollectionHistoryLink,
 ) {
 	for _, prevHistoryItem := range currentHistoryItem.previous {
-		if _, ok := result[prevHistoryItem.collection.SchemaVersionID]; ok {
+		if _, ok := result[prevHistoryItem.collection.ID]; ok {
 			// As the history forms a DAG, this should only ever happen when
 			// iterating through the item we were at immediately before the current.
 			continue
@@ -133,7 +133,7 @@ func linkBackwards(
 			collection: prevHistoryItem.collection,
 			next:       immutable.Some(currentLink),
 		}
-		result[prevLink.collection.SchemaVersionID] = prevLink
+		result[prevLink.collection.ID] = prevLink
 
 		linkForwards(prevLink, prevHistoryItem, result)
 		linkBackwards(prevLink, prevHistoryItem, result)
@@ -155,20 +155,17 @@ func getCollectionHistory(
 	}
 
 	history := map[schemaVersionID]*collectionHistoryLink{}
-	schemaVersionsByColID := map[uint32]schemaVersionID{}
 
 	for _, col := range cols {
 		// Convert the temporary types to the cleaner return type:
-		history[col.SchemaVersionID] = &collectionHistoryLink{
+		history[col.ID] = &collectionHistoryLink{
 			collection: &col,
 		}
-		schemaVersionsByColID[col.ID] = col.SchemaVersionID
 	}
 
 	for _, historyItem := range history {
 		for _, source := range historyItem.collection.CollectionSources() {
-			srcSchemaVersion := schemaVersionsByColID[source.SourceCollectionID]
-			src := history[srcSchemaVersion]
+			src := history[source.SourceCollectionID]
 			historyItem.previous = append(
 				historyItem.previous,
 				src,

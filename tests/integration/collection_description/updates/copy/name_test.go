@@ -37,10 +37,14 @@ func TestColDescrUpdateCopyName_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "copy", "from": "/1/Name", "path": "/2/Name" }
+						{
+							"op": "copy",
+							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
+						}
 					]
 				`,
-				ExpectedError: "multiple versions of same collection cannot be active. Name: Users, Root: 1",
+				ExpectedError: "collection already exists. Name: Users",
 			},
 		},
 	}
@@ -69,8 +73,15 @@ func TestColDescrUpdateCopyName(t *testing.T) {
 				// then decativate the original collection version by removing the name
 				Patch: `
 					[
-						{ "op": "copy", "from": "/1/Name", "path": "/2/Name" },
-						{ "op": "remove", "path": "/1/Name" }
+						{
+							"op": "copy",
+							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
+						},
+						{
+							"op": "remove",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name"
+						}
 					]
 				`,
 			},

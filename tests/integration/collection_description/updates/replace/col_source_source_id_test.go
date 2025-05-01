@@ -41,10 +41,14 @@ func TestColDescrUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *testi
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/2/Sources/0/SourceCollectionID", "value": 3 }
+						{
+							"op": "replace",
+							"path": "/bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe/Sources/0/SourceCollectionID",
+							"value": "gfddsfaa"
+						}
 					]
 				`,
-				ExpectedError: "collection source ID cannot be mutated. CollectionID: 2, NewCollectionSourceID: 3, OldCollectionSourceID: 1",
+				ExpectedError: "collection source ID cannot be mutated.",
 			},
 		},
 	}

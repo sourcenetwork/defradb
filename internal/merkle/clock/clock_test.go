@@ -29,7 +29,7 @@ func newTestMerkleClock() *MerkleClock {
 	s := memory.NewDatastore(context.Background())
 
 	multistore := datastore.MultiStoreFrom(s)
-	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
+	reg := crdt.NewLWWRegister(multistore.Rootstore(), "", keys.DataStoreKey{}, "")
 	return NewMerkleClock(
 		multistore.Headstore(),
 		multistore.Blockstore(),
@@ -43,7 +43,7 @@ func TestNewMerkleClock(t *testing.T) {
 	s := memory.NewDatastore(context.Background())
 
 	multistore := datastore.MultiStoreFrom(s)
-	reg := crdt.NewLWWRegister(multistore.Rootstore(), keys.CollectionSchemaVersionKey{}, keys.DataStoreKey{}, "")
+	reg := crdt.NewLWWRegister(multistore.Rootstore(), "", keys.DataStoreKey{}, "")
 	clk := NewMerkleClock(multistore.Headstore(), multistore.Blockstore(), multistore.Encstore(), keys.HeadstoreDocKey{}, reg)
 
 	if clk.headstore != multistore.Headstore() {

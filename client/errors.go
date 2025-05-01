@@ -47,6 +47,10 @@ const (
 	errEmbeddingFieldEmbedding             string = "embedding fields cannot refer to self or another embedding field"
 )
 
+var (
+	errNotFound string = corekv.ErrNotFound.Error()
+)
+
 // Errors returnable from this package.
 //
 // This list is incomplete and undefined errors may also be returned.
@@ -81,6 +85,7 @@ var (
 	ErrEmptyModelForEmbedding               = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding              = errors.New(errEmbeddingFieldEmbedding)
+	ErrNotFound                             = errors.New(errNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -153,10 +158,10 @@ func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
 
-func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
+func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaVersionID", schemaVersionID),
+		errors.NewKV("CollectionVersionID", collectionVersionID),
 	)
 }
 
@@ -241,4 +246,8 @@ func NewErrUnknownEmbeddingProvider(provider string) error {
 
 func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
+}
+
+func NewErrNotFound(kv errors.KV) error {
+	return errors.New(errNotFound, kv)
 }

@@ -43,9 +43,11 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 								Name: "_docID",
 							},
 							{
-								Name:         "dogs",
-								ID:           1,
-								Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(2, true)),
+								Name: "dogs",
+								ID:   1,
+								Kind: immutable.Some[client.FieldKind](
+									client.NewSchemaKind("bafkreibtwohjfa5ik3huokzglyneezu4m76fjv57ji2luoiohyhnsmj5lq", true),
+								),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{
@@ -66,9 +68,11 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 								ID:   1,
 							},
 							{
-								Name:         "owner",
-								ID:           2,
-								Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(1, false)),
+								Name: "owner",
+								ID:   2,
+								Kind: immutable.Some[client.FieldKind](
+									client.NewSchemaKind("bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4", false),
+								),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{

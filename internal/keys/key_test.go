@@ -35,23 +35,23 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 }
 
 func TestNewIndexKey_IfEmptyParam_ReturnPrefix(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.None[uint32](), "")
+	key := NewCollectionIndexKey(immutable.None[string](), "")
 	assert.Equal(t, "/collection/index", key.ToString())
 }
 
 func TestNewIndexKey_IfParamsAreGiven_ReturnFullKey(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.Some[uint32](1), "idx")
-	assert.Equal(t, "/collection/index/1/idx", key.ToString())
+	key := NewCollectionIndexKey(immutable.Some("a"), "idx")
+	assert.Equal(t, "/collection/index/a/idx", key.ToString())
 }
 
 func TestNewIndexKey_InNoCollectionName_ReturnJustPrefix(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.None[uint32](), "idx")
+	key := NewCollectionIndexKey(immutable.None[string](), "idx")
 	assert.Equal(t, "/collection/index", key.ToString())
 }
 
 func TestNewIndexKey_InNoIndexName_ReturnWithoutIndexName(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.Some[uint32](1), "")
-	assert.Equal(t, "/collection/index/1", key.ToString())
+	key := NewCollectionIndexKey(immutable.Some("a"), "")
+	assert.Equal(t, "/collection/index/a", key.ToString())
 }
 
 func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
@@ -69,16 +69,16 @@ func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
 }
 
 func TestNewIndexKeyFromString_IfOnlyCollectionName_ReturnKey(t *testing.T) {
-	key, err := NewCollectionIndexKeyFromString("/collection/index/1")
+	key, err := NewCollectionIndexKeyFromString("/collection/index/a")
 	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some[uint32](1), key.CollectionID)
+	assert.Equal(t, immutable.Some("a"), key.CollectionID)
 	assert.Equal(t, "", key.IndexName)
 }
 
 func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
-	key, err := NewCollectionIndexKeyFromString("/collection/index/1/idx")
+	key, err := NewCollectionIndexKeyFromString("/collection/index/a/idx")
 	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some[uint32](1), key.CollectionID)
+	assert.Equal(t, immutable.Some("a"), key.CollectionID)
 	assert.Equal(t, "idx", key.IndexName)
 }
 
@@ -187,10 +187,10 @@ func TestIndexDatastoreKey_ToDS(t *testing.T) {
 
 func TestCollectionIndexKey_Bytes(t *testing.T) {
 	key := CollectionIndexKey{
-		CollectionID: immutable.Some[uint32](1),
+		CollectionID: immutable.Some("a"),
 		IndexName:    "idx",
 	}
-	assert.Equal(t, []byte(COLLECTION_INDEX+"/1/idx"), key.Bytes())
+	assert.Equal(t, []byte(COLLECTION_INDEX+"/a/idx"), key.Bytes())
 }
 
 func TestDecodeIndexDataStoreKey(t *testing.T) {

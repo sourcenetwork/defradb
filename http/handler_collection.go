@@ -274,15 +274,16 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
 	store := mustGetContextClientStore(req)
-	indexesMap, err := store.GetAllIndexes(req.Context())
-
+	name := chi.URLParam(req, "name")
+	col, err := store.GetCollectionByName(req.Context(), name)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	indexes := make([]client.IndexDescription, 0, len(indexesMap))
-	for _, index := range indexesMap {
-		indexes = append(indexes, index...)
+	indexes, err := col.GetIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
 }

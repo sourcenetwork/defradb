@@ -21,7 +21,7 @@ import (
 
 func MakeLensDownCommand() *cobra.Command {
 	var file string
-	var collectionID uint32
+	var collectionID string
 	var cmd = &cobra.Command{
 		Use:   "down --collection <collectionID> <documents>",
 		Short: "Reverses the migration to the specified collection version.",
@@ -80,6 +80,6 @@ Example: migrate from stdin
 		},
 	}
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
-	cmd.Flags().Uint32Var(&collectionID, "collection", 0, "Collection id")
+	cmd.Flags().StringVar(&collectionID, "collection", "", "Collection id")
 	return cmd
 }

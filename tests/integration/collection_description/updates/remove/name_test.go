@@ -29,7 +29,10 @@ func TestColDescrUpdateRemoveName(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/1/Name" }
+						{
+							"op": "remove",
+							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name"
+						}
 					]
 				`,
 			},

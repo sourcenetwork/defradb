@@ -56,7 +56,10 @@ func TestColDescrUpdateRemoveCollectionSourceTransform(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/2/Sources/0/Transform" }
+						{
+							"op": "remove",
+							"path": "/bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe/Sources/0/Transform"
+						}
 					]
 				`,
 			},

@@ -169,10 +169,10 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
-	if req.URL.Query().Has("schema_root") {
-		options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
+	if req.URL.Query().Has("collection_id") {
+		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
@@ -227,10 +227,10 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
-	if req.URL.Query().Has("schema_root") {
-		options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
+	if req.URL.Query().Has("collection_id") {
+		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")

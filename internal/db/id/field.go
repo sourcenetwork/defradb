@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package id
 
 import (
 	"context"
@@ -17,65 +17,20 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// setCollectionIDs sets the IDs on a collection description, including field IDs, mutating the input set.
-func (db *DB) setCollectionIDs(ctx context.Context, newCollections []client.CollectionDefinition) error {
-	err := db.setCollectionID(ctx, newCollections)
-	if err != nil {
-		return err
-	}
-
-	return db.setFieldIDs(ctx, newCollections)
-}
-
-// setCollectionID sets the IDs directly on a collection description, excluding stuff like field IDs,
-// mutating the input set.
-func (db *DB) setCollectionID(ctx context.Context, newCollections []client.CollectionDefinition) error {
-	colSeq, err := db.getSequence(ctx, keys.CollectionIDSequenceKey{})
-	if err != nil {
-		return err
-	}
-
-	for i := range newCollections {
-		if len(newCollections[i].Description.Fields) == 0 {
-			// This is a schema-only definition, we should not create a collection for it
-			continue
-		}
-
-		colID, err := colSeq.next(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Unlike schema, collections can be mutated and thus we need to make sure this function
-		// does not assign new IDs to existing collections.
-		if newCollections[i].Description.ID == 0 {
-			newCollections[i].Description.ID = uint32(colID)
-		}
-
-		if newCollections[i].Description.RootID == 0 {
-			newCollections[i].Description.RootID = uint32(colID)
-		}
-	}
-
-	return nil
-}
-
-// setFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
-func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDefinition) error {
-	collectionsByName := map[string]client.CollectionDescription{}
+// SetFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
+func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.CollectionDefinition) error {
 	schemasByName := map[string]client.SchemaDescription{}
 	for _, def := range definitions {
-		if def.Description.Name.HasValue() {
-			collectionsByName[def.Description.Name.Value()] = def.Description
-		}
 		schemasByName[def.Schema.Name] = def.Schema
 	}
 
 	for i := range definitions {
-		fieldSeq, err := db.getSequence(ctx, keys.NewFieldIDSequenceKey(definitions[i].Description.RootID))
+		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Description.CollectionID))
 		if err != nil {
 			return err
 		}
@@ -90,7 +45,7 @@ func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDe
 				// queries too.
 				fieldID = 0
 			} else {
-				nextID, err := fieldSeq.next(ctx)
+				nextID, err := fieldSeq.Next(ctx, txn)
 				if err != nil {
 					return err
 				}
@@ -103,8 +58,6 @@ func (db *DB) setFieldIDs(ctx context.Context, definitions []client.CollectionDe
 					var newKind client.FieldKind
 					if kind.Name == definitions[i].Description.Name.Value() {
 						newKind = client.NewSelfKind("", kind.IsArray())
-					} else if otherCol, ok := collectionsByName[kind.Name]; ok {
-						newKind = client.NewCollectionKind(otherCol.RootID, kind.IsArray())
 					} else if otherSchema, ok := schemasByName[kind.Name]; ok {
 						newKind = client.NewSchemaKind(otherSchema.Root, kind.IsArray())
 					} else {

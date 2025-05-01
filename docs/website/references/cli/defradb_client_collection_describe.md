@@ -12,8 +12,8 @@ Example: view all collections
 Example: view collection by name
   defradb client collection describe --name User
 		
-Example: view collection by schema root id
-  defradb client collection describe --schema bae123
+Example: view collection by collection id
+  defradb client collection describe --collection-id bae123
 		
 Example: view collection by version id. This will also return inactive collections
   defradb client collection describe --version bae123
@@ -26,11 +26,11 @@ defradb client collection describe [flags]
 ### Options
 
 ```
-      --get-inactive     Get inactive collections as well as active
-  -h, --help             help for describe
-      --name string      Collection name
-      --schema string    Collection schema Root
-      --version string   Collection version ID
+      --collection-id string   Collection P2P identifier
+      --get-inactive           Get inactive collections as well as active
+  -h, --help                   help for describe
+      --name string            Collection name
+      --version string         Collection version ID
 ```
 
 ### Options inherited from parent commands

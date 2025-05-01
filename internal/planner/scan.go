@@ -16,8 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -175,7 +175,14 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.prefixes) == 0 {
-		prefix := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
+		shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, n.col.Description().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		prefix := keys.DataStoreKey{
+			CollectionShortID: shortID,
+		}
 		n.prefixes = []keys.Walkable{prefix}
 	}
 
@@ -252,7 +259,7 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 
 	// Add the collection attributes.
 	simpleExplainMap[collectionNameLabel] = n.col.Name().Value()
-	simpleExplainMap[collectionIDLabel] = n.col.Description().IDString()
+	simpleExplainMap[collectionIDLabel] = n.col.Description().ID
 
 	// Add the prefixes attribute.
 	simpleExplainMap[prefixesLabel] = n.explainPrefixes()

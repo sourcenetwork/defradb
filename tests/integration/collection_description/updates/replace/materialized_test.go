@@ -32,7 +32,11 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t *t
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/IsMaterialized", "value": false }
+						{
+							"op": "replace",
+							"path": "/bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4/IsMaterialized",
+							"value": false
+						}
 					]
 				`,
 				ExpectedError: "non-materialized collections are not supported. Collection: User",
@@ -74,7 +78,11 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/2/IsMaterialized", "value": false }
+						{
+							"op": "replace",
+							"path": "/bafkreibdmvzu7gv4iecgms5odn4t7g66jrrgphjqsnnv666ptmx4xgk5my/IsMaterialized",
+							"value": false
+						}
 					]
 				`,
 			},

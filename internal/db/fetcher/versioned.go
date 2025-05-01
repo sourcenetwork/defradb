@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
@@ -25,8 +26,10 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -117,6 +120,38 @@ func (vf *VersionedFetcher) Init(
 	// create store
 	root := memory.NewDatastore(ctx)
 	vf.root = root
+
+	// Copy the entire system store into the temp store so that important stuff
+	// such as collection definitions and short-ids are available.
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
+	if err != nil {
+		return err
+	}
+	dst := datastore.MultiStoreFrom(root).Systemstore()
+	for {
+		hasValue, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if !hasValue {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		err = dst.Set(ctx, iter.Key(), value)
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+	}
+	err = iter.Close()
+	if err != nil {
+		return err
+	}
 
 	vf.store = datastore.NewTxnFrom(
 		ctx,
@@ -306,23 +341,28 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
+	shortID, err := id.GetShortCollectionID(vf.ctx, vf.txn, vf.col.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	var mcrdt merklecrdt.MerkleCRDT
 	switch {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(
 			vf.store,
-			keys.NewCollectionSchemaVersionKey(vf.col.Description().SchemaVersionID, vf.col.Description().ID),
-			keys.NewHeadstoreColKey(vf.col.Description().RootID),
+			vf.col.Description().ID,
+			keys.NewHeadstoreColKey(shortID),
 		)
 
 	case block.Delta.IsComposite():
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
 			vf.store,
-			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
-				CollectionRootID: vf.col.Description().RootID,
-				DocID:            string(block.Delta.GetDocID()),
-				FieldID:          fmt.Sprint(core.COMPOSITE_NAMESPACE),
+				CollectionShortID: shortID,
+				DocID:             string(block.Delta.GetDocID()),
+				FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 			},
 		)
 
@@ -334,13 +374,13 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
 			vf.store,
-			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+			block.Delta.GetSchemaVersionID(),
 			field.Typ,
 			field.Kind,
 			keys.DataStoreKey{
-				CollectionRootID: vf.col.Description().RootID,
-				DocID:            string(block.Delta.GetDocID()),
-				FieldID:          fmt.Sprint(field.ID),
+				CollectionShortID: shortID,
+				DocID:             string(block.Delta.GetDocID()),
+				FieldID:           fmt.Sprint(field.ID),
 			},
 			field.Name,
 		)
@@ -387,5 +427,9 @@ func (vf *VersionedFetcher) Close() error {
 		return err
 	}
 
-	return vf.Fetcher.Close()
+	if vf.Fetcher != nil {
+		return vf.Fetcher.Close()
+	}
+
+	return nil
 }

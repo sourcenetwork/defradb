@@ -268,11 +268,11 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		args = append(args, "--version", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -319,11 +319,11 @@ func (w *Wrapper) GetCollections(
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		args = append(args, "--version", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))

@@ -364,7 +364,6 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 					query {
 						commits {
 							cid
-							collectionID
 							delta
 							docID
 							fieldId
@@ -383,13 +382,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          gomega.And(ageUpdateCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue(22),
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "1",
-							"fieldName":    "age",
-							"height":       int64(2),
+							"cid":       gomega.And(ageUpdateCid, uniqueCid),
+							"delta":     testUtils.CBORValue(22),
+							"docID":     "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+							"fieldId":   "1",
+							"fieldName": "age",
+							"height":    int64(2),
 							"links": []map[string]any{
 								{
 									"cid":  ageCreateCid,
@@ -399,35 +397,32 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"signature": nil,
 						},
 						{
-							"cid":          gomega.And(ageCreateCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue(21),
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "1",
-							"fieldName":    "age",
-							"height":       int64(1),
-							"links":        []map[string]any{},
-							"signature":    nil,
+							"cid":       gomega.And(ageCreateCid, uniqueCid),
+							"delta":     testUtils.CBORValue(21),
+							"docID":     "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+							"fieldId":   "1",
+							"fieldName": "age",
+							"height":    int64(1),
+							"links":     []map[string]any{},
+							"signature": nil,
 						},
 						{
-							"cid":          gomega.And(nameCreateCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue("John"),
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "2",
-							"fieldName":    "name",
-							"height":       int64(1),
-							"links":        []map[string]any{},
-							"signature":    nil,
+							"cid":       gomega.And(nameCreateCid, uniqueCid),
+							"delta":     testUtils.CBORValue("John"),
+							"docID":     "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+							"fieldId":   "2",
+							"fieldName": "name",
+							"height":    int64(1),
+							"links":     []map[string]any{},
+							"signature": nil,
 						},
 						{
-							"cid":          gomega.And(updateCompositeCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "C",
-							"fieldName":    nil,
-							"height":       int64(2),
+							"cid":       gomega.And(updateCompositeCid, uniqueCid),
+							"delta":     nil,
+							"docID":     "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+							"fieldId":   "C",
+							"fieldName": nil,
+							"height":    int64(2),
 							"links": []map[string]any{
 								{
 									"cid":  createCompositeCid,
@@ -441,13 +436,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"signature": nil,
 						},
 						{
-							"cid":          gomega.And(createCompositeCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "C",
-							"fieldName":    nil,
-							"height":       int64(1),
+							"cid":       gomega.And(createCompositeCid, uniqueCid),
+							"delta":     nil,
+							"docID":     "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
+							"fieldId":   "C",
+							"fieldName": nil,
+							"height":    int64(1),
 							"links": []map[string]any{
 								{
 									"cid":  ageCreateCid,

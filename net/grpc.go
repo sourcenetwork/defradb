@@ -24,11 +24,11 @@ const (
 )
 
 type pushLogRequest struct {
-	DocID      string
-	CID        []byte
-	SchemaRoot string
-	Creator    string
-	Block      []byte
+	DocID        string
+	CID          []byte
+	CollectionID string
+	Creator      string
+	Block        []byte
 }
 
 type pushLogReply struct{}

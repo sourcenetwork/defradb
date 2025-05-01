@@ -66,7 +66,6 @@ const (
 	SignatureTypeName        = "Signature"
 	HeightFieldName          = "height"
 	CidFieldName             = "cid"
-	CollectionIDFieldName    = "collectionID"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	FieldNameFieldName       = "fieldName"
 	FieldIDFieldName         = "fieldId"
@@ -141,7 +140,6 @@ var (
 		HeightFieldName,
 		CidFieldName,
 		DocIDArgName,
-		CollectionIDFieldName,
 		SchemaVersionIDFieldName,
 		FieldNameFieldName,
 		FieldIDFieldName,

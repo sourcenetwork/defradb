@@ -27,10 +27,14 @@ func TestColDescrUpdateReplaceSources_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Sources", "value": [{"SourceCollectionID": 1}] }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Sources",
+							"value": [{"SourceCollectionID": "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"}]
+						}
 					]
 				`,
-				ExpectedError: "collection sources cannot be added or removed. CollectionID: 1",
+				ExpectedError: "collection sources cannot be added or removed.",
 			},
 		},
 	}
@@ -49,10 +53,14 @@ func TestColDescrUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Sources", "value": [{"Query": {"Name": "Users"}}] }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Sources",
+							"value": [{"Query": {"Name": "Users"}}]
+						}
 					]
 				`,
-				ExpectedError: "collection sources cannot be added or removed. CollectionID: 1",
+				ExpectedError: "collection sources cannot be added or removed.",
 			},
 		},
 	}

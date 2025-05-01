@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -73,7 +74,13 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			n.source.Prefixes(docIDsToPrefixes(documentsToDocIDs(doc), n.collection.Description()))
+
+			prefixes, err := n.docIDsToPrefixes(documentsToDocIDs(doc), n.collection.Description())
+			if err != nil {
+				return false, err
+			}
+
+			n.source.Prefixes(prefixes)
 		}
 		err = n.source.Init()
 		if err != nil {
@@ -90,6 +97,22 @@ func (n *upsertNode) Next() (bool, error) {
 	}
 	n.currentValue = n.source.Value()
 	return true, nil
+}
+
+func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionDescription) ([]keys.Walkable, error) {
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, desc.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	prefixes := make([]keys.Walkable, len(ids))
+	for i, id := range ids {
+		prefixes[i] = keys.DataStoreKey{
+			CollectionShortID: shortID,
+			DocID:             id,
+		}
+	}
+	return prefixes, nil
 }
 
 func (n *upsertNode) Kind() string {
