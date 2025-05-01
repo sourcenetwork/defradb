@@ -10,7 +10,7 @@
 
 /* Node configuration, in which NodeOpt functions are applied on Options. */
 
-package net
+package config
 
 import (
 	"google.golang.org/grpc"

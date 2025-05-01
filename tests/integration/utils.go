@@ -42,7 +42,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -96,6 +96,8 @@ var (
 	viewType     ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
+	// skipBackupTests will skip any tests taht involve backup actions
+	skipBackupTests = false
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -173,6 +175,7 @@ func ExecuteTestCase(
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
+	skipIfBackupTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
@@ -185,6 +188,9 @@ func ExecuteTestCase(
 	}
 	if cliClient {
 		clients = append(clients, CLIClientType)
+	}
+	if jsClient {
+		clients = append(clients, JSClientType)
 	}
 
 	var databases []DatabaseType
@@ -756,7 +762,7 @@ func startNodes(s *state, action Start) {
 		for _, addr := range s.nodes[nodeIndex].peerInfo.Addrs {
 			addresses = append(addresses, addr.String())
 		}
-		opts = append(opts, net.WithListenAddresses(addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(addresses...))
 		node, err := setupNode(s, opts...)
 		require.NoError(s.t, err)
 		databaseDir = originalPath
@@ -836,7 +842,7 @@ func configureNode(
 	require.NoError(s.t, err)
 
 	netNodeOpts := action()
-	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
+	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
@@ -2404,6 +2410,23 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 	if skipNetworkTests && hasNetworkAction {
 		t.Skip("test involves network actions")
+	}
+}
+
+// skipIfBackupTest skips the current test if the given actions
+// contain backup actions and skipBackupTests is true.
+func skipIfBackupTest(t testing.TB, actions []any) {
+	hasBackupAction := false
+	for _, act := range actions {
+		switch act.(type) {
+		case BackupImport:
+			hasBackupAction = true
+		case BackupExport:
+			hasBackupAction = true
+		}
+	}
+	if skipBackupTests && hasBackupAction {
+		t.Skip("test involves backup actions")
 	}
 }
 

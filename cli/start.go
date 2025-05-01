@@ -27,7 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/version"
 )
@@ -80,10 +80,10 @@ func MakeStartCommand() *cobra.Command {
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				// net node options
-				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
-				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
-				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
-				net.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
+				netConfig.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
+				netConfig.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
+				netConfig.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				netConfig.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
@@ -313,7 +313,7 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	} else if err != nil {
 		return nil, err
 	}
-	return append(opts, net.WithPrivateKey(peerKey)), nil
+	return append(opts, netConfig.WithPrivateKey(peerKey)), nil
 }
 
 func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {

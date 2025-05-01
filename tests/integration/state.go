@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
@@ -130,7 +130,7 @@ type nodeState struct {
 	// p2p contains p2p states for the node.
 	p2p *p2pState
 	// The network configurations for the nodes
-	netOpts []net.NodeOpt
+	netOpts []netConfig.NodeOpt
 	// The path to any file-based databases active in this test.
 	dbPath string
 	// Collections by index present in the test.
