@@ -20,7 +20,7 @@ import (
 // select the datastore implementation to use.
 func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithBlockSigning(s.enabledBlockSigning))
+	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 	opts = append(opts, node.WithBadgerInMemory(true))
 
 	node, err := node.New(s.ctx, opts...)

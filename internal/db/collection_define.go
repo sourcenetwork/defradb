@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 func (db *DB) createCollections(
@@ -45,11 +46,13 @@ func (db *DB) createCollections(
 	}
 
 	for i := range newDefinitions {
-		newDefinitions[i].Description.SchemaVersionID = newSchemas[i].VersionID
+		newDefinitions[i].Description.ID = newSchemas[i].VersionID
+		newDefinitions[i].Description.CollectionID = newSchemas[i].Root
 		newDefinitions[i].Schema = newSchemas[i]
 	}
 
-	err = db.setCollectionIDs(ctx, newDefinitions)
+	txn := mustGetContextTxn(ctx)
+	err = id.SetFieldIDs(ctx, txn, newDefinitions)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +71,6 @@ func (db *DB) createCollections(
 	if err != nil {
 		return nil, err
 	}
-
-	txn := mustGetContextTxn(ctx)
 
 	for _, def := range newDefinitions {
 		_, err := description.CreateSchemaVersion(ctx, txn, def.Schema)
@@ -128,10 +129,10 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	existingColsByID := map[uint32]client.CollectionDescription{}
+	existingColsByID := map[string]client.CollectionDescription{}
 	existingDefinitions := make([]client.CollectionDefinition, len(existingCols))
 	for _, col := range existingCols {
-		existingColsByID[col.ID()] = col.Description()
+		existingColsByID[col.Description().ID] = col.Description()
 		existingDefinitions = append(existingDefinitions, col.Definition())
 	}
 
@@ -145,7 +146,7 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	var newColsByID map[uint32]client.CollectionDescription
+	var newColsByID map[string]client.CollectionDescription
 	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&newColsByID)
@@ -153,11 +154,11 @@ func (db *DB) patchCollection(
 		return err
 	}
 	newDefinitions := make([]client.CollectionDefinition, len(existingCols))
-	updatedColsByID := make(map[uint32]struct{})
+	updatedColsByID := make(map[string]struct{})
 	for i, col := range existingCols {
 		newDefinitions[i].Schema = col.Schema()
-		newDefinitions[i].Description = newColsByID[col.ID()]
-		updatedColsByID[col.ID()] = struct{}{}
+		newDefinitions[i].Description = newColsByID[col.Description().ID]
+		updatedColsByID[col.Description().ID] = struct{}{}
 	}
 	// append new cols
 	for id, col := range newColsByID {
@@ -251,7 +252,7 @@ func (db *DB) setActiveSchemaVersion(
 		return ErrSchemaVersionIDEmpty
 	}
 	txn := mustGetContextTxn(ctx)
-	cols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, schemaVersionID)
+	col, err := description.GetCollectionByID(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -266,8 +267,8 @@ func (db *DB) setActiveSchemaVersion(
 		return err
 	}
 
-	colsBySourceID := map[uint32][]client.CollectionDescription{}
-	colsByID := make(map[uint32]client.CollectionDescription, len(colsWithRoot))
+	colsBySourceID := map[string][]client.CollectionDescription{}
+	colsByID := make(map[string]client.CollectionDescription, len(colsWithRoot))
 	for _, col := range colsWithRoot {
 		colsByID[col.ID] = col
 
@@ -281,48 +282,47 @@ func (db *DB) setActiveSchemaVersion(
 		}
 	}
 
-	for _, col := range cols {
-		if col.Name.HasValue() {
-			// The collection is already active, so we can skip it and continue
-			continue
-		}
-		sources := col.CollectionSources()
+	if col.Name.HasValue() {
+		// The collection is already active, so we can skip it and continue
+		return db.loadSchema(ctx)
+	}
 
-		var activeCol client.CollectionDescription
-		var rootCol client.CollectionDescription
-		var isActiveFound bool
-		if len(sources) > 0 {
-			// For now, we assume that each collection can only have a single source.  This will likely need
-			// to change later.
-			activeCol, rootCol, isActiveFound = db.getActiveCollectionDown(ctx, colsByID, sources[0].SourceCollectionID)
-		}
-		if !isActiveFound {
-			// We need to look both down and up for the active version - the most recent is not necessarily the active one.
-			activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.ID)
-		}
+	sources := col.CollectionSources()
 
-		var newName string
-		if isActiveFound {
-			newName = activeCol.Name.Value()
-		} else {
-			// If there are no active versions in the collection set, take the name of the schema to be the name of the
-			// collection.
-			newName = schema.Name
-		}
-		col.Name = immutable.Some(newName)
+	var activeCol client.CollectionDescription
+	var rootCol client.CollectionDescription
+	var isActiveFound bool
+	if len(sources) > 0 {
+		// For now, we assume that each collection can only have a single source.  This will likely need
+		// to change later.
+		activeCol, rootCol, isActiveFound = db.getActiveCollectionDown(ctx, colsByID, sources[0].SourceCollectionID)
+	}
+	if !isActiveFound {
+		// We need to look both down and up for the active version - the most recent is not necessarily the active one.
+		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.ID)
+	}
 
-		_, err = description.SaveCollection(ctx, txn, col)
+	var newName string
+	if isActiveFound {
+		newName = activeCol.Name.Value()
+	} else {
+		// If there are no active versions in the collection set, take the name of the schema to be the name of the
+		// collection.
+		newName = schema.Name
+	}
+	col.Name = immutable.Some(newName)
+
+	_, err = description.SaveCollection(ctx, txn, col)
+	if err != nil {
+		return err
+	}
+
+	if isActiveFound {
+		// Deactivate the currently active collection by setting its name to none.
+		activeCol.Name = immutable.None[string]()
+		_, err = description.SaveCollection(ctx, txn, activeCol)
 		if err != nil {
 			return err
-		}
-
-		if isActiveFound {
-			// Deactivate the currently active collection by setting its name to none.
-			activeCol.Name = immutable.None[string]()
-			_, err = description.SaveCollection(ctx, txn, activeCol)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -332,8 +332,8 @@ func (db *DB) setActiveSchemaVersion(
 
 func (db *DB) getActiveCollectionDown(
 	ctx context.Context,
-	colsByID map[uint32]client.CollectionDescription,
-	id uint32,
+	colsByID map[string]client.CollectionDescription,
+	id string,
 ) (client.CollectionDescription, client.CollectionDescription, bool) {
 	col, ok := colsByID[id]
 	if !ok {
@@ -359,8 +359,8 @@ func (db *DB) getActiveCollectionDown(
 
 func (db *DB) getActiveCollectionUp(
 	ctx context.Context,
-	colsBySourceID map[uint32][]client.CollectionDescription,
-	id uint32,
+	colsBySourceID map[string][]client.CollectionDescription,
+	id string,
 ) (client.CollectionDescription, bool) {
 	cols, ok := colsBySourceID[id]
 	if !ok {

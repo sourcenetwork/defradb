@@ -47,7 +47,7 @@ type FieldLevelMerkleCRDT interface {
 
 func FieldLevelCRDTWithStore(
 	store Stores,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	cType client.CType,
 	kind client.FieldKind,
 	key keys.DataStoreKey,
@@ -57,14 +57,14 @@ func FieldLevelCRDTWithStore(
 	case client.LWW_REGISTER:
 		return NewMerkleLWWRegister(
 			store,
-			schemaVersionKey,
+			schemaVersionID,
 			key,
 			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewMerkleCounter(
 			store,
-			schemaVersionKey,
+			schemaVersionID,
 			key,
 			fieldName,
 			cType == client.PN_COUNTER,

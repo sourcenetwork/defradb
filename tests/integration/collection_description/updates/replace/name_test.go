@@ -37,14 +37,17 @@ func TestColDescrUpdateReplaceName_GivenExistingName(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Name", "value": "Actors" }
+						{
+							"op": "replace",
+							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name",
+							"value": "Actors"
+						}
 					]
 				`,
 			},
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             1,
 						Name:           immutable.Some("Actors"),
 						IsMaterialized: true,
 					},
@@ -99,10 +102,14 @@ func TestColDescrUpdateReplaceName_GivenInactiveCollectionWithSameName_Errors(t 
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/2/Name", "value": "Users" }
+						{
+							"op": "replace",
+							"path": "/bafkreigtjpibdyrvmwvu7wbzatqpgavczrauj4huog2cvskwrgak6m7qgi/Name",
+							"value": "Users"
+						}
 					]
 				`,
-				ExpectedError: "multiple versions of same collection cannot be active. Name: Users, Root: 1",
+				ExpectedError: "collection already exists. Name: Users",
 			},
 		},
 	}
@@ -131,7 +138,11 @@ func TestColDescrUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T) 
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/2/Name", "value": "Actors" }
+						{
+							"op": "replace",
+							"path": "/bafkreigtjpibdyrvmwvu7wbzatqpgavczrauj4huog2cvskwrgak6m7qgi/Name",
+							"value": "Actors"
+						}
 					]
 				`,
 				// The params at the end of the error message is dependant on the order Go decides to iterate through
@@ -170,8 +181,15 @@ func TestColDescrUpdateReplaceName_RemoveExistingName(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "remove", "path": "/1/Name" },
-						{ "op": "replace", "path": "/2/Name", "value": "Actors" }
+						{
+							"op": "remove",
+							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name"
+						},
+						{
+							"op": "replace",
+							"path": "/bafkreigtjpibdyrvmwvu7wbzatqpgavczrauj4huog2cvskwrgak6m7qgi/Name",
+							"value": "Actors"
+						}
 					]
 				`,
 			},
@@ -181,16 +199,14 @@ func TestColDescrUpdateReplaceName_RemoveExistingName(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             1,
 						IsMaterialized: true,
 					},
 					{
-						ID:             2,
 						Name:           immutable.Some("Actors"),
 						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 							},
 						},
 					},

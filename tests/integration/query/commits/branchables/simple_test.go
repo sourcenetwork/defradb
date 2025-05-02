@@ -94,7 +94,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 				Request: `query {
 						commits {
 							cid
-							collectionID
+							schemaVersionId
 							delta
 							docID
 							fieldId
@@ -109,13 +109,13 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          gomega.And(collectionCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        nil,
-							"fieldId":      nil,
-							"fieldName":    nil,
-							"height":       int64(1),
+							"cid":             gomega.And(collectionCid, uniqueCid),
+							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+							"delta":           nil,
+							"docID":           nil,
+							"fieldId":         nil,
+							"fieldName":       nil,
+							"height":          int64(1),
 							"links": []map[string]any{
 								{
 									"cid":  compositeCid,
@@ -124,33 +124,33 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							},
 						},
 						{
-							"cid":          gomega.And(ageCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue(21),
-							"docID":        "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-							"fieldId":      "1",
-							"fieldName":    "age",
-							"height":       int64(1),
-							"links":        []map[string]any{},
+							"cid":             gomega.And(ageCid, uniqueCid),
+							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+							"delta":           testUtils.CBORValue(21),
+							"docID":           "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"fieldId":         "1",
+							"fieldName":       "age",
+							"height":          int64(1),
+							"links":           []map[string]any{},
 						},
 						{
-							"cid":          gomega.And(nameCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue("John"),
-							"docID":        "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-							"fieldId":      "2",
-							"fieldName":    "name",
-							"height":       int64(1),
-							"links":        []map[string]any{},
+							"cid":             gomega.And(nameCid, uniqueCid),
+							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+							"delta":           testUtils.CBORValue("John"),
+							"docID":           "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"fieldId":         "2",
+							"fieldName":       "name",
+							"height":          int64(1),
+							"links":           []map[string]any{},
 						},
 						{
-							"cid":          gomega.And(compositeCid, uniqueCid),
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-							"fieldId":      "C",
-							"fieldName":    nil,
-							"height":       int64(1),
+							"cid":             gomega.And(compositeCid, uniqueCid),
+							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+							"delta":           nil,
+							"docID":           "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"fieldId":         "C",
+							"fieldName":       nil,
+							"height":          int64(1),
 							"links": []map[string]any{
 								{
 									"cid":  ageCid,

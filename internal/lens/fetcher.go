@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -70,6 +71,7 @@ func (f *lensedFetcher) Init(
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -122,6 +124,7 @@ historyLoop:
 		col,
 		innerFetcherFields,
 		filter,
+		ordering,
 		docmapper,
 		showDeleted,
 	)
@@ -295,10 +298,15 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		return core.ErrInvalidKey
 	}
 
+	shortID, err := id.GetShortCollectionID(ctx, f.txn, f.col.Description().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	datastoreKeyBase := keys.DataStoreKey{
-		CollectionRootID: f.col.Description().RootID,
-		DocID:            docID,
-		InstanceType:     keys.ValueKey,
+		CollectionShortID: shortID,
+		DocID:             docID,
+		InstanceType:      keys.ValueKey,
 	}
 
 	for fieldName, value := range modifiedFieldValuesByName {
@@ -322,7 +330,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	}
 
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	err := f.txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
+	err = f.txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
 	if err != nil {
 		return err
 	}

@@ -1,3 +1,57 @@
+<a name="v0.17.0"></a>
+## [v0.17.0](https://github.com/sourcenetwork/defradb/compare/v0.16.0...v0.17.0)
+
+> 2025-04-16
+
+DefraDB v0.17 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.16.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Enable block verification by clients ([#3591](https://github.com/sourcenetwork/defradb/issues/3591))
+* Make replicator retry intervals configurable ([#3574](https://github.com/sourcenetwork/defradb/issues/3574))
+* Make signing algorithm configurable ([#3545](https://github.com/sourcenetwork/defradb/issues/3545))
+* JS build support ([#3548](https://github.com/sourcenetwork/defradb/issues/3548))
+* Make DAC write permission more granular ([#3218](https://github.com/sourcenetwork/defradb/issues/3218))
+* Introduce digital signatures ([#3505](https://github.com/sourcenetwork/defradb/issues/3505))
+
+### Fixes
+
+* PeerInfo sync issue ([#3606](https://github.com/sourcenetwork/defradb/issues/3606))
+* Only give badger a path if not in-memory ([#3552](https://github.com/sourcenetwork/defradb/issues/3552))
+* Consistent version query semantics ([#3477](https://github.com/sourcenetwork/defradb/issues/3477))
+
+### Refactoring
+
+* Make validator return joined errors ([#3513](https://github.com/sourcenetwork/defradb/issues/3513))
+* Replace datastore package with corekv ([#3508](https://github.com/sourcenetwork/defradb/issues/3508))
+* Changed paths for lens migration in CLI ([#3510](https://github.com/sourcenetwork/defradb/issues/3510))
+
+### Testing
+
+* Add example CLI integration tests ([#3550](https://github.com/sourcenetwork/defradb/issues/3550))
+* Incorporate gomega matchers ([#3489](https://github.com/sourcenetwork/defradb/issues/3489))
+
+### Chore
+
+* Bump acp_core and SourceHub pkg versions ([#3527](https://github.com/sourcenetwork/defradb/issues/3527))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-04-14 ([#3618](https://github.com/sourcenetwork/defradb/issues/3618))
+* Update dependencies (bulk dependabot PRs) 2025-04-08 ([#3603](https://github.com/sourcenetwork/defradb/issues/3603))
+* Update dependencies (bulk dependabot PRs) 2025-03-31 ([#3587](https://github.com/sourcenetwork/defradb/issues/3587))
+* Update dependencies (bulk dependabot PRs) 2025-03-24 ([#3568](https://github.com/sourcenetwork/defradb/issues/3568))
+* Update dependencies (bulk dependabot PRs) 2025-03-18 ([#3549](https://github.com/sourcenetwork/defradb/issues/3549))
+* Update dependencies (bulk dependabot PRs) 2025-03-13 ([#3536](https://github.com/sourcenetwork/defradb/issues/3536))
+* Update dependencies (bulk dependabot PRs) 2025-03-11 ([#3528](https://github.com/sourcenetwork/defradb/issues/3528))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 8.25.0 to 8.26.0 in /playground ([#3506](https://github.com/sourcenetwork/defradb/issues/3506))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 8.25.0 to 8.26.0 in /playground ([#3507](https://github.com/sourcenetwork/defradb/issues/3507))
+* Update dependencies (bulk dependabot PRs) 2025-03-03 ([#3504](https://github.com/sourcenetwork/defradb/issues/3504))
+* Bump github.com/go-jose/go-jose/v3 from 3.0.1-0.20221117193127-916db76e8214 to 3.0.4 ([#3492](https://github.com/sourcenetwork/defradb/issues/3492))
+* Update dependencies (bulk dependabot PRs) 2025-02-24 ([#3487](https://github.com/sourcenetwork/defradb/issues/3487))
+
 <a name="v0.16.0"></a>
 ## [v0.16.0](https://github.com/sourcenetwork/defradb/compare/v0.15.0...v0.16.0)
 
@@ -5,7 +59,7 @@
 
 DefraDB v0.16 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.14.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.15.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
 
 ### Features
 

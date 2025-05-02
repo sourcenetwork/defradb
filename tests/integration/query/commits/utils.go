@@ -22,20 +22,8 @@ const userCollectionGQLSchema = (`
 	}
 `)
 
-const companiesCollectionGQLSchema = (`
-	type Companies {
-		name: String
-	}
-`)
-
 func updateUserCollectionSchema() testUtils.SchemaUpdate {
 	return testUtils.SchemaUpdate{
 		Schema: userCollectionGQLSchema,
-	}
-}
-
-func updateCompaniesCollectionSchema() testUtils.SchemaUpdate {
-	return testUtils.SchemaUpdate{
-		Schema: companiesCollectionGQLSchema,
 	}
 }

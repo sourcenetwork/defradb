@@ -28,6 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -226,11 +227,11 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		params.Add("version_id", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		params.Add("schema_root", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		params.Add("collection_id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -286,11 +287,11 @@ func (c *Client) GetCollections(
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		params.Add("version_id", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		params.Add("version_id", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		params.Add("schema_root", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		params.Add("collection_id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -522,4 +523,27 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return ident, err
+}
+
+func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	methodURL := c.http.baseURL.JoinPath("block", "verify-signature")
+
+	params := url.Values{}
+	params.Add("cid", cid)
+	params.Add("public-key", pubKey.String())
+	params.Add("type", string(pubKey.Type()))
+	methodURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.http.setDefaultHeaders(req)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
 }

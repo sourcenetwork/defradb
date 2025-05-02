@@ -30,10 +30,10 @@ var _ MerkleCRDT = (*MerkleCollection)(nil)
 
 func NewMerkleCollection(
 	store Stores,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.HeadstoreColKey,
 ) *MerkleCollection {
-	register := crdt.NewCollection(schemaVersionKey)
+	register := crdt.NewCollection(schemaVersionID)
 
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key, register)
 

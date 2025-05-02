@@ -16,6 +16,7 @@ import (
 	"context"
 	"syscall/js"
 
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/goji"
 )
 
@@ -135,6 +136,31 @@ func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, err
 	}
 	c.txns.Store(txn.ID(), txn)
 	return newTransaction(txn), nil
+}
+
+func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, error) {
+	pubKeyHex, err := stringArg(args, 0, "publicKey")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	pubKeyType, err := stringArg(args, 1, "publicKeyType")
+	if pubKeyType == "" {
+		pubKeyType = string(crypto.KeyTypeSecp256k1)
+	}
+	blockCID, err := stringArg(args, 2, "blockCID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 3, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	pubKey, err := crypto.PublicKeyFromString(crypto.KeyType(pubKeyType), pubKeyHex)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.VerifySignature(ctx, blockCID, pubKey)
+	return js.Undefined(), err
 }
 
 func (c *Client) close(this js.Value, args []js.Value) (js.Value, error) {

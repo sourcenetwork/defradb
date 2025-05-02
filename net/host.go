@@ -14,6 +14,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/sourcenetwork/defradb/net/config"
+
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
@@ -22,7 +24,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/routing"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
-	"github.com/sourcenetwork/defradb/net/config"
 )
 
 // setupHost returns a host and router configured with the given options.

@@ -25,6 +25,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
@@ -164,7 +165,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	}
 
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	ident, err := acpIdentity.FromPrivateKey(privKey)
+	ident, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	if err != nil {
 		return err
 	}

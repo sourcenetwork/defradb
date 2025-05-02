@@ -84,11 +84,11 @@ func TestPushLog(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = p.server.pushLogHandler(ctx, &pushLogRequest{
-		DocID:      doc.ID().String(),
-		CID:        headCID.Bytes(),
-		SchemaRoot: col.SchemaRoot(),
-		Creator:    p.PeerID().String(),
-		Block:      b,
+		DocID:        doc.ID().String(),
+		CID:          headCID.Bytes(),
+		CollectionID: col.SchemaRoot(),
+		Creator:      p.PeerID().String(),
+		Block:        b,
 	})
 	require.NoError(t, err)
 }

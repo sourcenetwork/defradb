@@ -57,7 +57,6 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             2,
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
 						Indexes: []client.IndexDescription{
@@ -156,7 +155,6 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             2,
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
 						Indexes: []client.IndexDescription{

@@ -41,7 +41,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -85,7 +85,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -129,7 +129,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -173,7 +173,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_and": []any{
@@ -226,7 +226,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_or": []any{
@@ -279,7 +279,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -325,7 +325,7 @@ func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "1",
+							"collectionID":   "bafkreih4zeq3ac4dh2iz3i53ka2hpfu3jbia4ntonwm7qlthzz2gytzo6e",
 							"collectionName": "Users",
 							"filter": dataMap{
 								"custom": dataMap{

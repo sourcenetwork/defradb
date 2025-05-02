@@ -138,6 +138,9 @@
             },
             "collection": {
                 "properties": {
+                    "CollectionID": {
+                        "type": "string"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
@@ -161,9 +164,7 @@
                         "type": "array"
                     },
                     "ID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Indexes": {
                         "items": {
@@ -201,19 +202,14 @@
                     "IsBranchable": {
                         "type": "boolean"
                     },
+                    "IsEmbeddedOnly": {
+                        "type": "boolean"
+                    },
                     "IsMaterialized": {
                         "type": "boolean"
                     },
                     "Name": {},
                     "Policy": {},
-                    "RootID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
-                    },
-                    "SchemaVersionID": {
-                        "type": "string"
-                    },
                     "Sources": {
                         "items": {},
                         "type": "array"
@@ -254,6 +250,9 @@
                 "properties": {
                     "description": {
                         "properties": {
+                            "CollectionID": {
+                                "type": "string"
+                            },
                             "Fields": {
                                 "items": {
                                     "properties": {
@@ -277,9 +276,7 @@
                                 "type": "array"
                             },
                             "ID": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
+                                "type": "string"
                             },
                             "Indexes": {
                                 "items": {
@@ -317,19 +314,14 @@
                             "IsBranchable": {
                                 "type": "boolean"
                             },
+                            "IsEmbeddedOnly": {
+                                "type": "boolean"
+                            },
                             "IsMaterialized": {
                                 "type": "boolean"
                             },
                             "Name": {},
                             "Policy": {},
-                            "RootID": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
-                            },
-                            "SchemaVersionID": {
-                                "type": "string"
-                            },
                             "Sources": {
                                 "items": {},
                                 "type": "array"
@@ -563,9 +555,7 @@
             "migrate_request": {
                 "properties": {
                     "CollectionID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Data": {
                         "items": {
@@ -699,9 +689,7 @@
             "set_migration_request": {
                 "properties": {
                     "CollectionID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Config": {
                         "properties": {
@@ -929,6 +917,54 @@
                 },
                 "tags": [
                     "backup"
+                ]
+            }
+        },
+        "/block/verify-signature": {
+            "get": {
+                "description": "Verify block signature",
+                "operationId": "verify_block",
+                "parameters": [
+                    {
+                        "description": "Content ID of the block to verify",
+                        "in": "query",
+                        "name": "cid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Public key of the block to verify",
+                        "in": "query",
+                        "name": "public-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Type of the public key: secp256k1, ed25519",
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "block"
                 ]
             }
         },

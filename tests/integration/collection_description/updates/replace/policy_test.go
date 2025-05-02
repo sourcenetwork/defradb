@@ -27,10 +27,14 @@ func TestColDescrUpdateReplacePolicy_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Policy", "value": {} }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Policy",
+							"value": {}
+						}
 					]
 				`,
-				ExpectedError: "collection policy cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection policy cannot be mutated.",
 			},
 		},
 	}
@@ -49,10 +53,14 @@ func TestColDescrUpdateReplacePolicyID_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Policy", "value": {"ID": "dfe202ffb4f0fe9b46157c313213a383"} }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Policy",
+							"value": {"ID": "dfe202ffb4f0fe9b46157c313213a383"}
+						}
 					]
 				`,
-				ExpectedError: "collection policy cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection policy cannot be mutated.",
 			},
 		},
 	}
@@ -71,10 +79,14 @@ func TestColDescrUpdateReplacePolicyResource_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Policy", "value": {"ResourceName": "mutatingResource"} }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Policy",
+							"value": {"ResourceName": "mutatingResource"}
+						}
 					]
 				`,
-				ExpectedError: "collection policy cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection policy cannot be mutated.",
 			},
 		},
 	}

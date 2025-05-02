@@ -26,12 +26,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	toml "github.com/pelletier/go-toml"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
+
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	toml "github.com/pelletier/go-toml"
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 )
@@ -308,7 +309,7 @@ func getFreePort() (int, func(), error) {
 		return 0, nil, err
 	}
 
-	return l.Addr().(*net.TCPAddr).Port,
+	return l.Addr().(*net.TCPAddr).Port, //nolint:forcetypeassert
 		func() {
 			// there are no errors that this returns that we actually care about
 			_ = l.Close()

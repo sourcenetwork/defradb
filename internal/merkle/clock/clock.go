@@ -17,7 +17,7 @@ import (
 	"context"
 
 	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -112,7 +112,7 @@ func (mc *MerkleClock) AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	if IsSigningContext(ctx) {
+	if EnabledSigningFromContext(ctx) {
 		err = mc.signBlock(ctx, dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
@@ -238,15 +238,26 @@ func (mc *MerkleClock) signBlock(
 		return err
 	}
 
-	sigBytes, err := crypto.SignECDSA256K(ident.Value().PrivateKey, blockBytes)
+	var sigType string
+
+	switch ident.Value().PrivateKey.Type() {
+	case crypto.KeyTypeSecp256k1:
+		sigType = coreblock.SignatureTypeECDSA256K
+	case crypto.KeyTypeEd25519:
+		sigType = coreblock.SignatureTypeEd25519
+	default:
+		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
+	}
+
+	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
 	if err != nil {
 		return err
 	}
 
 	sig := &coreblock.Signature{
 		Header: coreblock.SignatureHeader{
-			Type:     coreblock.SignatureTypeECDSA256K,
-			Identity: []byte(ident.Value().PublicKey.SerializeCompressed()),
+			Type:     sigType,
+			Identity: []byte(ident.Value().PublicKey.String()),
 		},
 		Value: sigBytes,
 	}
@@ -337,15 +348,18 @@ func (mc *MerkleClock) Heads() *heads {
 	return mc.headset
 }
 
-type signingContextKey struct{}
+type enabledSigningContextKey struct{}
 
-// ContextWithSigning returns a new context with the signing context key set to true.
-func ContextWithSigning(ctx context.Context) context.Context {
-	return context.WithValue(ctx, signingContextKey{}, true)
+// ContextWithEnabledSigning returns a context with block signing enabled.
+func ContextWithEnabledSigning(ctx context.Context) context.Context {
+	return context.WithValue(ctx, enabledSigningContextKey{}, true)
 }
 
-// IsSigningContext returns true if the context is a signing context.
-func IsSigningContext(ctx context.Context) bool {
-	_, ok := ctx.Value(signingContextKey{}).(bool)
-	return ok
+// EnabledSigningFromContext returns true if block signing is enabled in the context.
+func EnabledSigningFromContext(ctx context.Context) bool {
+	val := ctx.Value(enabledSigningContextKey{})
+	if val == nil {
+		return false
+	}
+	return val.(bool)
 }

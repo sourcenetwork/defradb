@@ -133,7 +133,7 @@ func GetSchemas(
 
 	versionIDs := make([]string, 0)
 	for _, col := range cols {
-		versionIDs = append(versionIDs, col.SchemaVersionID)
+		versionIDs = append(versionIDs, col.ID)
 	}
 
 	schemaVersionPrefix := keys.NewSchemaVersionKey("")
@@ -312,7 +312,7 @@ func GetCollectionlessSchemas(
 
 	colSchemaRoots := map[string]struct{}{}
 	for _, col := range cols {
-		schemaRoot := schemaRootsByVersionID[col.SchemaVersionID]
+		schemaRoot := schemaRootsByVersionID[col.ID]
 		colSchemaRoots[schemaRoot] = struct{}{}
 	}
 

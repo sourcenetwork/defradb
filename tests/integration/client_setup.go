@@ -16,12 +16,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
+
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 func init() {

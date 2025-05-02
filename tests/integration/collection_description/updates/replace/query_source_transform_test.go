@@ -79,7 +79,11 @@ func TestColDescrUpdateReplaceQuerySourceTransform(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: fmt.Sprintf(`
 						[
-							{ "op": "replace", "path": "/2/Sources/0/Transform", "value": %s }
+							{
+								"op": "replace",
+								"path": "/bafkreigz4kfik46hfu7zs4l762vjrlowt6qe3kajq2pz6u7ggyyzkrrjeu/Sources/0/Transform",
+								"value": %s
+							}
 						]
 					`,
 					newTransformCfgJson,

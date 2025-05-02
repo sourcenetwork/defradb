@@ -30,7 +30,6 @@ func TestColDescrSimpleCreatesColGivenEmptyType(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:             1,
 						Name:           immutable.Some("Users"),
 						IsMaterialized: true,
 					},

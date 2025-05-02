@@ -55,7 +55,11 @@ func TestColDescrUpdateReplaceQuerySourceQuery(t *testing.T) {
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
-						{ "op": "replace", "path": "/3/Sources/0/Query", "value": {"Name": "Users", "Fields":[{"Name":"name"}]} }
+						{
+							"op": "replace",
+							"path": "/bafkreih4nvljjk7ioviij7sgxzmztqpm3ypf27m4dx4f2cipokkoeegyam/Sources/0/Query",
+							"value": {"Name": "Users", "Fields":[{"Name":"name"}]}
+						}
 					]
 				`,
 			},
@@ -119,7 +123,11 @@ func TestColDescrUpdateReplaceQuerySourceQueryName(t *testing.T) {
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
-						{ "op": "replace", "path": "/3/Sources/0/Query/Name", "value": "Users" }
+						{
+							"op": "replace",
+							"path": "/bafkreih4nvljjk7ioviij7sgxzmztqpm3ypf27m4dx4f2cipokkoeegyam/Sources/0/Query/Name",
+							"value": "Users"
+						}
 					]
 				`,
 			},

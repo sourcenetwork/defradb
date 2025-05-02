@@ -29,12 +29,13 @@ const (
 )
 
 var (
-	ErrPeerConnectionWaitTimout = errors.New("waiting for peer connection timed out")
-	ErrPubSubWaitTimeout        = errors.New("waiting for pubsub timed out")
-	ErrPushLogWaitTimeout       = errors.New("waiting for pushlog timed out")
-	ErrNilDB                    = errors.New("database object can't be nil")
-	ErrNilUpdateChannel         = errors.New("tried to subscribe to update channel, but update channel is nil")
-	ErrCheckingForExistingBlock = errors.New(errCheckingForExistingBlock)
+	ErrPeerConnectionWaitTimout  = errors.New("waiting for peer connection timed out")
+	ErrPubSubWaitTimeout         = errors.New("waiting for pubsub timed out")
+	ErrPushLogWaitTimeout        = errors.New("waiting for pushlog timed out")
+	ErrNilDB                     = errors.New("database object can't be nil")
+	ErrNilUpdateChannel          = errors.New("tried to subscribe to update channel, but update channel is nil")
+	ErrCheckingForExistingBlock  = errors.New(errCheckingForExistingBlock)
+	ErrTimeoutWaitingForPeerInfo = errors.New("timeout waiting for peer info")
 )
 
 func NewErrPushLog(inner error, kv ...errors.KV) error {

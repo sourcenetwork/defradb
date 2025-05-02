@@ -12,22 +12,12 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
-
-// CollectionDescription with no known root will take this ID as their temporary RootID.
-//
-// Orphan CollectionDescriptions are typically created when setting migrations from schema versions
-// that do not yet exist.  The OrphanRootID will be replaced with the actual RootID once a full chain
-// of schema versions leading back to a schema version used by a collection with a non-orphan RootID
-// has been established.
-const OrphanRootID uint32 = math.MaxUint32
 
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
@@ -37,21 +27,11 @@ type CollectionDescription struct {
 	// is no means to update the local value so that it differs from the (global) schema name.
 	Name immutable.Option[string]
 
-	// ID is the local identifier of this collection.
-	//
-	// It is immutable.
-	ID uint32
+	// The immutable ID of this collection version.
+	ID string
 
-	// RootID is the local root identifier of this collection, linking together a chain of
-	// collection instances on different schema versions.
-	//
-	// Collections sharing the same RootID will be compatable with each other, with the documents
-	// within them shared and yielded as if they were in the same set, using Lens transforms to
-	// migrate between schema versions when provided.
-	RootID uint32
-
-	// The ID of the schema version that this collection is at.
-	SchemaVersionID string
+	// The immutable ID of this collection, consistent across all versions.
+	CollectionID string
 
 	// Sources is the set of sources from which this collection draws data.
 	//
@@ -104,6 +84,12 @@ type CollectionDescription struct {
 	// that will change in the future.
 	IsBranchable bool
 
+	// IsEmbeddedOnly defines whether this collection exists only as a child object embedded within
+	// another collection or not.
+	//
+	// If true, it will not be directly queriable.
+	IsEmbeddedOnly bool
+
 	// VectorEmbeddings contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
@@ -143,7 +129,7 @@ type CollectionSource struct {
 	//
 	// This is a bi-directional relationship, and documents in the host collection instance will also
 	// be available to the source collection instance.
-	SourceCollectionID uint32
+	SourceCollectionID string
 
 	// Transform is a optional Lens configuration.  If specified, data drawn from the source will have the
 	// transform applied before being returned by any operation on the host collection instance.
@@ -151,11 +137,6 @@ type CollectionSource struct {
 	// If the transform supports an inverse operation, that inverse will be applied when the source collection
 	// draws data from this host.
 	Transform immutable.Option[model.Lens]
-}
-
-// IDString returns the collection ID as a string.
-func (col CollectionDescription) IDString() string {
-	return fmt.Sprint(col.ID)
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
@@ -210,11 +191,12 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
 	Name             immutable.Option[string]
-	ID               uint32
+	ID               string
+	CollectionID     string
 	RootID           uint32
-	SchemaVersionID  string
 	IsMaterialized   bool
 	IsBranchable     bool
+	IsEmbeddedOnly   bool
 	Policy           immutable.Option[PolicyDescription]
 	Indexes          []IndexDescription
 	Fields           []CollectionFieldDescription
@@ -233,10 +215,10 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 
 	c.Name = descMap.Name
 	c.ID = descMap.ID
-	c.RootID = descMap.RootID
-	c.SchemaVersionID = descMap.SchemaVersionID
+	c.CollectionID = descMap.CollectionID
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable
+	c.IsEmbeddedOnly = descMap.IsEmbeddedOnly
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))

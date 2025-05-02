@@ -40,6 +40,7 @@ Execute queries, add schema types, obtain node info, etc.
 * [defradb](defradb.md)	 - DefraDB Edge Database
 * [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system of a DefraDB node
 * [defradb client backup](defradb_client_backup.md)	 - Interact with the backup utility
+* [defradb client block](defradb_client_block.md)	 - Manage blocks of a running DefraDB instance
 * [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
 * [defradb client dump](defradb_client_dump.md)	 - Dump the contents of DefraDB node-side
 * [defradb client index](defradb_client_index.md)	 - Manage collections' indexes of a running DefraDB instance

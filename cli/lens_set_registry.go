@@ -12,7 +12,6 @@ package cli
 
 import (
 	"encoding/json"
-	"strconv"
 	"strings"
 
 	"github.com/lens-vm/lens/host-go/config/model"
@@ -42,12 +41,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return NewErrInvalidLensConfig(err)
 			}
 
-			collectionID, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			return store.LensRegistry().SetMigration(cmd.Context(), uint32(collectionID), lensCfg)
+			return store.LensRegistry().SetMigration(cmd.Context(), args[0], lensCfg)
 		},
 	}
 	return cmd

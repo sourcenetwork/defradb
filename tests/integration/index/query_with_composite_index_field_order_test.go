@@ -173,6 +173,12 @@ func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDe
 }
 
 func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInRevertedOrder(t *testing.T) {
+	req := `query {
+		User(filter: {name: {_like: "A%"}}) {
+			name
+			age
+		}
+	}`
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on first field",
 		Actions: []any{
@@ -224,13 +230,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 					}`,
 			},
 			testUtils.Request{
-				Request: `
-					query {
-						User(filter: {name: {_like: "A%"}}) {
-							name
-							age
-						}
-					}`,
+				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
@@ -255,6 +255,105 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 						},
 					},
 				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// we fetch all available docs with index
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_ShouldFetchInRevertedOrder(t *testing.T) {
+	req := `query {
+		User(order: {name: DESC}) {
+			name
+			age
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Andy",
+						"age":	24
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Andy",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// we fetch all available docs with index
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
 		},
 	}

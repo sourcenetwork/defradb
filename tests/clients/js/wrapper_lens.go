@@ -31,7 +31,7 @@ type LensRegistry struct {
 
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
-func (w *LensRegistry) SetMigration(ctx context.Context, collectionID uint32, config model.Lens) error {
+func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
 	configVal, err := goji.MarshalJS(config)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
 func (w *LensRegistry) MigrateUp(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	var srcList []map[string]any
 	enumerable.ForEach(src, func(item map[string]any) {
@@ -75,7 +75,7 @@ func (w *LensRegistry) MigrateUp(
 func (w *LensRegistry) MigrateDown(
 	ctx context.Context,
 	src enumerable.Enumerable[map[string]any],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
 	var srcList []map[string]any
 	enumerable.ForEach(src, func(item map[string]any) {

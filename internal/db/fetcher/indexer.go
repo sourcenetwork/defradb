@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -39,6 +39,7 @@ type indexFetcher struct {
 	indexIter     indexIterator
 	currentDocID  immutable.Option[string]
 	execInfo      *ExecInfo
+	ordering      []mapper.OrderCondition
 }
 
 var _ fetcher = (*indexFetcher)(nil)
@@ -54,6 +55,7 @@ func newIndexFetcher(
 	col client.Collection,
 	docMapper *core.DocumentMapping,
 	execInfo *ExecInfo,
+	ordering []mapper.OrderCondition,
 ) (*indexFetcher, error) {
 	f := &indexFetcher{
 		ctx:        ctx,
@@ -63,6 +65,7 @@ func newIndexFetcher(
 		indexDesc:  indexDesc,
 		fieldsByID: fieldsByID,
 		execInfo:   execInfo,
+		ordering:   ordering,
 	}
 
 	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
@@ -121,7 +124,16 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	if !f.currentDocID.HasValue() {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
-	prefix := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), f.currentDocID.Value())
+
+	shortID, err := id.GetShortCollectionID(f.ctx, f.txn, f.col.Description().CollectionID)
+	if err != nil {
+		return immutable.None[EncodedDocument](), err
+	}
+
+	prefix := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             f.currentDocID.Value(),
+	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)
 	if err != nil {

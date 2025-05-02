@@ -361,14 +361,11 @@ func assertCollectionDescriptions(
 
 	for i, expected := range expected {
 		actual := actual[i]
-		if expected.ID != 0 {
+		if expected.ID != "" {
 			require.Equal(s.t, expected.ID, actual.ID)
 		}
-		if expected.RootID != 0 {
-			require.Equal(s.t, expected.RootID, actual.RootID)
-		}
-		if expected.SchemaVersionID != "" {
-			require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
+		if expected.CollectionID != "" {
+			require.Equal(s.t, expected.CollectionID, actual.CollectionID)
 		}
 
 		require.Equal(s.t, expected.Name, actual.Name)

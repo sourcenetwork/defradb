@@ -50,17 +50,11 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:              1,
-						SchemaVersionID: "does not exist",
-						IsMaterialized:  true,
-					},
-					{
-						ID:              2,
-						SchemaVersionID: "also does not exist",
-						IsMaterialized:  true,
+						ID:             "also does not exist",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -76,6 +70,10 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						ID:             "does not exist",
+						IsMaterialized: true,
 					},
 				},
 			},
@@ -129,17 +127,11 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:              1,
-						SchemaVersionID: "does not exist",
-						IsMaterialized:  true,
-					},
-					{
-						ID:              2,
-						SchemaVersionID: "also does not exist",
-						IsMaterialized:  true,
+						ID:             "also does not exist",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -157,17 +149,15 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						},
 					},
 					{
-						ID:              3,
-						IsMaterialized:  true,
-						SchemaVersionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+						IsMaterialized: true,
+						ID:             "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 					},
 					{
-						ID:              4,
-						IsMaterialized:  true,
-						SchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+						IsMaterialized: true,
+						ID:             "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 3,
+								SourceCollectionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -183,6 +173,10 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						ID:             "does not exist",
+						IsMaterialized: true,
 					},
 				},
 			},
@@ -237,17 +231,15 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						ID:              1,
-						SchemaVersionID: "a",
-						IsMaterialized:  true,
+						ID:             "a",
+						IsMaterialized: true,
 					},
 					{
-						ID:              2,
-						SchemaVersionID: "b",
-						IsMaterialized:  true,
+						ID:             "b",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "a",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -265,12 +257,11 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						},
 					},
 					{
-						ID:              3,
-						SchemaVersionID: "c",
-						IsMaterialized:  true,
+						ID:             "c",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "a",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{

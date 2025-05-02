@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/js"
@@ -334,6 +335,7 @@ func handleSubscription(value sysjs.Value) <-chan client.GQLResult {
 	iter := goji.ForAwaitOf(value)
 	sub := make(chan client.GQLResult)
 	go func() {
+		defer close(sub)
 		for val := range iter {
 			var gql client.GQLResult
 			if err := goji.UnmarshalJS(val.Value, &gql); err != nil {
@@ -344,7 +346,6 @@ func handleSubscription(value sysjs.Value) <-chan client.GQLResult {
 			}
 			sub <- gql
 		}
-		defer close(sub)
 	}()
 	return sub
 }
@@ -433,4 +434,9 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return out, nil
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	_, err := execute(ctx, w.value, "verifySignature", pubKey.String(), string(pubKey.Type()), blockCid)
+	return err
 }

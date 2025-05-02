@@ -42,7 +42,7 @@ func newLensRegistry(registry client.LensRegistry, txns *sync.Map) js.Value {
 }
 
 func (c *clientLens) setMigration(this js.Value, args []js.Value) (js.Value, error) {
-	collectionID, err := intArg(args, 0, "collectionID")
+	collectionID, err := stringArg(args, 0, "collectionID")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -54,7 +54,7 @@ func (c *clientLens) setMigration(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.registry.SetMigration(ctx, uint32(collectionID), lens)
+	err = c.registry.SetMigration(ctx, collectionID, lens)
 	return js.Undefined(), err
 }
 
@@ -72,7 +72,7 @@ func (c *clientLens) migrateUp(this js.Value, args []js.Value) (js.Value, error)
 	if err := structArg(args, 0, "data", &data); err != nil {
 		return js.Undefined(), err
 	}
-	collectionID, err := intArg(args, 1, "collectionID")
+	collectionID, err := stringArg(args, 1, "collectionID")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -80,7 +80,7 @@ func (c *clientLens) migrateUp(this js.Value, args []js.Value) (js.Value, error)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	result, err := c.registry.MigrateUp(ctx, enumerable.New(data), uint32(collectionID))
+	result, err := c.registry.MigrateUp(ctx, enumerable.New(data), collectionID)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -96,7 +96,7 @@ func (c *clientLens) migrateDown(this js.Value, args []js.Value) (js.Value, erro
 	if err := structArg(args, 0, "data", &data); err != nil {
 		return js.Undefined(), err
 	}
-	collectionID, err := intArg(args, 1, "collectionID")
+	collectionID, err := stringArg(args, 1, "collectionID")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -104,7 +104,7 @@ func (c *clientLens) migrateDown(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	result, err := c.registry.MigrateDown(ctx, enumerable.New(data), uint32(collectionID))
+	result, err := c.registry.MigrateDown(ctx, enumerable.New(data), collectionID)
 	if err != nil {
 		return js.Undefined(), err
 	}

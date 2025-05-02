@@ -66,13 +66,13 @@ func (c *Collection) Schema() client.SchemaDescription {
 	return out
 }
 
-func (c *Collection) ID() uint32 {
+func (c *Collection) ID() string {
 	promise := c.client.Call("id")
 	res, err := goji.Await(goji.PromiseValue(promise))
 	if err != nil {
 		panic(err)
 	}
-	return uint32(res[0].Int())
+	return res[0].String()
 }
 
 func (c *Collection) SchemaRoot() string {

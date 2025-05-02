@@ -29,7 +29,11 @@ func TestColDescrUpdateReplaceIsBranchable_UpdatingFromTrueToFalse_Errors(t *tes
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/IsBranchable", "value": false }
+						{
+							"op": "replace",
+							"path": "/bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4/IsBranchable",
+							"value": false
+						}
 					]
 				`,
 				ExpectedError: "mutating IsBranchable is not supported. Collection: User",
@@ -53,7 +57,11 @@ func TestColDescrUpdateReplaceIsBranchable_UpdatingFromFalseToTrue_Errors(t *tes
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/IsBranchable", "value": true }
+						{
+							"op": "replace",
+							"path": "/bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4/IsBranchable",
+							"value": true
+						}
 					]
 				`,
 				ExpectedError: "mutating IsBranchable is not supported. Collection: User",

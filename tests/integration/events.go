@@ -84,7 +84,7 @@ func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
 	s.nodes[cfg.SourceNodeID].p2p.replicators[cfg.TargetNodeID] = struct{}{}
 }
 
-// waitForReplicatorConfigureEvent waits for a node to publish a
+// waitForReplicatorDeleteEvent waits for a node to publish a
 // replicator completed event on the local event bus.
 func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
 	select {
@@ -126,7 +126,7 @@ func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
 	}
 }
 
-// waitForSubscribeToCollectionEvent waits for a node to publish a
+// waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollection) {
 	select {
@@ -156,7 +156,7 @@ func waitForUpdateEvents(
 	nodeID immutable.Option[int],
 	collectionIndex int,
 	docIDs map[string]struct{},
-	ident immutable.Option[identity],
+	ident immutable.Option[Identity],
 ) {
 	for i := 0; i < len(s.nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -273,11 +273,11 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[identity]) {
+func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[Identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {
-		if c.SchemaRoot() == evt.SchemaRoot {
+		if c.Description().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
 	}
@@ -363,7 +363,7 @@ func getEventsForUpdateWithFilter(
 // returned.  If it is scoped to a schema, the schema root will be returned.
 func getUpdateEventKey(evt event.Update) string {
 	if evt.DocID == "" {
-		return evt.SchemaRoot
+		return evt.CollectionID
 	}
 
 	return evt.DocID
@@ -375,7 +375,7 @@ func getUpdateEventKey(evt event.Update) string {
 // returned.  If it is scoped to a schema, the schema root will be returned.
 func getMergeEventKey(evt event.Merge) string {
 	if evt.DocID == "" {
-		return evt.SchemaRoot
+		return evt.CollectionID
 	}
 
 	return evt.DocID

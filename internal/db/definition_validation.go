@@ -25,7 +25,7 @@ import (
 // It is read only and will not and should not be mutated.
 type definitionState struct {
 	collections     []client.CollectionDescription
-	collectionsByID map[uint32]client.CollectionDescription
+	collectionsByID map[string]client.CollectionDescription
 
 	schemaByID   map[string]client.SchemaDescription
 	schemaByName map[string]client.SchemaDescription
@@ -39,7 +39,7 @@ type definitionState struct {
 func newDefinitionState(
 	definitions []client.CollectionDefinition,
 ) *definitionState {
-	collectionsByID := map[uint32]client.CollectionDescription{}
+	collectionsByID := map[string]client.CollectionDescription{}
 	schemasByID := map[string]client.SchemaDescription{}
 	definitionsByName := map[string]client.CollectionDefinition{}
 	collections := []client.CollectionDescription{}
@@ -50,7 +50,7 @@ func newDefinitionState(
 		schemasByID[def.Schema.VersionID] = def.Schema
 		schemaByName[def.Schema.Name] = def.Schema
 
-		if def.Description.ID != 0 {
+		if def.Description.ID != "" {
 			collectionsByID[def.Description.ID] = def.Description
 			collections = append(collections, def.Description)
 		}
@@ -86,10 +86,10 @@ var updateOnlyValidators = []definitionValidator{
 	validateIndexesNotModified,
 	validateFieldsNotModified,
 	validatePolicyNotModified,
-	validateIDNotZero,
+	validateIDNotEmpty,
 	validateIDUnique,
-	validateRootIDNotMutated,
 	validateSingleVersionActive,
+	validateCollectionIDNotMutated,
 	validateSchemaNotAdded,
 	validateSchemaFieldNotDeleted,
 	validateFieldNotMutated,
@@ -248,7 +248,7 @@ func validateSecondaryFieldsPairUp(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		schema, ok := newState.schemaByID[newCollection.SchemaVersionID]
+		schema, ok := newState.schemaByID[newCollection.ID]
 		if !ok {
 			continue
 		}
@@ -281,7 +281,7 @@ func validateSecondaryFieldsPairUp(
 				continue
 			}
 
-			if len(otherDef.Description.Fields) == 0 {
+			if otherDef.Description.IsEmbeddedOnly {
 				// Views/embedded objects do not require both sides of the relation to be defined.
 				continue
 			}
@@ -314,7 +314,7 @@ func validateSingleSidePrimary(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		schema, ok := newState.schemaByID[newCollection.SchemaVersionID]
+		schema, ok := newState.schemaByID[newCollection.ID]
 		if !ok {
 			continue
 		}
@@ -389,16 +389,16 @@ func validateSingleVersionActive(
 	oldState *definitionState,
 ) error {
 	var errs []error
-	rootsWithActiveCol := map[uint32]struct{}{}
-	for _, col := range newState.collections {
-		if !col.Name.HasValue() {
+	rootsWithActiveCol := map[string]struct{}{}
+	for _, def := range newState.definitionsByName {
+		if !def.Description.Name.HasValue() {
 			continue
 		}
 
-		if _, ok := rootsWithActiveCol[col.RootID]; ok {
-			errs = append(errs, NewErrMultipleActiveCollectionVersions(col.Name.Value(), col.RootID))
+		if _, ok := rootsWithActiveCol[def.Schema.Root]; ok {
+			errs = append(errs, NewErrMultipleActiveCollectionVersions(def.Description.Name.Value(), def.Schema.Root))
 		}
-		rootsWithActiveCol[col.RootID] = struct{}{}
+		rootsWithActiveCol[def.Schema.Root] = struct{}{}
 	}
 
 	return errors.Join(errs...)
@@ -519,7 +519,7 @@ func validatePolicyNotModified(
 	return errors.Join(errs...)
 }
 
-func validateIDNotZero(
+func validateIDNotEmpty(
 	ctx context.Context,
 	db *DB,
 	newState *definitionState,
@@ -527,8 +527,8 @@ func validateIDNotZero(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		if newCol.ID == 0 {
-			errs = append(errs, ErrCollectionIDCannotBeZero)
+		if newCol.ID == "" {
+			errs = append(errs, ErrCollectionIDCannotBeEmpty)
 		}
 	}
 
@@ -542,7 +542,7 @@ func validateIDUnique(
 	oldState *definitionState,
 ) error {
 	var errs []error
-	colIds := map[uint32]struct{}{}
+	colIds := map[string]struct{}{}
 	for _, newCol := range newState.collections {
 		if _, ok := colIds[newCol.ID]; ok {
 			errs = append(errs, NewErrCollectionIDAlreadyExists(newCol.ID))
@@ -569,7 +569,7 @@ func validateIDExists(
 	return errors.Join(errs...)
 }
 
-func validateRootIDNotMutated(
+func validateCollectionIDNotMutated(
 	ctx context.Context,
 	db *DB,
 	newState *definitionState,
@@ -582,23 +582,8 @@ func validateRootIDNotMutated(
 			continue
 		}
 
-		if newCol.RootID != oldCol.RootID {
-			errs = append(errs, NewErrCollectionRootIDCannotBeMutated(newCol.ID))
-		}
-	}
-
-	for _, newSchema := range newState.schemaByName {
-		oldSchema, ok := oldState.schemaByName[newSchema.Name]
-		if !ok {
-			continue
-		}
-
-		if newSchema.Root != oldSchema.Root {
-			errs = append(errs, NewErrSchemaRootDoesntMatch(
-				newSchema.Name,
-				oldSchema.Root,
-				newSchema.Root,
-			))
+		if newCol.CollectionID != oldCol.CollectionID {
+			errs = append(errs, NewErrCollectionIDCannotBeMutated(newCol.ID))
 		}
 	}
 
@@ -618,7 +603,7 @@ func validateSchemaVersionIDNotMutated(
 			continue
 		}
 
-		if newCol.SchemaVersionID != oldCol.SchemaVersionID {
+		if newCol.ID != oldCol.ID {
 			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.ID))
 		}
 	}
@@ -975,7 +960,7 @@ func validateSelfReferences(
 				continue
 			}
 
-			if otherDef.Description.RootID == col.RootID {
+			if otherDef.Schema.Root == newState.schemaByID[col.ID].Root {
 				errs = append(errs, NewErrSelfReferenceWithoutSelf(field.Name))
 			}
 		}

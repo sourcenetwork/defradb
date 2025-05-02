@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -50,7 +50,12 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 			FieldID: core.COMPOSITE_NAMESPACE,
 		}
 	} else {
-		key = keys.NewHeadstoreColKey(col.Description().RootID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, col.Description().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		key = keys.NewHeadstoreColKey(shortID)
 	}
 
 	mt, err := getHeadsAsMergeTarget(ctx, txn, key)
@@ -381,7 +386,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(dagBlock.Delta)
+		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -441,10 +446,10 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
-	schemaVersionKey := keys.CollectionSchemaVersionKey{
-		SchemaVersionID: mp.col.Schema().VersionID,
-		CollectionID:    mp.col.ID(),
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
+	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Description().CollectionID)
+	if err != nil {
+		return nil, err
 	}
 
 	switch {
@@ -454,15 +459,18 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 
 		return merklecrdt.NewMerkleCompositeDAG(
 			mp.txn,
-			schemaVersionKey,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(core.COMPOSITE_NAMESPACE),
+			mp.col.Schema().VersionID,
+			keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
 	case crdt.IsCollection():
 		return merklecrdt.NewMerkleCollection(
 			mp.txn,
-			schemaVersionKey,
-			keys.NewHeadstoreColKey(mp.col.Description().RootID),
+			mp.col.Schema().VersionID,
+			keys.NewHeadstoreColKey(shortID),
 		), nil
 
 	default:
@@ -478,16 +486,19 @@ func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT
 
 		return merklecrdt.FieldLevelCRDTWithStore(
 			mp.txn,
-			schemaVersionKey,
+			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(fd.ID.String()),
+			keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}.WithFieldID(fd.ID.String()),
 			field,
 		)
 	}
 }
 
-func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string) (*collection, error) {
+func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -497,14 +508,14 @@ func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string)
 	cols, err := db.getCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(rootSchema),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(rootSchema)
+		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
 	}
 	// We currently only support one active collection per root schema
 	// so it is safe to return the first one.

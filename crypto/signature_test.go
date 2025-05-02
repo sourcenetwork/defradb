@@ -143,7 +143,7 @@ func TestVerifyECDSA_NilPublicKey(t *testing.T) {
 	message := []byte("test message")
 	err := VerifyECDSA256K(nil, message, []byte("signature"))
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, ErrUnsupportedECDSAPrivKeyType)
+	assert.ErrorIs(t, err, ErrNilKey)
 }
 
 func TestVerifyEd25519_WithPublicKeyStruct(t *testing.T) {

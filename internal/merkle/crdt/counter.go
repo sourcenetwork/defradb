@@ -33,13 +33,13 @@ var _ FieldLevelMerkleCRDT = (*MerkleCounter)(nil)
 // backed by a Counter CRDT.
 func NewMerkleCounter(
 	store Stores,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *MerkleCounter {
-	register := crdt.NewCounter(store.Datastore(), schemaVersionKey, key, fieldName, allowDecrement, kind)
+	register := crdt.NewCounter(store.Datastore(), schemaVersionID, key, fieldName, allowDecrement, kind)
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
 		register)
 

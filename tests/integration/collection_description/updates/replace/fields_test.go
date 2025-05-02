@@ -27,10 +27,14 @@ func TestColDescrUpdateReplaceFields_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Fields", "value": [{}] }
+						{
+							"op": "replace",
+							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Fields",
+							"value": [{}]
+						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection fields cannot be mutated.",
 			},
 		},
 	}
@@ -50,10 +54,14 @@ func TestColDescrUpdateReplaceDefaultValue_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/1/Fields/1/DefaultValue", "value": "Alice" }
+						{
+							"op": "replace",
+							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Fields/1/DefaultValue",
+							"value": "Alice"
+						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated. CollectionID: 1",
+				ExpectedError: "collection fields cannot be mutated.",
 			},
 		},
 	}

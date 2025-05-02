@@ -51,12 +51,6 @@ func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinitio
 		return NewLocalFieldDefinition(
 			collectionField,
 		), true
-	} else if !existsOnCollection && existsOnSchema {
-		// If the field only exist on the schema it is likely that this is a schema-only object
-		// definition, for example for an embedded object.
-		return NewSchemaOnlyFieldDefinition(
-			schemaField,
-		), true
 	}
 
 	return FieldDefinition{}, false
@@ -66,7 +60,6 @@ func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinitio
 // as a single set.
 func (def CollectionDefinition) GetFields() []FieldDefinition {
 	fields := []FieldDefinition{}
-	localFieldNames := map[string]struct{}{}
 
 	for _, localField := range def.Description.Fields {
 		globalField, ok := def.Schema.GetFieldByName(localField.Name)
@@ -82,18 +75,6 @@ func (def CollectionDefinition) GetFields() []FieldDefinition {
 				NewLocalFieldDefinition(localField),
 			)
 		}
-		localFieldNames[localField.Name] = struct{}{}
-	}
-
-	for _, schemaField := range def.Schema.Fields {
-		if _, ok := localFieldNames[schemaField.Name]; ok {
-			continue
-		}
-		// This must be a global only field, for example on an embedded object.
-		fields = append(
-			fields,
-			NewSchemaOnlyFieldDefinition(schemaField),
-		)
 	}
 
 	return fields
@@ -222,25 +203,19 @@ type DefinitionCache struct {
 
 	// The cached Definitions mapped by the Root of their [SchemaDescription]
 	DefinitionsBySchemaRoot map[string]CollectionDefinition
-
-	// The cached Definitions mapped by the Root of their [CollectionDescription]
-	DefinitionsByCollectionRoot map[uint32]CollectionDefinition
 }
 
 // NewDefinitionCache creates a new [DefinitionCache] populated with the given [CollectionDefinition]s.
 func NewDefinitionCache(definitions []CollectionDefinition) DefinitionCache {
 	definitionsBySchemaRoot := make(map[string]CollectionDefinition, len(definitions))
-	definitionsByCollectionRoot := make(map[uint32]CollectionDefinition, len(definitions))
 
 	for _, def := range definitions {
 		definitionsBySchemaRoot[def.Schema.Root] = def
-		definitionsByCollectionRoot[def.Description.RootID] = def
 	}
 
 	return DefinitionCache{
-		Definitions:                 definitions,
-		DefinitionsBySchemaRoot:     definitionsBySchemaRoot,
-		DefinitionsByCollectionRoot: definitionsByCollectionRoot,
+		Definitions:             definitions,
+		DefinitionsBySchemaRoot: definitionsBySchemaRoot,
 	}
 }
 
@@ -267,15 +242,7 @@ func GetDefinition(
 		def, ok := cache.DefinitionsBySchemaRoot[typedKind.Root]
 		return def, ok
 
-	case *CollectionKind:
-		def, ok := cache.DefinitionsByCollectionRoot[typedKind.Root]
-		return def, ok
-
 	case *SelfKind:
-		if host.Description.RootID != 0 {
-			return host, true
-		}
-
 		if typedKind.RelativeID == "" {
 			return host, true
 		}
@@ -326,35 +293,34 @@ func GetDefinitionFromStore(
 		return col.Definition(), true, nil
 
 	case *SchemaKind:
-		schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
-			Root: immutable.Some(typedKind.Root),
+		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
+			CollectionID: immutable.Some(typedKind.Root),
 		})
-		if len(schemas) == 0 || err != nil {
-			return CollectionDefinition{}, false, err
+
+		if len(cols) == 0 || errors.Is(err, ErrNotFound) {
+			// If no collections were found, check for schema-only collections
+			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
+				Root: immutable.Some(typedKind.Root),
+			})
+
+			if len(schemas) == 0 || err != nil {
+				return CollectionDefinition{}, false, err
+			}
+
+			return CollectionDefinition{
+				// todo - returning the first is a temporary simplification until
+				// https://github.com/sourcenetwork/defradb/issues/2934
+				Schema: schemas[0],
+			}, true, nil
 		}
 
-		return CollectionDefinition{
-			// todo - returning the first is a temporary simplification until
-			// https://github.com/sourcenetwork/defradb/issues/2934
-			Schema: schemas[0],
-		}, true, nil
-
-	case *CollectionKind:
-		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			Root: immutable.Some(typedKind.Root),
-		})
-
-		if len(cols) == 0 || err != nil {
+		if err != nil {
 			return CollectionDefinition{}, false, err
 		}
 
 		return cols[0].Definition(), true, nil
 
 	case *SelfKind:
-		if host.Description.RootID != 0 {
-			return host, true, nil
-		}
-
 		if typedKind.RelativeID == "" {
 			return host, true, nil
 		}
@@ -363,7 +329,7 @@ func GetDefinitionFromStore(
 		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
 
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			SchemaRoot: immutable.Some(targetID),
+			CollectionID: immutable.Some(targetID),
 		})
 		if len(cols) == 0 || err != nil {
 			return CollectionDefinition{}, false, err

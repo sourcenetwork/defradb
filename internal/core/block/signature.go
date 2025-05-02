@@ -11,9 +11,6 @@
 package coreblock
 
 import (
-	"crypto/ed25519"
-
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
@@ -23,7 +20,7 @@ import (
 
 const (
 	SignatureTypeECDSA256K = "ES256K"
-	SignatureTypeEd25519   = "Ed25519"
+	SignatureTypeEd25519   = "EdDSA"
 )
 
 // SignatureHeader contains the header of the signature.
@@ -100,44 +97,100 @@ func (sig *Signature) GenerateNode() ipld.Node {
 	return bindnode.Wrap(sig, SignatureSchema).Representation()
 }
 
-// VerifyBlockSignature verifies the signature of a block.
+// verifySignature performs the cryptographic verification
+func verifySignature(pubKey crypto.PublicKey, signedBytes, sigValue []byte) error {
+	valid, err := pubKey.Verify(signedBytes, sigValue)
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return crypto.ErrSignatureVerification
+	}
+	return nil
+}
+
+// VerifyBlockSignature verifies the signature of a block using the link system.
 // The first return value is true if it actually ran cryptographic verification.
 func VerifyBlockSignature(block *Block, lsys *linking.LinkSystem) (bool, error) {
 	if block.Signature == nil {
 		return false, nil
 	}
 
-	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
-	if err != nil {
-		return false, NewErrCouldNotLoadSignatureBlock(err)
-	}
-
-	sigBlock, err := GetSignatureBlockFromNode(nd)
-	if err != nil {
-		return false, NewErrCouldNotLoadSignatureBlock(err)
-	}
-
-	blockToVerify := *block
-	blockToVerify.Signature = nil
-
-	signedBytes, err := marshalNode(&blockToVerify, BlockSchema)
+	signedBytes, err := getBlockBytesToSign(block)
 	if err != nil {
 		return false, err
 	}
 
+	sigBlock, err := loadSignatureBlock(block, lsys)
+	if err != nil {
+		return false, err
+	}
+
+	pubKey, err := getPublicKeyFromSignature(sigBlock)
+	if err != nil {
+		return false, err
+	}
+
+	return true, verifySignature(pubKey, signedBytes, sigBlock.Value)
+}
+
+// VerifyBlockSignatureWithKey verifies the signature of a block using a public key.
+// The first return value is true if it actually ran cryptographic verification.
+func VerifyBlockSignatureWithKey(block *Block, lsys *linking.LinkSystem, pubKey crypto.PublicKey) (bool, error) {
+	if block.Signature == nil {
+		return false, nil
+	}
+
+	signedBytes, err := getBlockBytesToSign(block)
+	if err != nil {
+		return false, err
+	}
+
+	sigBlock, err := loadSignatureBlock(block, lsys)
+	if err != nil {
+		return false, err
+	}
+
+	// Verify that the identity matches the signature's identity
+	if string(sigBlock.Header.Identity) != pubKey.String() {
+		return false, ErrSignaturePubKeyMismatch
+	}
+
+	return true, verifySignature(pubKey, signedBytes, sigBlock.Value)
+}
+
+func loadSignatureBlock(block *Block, lsys *linking.LinkSystem) (*Signature, error) {
+	nd, err := lsys.Load(ipld.LinkContext{}, *block.Signature, SignatureSchemaPrototype)
+	if err != nil {
+		return nil, NewErrCouldNotLoadSignatureBlock(err)
+	}
+
+	sigBlock, err := GetSignatureBlockFromNode(nd)
+	if err != nil {
+		return nil, NewErrCouldNotLoadSignatureBlock(err)
+	}
+	return sigBlock, nil
+}
+
+// getBlockBytesToSign returns the bytes to sign for a block
+func getBlockBytesToSign(block *Block) ([]byte, error) {
+	blockToVerify := *block
+	blockToVerify.Signature = nil
+
+	return marshalNode(&blockToVerify, BlockSchema)
+}
+
+// getPublicKeyFromSignature extracts the public key from a signature block
+func getPublicKeyFromSignature(sigBlock *Signature) (crypto.PublicKey, error) {
+	var keyType crypto.KeyType
 	switch sigBlock.Header.Type {
 	case SignatureTypeEd25519:
-		pubKey := ed25519.PublicKey(sigBlock.Header.Identity)
-		return true, crypto.Verify(pubKey, signedBytes, sigBlock.Value)
-
+		keyType = crypto.KeyTypeEd25519
 	case SignatureTypeECDSA256K:
-		pubKey, err := secp256k1.ParsePubKey(sigBlock.Header.Identity)
-		if err != nil {
-			return false, crypto.ErrUnsupportedECDSAPrivKeyType
-		}
-		return true, crypto.Verify(pubKey, signedBytes, sigBlock.Value)
-
+		keyType = crypto.KeyTypeSecp256k1
 	default:
-		return false, crypto.ErrUnsupportedPrivKeyType
+		return nil, crypto.ErrUnsupportedPrivKeyType
 	}
+
+	return crypto.PublicKeyFromString(keyType, string(sigBlock.Header.Identity))
 }

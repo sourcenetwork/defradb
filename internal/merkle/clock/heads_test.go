@@ -21,6 +21,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/stretchr/testify/require"
 
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -105,13 +106,13 @@ func TestHeadsAdd(t *testing.T) {
 	}
 }
 
-func TestHeaddsList(t *testing.T) {
+func TestHeadsList(t *testing.T) {
 	ctx := context.Background()
 	heads := newHeadSet()
 	c1 := newRandomCID()
 	c2 := newRandomCID()
-	heads.Write(ctx, c1, uint64(1))
-	heads.Write(ctx, c2, uint64(2))
+	require.NoError(t, heads.Write(ctx, c1, uint64(1)))
+	require.NoError(t, heads.Write(ctx, c2, uint64(2)))
 
 	list, h, err := heads.List(ctx)
 	if err != nil {

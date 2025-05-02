@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -144,6 +145,10 @@ type DB interface {
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+
+	// VerifySignature verifies the signatures of a block using a public key.
+	// Returns an error if any signature verification fails.
+	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
 }
 
 // Store contains the core DefraDB read-write operations.
@@ -397,14 +402,11 @@ type RequestResult struct {
 
 // CollectionFetchOptions represents a set of options used for fetching collections.
 type CollectionFetchOptions struct {
-	// If provided, only collections with this schema version id will be returned.
-	SchemaVersionID immutable.Option[string]
+	// If provided, only collections with this version id will be returned.
+	ID immutable.Option[string]
 
-	// If provided, only collections with schemas of this root will be returned.
-	SchemaRoot immutable.Option[string]
-
-	// If provided, only collections with this root will be returned.
-	Root immutable.Option[uint32]
+	// If provided, only collections with this CollectionID will be returned.
+	CollectionID immutable.Option[string]
 
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]

@@ -14,33 +14,40 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 func MakeIdentityNewCommand() *cobra.Command {
+	var keyType string
+
 	var cmd = &cobra.Command{
 		Use:   "new",
 		Short: "Generate a new identity",
 		Long: `Generate a new identity
 
 The generated identity contains:
-- A secp256k1 private key that is a 256-bit big-endian binary-encoded number,
-padded to a length of 32 bytes in HEX format.
-- A compressed 33-byte secp256k1 public key in HEX format.
+- A private key (secp256k1 or ed25519, based on --type flag)
+- A corresponding public key
 - A "did:key" generated from the public key.
 
-Example: generate a new identity:
+Example: generate a new identity with secp256k1 key (default):
   defradb identity new
+
+Example: generate a new identity with ed25519 key:
+  defradb identity new --type ed25519
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			newIdentity, err := identity.Generate()
+			newIdentity, err := identity.Generate(crypto.KeyType(keyType))
 			if err != nil {
 				return err
 			}
 
-			return writeJSON(cmd, newIdentity)
+			return writeJSON(cmd, newIdentity.IntoRawIdentity())
 		},
 	}
+
+	cmd.Flags().StringVar(&keyType, "type", "secp256k1", "Key type (secp256k1 or ed25519)")
 
 	return cmd
 }

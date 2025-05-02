@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
@@ -71,8 +72,13 @@ type TestCase struct {
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
-	// If set to true DAG blocks will be signed with a separate block that
-	EnabledBlockSigning bool
+	// EnableSigning indicates if signing should be enabled for the test.
+	// Use [IdentityTypes] to customize the key type that is used for identity and signing.
+	EnableSigning bool
+
+	// IdentityTypes is a map of identity to key type.
+	// Use it to customize the key type that is used for identity and signing.
+	IdentityTypes map[Identity]crypto.KeyType
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -343,9 +349,9 @@ type CreateDoc struct {
 	// If an Identity is provided and the collection has a policy, then the
 	// created document(s) will be owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -415,9 +421,9 @@ type DeleteDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -448,9 +454,9 @@ type UpdateDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -491,9 +497,9 @@ type UpdateWithFilter struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -648,9 +654,9 @@ type Request struct {
 	// If an Identity is provided and the collection has a policy, then can
 	// operate over private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	Identity immutable.Option[Identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -851,13 +857,34 @@ type GetNodeIdentity struct {
 
 	// ExpectedIdentity holds the identity that is expected to be found.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity immutable.Option[identity]
+	ExpectedIdentity immutable.Option[Identity]
 }
 
 // Wait is an action that will wait for the given duration.
 type Wait struct {
 	// Duration is the duration to wait.
 	Duration time.Duration
+}
+
+// VerifyBlockSignature is an action that will verify the signature of the given block.
+type VerifyBlockSignature struct {
+	// The cid of the block to verify the signature of.
+	Cid string
+
+	// The identity of this request. Optional.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[Identity]
+
+	// The identity of the author of the block to verify the signature of.
+	SignerIdentity Identity
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }

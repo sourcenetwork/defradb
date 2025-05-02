@@ -32,7 +32,6 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 					query {
 						commits {
 							cid
-							collectionID
 							delta
 							docID
 							fieldId
@@ -48,33 +47,30 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":          "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
-							"collectionID": int64(1),
-							"delta":        encrypt(testUtils.CBORValue(21), john21DocID, ""),
-							"docID":        john21DocID,
-							"fieldId":      "1",
-							"fieldName":    "age",
-							"height":       int64(1),
-							"links":        []map[string]any{},
+							"cid":       "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
+							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
+							"docID":     john21DocID,
+							"fieldId":   "1",
+							"fieldName": "age",
+							"height":    int64(1),
+							"links":     []map[string]any{},
 						},
 						{
-							"cid":          "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
-							"collectionID": int64(1),
-							"delta":        encrypt(testUtils.CBORValue("John"), john21DocID, ""),
-							"docID":        john21DocID,
-							"fieldId":      "2",
-							"fieldName":    "name",
-							"height":       int64(1),
-							"links":        []map[string]any{},
+							"cid":       "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
+							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
+							"docID":     john21DocID,
+							"fieldId":   "2",
+							"fieldName": "name",
+							"height":    int64(1),
+							"links":     []map[string]any{},
 						},
 						{
-							"cid":          "bafyreidl77w6pex7uworttm5bsqyvli5qxqoqy3q2n2xqor5vrqfr3woee",
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        john21DocID,
-							"fieldId":      "C",
-							"fieldName":    nil,
-							"height":       int64(1),
+							"cid":       "bafyreidl77w6pex7uworttm5bsqyvli5qxqoqy3q2n2xqor5vrqfr3woee",
+							"delta":     nil,
+							"docID":     john21DocID,
+							"fieldId":   "C",
+							"fieldName": nil,
+							"height":    int64(1),
 							"links": []map[string]any{
 								{
 									"cid":  "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",

@@ -24,6 +24,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	libp2pevent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
@@ -186,6 +187,20 @@ func NewPeer(
 		}
 	}()
 
+	// There is a possibility for the PeerInfo event to trigger before the PeerInfo has been set for the host.
+	// To avoid this, we wait for the host to indicate that its local address has been updated.
+	sub, err := h.EventBus().Subscribe(&libp2pevent.EvtLocalAddressesUpdated{})
+	if err != nil {
+		return nil, err
+	}
+	select {
+	case <-sub.Out():
+		break
+	case <-time.After(5 * time.Second):
+		// This can only happen if the listening address has been mistakenly set to a zero value.
+		return nil, ErrTimeoutWaitingForPeerInfo
+	}
+
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
 
 	return p, nil
@@ -286,11 +301,11 @@ func (p *Peer) handleLog(evt event.Update) error {
 	// Retries are for replicators only and should not polluting the pubsub network.
 	if !evt.IsRetry {
 		req := &pushLogRequest{
-			DocID:      evt.DocID,
-			CID:        evt.Cid.Bytes(),
-			SchemaRoot: evt.SchemaRoot,
-			Creator:    p.host.ID().String(),
-			Block:      evt.Block,
+			DocID:        evt.DocID,
+			CID:          evt.Cid.Bytes(),
+			CollectionID: evt.CollectionID,
+			Creator:      p.host.ID().String(),
+			Block:        evt.Block,
 		}
 
 		if evt.DocID != "" {
@@ -299,8 +314,8 @@ func (p *Peer) handleLog(evt event.Update) error {
 			}
 		}
 
-		if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
+		if err := p.server.publishLog(p.ctx, evt.CollectionID, req); err != nil {
+			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
 		}
 	}
 
@@ -316,7 +331,7 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	}
 
 	p.server.mu.Lock()
-	reps, exists := p.server.replicators[lg.SchemaRoot]
+	reps, exists := p.server.replicators[lg.CollectionID]
 	p.server.mu.Unlock()
 
 	if exists {

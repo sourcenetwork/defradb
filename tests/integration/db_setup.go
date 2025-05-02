@@ -42,7 +42,7 @@ func createBadgerEncryptionKey() error {
 // select the datastore implementation to use.
 func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithBlockSigning(s.enabledBlockSigning))
+	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 
 	err := createBadgerEncryptionKey()
 	if err != nil {

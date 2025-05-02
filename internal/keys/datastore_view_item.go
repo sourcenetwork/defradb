@@ -24,8 +24,8 @@ import (
 // It is stored in the format `/collection/vi/[CollectionRootID]/[ItemID]`. It points to the
 // full serialized View item.
 type ViewCacheKey struct {
-	// CollectionRootID is the Root of the Collection that this item belongs to.
-	CollectionRootID uint32
+	// CollectionShortID is the id of the Collection that this item belongs to.
+	CollectionShortID uint32
 
 	// ItemID is the unique (to this CollectionRootID) ID of the View item.
 	//
@@ -36,16 +36,16 @@ type ViewCacheKey struct {
 
 var _ Key = (*ViewCacheKey)(nil)
 
-func NewViewCacheColPrefix(rootID uint32) ViewCacheKey {
+func NewViewCacheColPrefix(collectionShortID uint32) ViewCacheKey {
 	return ViewCacheKey{
-		CollectionRootID: rootID,
+		CollectionShortID: collectionShortID,
 	}
 }
 
-func NewViewCacheKey(rootID uint32, itemID uint) ViewCacheKey {
+func NewViewCacheKey(collectionShortID uint32, itemID uint) ViewCacheKey {
 	return ViewCacheKey{
-		CollectionRootID: rootID,
-		ItemID:           itemID,
+		CollectionShortID: collectionShortID,
+		ItemID:            itemID,
 	}
 }
 
@@ -56,9 +56,9 @@ func (k ViewCacheKey) ToString() string {
 func (k ViewCacheKey) Bytes() []byte {
 	result := []byte(COLLECTION_VIEW_ITEMS)
 
-	if k.CollectionRootID != 0 {
+	if k.CollectionShortID != 0 {
 		result = append(result, '/')
-		result = encoding.EncodeUvarintAscending(result, uint64(k.CollectionRootID))
+		result = encoding.EncodeUvarintAscending(result, uint64(k.CollectionShortID))
 	}
 
 	if k.ItemID != 0 {
@@ -76,8 +76,8 @@ func (k ViewCacheKey) ToDS() ds.Key {
 func (k ViewCacheKey) PrettyPrint() string {
 	result := COLLECTION_VIEW_ITEMS
 
-	if k.CollectionRootID != 0 {
-		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
+	if k.CollectionShortID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionShortID))
 	}
 	if k.ItemID != 0 {
 		result = result + "/" + strconv.Itoa(int(k.ItemID))

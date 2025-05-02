@@ -120,7 +120,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		var isEmbedded bool
 		for _, definition := range collections {
-			if t.Name() == definition.Schema.Name && !definition.Description.Name.HasValue() {
+			if t.Name() == definition.Schema.Name && definition.Description.IsEmbeddedOnly {
 				isEmbedded = true
 				break
 			}
@@ -435,12 +435,11 @@ func (g *Generator) buildTypes(
 
 	for _, collection := range collections {
 		fieldDescriptions := collection.GetFields()
-		isEmbeddedObject := !collection.Description.Name.HasValue()
 		isQuerySource := len(collection.Description.QuerySources()) > 0
-		isViewObject := isEmbeddedObject || isQuerySource
+		isViewObject := collection.Description.IsEmbeddedOnly || isQuerySource
 
 		var objectName string
-		if isEmbeddedObject {
+		if collection.Description.IsEmbeddedOnly {
 			// If this is an embedded object, take the type name from the Schema
 			objectName = collection.Schema.Name
 		} else {
@@ -545,10 +544,9 @@ func (g *Generator) buildTypes(
 // for collection create and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
 	for _, collection := range collections {
-		if !collection.Description.Name.HasValue() {
-			// If the definition's collection is empty, this must be a collectionless
-			// schema, in which case users cannot mutate documents through it and we
-			// have no need to build mutation input types for it.
+		if collection.Description.IsEmbeddedOnly {
+			// Users cannot mutate documents through embedded collections, so we
+			// have no need to build mutation input types for this collection.
 			continue
 		}
 

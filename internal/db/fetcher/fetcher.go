@@ -60,6 +60,7 @@ type Fetcher interface {
 		col client.Collection,
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,
+		ordering []mapper.OrderCondition,
 		docmapper *core.DocumentMapping,
 		showDeleted bool,
 	) error

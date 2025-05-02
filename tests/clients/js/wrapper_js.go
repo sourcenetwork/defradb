@@ -14,7 +14,6 @@ package js
 
 import (
 	"context"
-	"encoding/hex"
 	"syscall/js"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -32,7 +31,7 @@ func execute(ctx context.Context, value js.Value, method string, args ...any) ([
 	}
 	id := identity.FromContext(ctx)
 	if id.HasValue() && id.Value().PrivateKey != nil {
-		contextValues["identity"] = hex.EncodeToString(id.Value().PrivateKey.Serialize())
+		contextValues["identity"] = id.Value().PrivateKey.String()
 	}
 	enc := encryption.GetContextConfig(ctx)
 	if enc.HasValue() {

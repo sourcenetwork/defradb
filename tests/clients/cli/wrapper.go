@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -267,11 +268,11 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		args = append(args, "--version", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -318,11 +319,11 @@ func (w *Wrapper) GetCollections(
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.ID.HasValue() {
+		args = append(args, "--version", options.ID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -577,4 +578,14 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	args := []string{"client", "block", "verify-signature"}
+
+	args = append(args, "--type", string(pubKey.Type()))
+	args = append(args, pubKey.String(), cid)
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }

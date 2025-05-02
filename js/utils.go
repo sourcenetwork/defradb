@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/encryption"
@@ -122,7 +123,7 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 		return immutable.None[acpIdentity.Identity](), err
 	}
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	identity, err := acpIdentity.FromPrivateKey(privKey)
+	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}

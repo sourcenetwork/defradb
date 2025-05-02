@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -262,6 +262,9 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	if isScanNode {
 		origScan.showDeleted = n.selectReq.ShowDeleted
 		origScan.filter = n.filter
+		if n.selectReq.OrderBy != nil {
+			origScan.ordering = n.selectReq.OrderBy.Conditions
+		}
 		n.filter = nil
 
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
@@ -284,6 +287,15 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 				},
 			)
 		} else if n.selectReq.DocIDs.HasValue() {
+			shortID, err := id.GetShortCollectionID(
+				n.planner.ctx,
+				n.planner.txn,
+				sourcePlan.collection.Description().CollectionID,
+			)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
 			// if we have a FindByDocID filter, create a prefix for it
 			// and propagate it to the scanNode
@@ -291,8 +303,12 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+
 			for i, docID := range n.selectReq.DocIDs.Value() {
-				prefixes[i] = base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
+				prefixes[i] = keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocID:             docID,
+				}
 			}
 			origScan.Prefixes(prefixes)
 		}
@@ -305,6 +321,10 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 
 	if isScanNode {
 		origScan.index = findIndexByFilteringField(origScan)
+		if !origScan.index.HasValue() {
+			// if we can not use index for filtering, try to use index for ordering
+			origScan.index = findIndexByOrderingField(origScan)
+		}
 		origScan.initFetcher(n.selectReq.Cid)
 	}
 
@@ -312,26 +332,26 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	if scanNode.filter == nil {
-		return immutable.None[client.IndexDescription]()
-	}
-	colDesc := scanNode.col.Description()
-
-	conditions := scanNode.filter.ExternalConditions
 	var indexCandidates []client.IndexDescription
-	filter.TraverseFields(conditions, func(path []string, val any) bool {
-		for _, field := range scanNode.col.Schema().Fields {
-			if field.Name != path[0] {
-				continue
+
+	if scanNode.filter != nil {
+		colDesc := scanNode.col.Description()
+		conditions := scanNode.filter.ExternalConditions
+		filter.TraverseFields(conditions, func(path []string, val any) bool {
+			for _, field := range scanNode.col.Schema().Fields {
+				if field.Name != path[0] {
+					continue
+				}
+				indexes := colDesc.GetIndexesOnField(field.Name)
+				if len(indexes) > 0 {
+					indexCandidates = append(indexCandidates, indexes...)
+					return true
+				}
 			}
-			indexes := colDesc.GetIndexesOnField(field.Name)
-			if len(indexes) > 0 {
-				indexCandidates = append(indexCandidates, indexes...)
-				return true
-			}
-		}
-		return true
-	})
+			return true
+		})
+	}
+
 	if len(indexCandidates) == 0 {
 		return immutable.None[client.IndexDescription]()
 	}
@@ -342,6 +362,34 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	// we return the first found index. We will optimize it later.
 	// https://github.com/sourcenetwork/defradb/issues/2680
 	return immutable.Some(indexCandidates[0])
+}
+
+func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
+	if len(scanNode.ordering) > 0 {
+		colDesc := scanNode.col.Description()
+
+		fieldNames := []string{}
+		mapping := scanNode.documentMapping
+		for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
+			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
+			if !found {
+				return immutable.None[client.IndexDescription]()
+			}
+
+			fieldNames = append(fieldNames, fieldName)
+			if fieldIndex < len(mapping.ChildMappings) {
+				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+					mapping = childMapping
+				}
+			}
+		}
+
+		indexes := colDesc.GetIndexesOnField(fieldNames[0])
+		if len(indexes) > 0 {
+			return immutable.Some(indexes[0])
+		}
+	}
+	return immutable.None[client.IndexDescription]()
 }
 
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
