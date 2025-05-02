@@ -51,12 +51,6 @@ func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinitio
 		return NewLocalFieldDefinition(
 			collectionField,
 		), true
-	} else if !existsOnCollection && existsOnSchema {
-		// If the field only exist on the schema it is likely that this is a schema-only object
-		// definition, for example for an embedded object.
-		return NewSchemaOnlyFieldDefinition(
-			schemaField,
-		), true
 	}
 
 	return FieldDefinition{}, false
@@ -66,7 +60,6 @@ func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinitio
 // as a single set.
 func (def CollectionDefinition) GetFields() []FieldDefinition {
 	fields := []FieldDefinition{}
-	localFieldNames := map[string]struct{}{}
 
 	for _, localField := range def.Description.Fields {
 		globalField, ok := def.Schema.GetFieldByName(localField.Name)
@@ -82,18 +75,6 @@ func (def CollectionDefinition) GetFields() []FieldDefinition {
 				NewLocalFieldDefinition(localField),
 			)
 		}
-		localFieldNames[localField.Name] = struct{}{}
-	}
-
-	for _, schemaField := range def.Schema.Fields {
-		if _, ok := localFieldNames[schemaField.Name]; ok {
-			continue
-		}
-		// This must be a global only field, for example on an embedded object.
-		fields = append(
-			fields,
-			NewSchemaOnlyFieldDefinition(schemaField),
-		)
 	}
 
 	return fields

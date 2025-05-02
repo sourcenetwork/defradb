@@ -918,34 +918,7 @@ func getTopLevelInfo(
 		var definition client.CollectionDefinition
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			// If the collection is not found, check to see if a schema of that name exists,
-			// if so, this must be an embedded object.
-			//
-			// Note: This is a poor way to check if a collection exists or not, see
-			// https://github.com/sourcenetwork/defradb/issues/2146
-			schemas, err := store.GetSchemas(
-				ctx,
-				client.SchemaFetchOptions{
-					Name: immutable.Some(collectionName),
-				},
-			)
-			if err != nil {
-				return nil, client.CollectionDefinition{}, err
-			}
-			if len(schemas) == 0 {
-				return nil, client.CollectionDefinition{}, NewErrTypeNotFound(collectionName)
-			}
-
-			for i, f := range schemas[0].Fields {
-				// As embedded objects do not have collections/field-ids, we just take the index
-				mapping.Add(int(i), f.Name)
-			}
-
-			definition = client.CollectionDefinition{
-				// `schemas` will contain all versions of that name, as views cannot be updated atm this should
-				// be fine for now
-				Schema: schemas[0],
-			}
+			return nil, client.CollectionDefinition{}, err
 		} else {
 			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 			definition = collection.Definition()

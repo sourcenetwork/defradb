@@ -52,6 +52,33 @@ var TypeToDefaultPropName = map[string]string{
 	typeBlob:     types.DefaultDirectivePropBlob,
 }
 
+type typeDefinition struct {
+	Name        *ast.Name
+	Description *ast.StringValue
+	Directives  []*ast.Directive
+	Fields      []*ast.FieldDefinition
+	IsInterface bool
+}
+
+func newInterfaceDefinition(def *ast.InterfaceDefinition) *typeDefinition {
+	return &typeDefinition{
+		Name:        def.Name,
+		Description: def.Description,
+		Directives:  def.Directives,
+		Fields:      def.Fields,
+		IsInterface: true,
+	}
+}
+
+func newObjectDefinition(def *ast.ObjectDefinition) *typeDefinition {
+	return &typeDefinition{
+		Name:        def.Name,
+		Description: def.Description,
+		Directives:  def.Directives,
+		Fields:      def.Fields,
+	}
+}
+
 // fromAst parses a GQL AST into a set of collection descriptions.
 func fromAst(doc *ast.Document) (
 	[]client.CollectionDefinition,
@@ -63,7 +90,8 @@ func fromAst(doc *ast.Document) (
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
-			description, err := collectionFromAstDefinition(defType, cTypeByFieldNameByObjName)
+			td := newObjectDefinition(defType)
+			description, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
 			if err != nil {
 				return nil, err
 			}
@@ -71,18 +99,13 @@ func fromAst(doc *ast.Document) (
 			definitions = append(definitions, description)
 
 		case *ast.InterfaceDefinition:
-			description, err := schemaFromAstDefinition(defType, cTypeByFieldNameByObjName)
+			td := newInterfaceDefinition(defType)
+			description, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
 			if err != nil {
 				return nil, err
 			}
 
-			definitions = append(
-				definitions,
-				client.CollectionDefinition{
-					// `Collection` is left as default, as interfaces are schema-only declarations
-					Schema: description,
-				},
-			)
+			definitions = append(definitions, description)
 
 		default:
 			// Do nothing, ignore it and continue
@@ -101,9 +124,9 @@ func fromAst(doc *ast.Document) (
 	return definitions, nil
 }
 
-// collectionFromAstDefinition parses a AST object definition into a set of collection descriptions.
-func collectionFromAstDefinition(
-	def *ast.ObjectDefinition,
+// fromAstDefinition parses a AST object definition into a set of collection descriptions.
+func fromAstDefinition(
+	def *typeDefinition,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) (client.CollectionDefinition, error) {
 	schemaFieldDescriptions := []client.SchemaFieldDescription{
@@ -128,7 +151,6 @@ func collectionFromAstDefinition(
 			field,
 			def.Name.Value,
 			cTypeByFieldNameByObjName,
-			false,
 		)
 		if err != nil {
 			return client.CollectionDefinition{}, err
@@ -238,39 +260,13 @@ func collectionFromAstDefinition(
 			Fields:           collectionFieldDescriptions,
 			IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
 			IsBranchable:     isBranchable,
+			IsEmbeddedOnly:   def.IsInterface,
 			VectorEmbeddings: vectorEmbeddings,
 		},
 		Schema: client.SchemaDescription{
 			Name:   def.Name.Value,
 			Fields: schemaFieldDescriptions,
 		},
-	}, nil
-}
-
-func schemaFromAstDefinition(
-	def *ast.InterfaceDefinition,
-	cTypeByFieldNameByObjName map[string]map[string]client.CType,
-) (client.SchemaDescription, error) {
-	fieldDescriptions := []client.SchemaFieldDescription{}
-
-	for _, field := range def.Fields {
-		// schema-only types do not have collection fields, so we can safely discard any returned here
-		tmpFieldsDescriptions, _, err := fieldsFromAST(field, def.Name.Value, cTypeByFieldNameByObjName, true)
-		if err != nil {
-			return client.SchemaDescription{}, err
-		}
-
-		fieldDescriptions = append(fieldDescriptions, tmpFieldsDescriptions...)
-	}
-
-	// sort the fields lexicographically
-	sort.Slice(fieldDescriptions, func(i, j int) bool {
-		return fieldDescriptions[i].Name < fieldDescriptions[j].Name
-	})
-
-	return client.SchemaDescription{
-		Name:   def.Name.Value,
-		Fields: fieldDescriptions,
 	}, nil
 }
 
@@ -476,7 +472,6 @@ func fieldsFromAST(
 	field *ast.FieldDefinition,
 	hostObjectName string,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
-	schemaOnly bool,
 ) ([]client.SchemaFieldDescription, []client.CollectionFieldDescription, error) {
 	kind, err := astTypeToKind(hostObjectName, field)
 	if err != nil {
@@ -522,24 +517,14 @@ func fieldsFromAST(
 		}
 
 		if kind.IsArray() {
-			if schemaOnly { // todo - document and/or do better
-				schemaFieldDescriptions = append(
-					schemaFieldDescriptions,
-					client.SchemaFieldDescription{
-						Name: field.Name.Value,
-						Kind: kind,
-					},
-				)
-			} else {
-				collectionFieldDescriptions = append(
-					collectionFieldDescriptions,
-					client.CollectionFieldDescription{
-						Name:         field.Name.Value,
-						Kind:         immutable.Some(kind),
-						RelationName: immutable.Some(relationName),
-					},
-				)
-			}
+			collectionFieldDescriptions = append(
+				collectionFieldDescriptions,
+				client.CollectionFieldDescription{
+					Name:         field.Name.Value,
+					Kind:         immutable.Some(kind),
+					RelationName: immutable.Some(relationName),
+				},
+			)
 		} else {
 			idFieldName := fmt.Sprintf("%s_id", field.Name.Value)
 
@@ -828,15 +813,8 @@ func finalizeRelations(
 	definitions []client.CollectionDefinition,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) error {
-	embeddedObjNames := map[string]struct{}{}
-	for _, def := range definitions {
-		if !def.Description.Name.HasValue() {
-			embeddedObjNames[def.Schema.Name] = struct{}{}
-		}
-	}
-
 	for i, definition := range definitions {
-		if _, ok := embeddedObjNames[definition.Description.Name.Value()]; ok {
+		if definition.Description.IsEmbeddedOnly {
 			// Embedded objects are simpler and require no addition work
 			continue
 		}
@@ -855,8 +833,7 @@ func finalizeRelations(
 
 			var otherColDefinition immutable.Option[client.CollectionDefinition]
 			for _, otherDef := range definitions {
-				// Check the 'other' schema name, there can only be a one-one mapping in an SDL
-				// appart from embedded, which will be schema only.
+				// Check the 'other' schema name, there can only be a one-one mapping in an SDL.
 				if otherDef.Schema.Name == namedKind.Name {
 					otherColDefinition = immutable.Some(otherDef)
 					break
@@ -891,8 +868,7 @@ func finalizeRelations(
 				}
 			}
 
-			otherIsEmbedded := len(otherColDefinition.Value().Description.Fields) == 0
-			if !otherIsEmbedded {
+			if !otherColDefinition.Value().Description.IsEmbeddedOnly {
 				var schemaFieldIndex int
 				var schemaFieldExists bool
 				for i, schemaField := range definition.Schema.Fields {
