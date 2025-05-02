@@ -95,8 +95,10 @@ func (n *orderNode) Init() error {
 	// reset stateful data
 	n.needSort = true
 	n.orderStrategy = nil
+
 	return n.plan.Init()
 }
+
 func (n *orderNode) Start() error { return n.plan.Start() }
 
 func (n *orderNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }

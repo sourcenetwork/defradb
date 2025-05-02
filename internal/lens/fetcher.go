@@ -71,6 +71,7 @@ func (f *lensedFetcher) Init(
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -123,6 +124,7 @@ historyLoop:
 		col,
 		innerFetcherFields,
 		filter,
+		ordering,
 		docmapper,
 		showDeleted,
 	)

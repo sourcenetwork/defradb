@@ -340,6 +340,7 @@ func (c *collection) iterateAllDocs(
 		fields,
 		nil,
 		nil,
+		nil,
 		false,
 	)
 	if err != nil {

@@ -47,8 +47,9 @@ type scanNode struct {
 
 	prefixes []keys.Walkable
 
-	filter *mapper.Filter
-	slct   *mapper.Select
+	filter   *mapper.Filter
+	ordering []mapper.OrderCondition
+	slct     *mapper.Select
 
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
@@ -71,6 +72,7 @@ func (n *scanNode) Init() error {
 		n.col,
 		n.fields,
 		n.filter,
+		n.ordering,
 		n.slct.DocumentMapping,
 		n.showDeleted,
 	); err != nil {

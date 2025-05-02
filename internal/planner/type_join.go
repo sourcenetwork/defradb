@@ -202,10 +202,10 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 		}
 		var subScan *scanNode
 		if joinMany, isJoinMany := n.joinPlan.(*typeJoinMany); isJoinMany {
-			subScan = getScanNode(joinMany.childSide.plan)
+			subScan = getNode[*scanNode](joinMany.childSide.plan)
 		}
 		if joinOne, isJoinOne := n.joinPlan.(*typeJoinOne); isJoinOne {
-			subScan = getScanNode(joinOne.childSide.plan)
+			subScan = getNode[*scanNode](joinOne.childSide.plan)
 		}
 		if subScan != nil {
 			subScanExplain, err := subScan.Explain(explainType)
@@ -378,7 +378,7 @@ func (p *Planner) newInvertableTypeJoin(
 		childSide:  childSide,
 		skipChild:  skipChild,
 		// we store child's own filter in case an index kicks in and replaces it with it's own filter
-		subFilter: getScanNode(childSide.plan).filter,
+		subFilter: getNode[*scanNode](childSide.plan).filter,
 	}
 
 	return join, nil
@@ -443,7 +443,7 @@ func getForeignKey(node planNode, relFieldName string) string {
 
 // fetchDocWithIDAndItsSubDocs fetches a document with the given docID from the given planNode.
 func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[core.Doc], error) {
-	scan := getScanNode(node)
+	scan := getNode[*scanNode](node)
 	if scan == nil {
 		return immutable.None[core.Doc](), nil
 	}
@@ -546,7 +546,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() e
 		return client.NewErrFieldNotExist(r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
 	}
 
-	r.primaryScan = getScanNode(r.primarySide.plan)
+	r.primaryScan = getNode[*scanNode](r.primarySide.plan)
 
 	r.relIDFieldDef = relIDFieldDef
 
@@ -808,15 +808,17 @@ func (join *invertibleTypeJoin) Value() core.Doc {
 }
 
 func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
-	fieldFilter *mapper.Filter,
 	index client.IndexDescription,
+	fieldFilter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 ) error {
-	childScan := getScanNode(join.childSide.plan)
+	childScan := getNode[*scanNode](join.childSide.plan)
 	childScan.tryAddFieldWithName(join.childSide.relFieldDef.Value().Name + request.RelatedObjectID)
 	// replace child's filter with the filter that utilizes the index
 	// the original child's filter is stored in join.subFilter
 	childScan.filter = fieldFilter
 	childScan.index = immutable.Some(index)
+	childScan.ordering = ordering
 	childScan.initFetcher(immutable.Option[string]{})
 
 	join.childSide.isFirst = join.parentSide.isFirst
@@ -842,12 +844,11 @@ func addFilterOnIDField(f *mapper.Filter, propIndex int, docID string) *mapper.F
 	return f
 }
 
-func getScanNode(plan planNode) *scanNode {
+func getNode[T planNode](plan planNode) T {
 	node := plan
 	for node != nil {
-		scanNode, ok := node.(*scanNode)
-		if ok {
-			return scanNode
+		if node, ok := node.(T); ok {
+			return node
 		}
 		node = node.Source()
 		if node == nil {
@@ -856,5 +857,6 @@ func getScanNode(plan planNode) *scanNode {
 			}
 		}
 	}
-	return nil
+	var zero T
+	return zero
 }

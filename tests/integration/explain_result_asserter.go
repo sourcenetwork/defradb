@@ -39,6 +39,8 @@ type ExplainResultAsserter struct {
 	filterMatches  immutable.Option[int]
 	sizeOfResults  immutable.Option[int]
 	planExecutions immutable.Option[uint64]
+	withOrder      bool
+	withLimit      bool
 }
 
 func readNumberProp(t testing.TB, val any, prop string) uint64 {
@@ -71,9 +73,17 @@ func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
 	}
 	operationNode := ConvertToArrayOfMaps(t, explainNode["operationNode"])
 	require.Len(t, operationNode, 1)
-	selectTopNode, ok := operationNode[0]["selectTopNode"].(dataMap)
+	node, ok := operationNode[0]["selectTopNode"].(dataMap)
 	require.True(t, ok, "Expected selectTopNode")
-	selectNode, ok := selectTopNode["selectNode"].(dataMap)
+	if a.withLimit {
+		node, ok = node["limitNode"].(dataMap)
+		require.True(t, ok, "Expected limitNode")
+	}
+	if a.withOrder {
+		node, ok = node["orderNode"].(dataMap)
+		require.True(t, ok, "Expected orderNode")
+	}
+	selectNode, ok := node["selectNode"].(dataMap)
 	require.True(t, ok, "Expected selectNode")
 
 	if a.filterMatches.HasValue() {
@@ -155,6 +165,16 @@ func (a *ExplainResultAsserter) WithSizeOfResults(sizeOfResults int) *ExplainRes
 
 func (a *ExplainResultAsserter) WithPlanExecutions(planExecutions uint64) *ExplainResultAsserter {
 	a.planExecutions = immutable.Some[uint64](planExecutions)
+	return a
+}
+
+func (a *ExplainResultAsserter) WithOrder() *ExplainResultAsserter {
+	a.withOrder = true
+	return a
+}
+
+func (a *ExplainResultAsserter) WithLimit() *ExplainResultAsserter {
+	a.withLimit = true
 	return a
 }
 
