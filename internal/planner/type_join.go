@@ -827,28 +827,6 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	return nil
 }
 
-// isOrderedByIndex checks if the plan is ordered by an index.
-func isOrderedByIndex(plan planNode) bool {
-	var scan *scanNode
-	// the typeIndexJoin has 2 scan nodes for every side of the join
-	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
-	typeJoin := getNode[*typeIndexJoin](plan)
-	if typeJoin != nil {
-		if j, ok := typeJoin.joinPlan.(*typeJoinOne); ok {
-			scan = getNode[*scanNode](j.getFirstSide().plan)
-		} else if j, ok := typeJoin.joinPlan.(*typeJoinMany); ok {
-			scan = getNode[*scanNode](j.getFirstSide().plan)
-		}
-	} else {
-		scan = getNode[*scanNode](plan)
-	}
-	if scan == nil || !scan.index.HasValue() {
-		return false
-	}
-	fieldIndexes := scan.documentMapping.IndexesByName[scan.index.Value().Fields[0].Name]
-	return len(fieldIndexes) > 0 && len(scan.ordering) > 0 && scan.ordering[0].FieldIndexes[0] == fieldIndexes[0]
-}
-
 func addFilterOnIDField(f *mapper.Filter, propIndex int, docID string) *mapper.Filter {
 	if f == nil {
 		f = mapper.NewFilter()

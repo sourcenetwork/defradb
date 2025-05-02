@@ -453,6 +453,9 @@ func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 	return nil, nil
 }
 
+// isIndexOrdered checks if the index is ordered by the first field in the ordering array.
+// The first return value specifies ordered-by field is indexed
+// The second one specifies if the index is ordered in the opposite direction to the given ordering, i.e. reversed.
 func (f *indexFetcher) isIndexOrdered() (bool, bool) {
 	if len(f.ordering) > 0 {
 		orderField, found := f.mapping.TryToFindNameFromIndex(f.ordering[0].FieldIndexes[0])

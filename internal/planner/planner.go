@@ -301,16 +301,127 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
+// isOrderedByIndex checks if the plan is ordered by an index.
+func isOrderedByIndex(plan planNode) bool {
+	var scan *scanNode
+	// the typeIndexJoin has 2 scan nodes for every side of the join
+	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
+	typeJoin := getNode[*typeIndexJoin](plan)
+	if typeJoin != nil {
+		if j, ok := typeJoin.joinPlan.(*typeJoinOne); ok {
+			scan = getNode[*scanNode](j.getFirstSide().plan)
+		} else if j, ok := typeJoin.joinPlan.(*typeJoinMany); ok {
+			scan = getNode[*scanNode](j.getFirstSide().plan)
+		}
+	} else {
+		scan = getNode[*scanNode](plan)
+	}
+	if scan == nil || !scan.index.HasValue() {
+		return false
+	}
+
+	fieldIndexes := scan.documentMapping.IndexesByName[scan.index.Value().Fields[0].Name]
+	return len(fieldIndexes) > 0 && len(scan.ordering) > 0 &&
+		fieldIndexes[0] == scan.ordering[0].FieldIndexes[0]
+}
+
+// tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.
+func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
+	if !node.childSide.relFieldDef.HasValue() {
+		// If the relation is one sided we cannot invert the join, so return early
+		return nil
+	}
+	optimized, err := p.tryOptimizeJoinDirectionByFilter(node, parentPlan)
+	if err != nil {
+		return err
+	}
+	if !optimized {
+		_, err = p.tryOptimizeJoinDirectionByOrder(node, parentPlan)
+	}
+
+	return err
+}
+
+// tryOptimizeJoinDirectionByFilter tries to optimize the join direction by using a filter on the child side.
+// If the child side has an index on a field that is filtered on, we can invert the join direction.
+// Returns true if the join direction was optimized, false otherwise.
+func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+	if parentPlan.selectNode.filter == nil {
+		return false, nil
+	}
+
+	filteredSubFields := findFilteredByRelationFields(
+		parentPlan.selectNode.filter.Conditions,
+		node.documentMapping,
+	)
+
+	slct := node.childSide.plan.(*selectTopNode).selectNode
+	desc := slct.collection.Description()
+
+	for subFieldName, subFieldInd := range filteredSubFields {
+		indexes := desc.GetIndexesOnField(subFieldName)
+		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
+			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
+			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
+			relevantFilter := filter.CopyField(parentPlan.selectNode.filter, relatedField,
+				mapper.Field{Name: subFieldName, Index: subFieldInd})
+
+			fieldFilter := extractRelatedSubFilter(relevantFilter, node.parentSide.plan.DocumentMap(), relatedField)
+			// At the moment we just take the first index, but later we want to run some kind of analysis to
+			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
+			err := node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
+			if err != nil {
+				return false, err
+			}
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// extractRelatedSubFilter extracts the sub filter from the parent filter.
+func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
+	subInd := docMap.FirstIndexOfName(relField.Name)
+	relatedField := mapper.Field{Name: relField.Name, Index: subInd}
+	subFilter := filter.UnwrapRelation(f, relatedField)
+	return subFilter
+}
+
+// tryOptimizeJoinDirectionByOrder tries to optimize the join direction by using an order on the child side.
+// If the child side has an index on a field that is ordered on, we can invert the join direction.
+// Returns true if the join direction was optimized, false otherwise.
+func (p *Planner) tryOptimizeJoinDirectionByOrder(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+	if parentPlan.order == nil || len(parentPlan.order.ordering) == 0 {
+		return false, nil
+	}
+
+	childFieldName, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
+	if err != nil {
+		return false, err
+	}
+
+	slct := node.childSide.plan.(*selectTopNode).selectNode
+	desc := slct.collection.Description()
+	indexes := desc.GetIndexesOnField(childFieldName)
+
+	if len(indexes) == 0 {
+		return false, nil
+	}
+
+	ordering := parentPlan.order.ordering[0]
+	ordering.FieldIndexes = ordering.FieldIndexes[1:]
+
+	err = node.invertJoinDirectionWithIndex(indexes[0], nil, []mapper.OrderCondition{ordering})
+	return err == nil, err
+}
+
+// findOrderedByRelationFields finds the field that is ordered on in the order condition.
+// Returns the field name and an error if the field is not found.
 func findOrderedByRelationFields(
 	ordering mapper.OrderCondition,
 	mapping *core.DocumentMapping,
 ) (string, error) {
 	fieldIndex := ordering.FieldIndexes[0]
-	_, found := mapping.TryToFindNameFromIndex(fieldIndex)
-	if !found {
-		return "", client.NewErrFieldIndexNotExist(fieldIndex)
-	}
-
 	if fieldIndex < len(mapping.ChildMappings) {
 		if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
 			// if fieldIndex is from child mapping, then we need to get the sub field index
@@ -324,64 +435,6 @@ func findOrderedByRelationFields(
 		}
 	}
 	return "", nil
-}
-
-func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
-	if !node.childSide.relFieldDef.HasValue() {
-		// If the relation is one sided we cannot invert the join, so return early
-		return nil
-	}
-
-	if parentPlan.selectNode.filter != nil {
-		filteredSubFields := findFilteredByRelationFields(
-			parentPlan.selectNode.filter.Conditions,
-			node.documentMapping,
-		)
-		slct := node.childSide.plan.(*selectTopNode).selectNode
-		desc := slct.collection.Description()
-		for subFieldName, subFieldInd := range filteredSubFields {
-			indexes := desc.GetIndexesOnField(subFieldName)
-			if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
-				subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
-				relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
-				relevantFilter := filter.CopyField(parentPlan.selectNode.filter, relatedField,
-					mapper.Field{Name: subFieldName, Index: subFieldInd})
-				fieldFilter := extractRelatedSubFilter(relevantFilter, node.parentSide.plan.DocumentMap(), relatedField)
-				// At the moment we just take the first index, but later we want to run some kind of analysis to
-				// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-				err := node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
-				if err != nil {
-					return err
-				}
-				break
-			}
-		}
-	} else if parentPlan.order != nil && len(parentPlan.order.ordering) > 0 {
-		childFieldName, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
-		if err != nil {
-			return err
-		}
-		slct := node.childSide.plan.(*selectTopNode).selectNode
-		desc := slct.collection.Description()
-		indexes := desc.GetIndexesOnField(childFieldName)
-		if len(indexes) > 0 {
-			ordering := parentPlan.order.ordering[0]
-			ordering.FieldIndexes = ordering.FieldIndexes[1:]
-			err := node.invertJoinDirectionWithIndex(indexes[0], nil, []mapper.OrderCondition{ordering})
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
-	subInd := docMap.FirstIndexOfName(relField.Name)
-	relatedField := mapper.Field{Name: relField.Name, Index: subInd}
-	subFilter := filter.UnwrapRelation(f, relatedField)
-	return subFilter
 }
 
 // expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
