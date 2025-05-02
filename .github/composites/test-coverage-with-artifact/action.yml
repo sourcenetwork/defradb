@@ -8,32 +8,32 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: "Test Coverage And Save Artifact"
+name: 'Test Coverage And Save Artifact'
 
-description: "Composite action to run the test with coverage and save the report as artifact"
+description: 'Composite action to run the test with coverage and save the report as artifact'
 
 inputs:
   coverage-artifact-name:
-    description: "Name of the artifact that will save coverage report"
+    description: 'Name of the artifact that will save coverage report'
     required: true
-    default: "coverage_default"
+    default: 'coverage_default'
 
   coverage-path:
-    description: "Path to coverage file"
+    description: 'Path to coverage file'
     required: false
-    default: "coverage.txt"
+    default: 'coverage.txt'
 
 runs:
   # This is a composite action, setting this is required.
-  using: "composite"
+  using: 'composite'
 
   steps:
     - name: Run integration tests
       shell: bash # It's required for run step to specify shell in a composite action.
       run: make test:coverage
 
-    - name: Test coverage & save coverage report in an artifact
-      uses: ./.github/composites/test-coverage-with-artifact
+    - name: Save coverage report in an artifact
+      uses: ./.github/composites/upload-coverage-artifact
       with:
         coverage-artifact-name: ${{ inputs.coverage-artifact-name }}
         coverage-path: ${{ inputs.coverage-path }}
