@@ -2,8 +2,6 @@ module github.com/sourcenetwork/defradb
 
 go 1.23.6
 
-replace github.com/sourcenetwork/goji => ../goji
-
 require (
 	github.com/bits-and-blooms/bitset v1.20.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -49,7 +47,7 @@ require (
 	github.com/sourcenetwork/corekv v0.1.2-0.20250408190711-a0c842d15118
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
-	github.com/sourcenetwork/goji v0.0.5
+	github.com/sourcenetwork/goji v0.0.6
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf
