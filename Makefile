@@ -66,6 +66,7 @@ BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
+JS_TEST_FLAGS=-exec="$$(go env GOROOT)/misc/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
@@ -242,7 +243,7 @@ clean\:test:
 
 .PHONY: clean\:coverage
 clean\:coverage:
-	rm -rf $(COVERAGE_DIRECTORY) 
+	rm -rf $(COVERAGE_DIRECTORY)
 	rm -f $(COVERAGE_FILE)
 
 # Example: `make tls-certs path="~/.defradb/certs"`
@@ -348,7 +349,13 @@ test\:coverage-html:
 	@$(MAKE) test:coverage path=$(path)
 	go tool cover -html=$(COVERAGE_FILE)
 	@$(MAKE) clean:coverage
-	
+
+.PHONY: test\:coverage-js
+test\:coverage-js:
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	GOOS=js GOARCH=wasm gotestsum --format pkgname -- ./tests/integration/... $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:changes
 test\:changes:

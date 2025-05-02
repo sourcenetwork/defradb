@@ -1,4 +1,4 @@
-# Copyright 2024 Democratized Data Foundation
+# Copyright 2025 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -8,9 +8,9 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: "Test Coverage And Save Artifact"
+name: "Upload Coverage Artifact"
 
-description: "Composite action to run the test with coverage and save the report as artifact"
+description: "Composite action to upload the coverage report as an artifact"
 
 inputs:
   coverage-artifact-name:
@@ -28,12 +28,13 @@ runs:
   using: "composite"
 
   steps:
-    - name: Run integration tests
-      shell: bash # It's required for run step to specify shell in a composite action.
-      run: make test:coverage
-
-    - name: Test coverage & save coverage report in an artifact
-      uses: ./.github/composites/test-coverage-with-artifact
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
       with:
-        coverage-artifact-name: ${{ inputs.coverage-artifact-name }}
-        coverage-path: ${{ inputs.coverage-path }}
+        # Make sure the name is always unique per job as artifacts are now immutable.
+        # Note Issue: https://github.com/actions/upload-artifact/issues/478
+        # Solve: https://github.com/actions/upload-artifact/issues/478#issuecomment-1885470013
+        name: ${{ inputs.coverage-artifact-name }}
+        path: ${{ inputs.coverage-path }}
+        if-no-files-found: error
+        retention-days: 7

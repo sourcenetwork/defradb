@@ -18,11 +18,10 @@ on:
 
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
     branches:
       - master
       - develop
-
 
 # Default environment configuration settings.
 env:
@@ -44,12 +43,10 @@ env:
   DEFRA_ACP_TYPE: local
   DEFRA_VIEW_TYPE: cacheless
 
-
 # We run all runners via the bash shell to provide us with a consistent set of env variables and commands
 defaults:
   run:
     shell: bash
-
 
 jobs:
   # The basic matrix job tests the combination of client, database and mutation types using
@@ -99,9 +96,8 @@ jobs:
             _${{ matrix.client-type }}\
             _${{ matrix.database-type }}\
             _${{ matrix.mutation-type }}\
-          "
+            "
           coverage-path: coverage.txt
-
 
   # This job runs the tests on other operating systems using default configurations.
   test-os:
@@ -130,7 +126,6 @@ jobs:
         with:
           coverage-artifact-name: "coverage_os_${{ matrix.os }}"
           coverage-path: coverage.txt
-
 
   # The acp matrix job tests the combinations of source-hub acp and client types on linux.
   test-acp:
@@ -175,9 +170,8 @@ jobs:
           coverage-artifact-name: "coverage_acp\
             _${{ matrix.acp-type }}\
             _${{ matrix.client-type }}\
-          "
+            "
           coverage-path: coverage.txt
-
 
   # The lens matrix job tests the wazero and wasmer lens on linux.
   test-lens:
@@ -206,7 +200,6 @@ jobs:
           coverage-artifact-name: "coverage_lens_${{ matrix.lens-type }}"
           coverage-path: coverage.txt
 
-
   # This job runs the materialized view tests using default configuration, on linux.
   test-view:
     name: Test view job
@@ -228,7 +221,6 @@ jobs:
         with:
           coverage-artifact-name: "coverage_view_materialized"
           coverage-path: coverage.txt
-
 
   # This job runs the database with encryption tests using default configuration, on linux.
   test-encryption:
@@ -274,18 +266,42 @@ jobs:
           coverage-artifact-name: "coverage_telemetry"
           coverage-path: coverage.txt
 
+  # This job runs the database js tests using default configuration, on linux.
+  test-js:
+    name: Test JS job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Run integration tests
+        shell: bash # It's required for run step to specify shell in a composite action.
+        run: make test:coverage-js
+
+      - name: Save coverage report in an artifact
+        uses: ./.github/composites/upload-coverage-artifact
+        with:
+          coverage-artifact-name: "coverage_js"
+          coverage-path: coverage.txt
+
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job
 
     needs:
-      - test-basic        # 18 test(s)
-      - test-os           #  1 test(s) [excluding windows]
-      - test-acp          #  3 test(s)
-      - test-lens         #  2 test(s)
-      - test-view         #  1 test(s)
-      - test-encryption   #  1 test(s)
-      - test-telemetry    #  1 test(s)
+      - test-basic # 18 test(s)
+      - test-os #  1 test(s) [excluding windows]
+      - test-acp #  3 test(s)
+      - test-lens #  2 test(s)
+      - test-view #  1 test(s)
+      - test-encryption #  1 test(s)
+      - test-telemetry #  1 test(s)
+      - test-js #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
@@ -313,6 +329,6 @@ jobs:
           name: defradb-codecov
           files: coverage_reports/**/*.txt
           flags: all-tests
-          os: 'linux'
+          os: "linux"
           fail_ci_if_error: true
           verbose: true
