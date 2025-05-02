@@ -152,11 +152,11 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 
 	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 
-	switch acpType {
-	case LocalACPType:
+	switch documentACPType {
+	case LocalDocumentACPType:
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
-	case SourceHubACPType:
+	case SourceHubDocumentACPType:
 		if len(s.acpOptions) == 0 {
 			s.acpOptions, err = setupSourceHub(s)
 			require.NoError(s.t, err)

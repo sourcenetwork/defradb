@@ -52,9 +52,9 @@ Notes:
   - ACP must be available (i.e. ACP can not be disabled).
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
-  - If the specified relation was not granted the minimum DPI permissions (read or write) within the policy,
-  and a relationship is formed, the subject/actor will still not be able to access (read or write) the resource.
-  - Learn more about [ACP & DPI Rules](/acp/README.md)
+  - If the specified relation was not granted the minimum DRI permissions within the policy,
+  and a relationship is formed, the subject/actor will still not be able to access the resource.
+  - Learn more about the DefraDB [ACP System](/acp/README.md)
 
 Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5) read a private document:
   defradb client acp relationship add \

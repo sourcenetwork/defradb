@@ -285,7 +285,7 @@ test\:col-named-mutations:
 
 .PHONY: test\:source-hub
 test\:source-hub:
-	DEFRA_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:

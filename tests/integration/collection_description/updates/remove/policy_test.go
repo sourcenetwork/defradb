@@ -19,7 +19,7 @@ import (
 func TestColDescrUpdateRemovePolicy_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.AddPolicy{
+			testUtils.AddDocPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

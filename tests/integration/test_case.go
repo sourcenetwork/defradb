@@ -48,12 +48,12 @@ type TestCase struct {
 	// differences between client types, or we need to temporarily document a bug.
 	SupportedClientTypes immutable.Option[[]ClientType]
 
-	// If provided a value, SupportedACPTypes will cause this test to be skipped
+	// If provided a value, SupportedDocumentACPTypes will cause this test to be skipped
 	// if the active acp type is not within the given set.
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between acp types, or we need to temporarily document a bug.
-	SupportedACPTypes immutable.Option[[]ACPType]
+	SupportedDocumentACPTypes immutable.Option[[]DocumentACPType]
 
 	// If provided a value, SupportedACPTypes will cause this test to be skipped
 	// if the active view type is not within the given set.

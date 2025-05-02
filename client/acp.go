@@ -10,9 +10,9 @@
 
 package client
 
-// PolicyDescription describes a policy which is made up of a valid policyID that is
-// registered with acp and has a valid DPI compliant resource name that also
-// exists on that policy, the description is already validated.
+// PolicyDescription describes a policy using it's ID and it's resource name, where:
+// 1) the ID is the policyID of the registered policy on the document acp system and
+// 2) the resource name is of a resource that is document resource interface (DRI) compliant.
 type PolicyDescription struct {
 	// ID is the local policyID when using local acp, and global policyID when
 	// using remote acp with sourcehub. This identifier is externally managed
