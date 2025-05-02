@@ -284,8 +284,12 @@ jobs:
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
 
       - name: Run integration tests
         shell: bash # It's required for run step to specify shell in a composite action.
