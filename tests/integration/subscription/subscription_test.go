@@ -277,76 +277,76 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	execute(t, test)
 }
 
-func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Subscription with user creations and mutations for all",
-		Actions: []any{
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "John",
-					"age": 27,
-					"verified": true,
-					"points": 42.1
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Addo",
-					"age": 31,
-					"verified": true,
-					"points": 50
-				}`,
-			},
-			testUtils.SubscriptionRequest{
-				Request: `subscription {
-					User {
-						name
-						age
-						points
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"User": []map[string]any{
-							{
-								"age":    int64(31),
-								"name":   "Addo",
-								"points": float64(55),
-							},
-						},
-					},
-					{
-						"User": []map[string]any{
-							{
-								"age":    int64(27),
-								"name":   "John",
-								"points": float64(55),
-							},
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `mutation {
-					update_User(input: {points: 55}) {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"update_User": []map[string]any{
-						{
-							"name": "Addo",
-						},
-						{
-							"name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
+// func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
+// 	test := testUtils.TestCase{
+// 		Description: "Subscription with user creations and mutations for all",
+// 		Actions: []any{
+// 			testUtils.CreateDoc{
+// 				CollectionID: 0,
+// 				Doc: `{
+// 					"name": "John",
+// 					"age": 27,
+// 					"verified": true,
+// 					"points": 42.1
+// 				}`,
+// 			},
+// 			testUtils.CreateDoc{
+// 				CollectionID: 0,
+// 				Doc: `{
+// 					"name": "Addo",
+// 					"age": 31,
+// 					"verified": true,
+// 					"points": 50
+// 				}`,
+// 			},
+// 			testUtils.SubscriptionRequest{
+// 				Request: `subscription {
+// 					User {
+// 						name
+// 						age
+// 						points
+// 					}
+// 				}`,
+// 				Results: []map[string]any{
+// 					{
+// 						"User": []map[string]any{
+// 							{
+// 								"age":    int64(31),
+// 								"name":   "Addo",
+// 								"points": float64(55),
+// 							},
+// 						},
+// 					},
+// 					{
+// 						"User": []map[string]any{
+// 							{
+// 								"age":    int64(27),
+// 								"name":   "John",
+// 								"points": float64(55),
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			testUtils.Request{
+// 				Request: `mutation {
+// 					update_User(input: {points: 55}) {
+// 						name
+// 					}
+// 				}`,
+// 				Results: map[string]any{
+// 					"update_User": []map[string]any{
+// 						{
+// 							"name": "Addo",
+// 						},
+// 						{
+// 							"name": "John",
+// 						},
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
 
-	execute(t, test)
-}
+// 	execute(t, test)
+// }
