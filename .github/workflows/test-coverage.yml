@@ -291,6 +291,12 @@ jobs:
           check-latest: true
           cache: false
 
+      - name: Build dependencies
+        shell: bash # It's required for run step to specify shell in a composite action.
+        run: |
+          make deps:modules
+          make deps:test
+
       - name: Run integration tests
         shell: bash # It's required for run step to specify shell in a composite action.
         run: make test:coverage-js
