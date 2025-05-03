@@ -97,7 +97,7 @@ type ACPSystemClient interface {
 	// relationship was made.
 	//
 	// Note: The requester identity must either be the owner of the object (being shared) or
-	//       the manager (i.e. the relation has `manages` defined in the policy).
+	// the manager (i.e. the relation has `manages` defined in the policy).
 	AddActorRelationship(
 		ctx context.Context,
 		policyID string,
@@ -118,7 +118,7 @@ type ACPSystemClient interface {
 	// will be false if the relationship record was not found (no-op).
 	//
 	// Note: The requester identity must either be the owner of the object (being shared) or
-	//       the manager (i.e. the relation has `manages` defined in the policy).
+	// the manager (i.e. the relation has `manages` defined in the policy).
 	DeleteActorRelationship(
 		ctx context.Context,
 		policyID string,
