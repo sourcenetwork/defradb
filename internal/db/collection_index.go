@@ -334,7 +334,7 @@ func (c *collection) iterateAllDocs(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
-		c.db.acp,
+		c.db.documentACP,
 		immutable.None[client.IndexDescription](),
 		c,
 		fields,

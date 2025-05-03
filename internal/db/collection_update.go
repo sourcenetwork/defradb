@@ -172,7 +172,7 @@ func (c *collection) makeSelectionPlan(
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
-		c.db.acp,
+		c.db.documentACP,
 		c.db,
 		txn,
 	)

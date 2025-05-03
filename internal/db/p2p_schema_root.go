@@ -56,7 +56,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		storeCollections = append(storeCollections, storeCol...)
 	}
 
-	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+	if db.documentACP.HasValue() && !db.documentACP.Value().SupportsP2P() {
 		for _, col := range storeCollections {
 			if col.Description().Policy.HasValue() {
 				return ErrP2PColHasPolicy

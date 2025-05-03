@@ -349,7 +349,7 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	return collectionName, docID
 }
 
-func setupSourceHub(s *state) ([]node.ACPOpt, error) {
+func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 	var isACPTest bool
 	for _, a := range s.testCase.Actions {
 		switch a.(type) {
@@ -593,7 +593,7 @@ cmdReaderLoop:
 		return nil, err
 	}
 
-	return []node.ACPOpt{
+	return []node.DocumentACPOpt{
 		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
 		node.WithSourceHubChainID(chainID),
 		node.WithSourceHubGRPCAddress(gRpcAddress),

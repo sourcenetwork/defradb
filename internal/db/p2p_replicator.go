@@ -108,7 +108,7 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 		}
 	}
 
-	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+	if db.documentACP.HasValue() && !db.documentACP.Value().SupportsP2P() {
 		for _, col := range collections {
 			if col.Description().Policy.HasValue() {
 				return ErrReplicatorColHasPolicy

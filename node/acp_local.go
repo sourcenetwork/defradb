@@ -13,19 +13,19 @@ package node
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 
 	"github.com/sourcenetwork/immutable"
 )
 
-const LocalACPType ACPType = "local"
+const LocalDocumentACPType DocumentACPType = "local"
 
 func init() {
-	constructor := func(ctx context.Context, options *ACPOptions) (immutable.Option[acp.ACP], error) {
-		acpLocal := acp.NewLocalACP()
-		acpLocal.Init(ctx, options.path)
-		return immutable.Some(acpLocal), nil
+	constructor := func(ctx context.Context, options *DocumentACPOptions) (immutable.Option[dac.DocumentACP], error) {
+		localDocumentACP := dac.NewLocalDocumentACP()
+		localDocumentACP.Init(ctx, options.path)
+		return immutable.Some(localDocumentACP), nil
 	}
-	acpConstructors[LocalACPType] = constructor
-	acpConstructors[DefaultACPType] = constructor
+	documentACPConstructors[LocalDocumentACPType] = constructor
+	documentACPConstructors[DefaultDocumentACPType] = constructor
 }

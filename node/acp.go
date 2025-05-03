@@ -16,31 +16,37 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 )
 
-type ACPType string
+type DocumentACPType string
 
 const (
-	// NoACPType disables the ACP subsystem.
-	NoACPType ACPType = "none"
-	// DefaultACPType uses the default ACP implementation for this build.
-	DefaultACPType ACPType = ""
+	// NoDocumentACPType disables the document ACP subsystem.
+	NoDocumentACPType DocumentACPType = "none"
+	// DefaultDocumentACPType uses the default ACP implementation for this build.
+	DefaultDocumentACPType DocumentACPType = ""
 )
 
-// acpConstructors is a map of [ACPType]s to acp implementations.
+// documentACPConstructors is a map of [DocumentACPType]s to acp implementations.
 //
 // It is populated by the `init` functions in the implementation-specific files - this
 // allows it's population to be managed by build flags.
-var acpConstructors = map[ACPType]func(context.Context, *ACPOptions) (immutable.Option[acp.ACP], error){
-	NoACPType: func(ctx context.Context, a *ACPOptions) (immutable.Option[acp.ACP], error) {
-		return acp.NoACP, nil
+var documentACPConstructors = map[DocumentACPType]func(
+	context.Context,
+	*DocumentACPOptions,
+) (immutable.Option[dac.DocumentACP], error){
+	NoDocumentACPType: func(
+		ctx context.Context,
+		a *DocumentACPOptions,
+	) (immutable.Option[dac.DocumentACP], error) {
+		return dac.NoDocumentACP, nil
 	},
 }
 
-// ACPOptions contains ACP configuration values.
-type ACPOptions struct {
-	acpType ACPType
+// DocumentACPOptions contains ACP configuration values.
+type DocumentACPOptions struct {
+	documentACPType DocumentACPType
 
 	// Note: An empty path will result in an in-memory ACP instance.
 	//
@@ -63,27 +69,27 @@ type TxSigner interface {
 }
 
 // DefaultACPOptions returns new options with default values.
-func DefaultACPOptions() *ACPOptions {
-	return &ACPOptions{
-		acpType: LocalACPType,
+func DefaultACPOptions() *DocumentACPOptions {
+	return &DocumentACPOptions{
+		documentACPType: LocalDocumentACPType,
 	}
 }
 
-// StoreOpt is a function for setting configuration values.
-type ACPOpt func(*ACPOptions)
+// DocumentACPOpt is a function for setting document ACP configuration values.
+type DocumentACPOpt func(*DocumentACPOptions)
 
-// WithACPType sets the ACP type.
-func WithACPType(acpType ACPType) ACPOpt {
-	return func(o *ACPOptions) {
-		o.acpType = acpType
+// WithDocumentACPType sets the ACP type.
+func WithDocumentACPType(acpType DocumentACPType) DocumentACPOpt {
+	return func(o *DocumentACPOptions) {
+		o.documentACPType = acpType
 	}
 }
 
-// WithACPPath sets the ACP path.
+// WithDocumentACPPath sets the document ACP system path.
 //
-// Note: An empty path will result in an in-memory ACP instance.
-func WithACPPath(path string) ACPOpt {
-	return func(o *ACPOptions) {
+// Note: An empty path will result in an in-memory document ACP instance.
+func WithDocumentACPPath(path string) DocumentACPOpt {
+	return func(o *DocumentACPOptions) {
 		o.path = path
 	}
 }
@@ -91,45 +97,45 @@ func WithACPPath(path string) ACPOpt {
 // WithKeyring sets the txn signer for Defra to use.
 //
 // It is only required when SourceHub ACP is active.
-func WithTxnSigner(signer immutable.Option[TxSigner]) ACPOpt {
-	return func(o *ACPOptions) {
+func WithTxnSigner(signer immutable.Option[TxSigner]) DocumentACPOpt {
+	return func(o *DocumentACPOptions) {
 		o.signer = signer
 	}
 }
 
 // WithSourceHubChainID specifies the chainID of the SourceHub (cosmos) chain
 // to use for SourceHub ACP.
-func WithSourceHubChainID(sourceHubChainID string) ACPOpt {
-	return func(o *ACPOptions) {
+func WithSourceHubChainID(sourceHubChainID string) DocumentACPOpt {
+	return func(o *DocumentACPOptions) {
 		o.sourceHubChainID = sourceHubChainID
 	}
 }
 
 // WithSourceHubGRPCAddress specifies the GRPC address of the SourceHub node to use
 // for ACP calls.
-func WithSourceHubGRPCAddress(address string) ACPOpt {
-	return func(o *ACPOptions) {
+func WithSourceHubGRPCAddress(address string) DocumentACPOpt {
+	return func(o *DocumentACPOptions) {
 		o.sourceHubGRPCAddress = address
 	}
 }
 
 // WithSourceHubCometRPCAddress specifies the Comet RPC address of the SourceHub node to use
 // for ACP calls.
-func WithSourceHubCometRPCAddress(address string) ACPOpt {
-	return func(o *ACPOptions) {
+func WithSourceHubCometRPCAddress(address string) DocumentACPOpt {
+	return func(o *DocumentACPOptions) {
 		o.sourceHubCometRPCAddress = address
 	}
 }
 
-// NewACP returns a new ACP module with the given options.
-func NewACP(ctx context.Context, opts ...ACPOpt) (immutable.Option[acp.ACP], error) {
+// NewDocumentACP returns a new ACP module with the given options.
+func NewDocumentACP(ctx context.Context, opts ...DocumentACPOpt) (immutable.Option[dac.DocumentACP], error) {
 	options := DefaultACPOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
-	acpConstructor, ok := acpConstructors[options.acpType]
+	acpConstructor, ok := documentACPConstructors[options.documentACPType]
 	if ok {
 		return acpConstructor(ctx, options)
 	}
-	return immutable.None[acp.ACP](), NewErrACPTypeNotSupported(options.acpType)
+	return immutable.None[dac.DocumentACP](), NewErrACPTypeNotSupported(options.documentACPType)
 }

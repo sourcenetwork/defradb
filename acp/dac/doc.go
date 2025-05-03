@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -9,10 +9,10 @@
 // licenses/APL.txt.
 
 /*
-This package implements admin and document access control systems.
+This package implements local and sourcehub document access control systems.
 
-Document access control systems provide acp for individual documents of a collection.
+Local document access control provides acp local to a node.
 
-Admin access control systems provide acp for a node's operations.
+SourceHub document access control enables acp beyond just the local node.
 */
-package acp
+package dac

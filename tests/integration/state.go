@@ -196,7 +196,7 @@ type state struct {
 	nodes []*nodeState
 
 	// The ACP options to share between each node.
-	acpOptions []node.ACPOpt
+	acpOptions []node.DocumentACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
@@ -282,7 +282,7 @@ func newState(
 		allActionsDone:                  make(chan struct{}),
 		subscriptionResultsChans:        []chan func(){},
 		nodes:                           []*nodeState{},
-		acpOptions:                      []node.ACPOpt{},
+		acpOptions:                      []node.DocumentACPOpt{},
 		collectionNames:                 collectionNames,
 		collectionIndexesByCollectionID: map[string]int{},
 		docIDs:                          [][]client.DocID{},

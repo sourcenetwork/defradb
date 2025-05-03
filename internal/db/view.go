@@ -147,7 +147,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
 	txn := mustGetContextTxn(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
+	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 
 	// temporarily disable the cache in order to query without using it
 	col.Description.IsMaterialized = false

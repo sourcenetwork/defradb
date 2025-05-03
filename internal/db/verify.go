@@ -18,8 +18,8 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
@@ -52,7 +52,7 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 		return ErrMissingSignature
 	}
 
-	if db.acp.HasValue() {
+	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
 		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID)
 		if err != nil {
@@ -62,9 +62,9 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 		hasPerm, err := permission.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
 			identity.FromContext(ctx),
-			db.acp.Value(),
+			db.documentACP.Value(),
 			collection,
-			acp.ReadPermission,
+			acpTypes.DocumentReadPerm,
 			docID,
 		)
 

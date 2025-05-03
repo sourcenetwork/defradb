@@ -34,7 +34,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -76,8 +76,8 @@ type Peer struct {
 	// peer DAG service
 	blockService blockservice.BlockService
 
-	acp immutable.Option[acp.ACP]
-	db  DB
+	documentACP immutable.Option[dac.DocumentACP]
+	db          DB
 
 	bootCloser io.Closer
 }
@@ -86,7 +86,7 @@ type Peer struct {
 func NewPeer(
 	ctx context.Context,
 	bus *event.Bus,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	db DB,
 	opts ...NodeOpt,
 ) (p *Peer, err error) {
@@ -130,14 +130,14 @@ func NewPeer(
 	)
 
 	p = &Peer{
-		host:   h,
-		dht:    ddht,
-		ctx:    ctx,
-		cancel: cancel,
-		bus:    bus,
-		acp:    acp,
-		db:     db,
-		p2pRPC: grpc.NewServer(options.GRPCServerOptions...),
+		host:        h,
+		dht:         ddht,
+		ctx:         ctx,
+		cancel:      cancel,
+		bus:         bus,
+		documentACP: documentACP,
+		db:          db,
+		p2pRPC:      grpc.NewServer(options.GRPCServerOptions...),
 	}
 
 	if options.EnablePubSub {

@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package acp
+package dac
 
 import (
 	"context"
@@ -16,7 +16,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
 var identity1 = identity.Identity{
@@ -58,7 +60,7 @@ resources:
 
 func Test_LocalACP_InMemory_StartAndClose_NoError(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -74,7 +76,7 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -86,7 +88,7 @@ func Test_LocalACP_PersistentMemory_StartAndClose_NoError(t *testing.T) {
 
 func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterWipeReturnsSameID(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -132,7 +134,7 @@ func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterWipeReturnsSameID(t
 
 func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterResetStateReturnsSameID(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -174,7 +176,7 @@ func Test_LocalACP_InMemory_AddPolicy_CreatingSamePolicyAfterResetStateReturnsSa
 
 func Test_LocalACP_Persistent_AddPolicy_CreatingSamePolicyAfterResetStateReturnsSameID(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	acpPath := t.TempDir()
 	localACP.Init(ctx, acpPath)
@@ -217,7 +219,7 @@ func Test_LocalACP_Persistent_AddPolicy_CreatingSamePolicyAfterResetStateReturns
 
 func Test_LocalACP_InMemory_ResetStateAfterClose(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -235,7 +237,7 @@ func Test_LocalACP_Persistent_ResetStateAfterClose(t *testing.T) {
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -253,7 +255,7 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CreatingSamePolicyReturnsDifferent
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -295,7 +297,7 @@ func Test_LocalACP_PersistentMemory_AddPolicy_CreatingSamePolicyReturnsDifferent
 
 func Test_LocalACP_InMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -313,28 +315,28 @@ func Test_LocalACP_InMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *test
 		policyID,
 	)
 
-	errValidateResourceExists := localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists := localACP.ValidateResourceInterface(
 		ctx,
 		validPolicyID,
 		"users",
 	)
 	require.Nil(t, errValidateResourceExists)
 
-	errValidateResourceExists = localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists = localACP.ValidateResourceInterface(
 		ctx,
 		validPolicyID,
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, ErrResourceDoesNotExistOnTargetPolicy)
+	require.ErrorIs(t, errValidateResourceExists, acp.ErrResourceDoesNotExistOnTargetPolicy)
 
-	errValidateResourceExists = localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists = localACP.ValidateResourceInterface(
 		ctx,
 		"invalidPolicyID",
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, ErrPolicyDoesNotExistWithACP)
+	require.ErrorIs(t, errValidateResourceExists, acp.ErrPolicyDoesNotExistWithACP)
 
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
@@ -345,7 +347,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -363,7 +365,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 		policyID,
 	)
 
-	errValidateResourceExists := localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists := localACP.ValidateResourceInterface(
 		ctx,
 		validPolicyID,
 		"users",
@@ -379,28 +381,28 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 	require.Nil(t, errStart)
 
 	// Do the same check after restart.
-	errValidateResourceExists = localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists = localACP.ValidateResourceInterface(
 		ctx,
 		validPolicyID,
 		"users",
 	)
 	require.Nil(t, errValidateResourceExists)
 
-	errValidateResourceExists = localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists = localACP.ValidateResourceInterface(
 		ctx,
 		validPolicyID,
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, ErrResourceDoesNotExistOnTargetPolicy)
+	require.ErrorIs(t, errValidateResourceExists, acp.ErrResourceDoesNotExistOnTargetPolicy)
 
-	errValidateResourceExists = localACP.ValidateResourceExistsOnValidDPI(
+	errValidateResourceExists = localACP.ValidateResourceInterface(
 		ctx,
 		"invalidPolicyID",
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, ErrPolicyDoesNotExistWithACP)
+	require.ErrorIs(t, errValidateResourceExists, acp.ErrPolicyDoesNotExistWithACP)
 
 	errClose = localACP.Close()
 	require.Nil(t, errClose)
@@ -408,7 +410,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 
 func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOtherwise(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -435,7 +437,7 @@ func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOt
 		"",
 	)
 	require.Error(t, errRegisterDoc)
-	require.ErrorIs(t, errRegisterDoc, ErrFailedToRegisterDocWithACP)
+	require.ErrorIs(t, errRegisterDoc, acp.ErrFailedToRegisterDocWithACP)
 
 	// Check if an invalid empty doc and empty resource is registered.
 	isDocRegistered, errDocRegistered := localACP.IsDocRegistered(
@@ -445,7 +447,7 @@ func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOt
 		"",
 	)
 	require.Error(t, errDocRegistered)
-	require.ErrorIs(t, errDocRegistered, ErrFailedToCheckIfDocIsRegisteredWithACP)
+	require.ErrorIs(t, errDocRegistered, acp.ErrFailedToCheckIfDocIsRegisteredWithACP)
 	require.False(t, isDocRegistered)
 
 	// No documents are registered right now so return false.
@@ -488,7 +490,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -515,7 +517,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 		"",
 	)
 	require.Error(t, errRegisterDoc)
-	require.ErrorIs(t, errRegisterDoc, ErrFailedToRegisterDocWithACP)
+	require.ErrorIs(t, errRegisterDoc, acp.ErrFailedToRegisterDocWithACP)
 
 	// Check if an invalid empty doc and empty resource is registered.
 	isDocRegistered, errDocRegistered := localACP.IsDocRegistered(
@@ -525,7 +527,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 		"",
 	)
 	require.Error(t, errDocRegistered)
-	require.ErrorIs(t, errDocRegistered, ErrFailedToCheckIfDocIsRegisteredWithACP)
+	require.ErrorIs(t, errDocRegistered, acp.ErrFailedToCheckIfDocIsRegisteredWithACP)
 	require.False(t, isDocRegistered)
 
 	// No documents are registered right now so return false.
@@ -584,7 +586,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 
 func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherwise(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -605,46 +607,46 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	// Invalid empty arguments such that we can't check doc access (read).
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"",
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (update).
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		UpdatePermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"",
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (delete).
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		DeletePermission,
+		acpTypes.DocumentDeletePerm,
 		identity1.DID,
 		validPolicyID,
 		"",
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
 	// Check document accesss for a document that does not exist.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"users",
@@ -666,7 +668,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	// Now check using correct identity if it has access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"users",
@@ -678,7 +680,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	// Now check using wrong identity, it should not have access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -696,7 +698,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -717,46 +719,46 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	// Invalid empty arguments such that we can't check doc access (read).
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"",
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (update).
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		UpdatePermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"",
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (delete).
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		DeletePermission,
+		acpTypes.DocumentDeletePerm,
 		identity1.DID,
 		validPolicyID,
 		"",
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
 	require.False(t, hasAccess)
 
 	// Check document accesss for a document that does not exist.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"users",
@@ -778,7 +780,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	// Now check using correct identity if it has access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"users",
@@ -790,7 +792,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	// Now check using wrong identity, it should not have access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -810,7 +812,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	// Now check again after the restart using correct identity if it still has access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity1.DID,
 		validPolicyID,
 		"users",
@@ -822,7 +824,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	// Now check again after restart using wrong identity, it should continue to not have access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -837,7 +839,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 
 func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoOp(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -868,7 +870,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoO
 	// Other identity does not have access yet.
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -906,7 +908,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoO
 	// Now the other identity has access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -924,7 +926,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -955,7 +957,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	// Other identity does not have access yet.
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -993,7 +995,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	// Now the other identity has access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1013,7 +1015,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	// Now check again after the restart that the second identity still has access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1028,7 +1030,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 
 func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFalseOtherwise(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	errStart := localACP.Start(ctx)
@@ -1072,7 +1074,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 	// Now the other identity has access.
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1110,7 +1112,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 	// Other identity now has no access again.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1128,7 +1130,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	errStart := localACP.Start(ctx)
@@ -1172,7 +1174,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	// Now the other identity has access.
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1210,7 +1212,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	// Other identity now has no access again.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1230,7 +1232,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	// Now check again after the restart that the second identity still has no access.
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
-		ReadPermission,
+		acpTypes.DocumentReadPerm,
 		identity2.DID,
 		validPolicyID,
 		"users",
@@ -1245,7 +1247,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 
 func Test_LocalACP_InMemory_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -1257,7 +1259,7 @@ func Test_LocalACP_InMemory_AddPolicy_InvalidCreatorIDReturnsError(t *testing.T)
 		validPolicy,
 	)
 
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 	require.Empty(t, policyID)
 
 	err = localACP.Close()
@@ -1269,7 +1271,7 @@ func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -1281,7 +1283,7 @@ func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.
 		validPolicy,
 	)
 
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 	require.Empty(t, policyID)
 
 	err = localACP.Close()
@@ -1290,7 +1292,7 @@ func Test_LocalACP_Persistent_AddPolicy_InvalidCreatorIDReturnsError(t *testing.
 
 func Test_LocalACP_InMemory_RegisterObject_InvalidCreatorIDReturnsError(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -1304,7 +1306,7 @@ func Test_LocalACP_InMemory_RegisterObject_InvalidCreatorIDReturnsError(t *testi
 		"documentID_XYZ",
 	)
 
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1315,7 +1317,7 @@ func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *tes
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -1329,7 +1331,7 @@ func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *tes
 		"documentID_XYZ",
 	)
 
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1337,7 +1339,7 @@ func Test_LocalACP_Persistent_RegisterObject_InvalidCreatorIDReturnsError(t *tes
 
 func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -1354,7 +1356,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError
 		identity2.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 
 	// Invalid target actor.
 	exists, err = localACP.AddDocActorRelationship(
@@ -1367,7 +1369,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError
 		invalidIdentity.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrFailedToAddDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationshipWithACP)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1378,7 +1380,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -1395,7 +1397,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 		identity2.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 
 	// Invalid target actor.
 	exists, err = localACP.AddDocActorRelationship(
@@ -1408,7 +1410,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 		invalidIdentity.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrFailedToAddDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationshipWithACP)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1416,7 +1418,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 
 func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnError(t *testing.T) {
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, "")
 	err := localACP.Start(ctx)
@@ -1433,7 +1435,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnEr
 		identity2.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 
 	// Invalid target actor.
 	exists, err = localACP.DeleteDocActorRelationship(
@@ -1446,7 +1448,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnEr
 		invalidIdentity.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrFailedToDeleteDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationshipWithACP)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1457,7 +1459,7 @@ func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturn
 	require.NotEqual(t, "", acpPath)
 
 	ctx := context.Background()
-	localACP := NewLocalACP()
+	localACP := NewLocalDocumentACP()
 
 	localACP.Init(ctx, acpPath)
 	err := localACP.Start(ctx)
@@ -1474,7 +1476,7 @@ func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturn
 		identity2.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrInvalidActorID)
+	require.ErrorIs(t, err, acp.ErrInvalidActorID)
 
 	// Invalid target actor.
 	exists, err = localACP.DeleteDocActorRelationship(
@@ -1487,7 +1489,7 @@ func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturn
 		invalidIdentity.DID,
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, ErrFailedToDeleteDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationshipWithACP)
 
 	err = localACP.Close()
 	require.NoError(t, err)

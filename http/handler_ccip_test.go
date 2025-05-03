@@ -26,7 +26,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
@@ -193,7 +194,7 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 func setupDatabase(t *testing.T) client.DB {
 	ctx := context.Background()
 
-	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), acp.NoACP, nil)
+	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {

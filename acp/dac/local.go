@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package acp
+package dac
 
 import (
 	"context"
@@ -23,56 +23,34 @@ import (
 	"github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const localACPStoreName = "local_acp"
 
-// ACPLocal represents a local acp implementation that makes no remote calls.
-type ACPLocal struct {
+var _ DocumentACP = (*bridgeDocumentACP)(nil)
+
+func NewLocalDocumentACP() DocumentACP {
+	return &bridgeDocumentACP{
+		clientACP:   &LocalDocumentACP{},
+		supportsP2P: false,
+	}
+}
+
+// LocalDocumentACP represents a local document acp implementation that makes no remote calls.
+type LocalDocumentACP struct {
 	pathToStore immutable.Option[string]
 	engine      types.ACPEngineServer
 	manager     runtime.RuntimeManager
 	closed      bool
 }
 
-var _ sourceHubClient = (*ACPLocal)(nil)
+var _ acp.ACPSystemClient = (*LocalDocumentACP)(nil)
 
-func mapACPCorePolicy(pol *types.Policy) policy {
-	resources := make(map[string]*resource)
-	for _, coreResource := range pol.Resources {
-		resource := mapACPCoreResource(coreResource)
-		resources[resource.Name] = resource
-	}
-
-	return policy{
-		ID:        pol.Id,
-		Resources: resources,
-	}
-}
-
-func mapACPCoreResource(policy *types.Resource) *resource {
-	perms := make(map[string]*permission)
-	for _, corePermission := range policy.Permissions {
-		perm := mapACPCorePermission(corePermission)
-		perms[perm.Name] = perm
-	}
-
-	return &resource{
-		Name:        policy.Name,
-		Permissions: perms,
-	}
-}
-
-func mapACPCorePermission(perm *types.Permission) *permission {
-	return &permission{
-		Name:       perm.Name,
-		Expression: perm.Expression,
-	}
-}
-
-func (l *ACPLocal) Init(ctx context.Context, path string) {
+func (l *LocalDocumentACP) Init(ctx context.Context, path string) {
 	if path == "" {
 		l.pathToStore = immutable.None[string]()
 	} else {
@@ -80,7 +58,7 @@ func (l *ACPLocal) Init(ctx context.Context, path string) {
 	}
 }
 
-func (l *ACPLocal) Start(ctx context.Context) error {
+func (l *LocalDocumentACP) Start(ctx context.Context) error {
 	var manager runtime.RuntimeManager
 	var err error
 	var opts []runtime.Opt
@@ -98,7 +76,7 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 
 	manager, err = runtime.NewRuntimeManager(opts...)
 	if err != nil {
-		return NewErrInitializationOfACPFailed(err, "Local", storeLocation)
+		return acp.NewErrInitializationOfACPFailed(err, "Local", storeLocation)
 	}
 
 	l.manager = manager
@@ -106,7 +84,7 @@ func (l *ACPLocal) Start(ctx context.Context) error {
 	return nil
 }
 
-func (l *ACPLocal) Close() error {
+func (l *LocalDocumentACP) Close() error {
 	if !l.closed {
 		err := l.manager.Terminate()
 		if err != nil {
@@ -117,7 +95,7 @@ func (l *ACPLocal) Close() error {
 	return nil
 }
 
-func (l *ACPLocal) ResetState(ctx context.Context) error {
+func (l *LocalDocumentACP) ResetState(ctx context.Context) error {
 	err := l.Close()
 	if err != nil {
 		return err
@@ -129,20 +107,20 @@ func (l *ACPLocal) ResetState(ctx context.Context) error {
 		path := storeLocation + "/" + localACPStoreName
 		info, err := os.Stat(path)
 		if os.IsNotExist(err) {
-			return errors.Join(ErrACPResetState, err)
+			return errors.Join(acp.ErrACPResetState, err)
 		} else if err != nil {
-			return errors.Join(ErrACPResetState, err)
+			return errors.Join(acp.ErrACPResetState, err)
 		}
 
 		if info.IsDir() {
 			// remove dir
 			if err := os.RemoveAll(path); err != nil {
-				return errors.Join(ErrACPResetState, err)
+				return errors.Join(acp.ErrACPResetState, err)
 			}
 		} else {
 			// remove file
 			if err := os.Remove(path); err != nil {
-				return errors.Join(ErrACPResetState, err)
+				return errors.Join(acp.ErrACPResetState, err)
 			}
 		}
 	}
@@ -151,16 +129,16 @@ func (l *ACPLocal) ResetState(ctx context.Context) error {
 	return l.Start(ctx)
 }
 
-func (l *ACPLocal) AddPolicy(
+func (l *LocalDocumentACP) AddPolicy(
 	ctx context.Context,
 	creator identity.Identity,
 	policy string,
-	marshalType policyMarshalType,
+	marshalType acpTypes.PolicyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
 	principal, err := types.NewDIDPrincipal(creator.DID)
 	if err != nil {
-		return "", newErrInvalidActorID(err, creator.DID)
+		return "", acp.NewErrInvalidActorID(err, creator.DID)
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
@@ -177,11 +155,11 @@ func (l *ACPLocal) AddPolicy(
 	return response.Record.Policy.Id, nil
 }
 
-func (l *ACPLocal) Policy(
+func (l *LocalDocumentACP) Policy(
 	ctx context.Context,
 	policyID string,
-) (immutable.Option[policy], error) {
-	none := immutable.None[policy]()
+) (immutable.Option[acpTypes.Policy], error) {
+	none := immutable.None[acpTypes.Policy]()
 
 	request := types.GetPolicyRequest{Id: policyID}
 	response, err := l.engine.GetPolicy(ctx, &request)
@@ -193,11 +171,11 @@ func (l *ACPLocal) Policy(
 		return none, err
 	}
 
-	policy := mapACPCorePolicy(response.Record.Policy)
+	policy := acpTypes.MapACPCorePolicy(response.Record.Policy)
 	return immutable.Some(policy), nil
 }
 
-func (l *ACPLocal) RegisterObject(
+func (l *LocalDocumentACP) RegisterObject(
 	ctx context.Context,
 	identity identity.Identity,
 	policyID string,
@@ -207,7 +185,7 @@ func (l *ACPLocal) RegisterObject(
 ) error {
 	principal, err := types.NewDIDPrincipal(identity.DID)
 	if err != nil {
-		return newErrInvalidActorID(err, identity.DID)
+		return acp.NewErrInvalidActorID(err, identity.DID)
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)
@@ -220,7 +198,7 @@ func (l *ACPLocal) RegisterObject(
 	return err
 }
 
-func (l *ACPLocal) ObjectOwner(
+func (l *LocalDocumentACP) ObjectOwner(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -244,20 +222,20 @@ func (l *ACPLocal) ObjectOwner(
 	return none, nil
 }
 
-func (l *ACPLocal) VerifyAccessRequest(
+func (l *LocalDocumentACP) VerifyAccessRequest(
 	ctx context.Context,
-	permission DPIPermission,
+	permission acpTypes.ResourceInterfacePermission,
 	actorID string,
 	policyID string,
 	resourceName string,
-	docID string,
+	objectID string,
 ) (bool, error) {
 	req := types.VerifyAccessRequestRequest{
 		PolicyId: policyID,
 		AccessRequest: &types.AccessRequest{
 			Operations: []*types.Operation{
 				{
-					Object:     types.NewObject(resourceName, docID),
+					Object:     types.NewObject(resourceName, objectID),
 					Permission: permission.String(),
 				},
 			},
@@ -275,7 +253,7 @@ func (l *ACPLocal) VerifyAccessRequest(
 	return resp.Valid, nil
 }
 
-func (l *ACPLocal) AddActorRelationship(
+func (l *LocalDocumentACP) AddActorRelationship(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -287,7 +265,7 @@ func (l *ACPLocal) AddActorRelationship(
 ) (bool, error) {
 	principal, err := types.NewDIDPrincipal(requester.DID)
 	if err != nil {
-		return false, newErrInvalidActorID(err, requester.DID)
+		return false, acp.NewErrInvalidActorID(err, requester.DID)
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)
@@ -321,7 +299,7 @@ func (l *ACPLocal) AddActorRelationship(
 	return setRelationshipResponse.RecordExisted, nil
 }
 
-func (l *ACPLocal) DeleteActorRelationship(
+func (l *LocalDocumentACP) DeleteActorRelationship(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -333,7 +311,7 @@ func (l *ACPLocal) DeleteActorRelationship(
 ) (bool, error) {
 	principal, err := types.NewDIDPrincipal(requester.DID)
 	if err != nil {
-		return false, newErrInvalidActorID(err, requester.DID)
+		return false, acp.NewErrInvalidActorID(err, requester.DID)
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)

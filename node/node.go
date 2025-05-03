@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -44,8 +44,8 @@ type Node struct {
 	server *http.Server
 	// kms subsystem instance
 	kmsService kms.Service
-	// acp subsystem instance
-	acp immutable.Option[acp.ACP]
+	// documentACP subsystem instance
+	documentACP immutable.Option[dac.DocumentACP]
 	// config values after applying options
 	config *Config
 	// options the node was created with
@@ -70,7 +70,7 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.acp, err = NewACP(ctx, filterOptions[ACPOpt](n.options)...)
+	n.documentACP, err = NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.DB, err = db.NewDB(ctx, rootstore, n.acp, lens, filterOptions[db.Option](n.options)...)
+	n.DB, err = db.NewDB(ctx, rootstore, n.documentACP, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -118,9 +118,9 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if n.acp.HasValue() {
-		acp := n.acp.Value()
-		err := acp.ResetState(ctx)
+	if n.documentACP.HasValue() {
+		documentACP := n.documentACP.Value()
+		err := documentACP.ResetState(ctx)
 		if err != nil {
 			// for now we will just log this error, since SourceHub ACP doesn't yet
 			// implement the ResetState.
@@ -128,7 +128,7 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		}
 		// follow up close call on ACP is required since the node.Start function starts
 		// ACP again anyways so we need to gracefully close before starting again
-		err = acp.Close()
+		err = documentACP.Close()
 		if err != nil {
 			return err
 		}

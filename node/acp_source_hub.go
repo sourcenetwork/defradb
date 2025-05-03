@@ -15,26 +15,29 @@ package node
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 
 	"github.com/sourcenetwork/immutable"
 )
 
-const SourceHubACPType ACPType = "source-hub"
+const SourceHubDocumentACPType DocumentACPType = "source-hub"
 
 func init() {
-	acpConstructors[SourceHubACPType] = func(ctx context.Context, options *ACPOptions) (immutable.Option[acp.ACP], error) {
+	documentACPConstructors[SourceHubDocumentACPType] = func(
+		ctx context.Context,
+		options *DocumentACPOptions,
+	) (immutable.Option[dac.DocumentACP], error) {
 		if !options.signer.HasValue() {
-			return acp.NoACP, ErrSignerMissingForSourceHubACP
+			return dac.NoDocumentACP, ErrSignerMissingForSourceHubACP
 		}
-		acpSourceHub, err := acp.NewSourceHubACP(
+		acpSourceHub, err := dac.NewSourceHubACP(
 			options.sourceHubChainID,
 			options.sourceHubGRPCAddress,
 			options.sourceHubCometRPCAddress,
 			options.signer.Value(),
 		)
 		if err != nil {
-			return acp.NoACP, err
+			return dac.NoDocumentACP, err
 		}
 		return immutable.Some(acpSourceHub), nil
 	}
