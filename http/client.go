@@ -483,6 +483,11 @@ func (c *Client) Close() {
 	// do nothing
 }
 
+func (c *Client) PurgeACPState(context.Context) error {
+	// Use the high-level purge instead.
+	return ErrCanNotPurgeOnlyACPState
+}
+
 func (c *Client) Rootstore() datastore.Rootstore {
 	panic("client side database")
 }

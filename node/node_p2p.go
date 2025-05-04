@@ -17,12 +17,14 @@ package node
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/immutable"
 )
 
-func (n *Node) startP2P(ctx context.Context) error {
+func (n *Node) startP2P(ctx context.Context, documentACP immutable.Option[dac.DocumentACP]) error {
 	if n.config.disableP2P {
 		return nil
 	}
@@ -30,7 +32,7 @@ func (n *Node) startP2P(ctx context.Context) error {
 	peer, err := net.NewPeer(
 		ctx,
 		n.DB.Events(),
-		n.documentACP,
+		documentACP,
 		coreDB,
 		filterOptions[net.NodeOpt](n.options)...,
 	)
@@ -52,7 +54,7 @@ func (n *Node) startP2P(ctx context.Context) error {
 				peer.Server(),
 				n.DB.Events(),
 				n.DB.Encstore(),
-				n.documentACP,
+				documentACP,
 				db.NewCollectionRetriever(n.DB),
 				ident.Value().DID,
 			)

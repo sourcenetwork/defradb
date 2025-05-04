@@ -234,6 +234,31 @@ func (db *DB) AddPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
+func (db *DB) PurgeACPState(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	// Purge document acp state and keep it closed.
+	if db.documentACP.HasValue() {
+		documentACP := db.documentACP.Value()
+		err := documentACP.ResetState(ctx)
+		if err != nil {
+			// for now we will just log this error, since SourceHub ACP doesn't yet
+			// implement the ResetState.
+			log.ErrorE("Failed to reset document ACP state", err)
+		}
+
+		// follow up close call on document ACP is required since the node.Start function starts
+		// document ACP again anyways so we need to gracefully close before starting again.
+		err = documentACP.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.

@@ -517,6 +517,10 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	return &Transaction{tx, w.cmd}, nil
 }
 
+func (w *Wrapper) PurgeACPState(ctx context.Context) error {
+	return w.node.DB.PurgeACPState(ctx)
+}
+
 func (w *Wrapper) Rootstore() datastore.Rootstore {
 	return w.node.DB.Rootstore()
 }
