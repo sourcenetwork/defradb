@@ -40,7 +40,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Contributors](#contributors)
 <!--te-->
 
-DISCLAIMER: At this early stage, DefraDB does not offer data encryption, and the default configuration exposes the database to the network. The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, but please do not use it for production purposes until it has been thoroughly tested and developed.
+DISCLAIMER: The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, and when you plan to deploy it to production, please thoroughly test your integrations.
 
 ## Install
 
