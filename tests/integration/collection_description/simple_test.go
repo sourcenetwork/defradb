@@ -30,6 +30,7 @@ func TestColDescrSimpleCreatesColGivenEmptyType(t *testing.T) {
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 					},
 				},
 			},

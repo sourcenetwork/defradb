@@ -199,6 +199,7 @@ func TestColDescrUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",
@@ -559,6 +560,7 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *testin
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",

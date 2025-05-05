@@ -33,6 +33,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,

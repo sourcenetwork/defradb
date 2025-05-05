@@ -44,6 +44,7 @@ func TestColDescrUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					{
 						Name:             "Users",
 						IsMaterialized:   true,
+						IsActive:         true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{},
 					},
 				},

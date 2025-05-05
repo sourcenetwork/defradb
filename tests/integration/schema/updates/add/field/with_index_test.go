@@ -57,6 +57,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						Indexes: []client.IndexDescription{
 							{
 								Name:   "Users_name_ASC",
@@ -155,6 +156,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						Indexes: []client.IndexDescription{
 							{
 								Name:   "Users_name_ASC",

@@ -102,6 +102,7 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					{
 						Name:           "UserView",
 						IsMaterialized: false,
+						IsActive:       true,
 					},
 				},
 			},

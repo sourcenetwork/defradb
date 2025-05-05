@@ -147,6 +147,7 @@ func TestColDescrUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T)
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",

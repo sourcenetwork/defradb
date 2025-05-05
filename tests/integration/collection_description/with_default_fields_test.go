@@ -38,6 +38,7 @@ func TestCollectionDescription_WithDefaultFieldValues(t *testing.T) {
 					{
 						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								ID:   0,

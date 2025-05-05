@@ -82,6 +82,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 					{
 						Name:           "User",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,
