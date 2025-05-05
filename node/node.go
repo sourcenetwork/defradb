@@ -78,7 +78,7 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = n.startP2P(ctx, documentACP)
+	err = n.startP2P(ctx)
 	if err != nil {
 		return err
 	}

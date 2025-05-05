@@ -211,6 +211,10 @@ func (db *DB) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
+func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
+	return db.documentACP
+}
+
 func (db *DB) AddPolicy(
 	ctx context.Context,
 	policy string,
