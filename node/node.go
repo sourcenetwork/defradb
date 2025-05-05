@@ -115,9 +115,11 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		return err
 	}
 
+	coreDB, _ := n.DB.(*db.DB)
+
 	// This will purge state.
 	// They will be restarted when node is started again.
-	err = n.DB.PurgeACPState(ctx)
+	err = coreDB.PurgeACPState(ctx)
 	if err != nil {
 		return err
 	}

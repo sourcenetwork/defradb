@@ -100,10 +100,6 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
-func (w *Wrapper) PurgeACPState(ctx context.Context) error {
-	return w.node.DB.PurgeACPState(ctx)
-}
-
 func (w *Wrapper) AddPolicy(
 	ctx context.Context,
 	policy string,

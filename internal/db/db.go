@@ -238,6 +238,11 @@ func (db *DB) AddPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
+// PurgeACPState purges the ACP state(s), and calls [Close()] on the ACP system(s) before returning.
+//
+// This will close the ACP system(s), purge it's state(s), then restart it/them, and finally close it/them.
+//
+// Note: all ACP state(s) will be lost, and won't be recoverable.
 func (db *DB) PurgeACPState(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

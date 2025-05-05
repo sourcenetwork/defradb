@@ -97,13 +97,6 @@ type DB interface {
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// PurgeACPState purges the ACP state(s), and calls [Close()] on the ACP system(s) before returning.
-	//
-	// This will close the ACP system(s), purge it's state(s), then restart it/them, and finally close it/them.
-	//
-	// Note: all ACP state(s) will be lost, and won't be recoverable.
-	PurgeACPState(ctx context.Context) error
-
 	// AddPolicy adds policy to acp, if acp is available.
 	//
 	// If policy was successfully added to acp then a policyID is returned,
