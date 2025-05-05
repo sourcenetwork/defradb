@@ -199,6 +199,9 @@
                         },
                         "type": "array"
                     },
+                    "IsActive": {
+                        "type": "boolean"
+                    },
                     "IsBranchable": {
                         "type": "boolean"
                     },
@@ -208,7 +211,9 @@
                     "IsMaterialized": {
                         "type": "boolean"
                     },
-                    "Name": {},
+                    "Name": {
+                        "type": "string"
+                    },
                     "Policy": {},
                     "Sources": {
                         "items": {},
@@ -311,6 +316,9 @@
                                 },
                                 "type": "array"
                             },
+                            "IsActive": {
+                                "type": "boolean"
+                            },
                             "IsBranchable": {
                                 "type": "boolean"
                             },
@@ -320,7 +328,9 @@
                             "IsMaterialized": {
                                 "type": "boolean"
                             },
-                            "Name": {},
+                            "Name": {
+                                "type": "string"
+                            },
                             "Policy": {},
                             "Sources": {
                                 "items": {},

@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/immutable"
-
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
@@ -31,7 +29,7 @@ var (
 
 	def = CollectionDefinition{
 		Description: CollectionDescription{
-			Name: immutable.Some("User"),
+			Name: "User",
 			Fields: []CollectionFieldDescription{
 				{
 					Name: "Name",

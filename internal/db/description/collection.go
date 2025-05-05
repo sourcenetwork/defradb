@@ -39,11 +39,6 @@ func SaveCollection(
 		}
 	}
 
-	existing, err := GetCollectionByID(ctx, txn, desc.ID)
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return client.CollectionDescription{}, err
-	}
-
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return client.CollectionDescription{}, err
@@ -55,31 +50,25 @@ func SaveCollection(
 		return client.CollectionDescription{}, err
 	}
 
-	if existing.Name.HasValue() && existing.Name != desc.Name {
-		nameKey := keys.NewCollectionNameKey(existing.Name.Value())
-		idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
-		nameIndexExsts := true
+	if !desc.IsActive {
+		nameKey := keys.NewCollectionNameKey(desc.Name)
+		idBytes, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 		if err != nil {
-			if errors.Is(err, corekv.ErrNotFound) {
-				nameIndexExsts = false
-			} else {
+			if !errors.Is(err, corekv.ErrNotFound) {
 				return client.CollectionDescription{}, err
 			}
 		}
-		if nameIndexExsts {
-			if string(idBuf) == desc.ID {
-				// The name index may have already been overwritten, pointing at another collection
-				// we should only remove the existing index if it still points at this collection
-				err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
-				if err != nil {
-					return client.CollectionDescription{}, err
-				}
+
+		if string(idBytes) == desc.ID {
+			err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
+			if err != nil {
+				return client.CollectionDescription{}, err
 			}
 		}
 	}
 
-	if desc.Name.HasValue() {
-		nameKey := keys.NewCollectionNameKey(desc.Name.Value())
+	if desc.IsActive {
+		nameKey := keys.NewCollectionNameKey(desc.Name)
 		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.ID))
 		if err != nil {
 			return client.CollectionDescription{}, err

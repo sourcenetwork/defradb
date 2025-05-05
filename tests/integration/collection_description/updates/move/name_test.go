@@ -45,25 +45,7 @@ func TestColDescrUpdateMoveName(t *testing.T) {
 						}
 					]
 				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
-				},
+				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}

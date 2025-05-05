@@ -332,7 +332,7 @@ func (p *Planner) newInvertableTypeJoin(
 	var childSideRelIDFieldMapIndex immutable.Option[int]
 	childsRelFieldDesc, ok := subCol.Description().GetFieldByRelation(
 		parentsRelFieldDef.RelationName,
-		parent.collection.Name().Value(),
+		parent.collection.Name(),
 		parentsRelFieldDef.Name,
 	)
 	if ok {

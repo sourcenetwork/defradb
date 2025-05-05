@@ -169,7 +169,7 @@ func (db *DB) getDocsHeads(
 				log.ErrorContextE(
 					ctx,
 					"Failed to get all docIDs",
-					NewErrReplicatorDocID(err, dbErrors.NewKV("Collection", col.Name().Value())),
+					NewErrReplicatorDocID(err, dbErrors.NewKV("Collection", col.Name())),
 				)
 				continue
 			}

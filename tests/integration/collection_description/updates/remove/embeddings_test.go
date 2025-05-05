@@ -13,8 +13,6 @@ package remove
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -44,8 +42,9 @@ func TestColDescrUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:             immutable.Some("Users"),
+						Name:             "Users",
 						IsMaterialized:   true,
+						IsActive:         true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{},
 					},
 				},

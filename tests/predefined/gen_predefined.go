@@ -77,7 +77,7 @@ func Create(defs []client.CollectionDefinition, docsList DocsList) ([]gen.Genera
 	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs := make(map[string]client.CollectionDefinition)
 	for _, col := range defs {
-		typeDefs[col.Description.Name.Value()] = col
+		typeDefs[col.Description.Name] = col
 	}
 
 	generator := docGenerator{
@@ -150,7 +150,7 @@ func (this *docGenerator) generatePrimary(
 				result = append(result, subResult...)
 
 				secondaryDocs, err := this.generateSecondaryDocs(
-					secDocMapField.(map[string]any), docID, &primType, secType.Description.Name.Value())
+					secDocMapField.(map[string]any), docID, &primType, secType.Description.Name)
 				if err != nil {
 					return nil, nil, err
 				}
@@ -235,7 +235,7 @@ func (this *docGenerator) generateSecondaryDocsForField(
 			case []map[string]any:
 				for _, relDoc := range relVal {
 					relDoc[primaryPropName] = primaryDocID
-					actions, err := this.generateRelatedDocs(relDoc, relTypeDef.Description.Name.Value())
+					actions, err := this.generateRelatedDocs(relDoc, relTypeDef.Description.Name)
 					if err != nil {
 						return nil, err
 					}
@@ -243,7 +243,7 @@ func (this *docGenerator) generateSecondaryDocsForField(
 				}
 			case map[string]any:
 				relVal[primaryPropName] = primaryDocID
-				actions, err := this.generateRelatedDocs(relVal, relTypeDef.Description.Name.Value())
+				actions, err := this.generateRelatedDocs(relVal, relTypeDef.Description.Name)
 				if err != nil {
 					return nil, err
 				}

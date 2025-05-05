@@ -180,7 +180,7 @@ func (db *DB) getCollections(
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !options.IncludeInactive.Value() && !col.Name.HasValue() && !options.ID.HasValue() {
+		if !options.IncludeInactive.Value() && !col.IsActive && !options.ID.HasValue() {
 			continue
 		}
 
@@ -356,7 +356,7 @@ func (c *collection) Description() client.CollectionDescription {
 }
 
 // Name returns the collection name.
-func (c *collection) Name() immutable.Option[string] {
+func (c *collection) Name() string {
 	return c.Description().Name
 }
 
@@ -842,7 +842,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 
 	otherObjFieldDescription, _ := otherCol.Description.GetFieldByRelation(
 		fieldDescription.RelationName,
-		c.Name().Value(),
+		c.Name(),
 		objFieldDescription.Name,
 	)
 	if !(otherObjFieldDescription.Kind.HasValue() &&

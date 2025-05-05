@@ -438,6 +438,7 @@ func (db *DB) updateSchema(
 				// another collection set that happens to be using the same schema.
 				if source.SourceCollectionID == previousID {
 					existingCol.CollectionID = schema.Root
+					existingCol.Name = schema.Name
 
 					for _, globalField := range schema.Fields {
 						var fieldID client.FieldID
@@ -468,10 +469,10 @@ func (db *DB) updateSchema(
 		}
 
 		if !isExistingCol {
-			// Create any new collections without a name (inactive), if [setAsActiveVersion] is true
+			// Create any new collections as inactive, if [setAsActiveVersion] is true
 			// they will be activated later along with any existing collection versions.
-			col.Name = immutable.None[string]()
 			col.ID = schema.VersionID
+			col.IsActive = false
 			col.CollectionID = schema.Root
 			col.Sources = []any{
 				&client.CollectionSource{

@@ -116,6 +116,7 @@ const (
 	errMissingSignature                         string = "block is missing required signature"
 	errNoIdentityInContext                      string = "no identity found in context"
 	errMissingPermission                        string = "missing permission"
+	errCollectionNameMutated                    string = "collection name cannot be mutated"
 )
 
 var (
@@ -172,6 +173,7 @@ var (
 	ErrMissingSignature                         = errors.New(errMissingSignature)
 	ErrMissingPermission                        = errors.New(errMissingPermission)
 	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
+	ErrCollectionNameMutated                    = errors.New(errCollectionNameMutated)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -740,4 +742,12 @@ func NewErrEmbeddingFieldNotFound(field string) error {
 
 func NewErrGetDocForEmbedding(inner error) error {
 	return errors.Wrap(errGetDocForEmbedding, inner)
+}
+
+func NewErrCollectionNameMutated(newName string, oldName string) error {
+	return errors.New(
+		errCollectionNameMutated,
+		errors.NewKV("NewName", newName),
+		errors.NewKV("OldName", oldName),
+	)
 }

@@ -19,13 +19,18 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
+// OrphanCollectionID represents an orphan Collection.
+//
+// Some actions may result in CollectionVersions being defined in an oprhaned state,
+// such as registering Lens migrations for version(s) that do not yet exist locally.
+//
+// Orphaned collections cannot be queried.
+const OrphanCollectionID string = "OrphanCollectionID"
+
 // CollectionDescription describes a Collection and all its associated metadata.
 type CollectionDescription struct {
 	// Name contains the name of the collection.
-	//
-	// It is conceptually local to the node hosting the DefraDB instance, but currently there
-	// is no means to update the local value so that it differs from the (global) schema name.
-	Name immutable.Option[string]
+	Name string
 
 	// The immutable ID of this collection version.
 	ID string
@@ -59,6 +64,14 @@ type CollectionDescription struct {
 	// parsing is done, to avoid storing an invalid policyID or policy resource
 	// that may not even exist on acp.
 	Policy immutable.Option[PolicyDescription]
+
+	// IsActive defines whether this version of the collection is active or not.
+	//
+	// The active version will be used when accessed via various functions/endpoints,
+	// such as GQL.
+	//
+	// Only one version can be active at a time.
+	IsActive bool
 
 	// IsMaterialized defines whether the items in this collection are cached or not.
 	//
@@ -158,7 +171,7 @@ func (col CollectionDescription) GetFieldByRelation(
 ) (CollectionFieldDescription, bool) {
 	for _, field := range col.Fields {
 		if field.RelationName.Value() == relationName &&
-			!(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) &&
+			!(col.Name == otherCollectionName && otherFieldName == field.Name) &&
 			field.Kind.Value() != FieldKind_DocID {
 			return field, true
 		}
@@ -190,13 +203,14 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 // of json to a [CollectionDescription].
 type collectionDescription struct {
 	// These properties are unmarshalled using the default json unmarshaller
-	Name             immutable.Option[string]
+	Name             string
 	ID               string
 	CollectionID     string
 	RootID           uint32
 	IsMaterialized   bool
 	IsBranchable     bool
 	IsEmbeddedOnly   bool
+	IsActive         bool
 	Policy           immutable.Option[PolicyDescription]
 	Indexes          []IndexDescription
 	Fields           []CollectionFieldDescription
@@ -219,6 +233,7 @@ func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable
 	c.IsEmbeddedOnly = descMap.IsEmbeddedOnly
+	c.IsActive = descMap.IsActive
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))

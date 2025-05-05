@@ -120,7 +120,7 @@ func saveBatchToCollections(
 ) error {
 	for colName, colDocs := range colDocsMap {
 		for _, col := range collections {
-			if col.Description().Name.Value() == colName {
+			if col.Description().Name == colName {
 				err := col.CreateMany(ctx, colDocs)
 				if err != nil {
 					return err
@@ -135,7 +135,7 @@ func saveBatchToCollections(
 func groupDocsByCollection(docs []gen.GeneratedDoc) map[string][]*client.Document {
 	result := make(map[string][]*client.Document)
 	for _, doc := range docs {
-		result[doc.Col.Description.Name.Value()] = append(result[doc.Col.Description.Name.Value()], doc.Doc)
+		result[doc.Col.Description.Name] = append(result[doc.Col.Description.Name], doc.Doc)
 	}
 	return result
 }

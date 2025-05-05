@@ -13,8 +13,6 @@ package collection_description
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -30,9 +28,10 @@ func TestColDescr_Branchable(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						IsBranchable:   true,
+						IsActive:       true,
 					},
 				},
 			},
@@ -53,9 +52,10 @@ func TestColDescr_BranchableIfTrue(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						IsBranchable:   true,
+						IsActive:       true,
 					},
 				},
 			},
@@ -76,9 +76,10 @@ func TestColDescr_BranchableIfFalse(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
 						IsBranchable:   false,
+						IsActive:       true,
 					},
 				},
 			},

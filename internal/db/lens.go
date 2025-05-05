@@ -48,6 +48,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	if !srcFound {
 		desc := client.CollectionDescription{
 			ID:             cfg.SourceSchemaVersionID,
+			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 		}
 
@@ -80,6 +81,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 	if !isDstCollectionFound {
 		desc := client.CollectionDescription{
+			Name:           sourceCol.Name,
 			ID:             cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
 			CollectionID:   sourceCol.CollectionID,

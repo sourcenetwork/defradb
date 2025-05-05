@@ -149,7 +149,7 @@ func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	col, err := db.GetCollectionByName(ctx, cols[0].Name.Value())
+	col, err := db.GetCollectionByName(ctx, cols[0].Name)
 	require.NoError(t, err)
 	doc, err := client.NewDocFromMap(map[string]any{"name": "Alice"}, col.Definition())
 	require.NoError(t, err)
