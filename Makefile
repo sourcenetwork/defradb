@@ -165,7 +165,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v2@v2.43.0
+	go install github.com/vektra/mockery/v3@v3.2
 
 .PHONY: deps\:playground
 deps\:playground:
