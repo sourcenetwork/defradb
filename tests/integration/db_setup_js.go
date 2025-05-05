@@ -22,6 +22,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 	opts = append(opts, node.WithBadgerInMemory(true))
+	opts = append(opts, node.WithLensRuntime(node.JSLensRuntime))
 
 	node, err := node.New(s.ctx, opts...)
 	if err != nil {

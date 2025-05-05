@@ -282,7 +282,6 @@ jobs:
 
     env:
       CGO_ENABLED: 0
-      DEFRA_LENS_TYPE: js
 
     steps:
       - name: Checkout code into the directory
@@ -313,6 +312,7 @@ jobs:
       - test-view         #  1 test(s)
       - test-encryption   #  1 test(s)
       - test-telemetry    #  1 test(s)
+      - test-js           #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
