@@ -15,9 +15,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -44,8 +42,6 @@ type Node struct {
 	server *http.Server
 	// kms subsystem instance
 	kmsService kms.Service
-	// documentACP subsystem instance
-	documentACP immutable.Option[dac.DocumentACP]
 	// config values after applying options
 	config *Config
 	// options the node was created with
@@ -70,15 +66,15 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.documentACP, err = NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
-	if err != nil {
-		return err
-	}
 	lens, err := NewLens(ctx, filterOptions[LenOpt](n.options)...)
 	if err != nil {
 		return err
 	}
-	n.DB, err = db.NewDB(ctx, rootstore, n.documentACP, lens, filterOptions[db.Option](n.options)...)
+	documentACP, err := NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -118,20 +114,14 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if n.documentACP.HasValue() {
-		documentACP := n.documentACP.Value()
-		err := documentACP.ResetState(ctx)
-		if err != nil {
-			// for now we will just log this error, since SourceHub ACP doesn't yet
-			// implement the ResetState.
-			log.ErrorE("Failed to reset ACP state", err)
-		}
-		// follow up close call on ACP is required since the node.Start function starts
-		// ACP again anyways so we need to gracefully close before starting again
-		err = documentACP.Close()
-		if err != nil {
-			return err
-		}
+
+	coreDB, _ := n.DB.(*db.DB)
+
+	// This will purge state.
+	// They will be restarted when node is started again.
+	err = coreDB.PurgeACPState(ctx)
+	if err != nil {
+		return err
 	}
 
 	return n.Start(ctx)

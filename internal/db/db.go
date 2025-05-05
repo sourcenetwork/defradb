@@ -211,6 +211,10 @@ func (db *DB) LensRegistry() client.LensRegistry {
 	return db.lensRegistry
 }
 
+func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
+	return db.documentACP
+}
+
 func (db *DB) AddPolicy(
 	ctx context.Context,
 	policy string,
@@ -232,6 +236,36 @@ func (db *DB) AddPolicy(
 	}
 
 	return client.AddPolicyResult{PolicyID: policyID}, nil
+}
+
+// PurgeACPState purges the ACP state(s), and calls [Close()] on the ACP system(s) before returning.
+//
+// This will close the ACP system(s), purge it's state(s), then restart it/them, and finally close it/them.
+//
+// Note: all ACP state(s) will be lost, and won't be recoverable.
+func (db *DB) PurgeACPState(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	// Purge document acp state and keep it closed.
+	if db.documentACP.HasValue() {
+		documentACP := db.documentACP.Value()
+		err := documentACP.ResetState(ctx)
+		if err != nil {
+			// for now we will just log this error, since SourceHub ACP doesn't yet
+			// implement the ResetState.
+			log.ErrorE("Failed to reset document ACP state", err)
+		}
+
+		// follow up close call on document ACP is required since the node.Start function starts
+		// document ACP again anyways so we need to gracefully close before starting again.
+		err = documentACP.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // publishDocUpdateEvent publishes an update event for a document.
