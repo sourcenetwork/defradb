@@ -1937,9 +1937,12 @@ func executeSubscriptionRequest(
 				select {
 				case s := <-result.Subscription:
 					results = append(results, &s)
-
+				case <-time.After(100 * time.Millisecond):
+				}
+				select {
 				case <-s.allActionsDone:
 					allActionsAreDone = true
+				case <-time.After(100 * time.Millisecond):
 				}
 			}
 
