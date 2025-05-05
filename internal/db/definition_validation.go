@@ -392,21 +392,21 @@ func validateSingleVersionActive(
 ) error {
 	var errs []error
 	colsWithActiveCol := map[string]struct{}{}
-	for _, def := range newState.definitionsByName {
-		if !def.Description.IsActive {
+	for _, def := range newState.collections {
+		if !def.IsActive {
 			continue
 		}
 
-		if _, ok := colsWithActiveCol[def.Description.CollectionID]; ok {
+		if _, isDuplicate := colsWithActiveCol[def.CollectionID]; isDuplicate {
 			errs = append(
 				errs,
 				NewErrMultipleActiveCollectionVersions(
-					def.Description.Name,
-					def.Description.CollectionID,
+					def.Name,
+					def.CollectionID,
 				),
 			)
 		}
-		colsWithActiveCol[def.Schema.Root] = struct{}{}
+		colsWithActiveCol[def.CollectionID] = struct{}{}
 	}
 
 	return errors.Join(errs...)
