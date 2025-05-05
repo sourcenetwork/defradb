@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -85,7 +85,7 @@ func runMakePlanBench(
 		planner := planner.New(
 			ctx,
 			acpIdentity.None,
-			acp.NoACP,
+			dac.NoDocumentACP,
 			d,
 			txn,
 		)

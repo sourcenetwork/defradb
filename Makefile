@@ -166,7 +166,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v2@v2.43.0
+	go install github.com/vektra/mockery/v3@v3.2
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -286,7 +286,7 @@ test\:col-named-mutations:
 
 .PHONY: test\:source-hub
 test\:source-hub:
-	DEFRA_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:

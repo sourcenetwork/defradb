@@ -23,8 +23,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 	grpcpeer "google.golang.org/grpc/peer"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -53,7 +54,7 @@ type pubSubService struct {
 	keyRequestedSub *event.Subscription
 	eventBus        *event.Bus
 	encStore        *ipldEncStorage
-	acp             immutable.Option[acp.ACP]
+	documentACP     immutable.Option[dac.DocumentACP]
 	colRetriever    CollectionRetriever
 	nodeDID         string
 }
@@ -82,7 +83,7 @@ func NewPubSubService(
 	pubsub PubSubServer,
 	eventBus *event.Bus,
 	encstore datastore.Blockstore,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
 	nodeDID string,
 ) (*pubSubService, error) {
@@ -92,7 +93,7 @@ func NewPubSubService(
 		pubsub:       pubsub,
 		eventBus:     eventBus,
 		encStore:     newIPLDEncryptionStorage(encstore),
-		acp:          acp,
+		documentACP:  documentACP,
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
 	}
@@ -364,7 +365,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 	actorIdentity string,
 	entBlock *coreblock.Encryption,
 ) (bool, error) {
-	if !s.acp.HasValue() {
+	if !s.documentACP.HasValue() {
 		return true, nil
 	}
 
@@ -377,9 +378,9 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		immutable.Some(identity.Identity{DID: actorIdentity}),
-		s.acp.Value(),
+		s.documentACP.Value(),
 		collection,
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		docID,
 	)
 }

@@ -662,15 +662,15 @@ func validateCollectionDefinitionPolicyDesc(
 		// If there is a policy specified, but the database does not have
 		// acp enabled/available return an error, database must have an acp available
 		// to enable access control (inorder to adhere to the policy specified).
-		if !db.acp.HasValue() {
+		if !db.documentACP.HasValue() {
 			errs = append(errs, ErrCanNotHavePolicyWithoutACP)
 		}
 
-		// If we have the policy specified on the collection, and acp is available/enabled,
-		// then using the acp system we need to ensure the policy id specified
-		// actually exists as a policy, and the resource name exists on that policy
-		// and that the resource is a valid DPI.
-		err := db.acp.Value().ValidateResourceExistsOnValidDPI(
+		// If we have the policy specified on the collection, and document acp is
+		// available/enabled, then using the document acp system we need to ensure
+		// the policy id specified actually exists as a policy, and the resource name
+		// exists on that policy and that the resource is a valid document interface resource.
+		err := db.documentACP.Value().ValidateResourceInterface(
 			ctx,
 			newCol.Policy.Value().ID,
 			newCol.Policy.Value().ResourceName,

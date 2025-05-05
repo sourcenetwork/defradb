@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/corekv/badger"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 )
 
 func newBadgerDB(ctx context.Context) (*DB, error) {
@@ -26,7 +26,7 @@ func newBadgerDB(ctx context.Context) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newDB(ctx, rootstore, acp.NoACP, nil)
+	return newDB(ctx, rootstore, dac.NoDocumentACP, nil)
 }
 
 func TestNewDB(t *testing.T) {
@@ -34,6 +34,6 @@ func TestNewDB(t *testing.T) {
 	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	require.NoError(t, err)
 
-	_, err = NewDB(ctx, rootstore, acp.NoACP, nil)
+	_, err = NewDB(ctx, rootstore, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 }

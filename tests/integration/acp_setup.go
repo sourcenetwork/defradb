@@ -51,22 +51,22 @@ func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
 	return immutable.None[string]()
 }
 
-func setupSourceHub(s *state) ([]node.ACPOpt, error) {
-	var isACPTest bool
+func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
+	var isDocumentACPTest bool
 	for _, a := range s.testCase.Actions {
 		switch a.(type) {
 		case
-			AddPolicy,
+			AddDocPolicy,
 			AddDocActorRelationship,
 			DeleteDocActorRelationship:
-			isACPTest = true
+			isDocumentACPTest = true
 		}
 	}
 
-	if !isACPTest {
+	if !isDocumentACPTest {
 		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
 		// runtime of the test suite when SourceHub ACP is selected.
-		s.t.Skipf("test has no ACP elements when testing with SourceHub ACP")
+		s.t.Skipf("test has no document ACP elements when testing with SourceHub ACP")
 	}
 
 	const moniker string = "foo"
@@ -295,7 +295,7 @@ cmdReaderLoop:
 		return nil, err
 	}
 
-	return []node.ACPOpt{
+	return []node.DocumentACPOpt{
 		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
 		node.WithSourceHubChainID(chainID),
 		node.WithSourceHubGRPCAddress(gRpcAddress),

@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -69,12 +69,12 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	require.NoError(t, err)
 
-	acpLocal := acp.NewLocalACP()
-	acpLocal.Init(context.Background(), "")
+	localDocumentACP := dac.NewLocalDocumentACP()
+	localDocumentACP.Init(context.Background(), "")
 	db, err := db.NewDB(
 		ctx,
 		store,
-		immutable.Some(acpLocal),
+		immutable.Some(localDocumentACP),
 		nil,
 		db.WithRetryInterval([]time.Duration{time.Second}),
 	)
@@ -83,7 +83,7 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 	n, err := NewPeer(
 		ctx,
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithListenAddresses(randomMultiaddr),
 	)
@@ -95,36 +95,36 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 func TestNewPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
-	p, err := NewPeer(ctx, db.Events(), immutable.None[acp.ACP](), db)
+	p, err := NewPeer(ctx, db.Events(), immutable.None[dac.DocumentACP](), db)
 	require.NoError(t, err)
 	p.Close()
 }
 
 func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	ctx := context.Background()
-	_, err := NewPeer(ctx, nil, immutable.None[acp.ACP](), nil)
+	_, err := NewPeer(ctx, nil, immutable.None[dac.DocumentACP](), nil)
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db1, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db1.Close()
 
 	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, acp.NoACP, nil)
+	db2, err := db.NewDB(ctx, store2, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db2.Close()
 
 	n1, err := NewPeer(
 		ctx,
 		db1.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db1,
 		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
@@ -133,7 +133,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	n2, err := NewPeer(
 		ctx,
 		db2.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db2,
 		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
@@ -255,7 +255,7 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 func fixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	database, err := db.NewDB(ctx, rootstore, acp.NoACP, nil)
+	database, err := db.NewDB(ctx, rootstore, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	return database
 }
@@ -263,13 +263,13 @@ func fixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
 func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithEnableRelay(true),
 	)
@@ -280,14 +280,14 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
 	n, err := NewPeer(
 		context.Background(),
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithEnablePubSub(false),
 	)
@@ -299,14 +299,14 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
 	n, err := NewPeer(
 		ctx,
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithEnablePubSub(true),
 	)
@@ -320,13 +320,13 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 func TestNodeClose_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 	n, err := NewPeer(
 		context.Background(),
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 	)
 	require.NoError(t, err)
@@ -336,14 +336,14 @@ func TestNodeClose_NoError(t *testing.T) {
 func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
 	n, err := NewPeer(
 		context.Background(),
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
@@ -355,14 +355,14 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, store, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
 	n, err := NewPeer(
 		context.Background(),
 		db.Events(),
-		immutable.None[acp.ACP](),
+		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithBootstrapPeers("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"),
 	)

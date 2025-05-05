@@ -13,8 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -141,7 +141,7 @@ func (c *collection) applyDelete(
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.DeletePermission,
+		acpTypes.DocumentDeletePerm,
 		primaryKey.DocID,
 	)
 

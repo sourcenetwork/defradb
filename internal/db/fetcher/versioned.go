@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -94,7 +94,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
-	acp immutable.Option[acp.ACP]
+	documentACP immutable.Option[dac.DocumentACP]
 
 	col client.Collection
 }
@@ -104,7 +104,7 @@ func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
@@ -113,7 +113,7 @@ func (vf *VersionedFetcher) Init(
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
-	vf.acp = acp
+	vf.documentACP = documentACP
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.txn = txn
@@ -168,7 +168,7 @@ func (vf *VersionedFetcher) Init(
 		ctx,
 		identity,
 		vf.store,
-		acp,
+		documentACP,
 		index,
 		col,
 		fields,

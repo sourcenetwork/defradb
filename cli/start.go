@@ -108,12 +108,12 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				opts = append(opts, node.WithACPPath(rootDir))
+				opts = append(opts, node.WithDocumentACPPath(rootDir))
 			}
 
 			acpType := cfg.GetString("acp.type")
 			if acpType != "" {
-				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
+				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(acpType)))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {

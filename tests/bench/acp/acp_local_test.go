@@ -20,8 +20,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
 var identity1 = identity.Identity{
@@ -63,12 +64,12 @@ resources:
           - actor
  `
 
-// newLocalACPSetup will setup localACP instance in memory if inMem is true and a persistent store otherwise.
-// Additionally it will also start the acp instance.
-// The caller is responsible to call `Close()` on the returned [acp.ACP] instance.
-func newLocalACPSetup(b *testing.B, inMem bool) acp.ACP {
+// newLocalDocumentACPSetup will setup localACP instance in memory if inMem is true and a persistent store otherwise.
+// Additionally it will also start the document acp instance.
+// The caller is responsible to call `Close()` on the returned [dac.DocumentACP] instance.
+func newLocalDocumentACPSetup(b *testing.B, inMem bool) dac.DocumentACP {
 	ctx := context.Background()
-	localACP := acp.NewLocalACP()
+	localACP := dac.NewLocalDocumentACP()
 
 	if inMem {
 		localACP.Init(ctx, "")
@@ -83,8 +84,8 @@ func newLocalACPSetup(b *testing.B, inMem bool) acp.ACP {
 	return localACP
 }
 
-// resetLocalACPKeepPolicy resets the local acp instance then adds our desired policy back.
-func resetLocalACPKeepPolicy(b *testing.B, ctx context.Context, localACP acp.ACP) {
+// resetLocalDocumentACPKeepPolicy resets the local document acp instance then adds our desired policy back.
+func resetLocalDocumentACPKeepPolicy(b *testing.B, ctx context.Context, localACP dac.DocumentACP) {
 	resetErr := localACP.ResetState(ctx)
 	require.Nil(b, resetErr)
 
@@ -101,7 +102,7 @@ func resetLocalACPKeepPolicy(b *testing.B, ctx context.Context, localACP acp.ACP
 	)
 }
 
-func registerXDocObjects(b *testing.B, ctx context.Context, count int, localACP acp.ACP) {
+func registerXDocObjects(b *testing.B, ctx context.Context, count int, localACP dac.DocumentACP) {
 	for index := 0; index < count; index++ {
 		err := localACP.RegisterDocObject(
 			ctx,
@@ -122,7 +123,7 @@ func BenchmarkACPRegister(b *testing.B) {
 			b.Run(
 				fmt.Sprintf("scale=%d,inMem=%t", scaleBy, inMemoryOrPersistent),
 				func(b *testing.B) {
-					localACP := newLocalACPSetup(b, inMemoryOrPersistent)
+					localACP := newLocalDocumentACPSetup(b, inMemoryOrPersistent)
 					defer localACP.Close()
 
 					b.ResetTimer()
@@ -130,7 +131,7 @@ func BenchmarkACPRegister(b *testing.B) {
 						// Since we need to re-initialize for every run use stop-start.
 						b.StopTimer()
 						ctx := context.Background()
-						resetLocalACPKeepPolicy(b, ctx, localACP)
+						resetLocalDocumentACPKeepPolicy(b, ctx, localACP)
 
 						b.StartTimer()
 						registerXDocObjects(b, ctx, scaleBy, localACP)
@@ -147,7 +148,7 @@ func BenchmarkACPIsDocRegistered(b *testing.B) {
 			b.Run(
 				fmt.Sprintf("scale=%d,inMem=%t", scaleBy, inMemoryOrPersistent),
 				func(b *testing.B) {
-					localACP := newLocalACPSetup(b, inMemoryOrPersistent)
+					localACP := newLocalDocumentACPSetup(b, inMemoryOrPersistent)
 					defer localACP.Close()
 
 					b.ResetTimer()
@@ -155,7 +156,7 @@ func BenchmarkACPIsDocRegistered(b *testing.B) {
 						// Since we need to re-initialize for every run use stop-start.
 						b.StopTimer()
 						ctx := context.Background()
-						resetLocalACPKeepPolicy(b, ctx, localACP)
+						resetLocalDocumentACPKeepPolicy(b, ctx, localACP)
 						registerXDocObjects(b, ctx, scaleBy, localACP)
 
 						b.StartTimer()
@@ -176,7 +177,7 @@ func BenchmarkACPCheckDocAccess(b *testing.B) {
 			b.Run(
 				fmt.Sprintf("scale=%d,inMem=%t", scaleBy, inMemoryOrPersistent),
 				func(b *testing.B) {
-					localACP := newLocalACPSetup(b, inMemoryOrPersistent)
+					localACP := newLocalDocumentACPSetup(b, inMemoryOrPersistent)
 					defer localACP.Close()
 
 					b.ResetTimer()
@@ -184,13 +185,13 @@ func BenchmarkACPCheckDocAccess(b *testing.B) {
 						// Since we need to re-initialize for every run use stop-start.
 						b.StopTimer()
 						ctx := context.Background()
-						resetLocalACPKeepPolicy(b, ctx, localACP)
+						resetLocalDocumentACPKeepPolicy(b, ctx, localACP)
 						registerXDocObjects(b, ctx, scaleBy, localACP)
 
 						b.StartTimer()
 						_, err := localACP.CheckDocAccess(
 							ctx,
-							acp.ReadPermission,
+							acpTypes.DocumentReadPerm,
 							identity1.DID,
 							validPolicyID,
 							"users",

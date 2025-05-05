@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	httpapi "github.com/sourcenetwork/defradb/http"
@@ -48,7 +48,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore, acp.NoACP, nil)
+	db, err := db.NewDB(ctx, rootstore, dac.NoDocumentACP, nil)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}

@@ -20,8 +20,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -328,7 +328,7 @@ func (c *collection) getAllDocIDsChan(
 
 			canRead, err := c.checkAccessOfDocWithACP(
 				ctx,
-				acp.ReadPermission,
+				acpTypes.DocumentReadPerm,
 				docID.String(),
 			)
 
@@ -559,7 +559,7 @@ func (c *collection) update(
 	// Stop the update if the correct permissions aren't there.
 	canUpdate, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.UpdatePermission,
+		acpTypes.DocumentUpdatePerm,
 		doc.ID().String(),
 	)
 	if err != nil {
@@ -974,7 +974,7 @@ func (c *collection) exists(
 ) (exists bool, isDeleted bool, err error) {
 	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		primaryKey.DocID,
 	)
 	if err != nil {

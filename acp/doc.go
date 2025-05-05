@@ -9,9 +9,10 @@
 // licenses/APL.txt.
 
 /*
-Package acp utilizes the sourcehub acp module to bring the functionality
-to defradb, this package also helps avoid the leakage of direct sourcehub
-references through out the code base, and eases in swapping between local
-use case and a more global on sourcehub use case.
+This package implements admin and document access control systems.
+
+Document access control systems provide acp for individual documents of a collection.
+
+Admin access control systems provide acp for a node's operations.
 */
 package acp

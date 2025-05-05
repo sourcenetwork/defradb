@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -87,10 +87,10 @@ type PlanContext struct {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn      datastore.Txn
-	identity immutable.Option[acpIdentity.Identity]
-	acp      immutable.Option[acp.ACP]
-	db       client.Store
+	txn         datastore.Txn
+	identity    immutable.Option[acpIdentity.Identity]
+	documentACP immutable.Option[dac.DocumentACP]
+	db          client.Store
 
 	ctx context.Context
 }
@@ -98,16 +98,16 @@ type Planner struct {
 func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {
 	return &Planner{
-		txn:      txn,
-		identity: identity,
-		acp:      acp,
-		db:       db,
-		ctx:      ctx,
+		txn:         txn,
+		identity:    identity,
+		documentACP: documentACP,
+		db:          db,
+		ctx:         ctx,
 	}
 }
 

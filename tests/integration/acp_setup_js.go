@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func setupSourceHub(s *state) ([]node.ACPOpt, error) {
+func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 	return s.acpOptions, nil
 }
 

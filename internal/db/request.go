@@ -48,7 +48,7 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 	}
 
 	txn := mustGetContextTxn(ctx)
-	planner := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
+	planner := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {

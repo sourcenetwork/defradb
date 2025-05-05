@@ -19,15 +19,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type ACPType string
+type DocumentACPType string
 
 const (
-	acpTypeEnvName = "DEFRA_ACP_TYPE"
+	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
 )
 
 const (
-	SourceHubACPType ACPType = "source-hub"
-	LocalACPType     ACPType = "local"
+	SourceHubDocumentACPType DocumentACPType = "source-hub"
+	LocalDocumentACPType     DocumentACPType = "local"
 )
 
 const (
@@ -36,7 +36,7 @@ const (
 )
 
 var (
-	acpType ACPType
+	documentACPType DocumentACPType
 )
 
 // KMSType is the type of KMS to use.
@@ -54,14 +54,14 @@ func getKMSTypes() []KMSType {
 }
 
 func init() {
-	acpType = ACPType(os.Getenv(acpTypeEnvName))
-	if acpType == "" {
-		acpType = LocalACPType
+	documentACPType = DocumentACPType(os.Getenv(documentACPTypeEnvName))
+	if documentACPType == "" {
+		documentACPType = LocalDocumentACPType
 	}
 }
 
-// AddPolicy will attempt to add the given policy using DefraDB's ACP system.
-type AddPolicy struct {
+// AddDocPolicy will attempt to add the given policy using DefraDB's Document ACP system.
+type AddDocPolicy struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
 	// If a value is not provided the policy will be added in all nodes, unless testing with
@@ -88,10 +88,10 @@ type AddPolicy struct {
 	ExpectedError string
 }
 
-// addPolicyACP will attempt to add the given policy using DefraDB's ACP system.
-func addPolicyACP(
+// addPolicyDocumentACP will attempt to add the given policy using DefraDB's Document ACP system.
+func addPolicyDocumentACP(
 	s *state,
-	action AddPolicy,
+	action AddDocPolicy,
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
 	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
@@ -130,7 +130,7 @@ func addPolicyACP(
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if acpType == SourceHubACPType {
+		if documentACPType == SourceHubDocumentACPType {
 			// Note: If we break here the state will only preserve the policyIDs result on the
 			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
 			// on all the nodes, so we don't have to handle all the edge cases later in actions.
@@ -219,7 +219,7 @@ func addDocActorRelationshipACP(
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if acpType == SourceHubACPType {
+		if documentACPType == SourceHubDocumentACPType {
 			actionNodeID = immutable.Some(0)
 			break
 		}
@@ -239,7 +239,7 @@ type DeleteDocActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
-	// sourcehub ACP, in which case the relationship will only be deleted once.
+	// sourcehub document ACP, in which case the relationship will only be deleted once.
 	NodeID immutable.Option[int]
 
 	// The collection in which the target document we want to delete relationship for exists.
@@ -309,7 +309,7 @@ func deleteDocActorRelationshipACP(
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if acpType == SourceHubACPType {
+		if documentACPType == SourceHubDocumentACPType {
 			break
 		}
 	}

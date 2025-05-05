@@ -31,7 +31,7 @@ func (n *Node) startP2P(ctx context.Context) error {
 	peer, err := net.NewPeer(
 		ctx,
 		n.DB.Events(),
-		n.acp,
+		n.documentACP,
 		coreDB,
 		filterOptions[netConfig.NodeOpt](n.options)...,
 	)
@@ -53,7 +53,7 @@ func (n *Node) startP2P(ctx context.Context) error {
 				peer.Server(),
 				n.DB.Events(),
 				n.DB.Encstore(),
-				n.acp,
+				n.documentACP,
 				db.NewCollectionRetriever(n.DB),
 				ident.Value().DID,
 			)

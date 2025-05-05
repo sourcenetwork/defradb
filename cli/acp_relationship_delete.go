@@ -54,7 +54,7 @@ Notes:
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
   - If the relationship record was not found, then it will be a no-op.
-  - Learn more about [ACP & DPI Rules](/acp/README.md)
+  - Learn more about the DefraDB [ACP System](/acp/README.md)
 
 Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5) read a private document:
   defradb client acp relationship delete \
