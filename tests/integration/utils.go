@@ -171,7 +171,7 @@ func ExecuteTestCase(
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
-	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
+	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
@@ -360,8 +360,8 @@ func performAction(
 	case ConfigureMigration:
 		configureMigration(s, action)
 
-	case AddPolicy:
-		addPolicyACP(s, action)
+	case AddDocPolicy:
+		addPolicyDocumentACP(s, action)
 
 	case AddDocActorRelationship:
 		addDocActorRelationshipACP(s, action)
@@ -2373,18 +2373,18 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]ACPType]) {
+func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]DocumentACPType]) {
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == acpType {
+			if supportedType == documentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", acpType)
+			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
 		}
 	}
 }

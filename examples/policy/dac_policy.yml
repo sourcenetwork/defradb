@@ -1,0 +1,37 @@
+# The below policy contains a valid document acp resource interface that can be linked to a collection
+# object during the schema add command to have access control enabled for documents of that collection.
+#
+# The same policy example in json format is in: `examples/policy/dac_policy.json`
+#
+# Learn more about the DefraDB [ACP System](/acp/README.md)
+
+name: An Example Document ACP Policy
+
+description: A Document ACP Policy
+
+actor:
+  name: actor
+
+resources:
+  users:
+    permissions:
+      read:
+        expr: owner + reader + updater + deleter
+      update:
+        expr: owner + updater
+      delete:
+        expr: owner + deleter
+
+    relations:
+      owner:
+        types:
+          - actor
+      reader:
+        types:
+          - actor
+      updater:
+        types:
+          - actor
+      deleter:
+        types:
+          - actor

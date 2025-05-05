@@ -13,23 +13,18 @@ package acp
 import (
 	"context"
 
-	"github.com/sourcenetwork/corelog"
+	protoTypes "github.com/cosmos/gogoproto/types"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-var (
-	log = corelog.NewLogger("acp")
-
-	// NoACP is an empty ACP, this is used to disable access control.
-	NoACP = immutable.None[ACP]()
-)
-
-// ACP is the interface to all types of access control that might exist.
-type ACP interface {
+// ACPSystemClient is an abstraction to allow multiple types of ACP systems to share DefraDB specific logic.
+type ACPSystemClient interface {
 	// Init initializes the acp, with an absolute path. The provided path indicates where the
-	// persistent data will be stored for acp.
+	// persistent data will be stored for that ACP system.
 	//
 	// If the path is empty then acp will run in memory.
 	Init(ctx context.Context, path string)
@@ -40,102 +35,98 @@ type ACP interface {
 	// If the path is empty then acp will run in memory.
 	Start(ctx context.Context) error
 
-	// Close closes the resources in use by acp.
+	// Close closes any resources in use by acp.
 	Close() error
 
 	// ResetState purges the entire ACP state.
-	// Resetting will close the ACP engine, purge the state, then restart it
-	ResetState(ctx context.Context) error
+	ResetState(context.Context) error
 
-	// AddPolicy attempts to add the given policy. Detects the format of the policy automatically
-	// by assuming YAML format if JSON validation fails. Upon success a policyID is returned,
+	// AddPolicy attempts to add the given policy. Upon success a policyID is returned,
 	// otherwise returns error.
-	//
-	// A policy can not be added without a creator identity (sourcehub address).
-	AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error)
+	AddPolicy(
+		ctx context.Context,
+		creator identity.Identity,
+		policy string,
+		marshalType acpTypes.PolicyMarshalType,
+		creationTime *protoTypes.Timestamp,
+	) (string, error)
 
-	// ValidateResourceExistsOnValidDPI performs DPI validation of the resource (matching resource name)
-	// that is on the policy (matching policyID), returns an error upon validation failure.
-	//
-	// Learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
-	ValidateResourceExistsOnValidDPI(
+	// Policy returns a policy of the given policyID if one is found.
+	Policy(
 		ctx context.Context,
 		policyID string,
+	) (immutable.Option[acpTypes.Policy], error)
+
+	// RegisterObject registers the object to have access control.
+	// No error is returned upon successful registering of an object.
+	RegisterObject(
+		ctx context.Context,
+		identity identity.Identity,
+		policyID string,
 		resourceName string,
+		objectID string,
+		creationTime *protoTypes.Timestamp,
 	) error
 
-	// RegisterDocObject registers the document (object) to have access control.
-	// No error is returned upon successful registering of a document.
-	//
-	// Note(s):
-	// - This function does not check the collection to see if the document actually exists.
-	// - Some documents might be created without an identity signature so they would have public access.
-	// - actorID here is the identity of the actor registering the document object.
-	RegisterDocObject(
-		ctx context.Context,
-		indentity identity.Identity,
-		policyID string,
-		resourceName string,
-		docID string,
-	) error
-
-	// IsDocRegistered returns true if the document was found to be registered, otherwise returns false.
-	// If check failed then an error and false will be returned.
-	IsDocRegistered(
+	// ObjectOwner returns the owner of the object of the given objectID.
+	ObjectOwner(
 		ctx context.Context,
 		policyID string,
 		resourceName string,
-		docID string,
-	) (bool, error)
+		objectID string,
+	) (immutable.Option[string], error)
 
-	// CheckDocAccess returns true if the check was successfull and the request has access to the document. If
-	// the check was successful but the request does not have access to the document, then returns false.
+	// VerifyAccessRequest returns true if the check was successfull and the request has access to the object. If
+	// the check was successful but the request does not have access to the object, then returns false.
 	// Otherwise if check failed then an error is returned (and the boolean result should not be used).
-	//
-	// Note(s):
-	// - permission here is a valid DPI permission we are checking for ("read" or "update" or "delete").
-	CheckDocAccess(
+	VerifyAccessRequest(
 		ctx context.Context,
-		permission DPIPermission,
+		permission acpTypes.ResourceInterfacePermission,
 		actorID string,
 		policyID string,
 		resourceName string,
-		docID string,
+		objectID string,
 	) (bool, error)
 
-	// AddDocActorRelationship creates a relationship between document and the target actor.
+	// AddActorRelationship creates a relationship within a policy which ties the target actor
+	// with the specified object, which means that the set of high level rules defined in the
+	// policy will now apply to target actor as well.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
-	// be true if the relationship already existed (no-op), and false if a new relationship was made.
+	// be true if the relationship with actor already existed (no-op), and false if a new
+	// relationship was made.
 	//
-	// Note: The request actor must either be the owner or manager of the document.
-	AddDocActorRelationship(
+	// Note: The requester identity must either be the owner of the object (being shared) or
+	// the manager (i.e. the relation has `manages` defined in the policy).
+	AddActorRelationship(
 		ctx context.Context,
 		policyID string,
 		resourceName string,
-		docID string,
+		objectID string,
 		relation string,
-		requestActor identity.Identity,
+		requester identity.Identity,
 		targetActor string,
+		creationTime *protoTypes.Timestamp,
 	) (bool, error)
 
-	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	// DeleteActorRelationship deletes a relationship within a policy which ties the target actor
+	// with the specified object, which means that the set of high level rules defined in the
+	// policy for that relation no-longer will apply to target actor anymore.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
-	// be true if the relationship record was found, and deleted. Upon success the boolean
-	// value will be false if the relationship record was not found (no-op).
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
 	//
-	// Note: The request actor must either be the owner or manager of the document.
-	DeleteDocActorRelationship(
+	// Note: The requester identity must either be the owner of the object (being shared) or
+	// the manager (i.e. the relation has `manages` defined in the policy).
+	DeleteActorRelationship(
 		ctx context.Context,
 		policyID string,
 		resourceName string,
-		docID string,
+		objectID string,
 		relation string,
-		requestActor identity.Identity,
+		requester identity.Identity,
 		targetActor string,
+		creationTime *protoTypes.Timestamp,
 	) (bool, error)
-
-	// SupportsP2P returns true if the implementation supports ACP across a peer network.
-	SupportsP2P() bool
 }

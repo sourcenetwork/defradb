@@ -15,8 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
@@ -25,9 +26,9 @@ import (
 type permissionedFetcher struct {
 	ctx context.Context
 
-	identity immutable.Option[acpIdentity.Identity]
-	acp      acp.ACP
-	col      client.Collection
+	identity    immutable.Option[acpIdentity.Identity]
+	documentACP dac.DocumentACP
+	col         client.Collection
 
 	fetcher fetcher
 }
@@ -37,16 +38,16 @@ var _ fetcher = (*permissionedFetcher)(nil)
 func newPermissionedFetcher(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	acp acp.ACP,
+	documentACP dac.DocumentACP,
 	col client.Collection,
 	fetcher fetcher,
 ) *permissionedFetcher {
 	return &permissionedFetcher{
-		ctx:      ctx,
-		identity: identity,
-		acp:      acp,
-		col:      col,
-		fetcher:  fetcher,
+		ctx:         ctx,
+		identity:    identity,
+		documentACP: documentACP,
+		col:         col,
+		fetcher:     fetcher,
 	}
 }
 
@@ -63,9 +64,9 @@ func (f *permissionedFetcher) NextDoc() (immutable.Option[string], error) {
 	hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
 		f.ctx,
 		f.identity,
-		f.acp,
+		f.documentACP,
 		f.col,
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		docID.Value(),
 	)
 	if err != nil {

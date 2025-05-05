@@ -3,12 +3,13 @@
 package mocks
 
 import (
-	acp "github.com/sourcenetwork/defradb/acp"
-	client "github.com/sourcenetwork/defradb/client"
-
 	context "context"
 
+	client "github.com/sourcenetwork/defradb/client"
+
 	core "github.com/sourcenetwork/defradb/internal/core"
+
+	dac "github.com/sourcenetwork/defradb/acp/dac"
 
 	datastore "github.com/sourcenetwork/defradb/datastore"
 
@@ -148,17 +149,17 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(context.Context) (fetche
 	return _c
 }
 
-// Init provides a mock function with given fields: ctx, _a1, txn, _a3, index, col, fields, filter, ordering, docmapper, showDeleted
-func (_m *Fetcher) Init(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error {
-	ret := _m.Called(ctx, _a1, txn, _a3, index, col, fields, filter, ordering, docmapper, showDeleted)
+// Init provides a mock function with given fields: ctx, _a1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted
+func (_m *Fetcher) Init(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error {
+	ret := _m.Called(ctx, _a1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Init")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[acp.ACP], immutable.Option[client.IndexDescription], client.Collection, []client.FieldDefinition, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error); ok {
-		r0 = rf(ctx, _a1, txn, _a3, index, col, fields, filter, ordering, docmapper, showDeleted)
+	if rf, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[dac.DocumentACP], immutable.Option[client.IndexDescription], client.Collection, []client.FieldDefinition, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error); ok {
+		r0 = rf(ctx, _a1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -175,7 +176,7 @@ type Fetcher_Init_Call struct {
 //   - ctx context.Context
 //   - _a1 immutable.Option[identity.Identity]
 //   - txn datastore.Txn
-//   - _a3 immutable.Option[acp.ACP]
+//   - documentACP immutable.Option[dac.DocumentACP]
 //   - index immutable.Option[client.IndexDescription]
 //   - col client.Collection
 //   - fields []client.FieldDefinition
@@ -183,13 +184,13 @@ type Fetcher_Init_Call struct {
 //   - ordering []mapper.OrderCondition
 //   - docmapper *core.DocumentMapping
 //   - showDeleted bool
-func (_e *Fetcher_Expecter) Init(ctx interface{}, _a1 interface{}, txn interface{}, _a3 interface{}, index interface{}, col interface{}, fields interface{}, filter interface{}, ordering interface{}, docmapper interface{}, showDeleted interface{}) *Fetcher_Init_Call {
-	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, _a1, txn, _a3, index, col, fields, filter, ordering, docmapper, showDeleted)}
+func (_e *Fetcher_Expecter) Init(ctx interface{}, _a1 interface{}, txn interface{}, documentACP interface{}, index interface{}, col interface{}, fields interface{}, filter interface{}, ordering interface{}, docmapper interface{}, showDeleted interface{}) *Fetcher_Init_Call {
+	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, _a1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, _a3 immutable.Option[acp.ACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, _a1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(immutable.Option[identity.Identity]), args[2].(datastore.Txn), args[3].(immutable.Option[acp.ACP]), args[4].(immutable.Option[client.IndexDescription]), args[5].(client.Collection), args[6].([]client.FieldDefinition), args[7].(*mapper.Filter), args[8].([]mapper.OrderCondition), args[9].(*core.DocumentMapping), args[10].(bool))
+		run(args[0].(context.Context), args[1].(immutable.Option[identity.Identity]), args[2].(datastore.Txn), args[3].(immutable.Option[dac.DocumentACP]), args[4].(immutable.Option[client.IndexDescription]), args[5].(client.Collection), args[6].([]client.FieldDefinition), args[7].(*mapper.Filter), args[8].([]mapper.OrderCondition), args[9].(*core.DocumentMapping), args[10].(bool))
 	})
 	return _c
 }
@@ -199,7 +200,7 @@ func (_c *Fetcher_Init_Call) Return(_a0 error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[acp.ACP], immutable.Option[client.IndexDescription], client.Collection, []client.FieldDefinition, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[dac.DocumentACP], immutable.Option[client.IndexDescription], client.Collection, []client.FieldDefinition, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -24,7 +24,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -78,8 +78,8 @@ type DB struct {
 	// The identity of the current node
 	nodeIdentity immutable.Option[identity.Identity]
 
-	// Contains ACP if it exists
-	acp immutable.Option[acp.ACP]
+	// Contains document ACP if it exists
+	documentACP immutable.Option[dac.DocumentACP]
 
 	// The peer ID and network address information for the current node
 	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
@@ -104,17 +104,17 @@ var _ client.DB = (*DB)(nil)
 func NewDB(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, acp, lens, options...)
+	return newDB(ctx, rootstore, documentACP, lens, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
@@ -135,7 +135,7 @@ func newDB(
 	db := &DB{
 		rootstore:      rootstore,
 		multistore:     multistore,
-		acp:            acp,
+		documentACP:    documentACP,
 		lensRegistry:   lens,
 		parser:         parser,
 		options:        options,
@@ -218,11 +218,11 @@ func (db *DB) AddPolicy(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if !db.acp.HasValue() {
+	if !db.documentACP.HasValue() {
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	policyID, err := db.acp.Value().AddPolicy(
+	policyID, err := db.documentACP.Value().AddPolicy(
 		ctx,
 		identity.FromContext(ctx).Value(),
 		policy,
@@ -273,7 +273,7 @@ func (db *DB) AddDocActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if !db.acp.HasValue() {
+	if !db.documentACP.HasValue() {
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
@@ -287,7 +287,7 @@ func (db *DB) AddDocActorRelationship(
 		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
-	exists, err := db.acp.Value().AddDocActorRelationship(
+	exists, err := db.documentACP.Value().AddDocActorRelationship(
 		ctx,
 		policyID,
 		resourceName,
@@ -321,7 +321,7 @@ func (db *DB) DeleteDocActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if !db.acp.HasValue() {
+	if !db.documentACP.HasValue() {
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
@@ -335,7 +335,7 @@ func (db *DB) DeleteDocActorRelationship(
 		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
-	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
+	recordFound, err := db.documentACP.Value().DeleteDocActorRelationship(
 		ctx,
 		policyID,
 		resourceName,
@@ -379,9 +379,9 @@ func (db *DB) initialize(ctx context.Context) error {
 	defer txn.Discard(ctx)
 
 	// Start acp if enabled, this will recover previous state if there is any.
-	if db.acp.HasValue() {
-		// db is responsible to call db.acp.Close() to free acp resources while closing.
-		if err = db.acp.Value().Start(ctx); err != nil {
+	if db.documentACP.HasValue() {
+		// db is responsible to call db.documentACP.Close() to free acp resources while closing.
+		if err = db.documentACP.Value().Start(ctx); err != nil {
 			return err
 		}
 	}
@@ -450,8 +450,8 @@ func (db *DB) Close() {
 		log.ErrorE("Failure closing running process", err)
 	}
 
-	if db.acp.HasValue() {
-		if err := db.acp.Value().Close(); err != nil {
+	if db.documentACP.HasValue() {
+		if err := db.documentACP.Value().Close(); err != nil {
 			log.ErrorE("Failure closing acp", err)
 		}
 	}

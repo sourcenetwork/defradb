@@ -28,8 +28,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	grpcpeer "google.golang.org/grpc/peer"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -175,7 +175,7 @@ func (s *server) getIdentityHandler(
 	ctx context.Context,
 	req *getIdentityRequest,
 ) (*getIdentityReply, error) {
-	if !s.peer.acp.HasValue() {
+	if !s.peer.documentACP.HasValue() {
 		return &getIdentityReply{}, nil
 	}
 	token, err := s.peer.db.GetNodeIdentityToken(ctx, immutable.Some(req.PeerID))
@@ -465,7 +465,7 @@ func (s *server) SendPubSubMessage(
 //
 // This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
 func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
-	if !s.peer.acp.HasValue() {
+	if !s.peer.documentACP.HasValue() {
 		return true
 	}
 
@@ -543,9 +543,9 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
 		s.peer.ctx,
 		identFunc,
-		s.peer.acp.Value(),
+		s.peer.documentACP.Value(),
 		cols[0], // For now we assume there is only one collection.
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		string(block.Delta.GetDocID()),
 	)
 	if err != nil {
@@ -562,7 +562,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
 func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, error) {
-	if !s.peer.acp.HasValue() {
+	if !s.peer.documentACP.HasValue() {
 		return true, nil
 	}
 
@@ -591,9 +591,9 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.Identity{DID: ident.Value().DID})
 		},
-		s.peer.acp.Value(),
+		s.peer.documentACP.Value(),
 		cols[0], // For now we assume there is only one collection.
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		string(block.Delta.GetDocID()),
 	)
 	if err != nil {

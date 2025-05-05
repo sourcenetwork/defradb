@@ -67,7 +67,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			ctx := SetContextTxn(ctx, txn)
 
-			p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
+			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 			s := subRequest.ToSelect(evt.DocID, evt.Cid.String())
 
 			result, err := p.RunSelection(ctx, s)

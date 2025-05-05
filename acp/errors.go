@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	errInvalidACPSystem                          = "invalid acp system"
 	errInitializationOfACPFailed                 = "initialization of acp failed"
 	errStartingACPInEmptyPath                    = "starting acp in an empty path"
 	errFailedToAddPolicyWithACP                  = "failed to add policy with acp"
@@ -43,6 +44,7 @@ const (
 )
 
 var (
+	ErrInvalidACPSystem                          = errors.New(errInvalidACPSystem)
 	ErrInitializationOfACPFailed                 = errors.New(errInitializationOfACPFailed)
 	ErrFailedToAddPolicyWithACP                  = errors.New(errFailedToAddPolicyWithACP)
 	ErrFailedToRegisterDocWithACP                = errors.New(errFailedToRegisterDocWithACP)
@@ -192,7 +194,7 @@ func NewErrFailedToDeleteDocActorRelationshipWithACP(
 	)
 }
 
-func newErrPolicyDoesNotExistWithACP(
+func NewErrPolicyDoesNotExistWithACP(
 	inner error,
 	policyID string,
 ) error {
@@ -203,7 +205,7 @@ func newErrPolicyDoesNotExistWithACP(
 	)
 }
 
-func newErrPolicyValidationFailedWithACP(
+func NewErrPolicyValidationFailedWithACP(
 	inner error,
 	policyID string,
 ) error {
@@ -214,7 +216,7 @@ func newErrPolicyValidationFailedWithACP(
 	)
 }
 
-func newErrResourceDoesNotExistOnTargetPolicy(
+func NewErrResourceDoesNotExistOnTargetPolicy(
 	resourceName string,
 	policyID string,
 ) error {
@@ -224,8 +226,16 @@ func newErrResourceDoesNotExistOnTargetPolicy(
 		errors.NewKV("ResourceName", resourceName),
 	)
 }
+func NewErrInvalidACPSystem(
+	unknownACP string,
+) error {
+	return errors.New(
+		errInvalidACPSystem,
+		errors.NewKV("UnknownACP", unknownACP),
+	)
+}
 
-func newErrResourceIsMissingRequiredPermission(
+func NewErrResourceIsMissingRequiredPermission(
 	resourceName string,
 	permission string,
 	policyID string,
@@ -238,7 +248,7 @@ func newErrResourceIsMissingRequiredPermission(
 	)
 }
 
-func newErrExprOfRequiredPermissionMustStartWithRelation(
+func NewErrExprOfRequiredPermissionMustStartWithRelation(
 	permission string,
 	relation string,
 ) error {
@@ -249,7 +259,7 @@ func newErrExprOfRequiredPermissionMustStartWithRelation(
 	)
 }
 
-func newErrExprOfRequiredPermissionHasInvalidChar(
+func NewErrExprOfRequiredPermissionHasInvalidChar(
 	permission string,
 	relation string,
 	char byte,
@@ -300,7 +310,7 @@ func NewErrMissingRequiredArgToDeleteDocActorRelationship(
 	)
 }
 
-func newErrInvalidActorID(
+func NewErrInvalidActorID(
 	inner error,
 	id string,
 ) error {

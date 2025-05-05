@@ -152,7 +152,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "acp",
-				Description: "Access control policy operations",
+				Description: "Access control system",
 			},
 			&openapi3.Tag{
 				Name:        "transaction",

@@ -152,17 +152,17 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 
 	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 
-	switch acpType {
-	case LocalACPType:
-		opts = append(opts, node.WithACPType(node.LocalACPType))
+	switch documentACPType {
+	case LocalDocumentACPType:
+		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
-	case SourceHubACPType:
+	case SourceHubDocumentACPType:
 		if len(s.acpOptions) == 0 {
 			s.acpOptions, err = setupSourceHub(s)
 			require.NoError(s.t, err)
 		}
 
-		opts = append(opts, node.WithACPType(node.SourceHubACPType))
+		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
 		for _, opt := range s.acpOptions {
 			opts = append(opts, opt)
 		}
@@ -191,7 +191,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 			path = s.t.TempDir()
 		}
 
-		opts = append(opts, node.WithStorePath(path), node.WithACPPath(path))
+		opts = append(opts, node.WithStorePath(path), node.WithDocumentACPPath(path))
 
 	case DefraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
