@@ -361,8 +361,8 @@ func assertCollectionVersions(
 
 	for i, expected := range expected {
 		actual := actual[i]
-		if expected.ID != "" {
-			require.Equal(s.t, expected.ID, actual.ID)
+		if expected.VersionID != "" {
+			require.Equal(s.t, expected.VersionID, actual.VersionID)
 		}
 		if expected.CollectionID != "" {
 			require.Equal(s.t, expected.CollectionID, actual.CollectionID)

@@ -50,7 +50,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:             "also does not exist",
+						VersionID:      "also does not exist",
 						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
@@ -72,7 +72,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 						},
 					},
 					{
-						ID:             "does not exist",
+						VersionID:      "does not exist",
 						IsMaterialized: true,
 					},
 				},
@@ -127,7 +127,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:             "also does not exist",
+						VersionID:      "also does not exist",
 						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
@@ -150,11 +150,11 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					},
 					{
 						IsMaterialized: true,
-						ID:             "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+						VersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 					},
 					{
 						IsMaterialized: true,
-						ID:             "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+						VersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
@@ -175,7 +175,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						},
 					},
 					{
-						ID:             "does not exist",
+						VersionID:      "does not exist",
 						IsMaterialized: true,
 					},
 				},
@@ -231,11 +231,11 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:             "a",
+						VersionID:      "a",
 						IsMaterialized: true,
 					},
 					{
-						ID:             "b",
+						VersionID:      "b",
 						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
@@ -257,7 +257,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						},
 					},
 					{
-						ID:             "c",
+						VersionID:      "c",
 						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{

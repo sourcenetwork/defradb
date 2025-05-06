@@ -32,8 +32,8 @@ type CollectionVersion struct {
 	// Name contains the name of the collection.
 	Name string
 
-	// The immutable ID of this collection version.
-	ID string
+	// The immutable VersionID of this collection version.
+	VersionID string
 
 	// The immutable ID of this collection, consistent across all versions.
 	CollectionID string
@@ -228,7 +228,7 @@ func (c *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 	}
 
 	c.Name = descMap.Name
-	c.ID = descMap.ID
+	c.VersionID = descMap.ID
 	c.CollectionID = descMap.CollectionID
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable

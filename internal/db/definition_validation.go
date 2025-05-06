@@ -50,8 +50,8 @@ func newDefinitionState(
 		schemasByID[def.Schema.VersionID] = def.Schema
 		schemaByName[def.Schema.Name] = def.Schema
 
-		if def.Version.ID != "" {
-			collectionsByID[def.Version.ID] = def.Version
+		if def.Version.VersionID != "" {
+			collectionsByID[def.Version.VersionID] = def.Version
 			collections = append(collections, def.Version)
 		}
 	}
@@ -250,7 +250,7 @@ func validateSecondaryFieldsPairUp(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		schema, ok := newState.schemaByID[newCollection.ID]
+		schema, ok := newState.schemaByID[newCollection.VersionID]
 		if !ok {
 			continue
 		}
@@ -316,7 +316,7 @@ func validateSingleSidePrimary(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		schema, ok := newState.schemaByID[newCollection.ID]
+		schema, ok := newState.schemaByID[newCollection.VersionID]
 		if !ok {
 			continue
 		}
@@ -425,7 +425,7 @@ func validateSourcesNotRedefined(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.ID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
 		if !ok {
 			continue
 		}
@@ -434,7 +434,7 @@ func validateSourcesNotRedefined(
 		oldColSources := oldCol.CollectionSources()
 
 		if len(newColSources) != len(oldColSources) {
-			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.ID))
+			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
 		}
 
 		for i := range newColSources {
@@ -443,7 +443,7 @@ func validateSourcesNotRedefined(
 			}
 			if newColSources[i].SourceCollectionID != oldColSources[i].SourceCollectionID {
 				errs = append(errs, NewErrCollectionSourceIDMutated(
-					newCol.ID,
+					newCol.VersionID,
 					newColSources[i].SourceCollectionID,
 					oldColSources[i].SourceCollectionID,
 				))
@@ -454,7 +454,7 @@ func validateSourcesNotRedefined(
 		oldQuerySources := oldCol.QuerySources()
 
 		if len(newQuerySources) != len(oldQuerySources) {
-			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.ID))
+			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
 		}
 	}
 
@@ -469,14 +469,14 @@ func validateIndexesNotModified(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.ID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
 		if !ok {
 			continue
 		}
 
 		// DeepEqual is temporary, as this validation is temporary
 		if !reflect.DeepEqual(oldCol.Indexes, newCol.Indexes) {
-			errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.ID))
+			errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
 		}
 	}
 
@@ -491,14 +491,14 @@ func validateFieldsNotModified(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.ID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
 		if !ok {
 			continue
 		}
 
 		// DeepEqual is temporary, as this validation is temporary
 		if !reflect.DeepEqual(oldCol.Fields, newCol.Fields) {
-			errs = append(errs, NewErrCollectionFieldsCannotBeMutated(newCol.ID))
+			errs = append(errs, NewErrCollectionFieldsCannotBeMutated(newCol.VersionID))
 		}
 	}
 
@@ -513,14 +513,14 @@ func validatePolicyNotModified(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.ID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
 		if !ok {
 			continue
 		}
 
 		// DeepEqual is temporary, as this validation is temporary
 		if !reflect.DeepEqual(oldCol.Policy, newCol.Policy) {
-			errs = append(errs, NewErrCollectionPolicyCannotBeMutated(newCol.ID))
+			errs = append(errs, NewErrCollectionPolicyCannotBeMutated(newCol.VersionID))
 		}
 	}
 
@@ -535,7 +535,7 @@ func validateIDNotEmpty(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		if newCol.ID == "" {
+		if newCol.VersionID == "" {
 			errs = append(errs, ErrCollectionIDCannotBeEmpty)
 		}
 	}
@@ -552,10 +552,10 @@ func validateIDUnique(
 	var errs []error
 	colIds := map[string]struct{}{}
 	for _, newCol := range newState.collections {
-		if _, ok := colIds[newCol.ID]; ok {
-			errs = append(errs, NewErrCollectionIDAlreadyExists(newCol.ID))
+		if _, ok := colIds[newCol.VersionID]; ok {
+			errs = append(errs, NewErrCollectionIDAlreadyExists(newCol.VersionID))
 		}
-		colIds[newCol.ID] = struct{}{}
+		colIds[newCol.VersionID] = struct{}{}
 	}
 
 	return errors.Join(errs...)
@@ -569,8 +569,8 @@ func validateIDExists(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		if _, ok := oldState.collectionsByID[newCol.ID]; !ok {
-			errs = append(errs, NewErrAddCollectionIDWithPatch(newCol.ID))
+		if _, ok := oldState.collectionsByID[newCol.VersionID]; !ok {
+			errs = append(errs, NewErrAddCollectionIDWithPatch(newCol.VersionID))
 		}
 	}
 
@@ -585,13 +585,13 @@ func validateCollectionIDNotMutated(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.ID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
 		if !ok {
 			continue
 		}
 
 		if newCol.CollectionID != oldCol.CollectionID {
-			errs = append(errs, NewErrCollectionIDCannotBeMutated(newCol.ID))
+			errs = append(errs, NewErrCollectionIDCannotBeMutated(newCol.VersionID))
 		}
 	}
 
@@ -606,13 +606,13 @@ func validateSchemaVersionIDNotMutated(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.ID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
 		if !ok {
 			continue
 		}
 
-		if newCol.ID != oldCol.ID {
-			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.ID))
+		if newCol.VersionID != oldCol.VersionID {
+			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.VersionID))
 		}
 	}
 
@@ -639,12 +639,12 @@ oldLoop:
 		for _, newCol := range newState.collectionsByID {
 			// It is not enough to just match by the map index, in case the index does not pair
 			// up with the ID (this can happen if a user moves the collection within the map)
-			if newCol.ID == oldCol.ID {
+			if newCol.VersionID == oldCol.VersionID {
 				continue oldLoop
 			}
 		}
 
-		errs = append(errs, NewErrCollectionsCannotBeDeleted(oldCol.ID))
+		errs = append(errs, NewErrCollectionsCannotBeDeleted(oldCol.VersionID))
 	}
 
 	return errors.Join(errs...)
@@ -968,7 +968,7 @@ func validateSelfReferences(
 				continue
 			}
 
-			if otherDef.Schema.Root == newState.schemaByID[col.ID].Root {
+			if otherDef.Schema.Root == newState.schemaByID[col.VersionID].Root {
 				errs = append(errs, NewErrSelfReferenceWithoutSelf(field.Name))
 			}
 		}
@@ -1175,7 +1175,7 @@ func validateCollectionIsBranchableNotMutated(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol := oldState.collectionsByID[newCol.ID]
+		oldCol := oldState.collectionsByID[newCol.VersionID]
 
 		if newCol.IsBranchable != oldCol.IsBranchable {
 			errs = append(errs, NewErrColMutatingIsBranchable(newCol.Name))

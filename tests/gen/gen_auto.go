@@ -243,7 +243,7 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 			}
 		}
 		colNames[def.Version.Name] = struct{}{}
-		colIDs[def.Version.ID] = struct{}{}
+		colIDs[def.Version.VersionID] = struct{}{}
 	}
 
 	if len(colIDs) != len(definitions) {

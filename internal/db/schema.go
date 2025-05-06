@@ -423,7 +423,7 @@ func (db *DB) updateSchema(
 
 		definitions := make([]client.CollectionDefinition, 0, 1)
 
-		previousID := col.ID
+		previousID := col.VersionID
 
 		// The collection version may exist before the schema version was created locally.  This is
 		// because migrations for the globally known schema version may have been registered locally
@@ -471,7 +471,7 @@ func (db *DB) updateSchema(
 		if !isExistingCol {
 			// Create any new collections as inactive, if [setAsActiveVersion] is true
 			// they will be activated later along with any existing collection versions.
-			col.ID = schema.VersionID
+			col.VersionID = schema.VersionID
 			col.IsActive = false
 			col.CollectionID = schema.Root
 			col.Sources = []any{
@@ -534,7 +534,7 @@ func (db *DB) updateSchema(
 			}
 
 			if migration.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, def.Version.ID, migration.Value())
+				err = db.LensRegistry().SetMigration(ctx, def.Version.VersionID, migration.Value())
 				if err != nil {
 					return err
 				}

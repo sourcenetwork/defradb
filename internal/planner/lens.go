@@ -48,7 +48,7 @@ func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client
 func (n *lensNode) Init() error {
 	n.input = enumerable.NewQueue[map[string]any]()
 
-	pipe, err := n.p.db.LensRegistry().MigrateUp(n.p.ctx, n.input, n.collection.ID)
+	pipe, err := n.p.db.LensRegistry().MigrateUp(n.p.ctx, n.input, n.collection.VersionID)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (n *lensNode) toDoc(mapping *core.DocumentMapping, mapDoc map[string]any) c
 
 	return core.Doc{
 		Fields:          properties,
-		SchemaVersionID: n.collection.ID,
+		SchemaVersionID: n.collection.VersionID,
 		Status:          status,
 	}
 }
