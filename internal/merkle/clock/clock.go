@@ -343,11 +343,6 @@ func (mc *MerkleClock) updateHeads(
 	return nil
 }
 
-// Heads returns the current heads of the MerkleClock.
-func (mc *MerkleClock) Heads() *heads {
-	return mc.headset
-}
-
 type enabledSigningContextKey struct{}
 
 // ContextWithEnabledSigning returns a context with block signing enabled.
