@@ -18,8 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/goji"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -41,16 +39,13 @@ func (c *Collection) Description() client.CollectionDescription {
 	return out
 }
 
-func (c *Collection) Name() immutable.Option[string] {
+func (c *Collection) Name() string {
 	promise := c.client.Call("name")
 	res, err := goji.Await(goji.PromiseValue(promise))
 	if err != nil {
 		panic(err)
 	}
-	if res[0].IsUndefined() {
-		return immutable.None[string]()
-	}
-	return immutable.Some(res[0].String())
+	return res[0].String()
 }
 
 func (c *Collection) Schema() client.SchemaDescription {

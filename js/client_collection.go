@@ -53,11 +53,7 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 }
 
 func (c *clientCollection) name(this js.Value, args []js.Value) (js.Value, error) {
-	name := c.col.Name()
-	if name.HasValue() {
-		return js.ValueOf(name.Value()), nil
-	}
-	return js.Undefined(), nil
+	return js.ValueOf(c.col.Name()), nil
 }
 
 func (c *clientCollection) id(this js.Value, args []js.Value) (js.Value, error) {
