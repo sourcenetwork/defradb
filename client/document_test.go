@@ -28,7 +28,7 @@ var (
 	pref = ccid.NewDefaultSHA256PrefixV1()
 
 	def = CollectionDefinition{
-		Description: CollectionDescription{
+		Version: CollectionVersion{
 			Name: "User",
 			Fields: []CollectionFieldDescription{
 				{

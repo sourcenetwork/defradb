@@ -356,7 +356,7 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 	)
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Description()
+	desc := slct.collection.Version()
 
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
@@ -401,7 +401,7 @@ func (p *Planner) tryOptimizeJoinDirectionByOrder(node *invertibleTypeJoin, pare
 	}
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Description()
+	desc := slct.collection.Version()
 	indexes := desc.GetIndexesOnField(childFieldName)
 
 	if len(indexes) == 0 {

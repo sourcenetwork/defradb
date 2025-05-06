@@ -53,7 +53,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 				},
 			},
 			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
 						IsMaterialized: true,
@@ -152,7 +152,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 				},
 			},
 			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
 						IsMaterialized: true,

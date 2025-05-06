@@ -28,7 +28,7 @@ var openApiSchemas = map[string]any{
 	"peer_info":                       &peer.AddrInfo{},
 	"graphql_request":                 &GraphQLRequest{},
 	"backup_config":                   &client.BackupConfig{},
-	"collection":                      &client.CollectionDescription{},
+	"collection":                      &client.CollectionVersion{},
 	"schema":                          &client.SchemaDescription{},
 	"collection_definition":           &client.CollectionDefinition{},
 	"index":                           &client.IndexDescription{},

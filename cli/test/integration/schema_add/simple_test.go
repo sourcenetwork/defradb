@@ -29,7 +29,7 @@ func TestSchemaAdd(t *testing.T) {
 			&action.CollectionDescribe{
 				Expected: []client.CollectionDefinition{
 					{
-						Description: client.CollectionDescription{
+						Version: client.CollectionVersion{
 							Name:           "User",
 							IsMaterialized: true,
 						},

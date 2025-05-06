@@ -29,7 +29,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				Schema: `
 					type Users {}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
 						IsMaterialized: true,

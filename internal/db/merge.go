@@ -50,7 +50,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 			FieldID: core.COMPOSITE_NAMESPACE,
 		}
 	} else {
-		shortID, err := id.GetShortCollectionID(ctx, txn, col.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, col.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -447,7 +447,7 @@ func decryptBlock(
 }
 
 func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
-	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}

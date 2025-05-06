@@ -26,10 +26,10 @@ import (
 //
 // The definition types ([CollectionDefinition], [FieldDefinition]) are read-only types returned
 // from various functions as a convienient means to access the computated convergence of schema
-// and collection descriptions.
+// and collection versions.
 type CollectionDefinition struct {
-	// Description returns the CollectionDescription of this Collection.
-	Description CollectionDescription `json:"description"`
+	// Version returns the CollectionVersion of this Collection.
+	Version CollectionVersion `json:"version"`
 	// Schema returns the SchemaDescription used to define this Collection.
 	Schema SchemaDescription `json:"schema"`
 }
@@ -37,7 +37,7 @@ type CollectionDefinition struct {
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
 func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinition, bool) {
-	collectionField, existsOnCollection := def.Description.GetFieldByName(fieldName)
+	collectionField, existsOnCollection := def.Version.GetFieldByName(fieldName)
 	schemaField, existsOnSchema := def.Schema.GetFieldByName(fieldName)
 
 	if existsOnCollection && existsOnSchema {
@@ -61,7 +61,7 @@ func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinitio
 func (def CollectionDefinition) GetFields() []FieldDefinition {
 	fields := []FieldDefinition{}
 
-	for _, localField := range def.Description.Fields {
+	for _, localField := range def.Version.Fields {
 		globalField, ok := def.Schema.GetFieldByName(localField.Name)
 		if ok {
 			fields = append(
@@ -82,24 +82,24 @@ func (def CollectionDefinition) GetFields() []FieldDefinition {
 
 // GetName gets the name of this definition.
 //
-// If the collection description has a name (e.g. it is an active collection) it will return that,
+// If the collection version has a name (e.g. it is an active collection) it will return that,
 // otherwise it will return the schema name.
 func (def CollectionDefinition) GetName() string {
-	return def.Description.Name
+	return def.Version.Name
 }
 
 // FieldDefinition describes the combined local and global set of properties that constitutes
 // a field on a collection.
 //
-// It draws it's information from the [CollectionFieldDescription] on the [CollectionDescription],
+// It draws it's information from the [CollectionFieldDescription] on the [CollectionVersion],
 // and the [SchemaFieldDescription] on the [SchemaDescription].
 //
 // It is to [CollectionFieldDescription] and [SchemaFieldDescription] what [CollectionDefinition]
-// is to [CollectionDescription] and [SchemaDescription].
+// is to [CollectionVersion] and [SchemaDescription].
 //
 // The definition types ([CollectionDefinition], [FieldDefinition]) are read-only types returned
 // from various functions as a convienient means to access the computated convergence of schema
-// and collection descriptions.
+// and collection versions.
 type FieldDefinition struct {
 	// Name contains the name of this field.
 	Name string
@@ -332,7 +332,7 @@ func GetDefinitionFromStore(
 			return CollectionDefinition{}, false, err
 		}
 		def := cols[0].Definition()
-		def.Description = CollectionDescription{}
+		def.Version = CollectionVersion{}
 
 		return def, true, nil
 

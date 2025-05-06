@@ -96,7 +96,7 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return w.client.BasicExport(ctx, config)
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	return w.client.AddSchema(ctx, schema)
 }
 

@@ -1,6 +1,6 @@
 ## defradb client collection describe
 
-View collection description.
+View collection version.
 
 ### Synopsis
 

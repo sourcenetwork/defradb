@@ -48,7 +48,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						ID:             "also does not exist",
 						IsMaterialized: true,
@@ -125,7 +125,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						ID:             "also does not exist",
 						IsMaterialized: true,
@@ -229,7 +229,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						ID:             "a",
 						IsMaterialized: true,

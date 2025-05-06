@@ -49,7 +49,7 @@ func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
 						return
 					}
 
-					if col.Description().IsBranchable {
+					if col.Version().IsBranchable {
 						// As collection commits link to document composite commits, all events
 						// recieved for branchable collections must be processed serially else
 						// they may otherwise cause a transaction conflict.

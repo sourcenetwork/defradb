@@ -253,7 +253,38 @@
             },
             "collection_definition": {
                 "properties": {
-                    "description": {
+                    "schema": {
+                        "properties": {
+                            "Fields": {
+                                "items": {
+                                    "properties": {
+                                        "Kind": {},
+                                        "Name": {
+                                            "type": "string"
+                                        },
+                                        "Typ": {
+                                            "maximum": 255,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "Name": {
+                                "type": "string"
+                            },
+                            "Root": {
+                                "type": "string"
+                            },
+                            "VersionID": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "version": {
                         "properties": {
                             "CollectionID": {
                                 "type": "string"
@@ -364,37 +395,6 @@
                                     "type": "object"
                                 },
                                 "type": "array"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "schema": {
-                        "properties": {
-                            "Fields": {
-                                "items": {
-                                    "properties": {
-                                        "Kind": {},
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "Typ": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Name": {
-                                "type": "string"
-                            },
-                            "Root": {
-                                "type": "string"
-                            },
-                            "VersionID": {
-                                "type": "string"
                             }
                         },
                         "type": "object"

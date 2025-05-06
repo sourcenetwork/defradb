@@ -118,14 +118,14 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 	return err
 }
 
-func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	methodURL := c.http.baseURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
 	if err != nil {
 		return nil, err
 	}
-	var cols []client.CollectionDescription
+	var cols []client.CollectionVersion
 	if err := c.http.requestJson(req, &cols); err != nil {
 		return nil, err
 	}

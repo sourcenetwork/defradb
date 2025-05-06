@@ -67,8 +67,8 @@ type CollectionIndex interface {
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
 func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 	fieldsMap := make(map[string]bool)
-	fields := make([]FieldDefinition, 0, len(d.Description.Indexes))
-	for _, index := range d.Description.Indexes {
+	fields := make([]FieldDefinition, 0, len(d.Version.Indexes))
+	for _, index := range d.Version.Indexes {
 		for _, field := range index.Fields {
 			if fieldsMap[field.Name] {
 				// If the FieldDescription has already been added to the result do not add it a second time
@@ -86,7 +86,7 @@ func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 
 // GetIndexesOnField returns all indexes that are indexing the given field.
 // If the field is not the first field of a composite index, the index is not returned.
-func (d CollectionDescription) GetIndexesOnField(fieldName string) []IndexDescription {
+func (d CollectionVersion) GetIndexesOnField(fieldName string) []IndexDescription {
 	result := []IndexDescription{}
 	for _, index := range d.Indexes {
 		if index.Fields[0].Name == fieldName {

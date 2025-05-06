@@ -330,7 +330,7 @@ func (p *Planner) newInvertableTypeJoin(
 
 	var childsRelFieldDef immutable.Option[client.FieldDefinition]
 	var childSideRelIDFieldMapIndex immutable.Option[int]
-	childsRelFieldDesc, ok := subCol.Description().GetFieldByRelation(
+	childsRelFieldDesc, ok := subCol.Version().GetFieldByRelation(
 		parentsRelFieldDef.RelationName,
 		parent.collection.Name(),
 		parentsRelFieldDef.Name,
@@ -448,7 +448,7 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 		return immutable.None[core.Doc](), nil
 	}
 
-	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.p.txn, scan.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.p.txn, scan.col.Version().CollectionID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}

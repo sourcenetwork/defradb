@@ -177,7 +177,7 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
 
@@ -185,7 +185,7 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	if err != nil {
 		return nil, err
 	}
-	var cols []client.CollectionDescription
+	var cols []client.CollectionVersion
 	if err := json.Unmarshal(data, &cols); err != nil {
 		return nil, err
 	}

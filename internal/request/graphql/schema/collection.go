@@ -79,7 +79,7 @@ func newObjectDefinition(def *ast.ObjectDefinition) *typeDefinition {
 	}
 }
 
-// fromAst parses a GQL AST into a set of collection descriptions.
+// fromAst parses a GQL AST into a set of collection versions.
 func fromAst(doc *ast.Document) (
 	[]client.CollectionDefinition,
 	error,
@@ -124,7 +124,7 @@ func fromAst(doc *ast.Document) (
 	return definitions, nil
 }
 
-// fromAstDefinition parses a AST object definition into a set of collection descriptions.
+// fromAstDefinition parses a AST object definition into a set of collection versions.
 func fromAstDefinition(
 	def *typeDefinition,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
@@ -253,7 +253,7 @@ func fromAstDefinition(
 	}
 
 	return client.CollectionDefinition{
-		Description: client.CollectionDescription{
+		Version: client.CollectionVersion{
 			Name:             def.Name.Value,
 			Indexes:          indexDescriptions,
 			Policy:           policyDescription,
@@ -815,12 +815,12 @@ func finalizeRelations(
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) error {
 	for i, definition := range definitions {
-		if definition.Description.IsEmbeddedOnly {
+		if definition.Version.IsEmbeddedOnly {
 			// Embedded objects are simpler and require no addition work
 			continue
 		}
 
-		for _, field := range definition.Description.Fields {
+		for _, field := range definition.Version.Fields {
 			if !field.Kind.HasValue() {
 				continue
 			}
@@ -847,7 +847,7 @@ func finalizeRelations(
 				continue
 			}
 
-			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().Description.GetFieldByRelation(
+			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().Version.GetFieldByRelation(
 				field.RelationName.Value(),
 				definition.GetName(),
 				field.Name,
@@ -869,7 +869,7 @@ func finalizeRelations(
 				}
 			}
 
-			if !otherColDefinition.Value().Description.IsEmbeddedOnly {
+			if !otherColDefinition.Value().Version.IsEmbeddedOnly {
 				var schemaFieldIndex int
 				var schemaFieldExists bool
 				for i, schemaField := range definition.Schema.Fields {

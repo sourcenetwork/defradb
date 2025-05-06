@@ -343,7 +343,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	shortID, err := id.GetShortCollectionID(vf.ctx, vf.txn, vf.col.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(vf.ctx, vf.txn, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(
 			vf.store,
-			vf.col.Description().ID,
+			vf.col.Version().ID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 

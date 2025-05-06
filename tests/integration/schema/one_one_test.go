@@ -78,7 +78,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",
 						IsMaterialized: true,

@@ -352,10 +352,10 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 	return true
 }
 
-func assertCollectionDescriptions(
+func assertCollectionVersions(
 	s *state,
-	expected []client.CollectionDescription,
-	actual []client.CollectionDescription,
+	expected []client.CollectionVersion,
+	actual []client.CollectionVersion,
 ) {
 	require.Equal(s.t, len(expected), len(actual))
 

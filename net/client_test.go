@@ -23,7 +23,7 @@ import (
 )
 
 var def = client.CollectionDefinition{
-	Description: client.CollectionDescription{
+	Version: client.CollectionVersion{
 		Fields: []client.CollectionFieldDescription{
 			{
 				ID:   1,
@@ -140,7 +140,7 @@ func TestPushlog_WithValidPeerID_NoError(t *testing.T) {
 	err = p1.server.pushLog(event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          headCID,
-		CollectionID: col.Description().CollectionID,
+		CollectionID: col.Version().CollectionID,
 		Block:        b,
 	}, p2.PeerInfo().ID)
 	require.NoError(t, err)

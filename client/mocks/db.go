@@ -206,23 +206,23 @@ func (_c *DB_AddPolicy_Call) RunAndReturn(run func(ctx context.Context, policy s
 }
 
 // AddSchema provides a mock function for the type DB
-func (_mock *DB) AddSchema(context1 context.Context, s string) ([]client.CollectionDescription, error) {
+func (_mock *DB) AddSchema(context1 context.Context, s string) ([]client.CollectionVersion, error) {
 	ret := _mock.Called(context1, s)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddSchema")
 	}
 
-	var r0 []client.CollectionDescription
+	var r0 []client.CollectionVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]client.CollectionDescription, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]client.CollectionVersion, error)); ok {
 		return returnFunc(context1, s)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []client.CollectionDescription); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []client.CollectionVersion); ok {
 		r0 = returnFunc(context1, s)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.CollectionDescription)
+			r0 = ret.Get(0).([]client.CollectionVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -252,12 +252,12 @@ func (_c *DB_AddSchema_Call) Run(run func(context1 context.Context, s string)) *
 	return _c
 }
 
-func (_c *DB_AddSchema_Call) Return(collectionDescriptions []client.CollectionDescription, err error) *DB_AddSchema_Call {
-	_c.Call.Return(collectionDescriptions, err)
+func (_c *DB_AddSchema_Call) Return(collectionVersions []client.CollectionVersion, err error) *DB_AddSchema_Call {
+	_c.Call.Return(collectionVersions, err)
 	return _c
 }
 
-func (_c *DB_AddSchema_Call) RunAndReturn(run func(context1 context.Context, s string) ([]client.CollectionDescription, error)) *DB_AddSchema_Call {
+func (_c *DB_AddSchema_Call) RunAndReturn(run func(context1 context.Context, s string) ([]client.CollectionVersion, error)) *DB_AddSchema_Call {
 	_c.Call.Return(run)
 	return _c
 }

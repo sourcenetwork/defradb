@@ -898,7 +898,7 @@ func getCollectionName(
 	return selectRequest.Name, nil
 }
 
-// getTopLevelInfo returns the collection description and maps the fields directly on the object.
+// getTopLevelInfo returns the collection version and maps the fields directly on the object.
 func getTopLevelInfo(
 	ctx context.Context,
 	store client.Store,

@@ -34,12 +34,12 @@ type Collection struct {
 	def  client.CollectionDefinition
 }
 
-func (c *Collection) Description() client.CollectionDescription {
-	return c.def.Description
+func (c *Collection) Version() client.CollectionVersion {
+	return c.def.Version
 }
 
 func (c *Collection) Name() string {
-	return c.Description().Name
+	return c.Version().Name
 }
 
 func (c *Collection) Schema() client.SchemaDescription {
@@ -47,7 +47,7 @@ func (c *Collection) Schema() client.SchemaDescription {
 }
 
 func (c *Collection) ID() string {
-	return c.Description().ID
+	return c.Version().ID
 }
 
 func (c *Collection) SchemaRoot() string {
@@ -62,7 +62,7 @@ func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name)
 
 	body, err := doc.String()
 	if err != nil {
@@ -88,7 +88,7 @@ func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
 ) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name)
 
 	var docMapList []json.RawMessage
 	for _, doc := range docs {
@@ -140,7 +140,7 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, doc.ID().String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
 	if err != nil {
@@ -177,7 +177,7 @@ func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docID.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -207,7 +207,7 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionUpdateRequest{
 		Filter:  filter,
@@ -234,7 +234,7 @@ func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionDeleteRequest{
 		Filter: filter,
@@ -267,7 +267,7 @@ func (c *Collection) Get(
 		query.Add("show_deleted", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, docID.String())
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name, docID.String())
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -294,7 +294,7 @@ func (c *Collection) Get(
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -350,7 +350,7 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
 	if err != nil {
@@ -368,7 +368,7 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes", indexName)
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -379,7 +379,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name, "indexes")
+	methodURL := c.http.baseURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
