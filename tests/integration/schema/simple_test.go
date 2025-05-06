@@ -31,8 +31,9 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				`,
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,

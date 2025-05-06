@@ -115,7 +115,7 @@ func newIndexTestFixture(t *testing.T) *indexTestFixture {
 func (f *indexTestFixture) createCollectionIndex(
 	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
-	return f.createCollectionIndexFor(f.users.Name().Value(), desc)
+	return f.createCollectionIndexFor(f.users.Name(), desc)
 }
 
 func getUsersIndexDescOnName() client.IndexDescriptionCreateRequest {
@@ -137,13 +137,13 @@ func getUsersIndexDescOnAge() client.IndexDescriptionCreateRequest {
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnName() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnName())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnName())
 	require.NoError(f.t, err)
 	return newDesc
 }
 
 func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescription {
-	newDesc, err := f.createCollectionIndexFor(f.users.Name().Value(), getUsersIndexDescOnAge())
+	newDesc, err := f.createCollectionIndexFor(f.users.Name(), getUsersIndexDescOnAge())
 	require.NoError(f.t, err)
 	return newDesc
 }
@@ -446,7 +446,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 			},
 		}
 
-		_, err := f.createCollectionIndexFor(collection.Name().Value(), indexDesc)
+		_, err := f.createCollectionIndexFor(collection.Name(), indexDesc)
 		require.NoError(t, err)
 	}
 

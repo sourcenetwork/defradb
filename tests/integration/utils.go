@@ -459,7 +459,7 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 		if err != nil {
 			s.t.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name.Value()], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -469,7 +469,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	collections := s.nodes[firstNodesID].collections
 	defs := make([]client.CollectionDefinition, 0, len(collections))
 	for _, collection := range collections {
-		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name().Value()) {
+		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
 			defs = append(defs, collection.Definition())
 		}
 	}
@@ -814,7 +814,7 @@ func refreshCollections(
 
 		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
-				if collection.Name().Value() == collectionName {
+				if collection.Name() == collectionName {
 					if _, ok := s.collectionIndexesByCollectionID[collection.Description().CollectionID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
@@ -1414,7 +1414,7 @@ func createDocViaGQL(
 			strings.Join(action.EncryptedFields, ", ") + "]"
 	}
 
-	key := fmt.Sprintf("create_%s", collection.Name().Value())
+	key := fmt.Sprintf("create_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
@@ -1603,7 +1603,7 @@ func updateDocViaGQL(
 				_docID
 			}
 		}`,
-		collection.Name().Value(),
+		collection.Name(),
 		docID.String(),
 		input,
 	)

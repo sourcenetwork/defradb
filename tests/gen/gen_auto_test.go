@@ -72,7 +72,7 @@ func getDocIDsFromDocs(docs []*client.Document) []string {
 func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
 	var result []*client.Document
 	for _, doc := range docs {
-		if doc.Col.Description.Name.Value() == name {
+		if doc.Col.Description.Name == name {
 			result = append(result, doc.Doc)
 		}
 	}
@@ -1201,7 +1201,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		return []client.CollectionDefinition{
 			{
 				Description: client.CollectionDescription{
-					Name: immutable.Some("User"),
+					Name: "User",
 					Fields: []client.CollectionFieldDescription{
 						{
 							Name: "name",
@@ -1224,7 +1224,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			},
 			{
 				Description: client.CollectionDescription{
-					Name: immutable.Some("Device"),
+					Name: "Device",
 					Fields: []client.CollectionFieldDescription{
 						{
 							Name: "model",
@@ -1259,13 +1259,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		{
 			name: "description name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = immutable.Some("")
-			},
-		},
-		{
-			name: "description name is none",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = immutable.None[string]()
+				defs[0].Description.Name = ""
 			},
 		},
 		{
@@ -1308,7 +1302,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Description: client.CollectionDescription{
-				Name: immutable.Some("User"),
+				Name: "User",
 				ID:   "a",
 				Fields: []client.CollectionFieldDescription{
 					{
@@ -1348,7 +1342,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 		},
 		{
 			Description: client.CollectionDescription{
-				Name: immutable.Some("Device"),
+				Name: "Device",
 				ID:   "b",
 				Fields: []client.CollectionFieldDescription{
 					{

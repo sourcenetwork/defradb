@@ -94,6 +94,7 @@ var updateOnlyValidators = []definitionValidator{
 	validateSchemaFieldNotDeleted,
 	validateFieldNotMutated,
 	validateFieldNotMoved,
+	validateCollectionNameNotMutated,
 }
 
 var schemaUpdateValidators = append(
@@ -126,6 +127,7 @@ var globalValidators = []definitionValidator{
 	validateSingleSidePrimary,
 	validateCollectionDefinitionPolicyDesc,
 	validateSchemaNameNotEmpty,
+	validateCollectionNameNotEmpty,
 	validateRelationalFieldIDType,
 	validateSecondaryNotOnSchema,
 	validateTypeSupported,
@@ -216,7 +218,7 @@ func validateRelationPointsToValidKind(
 				continue
 			}
 
-			definition := newState.definitionsByName[newCollection.Name.Value()]
+			definition := newState.definitionsByName[newCollection.Name]
 			_, ok := client.GetDefinition(newState.definitionCache, definition, field.Kind.Value())
 			if !ok {
 				errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.Value().String()))
@@ -369,14 +371,14 @@ func validateCollectionNameUnique(
 	var errs []error
 	names := map[string]struct{}{}
 	for _, col := range newState.collections {
-		if !col.Name.HasValue() {
+		if !col.IsActive || col.Name == "" {
 			continue
 		}
 
-		if _, ok := names[col.Name.Value()]; ok {
-			errs = append(errs, NewErrCollectionAlreadyExists(col.Name.Value()))
+		if _, ok := names[col.Name]; ok {
+			errs = append(errs, NewErrCollectionAlreadyExists(col.Name))
 		}
-		names[col.Name.Value()] = struct{}{}
+		names[col.Name] = struct{}{}
 	}
 
 	return errors.Join(errs...)
@@ -389,16 +391,22 @@ func validateSingleVersionActive(
 	oldState *definitionState,
 ) error {
 	var errs []error
-	rootsWithActiveCol := map[string]struct{}{}
-	for _, def := range newState.definitionsByName {
-		if !def.Description.Name.HasValue() {
+	colsWithActiveCol := map[string]struct{}{}
+	for _, def := range newState.collections {
+		if !def.IsActive {
 			continue
 		}
 
-		if _, ok := rootsWithActiveCol[def.Schema.Root]; ok {
-			errs = append(errs, NewErrMultipleActiveCollectionVersions(def.Description.Name.Value(), def.Schema.Root))
+		if _, isDuplicate := colsWithActiveCol[def.CollectionID]; isDuplicate {
+			errs = append(
+				errs,
+				NewErrMultipleActiveCollectionVersions(
+					def.Name,
+					def.CollectionID,
+				),
+			)
 		}
-		rootsWithActiveCol[def.Schema.Root] = struct{}{}
+		colsWithActiveCol[def.CollectionID] = struct{}{}
 	}
 
 	return errors.Join(errs...)
@@ -954,7 +962,7 @@ func validateSelfReferences(
 				continue
 			}
 
-			definition := newState.definitionsByName[col.Name.Value()]
+			definition := newState.definitionsByName[col.Name]
 			otherDef, ok := client.GetDefinition(newState.definitionCache, definition, field.Kind.Value())
 			if !ok {
 				continue
@@ -1054,6 +1062,52 @@ func validateSchemaNameNotEmpty(
 	return errors.Join(errs...)
 }
 
+func validateCollectionNameNotEmpty(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, col := range newState.collections {
+		if col.CollectionID == client.OrphanCollectionID {
+			// CollectionVersions can exist before they are are linked to a Collection, as
+			// users can register migrations for unknown version ids, in which case the name
+			// will be empty.
+			continue
+		}
+
+		if col.Name == "" {
+			errs = append(errs, ErrCollectionNameEmpty)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateCollectionNameNotMutated(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, col := range newState.collections {
+		if col.Name == "" {
+			continue
+		}
+
+		for _, oldCol := range oldState.collections {
+			if oldCol.CollectionID == col.CollectionID &&
+				oldCol.Name != col.Name {
+				errs = append(errs, NewErrCollectionNameMutated(col.Name, oldCol.Name))
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 // validateCollectionMaterialized verifies that a non-view collection is materialized.
 //
 // Long term we wish to support this, however for now we block it off.
@@ -1066,7 +1120,7 @@ func validateCollectionMaterialized(
 	var errs []error
 	for _, col := range newState.collections {
 		if len(col.QuerySources()) == 0 && !col.IsMaterialized {
-			errs = append(errs, NewErrColNotMaterialized(col.Name.Value()))
+			errs = append(errs, NewErrColNotMaterialized(col.Name))
 		}
 	}
 
@@ -1085,7 +1139,7 @@ func validateMaterializedHasNoPolicy(
 	var errs []error
 	for _, col := range newState.collections {
 		if col.IsMaterialized && len(col.QuerySources()) != 0 && col.Policy.HasValue() {
-			errs = append(errs, NewErrMaterializedViewAndACPNotSupported(col.Name.Value()))
+			errs = append(errs, NewErrMaterializedViewAndACPNotSupported(col.Name))
 		}
 	}
 
@@ -1124,7 +1178,7 @@ func validateCollectionIsBranchableNotMutated(
 		oldCol := oldState.collectionsByID[newCol.ID]
 
 		if newCol.IsBranchable != oldCol.IsBranchable {
-			errs = append(errs, NewErrColMutatingIsBranchable(newCol.Name.Value()))
+			errs = append(errs, NewErrColMutatingIsBranchable(newCol.Name))
 		}
 	}
 

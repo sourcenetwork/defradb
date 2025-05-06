@@ -18,40 +18,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColDescrUpdateCopyName_Errors(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
-				SetAsDefaultVersion: immutable.Some(false),
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
-					]
-				`,
-				ExpectedError: "collection already exists. Name: Users",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestColDescrUpdateCopyName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -69,40 +35,15 @@ func TestColDescrUpdateCopyName(t *testing.T) {
 				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.PatchCollection{
-				// Activate the second collection by setting its name to that of the first,
-				// then decativate the original collection version by removing the name
 				Patch: `
 					[
 						{
 							"op": "copy",
 							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
 							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						},
-						{
-							"op": "remove",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name"
 						}
 					]
 				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
-				},
 			},
 		},
 	}

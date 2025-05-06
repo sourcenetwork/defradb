@@ -254,13 +254,14 @@ func fromAstDefinition(
 
 	return client.CollectionDefinition{
 		Description: client.CollectionDescription{
-			Name:             immutable.Some(def.Name.Value),
+			Name:             def.Name.Value,
 			Indexes:          indexDescriptions,
 			Policy:           policyDescription,
 			Fields:           collectionFieldDescriptions,
 			IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
 			IsBranchable:     isBranchable,
 			IsEmbeddedOnly:   def.IsInterface,
+			IsActive:         true,
 			VectorEmbeddings: vectorEmbeddings,
 		},
 		Schema: client.SchemaDescription{

@@ -151,7 +151,7 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
-		f, err = c.db.parser.NewFilterFromString(c.Name().Value(), fval)
+		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +183,7 @@ func (c *collection) makeSelectionPlan(
 func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
-			Name: c.Name().Value(),
+			Name: c.Name(),
 		},
 		Filterable: request.Filterable{
 			Filter: filter,

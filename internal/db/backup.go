@@ -182,8 +182,8 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 		// set collection
 		err = writeString(
 			f,
-			fmt.Sprintf("\"%s\":[", col.Name().Value()),
-			fmt.Sprintf("  \"%s\": [\n", col.Name().Value()),
+			fmt.Sprintf("\"%s\":[", col.Name()),
+			fmt.Sprintf("  \"%s\": [\n", col.Name()),
 			config.Pretty,
 		)
 		if err != nil {

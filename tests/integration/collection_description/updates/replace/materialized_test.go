@@ -100,8 +100,9 @@ func TestColDescrUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("UserView"),
+						Name:           "UserView",
 						IsMaterialized: false,
+						IsActive:       true,
 					},
 				},
 			},

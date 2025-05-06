@@ -13,8 +13,6 @@ package add
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -199,8 +197,9 @@ func TestColDescrUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",
@@ -559,8 +558,9 @@ func TestColDescrUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *testin
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionDescription{
 					{
-						Name:           immutable.Some("Users"),
+						Name:           "Users",
 						IsMaterialized: true,
+						IsActive:       true,
 						VectorEmbeddings: []client.VectorEmbeddingDescription{
 							{
 								FieldName: "name_v",
