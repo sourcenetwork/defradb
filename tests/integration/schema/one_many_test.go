@@ -34,7 +34,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 						owner: User @primary
 					}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",
 						IsMaterialized: true,
@@ -103,7 +103,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 						b: [User]
 					}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",
 						IsMaterialized: true,
@@ -150,7 +150,7 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 						a: [User]
 					}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",
 						IsMaterialized: true,
@@ -202,7 +202,7 @@ func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",
 						IsMaterialized: true,

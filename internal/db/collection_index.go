@@ -83,7 +83,7 @@ func (db *DB) getAllIndexDescriptions(
 			return nil, err
 		}
 
-		var col client.CollectionDescription
+		var col client.CollectionVersion
 		for _, col := range cols {
 			if col.IsActive {
 				break
@@ -281,7 +281,7 @@ func (c *collection) createIndex(
 	colSeq, err := sequence.Get(
 		ctx,
 		txn,
-		keys.NewIndexIDSequenceKey(c.Description().CollectionID),
+		keys.NewIndexIDSequenceKey(c.Version().CollectionID),
 	)
 	if err != nil {
 		return nil, err
@@ -311,7 +311,7 @@ func (c *collection) createIndex(
 	if err != nil {
 		return nil, err
 	}
-	c.def.Description.Indexes = append(c.def.Description.Indexes, colIndex.Description())
+	c.def.Version.Indexes = append(c.def.Version.Indexes, colIndex.Description())
 	c.indexes = append(c.indexes, colIndex)
 	err = c.indexExistingDocs(ctx, colIndex)
 	if err != nil {
@@ -346,7 +346,7 @@ func (c *collection) iterateAllDocs(
 		return errors.Join(err, df.Close())
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -444,13 +444,13 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 		return NewErrIndexWithNameDoesNotExists(indexName)
 	}
 
-	for i := range c.Description().Indexes {
-		if c.Description().Indexes[i].Name == indexName {
-			c.def.Description.Indexes = append(c.Description().Indexes[:i], c.Description().Indexes[i+1:]...)
+	for i := range c.Version().Indexes {
+		if c.Version().Indexes[i].Name == indexName {
+			c.def.Version.Indexes = append(c.Version().Indexes[:i], c.Version().Indexes[i+1:]...)
 			break
 		}
 	}
-	key := keys.NewCollectionIndexKey(immutable.Some(c.Description().CollectionID), indexName)
+	key := keys.NewCollectionIndexKey(immutable.Some(c.Version().CollectionID), indexName)
 	err = txn.Systemstore().Delete(ctx, key.Bytes())
 	if err != nil {
 		return err
@@ -460,7 +460,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *collection) loadIndexes(ctx context.Context) error {
-	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.Description().CollectionID)
+	indexDescriptions, err := c.db.fetchCollectionIndexDescriptions(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -472,7 +472,7 @@ func (c *collection) loadIndexes(ctx context.Context) error {
 		}
 		colIndexes = append(colIndexes, index)
 	}
-	c.def.Description.Indexes = indexDescriptions
+	c.def.Version.Indexes = indexDescriptions
 	c.indexes = colIndexes
 	return nil
 }
@@ -492,7 +492,7 @@ func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	if err != nil {
 		return nil, err
 	}
-	return c.Description().Indexes, nil
+	return c.Version().Indexes, nil
 }
 
 // checkExistingFieldsAndAdjustRelFieldNames checks if the fields in the index description
@@ -525,7 +525,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 		nameIncrement := 1
 		for {
 			desc.Name = generateIndexName(c, desc.Fields, nameIncrement)
-			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().CollectionID), desc.Name)
+			indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Version().CollectionID), desc.Name)
 			exists, err := txn.Systemstore().Has(ctx, indexKey.Bytes())
 			if err != nil {
 				return keys.CollectionIndexKey{}, err
@@ -536,7 +536,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 			nameIncrement++
 		}
 	} else {
-		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Description().CollectionID), desc.Name)
+		indexKey = keys.NewCollectionIndexKey(immutable.Some(c.Version().CollectionID), desc.Name)
 		exists, err := txn.Systemstore().Has(ctx, indexKey.Bytes())
 		if err != nil {
 			return keys.CollectionIndexKey{}, err

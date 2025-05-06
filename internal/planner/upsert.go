@@ -75,7 +75,7 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 
-			prefixes, err := n.docIDsToPrefixes(documentsToDocIDs(doc), n.collection.Description())
+			prefixes, err := n.docIDsToPrefixes(documentsToDocIDs(doc), n.collection.Version())
 			if err != nil {
 				return false, err
 			}
@@ -99,7 +99,7 @@ func (n *upsertNode) Next() (bool, error) {
 	return true, nil
 }
 
-func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionDescription) ([]keys.Walkable, error) {
+func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
 	shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, desc.CollectionID)
 	if err != nil {
 		return nil, err

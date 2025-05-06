@@ -454,7 +454,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // func TestGeneratePredefined_OneToMany(t *testing.T) {
 // 	defs := []client.CollectionDefinition{
 // 		{
-// 			Description: client.CollectionDescription{
+// 			Description: client.CollectionVersion{
 // 				Name: "User",
 // 				ID:   0,
 // 			},
@@ -474,7 +474,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 // 			},
 // 		},
 // 		{
-// 			Description: client.CollectionDescription{
+// 			Description: client.CollectionVersion{
 // 				Name: "Device",
 // 				ID:   1,
 // 			},

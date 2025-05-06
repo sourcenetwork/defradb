@@ -21,7 +21,7 @@ import (
 // When there is a policy, in addition to returning true in the last return value, the
 // first returned value is policyID, second is the resource name.
 func IsPermissioned(collection client.Collection) (string, string, bool) {
-	policy := collection.Definition().Description.Policy
+	policy := collection.Definition().Version.Policy
 	if policy.HasValue() &&
 		policy.Value().ID != "" &&
 		policy.Value().ResourceName != "" {

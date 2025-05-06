@@ -40,7 +40,7 @@ const (
 func (db *DB) addSchema(
 	ctx context.Context,
 	schemaString string,
-) ([]client.CollectionDescription, error) {
+) ([]client.CollectionVersion, error) {
 	newDefinitions, err := db.parser.ParseSDL(ctx, schemaString)
 	if err != nil {
 		return nil, err
@@ -51,9 +51,9 @@ func (db *DB) addSchema(
 		return nil, err
 	}
 
-	returnDescriptions := make([]client.CollectionDescription, len(returnDefinitions))
+	returnDescriptions := make([]client.CollectionVersion, len(returnDefinitions))
 	for i, def := range returnDefinitions {
-		returnDescriptions[i] = def.Description
+		returnDescriptions[i] = def.Version
 	}
 
 	err = db.loadSchema(ctx)
@@ -459,8 +459,8 @@ func (db *DB) updateSchema(
 					}
 
 					definitions = append(definitions, client.CollectionDefinition{
-						Description: existingCol,
-						Schema:      schema,
+						Version: existingCol,
+						Schema:  schema,
 					})
 
 					isExistingCol = true
@@ -494,8 +494,8 @@ func (db *DB) updateSchema(
 			}
 
 			definitions = append(definitions, client.CollectionDefinition{
-				Description: col,
-				Schema:      schema,
+				Version: col,
+				Schema:  schema,
 			})
 		}
 
@@ -528,13 +528,13 @@ func (db *DB) updateSchema(
 		}
 
 		for _, def := range definitions {
-			_, err = description.SaveCollection(ctx, txn, def.Description)
+			_, err = description.SaveCollection(ctx, txn, def.Version)
 			if err != nil {
 				return err
 			}
 
 			if migration.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, def.Description.ID, migration.Value())
+				err = db.LensRegistry().SetMigration(ctx, def.Version.ID, migration.Value())
 				if err != nil {
 					return err
 				}

@@ -290,7 +290,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			shortID, err := id.GetShortCollectionID(
 				n.planner.ctx,
 				n.planner.txn,
-				sourcePlan.collection.Description().CollectionID,
+				sourcePlan.collection.Version().CollectionID,
 			)
 			if err != nil {
 				return nil, nil, err
@@ -335,14 +335,14 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	var indexCandidates []client.IndexDescription
 
 	if scanNode.filter != nil {
-		colDesc := scanNode.col.Description()
+		col := scanNode.col.Version()
 		conditions := scanNode.filter.ExternalConditions
 		filter.TraverseFields(conditions, func(path []string, val any) bool {
 			for _, field := range scanNode.col.Schema().Fields {
 				if field.Name != path[0] {
 					continue
 				}
-				indexes := colDesc.GetIndexesOnField(field.Name)
+				indexes := col.GetIndexesOnField(field.Name)
 				if len(indexes) > 0 {
 					indexCandidates = append(indexCandidates, indexes...)
 					return true
@@ -366,7 +366,7 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 
 func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
 	if len(scanNode.ordering) > 0 {
-		colDesc := scanNode.col.Description()
+		col := scanNode.col.Version()
 
 		fieldNames := []string{}
 		mapping := scanNode.documentMapping
@@ -384,7 +384,7 @@ func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexD
 			}
 		}
 
-		indexes := colDesc.GetIndexesOnField(fieldNames[0])
+		indexes := col.GetIndexesOnField(fieldNames[0])
 		if len(indexes) > 0 {
 			return immutable.Some(indexes[0])
 		}
@@ -397,7 +397,7 @@ func findIndexByFieldName(col client.Collection, fieldName string) immutable.Opt
 		if field.Name != fieldName {
 			continue
 		}
-		indexes := col.Description().GetIndexesOnField(field.Name)
+		indexes := col.Version().GetIndexesOnField(field.Name)
 		if len(indexes) > 0 {
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
@@ -473,7 +473,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && len(n.collection.Description().QuerySources()) > 0) {
+			} else if !(n.collection != nil && len(n.collection.Version().QuerySources()) > 0) {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)

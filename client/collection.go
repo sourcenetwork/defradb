@@ -36,8 +36,8 @@ type Collection interface {
 	// Schema returns the SchemaDescription used to define this Collection.
 	Schema() SchemaDescription
 
-	// Description returns the CollectionDescription of this Collection.
-	Description() CollectionDescription
+	// Version returns the CollectionVersion of this Collection.
+	Version() CollectionVersion
 
 	// Create a new document.
 	//

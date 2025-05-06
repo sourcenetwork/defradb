@@ -24,7 +24,7 @@ func MakeCollectionDescribeCommand() *cobra.Command {
 	var getInactive bool
 	var cmd = &cobra.Command{
 		Use:   "describe",
-		Short: "View collection description.",
+		Short: "View collection version.",
 		Long: `Introspect collection types.
 
 Example: view all collections

@@ -138,7 +138,7 @@ func (db *DB) GetAllIndexes(
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionDescription, error) {
+func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -159,7 +159,7 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	return cols, nil
 }
 
-// PatchSchema takes the given JSON patch string and applies it to the set of CollectionDescriptions
+// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the

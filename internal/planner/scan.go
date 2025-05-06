@@ -177,7 +177,7 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.prefixes) == 0 {
-		shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, n.col.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(n.p.ctx, n.p.txn, n.col.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -261,7 +261,7 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 
 	// Add the collection attributes.
 	simpleExplainMap[collectionNameLabel] = n.col.Name()
-	simpleExplainMap[collectionIDLabel] = n.col.Description().ID
+	simpleExplainMap[collectionIDLabel] = n.col.Version().ID
 
 	// Add the prefixes attribute.
 	simpleExplainMap[prefixesLabel] = n.explainPrefixes()

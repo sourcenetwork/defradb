@@ -134,7 +134,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
 						ID:             schemaVersion1ID,
@@ -266,7 +266,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive
 						Name:           "Users",
@@ -383,7 +383,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive.
 						Name:           "Users",
@@ -520,7 +520,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive.
 						Name:           "Users",
@@ -601,7 +601,7 @@ collection at a specific version`,
 				FilterOptions: client.CollectionFetchOptions{
 					ID: immutable.Some(schemaVersion1ID),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive.
 						Name:           "Users",

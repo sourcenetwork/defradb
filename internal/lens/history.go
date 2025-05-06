@@ -24,7 +24,7 @@ import (
 // links to the previous and next version items if they exist.
 type collectionHistoryLink struct {
 	// The collection as this point in history.
-	collection *client.CollectionDescription
+	collection *client.CollectionVersion
 
 	// The history link to the next collection versions, if there are some
 	// (for the most recent schema version this will be empty).
@@ -40,7 +40,7 @@ type collectionHistoryLink struct {
 // the target schema version.
 type targetedCollectionHistoryLink struct {
 	// The collection as this point in history.
-	collection *client.CollectionDescription
+	collection *client.CollectionVersion
 
 	// The link to next collection version, if there is one
 	// (for the most recent collection version this will be None).

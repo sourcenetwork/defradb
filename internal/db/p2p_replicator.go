@@ -110,7 +110,7 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 
 	if db.documentACP.HasValue() && !db.documentACP.Value().SupportsP2P() {
 		for _, col := range collections {
-			if col.Description().Policy.HasValue() {
+			if col.Version().Policy.HasValue() {
 				return ErrReplicatorColHasPolicy
 			}
 		}
@@ -206,7 +206,7 @@ func (db *DB) getDocsHeads(
 					updateChan <- event.Update{
 						DocID:        docIDResult.ID.String(),
 						Cid:          c,
-						CollectionID: col.Description().CollectionID,
+						CollectionID: col.Version().CollectionID,
 						Block:        blk.RawData(),
 					}
 				}
@@ -703,7 +703,7 @@ func (db *DB) retryDoc(ctx context.Context, docID string) error {
 		updateEvent := event.Update{
 			DocID:        docID,
 			Cid:          headsIterator.CurrentCid(),
-			CollectionID: col.Description().CollectionID,
+			CollectionID: col.Version().CollectionID,
 			Block:        headsIterator.CurrentRawBlock(),
 			IsRetry:      true,
 			// Because the retry is done in a separate goroutine but the retry handling process should be synchronous,

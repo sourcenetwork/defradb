@@ -1,12 +1,12 @@
 ## defradb client collection patch
 
-Patch existing collection descriptions
+Patch existing collection versions
 
 ### Synopsis
 
-Patch existing collection descriptions.
+Patch existing collection versions.
 
-Uses JSON Patch to modify collection descriptions.
+Uses JSON Patch to modify collection versions.
 
 Example: patch from an argument string:
   defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]'

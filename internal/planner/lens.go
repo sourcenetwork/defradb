@@ -30,7 +30,7 @@ type lensNode struct {
 
 	p          *Planner
 	source     planNode
-	collection client.CollectionDescription
+	collection client.CollectionVersion
 
 	input  enumerable.Queue[map[string]any]
 	output enumerable.Enumerable[map[string]any]
@@ -41,7 +41,7 @@ func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client
 		docMapper:  docMapper{docMap},
 		p:          p,
 		source:     source,
-		collection: col.Description(),
+		collection: col.Version(),
 	}
 }
 

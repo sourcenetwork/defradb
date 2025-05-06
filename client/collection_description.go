@@ -27,8 +27,8 @@ import (
 // Orphaned collections cannot be queried.
 const OrphanCollectionID string = "OrphanCollectionID"
 
-// CollectionDescription describes a Collection and all its associated metadata.
-type CollectionDescription struct {
+// CollectionVersion describes a Collection and all its associated metadata.
+type CollectionVersion struct {
 	// Name contains the name of the collection.
 	Name string
 
@@ -137,7 +137,7 @@ type QuerySource struct {
 //
 // Typically these are used to link together multiple schema versions into the same dataset.
 type CollectionSource struct {
-	// SourceCollectionID is the local identifier of the source [CollectionDescription] from which to
+	// SourceCollectionID is the local identifier of the source [CollectionVersion] from which to
 	// share data.
 	//
 	// This is a bi-directional relationship, and documents in the host collection instance will also
@@ -154,7 +154,7 @@ type CollectionSource struct {
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByName(fieldName string) (CollectionFieldDescription, bool) {
+func (col CollectionVersion) GetFieldByName(fieldName string) (CollectionFieldDescription, bool) {
 	for _, field := range col.Fields {
 		if field.Name == fieldName {
 			return field, true
@@ -164,7 +164,7 @@ func (col CollectionDescription) GetFieldByName(fieldName string) (CollectionFie
 }
 
 // GetFieldByRelation returns the field that supports the relation of the given name.
-func (col CollectionDescription) GetFieldByRelation(
+func (col CollectionVersion) GetFieldByRelation(
 	relationName string,
 	otherCollectionName string,
 	otherFieldName string,
@@ -180,16 +180,16 @@ func (col CollectionDescription) GetFieldByRelation(
 }
 
 // QuerySources returns all the Sources of type [QuerySource]
-func (col CollectionDescription) QuerySources() []*QuerySource {
+func (col CollectionVersion) QuerySources() []*QuerySource {
 	return sourcesOfType[*QuerySource](col)
 }
 
 // CollectionSources returns all the Sources of type [CollectionSource]
-func (col CollectionDescription) CollectionSources() []*CollectionSource {
+func (col CollectionVersion) CollectionSources() []*CollectionSource {
 	return sourcesOfType[*CollectionSource](col)
 }
 
-func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
+func sourcesOfType[ResultType any](col CollectionVersion) []ResultType {
 	result := []ResultType{}
 	for _, source := range col.Sources {
 		if typedSource, isOfType := source.(ResultType); isOfType {
@@ -199,9 +199,9 @@ func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
 	return result
 }
 
-// collectionDescription is a private type used to facilitate the unmarshalling
-// of json to a [CollectionDescription].
-type collectionDescription struct {
+// collectionVersion is a private type used to facilitate the unmarshalling
+// of json to a [CollectionVersion].
+type collectionVersion struct {
 	// These properties are unmarshalled using the default json unmarshaller
 	Name             string
 	ID               string
@@ -220,8 +220,8 @@ type collectionDescription struct {
 	Sources []map[string]json.RawMessage
 }
 
-func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
-	var descMap collectionDescription
+func (c *CollectionVersion) UnmarshalJSON(bytes []byte) error {
+	var descMap collectionVersion
 	err := json.Unmarshal(bytes, &descMap)
 	if err != nil {
 		return err

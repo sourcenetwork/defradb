@@ -24,8 +24,8 @@ import (
 //
 // It is read only and will not and should not be mutated.
 type definitionState struct {
-	collections     []client.CollectionDescription
-	collectionsByID map[string]client.CollectionDescription
+	collections     []client.CollectionVersion
+	collectionsByID map[string]client.CollectionVersion
 
 	schemaByID   map[string]client.SchemaDescription
 	schemaByName map[string]client.SchemaDescription
@@ -39,10 +39,10 @@ type definitionState struct {
 func newDefinitionState(
 	definitions []client.CollectionDefinition,
 ) *definitionState {
-	collectionsByID := map[string]client.CollectionDescription{}
+	collectionsByID := map[string]client.CollectionVersion{}
 	schemasByID := map[string]client.SchemaDescription{}
 	definitionsByName := map[string]client.CollectionDefinition{}
-	collections := []client.CollectionDescription{}
+	collections := []client.CollectionVersion{}
 	schemaByName := map[string]client.SchemaDescription{}
 
 	for _, def := range definitions {
@@ -50,9 +50,9 @@ func newDefinitionState(
 		schemasByID[def.Schema.VersionID] = def.Schema
 		schemaByName[def.Schema.Name] = def.Schema
 
-		if def.Description.ID != "" {
-			collectionsByID[def.Description.ID] = def.Description
-			collections = append(collections, def.Description)
+		if def.Version.ID != "" {
+			collectionsByID[def.Version.ID] = def.Version
+			collections = append(collections, def.Version)
 		}
 	}
 
@@ -256,8 +256,8 @@ func validateSecondaryFieldsPairUp(
 		}
 
 		definition := client.CollectionDefinition{
-			Description: newCollection,
-			Schema:      schema,
+			Version: newCollection,
+			Schema:  schema,
 		}
 
 		for _, field := range newCollection.Fields {
@@ -283,12 +283,12 @@ func validateSecondaryFieldsPairUp(
 				continue
 			}
 
-			if otherDef.Description.IsEmbeddedOnly {
+			if otherDef.Version.IsEmbeddedOnly {
 				// Views/embedded objects do not require both sides of the relation to be defined.
 				continue
 			}
 
-			otherField, ok := otherDef.Description.GetFieldByRelation(
+			otherField, ok := otherDef.Version.GetFieldByRelation(
 				field.RelationName.Value(),
 				definition.GetName(),
 				field.Name,
@@ -321,8 +321,8 @@ func validateSingleSidePrimary(
 			continue
 		}
 		definition := client.CollectionDefinition{
-			Description: newCollection,
-			Schema:      schema,
+			Version: newCollection,
+			Schema:  schema,
 		}
 		for _, field := range definition.GetFields() {
 			if field.Kind == nil {
@@ -342,7 +342,7 @@ func validateSingleSidePrimary(
 			if !ok {
 				continue
 			}
-			otherField, ok := otherDef.Description.GetFieldByRelation(
+			otherField, ok := otherDef.Version.GetFieldByRelation(
 				field.RelationName,
 				definition.GetName(),
 				field.Name,
@@ -746,7 +746,7 @@ func validateEmbeddingAndKindCompatible(
 ) error {
 	var errs []error
 	for _, colDef := range newState.definitionsByName {
-		for _, embedding := range colDef.Description.VectorEmbeddings {
+		for _, embedding := range colDef.Version.VectorEmbeddings {
 			if embedding.FieldName == "" {
 				errs = append(errs, client.ErrEmptyFieldNameForEmbedding)
 				continue
@@ -779,13 +779,13 @@ func validateEmbeddingFieldsForGeneration(
 ) error {
 	var errs []error
 	for _, colDef := range newState.definitionsByName {
-		for _, embedding := range colDef.Description.VectorEmbeddings {
+		for _, embedding := range colDef.Version.VectorEmbeddings {
 			if len(embedding.Fields) == 0 {
 				errs = append(errs, client.ErrEmptyFieldsForEmbedding)
 			}
 			for _, fieldName := range embedding.Fields {
 				// Check that no fields used for embedding generation refers to self of another embedding field.
-				for _, embedding := range colDef.Description.VectorEmbeddings {
+				for _, embedding := range colDef.Version.VectorEmbeddings {
 					if embedding.FieldName == fieldName {
 						errs = append(errs, client.NewErrEmbeddingFieldEmbedding(fieldName))
 					}
@@ -818,7 +818,7 @@ func validateEmbeddingProviderAndModel(
 ) error {
 	var errs []error
 	for _, colDef := range newState.definitionsByName {
-		for _, embedding := range colDef.Description.VectorEmbeddings {
+		for _, embedding := range colDef.Version.VectorEmbeddings {
 			if embedding.Provider == "" {
 				errs = append(errs, client.ErrEmptyProviderForEmbedding)
 			}

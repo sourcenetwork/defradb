@@ -208,7 +208,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, index.collection.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, index.collection.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
@@ -234,7 +234,7 @@ func (index *collectionBaseIndex) deleteIndexKey(
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
 // field values for all documents.
 func (index *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
-	shortID, err := id.GetShortCollectionID(ctx, txn, index.collection.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, index.collection.Version().CollectionID)
 	if err != nil {
 		return err
 	}
