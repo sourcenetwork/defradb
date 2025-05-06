@@ -295,7 +295,6 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 
 func (p *Planner) Scan(
 	mapperSelect *mapper.Select,
-	colDesc client.CollectionDescription,
 ) (*scanNode, error) {
 	scan := &scanNode{
 		p:         p,

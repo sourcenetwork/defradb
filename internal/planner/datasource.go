@@ -40,7 +40,7 @@ func (p *Planner) getCollectionScanPlan(mapperSelect *mapper.Select) (planSource
 		}
 	} else {
 		var err error
-		plan, err = p.Scan(mapperSelect, col.Description())
+		plan, err = p.Scan(mapperSelect)
 		if err != nil {
 			return planSource{}, err
 		}
