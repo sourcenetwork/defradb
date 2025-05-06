@@ -57,13 +57,13 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
 	case SourceHubDocumentACPType:
-		if len(s.acpOptions) == 0 {
-			s.acpOptions, err = setupSourceHub(s)
+		if len(s.documentACPOptions) == 0 {
+			s.documentACPOptions, err = setupSourceHub(s)
 			require.NoError(s.t, err)
 		}
 
 		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
-		for _, opt := range s.acpOptions {
+		for _, opt := range s.documentACPOptions {
 			opts = append(opts, opt)
 		}
 

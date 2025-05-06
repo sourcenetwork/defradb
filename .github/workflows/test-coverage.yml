@@ -291,7 +291,6 @@ jobs:
         uses: ./.github/composites/setup-defradb
 
       - name: Run integration tests
-        shell: bash # It's required for run step to specify shell in a composite action.
         run: make test:coverage-js
 
       - name: Save coverage report in an artifact

@@ -96,7 +96,7 @@ var (
 	viewType     ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
-	// skipBackupTests will skip any tests taht involve backup actions
+	// skipBackupTests will skip any tests that involve backup actions
 	skipBackupTests = false
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
