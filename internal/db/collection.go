@@ -174,7 +174,7 @@ func (db *DB) getCollections(
 	collections := []client.Collection{}
 	for _, col := range cols {
 		if options.ID.HasValue() {
-			if col.ID != options.ID.Value() {
+			if col.VersionID != options.ID.Value() {
 				continue
 			}
 		}
@@ -184,7 +184,7 @@ func (db *DB) getCollections(
 			continue
 		}
 
-		schema, err := description.GetSchemaVersion(ctx, txn, col.ID)
+		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
@@ -216,7 +216,7 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 
 	definitions := make([]client.CollectionDefinition, len(cols))
 	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.ID)
+		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -365,9 +365,9 @@ func (c *collection) Schema() client.SchemaDescription {
 	return c.Definition().Schema
 }
 
-// ID returns the ID of the collection.
-func (c *collection) ID() string {
-	return c.Version().ID
+// VersionID returns the VersionID of the collection.
+func (c *collection) VersionID() string {
+	return c.Version().VersionID
 }
 
 func (c *collection) SchemaRoot() string {

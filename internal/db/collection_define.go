@@ -46,7 +46,7 @@ func (db *DB) createCollections(
 	}
 
 	for i := range newDefinitions {
-		newDefinitions[i].Version.ID = newSchemas[i].VersionID
+		newDefinitions[i].Version.VersionID = newSchemas[i].VersionID
 		newDefinitions[i].Version.CollectionID = newSchemas[i].Root
 		newDefinitions[i].Schema = newSchemas[i]
 	}
@@ -102,7 +102,7 @@ func (db *DB) createCollections(
 			}
 		}
 
-		result, err := db.getCollectionByID(ctx, desc.ID)
+		result, err := db.getCollectionByID(ctx, desc.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +132,7 @@ func (db *DB) patchCollection(
 	existingColsByID := map[string]client.CollectionVersion{}
 	existingDefinitions := make([]client.CollectionDefinition, len(existingCols))
 	for _, col := range existingCols {
-		existingColsByID[col.Version().ID] = col.Version()
+		existingColsByID[col.Version().VersionID] = col.Version()
 		existingDefinitions = append(existingDefinitions, col.Definition())
 	}
 
@@ -157,8 +157,8 @@ func (db *DB) patchCollection(
 	updatedColsByID := make(map[string]struct{})
 	for i, col := range existingCols {
 		newDefinitions[i].Schema = col.Schema()
-		newDefinitions[i].Version = newColsByID[col.Version().ID]
-		updatedColsByID[col.Version().ID] = struct{}{}
+		newDefinitions[i].Version = newColsByID[col.Version().VersionID]
+		updatedColsByID[col.Version().VersionID] = struct{}{}
 	}
 	// append new cols
 	for id, col := range newColsByID {
@@ -180,7 +180,7 @@ func (db *DB) patchCollection(
 			return err
 		}
 
-		existingCol, ok := existingColsByID[col.ID]
+		existingCol, ok := existingColsByID[col.VersionID]
 		if ok {
 			if existingCol.IsMaterialized && !col.IsMaterialized {
 				// If the collection is being de-materialized - delete any cached values.
@@ -199,7 +199,7 @@ func (db *DB) patchCollection(
 
 			for _, src := range existingCol.CollectionSources() {
 				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
 					if err != nil {
 						return err
 					}
@@ -207,7 +207,7 @@ func (db *DB) patchCollection(
 			}
 			for _, src := range existingCol.QuerySources() {
 				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
 					if err != nil {
 						return err
 					}
@@ -217,7 +217,7 @@ func (db *DB) patchCollection(
 
 		for _, src := range col.CollectionSources() {
 			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
 				if err != nil {
 					return err
 				}
@@ -226,7 +226,7 @@ func (db *DB) patchCollection(
 
 		for _, src := range col.QuerySources() {
 			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
 				if err != nil {
 					return err
 				}
@@ -270,7 +270,7 @@ func (db *DB) setActiveSchemaVersion(
 	colsBySourceID := map[string][]client.CollectionVersion{}
 	colsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
 	for _, col := range colsWithRoot {
-		colsByID[col.ID] = col
+		colsByID[col.VersionID] = col
 
 		sources := col.CollectionSources()
 		if len(sources) > 0 {
@@ -299,7 +299,7 @@ func (db *DB) setActiveSchemaVersion(
 	}
 	if !isActiveFound {
 		// We need to look both down and up for the active version - the most recent is not necessarily the active one.
-		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.ID)
+		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.VersionID)
 	}
 
 	col.IsActive = true
@@ -362,7 +362,7 @@ func (db *DB) getActiveCollectionUp(
 		if col.IsActive {
 			return col, true
 		}
-		activeCol, isFound := db.getActiveCollectionUp(ctx, colsBySourceID, col.ID)
+		activeCol, isFound := db.getActiveCollectionUp(ctx, colsBySourceID, col.VersionID)
 		if isFound {
 			return activeCol, isFound
 		}

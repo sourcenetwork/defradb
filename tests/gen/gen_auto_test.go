@@ -1302,8 +1302,8 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Version: client.CollectionVersion{
-				Name: "User",
-				ID:   "a",
+				Name:      "User",
+				VersionID: "a",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "name",
@@ -1342,8 +1342,8 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 		},
 		{
 			Version: client.CollectionVersion{
-				Name: "Device",
-				ID:   "b",
+				Name:      "Device",
+				VersionID: "b",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "model",

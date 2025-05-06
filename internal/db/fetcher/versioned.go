@@ -353,7 +353,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(
 			vf.store,
-			vf.col.Version().ID,
+			vf.col.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 

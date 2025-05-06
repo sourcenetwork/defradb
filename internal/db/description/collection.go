@@ -44,7 +44,7 @@ func SaveCollection(
 		return client.CollectionVersion{}, err
 	}
 
-	key := keys.NewCollectionKey(desc.ID)
+	key := keys.NewCollectionKey(desc.VersionID)
 	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
 	if err != nil {
 		return client.CollectionVersion{}, err
@@ -59,7 +59,7 @@ func SaveCollection(
 			}
 		}
 
-		if string(idBytes) == desc.ID {
+		if string(idBytes) == desc.VersionID {
 			err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
 			if err != nil {
 				return client.CollectionVersion{}, err
@@ -69,7 +69,7 @@ func SaveCollection(
 
 	if desc.IsActive {
 		nameKey := keys.NewCollectionNameKey(desc.Name)
-		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.ID))
+		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
 		if err != nil {
 			return client.CollectionVersion{}, err
 		}
@@ -268,7 +268,7 @@ func GetActiveCollections(
 	}
 
 	// Sort the results by ID, so that the order matches that of [GetCollections].
-	sort.Slice(cols, func(i, j int) bool { return cols[i].ID < cols[j].ID })
+	sort.Slice(cols, func(i, j int) bool { return cols[i].VersionID < cols[j].VersionID })
 
 	return cols, iter.Close()
 }

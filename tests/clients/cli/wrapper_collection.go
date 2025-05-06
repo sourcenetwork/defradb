@@ -40,8 +40,8 @@ func (c *Collection) Schema() client.SchemaDescription {
 	return c.def.Schema
 }
 
-func (c *Collection) ID() string {
-	return c.Version().ID
+func (c *Collection) VersionID() string {
+	return c.Version().VersionID
 }
 
 func (c *Collection) SchemaRoot() string {
