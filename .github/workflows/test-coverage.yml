@@ -290,12 +290,6 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Setup upterm ssh session for debugging
-        uses: lhotari/action-upterm@v1
-        with:
-          limit-access-to-actor: true
-          limit-access-to-users: nasdf
-
       - name: Run integration tests
         run: make test:coverage-js
 
