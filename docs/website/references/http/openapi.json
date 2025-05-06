@@ -163,9 +163,6 @@
                         },
                         "type": "array"
                     },
-                    "ID": {
-                        "type": "string"
-                    },
                     "Indexes": {
                         "items": {
                             "properties": {
@@ -247,6 +244,9 @@
                             "type": "object"
                         },
                         "type": "array"
+                    },
+                    "VersionID": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -310,9 +310,6 @@
                                     "type": "object"
                                 },
                                 "type": "array"
-                            },
-                            "ID": {
-                                "type": "string"
                             },
                             "Indexes": {
                                 "items": {
@@ -395,6 +392,9 @@
                                     "type": "object"
                                 },
                                 "type": "array"
+                            },
+                            "VersionID": {
+                                "type": "string"
                             }
                         },
                         "type": "object"

@@ -49,7 +49,7 @@ func TestColVersionUpdateAddCollections_WithEmptyID_Errors(t *testing.T) {
 			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/hgfgsagasga", "value": {"ID": "", "Name": "Dogs"} }
+						{ "op": "add", "path": "/hgfgsagasga", "value": {"VersionID": "", "Name": "Dogs"} }
 					]
 				`,
 				ExpectedError: "schema name can't be empty",
@@ -74,7 +74,7 @@ func TestColVersionUpdateAddCollections_Errors(t *testing.T) {
 						{
 							"op": "add",
 							"path": "/hgfgsagasga",
-							"value": {"ID": "hgfgsagasga", "Name": "Dogs"}
+							"value": {"VersionID": "hgfgsagasga", "Name": "Dogs"}
 						}
 					]
 				`,

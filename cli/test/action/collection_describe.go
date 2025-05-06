@@ -50,8 +50,8 @@ func (a *CollectionDescribe) Execute() {
 		if expected.Version.CollectionID != "" {
 			require.Equal(a.s.T, expected.Version.CollectionID, actual.Version.CollectionID)
 		}
-		if expected.Version.ID != "" {
-			require.Equal(a.s.T, expected.Version.ID, actual.Version.ID)
+		if expected.Version.VersionID != "" {
+			require.Equal(a.s.T, expected.Version.VersionID, actual.Version.VersionID)
 		}
 
 		require.Equal(a.s.T, expected.Version.Name, actual.Version.Name)

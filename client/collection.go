@@ -24,8 +24,8 @@ type Collection interface {
 	// Name returns the name of this collection.
 	Name() string
 
-	// ID returns the ID of this Collection.
-	ID() string
+	// VersionID returns the VersionID of this Collection.
+	VersionID() string
 
 	// SchemaRoot returns the Root of the Schema used to define this Collection.
 	SchemaRoot() string

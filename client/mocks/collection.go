@@ -612,50 +612,6 @@ func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context)
 	return _c
 }
 
-// ID provides a mock function for the type Collection
-func (_mock *Collection) ID() string {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for ID")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func() string); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// Collection_ID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ID'
-type Collection_ID_Call struct {
-	*mock.Call
-}
-
-// ID is a helper method to define mock.On call
-func (_e *Collection_Expecter) ID() *Collection_ID_Call {
-	return &Collection_ID_Call{Call: _e.mock.On("ID")}
-}
-
-func (_c *Collection_ID_Call) Run(run func()) *Collection_ID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Collection_ID_Call) Return(s string) *Collection_ID_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *Collection_ID_Call) RunAndReturn(run func() string) *Collection_ID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Name provides a mock function for the type Collection
 func (_mock *Collection) Name() string {
 	ret := _mock.Called()
@@ -978,6 +934,50 @@ func (_c *Collection_Version_Call) Return(collectionVersion client.CollectionVer
 }
 
 func (_c *Collection_Version_Call) RunAndReturn(run func() client.CollectionVersion) *Collection_Version_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VersionID provides a mock function for the type Collection
+func (_mock *Collection) VersionID() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for VersionID")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// Collection_VersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VersionID'
+type Collection_VersionID_Call struct {
+	*mock.Call
+}
+
+// VersionID is a helper method to define mock.On call
+func (_e *Collection_Expecter) VersionID() *Collection_VersionID_Call {
+	return &Collection_VersionID_Call{Call: _e.mock.On("VersionID")}
+}
+
+func (_c *Collection_VersionID_Call) Run(run func()) *Collection_VersionID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Collection_VersionID_Call) Return(s string) *Collection_VersionID_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *Collection_VersionID_Call) RunAndReturn(run func() string) *Collection_VersionID_Call {
 	_c.Call.Return(run)
 	return _c
 }

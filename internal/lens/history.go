@@ -78,7 +78,7 @@ func getTargetedCollectionHistory(
 	targetLink := &targetedCollectionHistoryLink{
 		collection: targetHistoryItem.collection,
 	}
-	result[targetLink.collection.ID] = targetLink
+	result[targetLink.collection.VersionID] = targetLink
 
 	linkForwards(targetLink, targetHistoryItem, result)
 	linkBackwards(targetLink, targetHistoryItem, result)
@@ -96,7 +96,7 @@ func linkForwards(
 	result map[schemaVersionID]*targetedCollectionHistoryLink,
 ) {
 	for _, nextHistoryItem := range currentHistoryItem.next {
-		if _, ok := result[nextHistoryItem.collection.ID]; ok {
+		if _, ok := result[nextHistoryItem.collection.VersionID]; ok {
 			// As the history forms a DAG, this should only ever happen when
 			// iterating through the item we were at immediately before the current.
 			continue
@@ -106,7 +106,7 @@ func linkForwards(
 			collection: nextHistoryItem.collection,
 			previous:   immutable.Some(currentLink),
 		}
-		result[nextLink.collection.ID] = nextLink
+		result[nextLink.collection.VersionID] = nextLink
 
 		linkForwards(nextLink, nextHistoryItem, result)
 		linkBackwards(nextLink, nextHistoryItem, result)
@@ -123,7 +123,7 @@ func linkBackwards(
 	result map[schemaVersionID]*targetedCollectionHistoryLink,
 ) {
 	for _, prevHistoryItem := range currentHistoryItem.previous {
-		if _, ok := result[prevHistoryItem.collection.ID]; ok {
+		if _, ok := result[prevHistoryItem.collection.VersionID]; ok {
 			// As the history forms a DAG, this should only ever happen when
 			// iterating through the item we were at immediately before the current.
 			continue
@@ -133,7 +133,7 @@ func linkBackwards(
 			collection: prevHistoryItem.collection,
 			next:       immutable.Some(currentLink),
 		}
-		result[prevLink.collection.ID] = prevLink
+		result[prevLink.collection.VersionID] = prevLink
 
 		linkForwards(prevLink, prevHistoryItem, result)
 		linkBackwards(prevLink, prevHistoryItem, result)
@@ -158,7 +158,7 @@ func getCollectionHistory(
 
 	for _, col := range cols {
 		// Convert the temporary types to the cleaner return type:
-		history[col.ID] = &collectionHistoryLink{
+		history[col.VersionID] = &collectionHistoryLink{
 			collection: &col,
 		}
 	}

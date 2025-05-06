@@ -80,7 +80,7 @@ func (db *DB) addView(
 	for _, definition := range returnDescriptions {
 		for _, source := range definition.Version.QuerySources() {
 			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.Version.ID, source.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, definition.Version.VersionID, source.Transform.Value())
 				if err != nil {
 					return nil, err
 				}
