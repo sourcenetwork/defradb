@@ -17,7 +17,7 @@ import (
 )
 
 func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
-	return s.acpOptions, nil
+	return s.documentACPOptions, nil
 }
 
 func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
