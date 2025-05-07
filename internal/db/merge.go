@@ -33,7 +33,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
@@ -484,7 +483,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			return nil, nil
 		}
 
-		return merklecrdt.FieldLevelCRDTWithStore(
+		return crdt.FieldLevelCRDTWithStore(
 			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
 			fd.Typ,

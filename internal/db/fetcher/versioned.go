@@ -33,7 +33,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -375,7 +374,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 		}
 
-		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
+		mcrdt, err = crdt.FieldLevelCRDTWithStore(
 			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
 			field.Typ,

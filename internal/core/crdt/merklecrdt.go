@@ -11,7 +11,7 @@
 /*
 Package crdt provides CRDT implementations leveraging MerkleClock.
 */
-package merklecrdt
+package crdt
 
 import (
 	"context"
@@ -50,7 +50,7 @@ func FieldLevelCRDTWithStore(
 			key,
 			fieldName,
 			cType == client.PN_COUNTER,
-			kind.(client.ScalarKind),
+			kind.(client.ScalarKind), //nolint:forcetypeassert
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)

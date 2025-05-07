@@ -37,7 +37,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -737,7 +736,7 @@ func (c *collection) save(
 				return err
 			}
 
-			merkleCRDT, err := merklecrdt.FieldLevelCRDTWithStore(
+			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
 				txn.Datastore(),
 				c.Schema().VersionID,
 				val.Type(),
@@ -749,7 +748,7 @@ func (c *collection) save(
 				return err
 			}
 
-			delta, err := merkleCRDT.Delta(ctx, merklecrdt.NewDocField(primaryKey.DocID, k, val))
+			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocID, k, val))
 			if err != nil {
 				return err
 			}
