@@ -22,8 +22,8 @@ import (
 )
 
 type MerkleCollection struct {
-	clock *clock.MerkleClock
-	reg   *crdt.Collection
+	clock           *clock.MerkleClock
+	schemaVersionID string
 }
 
 var _ MerkleCRDT = (*MerkleCollection)(nil)
@@ -33,13 +33,13 @@ func NewMerkleCollection(
 	schemaVersionID string,
 	key keys.HeadstoreColKey,
 ) *MerkleCollection {
-	register := crdt.NewCollection(schemaVersionID)
+	register := crdt.NewCollection()
 
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key, register)
 
 	return &MerkleCollection{
-		clock: clk,
-		reg:   register,
+		clock:           clk,
+		schemaVersionID: schemaVersionID,
 	}
 }
 
@@ -48,6 +48,11 @@ func (m *MerkleCollection) Clock() *clock.MerkleClock {
 }
 
 func (m *MerkleCollection) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
-	delta := m.reg.NewDelta()
-	return m.clock.AddDelta(ctx, delta, links...)
+	return m.clock.AddDelta(
+		ctx,
+		&crdt.CollectionDelta{
+			SchemaVersionID: m.schemaVersionID,
+		},
+		links...,
+	)
 }
