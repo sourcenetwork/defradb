@@ -11,11 +11,19 @@
 package merklecrdt
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
+	"errors"
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
@@ -23,12 +31,14 @@ import (
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
 	clock           *clock.MerkleClock
+	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
 }
 
 var _ FieldLevelMerkleCRDT = (*MerkleLWWRegister)(nil)
+var _ core.ReplicatedData = (*MerkleLWWRegister)(nil)
 
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
@@ -38,16 +48,21 @@ func NewMerkleLWWRegister(
 	key keys.DataStoreKey,
 	fieldName string,
 ) *MerkleLWWRegister {
-	register := corecrdt.NewLWWRegister(store.Datastore(), key)
-	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
-		register)
-
-	return &MerkleLWWRegister{
-		clock:           clk,
+	dag := &MerkleLWWRegister{
 		key:             key,
 		schemaVersionID: schemaVersionID,
 		fieldName:       fieldName,
 	}
+
+	dag.clock = clock.NewMerkleClock(
+		store.Headstore(),
+		store.Blockstore(),
+		store.Encstore(),
+		key.ToHeadStoreKey(),
+		dag,
+	)
+
+	return dag
 }
 
 func (m *MerkleLWWRegister) Clock() *clock.MerkleClock {
@@ -70,4 +85,88 @@ func (m *MerkleLWWRegister) Save(ctx context.Context, data *DocField) (cidlink.L
 			SchemaVersionID: m.schemaVersionID,
 		},
 	)
+}
+
+// Merge implements ReplicatedData interface
+// Merge two LWWRegisty based on the order of the timestamp (ts),
+// if they are equal, compare IDs
+// MUTATE STATE
+func (reg *MerkleLWWRegister) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*corecrdt.LWWRegDelta)
+	if !ok {
+		return corecrdt.ErrMismatchedMergeType
+	}
+
+	return reg.setValue(ctx, d.Data, d.GetPriority())
+}
+
+func (reg *MerkleLWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
+	curPrio, err := getPriority(ctx, reg.store, reg.key)
+	if err != nil {
+		return corecrdt.NewErrFailedToGetPriority(err)
+	}
+
+	// if the current priority is higher ignore put
+	// else if the current value is lexicographically
+	// greater than the new then ignore
+	key := reg.key.WithValueFlag()
+	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().Bytes())
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return err
+	}
+	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+		key = key.WithDeletedFlag()
+	}
+	if priority < curPrio {
+		return nil
+	} else if priority == curPrio {
+		curValue, err := reg.store.Get(ctx, key.Bytes())
+		if err != nil {
+			return err
+		}
+
+		if bytes.Compare(curValue, val) >= 0 {
+			return nil
+		}
+	}
+
+	if bytes.Equal(val, client.CborNil) {
+		// If len(val) is 1 or less the property is nil and there is no reason for
+		// the field datastore key to exist.  Ommiting the key saves space and is
+		// consistent with what would be found if the user omitted the property on
+		// create.
+		err = reg.store.Delete(ctx, key.Bytes())
+		if err != nil {
+			return err
+		}
+	} else {
+		err = reg.store.Set(ctx, key.Bytes(), val)
+		if err != nil {
+			return corecrdt.NewErrFailedToStoreValue(err)
+		}
+	}
+
+	return setPriority(ctx, reg.store, reg.key, priority)
+}
+
+// get the current priority for given key
+func getPriority(
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key keys.DataStoreKey,
+) (uint64, error) {
+	pKey := key.WithPriorityFlag()
+	pbuf, err := store.Get(ctx, pKey.Bytes())
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	prio, num := binary.Uvarint(pbuf)
+	if num <= 0 {
+		return 0, corecrdt.ErrDecodingPriority
+	}
+	return prio, nil
 }

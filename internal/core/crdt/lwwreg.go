@@ -11,17 +11,7 @@
 package crdt
 
 import (
-	"bytes"
-	"context"
-
-	"github.com/sourcenetwork/corekv"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // LWWRegDelta is a single delta operation for an LWWRegister
@@ -61,86 +51,4 @@ func (delta *LWWRegDelta) GetPriority() uint64 {
 // SetPriority will set the priority for this delta.
 func (delta *LWWRegDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
-}
-
-// LWWRegister, Last-Writer-Wins Register, is a simple CRDT type that allows set/get
-// of an arbitrary data type that ensures convergence.
-type LWWRegister struct {
-	store datastore.DSReaderWriter
-	key   keys.DataStoreKey
-}
-
-var _ core.ReplicatedData = (*LWWRegister)(nil)
-
-// NewLWWRegister returns a new instance of the LWWReg with the given ID.
-func NewLWWRegister(
-	store datastore.DSReaderWriter,
-	key keys.DataStoreKey,
-) LWWRegister {
-	return LWWRegister{
-		store: store,
-		key:   key,
-	}
-}
-
-// Merge implements ReplicatedData interface
-// Merge two LWWRegisty based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
-func (reg LWWRegister) Merge(ctx context.Context, delta core.Delta) error {
-	d, ok := delta.(*LWWRegDelta)
-	if !ok {
-		return ErrMismatchedMergeType
-	}
-
-	return reg.setValue(ctx, d.Data, d.GetPriority())
-}
-
-func (reg LWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := getPriority(ctx, reg.store, reg.key)
-	if err != nil {
-		return NewErrFailedToGetPriority(err)
-	}
-
-	// if the current priority is higher ignore put
-	// else if the current value is lexicographically
-	// greater than the new then ignore
-	key := reg.key.WithValueFlag()
-	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().Bytes())
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return err
-	}
-	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
-		key = key.WithDeletedFlag()
-	}
-	if priority < curPrio {
-		return nil
-	} else if priority == curPrio {
-		curValue, err := reg.store.Get(ctx, key.Bytes())
-		if err != nil {
-			return err
-		}
-
-		if bytes.Compare(curValue, val) >= 0 {
-			return nil
-		}
-	}
-
-	if bytes.Equal(val, client.CborNil) {
-		// If len(val) is 1 or less the property is nil and there is no reason for
-		// the field datastore key to exist.  Ommiting the key saves space and is
-		// consistent with what would be found if the user omitted the property on
-		// create.
-		err = reg.store.Delete(ctx, key.Bytes())
-		if err != nil {
-			return err
-		}
-	} else {
-		err = reg.store.Set(ctx, key.Bytes(), val)
-		if err != nil {
-			return NewErrFailedToStoreValue(err)
-		}
-	}
-
-	return setPriority(ctx, reg.store, reg.key, priority)
 }
