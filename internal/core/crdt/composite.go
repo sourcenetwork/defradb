@@ -76,31 +76,19 @@ func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 
 // CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
 type CompositeDAG struct {
-	store           datastore.DSReaderWriter
-	key             keys.DataStoreKey
-	schemaVersionID string
+	store datastore.DSReaderWriter
+	key   keys.DataStoreKey
 }
 
 var _ core.ReplicatedData = (*CompositeDAG)(nil)
 
 func NewCompositeDAG(
 	store datastore.DSReaderWriter,
-	schemaVersionID string,
 	key keys.DataStoreKey,
 ) CompositeDAG {
 	return CompositeDAG{
-		store:           store,
-		key:             key,
-		schemaVersionID: schemaVersionID,
-	}
-}
-
-// Set returns a new composite DAG delta CRDT with the given status.
-func (c CompositeDAG) NewDelta(status client.DocumentStatus) *CompositeDAGDelta {
-	return &CompositeDAGDelta{
-		DocID:           []byte(c.key.DocID),
-		SchemaVersionID: c.schemaVersionID,
-		Status:          status,
+		store: store,
+		key:   key,
 	}
 }
 
@@ -108,9 +96,12 @@ func (c CompositeDAG) NewDelta(status client.DocumentStatus) *CompositeDAGDelta 
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
 func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
-	dagDelta, isDagDelta := delta.(*CompositeDAGDelta)
+	dagDelta, ok := delta.(*CompositeDAGDelta)
+	if !ok {
+		return ErrMismatchedMergeType
+	}
 
-	if isDagDelta && dagDelta.Status.IsDeleted() {
+	if dagDelta.Status.IsDeleted() {
 		err := c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err
@@ -132,17 +123,7 @@ func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
 		versionKey = versionKey.WithDeletedFlag()
 	}
 
-	var schemaVersionId string
-	if isDagDelta {
-		// If this is a CompositeDAGDelta take the datastore schema version from there.
-		// This is particularly important for P2P synced dags, as they may arrive here without having
-		// been migrated yet locally.
-		schemaVersionId = dagDelta.SchemaVersionID
-	} else {
-		schemaVersionId = c.schemaVersionID
-	}
-
-	err = c.store.Set(ctx, versionKey.Bytes(), []byte(schemaVersionId))
+	err = c.store.Set(ctx, versionKey.Bytes(), []byte(dagDelta.SchemaVersionID))
 	if err != nil {
 		return err
 	}

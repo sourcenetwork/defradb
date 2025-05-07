@@ -24,9 +24,9 @@ import (
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
-	clock *clock.MerkleClock
-	// core.ReplicatedData
-	reg corecrdt.CompositeDAG
+	clock           *clock.MerkleClock
+	key             keys.DataStoreKey
+	schemaVersionID string
 }
 
 var _ MerkleCRDT = (*MerkleCompositeDAG)(nil)
@@ -40,7 +40,6 @@ func NewMerkleCompositeDAG(
 ) *MerkleCompositeDAG {
 	compositeDag := corecrdt.NewCompositeDAG(
 		store.Datastore(),
-		schemaVersionID,
 		key,
 	)
 
@@ -48,8 +47,9 @@ func NewMerkleCompositeDAG(
 		compositeDag)
 
 	return &MerkleCompositeDAG{
-		clock: clock,
-		reg:   compositeDag,
+		clock:           clock,
+		key:             key,
+		schemaVersionID: schemaVersionID,
 	}
 }
 
@@ -61,12 +61,25 @@ func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
 func (m *MerkleCompositeDAG) Delete(
 	ctx context.Context,
 ) (cidlink.Link, []byte, error) {
-	delta := m.reg.NewDelta(client.Deleted)
-	return m.clock.AddDelta(ctx, delta)
+	return m.clock.AddDelta(
+		ctx,
+		&corecrdt.CompositeDAGDelta{
+			DocID:           []byte(m.key.DocID),
+			SchemaVersionID: m.schemaVersionID,
+			Status:          client.Deleted,
+		},
+	)
 }
 
 // Save the value of the composite CRDT to DAG.
 func (m *MerkleCompositeDAG) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
-	delta := m.reg.NewDelta(client.Active)
-	return m.clock.AddDelta(ctx, delta, links...)
+	return m.clock.AddDelta(
+		ctx,
+		&corecrdt.CompositeDAGDelta{
+			DocID:           []byte(m.key.DocID),
+			SchemaVersionID: m.schemaVersionID,
+			Status:          client.Active,
+		},
+		links...,
+	)
 }
