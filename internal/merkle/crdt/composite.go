@@ -15,22 +15,17 @@ import (
 	"context"
 	"errors"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
-	clock           *clock.MerkleClock
 	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
@@ -42,56 +37,37 @@ var _ core.ReplicatedData = (*MerkleCompositeDAG)(nil)
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
 func NewMerkleCompositeDAG(
-	store Stores,
+	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 ) *MerkleCompositeDAG {
-	dag := &MerkleCompositeDAG{
-		store:           store.Datastore(),
+	return &MerkleCompositeDAG{
+		store:           store,
 		key:             key,
 		schemaVersionID: schemaVersionID,
 	}
-
-	dag.clock = clock.NewMerkleClock(
-		store.Headstore(),
-		store.Blockstore(),
-		store.Encstore(),
-		key.ToHeadStoreKey(),
-		dag,
-	)
-
-	return dag
 }
 
-func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
-	return m.clock
+func (m *MerkleCompositeDAG) HeadstorePrefix() keys.HeadstoreKey {
+	return m.key.ToHeadStoreKey()
 }
 
-// Delete sets the values of CompositeDAG for a delete.
-func (m *MerkleCompositeDAG) Delete(
-	ctx context.Context,
-) (cidlink.Link, []byte, error) {
-	return m.clock.AddDelta(
-		ctx,
-		&corecrdt.CompositeDAGDelta{
-			DocID:           []byte(m.key.DocID),
-			SchemaVersionID: m.schemaVersionID,
-			Status:          client.Deleted,
-		},
-	)
+// DeleteDelta sets the values of CompositeDAG for a delete.
+func (m *MerkleCompositeDAG) DeleteDelta() *corecrdt.CompositeDAGDelta {
+	return &corecrdt.CompositeDAGDelta{
+		DocID:           []byte(m.key.DocID),
+		SchemaVersionID: m.schemaVersionID,
+		Status:          client.Deleted,
+	}
 }
 
-// Save the value of the composite CRDT to DAG.
-func (m *MerkleCompositeDAG) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
-	return m.clock.AddDelta(
-		ctx,
-		&corecrdt.CompositeDAGDelta{
-			DocID:           []byte(m.key.DocID),
-			SchemaVersionID: m.schemaVersionID,
-			Status:          client.Active,
-		},
-		links...,
-	)
+// Delta the value of the composite CRDT to DAG.
+func (m *MerkleCompositeDAG) Delta() *corecrdt.CompositeDAGDelta {
+	return &corecrdt.CompositeDAGDelta{
+		DocID:           []byte(m.key.DocID),
+		SchemaVersionID: m.schemaVersionID,
+		Status:          client.Active,
+	}
 }
 
 // Merge implements ReplicatedData interface.

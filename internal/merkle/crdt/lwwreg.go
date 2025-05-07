@@ -16,8 +16,6 @@ import (
 	"encoding/binary"
 	"errors"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -25,12 +23,10 @@ import (
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
-	clock           *clock.MerkleClock
 	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
@@ -43,48 +39,36 @@ var _ core.ReplicatedData = (*MerkleLWWRegister)(nil)
 // NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewMerkleLWWRegister(
-	store Stores,
+	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) *MerkleLWWRegister {
-	dag := &MerkleLWWRegister{
+	return &MerkleLWWRegister{
 		key:             key,
+		store:           store,
 		schemaVersionID: schemaVersionID,
 		fieldName:       fieldName,
 	}
-
-	dag.clock = clock.NewMerkleClock(
-		store.Headstore(),
-		store.Blockstore(),
-		store.Encstore(),
-		key.ToHeadStoreKey(),
-		dag,
-	)
-
-	return dag
 }
 
-func (m *MerkleLWWRegister) Clock() *clock.MerkleClock {
-	return m.clock
+func (m *MerkleLWWRegister) HeadstorePrefix() keys.HeadstoreKey {
+	return m.key.ToHeadStoreKey()
 }
 
 // Save the value of the register to the DAG.
-func (m *MerkleLWWRegister) Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error) {
+func (m *MerkleLWWRegister) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return nil, err
 	}
 
-	return m.clock.AddDelta(
-		ctx,
-		&corecrdt.LWWRegDelta{
-			Data:            bytes,
-			DocID:           []byte(m.key.DocID),
-			FieldName:       m.fieldName,
-			SchemaVersionID: m.schemaVersionID,
-		},
-	)
+	return &corecrdt.LWWRegDelta{
+		Data:            bytes,
+		DocID:           []byte(m.key.DocID),
+		FieldName:       m.fieldName,
+		SchemaVersionID: m.schemaVersionID,
+	}, nil
 }
 
 // Merge implements ReplicatedData interface

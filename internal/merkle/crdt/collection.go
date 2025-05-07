@@ -13,17 +13,13 @@ package merklecrdt
 import (
 	"context"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 type MerkleCollection struct {
-	clock           *clock.MerkleClock
+	headstorePrefix keys.HeadstoreKey
 	schemaVersionID string
 }
 
@@ -31,31 +27,23 @@ var _ MerkleCRDT = (*MerkleCollection)(nil)
 var _ core.ReplicatedData = (*MerkleCollection)(nil)
 
 func NewMerkleCollection(
-	store Stores,
 	schemaVersionID string,
 	key keys.HeadstoreColKey,
 ) *MerkleCollection {
-	dag := &MerkleCollection{
+	return &MerkleCollection{
 		schemaVersionID: schemaVersionID,
+		headstorePrefix: key,
 	}
-
-	dag.clock = clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key, dag)
-
-	return dag
 }
 
-func (m *MerkleCollection) Clock() *clock.MerkleClock {
-	return m.clock
+func (m *MerkleCollection) HeadstorePrefix() keys.HeadstoreKey {
+	return m.headstorePrefix
 }
 
-func (m *MerkleCollection) Save(ctx context.Context, links []coreblock.DAGLink) (cidlink.Link, []byte, error) {
-	return m.clock.AddDelta(
-		ctx,
-		&crdt.CollectionDelta{
-			SchemaVersionID: m.schemaVersionID,
-		},
-		links...,
-	)
+func (m *MerkleCollection) Delta() *crdt.CollectionDelta {
+	return &crdt.CollectionDelta{
+		SchemaVersionID: m.schemaVersionID,
+	}
 }
 
 func (c *MerkleCollection) Merge(ctx context.Context, other core.Delta) error {

@@ -16,37 +16,27 @@ package merklecrdt
 import (
 	"context"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
-
-// Stores is a trimmed down [datastore.Multistore] that declares only the sub-stores
-// that should be accessed by this package and it's children.
-type Stores interface {
-	Datastore() datastore.DSReaderWriter
-	Blockstore() datastore.Blockstore
-	Encstore() datastore.Blockstore
-	Headstore() datastore.DSReaderWriter
-}
 
 // MerkleCRDT is the implementation of a Merkle Clock along with a
 // CRDT payload. It implements the ReplicatedData interface
 // so it can be merged with any given semantics.
 type MerkleCRDT interface {
-	Clock() *clock.MerkleClock
+	Merge(ctx context.Context, delta core.Delta) error
+	HeadstorePrefix() keys.HeadstoreKey
 }
 
 type FieldLevelMerkleCRDT interface {
 	MerkleCRDT
-	Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error)
+	Delta(ctx context.Context, data *DocField) (core.Delta, error)
 }
 
 func FieldLevelCRDTWithStore(
-	store Stores,
+	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	cType client.CType,
 	kind client.FieldKind,

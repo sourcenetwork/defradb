@@ -20,7 +20,6 @@ import (
 	"math/big"
 
 	"github.com/fxamacker/cbor/v2"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"golang.org/x/exp/constraints"
 
 	"github.com/sourcenetwork/corekv"
@@ -30,12 +29,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type MerkleCounter struct {
-	clock           *clock.MerkleClock
 	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
@@ -50,35 +47,25 @@ var _ core.ReplicatedData = (*MerkleCounter)(nil)
 // NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
 func NewMerkleCounter(
-	store Stores,
+	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *MerkleCounter {
-	dag := &MerkleCounter{
-		store:           store.Datastore(),
+	return &MerkleCounter{
+		store:           store,
 		key:             key,
 		schemaVersionID: schemaVersionID,
 		fieldName:       fieldName,
 		allowDecrement:  allowDecrement,
 		kind:            kind,
 	}
-
-	dag.clock = clock.NewMerkleClock(
-		store.Headstore(),
-		store.Blockstore(),
-		store.Encstore(),
-		key.ToHeadStoreKey(),
-		dag,
-	)
-
-	return dag
 }
 
-func (m *MerkleCounter) Clock() *clock.MerkleClock {
-	return m.clock
+func (m *MerkleCounter) HeadstorePrefix() keys.HeadstoreKey {
+	return m.key.ToHeadStoreKey()
 }
 
 // Save the value of the  Counter to the DAG.
@@ -86,10 +73,10 @@ func (m *MerkleCounter) Clock() *clock.MerkleClock {
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (m *MerkleCounter) Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error) {
+func (m *MerkleCounter) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return nil, err
 	}
 
 	// To ensure that the dag block is unique, we add a random number to the delta.
@@ -97,28 +84,25 @@ func (m *MerkleCounter) Save(ctx context.Context, data *DocField) (cidlink.Link,
 	// initial dag block of a document can be reproducible.
 	exists, err := m.store.Has(ctx, m.key.ToPrimaryDataStoreKey().Bytes())
 	if err != nil {
-		return cidlink.Link{}, nil, err
+		return nil, err
 	}
 
 	var nonce int64
 	if exists {
 		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 		if err != nil {
-			return cidlink.Link{}, nil, err
+			return nil, err
 		}
 		nonce = r.Int64()
 	}
 
-	return m.clock.AddDelta(
-		ctx,
-		&crdt.CounterDelta{
-			DocID:           []byte(m.key.DocID),
-			FieldName:       m.fieldName,
-			Data:            bytes,
-			SchemaVersionID: m.schemaVersionID,
-			Nonce:           nonce,
-		},
-	)
+	return &crdt.CounterDelta{
+		DocID:           []byte(m.key.DocID),
+		FieldName:       m.fieldName,
+		Data:            bytes,
+		SchemaVersionID: m.schemaVersionID,
+		Nonce:           nonce,
+	}, nil
 }
 
 // Merge implements ReplicatedData interface.

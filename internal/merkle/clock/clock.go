@@ -28,7 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 var (
@@ -40,8 +39,6 @@ type MerkleClock struct {
 	headstore  datastore.DSReaderWriter
 	blockstore datastore.Blockstore
 	encstore   datastore.Blockstore
-	headset    *heads
-	crdt       core.ReplicatedData
 }
 
 // NewMerkleClock returns a new MerkleClock.
@@ -49,15 +46,11 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
-	namespace keys.HeadstoreKey,
-	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{
 		headstore:  headstore,
 		blockstore: blockstore,
 		encstore:   encstore,
-		headset:    NewHeadSet(headstore, namespace),
-		crdt:       crdt,
 	}
 }
 
@@ -80,10 +73,13 @@ func putBlock(
 // sets the delta priority in the Merkle DAG, and adds it to the blockstore then runs ProcessBlock.
 func (mc *MerkleClock) AddDelta(
 	ctx context.Context,
+	crdt core.ReplicatedData,
 	delta core.Delta,
 	links ...coreblock.DAGLink,
 ) (cidlink.Link, []byte, error) {
-	heads, height, err := mc.headset.List(ctx)
+	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
+
+	heads, height, err := headset.List(ctx)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrGettingHeads(err)
 	}
@@ -123,7 +119,7 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	// merge the delta and update the state
-	err = mc.ProcessBlock(ctx, block, link)
+	err = mc.ProcessBlock(ctx, crdt, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -219,26 +215,30 @@ func encryptBlock(
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
 func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
+	crdt core.ReplicatedData,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
-	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
+	err := crdt.Merge(ctx, block.Delta.GetDelta())
 	if err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
-	return mc.updateHeads(ctx, block, blockLink)
+	return mc.updateHeads(ctx, crdt, block, blockLink)
 }
 
 func (mc *MerkleClock) updateHeads(
 	ctx context.Context,
+	crdt core.ReplicatedData,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
+	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
+
 	priority := block.Delta.GetPriority()
 
 	if len(block.Heads) == 0 { // reached the bottom, at a leaf
-		err := mc.headset.Write(ctx, blockLink.Cid, priority)
+		err := headset.Write(ctx, blockLink.Cid, priority)
 		if err != nil {
 			return NewErrAddingHead(blockLink.Cid, err)
 		}
@@ -246,7 +246,7 @@ func (mc *MerkleClock) updateHeads(
 
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
-		isHead, err := mc.headset.IsHead(ctx, linkCid)
+		isHead, err := headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return NewErrCheckingHead(linkCid, err)
 		}
@@ -254,7 +254,7 @@ func (mc *MerkleClock) updateHeads(
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, linkCid, blockLink.Cid, priority)
+			err = headset.Replace(ctx, linkCid, blockLink.Cid, priority)
 			if err != nil {
 				return NewErrReplacingHead(linkCid, blockLink.Cid, err)
 			}
@@ -269,7 +269,7 @@ func (mc *MerkleClock) updateHeads(
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			err := mc.headset.Write(ctx, blockLink.Cid, priority)
+			err := headset.Write(ctx, blockLink.Cid, priority)
 			if err != nil {
 				log.ErrorContextE(
 					ctx,

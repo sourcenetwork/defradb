@@ -31,6 +31,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -352,14 +353,13 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	switch {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(
-			vf.store,
 			vf.col.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 
 	case block.Delta.IsComposite():
 		mcrdt = merklecrdt.NewMerkleCompositeDAG(
-			vf.store,
+			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -375,7 +375,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 
 		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
-			vf.store,
+			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
 			field.Typ,
 			field.Kind,
@@ -391,8 +391,10 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	err = mcrdt.Clock().ProcessBlock(
+	clock := clock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
+	err = clock.ProcessBlock(
 		vf.ctx,
+		mcrdt,
 		block,
 		cidlink.Link{
 			Cid: c,

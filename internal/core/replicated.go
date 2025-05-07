@@ -12,10 +12,13 @@ package core
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // ReplicatedData is a data type that allows concurrent writers to deterministically merge other
 // replicated data so as to converge on the same state.
 type ReplicatedData interface {
 	Merge(ctx context.Context, other Delta) error
+	HeadstorePrefix() keys.HeadstoreKey
 }

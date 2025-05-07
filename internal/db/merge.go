@@ -397,7 +397,8 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+		clock := clock.NewMerkleClock(mp.txn.Headstore(), mp.txn.Blockstore(), mp.txn.Encstore())
+		err = clock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}
@@ -458,7 +459,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (
 		mp.docIDs[docID] = struct{}{}
 
 		return merklecrdt.NewMerkleCompositeDAG(
-			mp.txn,
+			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -468,7 +469,6 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (
 
 	case crdt.IsCollection():
 		return merklecrdt.NewMerkleCollection(
-			mp.txn,
 			mp.col.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		), nil
@@ -485,7 +485,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (
 		}
 
 		return merklecrdt.FieldLevelCRDTWithStore(
-			mp.txn,
+			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
