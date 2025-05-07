@@ -11,16 +11,24 @@
 package merklecrdt
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/binary"
+	"errors"
 	"math"
 	"math/big"
 
+	"github.com/fxamacker/cbor/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"golang.org/x/exp/constraints"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
@@ -32,9 +40,12 @@ type MerkleCounter struct {
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
+	allowDecrement  bool
+	kind            client.ScalarKind
 }
 
 var _ FieldLevelMerkleCRDT = (*MerkleCounter)(nil)
+var _ core.ReplicatedData = (*MerkleCounter)(nil)
 
 // NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
@@ -46,17 +57,24 @@ func NewMerkleCounter(
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *MerkleCounter {
-	register := crdt.NewCounter(store.Datastore(), key, allowDecrement, kind)
-	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
-		register)
-
-	return &MerkleCounter{
-		clock:           clk,
+	dag := &MerkleCounter{
 		store:           store.Datastore(),
 		key:             key,
 		schemaVersionID: schemaVersionID,
 		fieldName:       fieldName,
+		allowDecrement:  allowDecrement,
+		kind:            kind,
 	}
+
+	dag.clock = clock.NewMerkleClock(
+		store.Headstore(),
+		store.Blockstore(),
+		store.Encstore(),
+		key.ToHeadStoreKey(),
+		dag,
+	)
+
+	return dag
 }
 
 func (m *MerkleCounter) Clock() *clock.MerkleClock {
@@ -101,4 +119,136 @@ func (m *MerkleCounter) Save(ctx context.Context, data *DocField) (cidlink.Link,
 			Nonce:           nonce,
 		},
 	)
+}
+
+// Merge implements ReplicatedData interface.
+// It merges two CounterRegisty by adding the values together.
+func (c *MerkleCounter) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*crdt.CounterDelta)
+	if !ok {
+		return crdt.ErrMismatchedMergeType
+	}
+
+	return c.incrementValue(ctx, d.Data, d.GetPriority())
+}
+
+func (c *MerkleCounter) incrementValue(
+	ctx context.Context,
+	valueAsBytes []byte,
+	priority uint64,
+) error {
+	key := c.key.WithValueFlag()
+	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return err
+	}
+	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+		key = key.WithDeletedFlag()
+	}
+
+	var resultAsBytes []byte
+
+	switch c.kind {
+	case client.FieldKind_NILLABLE_INT:
+		resultAsBytes, err = validateAndIncrement[int64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
+		if err != nil {
+			return err
+		}
+	case client.FieldKind_NILLABLE_FLOAT32:
+		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.allowDecrement)
+		if err != nil {
+			return err
+		}
+	case client.FieldKind_NILLABLE_FLOAT64:
+		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
+		if err != nil {
+			return err
+		}
+	default:
+		return crdt.NewErrUnsupportedCounterType(c.kind)
+	}
+
+	err = c.store.Set(ctx, key.Bytes(), resultAsBytes)
+	if err != nil {
+		return crdt.NewErrFailedToStoreValue(err)
+	}
+
+	return setPriority(ctx, c.store, c.key, priority)
+}
+
+func (c *MerkleCounter) CType() client.CType {
+	if c.allowDecrement {
+		return client.PN_COUNTER
+	}
+	return client.P_COUNTER
+}
+
+type Incrementable interface {
+	constraints.Integer | constraints.Float
+}
+
+func validateAndIncrement[T Incrementable](
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key keys.DataStoreKey,
+	valueAsBytes []byte,
+	allowDecrement bool,
+) ([]byte, error) {
+	value, err := getNumericFromBytes[T](valueAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	if !allowDecrement && value < 0 {
+		return nil, crdt.NewErrNegativeValue(value)
+	}
+
+	curValue, err := getCurrentValue[T](ctx, store, key)
+	if err != nil {
+		return nil, err
+	}
+
+	newValue := curValue + value
+	return cbor.Marshal(newValue)
+}
+
+func getCurrentValue[T Incrementable](
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key keys.DataStoreKey,
+) (T, error) {
+	curValue, err := store.Get(ctx, key.Bytes())
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return getNumericFromBytes[T](curValue)
+}
+
+func getNumericFromBytes[T Incrementable](b []byte) (T, error) {
+	var val T
+	err := cbor.Unmarshal(b, &val)
+	if err != nil {
+		return val, err
+	}
+	return val, nil
+}
+
+func setPriority(
+	ctx context.Context,
+	store datastore.DSReaderWriter,
+	key keys.DataStoreKey,
+	priority uint64,
+) error {
+	prioK := key.WithPriorityFlag()
+	buf := make([]byte, binary.MaxVarintLen64)
+	n := binary.PutUvarint(buf, priority)
+	if n == 0 {
+		return crdt.ErrEncodingPriority
+	}
+
+	return store.Set(ctx, prioK.Bytes(), buf[0:n])
 }
