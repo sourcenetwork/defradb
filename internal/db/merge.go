@@ -447,15 +447,15 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (core.ReplicatedData, error) {
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (core.ReplicatedData, error) {
 	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	switch {
-	case crdt.IsComposite():
-		docID := string(crdt.GetDocID())
+	case crdtUnion.IsComposite():
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
 		return merklecrdt.NewMerkleCompositeDAG(
@@ -467,17 +467,17 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
-	case crdt.IsCollection():
-		return merklecrdt.NewMerkleCollection(
+	case crdtUnion.IsCollection():
+		return crdt.NewMerkleCollection(
 			mp.col.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		), nil
 
 	default:
-		docID := string(crdt.GetDocID())
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		field := crdt.GetFieldName()
+		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Definition().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.

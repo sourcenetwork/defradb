@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -193,7 +194,7 @@ func (c *collection) applyDelete(
 			return err
 		}
 
-		collectionCRDT := merklecrdt.NewMerkleCollection(
+		collectionCRDT := crdt.NewMerkleCollection(
 			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)

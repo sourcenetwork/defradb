@@ -11,7 +11,10 @@
 package crdt
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type CollectionDelta struct {
@@ -35,4 +38,37 @@ func (d *CollectionDelta) GetPriority() uint64 {
 
 func (d *CollectionDelta) SetPriority(priority uint64) {
 	d.Priority = priority
+}
+
+type MerkleCollection struct {
+	headstorePrefix keys.HeadstoreKey
+	schemaVersionID string
+}
+
+var _ core.ReplicatedData = (*MerkleCollection)(nil)
+
+func NewMerkleCollection(
+	schemaVersionID string,
+	key keys.HeadstoreColKey,
+) *MerkleCollection {
+	return &MerkleCollection{
+		schemaVersionID: schemaVersionID,
+		headstorePrefix: key,
+	}
+}
+
+func (m *MerkleCollection) HeadstorePrefix() keys.HeadstoreKey {
+	return m.headstorePrefix
+}
+
+func (m *MerkleCollection) Delta() *CollectionDelta {
+	return &CollectionDelta{
+		SchemaVersionID: m.schemaVersionID,
+	}
+}
+
+func (c *MerkleCollection) Merge(ctx context.Context, other core.Delta) error {
+	// Collection merges don't actually need to do anything, as the delta is empty,
+	// and doc-level merges are handled by the document commits.
+	return nil
 }

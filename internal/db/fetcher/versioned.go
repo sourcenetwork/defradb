@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
@@ -352,7 +353,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	var mcrdt core.ReplicatedData
 	switch {
 	case block.Delta.IsCollection():
-		mcrdt = merklecrdt.NewMerkleCollection(
+		mcrdt = crdt.NewMerkleCollection(
 			vf.col.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)

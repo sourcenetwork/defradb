@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -793,7 +794,7 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
-		collectionCRDT := merklecrdt.NewMerkleCollection(
+		collectionCRDT := crdt.NewMerkleCollection(
 			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
