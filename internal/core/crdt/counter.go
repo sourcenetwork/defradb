@@ -13,9 +13,6 @@ package crdt
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
-	"math"
-	"math/big"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/sourcenetwork/corekv"
@@ -78,13 +75,8 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 // Counter, is a simple CRDT type that allows increment/decrement
 // of an Int and Float data types that ensures convergence.
 type Counter struct {
-	store           datastore.DSReaderWriter
-	key             keys.DataStoreKey
-	schemaVersionID string
-
-	// fieldName holds the name of the field hosting this CRDT, if this is a field level
-	// commit.
-	fieldName string
+	store datastore.DSReaderWriter
+	key   keys.DataStoreKey
 
 	AllowDecrement bool
 	Kind           client.ScalarKind
@@ -95,51 +87,16 @@ var _ core.ReplicatedData = (*Counter)(nil)
 // NewCounter returns a new instance of the Counter with the given ID.
 func NewCounter(
 	store datastore.DSReaderWriter,
-	schemaVersionID string,
 	key keys.DataStoreKey,
-	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) Counter {
 	return Counter{
-		store:           store,
-		key:             key,
-		schemaVersionID: schemaVersionID,
-		fieldName:       fieldName,
-		AllowDecrement:  allowDecrement,
-		Kind:            kind,
+		store:          store,
+		key:            key,
+		AllowDecrement: allowDecrement,
+		Kind:           kind,
 	}
-}
-
-// Set generates a new delta with the supplied value.
-//
-// WARNING: Incrementing an integer and causing it to overflow the int64 max value
-// will cause the value to roll over to the int64 min value. Incremeting a float and
-// causing it to overflow the float64 max value will act like a no-op.
-func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, error) {
-	// To ensure that the dag block is unique, we add a random number to the delta.
-	// This is done only on update (if the doc doesn't already exist) to ensure that the
-	// initial dag block of a document can be reproducible.
-	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
-	if err != nil {
-		return nil, err
-	}
-	var nonce int64
-	if exists {
-		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
-		if err != nil {
-			return nil, err
-		}
-		nonce = r.Int64()
-	}
-
-	return &CounterDelta{
-		DocID:           []byte(c.key.DocID),
-		FieldName:       c.fieldName,
-		Data:            value,
-		SchemaVersionID: c.schemaVersionID,
-		Nonce:           nonce,
-	}, nil
 }
 
 // Merge implements ReplicatedData interface.
