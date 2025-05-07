@@ -22,8 +22,10 @@ import (
 
 // MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
 type MerkleLWWRegister struct {
-	clock *clock.MerkleClock
-	reg   corecrdt.LWWRegister
+	clock           *clock.MerkleClock
+	key             keys.DataStoreKey
+	schemaVersionID string
+	fieldName       string
 }
 
 var _ FieldLevelMerkleCRDT = (*MerkleLWWRegister)(nil)
@@ -36,13 +38,15 @@ func NewMerkleLWWRegister(
 	key keys.DataStoreKey,
 	fieldName string,
 ) *MerkleLWWRegister {
-	register := corecrdt.NewLWWRegister(store.Datastore(), schemaVersionID, key, fieldName)
+	register := corecrdt.NewLWWRegister(store.Datastore(), key)
 	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
 		register)
 
 	return &MerkleLWWRegister{
-		clock: clk,
-		reg:   register,
+		clock:           clk,
+		key:             key,
+		schemaVersionID: schemaVersionID,
+		fieldName:       fieldName,
 	}
 }
 
@@ -57,8 +61,13 @@ func (m *MerkleLWWRegister) Save(ctx context.Context, data *DocField) (cidlink.L
 		return cidlink.Link{}, nil, err
 	}
 
-	// Set() call on underlying LWWRegister CRDT
-	// persist/publish delta
-	delta := m.reg.Set(bytes)
-	return m.clock.AddDelta(ctx, delta)
+	return m.clock.AddDelta(
+		ctx,
+		&corecrdt.LWWRegDelta{
+			Data:            bytes,
+			DocID:           []byte(m.key.DocID),
+			FieldName:       m.fieldName,
+			SchemaVersionID: m.schemaVersionID,
+		},
+	)
 }
