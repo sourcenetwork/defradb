@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -166,7 +165,7 @@ func (c *collection) applyDelete(
 
 	clock := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
 
-	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
+	merkleCRDT := crdt.NewMerkleCompositeDAG(
 		txn.Datastore(),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),

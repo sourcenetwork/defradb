@@ -359,7 +359,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		)
 
 	case block.Delta.IsComposite():
-		mcrdt = merklecrdt.NewMerkleCompositeDAG(
+		mcrdt = crdt.NewMerkleCompositeDAG(
 			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
