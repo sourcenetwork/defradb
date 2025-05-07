@@ -11,27 +11,8 @@
 package crdt
 
 import (
-	"context"
-
 	"github.com/sourcenetwork/defradb/internal/core"
 )
-
-// Collection is a simple CRDT type that tracks changes to the contents of a
-// collection in a similar way to a document composite commit, only simpler,
-// without the need to track status and a simpler [Merge] function.
-type Collection struct{}
-
-var _ core.ReplicatedData = (*Collection)(nil)
-
-func NewCollection() *Collection {
-	return &Collection{}
-}
-
-func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
-	// Collection merges don't actually need to do anything, as the delta is empty,
-	// and doc-level merges are handled by the document commits.
-	return nil
-}
 
 type CollectionDelta struct {
 	Priority        uint64

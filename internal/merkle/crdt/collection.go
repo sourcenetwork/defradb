@@ -15,6 +15,7 @@ import (
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -27,20 +28,20 @@ type MerkleCollection struct {
 }
 
 var _ MerkleCRDT = (*MerkleCollection)(nil)
+var _ core.ReplicatedData = (*MerkleCollection)(nil)
 
 func NewMerkleCollection(
 	store Stores,
 	schemaVersionID string,
 	key keys.HeadstoreColKey,
 ) *MerkleCollection {
-	register := crdt.NewCollection()
-
-	clk := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key, register)
-
-	return &MerkleCollection{
-		clock:           clk,
+	dag := &MerkleCollection{
 		schemaVersionID: schemaVersionID,
 	}
+
+	dag.clock = clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key, dag)
+
+	return dag
 }
 
 func (m *MerkleCollection) Clock() *clock.MerkleClock {
@@ -55,4 +56,10 @@ func (m *MerkleCollection) Save(ctx context.Context, links []coreblock.DAGLink) 
 		},
 		links...,
 	)
+}
+
+func (c *MerkleCollection) Merge(ctx context.Context, other core.Delta) error {
+	// Collection merges don't actually need to do anything, as the delta is empty,
+	// and doc-level merges are handled by the document commits.
+	return nil
 }
