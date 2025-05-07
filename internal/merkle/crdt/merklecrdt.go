@@ -22,16 +22,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// MerkleCRDT is the implementation of a Merkle Clock along with a
-// CRDT payload. It implements the ReplicatedData interface
-// so it can be merged with any given semantics.
-type MerkleCRDT interface {
-	Merge(ctx context.Context, delta core.Delta) error
-	HeadstorePrefix() keys.HeadstoreKey
-}
-
 type FieldLevelMerkleCRDT interface {
-	MerkleCRDT
+	core.ReplicatedData
 	Delta(ctx context.Context, data *DocField) (core.Delta, error)
 }
 

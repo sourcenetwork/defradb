@@ -31,7 +31,6 @@ type MerkleCompositeDAG struct {
 	schemaVersionID string
 }
 
-var _ MerkleCRDT = (*MerkleCompositeDAG)(nil)
 var _ core.ReplicatedData = (*MerkleCompositeDAG)(nil)
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT

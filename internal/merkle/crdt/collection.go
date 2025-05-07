@@ -23,7 +23,6 @@ type MerkleCollection struct {
 	schemaVersionID string
 }
 
-var _ MerkleCRDT = (*MerkleCollection)(nil)
 var _ core.ReplicatedData = (*MerkleCollection)(nil)
 
 func NewMerkleCollection(

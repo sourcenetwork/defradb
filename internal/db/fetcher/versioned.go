@@ -349,7 +349,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	var mcrdt merklecrdt.MerkleCRDT
+	var mcrdt core.ReplicatedData
 	switch {
 	case block.Delta.IsCollection():
 		mcrdt = merklecrdt.NewMerkleCollection(

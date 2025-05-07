@@ -447,7 +447,7 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (core.ReplicatedData, error) {
 	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, err
