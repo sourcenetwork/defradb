@@ -11,13 +11,19 @@
 package merklecrdt
 
 import (
+	"bytes"
 	"context"
+	"errors"
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
@@ -25,11 +31,13 @@ import (
 // MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type MerkleCompositeDAG struct {
 	clock           *clock.MerkleClock
+	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 }
 
 var _ MerkleCRDT = (*MerkleCompositeDAG)(nil)
+var _ core.ReplicatedData = (*MerkleCompositeDAG)(nil)
 
 // NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
@@ -38,19 +46,21 @@ func NewMerkleCompositeDAG(
 	schemaVersionID string,
 	key keys.DataStoreKey,
 ) *MerkleCompositeDAG {
-	compositeDag := corecrdt.NewCompositeDAG(
-		store.Datastore(),
-		key,
-	)
-
-	clock := clock.NewMerkleClock(store.Headstore(), store.Blockstore(), store.Encstore(), key.ToHeadStoreKey(),
-		compositeDag)
-
-	return &MerkleCompositeDAG{
-		clock:           clock,
+	dag := &MerkleCompositeDAG{
+		store:           store.Datastore(),
 		key:             key,
 		schemaVersionID: schemaVersionID,
 	}
+
+	dag.clock = clock.NewMerkleClock(
+		store.Headstore(),
+		store.Blockstore(),
+		store.Encstore(),
+		key.ToHeadStoreKey(),
+		dag,
+	)
+
+	return dag
 }
 
 func (m *MerkleCompositeDAG) Clock() *clock.MerkleClock {
@@ -82,4 +92,91 @@ func (m *MerkleCompositeDAG) Save(ctx context.Context, links []coreblock.DAGLink
 		},
 		links...,
 	)
+}
+
+// Merge implements ReplicatedData interface.
+// It ensures that the object marker exists for the given key.
+// If it doesn't, it adds it to the store.
+func (m *MerkleCompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
+	dagDelta, ok := delta.(*corecrdt.CompositeDAGDelta)
+	if !ok {
+		return corecrdt.ErrMismatchedMergeType
+	}
+
+	if dagDelta.Status.IsDeleted() {
+		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.DeletedObjectMarker})
+		if err != nil {
+			return err
+		}
+		return m.deleteWithPrefix(ctx, m.key.WithValueFlag().WithFieldID(""))
+	}
+
+	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
+	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
+	// the local representation of the document.
+	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
+	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey().Bytes())
+	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
+	if err != nil && hasObjectMarker {
+		return err
+	}
+
+	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
+		versionKey = versionKey.WithDeletedFlag()
+	}
+
+	err = m.store.Set(ctx, versionKey.Bytes(), []byte(dagDelta.SchemaVersionID))
+	if err != nil {
+		return err
+	}
+
+	if !hasObjectMarker {
+		// ensure object marker exists
+		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.ObjectMarker})
+	}
+
+	return nil
+}
+
+func (m MerkleCompositeDAG) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
+	iter, err := m.store.Iterator(ctx, corekv.IterOptions{
+		Prefix: key.Bytes(),
+	})
+	if err != nil {
+		return err
+	}
+
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		dsKey, err := keys.NewDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if dsKey.InstanceType == keys.ValueKey {
+			value, err := iter.Value()
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+
+			err = m.store.Set(ctx, dsKey.WithDeletedFlag().Bytes(), value)
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+		}
+
+		err = m.store.Delete(ctx, dsKey.Bytes())
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+	}
+
+	return iter.Close()
 }

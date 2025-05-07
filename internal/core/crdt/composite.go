@@ -11,17 +11,8 @@
 package crdt
 
 import (
-	"bytes"
-	"context"
-
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
@@ -72,109 +63,4 @@ func (delta *CompositeDAGDelta) GetPriority() uint64 {
 // SetPriority will set the priority for this delta.
 func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
-}
-
-// CompositeDAG is a CRDT structure that is used to track a collection of sub MerkleCRDTs.
-type CompositeDAG struct {
-	store datastore.DSReaderWriter
-	key   keys.DataStoreKey
-}
-
-var _ core.ReplicatedData = (*CompositeDAG)(nil)
-
-func NewCompositeDAG(
-	store datastore.DSReaderWriter,
-	key keys.DataStoreKey,
-) CompositeDAG {
-	return CompositeDAG{
-		store: store,
-		key:   key,
-	}
-}
-
-// Merge implements ReplicatedData interface.
-// It ensures that the object marker exists for the given key.
-// If it doesn't, it adds it to the store.
-func (c CompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
-	dagDelta, ok := delta.(*CompositeDAGDelta)
-	if !ok {
-		return ErrMismatchedMergeType
-	}
-
-	if dagDelta.Status.IsDeleted() {
-		err := c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.DeletedObjectMarker})
-		if err != nil {
-			return err
-		}
-		return c.deleteWithPrefix(ctx, c.key.WithValueFlag().WithFieldID(""))
-	}
-
-	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
-	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
-	// the local representation of the document.
-	versionKey := c.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	objectMarker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
-	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
-	if err != nil && hasObjectMarker {
-		return err
-	}
-
-	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
-		versionKey = versionKey.WithDeletedFlag()
-	}
-
-	err = c.store.Set(ctx, versionKey.Bytes(), []byte(dagDelta.SchemaVersionID))
-	if err != nil {
-		return err
-	}
-
-	if !hasObjectMarker {
-		// ensure object marker exists
-		return c.store.Set(ctx, c.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.ObjectMarker})
-	}
-
-	return nil
-}
-
-func (c CompositeDAG) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
-	iter, err := c.store.Iterator(ctx, corekv.IterOptions{
-		Prefix: key.Bytes(),
-	})
-	if err != nil {
-		return err
-	}
-
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		dsKey, err := keys.NewDataStoreKey(string(iter.Key()))
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-
-		if dsKey.InstanceType == keys.ValueKey {
-			value, err := iter.Value()
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-
-			err = c.store.Set(ctx, dsKey.WithDeletedFlag().Bytes(), value)
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-		}
-
-		err = c.store.Delete(ctx, dsKey.Bytes())
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-	}
-
-	return iter.Close()
 }
