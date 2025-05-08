@@ -163,7 +163,7 @@ func (c *collection) applyDelete(
 		ctx = clock.ContextWithEnabledSigning(ctx)
 	}
 
-	clock := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
+	clk := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
@@ -171,7 +171,7 @@ func (c *collection) applyDelete(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, b, err := clock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
+	link, b, err := clk.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (c *collection) applyDelete(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := clock.AddDelta(
+		link, headNode, err := clk.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),

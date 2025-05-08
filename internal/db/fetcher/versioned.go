@@ -391,8 +391,8 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	clock := clock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
-	err = clock.ProcessBlock(
+	clk := clock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
+	err = clk.ProcessBlock(
 		vf.ctx,
 		mcrdt,
 		block,

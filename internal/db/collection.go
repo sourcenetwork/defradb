@@ -697,7 +697,7 @@ func (c *collection) save(
 		DocID:             doc.ID().String(),
 	}
 
-	clock := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
+	clk := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
 
 	links := make([]coreblock.DAGLink, 0)
 	for k, v := range doc.Fields() {
@@ -753,7 +753,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := clock.AddDelta(ctx, merkleCRDT, delta)
+			link, _, err := clk.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -768,7 +768,7 @@ func (c *collection) save(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := clock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, headNode, err := clk.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -798,7 +798,7 @@ func (c *collection) save(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := clock.AddDelta(
+		link, headNode, err := clk.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
