@@ -31,7 +31,7 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 		panic("failed to marshal field value")
 	}
 
-	delta := &corecrdt.LWWRegDelta{
+	delta := &corecrdt.LWWDelta{
 		Data:            fieldVal,
 		DocID:           []byte(docID),
 		FieldName:       fieldName,

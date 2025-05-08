@@ -11,64 +11,46 @@
 /*
 Package crdt provides CRDT implementations leveraging MerkleClock.
 */
-package merklecrdt
+package crdt
 
 import (
 	"context"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
-// Stores is a trimmed down [datastore.Multistore] that declares only the sub-stores
-// that should be accessed by this package and it's children.
-type Stores interface {
-	Datastore() datastore.DSReaderWriter
-	Blockstore() datastore.Blockstore
-	Encstore() datastore.Blockstore
-	Headstore() datastore.DSReaderWriter
-}
-
-// MerkleCRDT is the implementation of a Merkle Clock along with a
-// CRDT payload. It implements the ReplicatedData interface
-// so it can be merged with any given semantics.
-type MerkleCRDT interface {
-	Clock() *clock.MerkleClock
-}
-
-type FieldLevelMerkleCRDT interface {
-	MerkleCRDT
-	Save(ctx context.Context, data *DocField) (cidlink.Link, []byte, error)
+type FieldLevelCRDT interface {
+	core.ReplicatedData
+	Delta(ctx context.Context, data *DocField) (core.Delta, error)
 }
 
 func FieldLevelCRDTWithStore(
-	store Stores,
+	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	cType client.CType,
 	kind client.FieldKind,
 	key keys.DataStoreKey,
 	fieldName string,
-) (FieldLevelMerkleCRDT, error) {
+) (FieldLevelCRDT, error) {
 	switch cType {
 	case client.LWW_REGISTER:
-		return NewMerkleLWWRegister(
+		return NewLWW(
 			store,
 			schemaVersionID,
 			key,
 			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
-		return NewMerkleCounter(
+		return NewCounter(
 			store,
 			schemaVersionID,
 			key,
 			fieldName,
 			cType == client.PN_COUNTER,
-			kind.(client.ScalarKind),
+			kind.(client.ScalarKind), //nolint:forcetypeassert
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)

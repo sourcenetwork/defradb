@@ -29,9 +29,10 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
+	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -348,18 +349,17 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	var mcrdt merklecrdt.MerkleCRDT
+	var mcrdt core.ReplicatedData
 	switch {
 	case block.Delta.IsCollection():
-		mcrdt = merklecrdt.NewMerkleCollection(
-			vf.store,
+		mcrdt = crdt.NewCollection(
 			vf.col.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 
 	case block.Delta.IsComposite():
-		mcrdt = merklecrdt.NewMerkleCompositeDAG(
-			vf.store,
+		mcrdt = crdt.NewDocComposite(
+			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -374,8 +374,8 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 		}
 
-		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
-			vf.store,
+		mcrdt, err = crdt.FieldLevelCRDTWithStore(
+			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
 			field.Typ,
 			field.Kind,
@@ -391,8 +391,10 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	err = mcrdt.Clock().ProcessBlock(
+	clk := clock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
+	err = clk.ProcessBlock(
 		vf.ctx,
+		mcrdt,
 		block,
 		cidlink.Link{
 			Cid: c,

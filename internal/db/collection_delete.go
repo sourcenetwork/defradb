@@ -19,10 +19,10 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -163,13 +163,15 @@ func (c *collection) applyDelete(
 		ctx = clock.ContextWithEnabledSigning(ctx)
 	}
 
-	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
-		txn,
+	clk := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
+
+	merkleCRDT := crdt.NewDocComposite(
+		txn.Datastore(),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, b, err := merkleCRDT.Delete(ctx)
+	link, b, err := clk.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
 	}
@@ -191,13 +193,17 @@ func (c *collection) applyDelete(
 			return err
 		}
 
-		collectionCRDT := merklecrdt.NewMerkleCollection(
-			txn,
+		collectionCRDT := crdt.NewCollection(
 			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})
+		link, headNode, err := clk.AddDelta(
+			ctx,
+			collectionCRDT,
+			collectionCRDT.Delta(),
+			[]coreblock.DAGLink{{Link: link}}...,
+		)
 		if err != nil {
 			return err
 		}

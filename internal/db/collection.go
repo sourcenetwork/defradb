@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -36,7 +37,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -697,6 +697,8 @@ func (c *collection) save(
 		DocID:             doc.ID().String(),
 	}
 
+	clk := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
+
 	links := make([]coreblock.DAGLink, 0)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
@@ -734,8 +736,8 @@ func (c *collection) save(
 				return err
 			}
 
-			merkleCRDT, err := merklecrdt.FieldLevelCRDTWithStore(
-				txn,
+			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
+				txn.Datastore(),
 				c.Schema().VersionID,
 				val.Type(),
 				fieldDescription.Kind,
@@ -746,7 +748,12 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := merkleCRDT.Save(ctx, merklecrdt.NewDocField(primaryKey.DocID, k, val))
+			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocID, k, val))
+			if err != nil {
+				return err
+			}
+
+			link, _, err := clk.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -755,13 +762,13 @@ func (c *collection) save(
 		}
 	}
 
-	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
-		txn,
+	merkleCRDT := crdt.NewDocComposite(
+		txn.Datastore(),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := merkleCRDT.Save(ctx, links)
+	link, headNode, err := clk.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -786,13 +793,17 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
-		collectionCRDT := merklecrdt.NewMerkleCollection(
-			txn,
+		collectionCRDT := crdt.NewCollection(
 			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})
+		link, headNode, err := clk.AddDelta(
+			ctx,
+			collectionCRDT,
+			collectionCRDT.Delta(),
+			[]coreblock.DAGLink{{Link: link}}...,
+		)
 		if err != nil {
 			return err
 		}

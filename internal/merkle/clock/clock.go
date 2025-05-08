@@ -24,13 +24,10 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 var (
@@ -42,8 +39,6 @@ type MerkleClock struct {
 	headstore  datastore.DSReaderWriter
 	blockstore datastore.Blockstore
 	encstore   datastore.Blockstore
-	headset    *heads
-	crdt       core.ReplicatedData
 }
 
 // NewMerkleClock returns a new MerkleClock.
@@ -51,15 +46,11 @@ func NewMerkleClock(
 	headstore datastore.DSReaderWriter,
 	blockstore datastore.Blockstore,
 	encstore datastore.Blockstore,
-	namespace keys.HeadstoreKey,
-	crdt core.ReplicatedData,
 ) *MerkleClock {
 	return &MerkleClock{
 		headstore:  headstore,
 		blockstore: blockstore,
 		encstore:   encstore,
-		headset:    NewHeadSet(headstore, namespace),
-		crdt:       crdt,
 	}
 }
 
@@ -82,10 +73,13 @@ func putBlock(
 // sets the delta priority in the Merkle DAG, and adds it to the blockstore then runs ProcessBlock.
 func (mc *MerkleClock) AddDelta(
 	ctx context.Context,
+	crdt core.ReplicatedData,
 	delta core.Delta,
 	links ...coreblock.DAGLink,
 ) (cidlink.Link, []byte, error) {
-	heads, height, err := mc.headset.List(ctx)
+	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
+
+	heads, height, err := headset.List(ctx)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrGettingHeads(err)
 	}
@@ -113,7 +107,7 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	if EnabledSigningFromContext(ctx) {
-		err = mc.signBlock(ctx, dagBlock)
+		err = signBlock(ctx, mc.blockstore, dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
@@ -125,7 +119,7 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	// merge the delta and update the state
-	err = mc.ProcessBlock(ctx, block, link)
+	err = mc.ProcessBlock(ctx, crdt, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -218,83 +212,33 @@ func encryptBlock(
 	return &coreblock.Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
 }
 
-func (mc *MerkleClock) signBlock(
-	ctx context.Context,
-	block *coreblock.Block,
-) error {
-	// We sign only the first field blocks just to add entropy and prevent any collisions.
-	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
-	if block.Delta.IsField() && block.Delta.GetPriority() > 1 {
-		return nil
-	}
-
-	ident := identity.FromContext(ctx)
-	if !ident.HasValue() {
-		return nil
-	}
-
-	blockBytes, err := block.Marshal()
-	if err != nil {
-		return err
-	}
-
-	var sigType string
-
-	switch ident.Value().PrivateKey.Type() {
-	case crypto.KeyTypeSecp256k1:
-		sigType = coreblock.SignatureTypeECDSA256K
-	case crypto.KeyTypeEd25519:
-		sigType = coreblock.SignatureTypeEd25519
-	default:
-		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
-	}
-
-	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
-	if err != nil {
-		return err
-	}
-
-	sig := &coreblock.Signature{
-		Header: coreblock.SignatureHeader{
-			Type:     sigType,
-			Identity: []byte(ident.Value().PublicKey.String()),
-		},
-		Value: sigBytes,
-	}
-
-	sigBlockLink, err := putBlock(ctx, mc.blockstore, sig)
-	if err != nil {
-		return err
-	}
-
-	block.Signature = &sigBlockLink
-
-	return nil
-}
-
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
 func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
+	crdt core.ReplicatedData,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
-	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
+	err := crdt.Merge(ctx, block.Delta.GetDelta())
 	if err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
-	return mc.updateHeads(ctx, block, blockLink)
+	return mc.updateHeads(ctx, crdt, block, blockLink)
 }
 
 func (mc *MerkleClock) updateHeads(
 	ctx context.Context,
+	crdt core.ReplicatedData,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
+	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
+
 	priority := block.Delta.GetPriority()
 
 	if len(block.Heads) == 0 { // reached the bottom, at a leaf
-		err := mc.headset.Write(ctx, blockLink.Cid, priority)
+		err := headset.Write(ctx, blockLink.Cid, priority)
 		if err != nil {
 			return NewErrAddingHead(blockLink.Cid, err)
 		}
@@ -302,7 +246,7 @@ func (mc *MerkleClock) updateHeads(
 
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
-		isHead, err := mc.headset.IsHead(ctx, linkCid)
+		isHead, err := headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return NewErrCheckingHead(linkCid, err)
 		}
@@ -310,7 +254,7 @@ func (mc *MerkleClock) updateHeads(
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, linkCid, blockLink.Cid, priority)
+			err = headset.Replace(ctx, linkCid, blockLink.Cid, priority)
 			if err != nil {
 				return NewErrReplacingHead(linkCid, blockLink.Cid, err)
 			}
@@ -325,7 +269,7 @@ func (mc *MerkleClock) updateHeads(
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			err := mc.headset.Write(ctx, blockLink.Cid, priority)
+			err := headset.Write(ctx, blockLink.Cid, priority)
 			if err != nil {
 				log.ErrorContextE(
 					ctx,
@@ -341,25 +285,4 @@ func (mc *MerkleClock) updateHeads(
 	}
 
 	return nil
-}
-
-// Heads returns the current heads of the MerkleClock.
-func (mc *MerkleClock) Heads() *heads {
-	return mc.headset
-}
-
-type enabledSigningContextKey struct{}
-
-// ContextWithEnabledSigning returns a context with block signing enabled.
-func ContextWithEnabledSigning(ctx context.Context) context.Context {
-	return context.WithValue(ctx, enabledSigningContextKey{}, true)
-}
-
-// EnabledSigningFromContext returns true if block signing is enabled in the context.
-func EnabledSigningFromContext(ctx context.Context) bool {
-	val := ctx.Value(enabledSigningContextKey{})
-	if val == nil {
-		return false
-	}
-	return val.(bool)
 }
