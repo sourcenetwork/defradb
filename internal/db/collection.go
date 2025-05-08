@@ -762,7 +762,7 @@ func (c *collection) save(
 		}
 	}
 
-	merkleCRDT := crdt.NewMerkleCompositeDAG(
+	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
@@ -793,7 +793,7 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
-		collectionCRDT := crdt.NewMerkleCollection(
+		collectionCRDT := crdt.NewCollection(
 			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)

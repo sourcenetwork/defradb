@@ -45,8 +45,8 @@ func init() {
 		&Block{},
 		&DAGLink{},
 		&crdt.CRDT{},
-		&crdt.LWWRegDelta{},
-		&crdt.CompositeDAGDelta{},
+		&crdt.LWWDelta{},
+		&crdt.DocCompositeDelta{},
 		&crdt.CounterDelta{},
 		&crdt.CollectionDelta{},
 	)

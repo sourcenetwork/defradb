@@ -457,7 +457,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		return crdt.NewMerkleCompositeDAG(
+		return crdt.NewDocComposite(
 			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
 			keys.DataStoreKey{
@@ -467,7 +467,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		), nil
 
 	case crdtUnion.IsCollection():
-		return crdt.NewMerkleCollection(
+		return crdt.NewCollection(
 			mp.col.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		), nil

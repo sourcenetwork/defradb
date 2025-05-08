@@ -24,9 +24,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// LWWRegDelta is a single delta operation for an LWWRegister
+// LWWDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
-type LWWRegDelta struct {
+type LWWDelta struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
@@ -37,14 +37,14 @@ type LWWRegDelta struct {
 	Data            []byte
 }
 
-var _ core.Delta = (*LWWRegDelta)(nil)
+var _ core.Delta = (*LWWDelta)(nil)
 
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
-// This needs to match the [LWWRegDelta] struct or [coreblock.mustSetSchema] will panic on init.
-func (delta LWWRegDelta) IPLDSchemaBytes() []byte {
+// This needs to match the [LWWDelta] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta LWWDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
-	type LWWRegDelta struct {
+	type LWWDelta struct {
 		docID     		Bytes
 		fieldName 		String
 		priority  		Int
@@ -54,35 +54,35 @@ func (delta LWWRegDelta) IPLDSchemaBytes() []byte {
 }
 
 // GetPriority gets the current priority for this delta.
-func (delta *LWWRegDelta) GetPriority() uint64 {
+func (delta *LWWDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *LWWRegDelta) SetPriority(prio uint64) {
+func (delta *LWWDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// MerkleLWWRegister is a MerkleCRDT implementation of the LWWRegister using MerkleClocks.
-type MerkleLWWRegister struct {
+// LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
+type LWW struct {
 	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
 }
 
-var _ FieldLevelMerkleCRDT = (*MerkleLWWRegister)(nil)
-var _ core.ReplicatedData = (*MerkleLWWRegister)(nil)
+var _ FieldLevelCRDT = (*LWW)(nil)
+var _ core.ReplicatedData = (*LWW)(nil)
 
-// NewMerkleLWWRegister creates a new instance (or loaded from DB) of a MerkleCRDT
+// NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
-func NewMerkleLWWRegister(
+func NewLWW(
 	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
-) *MerkleLWWRegister {
-	return &MerkleLWWRegister{
+) *LWW {
+	return &LWW{
 		key:             key,
 		store:           store,
 		schemaVersionID: schemaVersionID,
@@ -90,18 +90,18 @@ func NewMerkleLWWRegister(
 	}
 }
 
-func (m *MerkleLWWRegister) HeadstorePrefix() keys.HeadstoreKey {
+func (m *LWW) HeadstorePrefix() keys.HeadstoreKey {
 	return m.key.ToHeadStoreKey()
 }
 
 // Save the value of the register to the DAG.
-func (m *MerkleLWWRegister) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
+func (m *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
 	}
 
-	return &LWWRegDelta{
+	return &LWWDelta{
 		Data:            bytes,
 		DocID:           []byte(m.key.DocID),
 		FieldName:       m.fieldName,
@@ -113,8 +113,8 @@ func (m *MerkleLWWRegister) Delta(ctx context.Context, data *DocField) (core.Del
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg *MerkleLWWRegister) Merge(ctx context.Context, delta core.Delta) error {
-	d, ok := delta.(*LWWRegDelta)
+func (reg *LWW) Merge(ctx context.Context, delta core.Delta) error {
+	d, ok := delta.(*LWWDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
@@ -122,7 +122,7 @@ func (reg *MerkleLWWRegister) Merge(ctx context.Context, delta core.Delta) error
 	return reg.setValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg *MerkleLWWRegister) setValue(ctx context.Context, val []byte, priority uint64) error {
+func (reg *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	curPrio, err := getPriority(ctx, reg.store, reg.key)
 	if err != nil {
 		return NewErrFailedToGetPriority(err)

@@ -75,8 +75,8 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// MerkleCounter is a MerkleCRDT implementation of the Counter using MerkleClocks.
-type MerkleCounter struct {
+// Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
+type Counter struct {
 	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
@@ -85,20 +85,20 @@ type MerkleCounter struct {
 	kind            client.ScalarKind
 }
 
-var _ FieldLevelMerkleCRDT = (*MerkleCounter)(nil)
-var _ core.ReplicatedData = (*MerkleCounter)(nil)
+var _ FieldLevelCRDT = (*Counter)(nil)
+var _ core.ReplicatedData = (*Counter)(nil)
 
-// NewMerkleCounter creates a new instance (or loaded from DB) of a MerkleCRDT
+// NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
-func NewMerkleCounter(
+func NewCounter(
 	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
-) *MerkleCounter {
-	return &MerkleCounter{
+) *Counter {
+	return &Counter{
 		store:           store,
 		key:             key,
 		schemaVersionID: schemaVersionID,
@@ -108,7 +108,7 @@ func NewMerkleCounter(
 	}
 }
 
-func (m *MerkleCounter) HeadstorePrefix() keys.HeadstoreKey {
+func (m *Counter) HeadstorePrefix() keys.HeadstoreKey {
 	return m.key.ToHeadStoreKey()
 }
 
@@ -117,7 +117,7 @@ func (m *MerkleCounter) HeadstorePrefix() keys.HeadstoreKey {
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (m *MerkleCounter) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
+func (m *Counter) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (m *MerkleCounter) Delta(ctx context.Context, data *DocField) (core.Delta, 
 
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
-func (c *MerkleCounter) Merge(ctx context.Context, delta core.Delta) error {
+func (c *Counter) Merge(ctx context.Context, delta core.Delta) error {
 	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -160,7 +160,7 @@ func (c *MerkleCounter) Merge(ctx context.Context, delta core.Delta) error {
 	return c.incrementValue(ctx, d.Data, d.GetPriority())
 }
 
-func (c *MerkleCounter) incrementValue(
+func (c *Counter) incrementValue(
 	ctx context.Context,
 	valueAsBytes []byte,
 	priority uint64,
@@ -204,7 +204,7 @@ func (c *MerkleCounter) incrementValue(
 	return setPriority(ctx, c.store, c.key, priority)
 }
 
-func (c *MerkleCounter) CType() client.CType {
+func (c *Counter) CType() client.CType {
 	if c.allowDecrement {
 		return client.PN_COUNTER
 	}

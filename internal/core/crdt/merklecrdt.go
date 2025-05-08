@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-type FieldLevelMerkleCRDT interface {
+type FieldLevelCRDT interface {
 	core.ReplicatedData
 	Delta(ctx context.Context, data *DocField) (core.Delta, error)
 }
@@ -34,17 +34,17 @@ func FieldLevelCRDTWithStore(
 	kind client.FieldKind,
 	key keys.DataStoreKey,
 	fieldName string,
-) (FieldLevelMerkleCRDT, error) {
+) (FieldLevelCRDT, error) {
 	switch cType {
 	case client.LWW_REGISTER:
-		return NewMerkleLWWRegister(
+		return NewLWW(
 			store,
 			schemaVersionID,
 			key,
 			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
-		return NewMerkleCounter(
+		return NewCounter(
 			store,
 			schemaVersionID,
 			key,

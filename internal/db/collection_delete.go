@@ -165,7 +165,7 @@ func (c *collection) applyDelete(
 
 	clock := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
 
-	merkleCRDT := crdt.NewMerkleCompositeDAG(
+	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
@@ -193,7 +193,7 @@ func (c *collection) applyDelete(
 			return err
 		}
 
-		collectionCRDT := crdt.NewMerkleCollection(
+		collectionCRDT := crdt.NewCollection(
 			c.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)

@@ -24,8 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// CompositeDAGDelta represents a delta-state update made of sub-MerkleCRDTs.
-type CompositeDAGDelta struct {
+// DocCompositeDelta represents a delta-state update made of sub-MerkleCRDTs.
+type DocCompositeDelta struct {
 	// This property is duplicated from field-level blocks.
 	//
 	// We could remove this without much hassle from the composite, however long-term
@@ -49,14 +49,14 @@ type CompositeDAGDelta struct {
 	Status client.DocumentStatus
 }
 
-var _ core.Delta = (*CompositeDAGDelta)(nil)
+var _ core.Delta = (*DocCompositeDelta)(nil)
 
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
-// This needs to match the [CompositeDAGDelta] struct or [coreblock.mustSetSchema] will panic on init.
-func (delta *CompositeDAGDelta) IPLDSchemaBytes() []byte {
+// This needs to match the [DocCompositeDelta] struct or [coreblock.mustSetSchema] will panic on init.
+func (delta *DocCompositeDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
-	type CompositeDAGDelta struct {
+	type DocCompositeDelta struct {
 		docID     		Bytes
 		priority  		Int
 		schemaVersionID String
@@ -65,45 +65,45 @@ func (delta *CompositeDAGDelta) IPLDSchemaBytes() []byte {
 }
 
 // GetPriority gets the current priority for this delta.
-func (delta *CompositeDAGDelta) GetPriority() uint64 {
+func (delta *DocCompositeDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *CompositeDAGDelta) SetPriority(prio uint64) {
+func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// MerkleCompositeDAG is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
-type MerkleCompositeDAG struct {
+// DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
+type DocComposite struct {
 	store           datastore.DSReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 }
 
-var _ core.ReplicatedData = (*MerkleCompositeDAG)(nil)
+var _ core.ReplicatedData = (*DocComposite)(nil)
 
-// NewMerkleCompositeDAG creates a new instance (or loaded from DB) of a MerkleCRDT
+// NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
-func NewMerkleCompositeDAG(
+func NewDocComposite(
 	store datastore.DSReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
-) *MerkleCompositeDAG {
-	return &MerkleCompositeDAG{
+) *DocComposite {
+	return &DocComposite{
 		store:           store,
 		key:             key,
 		schemaVersionID: schemaVersionID,
 	}
 }
 
-func (m *MerkleCompositeDAG) HeadstorePrefix() keys.HeadstoreKey {
+func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 	return m.key.ToHeadStoreKey()
 }
 
 // DeleteDelta sets the values of CompositeDAG for a delete.
-func (m *MerkleCompositeDAG) DeleteDelta() *CompositeDAGDelta {
-	return &CompositeDAGDelta{
+func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
+	return &DocCompositeDelta{
 		DocID:           []byte(m.key.DocID),
 		SchemaVersionID: m.schemaVersionID,
 		Status:          client.Deleted,
@@ -111,8 +111,8 @@ func (m *MerkleCompositeDAG) DeleteDelta() *CompositeDAGDelta {
 }
 
 // Delta the value of the composite CRDT to DAG.
-func (m *MerkleCompositeDAG) Delta() *CompositeDAGDelta {
-	return &CompositeDAGDelta{
+func (m *DocComposite) Delta() *DocCompositeDelta {
+	return &DocCompositeDelta{
 		DocID:           []byte(m.key.DocID),
 		SchemaVersionID: m.schemaVersionID,
 		Status:          client.Active,
@@ -122,8 +122,8 @@ func (m *MerkleCompositeDAG) Delta() *CompositeDAGDelta {
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (m *MerkleCompositeDAG) Merge(ctx context.Context, delta core.Delta) error {
-	dagDelta, ok := delta.(*CompositeDAGDelta)
+func (m *DocComposite) Merge(ctx context.Context, delta core.Delta) error {
+	dagDelta, ok := delta.(*DocCompositeDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
@@ -163,7 +163,7 @@ func (m *MerkleCompositeDAG) Merge(ctx context.Context, delta core.Delta) error 
 	return nil
 }
 
-func (m MerkleCompositeDAG) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
+func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
 	iter, err := m.store.Iterator(ctx, corekv.IterOptions{
 		Prefix: key.Bytes(),
 	})

@@ -40,34 +40,34 @@ func (d *CollectionDelta) SetPriority(priority uint64) {
 	d.Priority = priority
 }
 
-type MerkleCollection struct {
+type Collection struct {
 	headstorePrefix keys.HeadstoreKey
 	schemaVersionID string
 }
 
-var _ core.ReplicatedData = (*MerkleCollection)(nil)
+var _ core.ReplicatedData = (*Collection)(nil)
 
-func NewMerkleCollection(
+func NewCollection(
 	schemaVersionID string,
 	key keys.HeadstoreColKey,
-) *MerkleCollection {
-	return &MerkleCollection{
+) *Collection {
+	return &Collection{
 		schemaVersionID: schemaVersionID,
 		headstorePrefix: key,
 	}
 }
 
-func (m *MerkleCollection) HeadstorePrefix() keys.HeadstoreKey {
+func (m *Collection) HeadstorePrefix() keys.HeadstoreKey {
 	return m.headstorePrefix
 }
 
-func (m *MerkleCollection) Delta() *CollectionDelta {
+func (m *Collection) Delta() *CollectionDelta {
 	return &CollectionDelta{
 		SchemaVersionID: m.schemaVersionID,
 	}
 }
 
-func (c *MerkleCollection) Merge(ctx context.Context, other core.Delta) error {
+func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
 	// Collection merges don't actually need to do anything, as the delta is empty,
 	// and doc-level merges are handled by the document commits.
 	return nil
