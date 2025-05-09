@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
@@ -310,10 +310,10 @@ func reconnectPeers(s *state) {
 }
 
 func RandomNetworkingConfig() ConfigureNode {
-	return func() []net.NodeOpt {
-		return []net.NodeOpt{
-			net.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
-			net.WithEnableRelay(false),
+	return func() []netConfig.NodeOpt {
+		return []netConfig.NodeOpt{
+			netConfig.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+			netConfig.WithEnableRelay(false),
 		}
 	}
 }

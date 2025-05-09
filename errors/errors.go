@@ -14,11 +14,7 @@ Package errors provides the internal error system.
 package errors
 
 import (
-	"bytes"
 	"errors"
-	"runtime"
-
-	goErrors "github.com/go-errors/errors"
 )
 
 // todo: make this configurable:
@@ -102,40 +98,4 @@ func Join(errs ...error) error {
 //go:noinline
 func WithStack(err error, keyvals ...KV) error {
 	return withStackTrace(err.Error(), 1, keyvals...)
-}
-
-// withStackTrace creates a `defraError` with a stacktrace and the given key-value pairs.
-//
-// The stacktrace will skip the top `depthToSkip` frames, allowing frames/calls generated from
-// within this package to not polute the resultant stacktrace.
-//
-// This function will not be inlined by the compiler as it will spoil any stacktrace
-// generated.
-//
-//go:noinline
-func withStackTrace(message string, depthToSkip int, keyvals ...KV) *defraError {
-	stackBuffer := make([]uintptr, MaxStackDepth)
-
-	// Skip the first X frames as they are part of this library (and dependencies) and are
-	// best hidden, also account for any parent calls within this library.
-	const depthFromHereToSkip int = 2
-	length := runtime.Callers(depthFromHereToSkip+depthToSkip, stackBuffer[:])
-	stack := stackBuffer[:length]
-	stackText := toString(stack)
-
-	return &defraError{
-		message:    message,
-		stacktrace: stackText,
-		kvs:        keyvals,
-	}
-}
-
-func toString(stack []uintptr) string {
-	buf := bytes.Buffer{}
-
-	for _, pc := range stack {
-		frame := goErrors.NewStackFrame(pc)
-		buf.WriteString(frame.String())
-	}
-	return buf.String()
 }

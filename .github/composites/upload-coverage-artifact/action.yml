@@ -1,0 +1,40 @@
+# Copyright 2025 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: "Upload Coverage Artifact"
+
+description: "Composite action to upload the coverage report as an artifact"
+
+inputs:
+  coverage-artifact-name:
+    description: "Name of the artifact that will save coverage report"
+    required: true
+    default: "coverage_default"
+
+  coverage-path:
+    description: "Path to coverage file"
+    required: false
+    default: "coverage.txt"
+
+runs:
+  # This is a composite action, setting this is required.
+  using: "composite"
+
+  steps:
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        # Make sure the name is always unique per job as artifacts are now immutable.
+        # Note Issue: https://github.com/actions/upload-artifact/issues/478
+        # Solve: https://github.com/actions/upload-artifact/issues/478#issuecomment-1885470013
+        name: ${{ inputs.coverage-artifact-name }}
+        path: ${{ inputs.coverage-path }}
+        if-no-files-found: error
+        retention-days: 7

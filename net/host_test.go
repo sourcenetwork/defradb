@@ -14,11 +14,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/net/config"
+
 	"github.com/stretchr/testify/require"
 )
 
 func TestSetupHostWithDefaultOptions(t *testing.T) {
-	h, dht, err := setupHost(context.Background(), DefaultOptions())
+	h, dht, err := setupHost(context.Background(), config.DefaultOptions())
 	require.NoError(t, err)
 
 	require.NotNil(t, h)

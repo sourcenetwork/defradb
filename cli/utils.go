@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -178,7 +177,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := identity.WithContext(cmd.Context(), immutable.Some(ident))
+	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some(ident))
 	cmd.SetContext(ctx)
 	return nil
 }

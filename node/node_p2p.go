@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 )
 
 func (n *Node) startP2P(ctx context.Context) error {
@@ -32,7 +33,7 @@ func (n *Node) startP2P(ctx context.Context) error {
 		n.DB.Events(),
 		coreDB.DocumentACP(),
 		coreDB,
-		filterOptions[net.NodeOpt](n.options)...,
+		filterOptions[netConfig.NodeOpt](n.options)...,
 	)
 	if err != nil {
 		return err

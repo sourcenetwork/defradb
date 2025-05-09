@@ -820,6 +820,14 @@ func (doc *Document) String() (string, error) {
 	return string(j), nil
 }
 
+func (doc *Document) MarshalJSON() ([]byte, error) {
+	value, err := doc.String()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(value), nil
+}
+
 // ToMap returns the document as a map[string]any object.
 func (doc *Document) ToMap() (map[string]any, error) {
 	return doc.toMapWithKey()

@@ -33,6 +33,7 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 		testUtils.TestCase{
 			Description:            test.Description,
 			SupportedMutationTypes: test.SupportedMutationTypes,
+			SupportedClientTypes:   test.SupportedClientTypes,
 			Actions: append(
 				[]any{
 					testUtils.SchemaUpdate{

@@ -14,6 +14,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/sourcenetwork/defradb/net/config"
+
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
@@ -25,7 +27,7 @@ import (
 )
 
 // setupHost returns a host and router configured with the given options.
-func setupHost(ctx context.Context, options *Options) (host.Host, *dualdht.DHT, error) {
+func setupHost(ctx context.Context, options *config.Options) (host.Host, *dualdht.DHT, error) {
 	connManager, err := connmgr.NewConnManager(100, 400, connmgr.WithGracePeriod(time.Second*20))
 	if err != nil {
 		return nil, nil, err
