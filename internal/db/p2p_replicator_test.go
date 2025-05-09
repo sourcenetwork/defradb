@@ -87,7 +87,7 @@ func TestSetReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema, err := db.GetSchemaByVersionID(ctx, cols[0].ID)
+	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: "other"},
@@ -113,7 +113,7 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 	require.NoError(t, err)
 	cols1, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].ID)
+	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: peerID},
@@ -127,7 +127,7 @@ func TestSetReplicator_WithValidCollectionsOnSeparateSet_ShouldSucceed(t *testin
 
 	cols2, err := db.AddSchema(ctx, `type Book { name: String }`)
 	require.NoError(t, err)
-	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].ID)
+	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: peerID},
@@ -201,7 +201,7 @@ func TestDeleteReplicator_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema, err := db.GetSchemaByVersionID(ctx, cols[0].ID)
+	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: peerID},
@@ -233,11 +233,11 @@ func TestDeleteReplicator_PartialWithValidCollections_ShouldSucceed(t *testing.T
 	require.NoError(t, err)
 	cols1, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].ID)
+	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].VersionID)
 	require.NoError(t, err)
 	cols2, err := db.AddSchema(ctx, `type Book { name: String }`)
 	require.NoError(t, err)
-	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].ID)
+	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: peerID},
@@ -270,7 +270,7 @@ func TestGetAllReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema, err := db.GetSchemaByVersionID(ctx, cols[0].ID)
+	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: peerID},
@@ -301,7 +301,7 @@ func TestLoadReplicators_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema, err := db.GetSchemaByVersionID(ctx, cols[0].ID)
+	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
 	require.NoError(t, err)
 	err = db.SetReplicator(ctx, client.ReplicatorParams{
 		Info:        peer.AddrInfo{ID: peerID},

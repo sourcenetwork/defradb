@@ -30,16 +30,16 @@ func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.Co
 	}
 
 	for i := range definitions {
-		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Description.CollectionID))
+		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Version.CollectionID))
 		if err != nil {
 			return err
 		}
 
-		for j := range definitions[i].Description.Fields {
+		for j := range definitions[i].Version.Fields {
 			var fieldID client.FieldID
-			if definitions[i].Description.Fields[j].ID != client.FieldID(0) {
-				fieldID = definitions[i].Description.Fields[j].ID
-			} else if definitions[i].Description.Fields[j].Name == request.DocIDFieldName {
+			if definitions[i].Version.Fields[j].ID != client.FieldID(0) {
+				fieldID = definitions[i].Version.Fields[j].ID
+			} else if definitions[i].Version.Fields[j].Name == request.DocIDFieldName {
 				// There is no hard technical requirement for this, we just think it looks nicer
 				// if the doc id is at the zero index.  It makes it look a little nicer in commit
 				// queries too.
@@ -52,11 +52,11 @@ func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.Co
 				fieldID = client.FieldID(nextID)
 			}
 
-			if definitions[i].Description.Fields[j].Kind.HasValue() {
-				switch kind := definitions[i].Description.Fields[j].Kind.Value().(type) {
+			if definitions[i].Version.Fields[j].Kind.HasValue() {
+				switch kind := definitions[i].Version.Fields[j].Kind.Value().(type) {
 				case *client.NamedKind:
 					var newKind client.FieldKind
-					if kind.Name == definitions[i].Description.Name {
+					if kind.Name == definitions[i].Version.Name {
 						newKind = client.NewSelfKind("", kind.IsArray())
 					} else if otherSchema, ok := schemasByName[kind.Name]; ok {
 						newKind = client.NewSchemaKind(otherSchema.Root, kind.IsArray())
@@ -66,13 +66,13 @@ func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.Co
 						continue
 					}
 
-					definitions[i].Description.Fields[j].Kind = immutable.Some(newKind)
+					definitions[i].Version.Fields[j].Kind = immutable.Some(newKind)
 				default:
 					// no-op
 				}
 			}
 
-			definitions[i].Description.Fields[j].ID = fieldID
+			definitions[i].Version.Fields[j].ID = fieldID
 		}
 	}
 

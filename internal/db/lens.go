@@ -46,8 +46,8 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	if !srcFound {
-		desc := client.CollectionDescription{
-			ID:             cfg.SourceSchemaVersionID,
+		desc := client.CollectionVersion{
+			VersionID:      cfg.SourceSchemaVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 		}
@@ -67,12 +67,12 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			// by another migration.  This can happen if the migrations are added in an unusual order, before
 			// their schemas have been defined locally.
 			dstCol.Sources = append(dstCol.Sources, &client.CollectionSource{
-				SourceCollectionID: sourceCol.ID,
+				SourceCollectionID: sourceCol.VersionID,
 			})
 		}
 
 		for _, source := range dstCol.CollectionSources() {
-			if source.SourceCollectionID == sourceCol.ID {
+			if source.SourceCollectionID == sourceCol.VersionID {
 				isDstCollectionFound = true
 				break
 			}
@@ -80,14 +80,14 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	if !isDstCollectionFound {
-		desc := client.CollectionDescription{
+		desc := client.CollectionVersion{
 			Name:           sourceCol.Name,
-			ID:             cfg.DestinationSchemaVersionID,
+			VersionID:      cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
 			CollectionID:   sourceCol.CollectionID,
 			Sources: []any{
 				&client.CollectionSource{
-					SourceCollectionID: sourceCol.ID,
+					SourceCollectionID: sourceCol.VersionID,
 					// The transform will be set later, when updating all destination collections
 					// whether they are newly created or not.
 				},
@@ -136,7 +136,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 		source.Transform = immutable.Some(cfg.Lens)
 
-		err = db.LensRegistry().SetMigration(ctx, dstCol.ID, cfg.Lens)
+		err = db.LensRegistry().SetMigration(ctx, dstCol.VersionID, cfg.Lens)
 		if err != nil {
 			return err
 		}

@@ -174,7 +174,7 @@ func TestHandleLog_NoError(t *testing.T) {
 	err = p.handleLog(event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          headCID,
-		CollectionID: col.Description().CollectionID,
+		CollectionID: col.Version().CollectionID,
 		Block:        b,
 	})
 	require.NoError(t, err)
@@ -215,7 +215,7 @@ func TestHandleLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 
 	err = p.handleLog(event.Update{
 		DocID:        doc.ID().String(),
-		CollectionID: col.Description().CollectionID,
+		CollectionID: col.Version().CollectionID,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }
@@ -247,7 +247,7 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	err = p.handleLog(event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          cid,
-		CollectionID: col.Description().CollectionID,
+		CollectionID: col.Version().CollectionID,
 	})
 	require.ErrorContains(t, err, "topic already exists")
 }

@@ -191,7 +191,7 @@ type SchemaUpdate struct {
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
 	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionDescription
+	ExpectedResults []client.CollectionVersion
 
 	// Any error expected from the action. Optional.
 	//
@@ -223,7 +223,7 @@ type PatchCollection struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
-	// The Patch to apply to the collection description.
+	// The Patch to apply to the collection version.
 	Patch string
 
 	ExpectedError string
@@ -273,7 +273,7 @@ type GetCollections struct {
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
 	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionDescription
+	ExpectedResults []client.CollectionVersion
 
 	// An optional set of fetch options for the collections.
 	FilterOptions client.CollectionFetchOptions

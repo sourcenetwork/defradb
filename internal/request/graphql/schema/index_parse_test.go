@@ -392,9 +392,9 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	require.NoError(t, err, testCase.description)
 
 	require.Equal(t, len(cols), 1, testCase.description)
-	require.Equal(t, len(cols[0].Description.Indexes), len(testCase.targetDescriptions), testCase.description)
+	require.Equal(t, len(cols[0].Version.Indexes), len(testCase.targetDescriptions), testCase.description)
 
-	for i, d := range cols[0].Description.Indexes {
+	for i, d := range cols[0].Version.Indexes {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)
 	}
 }

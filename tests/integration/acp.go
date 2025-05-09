@@ -320,10 +320,10 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	docID := ""
 	if collectionID != -1 {
 		collection := s.nodes[nodeID].collections[collectionID]
-		if collection.Description().Name == "" {
+		if collection.Version().Name == "" {
 			require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
 		}
-		collectionName = collection.Description().Name
+		collectionName = collection.Version().Name
 
 		if docInd != -1 {
 			docID = s.docIDs[collectionID][docInd].String()

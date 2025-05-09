@@ -51,16 +51,16 @@ type collection struct {
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
-// @body: Currently, the New/Create Collection APIs accept CollectionDescriptions
+// @body: Currently, the New/Create Collection APIs accept CollectionVersions
 // as params. We want these Descriptions objects to be low level descriptions, and
 // to be auto generated based on a more controllable and user friendly
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionDescription, schema client.SchemaDescription) *collection {
+func (db *DB) newCollection(desc client.CollectionVersion, schema client.SchemaDescription) *collection {
 	return &collection{
 		db:  db,
-		def: client.CollectionDefinition{Description: desc, Schema: schema},
+		def: client.CollectionDefinition{Version: desc, Schema: schema},
 	}
 }
 
@@ -132,7 +132,7 @@ func (db *DB) getCollections(
 ) ([]client.Collection, error) {
 	txn := mustGetContextTxn(ctx)
 
-	var cols []client.CollectionDescription
+	var cols []client.CollectionVersion
 	switch {
 	case options.Name.HasValue():
 		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
@@ -174,7 +174,7 @@ func (db *DB) getCollections(
 	collections := []client.Collection{}
 	for _, col := range cols {
 		if options.ID.HasValue() {
-			if col.ID != options.ID.Value() {
+			if col.VersionID != options.ID.Value() {
 				continue
 			}
 		}
@@ -184,7 +184,7 @@ func (db *DB) getCollections(
 			continue
 		}
 
-		schema, err := description.GetSchemaVersion(ctx, txn, col.ID)
+		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
@@ -216,7 +216,7 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 
 	definitions := make([]client.CollectionDefinition, len(cols))
 	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.ID)
+		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -270,7 +270,7 @@ func (c *collection) getAllDocIDsChan(
 ) (<-chan client.DocIDResult, error) {
 	txn := mustGetContextTxn(ctx)
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -350,14 +350,14 @@ func (c *collection) getAllDocIDsChan(
 	return resCh, nil
 }
 
-// Description returns the client.CollectionDescription.
-func (c *collection) Description() client.CollectionDescription {
-	return c.Definition().Description
+// Version returns the client.CollectionVersion.
+func (c *collection) Version() client.CollectionVersion {
+	return c.Definition().Version
 }
 
 // Name returns the collection name.
 func (c *collection) Name() string {
-	return c.Description().Name
+	return c.Version().Name
 }
 
 // Schema returns the Schema of the collection.
@@ -365,9 +365,9 @@ func (c *collection) Schema() client.SchemaDescription {
 	return c.Definition().Schema
 }
 
-// ID returns the ID of the collection.
-func (c *collection) ID() string {
-	return c.Description().ID
+// VersionID returns the VersionID of the collection.
+func (c *collection) VersionID() string {
+	return c.Version().VersionID
 }
 
 func (c *collection) SchemaRoot() string {
@@ -476,7 +476,7 @@ func (c *collection) create(
 	if len(doc.Values()) == 0 {
 		txn := mustGetContextTxn(ctx)
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -682,7 +682,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -770,7 +770,7 @@ func (c *collection) save(
 	updateEvent := event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          link.Cid,
-		CollectionID: c.Description().CollectionID,
+		CollectionID: c.Version().CollectionID,
 		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
@@ -781,8 +781,8 @@ func (c *collection) save(
 		doc.SetHead(link.Cid)
 	})
 
-	if c.def.Description.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if c.def.Version.IsBranchable {
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -799,7 +799,7 @@ func (c *collection) save(
 
 		updateEvent := event.Update{
 			Cid:          link.Cid,
-			CollectionID: c.Description().CollectionID,
+			CollectionID: c.Version().CollectionID,
 			Block:        headNode,
 		}
 
@@ -840,7 +840,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return err
 	}
 
-	otherObjFieldDescription, _ := otherCol.Description.GetFieldByRelation(
+	otherObjFieldDescription, _ := otherCol.Version.GetFieldByRelation(
 		fieldDescription.RelationName,
 		c.Name(),
 		objFieldDescription.Name,
@@ -1003,7 +1003,7 @@ func (c *collection) getPrimaryKeyFromDocID(
 ) (keys.PrimaryDataStoreKey, error) {
 	txn := mustGetContextTxn(ctx)
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, err
 	}

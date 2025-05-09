@@ -72,7 +72,7 @@ func getDocIDsFromDocs(docs []*client.Document) []string {
 func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
 	var result []*client.Document
 	for _, doc := range docs {
-		if doc.Col.Description.Name == name {
+		if doc.Col.Version.Name == name {
 			result = append(result, doc.Doc)
 		}
 	}
@@ -1200,7 +1200,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 	getValidDefs := func() []client.CollectionDefinition {
 		return []client.CollectionDefinition{
 			{
-				Description: client.CollectionDescription{
+				Version: client.CollectionVersion{
 					Name: "User",
 					Fields: []client.CollectionFieldDescription{
 						{
@@ -1223,7 +1223,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				},
 			},
 			{
-				Description: client.CollectionDescription{
+				Version: client.CollectionVersion{
 					Name: "Device",
 					Fields: []client.CollectionFieldDescription{
 						{
@@ -1259,7 +1259,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		{
 			name: "description name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = ""
+				defs[0].Version.Name = ""
 			},
 		},
 		{
@@ -1272,7 +1272,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			name: "field name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
 				defs[0].Schema.Fields[0].Name = ""
-				defs[0].Description.Fields[0].Name = ""
+				defs[0].Version.Fields[0].Name = ""
 			},
 		},
 		{
@@ -1301,9 +1301,9 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 
 	defs := []client.CollectionDefinition{
 		{
-			Description: client.CollectionDescription{
-				Name: "User",
-				ID:   "a",
+			Version: client.CollectionVersion{
+				Name:      "User",
+				VersionID: "a",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "name",
@@ -1341,9 +1341,9 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			},
 		},
 		{
-			Description: client.CollectionDescription{
-				Name: "Device",
-				ID:   "b",
+			Version: client.CollectionVersion{
+				Name:      "Device",
+				VersionID: "b",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "model",

@@ -97,7 +97,7 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -178,15 +178,15 @@ func (c *collection) applyDelete(
 	updateEvent := event.Update{
 		DocID:        primaryKey.DocID,
 		Cid:          link.Cid,
-		CollectionID: c.Description().CollectionID,
+		CollectionID: c.Version().CollectionID,
 		Block:        b,
 	}
 	txn.OnSuccess(func() {
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	})
 
-	if c.def.Description.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Description().CollectionID)
+	if c.def.Version.IsBranchable {
+		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -204,7 +204,7 @@ func (c *collection) applyDelete(
 
 		updateEvent := event.Update{
 			Cid:          link.Cid,
-			CollectionID: c.Description().CollectionID,
+			CollectionID: c.Version().CollectionID,
 			Block:        headNode,
 		}
 

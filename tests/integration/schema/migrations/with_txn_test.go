@@ -48,9 +48,9 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:             "also does not exist",
+						VersionID:      "also does not exist",
 						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
@@ -72,7 +72,7 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 						},
 					},
 					{
-						ID:             "does not exist",
+						VersionID:      "does not exist",
 						IsMaterialized: true,
 					},
 				},

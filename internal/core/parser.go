@@ -50,7 +50,7 @@ type Parser interface {
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
-	// ParseSDL parses an SDL string into a set of collection descriptions.
+	// ParseSDL parses an SDL string into a set of collection versions.
 	//
 	// The parsing should validate the syntax, but not validate what that syntax expresses
 	// is valid or not, i.e. we don't want the parser to make remote calls to verify the

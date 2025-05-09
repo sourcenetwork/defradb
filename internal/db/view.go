@@ -69,7 +69,7 @@ func (db *DB) addView(
 			Query:     *baseQuery,
 			Transform: transform,
 		}
-		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
+		newDefinitions[i].Version.Sources = append(newDefinitions[i].Version.Sources, &source)
 	}
 
 	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
@@ -78,9 +78,9 @@ func (db *DB) addView(
 	}
 
 	for _, definition := range returnDescriptions {
-		for _, source := range definition.Description.QuerySources() {
+		for _, source := range definition.Version.QuerySources() {
 			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, definition.Version.VersionID, source.Transform.Value())
 				if err != nil {
 					return nil, err
 				}
@@ -104,7 +104,7 @@ func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	}
 
 	for _, col := range cols {
-		if !col.Description.IsMaterialized {
+		if !col.Version.IsMaterialized {
 			// We only care about materialized views here, so skip any that aren't
 			continue
 		}
@@ -134,7 +134,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 
 	var views []client.CollectionDefinition
 	for _, col := range cols {
-		if querySrcs := col.Description().QuerySources(); len(querySrcs) == 0 {
+		if querySrcs := col.Version().QuerySources(); len(querySrcs) == 0 {
 			continue
 		}
 
@@ -150,15 +150,15 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 
 	// temporarily disable the cache in order to query without using it
-	col.Description.IsMaterialized = false
-	col.Description, err = description.SaveCollection(ctx, txn, col.Description)
+	col.Version.IsMaterialized = false
+	col.Version, err = description.SaveCollection(ctx, txn, col.Version)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
-		col.Description.IsMaterialized = true
-		col.Description, defErr = description.SaveCollection(ctx, txn, col.Description)
+		col.Version.IsMaterialized = true
+		col.Version, defErr = description.SaveCollection(ctx, txn, col.Version)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -211,7 +211,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, col.Description.CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, txn, col.Version.CollectionID)
 		if err != nil {
 			return err
 		}
@@ -234,7 +234,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := mustGetContextTxn(ctx)
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, col.Description.CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, txn, col.Version.CollectionID)
 	if err != nil {
 		return err
 	}

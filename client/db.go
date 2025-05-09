@@ -166,7 +166,7 @@ type Store interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) ([]CollectionDescription, error)
+	AddSchema(context.Context, string) ([]CollectionVersion, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
 	// present in the database.
@@ -189,7 +189,7 @@ type Store interface {
 	// A lens configuration may also be provided, it will be added to all collections using the schema.
 	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
 
-	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionDescriptions
+	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the

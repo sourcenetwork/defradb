@@ -46,8 +46,8 @@ func (db *DB) createCollections(
 	}
 
 	for i := range newDefinitions {
-		newDefinitions[i].Description.ID = newSchemas[i].VersionID
-		newDefinitions[i].Description.CollectionID = newSchemas[i].Root
+		newDefinitions[i].Version.VersionID = newSchemas[i].VersionID
+		newDefinitions[i].Version.CollectionID = newSchemas[i].Root
 		newDefinitions[i].Schema = newSchemas[i]
 	}
 
@@ -78,13 +78,13 @@ func (db *DB) createCollections(
 			return nil, err
 		}
 
-		if len(def.Description.Fields) == 0 {
+		if len(def.Version.Fields) == 0 {
 			// This is a schema-only definition, we should not create a collection for it
 			returnDescriptions = append(returnDescriptions, def)
 			continue
 		}
 
-		desc, err := description.SaveCollection(ctx, txn, def.Description)
+		desc, err := description.SaveCollection(ctx, txn, def.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (db *DB) createCollections(
 			}
 		}
 
-		result, err := db.getCollectionByID(ctx, desc.ID)
+		result, err := db.getCollectionByID(ctx, desc.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -129,10 +129,10 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	existingColsByID := map[string]client.CollectionDescription{}
+	existingColsByID := map[string]client.CollectionVersion{}
 	existingDefinitions := make([]client.CollectionDefinition, len(existingCols))
 	for _, col := range existingCols {
-		existingColsByID[col.Description().ID] = col.Description()
+		existingColsByID[col.Version().VersionID] = col.Version()
 		existingDefinitions = append(existingDefinitions, col.Definition())
 	}
 
@@ -146,7 +146,7 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	var newColsByID map[string]client.CollectionDescription
+	var newColsByID map[string]client.CollectionVersion
 	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&newColsByID)
@@ -157,15 +157,15 @@ func (db *DB) patchCollection(
 	updatedColsByID := make(map[string]struct{})
 	for i, col := range existingCols {
 		newDefinitions[i].Schema = col.Schema()
-		newDefinitions[i].Description = newColsByID[col.Description().ID]
-		updatedColsByID[col.Description().ID] = struct{}{}
+		newDefinitions[i].Version = newColsByID[col.Version().VersionID]
+		updatedColsByID[col.Version().VersionID] = struct{}{}
 	}
 	// append new cols
 	for id, col := range newColsByID {
 		if _, ok := updatedColsByID[id]; ok {
 			continue
 		}
-		newDefinitions = append(newDefinitions, client.CollectionDefinition{Description: col})
+		newDefinitions = append(newDefinitions, client.CollectionDefinition{Version: col})
 	}
 
 	err = db.validateCollectionChanges(ctx, existingDefinitions, newDefinitions)
@@ -180,14 +180,14 @@ func (db *DB) patchCollection(
 			return err
 		}
 
-		existingCol, ok := existingColsByID[col.ID]
+		existingCol, ok := existingColsByID[col.VersionID]
 		if ok {
 			if existingCol.IsMaterialized && !col.IsMaterialized {
 				// If the collection is being de-materialized - delete any cached values.
 				// Leaving them around will not break anything, but it would be a waste of
 				// storage space.
 				err := db.clearViewCache(ctx, client.CollectionDefinition{
-					Description: col,
+					Version: col,
 				})
 				if err != nil {
 					return err
@@ -199,7 +199,7 @@ func (db *DB) patchCollection(
 
 			for _, src := range existingCol.CollectionSources() {
 				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
 					if err != nil {
 						return err
 					}
@@ -207,7 +207,7 @@ func (db *DB) patchCollection(
 			}
 			for _, src := range existingCol.QuerySources() {
 				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.ID, model.Lens{})
+					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
 					if err != nil {
 						return err
 					}
@@ -217,7 +217,7 @@ func (db *DB) patchCollection(
 
 		for _, src := range col.CollectionSources() {
 			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
 				if err != nil {
 					return err
 				}
@@ -226,7 +226,7 @@ func (db *DB) patchCollection(
 
 		for _, src := range col.QuerySources() {
 			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.ID, src.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
 				if err != nil {
 					return err
 				}
@@ -267,10 +267,10 @@ func (db *DB) setActiveSchemaVersion(
 		return err
 	}
 
-	colsBySourceID := map[string][]client.CollectionDescription{}
-	colsByID := make(map[string]client.CollectionDescription, len(colsWithRoot))
+	colsBySourceID := map[string][]client.CollectionVersion{}
+	colsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
 	for _, col := range colsWithRoot {
-		colsByID[col.ID] = col
+		colsByID[col.VersionID] = col
 
 		sources := col.CollectionSources()
 		if len(sources) > 0 {
@@ -289,8 +289,8 @@ func (db *DB) setActiveSchemaVersion(
 
 	sources := col.CollectionSources()
 
-	var activeCol client.CollectionDescription
-	var rootCol client.CollectionDescription
+	var activeCol client.CollectionVersion
+	var rootCol client.CollectionVersion
 	var isActiveFound bool
 	if len(sources) > 0 {
 		// For now, we assume that each collection can only have a single source.  This will likely need
@@ -299,7 +299,7 @@ func (db *DB) setActiveSchemaVersion(
 	}
 	if !isActiveFound {
 		// We need to look both down and up for the active version - the most recent is not necessarily the active one.
-		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.ID)
+		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.VersionID)
 	}
 
 	col.IsActive = true
@@ -322,16 +322,16 @@ func (db *DB) setActiveSchemaVersion(
 
 func (db *DB) getActiveCollectionDown(
 	ctx context.Context,
-	colsByID map[string]client.CollectionDescription,
+	colsByID map[string]client.CollectionVersion,
 	id string,
-) (client.CollectionDescription, client.CollectionDescription, bool) {
+) (client.CollectionVersion, client.CollectionVersion, bool) {
 	col, ok := colsByID[id]
 	if !ok {
-		return client.CollectionDescription{}, client.CollectionDescription{}, false
+		return client.CollectionVersion{}, client.CollectionVersion{}, false
 	}
 
 	if col.IsActive {
-		return col, client.CollectionDescription{}, true
+		return col, client.CollectionVersion{}, true
 	}
 
 	sources := col.CollectionSources()
@@ -339,7 +339,7 @@ func (db *DB) getActiveCollectionDown(
 		// If a collection has zero sources it is likely the initial collection version, or
 		// this collection set is currently orphaned (can happen when setting migrations that
 		// do not yet link all the way back to a non-orphaned set)
-		return client.CollectionDescription{}, col, false
+		return client.CollectionVersion{}, col, false
 	}
 
 	// For now, we assume that each collection can only have a single source.  This will likely need
@@ -349,24 +349,24 @@ func (db *DB) getActiveCollectionDown(
 
 func (db *DB) getActiveCollectionUp(
 	ctx context.Context,
-	colsBySourceID map[string][]client.CollectionDescription,
+	colsBySourceID map[string][]client.CollectionVersion,
 	id string,
-) (client.CollectionDescription, bool) {
+) (client.CollectionVersion, bool) {
 	cols, ok := colsBySourceID[id]
 	if !ok {
 		// We have reached the top of the set, and have not found an active collection
-		return client.CollectionDescription{}, false
+		return client.CollectionVersion{}, false
 	}
 
 	for _, col := range cols {
 		if col.IsActive {
 			return col, true
 		}
-		activeCol, isFound := db.getActiveCollectionUp(ctx, colsBySourceID, col.ID)
+		activeCol, isFound := db.getActiveCollectionUp(ctx, colsBySourceID, col.VersionID)
 		if isFound {
 			return activeCol, isFound
 		}
 	}
 
-	return client.CollectionDescription{}, false
+	return client.CollectionVersion{}, false
 }

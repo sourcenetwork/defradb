@@ -22,10 +22,10 @@ func MakeCollectionPatchCommand() *cobra.Command {
 	var patchFile string
 	var cmd = &cobra.Command{
 		Use:   "patch [patch]",
-		Short: "Patch existing collection descriptions",
-		Long: `Patch existing collection descriptions.
+		Short: "Patch existing collection versions",
+		Long: `Patch existing collection versions.
 
-Uses JSON Patch to modify collection descriptions.
+Uses JSON Patch to modify collection versions.
 
 Example: patch from an argument string:
   defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]'

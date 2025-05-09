@@ -115,12 +115,12 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionDescriptions, err := parser.ParseSDL(ctx, schema)
+	collectionVersions, err := parser.ParseSDL(ctx, schema)
 	if err != nil {
 		return nil, err
 	}
 
-	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDescriptions)
+	err = parser.SetSchema(ctx, &dummyTxn{}, collectionVersions)
 	if err != nil {
 		return nil, err
 	}

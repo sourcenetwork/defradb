@@ -223,7 +223,7 @@ func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) err
 			continue
 		}
 
-		err = r.setMigration(ctx, txnCtx, col.ID, sources[0].Transform.Value())
+		err = r.setMigration(ctx, txnCtx, col.VersionID, sources[0].Transform.Value())
 		if err != nil {
 			return err
 		}

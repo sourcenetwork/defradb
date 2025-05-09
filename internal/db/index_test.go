@@ -314,13 +314,13 @@ func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	indOnName, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
 
-	assert.ElementsMatch(t, []client.IndexDescription{indOnName}, f.users.Description().Indexes)
+	assert.ElementsMatch(t, []client.IndexDescription{indOnName}, f.users.Version().Indexes)
 
 	indOnAge, err := f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnName, indOnAge},
-		f.users.Description().Indexes)
+		f.users.Version().Indexes)
 }
 
 func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
@@ -491,12 +491,12 @@ func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnAge},
-		f.users.Description().Indexes)
+		f.users.Version().Indexes)
 
 	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
 	require.NoError(t, err)
 
-	assert.ElementsMatch(t, []client.IndexDescription{}, f.users.Description().Indexes)
+	assert.ElementsMatch(t, []client.IndexDescription{}, f.users.Version().Indexes)
 }
 
 func TestDropIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {

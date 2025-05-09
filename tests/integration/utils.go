@@ -459,7 +459,7 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 		if err != nil {
 			s.t.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Version.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -815,12 +815,12 @@ func refreshCollections(
 		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
 				if collection.Name() == collectionName {
-					if _, ok := s.collectionIndexesByCollectionID[collection.Description().CollectionID]; !ok {
+					if _, ok := s.collectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
 						// we still wish to preserve the original index so test maintainers can reference
 						// them in a convenient manner.
-						s.collectionIndexesByCollectionID[collection.Description().CollectionID] = i
+						s.collectionIndexesByCollectionID[collection.Version().CollectionID] = i
 					}
 					break
 				}
@@ -828,7 +828,7 @@ func refreshCollections(
 		}
 
 		for _, collection := range allCollections {
-			if index, ok := s.collectionIndexesByCollectionID[collection.Description().CollectionID]; ok {
+			if index, ok := s.collectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
 				node.collections[index] = collection
 			}
 		}
@@ -1089,7 +1089,7 @@ func updateSchema(
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		if action.ExpectedResults != nil {
-			assertCollectionDescriptions(s, action.ExpectedResults, results)
+			assertCollectionVersions(s, action.ExpectedResults, results)
 		}
 	}
 
@@ -1180,16 +1180,16 @@ func getCollections(
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.SetContextTxn(s.ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
-		resultDescriptions := make([]client.CollectionDescription, len(results))
+		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
-			resultDescriptions[i] = col.Description()
+			resultDescriptions[i] = col.Version()
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			assertCollectionDescriptions(s, action.ExpectedResults, resultDescriptions)
+			assertCollectionVersions(s, action.ExpectedResults, resultDescriptions)
 		}
 	}
 }

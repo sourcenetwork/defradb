@@ -171,7 +171,7 @@ func waitForUpdateEvents(
 		expect := make(map[string]struct{}, len(docIDs))
 
 		col := node.collections[collectionIndex]
-		if col.Description().IsBranchable {
+		if col.Version().IsBranchable {
 			expect[col.SchemaRoot()] = struct{}{}
 		}
 		for k := range docIDs {
@@ -277,7 +277,7 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {
-		if c.Description().CollectionID == evt.CollectionID {
+		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
 	}
