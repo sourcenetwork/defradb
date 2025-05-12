@@ -243,7 +243,22 @@ func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error)
 }
 
 func (c *clientCollection) getAllDocIDs(this js.Value, args []js.Value) (js.Value, error) {
-	return js.Undefined(), nil
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.col.GetAllDocIDs(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	out := make(chan any)
+	go func() {
+		defer close(out)
+		for id := range res {
+			out <- js.ValueOf(id.ID.String())
+		}
+	}()
+	return goji.AsyncIteratorOf(out), err
 }
 
 func (c *clientCollection) createIndex(this js.Value, args []js.Value) (js.Value, error) {
