@@ -32,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
@@ -396,7 +395,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		clk := clock.NewMerkleClock(mp.txn.Headstore(), mp.txn.Blockstore(), mp.txn.Encstore())
+		clk := coreblock.NewMerkleClock(mp.txn.Headstore(), mp.txn.Blockstore(), mp.txn.Encstore())
 		err = clk.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return err
@@ -546,7 +545,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 
 // getHeads retrieves the heads associated with the given datastore key.
 func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
-	headset := clock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(txn.Headstore(), key)
 
 	cids, _, err := headset.List(ctx)
 	if err != nil {

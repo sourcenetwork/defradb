@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -160,10 +159,10 @@ func (c *collection) applyDelete(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = clock.ContextWithEnabledSigning(ctx)
+		ctx = coreblock.ContextWithEnabledSigning(ctx)
 	}
 
-	clk := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
+	clk := coreblock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),

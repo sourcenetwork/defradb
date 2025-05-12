@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package clock
+package coreblock
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
 type enabledSigningContextKey struct{}
@@ -38,7 +37,7 @@ func EnabledSigningFromContext(ctx context.Context) bool {
 func signBlock(
 	ctx context.Context,
 	blockstore datastore.Blockstore,
-	block *coreblock.Block,
+	block *Block,
 ) error {
 	// We sign only the first field blocks just to add entropy and prevent any collisions.
 	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
@@ -60,9 +59,9 @@ func signBlock(
 
 	switch ident.Value().PrivateKey.Type() {
 	case crypto.KeyTypeSecp256k1:
-		sigType = coreblock.SignatureTypeECDSA256K
+		sigType = SignatureTypeECDSA256K
 	case crypto.KeyTypeEd25519:
-		sigType = coreblock.SignatureTypeEd25519
+		sigType = SignatureTypeEd25519
 	default:
 		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
 	}
@@ -72,8 +71,8 @@ func signBlock(
 		return err
 	}
 
-	sig := &coreblock.Signature{
-		Header: coreblock.SignatureHeader{
+	sig := &Signature{
+		Header: SignatureHeader{
 			Type:     sigType,
 			Identity: []byte(ident.Value().PublicKey.String()),
 		},

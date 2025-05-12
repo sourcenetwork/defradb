@@ -36,7 +36,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -670,7 +669,7 @@ func (c *collection) save(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = clock.ContextWithEnabledSigning(ctx)
+		ctx = coreblock.ContextWithEnabledSigning(ctx)
 	}
 
 	// NOTE: We delay the final Clean() call until we know
@@ -697,7 +696,7 @@ func (c *collection) save(
 		DocID:             doc.ID().String(),
 	}
 
-	clk := clock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
+	clk := coreblock.NewMerkleClock(txn.Headstore(), txn.Blockstore(), txn.Encstore())
 
 	links := make([]coreblock.DAGLink, 0)
 	for k, v := range doc.Fields() {

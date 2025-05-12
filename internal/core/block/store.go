@@ -11,7 +11,7 @@
 /*
 Package clock provides a MerkleClock implementation, to track causal ordering of events.
 */
-package clock
+package coreblock
 
 import (
 	"context"
@@ -26,12 +26,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-)
-
-var (
-	log = corelog.NewLogger("merkleclock")
 )
 
 // MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
@@ -61,12 +56,12 @@ func putBlock(
 ) (cidlink.Link, error) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(blockstore.AsIPLDStorage())
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
 
-	return link.(cidlink.Link), nil
+	return link.(cidlink.Link), nil //nolint:forcetypeassert
 }
 
 // AddDelta adds a new delta to the existing DAG for this MerkleClock: checks the current heads,
@@ -75,7 +70,7 @@ func (mc *MerkleClock) AddDelta(
 	ctx context.Context,
 	crdt core.ReplicatedData,
 	delta core.Delta,
-	links ...coreblock.DAGLink,
+	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
 	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
 
@@ -86,7 +81,7 @@ func (mc *MerkleClock) AddDelta(
 	height = height + 1
 
 	delta.SetPriority(height)
-	block := coreblock.New(delta, links, heads...)
+	block := New(delta, links, heads...)
 
 	fieldName := immutable.None[string]()
 	if block.Delta.GetFieldName() != "" {
@@ -137,10 +132,10 @@ func (mc *MerkleClock) determineBlockEncryption(
 	docID string,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
-) (*coreblock.Encryption, cidlink.Link, error) {
+) (*Encryption, cidlink.Link, error) {
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		encBlock := &coreblock.Encryption{DocID: []byte(docID)}
+		encBlock := &Encryption{DocID: []byte(docID)}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
 			f := fieldName.Value()
 			encBlock.FieldName = &f
@@ -169,7 +164,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 		if err != nil {
 			return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 		}
-		prevBlock, err := coreblock.GetFromBytes(prevBlockBytes)
+		prevBlock, err := GetFromBytes(prevBlockBytes)
 		if err != nil {
 			return nil, cidlink.Link{}, err
 		}
@@ -178,11 +173,11 @@ func (mc *MerkleClock) determineBlockEncryption(
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 			}
-			prevEncBlock, err := coreblock.GetEncryptionBlockFromBytes(prevBlockEncBytes)
+			prevEncBlock, err := GetEncryptionBlockFromBytes(prevBlockEncBytes)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
-			return &coreblock.Encryption{
+			return &Encryption{
 				DocID:     prevEncBlock.DocID,
 				FieldName: prevEncBlock.FieldName,
 				Key:       prevEncBlock.Key,
@@ -195,9 +190,9 @@ func (mc *MerkleClock) determineBlockEncryption(
 
 func encryptBlock(
 	ctx context.Context,
-	block *coreblock.Block,
-	encBlock *coreblock.Encryption,
-) (*coreblock.Block, error) {
+	block *Block,
+	encBlock *Encryption,
+) (*Block, error) {
 	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		return block, nil
 	}
@@ -209,14 +204,14 @@ func encryptBlock(
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	return &coreblock.Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
+	return &Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
 func (mc *MerkleClock) ProcessBlock(
 	ctx context.Context,
 	crdt core.ReplicatedData,
-	block *coreblock.Block,
+	block *Block,
 	blockLink cidlink.Link,
 ) error {
 	err := crdt.Merge(ctx, block.Delta.GetDelta())
@@ -230,7 +225,7 @@ func (mc *MerkleClock) ProcessBlock(
 func (mc *MerkleClock) updateHeads(
 	ctx context.Context,
 	crdt core.ReplicatedData,
-	block *coreblock.Block,
+	block *Block,
 	blockLink cidlink.Link,
 ) error {
 	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())

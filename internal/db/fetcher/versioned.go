@@ -32,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -391,7 +390,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	clk := clock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
+	clk := coreblock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
 	err = clk.ProcessBlock(
 		vf.ctx,
 		mcrdt,
