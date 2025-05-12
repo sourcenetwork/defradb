@@ -36,7 +36,7 @@ import (
 func emptyBlock() []byte {
 	block := coreblock.Block{
 		Delta: crdt.CRDT{
-			CompositeDAGDelta: &crdt.CompositeDAGDelta{},
+			DocCompositeDelta: &crdt.DocCompositeDelta{},
 		},
 	}
 	b, _ := block.Marshal()
