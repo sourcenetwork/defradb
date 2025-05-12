@@ -76,6 +76,13 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Positive increments of a PN Counter with Int type causing overflow behaviour",
+		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+			// JS client does not support 64 bit integers
+			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#number_encoding
+			testUtils.GoClientType,
+			testUtils.CLIClientType,
+			testUtils.HTTPClientType,
+		}),
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a type error in this case
 			// because we are testing the internal overflow behaviour with

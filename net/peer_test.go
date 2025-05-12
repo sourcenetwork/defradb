@@ -30,6 +30,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/net/config"
 )
 
 func emptyBlock() []byte {
@@ -84,7 +85,7 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 		db.Events(),
 		immutable.None[dac.DocumentACP](),
 		db,
-		WithListenAddresses(randomMultiaddr),
+		config.WithListenAddresses(randomMultiaddr),
 	)
 	require.NoError(t, err)
 
@@ -125,7 +126,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 		db1.Events(),
 		immutable.None[dac.DocumentACP](),
 		db1,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n1.Close()
@@ -134,7 +135,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 		db2.Events(),
 		immutable.None[dac.DocumentACP](),
 		db2,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	defer n2.Close()
@@ -270,7 +271,7 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 		db.Events(),
 		immutable.None[dac.DocumentACP](),
 		db,
-		WithEnableRelay(true),
+		config.WithEnableRelay(true),
 	)
 	require.NoError(t, err)
 	n.Close()
@@ -288,7 +289,7 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 		db.Events(),
 		immutable.None[dac.DocumentACP](),
 		db,
-		WithEnablePubSub(false),
+		config.WithEnablePubSub(false),
 	)
 	require.NoError(t, err)
 	require.Nil(t, n.ps)
@@ -307,7 +308,7 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 		db.Events(),
 		immutable.None[dac.DocumentACP](),
 		db,
-		WithEnablePubSub(true),
+		config.WithEnablePubSub(true),
 	)
 
 	require.NoError(t, err)
@@ -344,7 +345,7 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 		db.Events(),
 		immutable.None[dac.DocumentACP](),
 		db,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	require.NoError(t, err)
 	require.Contains(t, n.ListenAddrs()[0].String(), "/tcp/")
@@ -363,7 +364,7 @@ func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
 		db.Events(),
 		immutable.None[dac.DocumentACP](),
 		db,
-		WithBootstrapPeers("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"),
+		config.WithBootstrapPeers("/ip4/127.0.0.1/tcp/6666/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"),
 	)
 	require.NoError(t, err)
 

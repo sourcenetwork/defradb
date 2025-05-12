@@ -23,7 +23,7 @@ func TestNodeStartJS(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	node, err := New(ctx, WithDisableP2P(true), WithDisableAPI(true))
+	node, err := New(ctx, WithDisableP2P(true), WithDisableAPI(true), WithBadgerInMemory(true))
 	require.NoError(t, err)
 
 	err = node.Start(ctx)

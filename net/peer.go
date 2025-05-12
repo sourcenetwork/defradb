@@ -41,6 +41,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
+	"github.com/sourcenetwork/defradb/net/config"
 )
 
 // DB hold the database related methods that are required by Peer.
@@ -88,7 +89,7 @@ func NewPeer(
 	bus *event.Bus,
 	documentACP immutable.Option[dac.DocumentACP],
 	db DB,
-	opts ...NodeOpt,
+	opts ...config.NodeOpt,
 ) (p *Peer, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
@@ -103,7 +104,7 @@ func NewPeer(
 		return nil, ErrNilDB
 	}
 
-	options := DefaultOptions()
+	options := config.DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
 	}

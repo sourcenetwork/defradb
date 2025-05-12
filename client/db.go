@@ -310,9 +310,9 @@ type Store interface {
 // GQLOptions contains optional arguments for GQL requests.
 type GQLOptions struct {
 	// OperationName is the name of the operation to exec.
-	OperationName string
+	OperationName string `json:"operationName"`
 	// Variables is a map of names to varible values.
-	Variables map[string]any
+	Variables map[string]any `json:"variables"`
 }
 
 // RequestOption sets an optional request setting.

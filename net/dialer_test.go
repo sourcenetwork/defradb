@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
+	"github.com/sourcenetwork/defradb/net/config"
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
@@ -32,7 +33,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		db1.Events(),
 		immutable.None[dac.DocumentACP](),
 		db1,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
@@ -41,7 +42,7 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 		db2.Events(),
 		immutable.None[dac.DocumentACP](),
 		db2,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
@@ -64,7 +65,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		db1.Events(),
 		immutable.None[dac.DocumentACP](),
 		db1,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
@@ -73,7 +74,7 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 		db2.Events(),
 		immutable.None[dac.DocumentACP](),
 		db2,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
@@ -99,7 +100,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		db1.Events(),
 		immutable.None[dac.DocumentACP](),
 		db1,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n1.Close()
@@ -108,7 +109,7 @@ func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_Closing
 		db2.Events(),
 		immutable.None[dac.DocumentACP](),
 		db2,
-		WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+		config.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 	)
 	assert.NoError(t, err)
 	defer n2.Close()
