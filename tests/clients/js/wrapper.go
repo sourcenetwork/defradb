@@ -86,12 +86,12 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	res, err := execute(ctx, w.value, "addSchema", schema)
 	if err != nil {
 		return nil, err
 	}
-	var out []client.CollectionDescription
+	var out []client.CollectionVersion
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}

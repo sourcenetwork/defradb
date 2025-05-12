@@ -26,19 +26,6 @@ type Collection struct {
 	client js.Value
 }
 
-func (c *Collection) Description() client.CollectionDescription {
-	promise := c.client.Call("description")
-	res, err := goji.Await(goji.PromiseValue(promise))
-	if err != nil {
-		panic(err)
-	}
-	var out client.CollectionDescription
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		panic(err)
-	}
-	return out
-}
-
 func (c *Collection) Name() string {
 	promise := c.client.Call("name")
 	res, err := goji.Await(goji.PromiseValue(promise))
@@ -61,13 +48,26 @@ func (c *Collection) Schema() client.SchemaDescription {
 	return out
 }
 
-func (c *Collection) ID() string {
-	promise := c.client.Call("id")
+func (c *Collection) VersionID() string {
+	promise := c.client.Call("versionID")
 	res, err := goji.Await(goji.PromiseValue(promise))
 	if err != nil {
 		panic(err)
 	}
 	return res[0].String()
+}
+
+func (c *Collection) Version() client.CollectionVersion {
+	promise := c.client.Call("version")
+	res, err := goji.Await(goji.PromiseValue(promise))
+	if err != nil {
+		panic(err)
+	}
+	var out client.CollectionVersion
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		panic(err)
+	}
+	return out
 }
 
 func (c *Collection) SchemaRoot() string {

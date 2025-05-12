@@ -32,11 +32,11 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 	}
 	return js.ValueOf(map[string]any{
 		"name":             goji.Async(c.name),
-		"id":               goji.Async(c.id),
+		"versionID":        goji.Async(c.versionID),
+		"version":          goji.Async(c.version),
 		"schemaRoot":       goji.Async(c.schemaRoot),
 		"definition":       goji.Async(c.definition),
 		"schema":           goji.Async(c.schema),
-		"description":      goji.Async(c.description),
 		"create":           goji.Async(c.create),
 		"createMany":       goji.Async(c.createMany),
 		"update":           goji.Async(c.update),
@@ -56,8 +56,12 @@ func (c *clientCollection) name(this js.Value, args []js.Value) (js.Value, error
 	return js.ValueOf(c.col.Name()), nil
 }
 
-func (c *clientCollection) id(this js.Value, args []js.Value) (js.Value, error) {
-	return js.ValueOf(c.col.ID()), nil
+func (c *clientCollection) versionID(this js.Value, args []js.Value) (js.Value, error) {
+	return js.ValueOf(c.col.VersionID()), nil
+}
+
+func (c *clientCollection) version(this js.Value, args []js.Value) (js.Value, error) {
+	return goji.MarshalJS(c.col.Version())
 }
 
 func (c *clientCollection) schemaRoot(this js.Value, args []js.Value) (js.Value, error) {
@@ -70,10 +74,6 @@ func (c *clientCollection) definition(this js.Value, args []js.Value) (js.Value,
 
 func (c *clientCollection) schema(this js.Value, args []js.Value) (js.Value, error) {
 	return goji.MarshalJS(c.col.Schema())
-}
-
-func (c *clientCollection) description(this js.Value, args []js.Value) (js.Value, error) {
-	return goji.MarshalJS(c.col.Description())
 }
 
 func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, error) {
