@@ -28,7 +28,7 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	// Generate new Block and save to lsys
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
 				Priority:        1,
@@ -42,7 +42,7 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 
 	compositeBlock := Block{
 		Delta: crdt.CRDT{
-			CompositeDAGDelta: &crdt.CompositeDAGDelta{
+			DocCompositeDelta: &crdt.DocCompositeDelta{
 				DocID:           []byte("docID"),
 				Priority:        1,
 				SchemaVersionID: "schemaVersionID",
@@ -61,7 +61,7 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 
 	fieldUpdateBlock := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
 				Priority:        2,
@@ -78,7 +78,7 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 
 	return Block{
 		Delta: crdt.CRDT{
-			CompositeDAGDelta: &crdt.CompositeDAGDelta{
+			DocCompositeDelta: &crdt.DocCompositeDelta{
 				DocID:           []byte("docID"),
 				Priority:        2,
 				SchemaVersionID: "schemaVersionID",
@@ -180,7 +180,7 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 
 	block := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
 				Priority:        1,
@@ -219,7 +219,7 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
 				Priority:        1,
@@ -240,7 +240,7 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 func TestBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
 	validBlock := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
 				Priority:        1,
@@ -303,7 +303,7 @@ func TestBlock_IsEncrypted(t *testing.T) {
 			setupBlock: func() Block {
 				return Block{
 					Delta: crdt.CRDT{
-						LWWRegDelta: &crdt.LWWRegDelta{},
+						LWWDelta: &crdt.LWWDelta{},
 					},
 					Encryption: &cidlink.Link{},
 				}
@@ -315,7 +315,7 @@ func TestBlock_IsEncrypted(t *testing.T) {
 			setupBlock: func() Block {
 				return Block{
 					Delta: crdt.CRDT{
-						LWWRegDelta: &crdt.LWWRegDelta{},
+						LWWDelta: &crdt.LWWDelta{},
 					},
 				}
 			},
@@ -326,7 +326,7 @@ func TestBlock_IsEncrypted(t *testing.T) {
 			setupBlock: func() Block {
 				return Block{
 					Delta: crdt.CRDT{
-						LWWRegDelta: &crdt.LWWRegDelta{},
+						LWWDelta: &crdt.LWWDelta{},
 					},
 					Signature: &cidlink.Link{},
 					Heads:     []cidlink.Link{{}},
@@ -375,7 +375,7 @@ func TestBlock_Clone(t *testing.T) {
 	// Create a dummy block and get its CID for Heads
 	dummyBlock := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				Data: []byte("dummy"),
 			},
 		},
@@ -386,7 +386,7 @@ func TestBlock_Clone(t *testing.T) {
 	// Create an original block with all fields set
 	original := Block{
 		Delta: crdt.CRDT{
-			LWWRegDelta: &crdt.LWWRegDelta{
+			LWWDelta: &crdt.LWWDelta{
 				DocID:           []byte("docID"),
 				FieldName:       "name",
 				Priority:        1,
@@ -418,7 +418,7 @@ func TestBlock_Clone(t *testing.T) {
 	require.Equal(t, originalBytes, clonedBytes, "Serialized blocks should be identical")
 
 	// Modify the original to verify deep copy
-	original.Delta.LWWRegDelta.Data = []byte("Jane")
+	original.Delta.LWWDelta.Data = []byte("Jane")
 
 	// Serialize both again
 	originalBytes, err = original.Marshal()
@@ -438,6 +438,6 @@ func TestBlock_Clone(t *testing.T) {
 	require.NoError(t, err, "Failed to unmarshal cloned block")
 
 	// Verify the unmarshaled blocks have the expected values
-	require.Equal(t, []byte("Jane"), unmarshaledOriginal.Delta.LWWRegDelta.Data)
-	require.Equal(t, []byte("John"), unmarshaledClone.Delta.LWWRegDelta.Data)
+	require.Equal(t, []byte("Jane"), unmarshaledOriginal.Delta.LWWDelta.Data)
+	require.Equal(t, []byte("John"), unmarshaledClone.Delta.LWWDelta.Data)
 }

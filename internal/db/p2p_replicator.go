@@ -28,8 +28,8 @@ import (
 	dbErrors "github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 const (
@@ -179,7 +179,7 @@ func (db *DB) getDocsHeads(
 					continue
 				}
 				docID := keys.DataStoreKeyFromDocID(docIDResult.ID)
-				headset := clock.NewHeadSet(
+				headset := coreblock.NewHeadSet(
 					txn.Headstore(),
 					docID.WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 				)

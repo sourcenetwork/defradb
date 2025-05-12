@@ -11,7 +11,7 @@
 /*
 Package clock provides a MerkleClock implementation, to track causal ordering of events.
 */
-package clock
+package coreblock
 
 import (
 	"context"
@@ -24,44 +24,10 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
-
-var (
-	log = corelog.NewLogger("merkleclock")
-)
-
-// MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
-type MerkleClock struct {
-	headstore  datastore.DSReaderWriter
-	blockstore datastore.Blockstore
-	encstore   datastore.Blockstore
-	headset    *heads
-	crdt       core.ReplicatedData
-}
-
-// NewMerkleClock returns a new MerkleClock.
-func NewMerkleClock(
-	headstore datastore.DSReaderWriter,
-	blockstore datastore.Blockstore,
-	encstore datastore.Blockstore,
-	namespace keys.HeadstoreKey,
-	crdt core.ReplicatedData,
-) *MerkleClock {
-	return &MerkleClock{
-		headstore:  headstore,
-		blockstore: blockstore,
-		encstore:   encstore,
-		headset:    NewHeadSet(headstore, namespace),
-		crdt:       crdt,
-	}
-}
 
 func putBlock(
 	ctx context.Context,
@@ -70,35 +36,40 @@ func putBlock(
 ) (cidlink.Link, error) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(blockstore.AsIPLDStorage())
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
 
-	return link.(cidlink.Link), nil
+	return link.(cidlink.Link), nil //nolint:forcetypeassert
 }
 
-// AddDelta adds a new delta to the existing DAG for this MerkleClock: checks the current heads,
-// sets the delta priority in the Merkle DAG, and adds it to the blockstore then runs ProcessBlock.
-func (mc *MerkleClock) AddDelta(
+// AddDelta adds a new delta to the existing DAG.
+//
+// It checks the current heads, sets the delta priority, adds it to the blockstore, then runs ProcessBlock.
+func AddDelta(
 	ctx context.Context,
+	txn datastore.Txn,
+	crdt core.ReplicatedData,
 	delta core.Delta,
-	links ...coreblock.DAGLink,
+	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	heads, height, err := mc.headset.List(ctx)
+	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
+
+	heads, height, err := headset.List(ctx)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrGettingHeads(err)
 	}
 	height = height + 1
 
 	delta.SetPriority(height)
-	block := coreblock.New(delta, links, heads...)
+	block := New(delta, links, heads...)
 
 	fieldName := immutable.None[string]()
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := mc.determineBlockEncryption(ctx, string(block.Delta.GetDocID()), fieldName, heads)
+	encBlock, encLink, err := determineBlockEncryption(ctx, txn, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -113,19 +84,19 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	if EnabledSigningFromContext(ctx) {
-		err = mc.signBlock(ctx, dagBlock)
+		err = signBlock(ctx, txn.Blockstore(), dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
 	}
 
-	link, err := putBlock(ctx, mc.blockstore, dagBlock)
+	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	// merge the delta and update the state
-	err = mc.ProcessBlock(ctx, block, link)
+	err = ProcessBlock(ctx, txn, crdt, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -138,15 +109,16 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
-func (mc *MerkleClock) determineBlockEncryption(
+func determineBlockEncryption(
 	ctx context.Context,
+	txn datastore.Txn,
 	docID string,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
-) (*coreblock.Encryption, cidlink.Link, error) {
+) (*Encryption, cidlink.Link, error) {
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
-		encBlock := &coreblock.Encryption{DocID: []byte(docID)}
+		encBlock := &Encryption{DocID: []byte(docID)}
 		if encryption.ShouldEncryptIndividualField(ctx, fieldName) {
 			f := fieldName.Value()
 			encBlock.FieldName = &f
@@ -161,7 +133,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 				encBlock.Key = encKey
 			}
 
-			link, err := putBlock(ctx, mc.encstore, encBlock)
+			link, err := putBlock(ctx, txn.Encstore(), encBlock)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
@@ -171,24 +143,24 @@ func (mc *MerkleClock) determineBlockEncryption(
 
 	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
-		prevBlockBytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
+		prevBlockBytes, err := txn.Blockstore().AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
 			return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 		}
-		prevBlock, err := coreblock.GetFromBytes(prevBlockBytes)
+		prevBlock, err := GetFromBytes(prevBlockBytes)
 		if err != nil {
 			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
-			prevBlockEncBytes, err := mc.encstore.AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
+			prevBlockEncBytes, err := txn.Encstore().AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 			}
-			prevEncBlock, err := coreblock.GetEncryptionBlockFromBytes(prevBlockEncBytes)
+			prevEncBlock, err := GetEncryptionBlockFromBytes(prevBlockEncBytes)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
-			return &coreblock.Encryption{
+			return &Encryption{
 				DocID:     prevEncBlock.DocID,
 				FieldName: prevEncBlock.FieldName,
 				Key:       prevEncBlock.Key,
@@ -201,9 +173,9 @@ func (mc *MerkleClock) determineBlockEncryption(
 
 func encryptBlock(
 	ctx context.Context,
-	block *coreblock.Block,
-	encBlock *coreblock.Encryption,
-) (*coreblock.Block, error) {
+	block *Block,
+	encBlock *Encryption,
+) (*Block, error) {
 	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		return block, nil
 	}
@@ -215,86 +187,38 @@ func encryptBlock(
 		return nil, err
 	}
 	clonedCRDT.SetData(bytes)
-	return &coreblock.Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
-}
-
-func (mc *MerkleClock) signBlock(
-	ctx context.Context,
-	block *coreblock.Block,
-) error {
-	// We sign only the first field blocks just to add entropy and prevent any collisions.
-	// The integrity of the field data is guaranteed by signatures of the parent composite blocks.
-	if block.Delta.IsField() && block.Delta.GetPriority() > 1 {
-		return nil
-	}
-
-	ident := identity.FromContext(ctx)
-	if !ident.HasValue() {
-		return nil
-	}
-
-	blockBytes, err := block.Marshal()
-	if err != nil {
-		return err
-	}
-
-	var sigType string
-
-	switch ident.Value().PrivateKey.Type() {
-	case crypto.KeyTypeSecp256k1:
-		sigType = coreblock.SignatureTypeECDSA256K
-	case crypto.KeyTypeEd25519:
-		sigType = coreblock.SignatureTypeEd25519
-	default:
-		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
-	}
-
-	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
-	if err != nil {
-		return err
-	}
-
-	sig := &coreblock.Signature{
-		Header: coreblock.SignatureHeader{
-			Type:     sigType,
-			Identity: []byte(ident.Value().PublicKey.String()),
-		},
-		Value: sigBytes,
-	}
-
-	sigBlockLink, err := putBlock(ctx, mc.blockstore, sig)
-	if err != nil {
-		return err
-	}
-
-	block.Signature = &sigBlockLink
-
-	return nil
+	return &Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
-func (mc *MerkleClock) ProcessBlock(
+func ProcessBlock(
 	ctx context.Context,
-	block *coreblock.Block,
+	txn datastore.Txn,
+	crdt core.ReplicatedData,
+	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	err := mc.crdt.Merge(ctx, block.Delta.GetDelta())
+	err := crdt.Merge(ctx, block.Delta.GetDelta())
 	if err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
-	return mc.updateHeads(ctx, block, blockLink)
+	return updateHeads(ctx, txn, crdt, block, blockLink)
 }
 
-func (mc *MerkleClock) updateHeads(
+func updateHeads(
 	ctx context.Context,
-	block *coreblock.Block,
+	txn datastore.Txn,
+	crdt core.ReplicatedData,
+	block *Block,
 	blockLink cidlink.Link,
 ) error {
+	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
+
 	priority := block.Delta.GetPriority()
 
 	if len(block.Heads) == 0 { // reached the bottom, at a leaf
-		err := mc.headset.Write(ctx, blockLink.Cid, priority)
+		err := headset.Write(ctx, blockLink.Cid, priority)
 		if err != nil {
 			return NewErrAddingHead(blockLink.Cid, err)
 		}
@@ -302,7 +226,7 @@ func (mc *MerkleClock) updateHeads(
 
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
-		isHead, err := mc.headset.IsHead(ctx, linkCid)
+		isHead, err := headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return NewErrCheckingHead(linkCid, err)
 		}
@@ -310,7 +234,7 @@ func (mc *MerkleClock) updateHeads(
 		if isHead {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
-			err = mc.headset.Replace(ctx, linkCid, blockLink.Cid, priority)
+			err = headset.Replace(ctx, linkCid, blockLink.Cid, priority)
 			if err != nil {
 				return NewErrReplacingHead(linkCid, blockLink.Cid, err)
 			}
@@ -318,14 +242,14 @@ func (mc *MerkleClock) updateHeads(
 			continue
 		}
 
-		known, err := mc.blockstore.Has(ctx, linkCid)
+		known, err := txn.Blockstore().Has(ctx, linkCid)
 		if err != nil {
 			return NewErrCouldNotFindBlock(linkCid, err)
 		}
 		if known {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
-			err := mc.headset.Write(ctx, blockLink.Cid, priority)
+			err := headset.Write(ctx, blockLink.Cid, priority)
 			if err != nil {
 				log.ErrorContextE(
 					ctx,
@@ -341,25 +265,4 @@ func (mc *MerkleClock) updateHeads(
 	}
 
 	return nil
-}
-
-// Heads returns the current heads of the MerkleClock.
-func (mc *MerkleClock) Heads() *heads {
-	return mc.headset
-}
-
-type enabledSigningContextKey struct{}
-
-// ContextWithEnabledSigning returns a context with block signing enabled.
-func ContextWithEnabledSigning(ctx context.Context) context.Context {
-	return context.WithValue(ctx, enabledSigningContextKey{}, true)
-}
-
-// EnabledSigningFromContext returns true if block signing is enabled in the context.
-func EnabledSigningFromContext(ctx context.Context) bool {
-	val := ctx.Value(enabledSigningContextKey{})
-	if val == nil {
-		return false
-	}
-	return val.(bool)
 }

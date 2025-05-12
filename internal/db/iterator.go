@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // DocHeadBlocksIterator is an iterator that iterates over the head blocks of a document.
@@ -44,7 +43,7 @@ func NewHeadBlocksIterator(
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
 	}
-	headset := clock.NewHeadSet(headstore, headStoreKey)
+	headset := coreblock.NewHeadSet(headstore, headStoreKey)
 	cids, _, err := headset.List(ctx)
 	if err != nil {
 		return nil, err

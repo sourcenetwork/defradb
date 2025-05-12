@@ -344,7 +344,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 	var fieldName any
 	var fieldID any
-	if block.Delta.CompositeDAGDelta != nil {
+	if block.Delta.DocCompositeDelta != nil {
 		fieldID = core.COMPOSITE_NAMESPACE
 		fieldName = nil
 	} else if block.Delta.CollectionDelta != nil {

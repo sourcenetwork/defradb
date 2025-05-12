@@ -32,8 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
@@ -397,7 +395,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, mp.txn, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}
@@ -446,19 +444,19 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (core.ReplicatedData, error) {
 	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	switch {
-	case crdt.IsComposite():
-		docID := string(crdt.GetDocID())
+	case crdtUnion.IsComposite():
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		return merklecrdt.NewMerkleCompositeDAG(
-			mp.txn,
+		return crdt.NewDocComposite(
+			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -466,26 +464,25 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdt crdt.CRDT) (
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
-	case crdt.IsCollection():
-		return merklecrdt.NewMerkleCollection(
-			mp.txn,
+	case crdtUnion.IsCollection():
+		return crdt.NewCollection(
 			mp.col.Schema().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		), nil
 
 	default:
-		docID := string(crdt.GetDocID())
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		field := crdt.GetFieldName()
+		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Definition().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.
 			return nil, nil
 		}
 
-		return merklecrdt.FieldLevelCRDTWithStore(
-			mp.txn,
+		return crdt.FieldLevelCRDTWithStore(
+			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
@@ -547,7 +544,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 
 // getHeads retrieves the heads associated with the given datastore key.
 func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
-	headset := clock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(txn.Headstore(), key)
 
 	cids, _, err := headset.List(ctx)
 	if err != nil {
