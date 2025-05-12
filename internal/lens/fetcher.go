@@ -12,6 +12,7 @@ package lens
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/fxamacker/cbor/v2"
@@ -316,7 +317,13 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			// in which case we have to skip them for now.
 			continue
 		}
-		fieldKey := datastoreKeyBase.WithFieldID(fieldDesc.ID.String())
+
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fieldDesc.Name)
+		if err != nil {
+			return err
+		}
+
+		fieldKey := datastoreKeyBase.WithFieldID(fmt.Sprint(fieldShortID))
 
 		bytes, err := cbor.Marshal(value)
 		if err != nil {

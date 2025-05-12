@@ -38,6 +38,11 @@ func SaveCollection(
 		}
 	}
 
+	err := id.SetShortFieldIDs(ctx, desc)
+	if err != nil {
+		return client.CollectionVersion{}, err
+	}
+
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return err

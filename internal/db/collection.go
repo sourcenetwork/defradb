@@ -706,9 +706,9 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldID, fieldExists := c.tryGetFieldID(k)
-			if !fieldExists {
-				return client.NewErrFieldNotExist(k)
+			fieldID, err := id.GetShortFieldID(ctx, shortID, k)
+			if err != nil {
+				return err
 			}
 			fieldKey := keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -1021,21 +1021,4 @@ func (c *collection) getPrimaryKeyFromDocID(
 		CollectionShortID: shortID,
 		DocID:             docID.String(),
 	}, nil
-}
-
-// tryGetFieldID returns the FieldID of the given fieldName.
-// Will return false if the field is not found.
-func (c *collection) tryGetFieldID(fieldName string) (uint32, bool) {
-	for _, field := range c.Definition().GetFields() {
-		if field.Name == fieldName {
-			if field.Kind.IsObject() {
-				// We do not wish to match navigational properties, only
-				// fields directly on the collection.
-				return uint32(0), false
-			}
-			return uint32(field.ID), true
-		}
-	}
-
-	return uint32(0), false
 }

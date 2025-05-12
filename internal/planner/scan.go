@@ -216,7 +216,12 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	n.currentValue, err = fetcher.DecodeToDoc(doc, n.documentMapping, false)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+	if err != nil {
+		return false, err
+	}
+
+	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
 	if err != nil {
 		return false, err
 	}

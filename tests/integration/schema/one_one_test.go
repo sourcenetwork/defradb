@@ -89,25 +89,21 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 							},
 							{
 								Name:         "boss",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "boss_id",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minion",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minion_id",
-								ID:           4,
 								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
 								RelationName: immutable.Some("user_user"),
 							},

@@ -12,21 +12,14 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sourcenetwork/immutable"
 )
-
-// FieldID is a unique identifier for a field in a schema.
-type FieldID uint32
 
 // CollectionFieldDescription describes the local components of a field on a collection.
 type CollectionFieldDescription struct {
 	// Name contains the name of the [SchemaFieldDescription] that this field uses.
 	Name string
-
-	// ID contains the local, internal ID of this field.
-	ID FieldID
 
 	// Kind contains the local field kind if this is a local-only field (e.g. the secondary
 	// side of a relation).
@@ -51,15 +44,10 @@ type CollectionFieldDescription struct {
 	Size int
 }
 
-func (f FieldID) String() string {
-	return fmt.Sprint(uint32(f))
-}
-
 // collectionFieldDescription is a private type used to facilitate the unmarshalling
 // of json to a [CollectionFieldDescription].
 type collectionFieldDescription struct {
 	Name         string
-	ID           FieldID
 	RelationName immutable.Option[string]
 	DefaultValue any
 	Size         int
@@ -76,7 +64,6 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 	}
 
 	f.Name = descMap.Name
-	f.ID = descMap.ID
 	f.DefaultValue = descMap.DefaultValue
 	f.RelationName = descMap.RelationName
 	f.Size = descMap.Size

@@ -27,6 +27,7 @@ import (
 func InitContext(ctx context.Context, txn datastore.Txn) context.Context {
 	ctx = txnctx.Set(ctx, txn)
 	ctx = id.InitCollectionShortIDCache(ctx)
+	ctx = id.InitFieldShortIDCache(ctx)
 
 	return ctx
 }

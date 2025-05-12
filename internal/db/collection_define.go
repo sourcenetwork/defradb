@@ -24,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
@@ -63,10 +62,6 @@ func (db *DB) createCollections(
 	setFieldKinds(newDefinitions)
 
 	txn := txnctx.MustGet(ctx)
-	err = id.SetFieldIDs(ctx, txn, newDefinitions)
-	if err != nil {
-		return nil, err
-	}
 
 	err = db.validateNewCollection(
 		ctx,

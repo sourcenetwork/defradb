@@ -104,9 +104,6 @@ type FieldDefinition struct {
 	// Name contains the name of this field.
 	Name string
 
-	// ID contains the local, internal ID of this field.
-	ID FieldID
-
 	// The data type that this field holds.
 	//
 	// Must contain a valid value. It is currently immutable.
@@ -146,7 +143,6 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 
 	return FieldDefinition{
 		Name:              global.Name,
-		ID:                local.ID,
 		Kind:              kind,
 		RelationName:      local.RelationName.Value(),
 		Typ:               global.Typ,
@@ -160,7 +156,6 @@ func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDesc
 func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 	return FieldDefinition{
 		Name:         local.Name,
-		ID:           local.ID,
 		Kind:         local.Kind.Value(),
 		RelationName: local.RelationName.Value(),
 		DefaultValue: local.DefaultValue,

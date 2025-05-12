@@ -13,6 +13,7 @@ package db
 import (
 	"container/list"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -481,6 +482,11 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			return nil, nil
 		}
 
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.Name)
+		if err != nil {
+			return nil, err
+		}
+
 		return crdt.FieldLevelCRDTWithStore(
 			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
@@ -489,7 +495,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
 				DocID:             docID,
-			}.WithFieldID(fd.ID.String()),
+			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
 	}

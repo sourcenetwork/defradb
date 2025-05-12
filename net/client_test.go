@@ -26,7 +26,6 @@ var def = client.CollectionDefinition{
 	Version: client.CollectionVersion{
 		Fields: []client.CollectionFieldDescription{
 			{
-				ID:   1,
 				Name: "test",
 			},
 		},

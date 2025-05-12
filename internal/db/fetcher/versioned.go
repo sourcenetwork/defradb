@@ -373,6 +373,11 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 		}
 
+		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.Name)
+		if err != nil {
+			return err
+		}
+
 		mcrdt, err = crdt.FieldLevelCRDTWithStore(
 			vf.store.Datastore(),
 			block.Delta.GetSchemaVersionID(),
@@ -381,7 +386,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
 				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(field.ID),
+				FieldID:           fmt.Sprint(fieldShortID),
 			},
 			field.Name,
 		)
