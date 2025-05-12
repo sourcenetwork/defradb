@@ -36,7 +36,7 @@ func TestSchemaMigrationQuery(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -45,8 +45,8 @@ func TestSchemaMigrationQuery(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -107,7 +107,7 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -116,8 +116,8 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -145,11 +145,11 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 							"verified": true,
 						},
 						{
-							"name":     "Fred",
+							"name":     "Shahzad",
 							"verified": true,
 						},
 						{
-							"name":     "Shahzad",
+							"name":     "Fred",
 							"verified": true,
 						},
 					},
@@ -163,7 +163,7 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 
 // Users may want to register migrations before the schema is locally updated. This may be particularly useful
 // for downgrading documents recieved via P2P.
-func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing.T) {
+func TestSchemaMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -180,8 +180,8 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -195,7 +195,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing
 					},
 				},
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -239,14 +239,14 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -257,8 +257,8 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 				// Register a migration from schema version 1 to schema version 2 **only** -
 				// there should be no migration from version 2 to version 3.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -311,14 +311,14 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -329,8 +329,8 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 				// Register a migration from schema version 2 to schema version 3 **only** -
 				// there should be no migration from version 1 to version 2.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
-					DestinationSchemaVersionID: "bafkreicpdtq27uclgcyeqivvyjvojtk57a573y3upfhi3lvteytktyhlva",
+					SourceSchemaVersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+					DestinationSchemaVersionID: "bafyreiccm7djewbzmay7yzincqcy5aggh33k74yh6mhm4gwbzxojxeqkve",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -383,14 +383,14 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -399,8 +399,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -416,8 +416,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
-					DestinationSchemaVersionID: "bafkreicpdtq27uclgcyeqivvyjvojtk57a573y3upfhi3lvteytktyhlva",
+					SourceSchemaVersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+					DestinationSchemaVersionID: "bafyreiccm7djewbzmay7yzincqcy5aggh33k74yh6mhm4gwbzxojxeqkve",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -472,8 +472,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -489,8 +489,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
-					DestinationSchemaVersionID: "bafkreicpdtq27uclgcyeqivvyjvojtk57a573y3upfhi3lvteytktyhlva",
+					SourceSchemaVersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+					DestinationSchemaVersionID: "bafyreiccm7djewbzmay7yzincqcy5aggh33k74yh6mhm4gwbzxojxeqkve",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -504,14 +504,14 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 					},
 				},
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -560,8 +560,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 			testUtils.ConfigureMigration{
 				// Declare the migration from v2=>v3 before declaring the migration from v1=>v2
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
-					DestinationSchemaVersionID: "bafkreicpdtq27uclgcyeqivvyjvojtk57a573y3upfhi3lvteytktyhlva",
+					SourceSchemaVersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+					DestinationSchemaVersionID: "bafyreiccm7djewbzmay7yzincqcy5aggh33k74yh6mhm4gwbzxojxeqkve",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -577,8 +577,8 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -592,14 +592,14 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 					},
 				},
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -651,7 +651,7 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -712,7 +712,7 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -721,8 +721,8 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -774,7 +774,7 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 					"mobile": [644, 832, 8325]
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -783,8 +783,8 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreicn6ltdovb6y7g3ecoptqkvx2y5y5yntrb5uydmg3jiakskqva2ta",
-					DestinationSchemaVersionID: "bafkreigb473jarbms7de62ykdu5necvxukmb6zbzolp4szdjcwzjvomuiq",
+					SourceSchemaVersionID:      "bafyreigpjfwigs367x4whcna37qsad4undunew4dkxt3himzlspqlkigo4",
+					DestinationSchemaVersionID: "bafyreid62abbjl4ykrzibdoh2ba4kba3nnrvfgnclla4xbaicd3xvujjr4",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -838,7 +838,7 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 					"age": 40
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -847,8 +847,8 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
-					DestinationSchemaVersionID: "bafkreibbnm7nrtnvwo7hmjjxacx7nxlqkp6bfr24vtlbv5vhwttlhrbr4q",
+					SourceSchemaVersionID:      "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+					DestinationSchemaVersionID: "bafyreicaau76vo3av2oi6gioxpkglmsozf7g44fbahsfabq7agqzj5wzdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -900,7 +900,7 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 					"age": 40
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -909,8 +909,8 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
-					DestinationSchemaVersionID: "bafkreibbnm7nrtnvwo7hmjjxacx7nxlqkp6bfr24vtlbv5vhwttlhrbr4q",
+					SourceSchemaVersionID:      "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+					DestinationSchemaVersionID: "bafyreicaau76vo3av2oi6gioxpkglmsozf7g44fbahsfabq7agqzj5wzdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -977,7 +977,7 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 					"age": 40
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "yearsLived", "Kind": "Int"} }
@@ -986,8 +986,8 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
-					DestinationSchemaVersionID: "bafkreifhm3admsxmv3xsbxehfkmtfnxqaq5wchrx47e7zc6vaxr352b3om",
+					SourceSchemaVersionID:      "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+					DestinationSchemaVersionID: "bafyreigftwdgktzs2dytrukiu3w4bmim3hsjlrb4j356fcal6u7ez3jkdq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -1040,7 +1040,7 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 					"age": 40
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "yearsLived", "Kind": "Int"} }
@@ -1049,8 +1049,8 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
-					DestinationSchemaVersionID: "bafkreifhm3admsxmv3xsbxehfkmtfnxqaq5wchrx47e7zc6vaxr352b3om",
+					SourceSchemaVersionID:      "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+					DestinationSchemaVersionID: "bafyreigftwdgktzs2dytrukiu3w4bmim3hsjlrb4j356fcal6u7ez3jkdq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

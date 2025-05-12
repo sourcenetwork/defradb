@@ -146,7 +146,7 @@ func waitForUpdateEvents(
 
 		col := node.Collections[collectionIndex]
 		if col.Version().IsBranchable {
-			expect[col.SchemaRoot()] = struct{}{}
+			expect[col.CollectionID()] = struct{}{}
 		}
 		for k := range docIDs {
 			expect[k] = struct{}{}

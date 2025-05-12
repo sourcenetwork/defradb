@@ -13,6 +13,8 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -66,13 +68,15 @@ func TestSchemaSelfReferenceSimple_SchemaHasSimpleSchemaID(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "User",
-						Root:      "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
-						VersionID: "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
-						Fields: []client.SchemaFieldDescription{
+						Name:           "User",
+						CollectionID:   "bafyreifwsspsoii73siptvgtugaz7maw3hyqsxghzw7m62waukq6bmzcmi",
+						VersionID:      "bafyreifwsspsoii73siptvgtugaz7maw3hyqsxghzw7m62waukq6bmzcmi",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
@@ -80,15 +84,18 @@ func TestSchemaSelfReferenceSimple_SchemaHasSimpleSchemaID(t *testing.T) {
 							},
 							{
 								Name: "boss",
-								Typ:  client.LWW_REGISTER,
 								// Simple self kinds do not contain a base ID, as there is only one possible value
 								// that they could hold
-								Kind: client.NewSelfKind("", false),
+								Kind:         client.NewSelfKind("", false),
+								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "boss_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "boss_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 						},
 					},
@@ -224,41 +231,21 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
-					{
-						Name: "Dog",
-						// Note how Dog and User share the same base ID, but with a different index suffixed on
-						// the end.
-						Root:      "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-0",
-						VersionID: "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-0",
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Typ:  client.NONE_CRDT,
-								Kind: client.FieldKind_DocID,
-							},
-							{
-								Name: "walker",
-								Typ:  client.LWW_REGISTER,
-								// Because Dog and User form a circular dependency tree, the relation is declared
-								// as a SelfKind, with the index identifier of User being held in the relation kind.
-								Kind: client.NewSelfKind("1", false),
-							},
-							{
-								Name: "walker_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name: "User",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreigqhogwrfyvqw33ujggwass2wgzbhqc2ttw2eny4doe42e2p4qyue",
+							RelativeID:      1,
+						}),
 						// Note how Dog and User share the same base ID, but with a different index suffixed on
 						// the end.
-						Root:      "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-1",
-						VersionID: "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-1",
-						Fields: []client.SchemaFieldDescription{
+						CollectionID:   "bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4",
+						VersionID:      "bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
@@ -266,15 +253,75 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
 							},
 							{
 								Name: "hosts",
-								Typ:  client.LWW_REGISTER,
 								// Because Dog and User form a circular dependency tree, the relation is declared
 								// as a SelfKind, with the index identifier of User being held in the relation kind.
-								Kind: client.NewSelfKind("0", false),
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "hosts_id",
-								Typ:  client.LWW_REGISTER,
+								Name:         "hosts_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "walks",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("walkies"),
+							},
+							{
+								Name:         "walks_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
+							},
+						},
+					},
+					{
+						Name: "Dog",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreigqhogwrfyvqw33ujggwass2wgzbhqc2ttw2eny4doe42e2p4qyue",
+							RelativeID:      0,
+						}),
+						// Note how Dog and User share the same base ID, but with a different index suffixed on
+						// the end.
+						CollectionID:   "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						VersionID:      "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name:         "host",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("hosts"),
+							},
+							{
+								Name:         "host_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+							},
+							{
+								Name: "walker",
+								// Because Dog and User form a circular dependency tree, the relation is declared
+								// as a SelfKind, with the index identifier of User being held in the relation kind.
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "walker_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
 							},
 						},
 					},
@@ -317,113 +364,207 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name: "Cat",
-						// Cat and Mouse share the same base ID, but with a different index suffixed on
-						// the end.  This base must be different to the Dog/User base ID.
-						Root:      "bafkreiacf7kjwlw32eiizyy6awdnfrnn7edaptp2chhfc5xktgxvrccqsa-0",
-						VersionID: "bafkreiacf7kjwlw32eiizyy6awdnfrnn7edaptp2chhfc5xktgxvrccqsa-0",
-						Fields: []client.SchemaFieldDescription{
+						Name: "User",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreigqhogwrfyvqw33ujggwass2wgzbhqc2ttw2eny4doe42e2p4qyue",
+							RelativeID:      1,
+						}),
+						// Dog and User share the same base ID, but with a different index suffixed on
+						// the end.  This base must be different to the Cat/Mouse base ID.
+						CollectionID:   "bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4",
+						VersionID:      "bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "loves",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("1", false),
+								Name:         "hosts",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "loves_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "hosts_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "tolerates",
-								Typ:  client.LWW_REGISTER,
-								// This relationship reaches out of the Cat/Dog circle, and thus must be of type SchemaKind,
-								// specified with the full User ID (including the `-1` index suffixed).
-								Kind: client.NewSchemaKind("bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-1", false),
+								Name:         "toleratedBy",
+								Kind:         client.NewCollectionKind("bafyreienyzedhnqtmvtn2nv2e2dl2vquxyiwc2c45faflmlg27yg4amqc4", false),
+								RelationName: immutable.Some("tolerates"),
 							},
 							{
-								Name: "tolerates_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "toleratedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("tolerates"),
+							},
+							{
+								Name:         "walks",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("walkies"),
+							},
+							{
+								Name:         "walks_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
 							},
 						},
 					},
 					{
 						Name: "Mouse",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreicksowygm76pakx5vjlljodjwwltdzayrwj6qie554j3ygweqwqn4",
+							RelativeID:      1,
+						}),
 						// Cat and Mouse share the same base ID, but with a different index suffixed on
 						// the end.  This base must be different to the Dog/User base ID.
-						Root:      "bafkreiacf7kjwlw32eiizyy6awdnfrnn7edaptp2chhfc5xktgxvrccqsa-1",
-						VersionID: "bafkreiacf7kjwlw32eiizyy6awdnfrnn7edaptp2chhfc5xktgxvrccqsa-1",
-						Fields: []client.SchemaFieldDescription{
+						CollectionID:   "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						VersionID:      "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "hates",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("0", false),
+								Name:         "hates",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("hates"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "hates_id",
-								Typ:  client.LWW_REGISTER,
+								Name:         "hates_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hates"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "lovedBy",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("loves"),
+							},
+							{
+								Name:         "lovedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("loves"),
+							},
+						},
+					},
+					{
+						Name: "Cat",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreicksowygm76pakx5vjlljodjwwltdzayrwj6qie554j3ygweqwqn4",
+							RelativeID:      0,
+						}),
+						// Cat and Mouse share the same base ID, but with a different index suffixed on
+						// the end.  This base must be different to the Dog/User base ID.
+						CollectionID:   "bafyreienyzedhnqtmvtn2nv2e2dl2vquxyiwc2c45faflmlg27yg4amqc4",
+						VersionID:      "bafyreienyzedhnqtmvtn2nv2e2dl2vquxyiwc2c45faflmlg27yg4amqc4",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name:         "hatedBy",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("hates"),
+							},
+							{
+								Name:         "hatedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hates"),
+							},
+							{
+								Name:         "loves",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("loves"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "loves_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("loves"),
+								IsPrimary:    true,
+							},
+							{
+								Name: "tolerates",
+								// This relationship reaches out of the Cat/Dog circle, and thus must be of type SchemaKind,
+								// specified with the full User ID (including the `-1` index suffixed).
+								Kind:         client.NewCollectionKind("bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4", false),
+								RelationName: immutable.Some("tolerates"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "tolerates_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("tolerates"),
+								IsPrimary:    true,
 							},
 						},
 					},
 					{
 						Name: "Dog",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreigqhogwrfyvqw33ujggwass2wgzbhqc2ttw2eny4doe42e2p4qyue",
+							RelativeID:      0,
+						}),
 						// Dog and User share the same base ID, but with a different index suffixed on
 						// the end.  This base must be different to the Cat/Mouse base ID.
-						Root:      "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-0",
-						VersionID: "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-0",
-						Fields: []client.SchemaFieldDescription{
+						CollectionID:   "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						VersionID:      "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "walker",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("1", false),
+								Name:         "host",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("hosts"),
 							},
 							{
-								Name: "walker_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name: "User",
-						// Dog and User share the same base ID, but with a different index suffixed on
-						// the end.  This base must be different to the Cat/Mouse base ID.
-						Root:      "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-1",
-						VersionID: "bafkreichlth4ajgalengyv3hnmqnxa4vhnv5f34a3gzwh2jaajqb2yxd4i-1",
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Typ:  client.NONE_CRDT,
-								Kind: client.FieldKind_DocID,
+								Name:         "host_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
 							},
 							{
-								Name: "hosts",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("0", false),
+								Name:         "walker",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "hosts_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "walker_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
 							},
 						},
 					},
@@ -468,113 +609,221 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHave
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Cat",
-						Root:      "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-0",
-						VersionID: "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-0",
-						Fields: []client.SchemaFieldDescription{
+						Name: "Mouse",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreih6p2qt3p3kcehh34uao5y5safkhskdfbshlaje63er66gryj65uq",
+							RelativeID:      2,
+						}),
+						CollectionID:   "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						VersionID:      "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "loves",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("2", false),
+								Name:         "hates",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("hates"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "loves_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "hates_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hates"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "tolerates",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("3", false),
+								Name:         "lovedBy",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("loves"),
 							},
 							{
-								Name: "tolerates_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "lovedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("loves"),
 							},
 						},
 					},
 					{
-						Name:      "Dog",
-						Root:      "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-1",
-						VersionID: "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-1",
-						Fields: []client.SchemaFieldDescription{
+						Name: "User",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreih6p2qt3p3kcehh34uao5y5safkhskdfbshlaje63er66gryj65uq",
+							RelativeID:      3,
+						}),
+						CollectionID:   "bafyreidrtmlxueujymjwidnysuqodrwr3pknivbefb3fuyxe7qv7q6evl4",
+						VersionID:      "bafyreidrtmlxueujymjwidnysuqodrwr3pknivbefb3fuyxe7qv7q6evl4",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "walker",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("3", false),
+								Name:         "feeds",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("feeds"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "walker_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "feeds_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("feeds"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "hosts",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "hosts_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "toleratedBy",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("tolerates"),
+							},
+							{
+								Name:         "toleratedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("tolerates"),
+							},
+							{
+								Name:         "walks",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("walkies"),
+							},
+							{
+								Name:         "walks_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
 							},
 						},
 					},
 					{
-						Name:      "Mouse",
-						Root:      "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-2",
-						VersionID: "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-2",
-						Fields: []client.SchemaFieldDescription{
+						Name: "Dog",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreih6p2qt3p3kcehh34uao5y5safkhskdfbshlaje63er66gryj65uq",
+							RelativeID:      1,
+						}),
+						CollectionID:   "bafyreiducawb6xng7urrbpnf5ytjs6kbmmibwltkgrnljlaww7tm6imvju",
+						VersionID:      "bafyreiducawb6xng7urrbpnf5ytjs6kbmmibwltkgrnljlaww7tm6imvju",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "hates",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("0", false),
+								Name:         "host",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("hosts"),
 							},
 							{
-								Name: "hates_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "host_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+							},
+							{
+								Name:         "walker",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "walker_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
 							},
 						},
 					},
 					{
-						Name:      "User",
-						Root:      "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-3",
-						VersionID: "bafkreibykyk7nm7hbh44rnyqc6glt7d73dpnn3ttwmichwdqydiajjh3ea-3",
-						Fields: []client.SchemaFieldDescription{
+						Name: "Cat",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreih6p2qt3p3kcehh34uao5y5safkhskdfbshlaje63er66gryj65uq",
+							RelativeID:      0,
+						}),
+						CollectionID:   "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
+						VersionID:      "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "feeds",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("0", false),
+								Name:         "fedBy",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("feeds"),
 							},
 							{
-								Name: "feeds_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "fedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("feeds"),
 							},
 							{
-								Name: "hosts",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("1", false),
+								Name:         "hatedBy",
+								Kind:         client.NewSelfKind("2", false),
+								RelationName: immutable.Some("hates"),
 							},
 							{
-								Name: "hosts_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "hatedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hates"),
+							},
+							{
+								Name:         "loves",
+								Kind:         client.NewSelfKind("2", false),
+								RelationName: immutable.Some("loves"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "loves_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("loves"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "tolerates",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("tolerates"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "tolerates_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("tolerates"),
+								IsPrimary:    true,
 							},
 						},
 					},
@@ -619,113 +868,221 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_Schem
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Cat",
-						Root:      "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-0",
-						VersionID: "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-0",
-						Fields: []client.SchemaFieldDescription{
+						Name: "Mouse",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreidcymuojy4qpyjuzbjdjekn3jea4fu776zflycowgnbqo3wp2jrom",
+							RelativeID:      2,
+						}),
+						CollectionID:   "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						VersionID:      "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "loves",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("2", false),
+								Name:         "hates",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("hates"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "loves_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "hates_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hates"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "tolerates",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("3", false),
+								Name:         "lickedBy",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("licks"),
 							},
 							{
-								Name: "tolerates_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "lickedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("licks"),
+							},
+							{
+								Name:         "lovedBy",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("loves"),
+							},
+							{
+								Name:         "lovedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("loves"),
 							},
 						},
 					},
 					{
-						Name:      "Dog",
-						Root:      "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-1",
-						VersionID: "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-1",
-						Fields: []client.SchemaFieldDescription{
+						Name: "Dog",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreidcymuojy4qpyjuzbjdjekn3jea4fu776zflycowgnbqo3wp2jrom",
+							RelativeID:      1,
+						}),
+						CollectionID:   "bafyreicf444olomeq4xlbuxqg2377r653etyjkshlnadcyyaegf3exy3bm",
+						VersionID:      "bafyreicf444olomeq4xlbuxqg2377r653etyjkshlnadcyyaegf3exy3bm",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "licks",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("2", false),
+								Name:         "host",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("hosts"),
 							},
 							{
-								Name: "licks_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "host_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
 							},
 							{
-								Name: "walker",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("3", false),
+								Name:         "licks",
+								Kind:         client.NewSelfKind("2", false),
+								RelationName: immutable.Some("licks"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "walker_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "licks_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("licks"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "walker",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "walker_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
 							},
 						},
 					},
 					{
-						Name:      "Mouse",
-						Root:      "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-2",
-						VersionID: "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-2",
-						Fields: []client.SchemaFieldDescription{
+						Name: "User",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreidcymuojy4qpyjuzbjdjekn3jea4fu776zflycowgnbqo3wp2jrom",
+							RelativeID:      3,
+						}),
+						CollectionID:   "bafyreif3dwkklu53xczlcs5okaexpn2fsnhqpqurg2vatwwwn5qakojwnm",
+						VersionID:      "bafyreif3dwkklu53xczlcs5okaexpn2fsnhqpqurg2vatwwwn5qakojwnm",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "hates",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("0", false),
+								Name:         "hosts",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
 							},
 							{
-								Name: "hates_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "hosts_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "toleratedBy",
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("tolerates"),
+							},
+							{
+								Name:         "toleratedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("tolerates"),
+							},
+							{
+								Name:         "walks",
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("walkies"),
+							},
+							{
+								Name:         "walks_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
 							},
 						},
 					},
 					{
-						Name:      "User",
-						Root:      "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-3",
-						VersionID: "bafkreidetmki4jtod5jfmromvcz2vd75j6t6g3vnw3aenlv7znludye4ru-3",
-						Fields: []client.SchemaFieldDescription{
+						Name: "Cat",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreidcymuojy4qpyjuzbjdjekn3jea4fu776zflycowgnbqo3wp2jrom",
+							RelativeID:      0,
+						}),
+						CollectionID:   "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
+						VersionID:      "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Typ:  client.NONE_CRDT,
 								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "hosts",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.NewSelfKind("1", false),
+								Name:         "hatedBy",
+								Kind:         client.NewSelfKind("2", false),
+								RelationName: immutable.Some("hates"),
 							},
 							{
-								Name: "hosts_id",
-								Typ:  client.LWW_REGISTER,
-								Kind: client.FieldKind_DocID,
+								Name:         "hatedBy_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hates"),
+							},
+							{
+								Name:         "loves",
+								Kind:         client.NewSelfKind("2", false),
+								RelationName: immutable.Some("loves"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "loves_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("loves"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "tolerates",
+								Kind:         client.NewSelfKind("3", false),
+								RelationName: immutable.Some("tolerates"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "tolerates_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("tolerates"),
+								IsPrimary:    true,
 							},
 						},
 					},

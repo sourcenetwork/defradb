@@ -28,20 +28,20 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
+func TestSchemaUpdatesRemoveVersionIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -52,24 +52,13 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
-				// This should do nothing
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/VersionID" }
 					]
 				`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						email
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
+				ExpectedError: "invalid cid: cid too short. VersionID:",
 			},
 		},
 	}
@@ -87,13 +76,13 @@ func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Name" }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}

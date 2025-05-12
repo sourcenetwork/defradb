@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -36,6 +36,31 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 					]
 				`,
 				ExpectedError: "no type found for given name. Field: foo, Kind: [Unknown]",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {
+							"Name": "foo", "Kind": "[Users]"
+						}}
+					]
+				`,
+				ExpectedError: "relation name cannot be empty. Field: foo",
 			},
 		},
 	}
@@ -52,15 +77,15 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "[Users]"
+							"Name": "foo", "Kind": "[Users]", "RelationName": "users_users"
 						}}
 					]
 				`,
-				ExpectedError: "secondary relation fields cannot be defined on the schema. Name: foo",
+				ExpectedError: "relation missing field. Object: Users, RelationName: users_users",
 			},
 		},
 	}

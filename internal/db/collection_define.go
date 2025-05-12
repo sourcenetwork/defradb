@@ -13,7 +13,9 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/sourcenetwork/immutable"
@@ -37,28 +39,32 @@ func (db *DB) createCollections(
 		return nil, err
 	}
 
-	newSchemas := make([]client.SchemaDescription, len(parseResults))
-	for i, def := range parseResults {
-		newSchemas[i] = def.Definition.Schema
+	existingDefinitionsByID := make(map[string]client.CollectionDefinition, len(existingDefinitions))
+	for _, col := range existingDefinitions {
+		existingDefinitionsByID[col.Version.CollectionID] = col
 	}
 
-	err = setSchemaIDs(newSchemas)
+	newCollections := make([]client.CollectionVersion, len(parseResults))
+	for i, def := range parseResults {
+		newCollections[i] = def.Definition.Version
+	}
+
+	err = setCollectionIDs(ctx, newCollections, immutable.None[model.Lens]())
 	if err != nil {
 		return nil, err
 	}
 
 	for i := range parseResults {
-		parseResults[i].Definition.Version.VersionID = newSchemas[i].VersionID
-		parseResults[i].Definition.Version.CollectionID = newSchemas[i].Root
-		parseResults[i].Definition.Schema = newSchemas[i]
+		// The secondary index code requires the useage of core.Collection which means we need to
+		// map the CollectionVersion back on to the input param.
+		parseResults[i].Definition.Version = newCollections[i]
 	}
 
 	newDefinitions := make([]client.CollectionDefinition, len(parseResults))
 	for i, def := range parseResults {
 		newDefinitions[i] = def.Definition
+		newDefinitions[i].Version = newCollections[i]
 	}
-
-	setFieldKinds(newDefinitions)
 
 	err = db.validateNewCollection(
 		ctx,
@@ -70,17 +76,6 @@ func (db *DB) createCollections(
 	}
 
 	for _, def := range parseResults {
-		_, err := description.CreateSchemaVersion(ctx, def.Definition.Schema)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(def.Definition.Version.Fields) == 0 {
-			// This is a schema-only definition, we should not create a collection for it
-			returnDescriptions = append(returnDescriptions, def.Definition)
-			continue
-		}
-
 		def.Definition.Version.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
 		for _, createIndex := range def.CreateIndexes {
 			desc, err := processCreateIndexRequest(ctx, def.Definition, createIndex)
@@ -95,7 +90,7 @@ func (db *DB) createCollections(
 			return nil, err
 		}
 
-		col, err := db.newCollection(def.Definition.Version, def.Definition.Schema)
+		col, err := db.newCollection(def.Definition.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -117,40 +112,30 @@ func (db *DB) createCollections(
 	return returnDescriptions, nil
 }
 
-func setFieldKinds(definitions []client.CollectionDefinition) {
-	schemasByName := map[string]client.SchemaDescription{}
-	for _, def := range definitions {
-		schemasByName[def.Schema.Name] = def.Schema
-	}
-
-	for i := range definitions {
-		for j := range definitions[i].Version.Fields {
-			if definitions[i].Version.Fields[j].Kind.HasValue() {
-				switch kind := definitions[i].Version.Fields[j].Kind.Value().(type) {
-				case *client.NamedKind:
-					var newKind client.FieldKind
-					if kind.Name == definitions[i].Version.Name {
-						newKind = client.NewSelfKind("", kind.IsArray())
-					} else if otherSchema, ok := schemasByName[kind.Name]; ok {
-						newKind = client.NewSchemaKind(otherSchema.Root, kind.IsArray())
-					} else {
-						// Continue, and let the validation stage return user friendly errors
-						// if appropriate
-						continue
-					}
-
-					definitions[i].Version.Fields[j].Kind = immutable.Some(newKind)
-				default:
-					// no-op
-				}
-			}
-		}
-	}
-}
-
+// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
+// present in the database.
+//
+// It will also update the GQL types used by the query system. It will error and not apply any of the
+// requested, valid updates should the net result of the patch result in an invalid state.  The
+// individual operations defined in the patch do not need to result in a valid state, only the net result
+// of the full patch.
+//
+// New CollectionVersions created by modifying the global type definition (e.g. renaming, adding fields, etc)
+// will automatically become the active version of the Collection, unless `IsActive` is set to false by the patch.
+//
+// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
+// [FieldKindStringToEnumMapping].
+//
+// CollectionVersions may be referenced by their VersionID, or their Name.  Referencing by name will patch
+// the current active version, whereas referencing by VersionID will patch that specific version, whether it is
+// currently active or not.
+//
+// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
+// by the patch.
 func (db *DB) patchCollection(
 	ctx context.Context,
 	patchString string,
+	migration immutable.Option[model.Lens],
 ) error {
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
@@ -164,11 +149,21 @@ func (db *DB) patchCollection(
 		return err
 	}
 
+	existingColsByName := map[string]client.CollectionVersion{}
 	existingColsByID := map[string]client.CollectionVersion{}
-	existingDefinitions := make([]client.CollectionDefinition, len(existingCols))
+	existingDefinitions := make([]client.CollectionDefinition, 0, len(existingCols))
 	for _, col := range existingCols {
+		if col.Version().IsActive {
+			existingColsByName[col.Version().Name] = col.Version()
+		}
 		existingColsByID[col.Version().VersionID] = col.Version()
 		existingDefinitions = append(existingDefinitions, col.Definition())
+	}
+
+	// Here we swap out any string representations of enums for their integer values
+	patch, err = substituteCollectionPatch(patch, existingColsByName)
+	if err != nil {
+		return err
 	}
 
 	existingDescriptionJson, err := json.Marshal(existingColsByID)
@@ -188,18 +183,107 @@ func (db *DB) patchCollection(
 	if err != nil {
 		return err
 	}
+
 	newDefinitions := make([]client.CollectionDefinition, len(existingCols))
 	updatedColsByID := make(map[string]struct{})
 	for i, col := range existingCols {
-		newDefinitions[i].Schema = col.Schema()
 		newDefinitions[i].Version = newColsByID[col.Version().VersionID]
 		updatedColsByID[col.Version().VersionID] = struct{}{}
 	}
-	// append new cols
-	for id, col := range newColsByID {
-		if _, ok := updatedColsByID[id]; ok {
-			continue
+
+	for _, col := range newColsByID {
+		// Automatically add any id fields for object fields added by the patch, if the patch did not explicitly
+		// add one.
+		for _, field := range col.Fields {
+			if field.Kind.IsObject() && !field.Kind.IsArray() {
+				idFieldName := field.Name + "_id"
+				if _, ok := col.GetFieldByName(idFieldName); !ok {
+					col.Fields = append(col.Fields, client.CollectionFieldDescription{
+						Name:         idFieldName,
+						Kind:         client.FieldKind_DocID,
+						RelationName: field.RelationName,
+						IsPrimary:    field.IsPrimary,
+					})
+				}
+			}
 		}
+	}
+
+	for key, col := range newColsByID {
+		previousCol := existingColsByName[col.Name]
+
+		previousFieldNames := make(map[string]struct{}, len(previousCol.Fields))
+		for _, field := range previousCol.Fields {
+			previousFieldNames[field.FieldID] = struct{}{}
+		}
+
+		for i, field := range col.Fields {
+			if _, existed := previousFieldNames[field.FieldID]; !existed && field.Typ == client.NONE_CRDT {
+				// If no CRDT Type has been provided to a new field, default to LWW_REGISTER.
+				// If the field existed before it might have been explicitly cleared by the user, in which
+				// case it is up to the validation logic to error or not.
+				newColsByID[key].Fields[i].Typ = client.LWW_REGISTER
+			}
+		}
+	}
+
+	newCollections := make([]client.CollectionVersion, 0, len(newColsByID))
+	for _, col := range newColsByID {
+		newCollections = append(newCollections, col)
+	}
+
+	err = setCollectionIDs(ctx, newCollections, migration)
+	if err != nil {
+		return err
+	}
+
+	for _, existingCol := range existingColsByName {
+		isMissing := true
+		for _, newCol := range newCollections {
+			if newCol.VersionID == existingCol.VersionID {
+				isMissing = false
+				break
+			}
+		}
+
+		// If an existing collection is not present in the new collection set,
+		// it must have mutated into a new collection version.
+		// The original still needs to exist and must be validated against.
+		// It may also be mutated later in this function.
+		if isMissing {
+			for _, newCol := range newCollections {
+				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
+					existingCol.IsActive = false
+					break
+				}
+			}
+			newCollections = append(newCollections, existingCol)
+		}
+	}
+
+	for i := 0; i < len(newCollections); i++ {
+		placeholder := newCollections[i]
+		if placeholder.IsPlaceholder {
+			isFound := false
+			for j, col := range newCollections {
+				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
+					newCollections[j].Sources = placeholder.Sources
+					isFound = true
+					break
+				}
+			}
+
+			if isFound {
+				// Remove the original placeholder from the collection set, its sources
+				// have been copied to the actual definition (with the same VersionID)
+				newCollections = append(newCollections[:i], newCollections[i+1:]...)
+				i--
+			}
+		}
+	}
+
+	newDefinitions = make([]client.CollectionDefinition, 0, len(newCollections))
+	for _, col := range newCollections {
 		newDefinitions = append(newDefinitions, client.CollectionDefinition{Version: col})
 	}
 
@@ -208,13 +292,17 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	for _, col := range newColsByID {
+	for _, col := range newCollections {
+		existingCol, ok := existingColsByID[col.VersionID]
+		if ok && col.Equal(existingCol) {
+			continue
+		}
+
 		err := description.SaveCollection(ctx, col)
 		if err != nil {
 			return err
 		}
 
-		existingCol, ok := existingColsByID[col.VersionID]
 		if ok {
 			if existingCol.IsMaterialized && !col.IsMaterialized {
 				// If the collection is being de-materialized - delete any cached values.
@@ -271,79 +359,202 @@ func (db *DB) patchCollection(
 	return db.loadSchema(ctx)
 }
 
-// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
+const (
+	collectionNamePathIndex int = 0
+	fieldsPathIndex         int = 1
+	fieldIndexPathIndex     int = 2
+)
+
+// substituteCollectionPatch handles any substitution of values that may be required before
+// the patch can be applied.
+//
+// For example Field [FieldKind] string representations will be replaced by the raw integer
+// value.
+func substituteCollectionPatch(
+	patch jsonpatch.Patch,
+	collectionsByName map[string]client.CollectionVersion,
+) (jsonpatch.Patch, error) {
+	fieldIndexesBySchema := make(map[string]map[string]int, len(collectionsByName))
+	for schemaName, schema := range collectionsByName {
+		fieldIndexesByName := make(map[string]int, len(schema.Fields))
+		fieldIndexesBySchema[schemaName] = fieldIndexesByName
+		for i, field := range schema.Fields {
+			fieldIndexesByName[field.Name] = i
+		}
+	}
+
+	for _, patchOperation := range patch {
+		path, err := patchOperation.Path()
+		if err != nil {
+			return nil, err
+		}
+		path = strings.TrimPrefix(path, "/")
+
+		if value, hasValue := patchOperation["value"]; hasValue {
+			splitPath := strings.Split(path, "/")
+
+			var newPatchValue immutable.Option[any]
+			var field map[string]any
+			isField := isField(splitPath)
+
+			if isField {
+				// We unmarshal the full field-value into a map to ensure that all user
+				// specified properties are maintained.
+				err = json.Unmarshal(*value, &field)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if isFieldOrInner(splitPath) {
+				fieldIndexer := splitPath[fieldIndexPathIndex]
+
+				if containsLetter(fieldIndexer) {
+					if isField {
+						if nameValue, hasName := field["Name"]; hasName {
+							if name, isString := nameValue.(string); isString && name != fieldIndexer {
+								return nil, NewErrIndexDoesNotMatchName(fieldIndexer, name)
+							}
+						} else {
+							field["Name"] = fieldIndexer
+						}
+						newPatchValue = immutable.Some[any](field)
+					}
+
+					desc := collectionsByName[splitPath[collectionNamePathIndex]]
+					var index string
+					if fieldIndexesByName, ok := fieldIndexesBySchema[desc.Name]; ok {
+						if i, ok := fieldIndexesByName[fieldIndexer]; ok {
+							index = fmt.Sprint(i)
+						}
+					}
+					if index == "" {
+						index = "-"
+						// If this is a new field we need to track its location so that subsequent operations
+						// within the patch may access it by field name.
+						fieldIndexesBySchema[desc.Name][fieldIndexer] = len(fieldIndexesBySchema[desc.Name])
+					}
+
+					splitPath[fieldIndexPathIndex] = index
+					path = strings.Join(splitPath, "/")
+					opPath := json.RawMessage([]byte(fmt.Sprintf(`"/%s"`, path)))
+					patchOperation["path"] = &opPath
+				}
+			}
+
+			if newPatchValue.HasValue() {
+				substitute, err := json.Marshal(newPatchValue.Value())
+				if err != nil {
+					return nil, err
+				}
+
+				substitutedValue := json.RawMessage(substitute)
+				patchOperation["value"] = &substitutedValue
+			}
+		}
+
+		splitPath := strings.Split(path, "/")
+		if len(splitPath) > 0 {
+			// If the path contains a collection name, substitute it for the version id
+			if col, ok := collectionsByName[splitPath[0]]; ok {
+				splitPath[0] = col.VersionID
+				path = strings.Join(splitPath, "/")
+				opPath := json.RawMessage([]byte(fmt.Sprintf(`"/%s"`, path)))
+				patchOperation["path"] = &opPath
+			}
+		}
+
+		fromPath, ok := patchOperation["from"]
+		if ok {
+			var from string
+			err := json.Unmarshal(*fromPath, &from)
+			if err != nil {
+				return nil, err
+			}
+			from = strings.TrimPrefix(from, "/")
+
+			splitPath := strings.Split(from, "/")
+			if len(splitPath) > 0 {
+				// If 'from' exists, and contains a collection name, substitute it for the version id
+				if col, ok := collectionsByName[splitPath[0]]; ok {
+					splitPath[0] = col.VersionID
+					from = strings.Join(splitPath, "/")
+					opPath := json.RawMessage([]byte(fmt.Sprintf(`"/%s"`, from)))
+					patchOperation["from"] = &opPath
+				}
+			}
+		}
+	}
+
+	return patch, nil
+}
+
+// isFieldOrInner returns true if the given path points to a SchemaFieldDescription or a property within it.
+func isFieldOrInner(path []string) bool {
+	//nolint:goconst
+	return len(path) >= 3 && path[fieldsPathIndex] == "Fields"
+}
+
+// isField returns true if the given path points to a SchemaFieldDescription.
+func isField(path []string) bool {
+	return len(path) == 3 && path[fieldsPathIndex] == "Fields"
+}
+
+// containsLetter returns true if the string contains a single unicode character.
+func containsLetter(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			return true
+		}
+	}
+	return false
+}
+
+// SetActiveCollectionVersion activates all collection versions with the given schema version, and deactivates all
 // those without it (if they share the same schema root).
 //
 // This will affect all operations interacting with the schema where a schema version is not explicitly
 // provided.  This includes GQL queries and Collection operations.
 //
 // It will return an error if the provided schema version ID does not exist.
-func (db *DB) setActiveSchemaVersion(
+func (db *DB) setActiveCollectionVersion(
 	ctx context.Context,
-	schemaVersionID string,
+	versionID string,
 ) error {
-	if schemaVersionID == "" {
+	if versionID == "" {
 		return ErrSchemaVersionIDEmpty
 	}
-	col, err := description.GetCollectionByID(ctx, schemaVersionID)
+	col, err := description.GetCollectionByID(ctx, versionID)
 	if err != nil {
 		return err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, schemaVersionID)
+	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, col.CollectionID)
 	if err != nil {
 		return err
 	}
 
-	colsWithRoot, err := description.GetCollectionsBySchemaRoot(ctx, schema.Root)
-	if err != nil {
-		return err
-	}
-
-	colsBySourceID := map[string][]client.CollectionVersion{}
-	colsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
 	for _, col := range colsWithRoot {
-		colsByID[col.VersionID] = col
+		if col.VersionID == versionID {
+			if col.IsActive {
+				continue
+			}
 
-		sources := col.CollectionSources()
-		if len(sources) > 0 {
-			// For now, we assume that each collection can only have a single source.  This will likely need
-			// to change later.
-			slice := colsBySourceID[sources[0].SourceCollectionID]
-			slice = append(slice, col)
-			colsBySourceID[sources[0].SourceCollectionID] = slice
+			col.IsActive = true
+			err = description.SaveCollection(ctx, col)
+			if err != nil {
+				return err
+			}
+
+			continue
 		}
-	}
 
-	if col.IsActive {
-		// The collection is already active, so we can skip it and continue
-		return db.loadSchema(ctx)
-	}
+		if !col.IsActive {
+			continue
+		}
 
-	sources := col.CollectionSources()
-
-	var activeCol client.CollectionVersion
-	var rootCol client.CollectionVersion
-	var isActiveFound bool
-	if len(sources) > 0 {
-		// For now, we assume that each collection can only have a single source.  This will likely need
-		// to change later.
-		activeCol, rootCol, isActiveFound = db.getActiveCollectionDown(ctx, colsByID, sources[0].SourceCollectionID)
-	}
-	if !isActiveFound {
-		// We need to look both down and up for the active version - the most recent is not necessarily the active one.
-		activeCol, isActiveFound = db.getActiveCollectionUp(ctx, colsBySourceID, rootCol.VersionID)
-	}
-
-	col.IsActive = true
-	err = description.SaveCollection(ctx, col)
-	if err != nil {
-		return err
-	}
-
-	if isActiveFound {
-		activeCol.IsActive = false
-		err = description.SaveCollection(ctx, activeCol)
+		col.IsActive = false
+		err = description.SaveCollection(ctx, col)
 		if err != nil {
 			return err
 		}
@@ -351,55 +562,4 @@ func (db *DB) setActiveSchemaVersion(
 
 	// Load the schema into the clients (e.g. GQL)
 	return db.loadSchema(ctx)
-}
-
-func (db *DB) getActiveCollectionDown(
-	ctx context.Context,
-	colsByID map[string]client.CollectionVersion,
-	id string,
-) (client.CollectionVersion, client.CollectionVersion, bool) {
-	col, ok := colsByID[id]
-	if !ok {
-		return client.CollectionVersion{}, client.CollectionVersion{}, false
-	}
-
-	if col.IsActive {
-		return col, client.CollectionVersion{}, true
-	}
-
-	sources := col.CollectionSources()
-	if len(sources) == 0 {
-		// If a collection has zero sources it is likely the initial collection version, or
-		// this collection set is currently orphaned (can happen when setting migrations that
-		// do not yet link all the way back to a non-orphaned set)
-		return client.CollectionVersion{}, col, false
-	}
-
-	// For now, we assume that each collection can only have a single source.  This will likely need
-	// to change later.
-	return db.getActiveCollectionDown(ctx, colsByID, sources[0].SourceCollectionID)
-}
-
-func (db *DB) getActiveCollectionUp(
-	ctx context.Context,
-	colsBySourceID map[string][]client.CollectionVersion,
-	id string,
-) (client.CollectionVersion, bool) {
-	cols, ok := colsBySourceID[id]
-	if !ok {
-		// We have reached the top of the set, and have not found an active collection
-		return client.CollectionVersion{}, false
-	}
-
-	for _, col := range cols {
-		if col.IsActive {
-			return col, true
-		}
-		activeCol, isFound := db.getActiveCollectionUp(ctx, colsBySourceID, col.VersionID)
-		if isFound {
-			return activeCol, isFound
-		}
-	}
-
-	return client.CollectionVersion{}, false
 }

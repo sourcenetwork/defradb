@@ -28,7 +28,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" }
@@ -63,7 +63,7 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
@@ -99,13 +99,14 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Here we esentially use Email as a template, copying it and renaming the
 				// clone.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/3" },
-						{ "op": "replace", "path": "/Users/Fields/3/Name", "value": "fax" }
+						{ "op": "replace", "path": "/Users/Fields/3/Name", "value": "fax" },
+						{ "op": "remove", "path": "/Users/Fields/3/FieldID" }
 					]
 				`,
 			},
@@ -137,14 +138,15 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Here we esentially use Name as a template, copying it, and renaming and
 				// re-typing the clone.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
 						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "age" },
-						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "Int" }
+						{ "op": "replace", "path": "/Users/Fields/2/Kind", "value": "Int" },
+						{ "op": "remove", "path": "/Users/Fields/2/FieldID" }
 					]
 				`,
 			},
@@ -188,7 +190,7 @@ func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testi
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Here we esentially use Name as a template, copying it and renaming and
 				// re-typing the clone.
 				Patch: `

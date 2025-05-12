@@ -358,20 +358,14 @@ func performAction(
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
 
-	case SchemaPatch:
-		patchSchema(s, action)
-
 	case PatchCollection:
 		patchCollection(s, action)
-
-	case GetSchema:
-		getSchema(s, action)
 
 	case GetCollections:
 		getCollections(s, action)
 
-	case SetActiveSchemaVersion:
-		setActiveSchemaVersion(s, action)
+	case SetActiveCollectionVersion:
+		setActiveCollectionVersion(s, action)
 
 	case CreateView:
 		createView(s, action)
@@ -1100,36 +1094,13 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t te
 	}
 }
 
-func patchSchema(
-	s *state.State,
-	action SchemaPatch,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		var setAsDefaultVersion bool
-		if action.SetAsDefaultVersion.HasValue() {
-			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
-		} else {
-			setAsDefaultVersion = true
-		}
-
-		err := node.PatchSchema(s.Ctx, action.Patch, action.Lens, setAsDefaultVersion)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
-}
-
 func patchCollection(
 	s *state.State,
 	action PatchCollection,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.PatchCollection(s.Ctx, action.Patch)
+		err := node.PatchCollection(s.Ctx, action.Patch, action.Lens)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1137,38 +1108,6 @@ func patchCollection(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-}
-
-func getSchema(
-	s *state.State,
-	action GetSchema,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		var results []client.SchemaDescription
-		var err error
-		switch {
-		case action.VersionID.HasValue():
-			result, e := node.GetSchemaByVersionID(s.Ctx, action.VersionID.Value())
-			err = e
-			results = []client.SchemaDescription{result}
-		default:
-			results, err = node.GetSchemas(
-				s.Ctx,
-				client.SchemaFetchOptions{
-					Root: action.Root,
-					Name: action.Name,
-				},
-			)
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if !expectedErrorRaised {
-			require.Equal(s.T, action.ExpectedResults, results)
-		}
-	}
 }
 
 func getCollections(
@@ -1194,13 +1133,13 @@ func getCollections(
 	}
 }
 
-func setActiveSchemaVersion(
+func setActiveCollectionVersion(
 	s *state.State,
-	action SetActiveSchemaVersion,
+	action SetActiveCollectionVersion,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.SetActiveSchemaVersion(s.Ctx, action.SchemaVersionID)
+		err := node.SetActiveCollectionVersion(s.Ctx, action.SchemaVersionID)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

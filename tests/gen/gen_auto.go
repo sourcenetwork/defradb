@@ -225,12 +225,6 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 		if def.Version.Name == "" {
 			return NewErrIncompleteColDefinition("description name is empty")
 		}
-		if def.Schema.Name == "" {
-			return NewErrIncompleteColDefinition("schema name is empty")
-		}
-		if def.Version.Name != def.Schema.Name {
-			return NewErrIncompleteColDefinition("description name and schema name do not match")
-		}
 		for _, field := range def.GetFields() {
 			if field.Name == "" {
 				return NewErrIncompleteColDefinition("field name is empty")

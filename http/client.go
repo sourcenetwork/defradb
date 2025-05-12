@@ -129,40 +129,19 @@ func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.Collect
 	return cols, nil
 }
 
-type patchSchemaRequest struct {
-	Patch               string
-	SetAsDefaultVersion bool
-	Migration           immutable.Option[model.Lens]
-}
-
-func (c *Client) PatchSchema(
-	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	methodURL := c.http.apiURL.JoinPath("schema")
-
-	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion, migration})
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
+type patchCollectionRequest struct {
+	Patch     string
+	Migration immutable.Option[model.Lens]
 }
 
 func (c *Client) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
 	methodURL := c.http.apiURL.JoinPath("collections")
 
-	body, err := json.Marshal(patch)
+	body, err := json.Marshal(patchCollectionRequest{patch, migration})
 	if err != nil {
 		return err
 	}
@@ -175,8 +154,8 @@ func (c *Client) PatchCollection(
 	return err
 }
 
-func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	methodURL := c.http.apiURL.JoinPath("schema", "default")
+func (c *Client) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
 	if err != nil {
@@ -312,44 +291,6 @@ func (c *Client) GetCollections(
 		collections[i] = &Collection{c.http, d}
 	}
 	return collections, nil
-}
-
-func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := c.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-
-	// schemas will always have length == 1 here
-	return schemas[0], nil
-}
-
-func (c *Client) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	methodURL := c.http.apiURL.JoinPath("schema")
-	params := url.Values{}
-	if options.ID.HasValue() {
-		params.Add("version_id", options.ID.Value())
-	}
-	if options.Root.HasValue() {
-		params.Add("root", options.Root.Value())
-	}
-	if options.Name.HasValue() {
-		params.Add("name", options.Name.Value())
-	}
-	methodURL.RawQuery = params.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
-	}
-	return schema, nil
 }
 
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

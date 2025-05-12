@@ -1205,19 +1205,11 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 					Fields: []client.CollectionFieldDescription{
 						{
 							Name: "name",
+							Kind: client.FieldKind_NILLABLE_INT,
 						},
 						{
 							Name: "device",
-							Kind: immutable.Some[client.FieldKind](client.NewNamedKind("Device", false)),
-						},
-					},
-				},
-				Schema: client.SchemaDescription{
-					Name: "User",
-					Fields: []client.SchemaFieldDescription{
-						{
-							Name: "name",
-							Kind: client.FieldKind_NILLABLE_INT,
+							Kind: client.NewNamedKind("Device", false),
 						},
 					},
 				},
@@ -1226,18 +1218,6 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				Version: client.CollectionVersion{
 					Name: "Device",
 					Fields: []client.CollectionFieldDescription{
-						{
-							Name: "model",
-						},
-						{
-							Name: "owner",
-							Kind: immutable.Some[client.FieldKind](client.NewNamedKind("User", false)),
-						},
-					},
-				},
-				Schema: client.SchemaDescription{
-					Name: "Device",
-					Fields: []client.SchemaFieldDescription{
 						{
 							Name: "model",
 							Kind: client.FieldKind_NILLABLE_STRING,
@@ -1263,22 +1243,9 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			},
 		},
 		{
-			name: "schema name is empty",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Schema.Name = ""
-			},
-		},
-		{
 			name: "field name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Schema.Fields[0].Name = ""
 				defs[0].Version.Fields[0].Name = ""
-			},
-		},
-		{
-			name: "not matching names",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Schema.Name = "Device"
 			},
 		},
 	}
@@ -1302,80 +1269,59 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	defs := []client.CollectionDefinition{
 		{
 			Version: client.CollectionVersion{
-				Name:      "User",
-				VersionID: "a",
+				Name:           "User",
+				VersionID:      "a",
+				CollectionID:   "a",
+				IsActive:       true,
+				IsMaterialized: true,
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "name",
-					},
-					{
-						Name: "age",
-					},
-					{
-						Name: "rating",
-					},
-					{
-						Name:         "devices",
-						Kind:         immutable.Some[client.FieldKind](client.NewSchemaKind("b", true)),
-						RelationName: immutable.Some("Device_owner"),
-					},
-				},
-			},
-			Schema: client.SchemaDescription{
-				Name: "User",
-				Root: "a",
-				Fields: []client.SchemaFieldDescription{
-					{
-						Name: "name",
 						Kind: client.FieldKind_NILLABLE_STRING,
+						Typ:  client.LWW_REGISTER,
 					},
 					{
 						Name: "age",
 						Kind: client.FieldKind_NILLABLE_INT,
+						Typ:  client.LWW_REGISTER,
 					},
 					{
 						Name: "rating",
 						Kind: client.FieldKind_NILLABLE_FLOAT64,
+						Typ:  client.LWW_REGISTER,
+					},
+					{
+						Name:         "devices",
+						Kind:         client.NewCollectionKind("b", true),
+						RelationName: immutable.Some("Device_owner"),
 					},
 				},
 			},
 		},
 		{
 			Version: client.CollectionVersion{
-				Name:      "Device",
-				VersionID: "b",
+				Name:           "Device",
+				VersionID:      "b",
+				CollectionID:   "b",
+				IsActive:       true,
+				IsMaterialized: true,
 				Fields: []client.CollectionFieldDescription{
-					{
-						Name: "model",
-					},
-					{
-						Name:         "owner",
-						Kind:         immutable.Some[client.FieldKind](client.NewSchemaKind("a", false)),
-						RelationName: immutable.Some("Device_owner"),
-					},
-					{
-						Name:         "owner_id",
-						RelationName: immutable.Some("Device_owner"),
-					},
-				},
-			},
-			Schema: client.SchemaDescription{
-				Name: "Device",
-				Root: "b",
-				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "model",
 						Kind: client.FieldKind_NILLABLE_STRING,
 					},
 					{
-						Name: "owner",
-						Kind: client.NewNamedKind("User", false),
-						Typ:  client.LWW_REGISTER,
+						Name:         "owner",
+						Kind:         client.NewCollectionKind("a", false),
+						RelationName: immutable.Some("Device_owner"),
+						IsPrimary:    true,
 					},
 					{
-						Name: "owner_id",
-						Kind: client.FieldKind_DocID,
-						Typ:  client.LWW_REGISTER,
+						Name:         "owner_id",
+						Kind:         client.FieldKind_DocID,
+						Typ:          client.LWW_REGISTER,
+						RelationName: immutable.Some("Device_owner"),
+						IsPrimary:    true,
 					},
 				},
 			},

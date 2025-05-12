@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16} }
@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -75,7 +75,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -101,7 +101,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -127,14 +127,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo", "Kind": "Users"
+							"Name": "foo", "Kind": "Users", "RelationName": "users_users", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1
+							"Name": "foo_id", "Kind": 1, "RelationName": "users_users", "IsPrimary": true
 						}}
 					]
 				`,

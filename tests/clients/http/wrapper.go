@@ -194,24 +194,16 @@ func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, err
 	return w.client.GetNACStatus(ctx)
 }
 
-func (w *Wrapper) PatchSchema(
-	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
-}
-
 func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
-	return w.client.PatchCollection(ctx, patch)
+	return w.client.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	return w.client.SetActiveCollectionVersion(ctx, schemaVersionID)
 }
 
 func (w *Wrapper) AddView(
@@ -244,17 +236,6 @@ func (w *Wrapper) GetCollections(
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	return w.client.GetCollections(ctx, options)
-}
-
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	return w.client.GetSchemaByVersionID(ctx, versionID)
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemas(ctx, options)
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

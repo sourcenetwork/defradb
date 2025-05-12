@@ -128,12 +128,12 @@ func TestQuerySimpleWithLimit2(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},
@@ -200,12 +200,12 @@ func TestQuerySimpleWithOffset0(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(32),
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 						{
-							"Name": "John",
-							"Age":  int64(21),
+							"Name": "Alice",
+							"Age":  int64(19),
 						},
 					},
 				},

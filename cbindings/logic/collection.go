@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -292,7 +293,7 @@ func CollectionGet(n int, docIDinput string, showDeleted bool, gocOptions GoCOpt
 	return marshalJSONToGoCResult(docMap)
 }
 
-func CollectionPatch(n int, patch string, gocOptions GoCOptions) GoCResult {
+func CollectionPatch(n int, patch string, lensString string, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, gocOptions.Identity)
@@ -305,7 +306,22 @@ func CollectionPatch(n int, patch string, gocOptions GoCOptions) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GetNode(n).DB.PatchCollection(ctx, patch)
+	var migration immutable.Option[model.Lens] = immutable.None[model.Lens]()
+	if lensString != "" {
+		var lensCfg model.Lens
+		decoder := json.NewDecoder(strings.NewReader(lensString))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&lensCfg); err != nil {
+			return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
+		}
+
+		// Length being greater than 0 also means it is not nil, so no need to check
+		if len(lensCfg.Lenses) > 0 {
+			migration = immutable.Some(lensCfg)
+		}
+	}
+
+	err = GetNode(n).DB.PatchCollection(ctx, patch, migration)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -369,4 +385,19 @@ func CollectionUpdate(n int, docID string, filter string, updater string, gocOpt
 	default:
 		return returnGoC(1, errNoDocIDOrFilter, "")
 	}
+}
+
+func SetActiveCollection(n int, version string, txnID uint64) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithTransaction(n, ctx, txnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	err = GetNode(n).DB.SetActiveCollectionVersion(ctx, version)
+	if err != nil {
+		return returnGoC(1, fmt.Sprintf(errSetActiveSchema, err), "")
+	}
+	return returnGoC(0, "", "")
 }

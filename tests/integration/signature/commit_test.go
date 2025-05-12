@@ -26,8 +26,8 @@ import (
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
-	const docID = "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3"
-	const schemaVersionID = "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq"
+	const docID = "bae-f895da58-3326-510a-87f3-d043ff5424ea"
+	const schemaVersionID = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
 
 	fieldVal, err := cbor.Marshal(value)
 	if err != nil {

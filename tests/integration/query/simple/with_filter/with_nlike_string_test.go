@@ -421,10 +421,10 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasEither(t *testing.T) 
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Viserys I Targaryen, King of the Andals",
+							"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 						},
 						{
-							"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+							"Name": "Viserys I Targaryen, King of the Andals",
 						},
 					},
 				},
@@ -464,10 +464,10 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockPropNotSet(t *testing.T)
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+							"Name": nil,
 						},
 						{
-							"Name": nil,
+							"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 						},
 					},
 				},

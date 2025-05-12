@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	HEADSTORE_DOC = "/d"
-	HEADSTORE_COL = "/c"
+	HEADSTORE_DOC         = "/d"
+	HEADSTORE_COL         = "/c"
+	HEADSTORE_FIELD_DEF   = "/f"
+	HEADSTORE_COL_DEF     = "/g"
+	HEADSTORE_COL_SET_DEF = "/s"
 )
 
 // HeadstoreKey represents any key that may be stored in the headstore.
@@ -41,6 +44,10 @@ func NewHeadstoreKey(key string) (HeadstoreKey, error) {
 		return NewHeadstoreDocKey(key)
 	case strings.HasPrefix(key, HEADSTORE_COL):
 		return NewHeadstoreColKeyFromString(key)
+	case strings.HasPrefix(key, HEADSTORE_FIELD_DEF):
+		return NewHeadstoreFieldDefinitionFromString(key)
+	case strings.HasPrefix(key, HEADSTORE_COL_DEF):
+		return NewHeadstoreCollectionDefinitionFromString(key)
 	default:
 		return nil, ErrInvalidKey
 	}

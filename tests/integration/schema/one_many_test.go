@@ -43,16 +43,17 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
-								Name: "dogs",
-								Kind: immutable.Some[client.FieldKind](
-									client.NewSchemaKind("bafkreibtwohjfa5ik3huokzglyneezu4m76fjv57ji2luoiohyhnsmj5lq", true),
-								),
+								Name:         "dogs",
+								Kind:         client.NewCollectionKind("bafyreig2a26vnof4pt7mnxjfi2eweca6stcpeahbh6jri76ukkff5udnva", true),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{
 								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},
@@ -63,21 +64,25 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
 							},
 							{
-								Name: "owner",
-								Kind: immutable.Some[client.FieldKind](
-									client.NewSchemaKind("bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4", false),
-								),
+								Name:         "owner",
+								Kind:         client.NewCollectionKind("bafyreiezxal4wrjp2fn6x5pf3kecliun72ky5tvb4deql2j376bmdknuh4", false),
 								RelationName: immutable.Some("dog_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "owner_id",
-								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
+								Kind:         client.ScalarKind(client.FieldKind_DocID),
 								RelationName: immutable.Some("dog_user"),
+								Typ:          client.LWW_REGISTER,
+								IsPrimary:    true,
 							},
 						},
 					},
@@ -107,20 +112,24 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name:         "a",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								Kind:         client.NewSelfKind("", false),
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "a_id",
-								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
+								Kind:         client.ScalarKind(client.FieldKind_DocID),
+								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "b",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
+								Kind:         client.NewSelfKind("", true),
 								RelationName: immutable.Some("user_user"),
 							},
 						},
@@ -151,21 +160,25 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name:         "a",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
+								Kind:         client.NewSelfKind("", true),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								Kind:         client.NewSelfKind("", false),
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "b_id",
-								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
+								Kind:         client.ScalarKind(client.FieldKind_DocID),
+								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 						},
 					},
@@ -200,46 +213,25 @@ func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name:         "boss",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								Kind:         client.NewSelfKind("", false),
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "boss_id",
-								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "minions",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
+								Kind:         client.NewSelfKind("", true),
 								RelationName: immutable.Some("user_user"),
-							},
-						},
-					},
-				},
-			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
-					{
-						Name:      "User",
-						Root:      "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
-						VersionID: "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: request.DocIDFieldName,
-								Kind: client.FieldKind_DocID,
-							},
-							{
-								Name: "boss",
-								Kind: client.NewSelfKind("", false),
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "boss_id",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},

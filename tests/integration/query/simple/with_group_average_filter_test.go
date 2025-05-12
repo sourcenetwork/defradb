@@ -101,10 +101,10 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 							"_avg": float64(33),
 							"_group": []map[string]any{
 								{
-									"Age": int64(34),
+									"Age": int64(32),
 								},
 								{
-									"Age": int64(32),
+									"Age": int64(34),
 								},
 							},
 						},
@@ -167,10 +167,10 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 							"_avg": float64(33),
 							"_group": []map[string]any{
 								{
-									"Age": int64(32),
+									"Age": int64(34),
 								},
 								{
-									"Age": int64(34),
+									"Age": int64(32),
 								},
 							},
 						},
@@ -285,11 +285,6 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":   "Alice",
-							"_avg":   float64(0),
-							"_group": []map[string]any{},
-						},
-						{
 							"Name": "John",
 							"_avg": float64(34),
 							"_group": []map[string]any{
@@ -297,6 +292,11 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 									"Age": int64(34),
 								},
 							},
+						},
+						{
+							"Name":   "Alice",
+							"_avg":   float64(0),
+							"_group": []map[string]any{},
 						},
 					},
 				},

@@ -27,7 +27,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Users" },
@@ -61,7 +61,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Author" },

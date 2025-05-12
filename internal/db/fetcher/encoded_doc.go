@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 type EncodedDocument interface {
@@ -175,12 +174,8 @@ func DecodeToDoc(
 	}
 
 	for desc, value := range properties {
-		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, desc.Name)
-		if err != nil {
-			return core.Doc{}, err
-		}
-
-		doc.Fields[fieldShortID] = value
+		index := mapping.FirstIndexOfName(desc.Name)
+		doc.Fields[index] = value
 	}
 
 	doc.SchemaVersionID = encdoc.SchemaVersionID()

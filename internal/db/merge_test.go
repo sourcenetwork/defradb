@@ -62,7 +62,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:        docID.String(),
 		Cid:          compInfo2.link.Cid,
-		CollectionID: col.SchemaRoot(),
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -107,7 +107,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:        docID.String(),
 		Cid:          compInfo2.link.Cid,
-		CollectionID: col.SchemaRoot(),
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -117,7 +117,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:        docID.String(),
 		Cid:          compInfo3.link.Cid,
-		CollectionID: col.SchemaRoot(),
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -165,7 +165,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:        docID.String(),
 		Cid:          compInfo2.link.Cid,
-		CollectionID: col.SchemaRoot(),
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -184,7 +184,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
 		DocID:        docID.String(),
 		Cid:          compInfo3.link.Cid,
-		CollectionID: col.SchemaRoot(),
+		CollectionID: col.CollectionID(),
 	})
 	require.ErrorContains(t, err, "could not find bafyreibdsxukhmkwea4hdd2svvf6fijvuhdxeil2bf75v4wzooldb74uwq")
 
@@ -245,7 +245,7 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 					DocID:           d.docID,
 					FieldName:       field,
 					Priority:        d.fieldsHeight[field],
-					SchemaVersionID: d.col.Schema().VersionID,
+					SchemaVersionID: d.col.Version().VersionID,
 					Data:            encodeValue(val),
 				},
 			},
@@ -264,7 +264,7 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		&crdt.DocCompositeDelta{
 			DocID:           d.docID,
 			Priority:        newPriority,
-			SchemaVersionID: d.col.Schema().VersionID,
+			SchemaVersionID: d.col.Version().VersionID,
 			Status:          1,
 		},
 		links,

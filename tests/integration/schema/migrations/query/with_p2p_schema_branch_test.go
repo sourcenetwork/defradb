@@ -35,7 +35,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Patch first node only
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -47,8 +47,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreibpai5hfnalhtn5mgamzkgml4gwftow7pklmjcn6i4sqey6a5u5ce",
-					DestinationSchemaVersionID: "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba",
+					SourceSchemaVersionID:      "bafyreibvat5vc4nxjbxlewe7y2gpskfugypzqbqwal2zwaa7bnuiedyuyy",
+					DestinationSchemaVersionID: "bafyreiecoh66au3ofetd7lyetuqm7xlsj3ln777l7sw324jsutel3w6u5m",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -62,7 +62,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					},
 				},
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Patch second node with different patch
 				NodeID: immutable.Some(1),
 				Patch: `

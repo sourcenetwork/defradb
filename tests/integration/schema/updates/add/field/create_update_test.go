@@ -18,8 +18,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
-	initialSchemaVersionID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	updatedSchemaVersionID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	initialSchemaVersionID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	updatedSchemaVersionID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 					},
 				},
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -111,8 +111,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 }
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
-	initialSchemaVersionID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	updatedSchemaVersionID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	initialSchemaVersionID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	updatedSchemaVersionID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -129,7 +129,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }

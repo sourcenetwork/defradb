@@ -32,7 +32,7 @@ func TestColVersionUpdateRemoveName(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name"
+							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i/Name"
 						}
 					]
 				`,

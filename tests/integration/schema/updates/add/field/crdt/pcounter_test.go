@@ -27,7 +27,7 @@ func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Int", "Typ": 5} }
@@ -60,7 +60,7 @@ func TestSchemaUpdates_AddFieldCRDTPCounterWithMismatchKind_Error(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "Boolean", "Typ": 5} }

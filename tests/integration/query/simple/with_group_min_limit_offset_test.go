@@ -55,7 +55,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWith
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_min": int64(32),
+							"_min": int64(28),
 						},
 						{
 							"Name": "Alice",

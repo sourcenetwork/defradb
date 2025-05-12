@@ -36,19 +36,6 @@ func (c *Collection) Name() string {
 	return res[0].String()
 }
 
-func (c *Collection) Schema() client.SchemaDescription {
-	promise := c.client.Call("schema")
-	res, err := goji.Await(goji.PromiseValue(promise))
-	if err != nil {
-		panic(err)
-	}
-	var out client.SchemaDescription
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		panic(err)
-	}
-	return out
-}
-
 func (c *Collection) VersionID() string {
 	promise := c.client.Call("versionID")
 	res, err := goji.Await(goji.PromiseValue(promise))
@@ -71,8 +58,8 @@ func (c *Collection) Version() client.CollectionVersion {
 	return out
 }
 
-func (c *Collection) SchemaRoot() string {
-	promise := c.client.Call("schemaRoot")
+func (c *Collection) CollectionID() string {
+	promise := c.client.Call("collectionID")
 	res, err := goji.Await(goji.PromiseValue(promise))
 	if err != nil {
 		panic(err)

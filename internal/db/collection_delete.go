@@ -163,7 +163,7 @@ func (c *collection) applyDelete(
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
-		c.Schema().VersionID,
+		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
@@ -190,7 +190,7 @@ func (c *collection) applyDelete(
 		}
 
 		collectionCRDT := crdt.NewCollection(
-			c.Schema().VersionID,
+			c.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 

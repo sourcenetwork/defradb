@@ -38,6 +38,50 @@ func (_m *Collection) EXPECT() *Collection_Expecter {
 	return &Collection_Expecter{mock: &_m.Mock}
 }
 
+// CollectionID provides a mock function for the type Collection
+func (_mock *Collection) CollectionID() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CollectionID")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// Collection_CollectionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CollectionID'
+type Collection_CollectionID_Call struct {
+	*mock.Call
+}
+
+// CollectionID is a helper method to define mock.On call
+func (_e *Collection_Expecter) CollectionID() *Collection_CollectionID_Call {
+	return &Collection_CollectionID_Call{Call: _e.mock.On("CollectionID")}
+}
+
+func (_c *Collection_CollectionID_Call) Run(run func()) *Collection_CollectionID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Collection_CollectionID_Call) Return(s string) *Collection_CollectionID_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *Collection_CollectionID_Call) RunAndReturn(run func() string) *Collection_CollectionID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type Collection
 func (_mock *Collection) Create(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
 	var tmpRet mock.Arguments
@@ -725,94 +769,6 @@ func (_c *Collection_Save_Call) Return(err error) *Collection_Save_Call {
 }
 
 func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Save_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Schema provides a mock function for the type Collection
-func (_mock *Collection) Schema() client.SchemaDescription {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Schema")
-	}
-
-	var r0 client.SchemaDescription
-	if returnFunc, ok := ret.Get(0).(func() client.SchemaDescription); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(client.SchemaDescription)
-	}
-	return r0
-}
-
-// Collection_Schema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Schema'
-type Collection_Schema_Call struct {
-	*mock.Call
-}
-
-// Schema is a helper method to define mock.On call
-func (_e *Collection_Expecter) Schema() *Collection_Schema_Call {
-	return &Collection_Schema_Call{Call: _e.mock.On("Schema")}
-}
-
-func (_c *Collection_Schema_Call) Run(run func()) *Collection_Schema_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Collection_Schema_Call) Return(schemaDescription client.SchemaDescription) *Collection_Schema_Call {
-	_c.Call.Return(schemaDescription)
-	return _c
-}
-
-func (_c *Collection_Schema_Call) RunAndReturn(run func() client.SchemaDescription) *Collection_Schema_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SchemaRoot provides a mock function for the type Collection
-func (_mock *Collection) SchemaRoot() string {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for SchemaRoot")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func() string); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// Collection_SchemaRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SchemaRoot'
-type Collection_SchemaRoot_Call struct {
-	*mock.Call
-}
-
-// SchemaRoot is a helper method to define mock.On call
-func (_e *Collection_Expecter) SchemaRoot() *Collection_SchemaRoot_Call {
-	return &Collection_SchemaRoot_Call{Call: _e.mock.On("SchemaRoot")}
-}
-
-func (_c *Collection_SchemaRoot_Call) Run(run func()) *Collection_SchemaRoot_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Collection_SchemaRoot_Call) Return(s string) *Collection_SchemaRoot_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *Collection_SchemaRoot_Call) RunAndReturn(run func() string) *Collection_SchemaRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

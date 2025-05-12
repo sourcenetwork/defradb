@@ -47,7 +47,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid":       "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
+							"cid":       "bafyreia37txi77ajmma3t3o4hlnkx7qdbzymioplbuscla576i52rr5hri",
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":     john21DocID,
 							"fieldName": "age",
@@ -55,7 +55,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
+							"cid":       "bafyreiajo5esphlst5bi2qjudn7uutk5layfa3edxb55rett54qj7gznai",
 							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":     john21DocID,
 							"fieldName": "name",
@@ -63,18 +63,18 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreidl77w6pex7uworttm5bsqyvli5qxqoqy3q2n2xqor5vrqfr3woee",
+							"cid":       "bafyreicmnl5hzhq4q533a47igftavebkqjhxl22t3hag6yods5j6iydji4",
 							"delta":     nil,
 							"docID":     john21DocID,
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
+									"cid":  "bafyreia37txi77ajmma3t3o4hlnkx7qdbzymioplbuscla576i52rr5hri",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
+									"cid":  "bafyreiajo5esphlst5bi2qjudn7uutk5layfa3edxb55rett54qj7gznai",
 									"name": "name",
 								},
 							},
@@ -161,20 +161,20 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
-							"docID": john21DocID,
-						},
-						{
-							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
-							"docID": john21DocID,
-						},
-						{
 							"delta": testUtils.CBORValue(34),
 							"docID": islam33DocID,
 						},
 						{
 							"delta": testUtils.CBORValue(33),
 							"docID": islam33DocID,
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
+							"docID": john21DocID,
+						},
+						{
+							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
+							"docID": john21DocID,
 						},
 					},
 				},
@@ -186,7 +186,7 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 }
 
 func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
-	const docID = "bae-d3cc98b4-38d5-5c50-85a3-d3045d44094e"
+	const docID = "bae-b0875c46-79f8-568f-9cc9-13eab3e2b8b1"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -229,7 +229,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 }
 
 func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *testing.T) {
-	const docID = "bae-d3cc98b4-38d5-5c50-85a3-d3045d44094e"
+	const docID = "bae-b0875c46-79f8-568f-9cc9-13eab3e2b8b1"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -278,7 +278,7 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
-				Doc:            "[" + john21Doc + ", " + islam33Doc + "]",
+				Doc:            "[" + islam33Doc + ", " + john21Doc + "]",
 				IsDocEncrypted: true,
 			},
 			testUtils.Request{
@@ -293,11 +293,11 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
+							"delta": encrypt(testUtils.CBORValue(33), islam33DocID, ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
-							"delta": encrypt(testUtils.CBORValue("John"), john21DocID, ""),
+							"delta": encrypt(testUtils.CBORValue("Islam"), islam33DocID, ""),
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
@@ -305,11 +305,11 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 							"docID": testUtils.NewDocIndex(0, 0),
 						},
 						{
-							"delta": encrypt(testUtils.CBORValue(33), islam33DocID, ""),
+							"delta": encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID": testUtils.NewDocIndex(0, 1),
 						},
 						{
-							"delta": encrypt(testUtils.CBORValue("Islam"), islam33DocID, ""),
+							"delta": encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID": testUtils.NewDocIndex(0, 1),
 						},
 						{

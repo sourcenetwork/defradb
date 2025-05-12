@@ -12,6 +12,7 @@ package client
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -37,6 +38,19 @@ type CollectionVersion struct {
 
 	// The immutable ID of this collection, consistent across all versions.
 	CollectionID string
+
+	// CollectionSetDescription contains the information required to identify a collection as part of
+	// a larger set.
+	//
+	// These are global, deterministic properties that, like CollectionID and VersionID, are common across all
+	// Defra nodes hosting the collection.
+	//
+	// Collections only form a collection set if, at the time of their creation, they form a circular set of relations -
+	// for example if the Book collection contains a primary relation to Author, and Author contains a primary relation
+	// to Book.
+	//
+	// If this CollectionVersion is not part of a collection set, this property will be None.
+	CollectionSet immutable.Option[CollectionSetDescription]
 
 	// Sources is the set of sources from which this collection draws data.
 	//
@@ -103,6 +117,13 @@ type CollectionVersion struct {
 	// If true, it will not be directly queriable.
 	IsEmbeddedOnly bool
 
+	// IsPlaceholder defines whether or not this collection version is an empty placeholder waiting
+	// to be defined in this Defra node.
+	//
+	// This can happen if a migration between version ids is defined locally before the version (for
+	// example, via PatchCollection).
+	IsPlaceholder bool
+
 	// VectorEmbeddings contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
@@ -112,6 +133,25 @@ type CollectionVersion struct {
 	// This is necessary to ensure that the generated docID is representative of the
 	// content of the document.
 	VectorEmbeddings []VectorEmbeddingDescription
+}
+
+// CollectionSetDescription contains the information required to identify a collection as part of
+// a larger set.
+//
+// These are global, deterministic properties that, like CollectionID and VersionID, are common across all
+// Defra nodes hosting the collection.
+//
+// Collections only form a collection set if, at the time of their creation, they form a circular set of relations -
+// for example if the Book collection contains a primary relation to Author, and Author contains a primary relation
+// to Book.
+type CollectionSetDescription struct {
+	// CollectionSetID is the ID of the collection set that this item belongs to.
+	CollectionSetID string
+
+	// RelativeID is this item's relative location within the collection set.
+	//
+	// This is currently based on Name, lexographically ascending, at the time of creation.
+	RelativeID int
 }
 
 // QuerySource represents a collection data source from a query.
@@ -172,7 +212,7 @@ func (col CollectionVersion) GetFieldByRelation(
 	for _, field := range col.Fields {
 		if field.RelationName.Value() == relationName &&
 			!(col.Name == otherCollectionName && otherFieldName == field.Name) &&
-			field.Kind.Value() != FieldKind_DocID {
+			field.Kind != FieldKind_DocID {
 			return field, true
 		}
 	}
@@ -199,6 +239,11 @@ func sourcesOfType[ResultType any](col CollectionVersion) []ResultType {
 	return result
 }
 
+// Equal returns true if this and the given [CollectionVersion] are equal.
+func (col CollectionVersion) Equal(other CollectionVersion) bool {
+	return reflect.DeepEqual(col, other)
+}
+
 // collectionVersion is a private type used to facilitate the unmarshalling
 // of json to a [CollectionVersion].
 type collectionVersion struct {
@@ -207,10 +252,12 @@ type collectionVersion struct {
 	VersionID        string
 	CollectionID     string
 	RootID           uint32
+	CollectionSet    immutable.Option[CollectionSetDescription]
 	IsMaterialized   bool
 	IsBranchable     bool
 	IsEmbeddedOnly   bool
 	IsActive         bool
+	IsPlaceholder    bool
 	Policy           immutable.Option[PolicyDescription]
 	Indexes          []IndexDescription
 	Fields           []CollectionFieldDescription
@@ -230,10 +277,12 @@ func (c *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 	c.Name = descMap.Name
 	c.VersionID = descMap.VersionID
 	c.CollectionID = descMap.CollectionID
+	c.CollectionSet = descMap.CollectionSet
 	c.IsMaterialized = descMap.IsMaterialized
 	c.IsBranchable = descMap.IsBranchable
 	c.IsEmbeddedOnly = descMap.IsEmbeddedOnly
 	c.IsActive = descMap.IsActive
+	c.IsPlaceholder = descMap.IsPlaceholder
 	c.Indexes = descMap.Indexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))

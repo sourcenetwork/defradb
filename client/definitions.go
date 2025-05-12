@@ -15,11 +15,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // CollectionDefinition contains the metadata defining what a Collection is.
@@ -30,22 +28,14 @@ import (
 type CollectionDefinition struct {
 	// Version returns the CollectionVersion of this Collection.
 	Version CollectionVersion `json:"version"`
-	// Schema returns the SchemaDescription used to define this Collection.
-	Schema SchemaDescription `json:"schema"`
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
 func (def CollectionDefinition) GetFieldByName(fieldName string) (FieldDefinition, bool) {
 	collectionField, existsOnCollection := def.Version.GetFieldByName(fieldName)
-	schemaField, existsOnSchema := def.Schema.GetFieldByName(fieldName)
 
-	if existsOnCollection && existsOnSchema {
-		return NewFieldDefinition(
-			collectionField,
-			schemaField,
-		), true
-	} else if existsOnCollection && !existsOnSchema {
+	if existsOnCollection {
 		// If the field exists only on the collection, it is a local only field, for example the
 		// secondary side of a relation.
 		return NewLocalFieldDefinition(
@@ -62,19 +52,11 @@ func (def CollectionDefinition) GetFields() []FieldDefinition {
 	fields := []FieldDefinition{}
 
 	for _, localField := range def.Version.Fields {
-		globalField, ok := def.Schema.GetFieldByName(localField.Name)
-		if ok {
-			fields = append(
-				fields,
-				NewFieldDefinition(localField, globalField),
-			)
-		} else {
-			// This must be a local only field, for example the secondary side of a relation.
-			fields = append(
-				fields,
-				NewLocalFieldDefinition(localField),
-			)
-		}
+		// This must be a local only field, for example the secondary side of a relation.
+		fields = append(
+			fields,
+			NewLocalFieldDefinition(localField),
+		)
 	}
 
 	return fields
@@ -101,6 +83,12 @@ func (def CollectionDefinition) GetName() string {
 // from various functions as a convienient means to access the computated convergence of schema
 // and collection versions.
 type FieldDefinition struct {
+	// The immutable ID of this field.
+	//
+	// Only global fields persisted in the DAG will have a value - virtual fields such as secondary
+	// relation fields will not have a FieldID.
+	FieldID string
+
 	// Name contains the name of this field.
 	Name string
 
@@ -131,44 +119,17 @@ type FieldDefinition struct {
 	Size int
 }
 
-// NewFieldDefinition returns a new [FieldDefinition], combining the given local and global elements
-// into a single object.
-func NewFieldDefinition(local CollectionFieldDescription, global SchemaFieldDescription) FieldDefinition {
-	var kind FieldKind
-	if local.Kind.HasValue() {
-		kind = local.Kind.Value()
-	} else {
-		kind = global.Kind
-	}
-
-	return FieldDefinition{
-		Name:              global.Name,
-		Kind:              kind,
-		RelationName:      local.RelationName.Value(),
-		Typ:               global.Typ,
-		IsPrimaryRelation: kind.IsObject() && !kind.IsArray(),
-		DefaultValue:      local.DefaultValue,
-		Size:              local.Size,
-	}
-}
-
 // NewLocalFieldDefinition returns a new [FieldDefinition] from the given local [CollectionFieldDescription].
 func NewLocalFieldDefinition(local CollectionFieldDescription) FieldDefinition {
 	return FieldDefinition{
-		Name:         local.Name,
-		Kind:         local.Kind.Value(),
-		RelationName: local.RelationName.Value(),
-		DefaultValue: local.DefaultValue,
-		Size:         local.Size,
-	}
-}
-
-// NewSchemaOnlyFieldDefinition returns a new [FieldDefinition] from the given global [SchemaFieldDescription].
-func NewSchemaOnlyFieldDefinition(global SchemaFieldDescription) FieldDefinition {
-	return FieldDefinition{
-		Name: global.Name,
-		Kind: global.Kind,
-		Typ:  global.Typ,
+		FieldID:           local.FieldID,
+		Name:              local.Name,
+		Kind:              local.Kind,
+		Typ:               local.Typ,
+		RelationName:      local.RelationName.Value(),
+		DefaultValue:      local.DefaultValue,
+		IsPrimaryRelation: local.IsPrimary,
+		Size:              local.Size,
 	}
 }
 
@@ -202,7 +163,7 @@ func NewDefinitionCache(definitions []CollectionDefinition) DefinitionCache {
 	definitionsBySchemaRoot := make(map[string]CollectionDefinition, len(definitions))
 
 	for _, def := range definitions {
-		definitionsBySchemaRoot[def.Schema.Root] = def
+		definitionsBySchemaRoot[def.Version.CollectionID] = def
 	}
 
 	return DefinitionCache{
@@ -230,8 +191,8 @@ func GetDefinition(
 
 		return CollectionDefinition{}, false
 
-	case *SchemaKind:
-		def, ok := cache.DefinitionsBySchemaRoot[typedKind.Root]
+	case *CollectionKind:
+		def, ok := cache.DefinitionsBySchemaRoot[typedKind.CollectionID]
 		return def, ok
 
 	case *SelfKind:
@@ -239,11 +200,19 @@ func GetDefinition(
 			return host, true
 		}
 
-		hostIDBase := strings.Split(host.Schema.Root, "-")[0]
-		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
+		for _, col := range cache.Definitions {
+			if col.Version.CollectionID == host.Version.CollectionID {
+				continue
+			}
 
-		def, ok := cache.DefinitionsBySchemaRoot[targetID]
-		return def, ok
+			if col.Version.CollectionSet.Value().CollectionSetID != host.Version.CollectionSet.Value().CollectionSetID {
+				continue
+			}
+
+			if fmt.Sprint(col.Version.CollectionSet.Value().RelativeID) == typedKind.RelativeID {
+				return col, true
+			}
+		}
 
 	default:
 		// no-op
@@ -265,45 +234,19 @@ func GetDefinitionFromStore(
 	switch typedKind := kind.(type) {
 	case *NamedKind:
 		col, err := store.GetCollectionByName(ctx, typedKind.Name)
-		if errors.Is(err, corekv.ErrNotFound) {
-			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
-				Name: immutable.Some(typedKind.Name),
-			})
-			if len(schemas) == 0 || err != nil {
-				return CollectionDefinition{}, false, err
-			}
-
-			return CollectionDefinition{
-				// todo - returning the first is a temporary simplification until
-				// https://github.com/sourcenetwork/defradb/issues/2934
-				Schema: schemas[0],
-			}, true, nil
-		} else if err != nil {
+		if err != nil {
 			return CollectionDefinition{}, false, err
 		}
 
 		return col.Definition(), true, nil
 
-	case *SchemaKind:
+	case *CollectionKind:
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			CollectionID: immutable.Some(typedKind.Root),
+			CollectionID: immutable.Some(typedKind.CollectionID),
 		})
 
-		if len(cols) == 0 || errors.Is(err, ErrNotFound) {
-			// If no collections were found, check for schema-only collections
-			schemas, err := store.GetSchemas(ctx, SchemaFetchOptions{
-				Root: immutable.Some(typedKind.Root),
-			})
-
-			if len(schemas) == 0 || err != nil {
-				return CollectionDefinition{}, false, err
-			}
-
-			return CollectionDefinition{
-				// todo - returning the first is a temporary simplification until
-				// https://github.com/sourcenetwork/defradb/issues/2934
-				Schema: schemas[0],
-			}, true, nil
+		if len(cols) == 0 {
+			return CollectionDefinition{}, false, ErrNotFound
 		}
 
 		if err != nil {
@@ -317,19 +260,26 @@ func GetDefinitionFromStore(
 			return host, true, nil
 		}
 
-		hostIDBase := strings.Split(host.Schema.Root, "-")[0]
-		targetID := fmt.Sprintf("%s-%s", hostIDBase, typedKind.RelativeID)
-
 		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			CollectionID: immutable.Some(targetID),
+			CollectionSetID: immutable.Some(host.Version.CollectionSet.Value().CollectionSetID),
 		})
-		if len(cols) == 0 || err != nil {
+		if err != nil {
 			return CollectionDefinition{}, false, err
 		}
-		def := cols[0].Definition()
-		def.Version = CollectionVersion{}
 
-		return def, true, nil
+		for _, col := range cols {
+			if col.Version().CollectionID == host.Version.CollectionID {
+				continue
+			}
+
+			if col.Version().CollectionSet.Value().CollectionSetID != host.Version.CollectionSet.Value().CollectionSetID {
+				continue
+			}
+
+			if fmt.Sprint(col.Version().CollectionSet.Value().RelativeID) == typedKind.RelativeID {
+				return col.Definition(), true, nil
+			}
+		}
 
 	default:
 		// no-op

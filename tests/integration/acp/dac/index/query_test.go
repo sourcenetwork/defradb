@@ -113,10 +113,10 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Islam",
+							"name": "Shahzad",
 						},
 						{
-							"name": "Shahzad",
+							"name": "Islam",
 						},
 					},
 				},

@@ -56,7 +56,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionNames ...string)
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
-		key := keys.NewP2PCollectionKey(col.SchemaRoot())
+		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
 			return err
@@ -65,7 +65,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionNames ...string)
 
 	txn.OnSuccess(func() {
 		for _, col := range storeCollections {
-			_, err := p.server.addPubSubTopic(col.SchemaRoot(), true, nil)
+			_, err := p.server.addPubSubTopic(col.CollectionID(), true, nil)
 			if err != nil {
 				log.ErrorE("Failed to add pubsub topic.", err)
 			}
@@ -107,7 +107,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionNames ...stri
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
-		key := keys.NewP2PCollectionKey(col.SchemaRoot())
+		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
@@ -116,7 +116,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionNames ...stri
 
 	txn.OnSuccess(func() {
 		for _, col := range storeCollections {
-			err := p.server.removePubSubTopic(col.SchemaRoot())
+			err := p.server.removePubSubTopic(col.CollectionID())
 			if err != nil {
 				log.ErrorE("Failed to remove pubsub topic.", err)
 			}

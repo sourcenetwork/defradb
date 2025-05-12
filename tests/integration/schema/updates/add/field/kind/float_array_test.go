@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldKindFloatArray(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 7} }
@@ -60,7 +60,7 @@ func TestSchemaUpdatesAddFieldKindFloatArrayWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 7} }
@@ -105,7 +105,7 @@ func TestSchemaUpdatesAddFieldKindFloatArraySubstitutionWithCreate(t *testing.T)
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "[Float!]"} }

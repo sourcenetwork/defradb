@@ -13,8 +13,6 @@ package schema
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -29,14 +27,14 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.SetActiveSchemaVersion{
+			testUtils.SetActiveCollectionVersion{
 				SchemaVersionID: "",
 				ExpectedError:   "schema version ID can't be empty",
 			},
@@ -55,14 +53,14 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.SetActiveSchemaVersion{
+			testUtils.SetActiveCollectionVersion{
 				SchemaVersionID: "does not exist",
 				ExpectedError:   "key not found",
 			},
@@ -81,16 +79,16 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.SetActiveSchemaVersion{
-				SchemaVersionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+			testUtils.SetActiveCollectionVersion{
+				SchemaVersionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -117,16 +115,16 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.SetActiveSchemaVersion{
-				SchemaVersionID: "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe",
+			testUtils.SetActiveCollectionVersion{
+				SchemaVersionID: "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
 			},
 			testUtils.Request{
 				Request: `query {

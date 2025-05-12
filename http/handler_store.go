@@ -73,17 +73,17 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
+func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var message patchSchemaRequest
+	var message patchCollectionRequest
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	err = db.PatchSchema(req.Context(), message.Patch, message.Migration, message.SetAsDefaultVersion)
+	err = db.PatchCollection(req.Context(), message.Patch, message.Migration)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -91,25 +91,7 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
-
-	var patch string
-	err := requestJSON(req, &patch)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-
-	err = db.PatchCollection(req.Context(), patch)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.Request) {
+func (s *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	schemaVersionID, err := io.ReadAll(req.Body)
@@ -117,7 +99,7 @@ func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = db.SetActiveSchemaVersion(req.Context(), string(schemaVersionID))
+	err = db.SetActiveCollectionVersion(req.Context(), string(schemaVersionID))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -195,28 +177,6 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		colDesc[i] = col.Definition()
 	}
 	responseJSON(rw, http.StatusOK, colDesc)
-}
-
-func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
-
-	options := client.SchemaFetchOptions{}
-	if req.URL.Query().Has("version_id") {
-		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
-	}
-	if req.URL.Query().Has("root") {
-		options.Root = immutable.Some(req.URL.Query().Get("root"))
-	}
-	if req.URL.Query().Has("name") {
-		options.Name = immutable.Some(req.URL.Query().Get("name"))
-	}
-
-	schema, err := db.GetSchemas(req.Context(), options)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, schema)
 }
 
 func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
@@ -379,9 +339,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionDefinitionSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/collection_definition",
 	}
-	schemaSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/schema",
-	}
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
@@ -394,8 +351,8 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	lensConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/lens_config",
 	}
-	patchSchemaRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/patch_schema_request",
+	patchCollectionRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/patch_collection_request",
 	}
 	identitySchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/identity",
@@ -431,33 +388,19 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	addSchema.AddResponse(200, addSchemaResponse)
 	addSchema.Responses.Set("400", errorResponse)
 
-	patchSchemaRequest := openapi3.NewRequestBody().
-		WithJSONSchemaRef(patchSchemaRequestSchema)
-
-	patchSchema := openapi3.NewOperation()
-	patchSchema.OperationID = "patch_schema"
-	patchSchema.Description = "Update a schema definition"
-	patchSchema.Tags = []string{"schema"}
-	patchSchema.RequestBody = &openapi3.RequestBodyRef{
-		Value: patchSchemaRequest,
-	}
-	patchSchema.Responses = openapi3.NewResponses()
-	patchSchema.Responses.Set("200", successResponse)
-	patchSchema.Responses.Set("400", errorResponse)
-
-	setActiveSchemaVersionRequest := openapi3.NewRequestBody().
+	setActiveCollectionVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
-	setActiveSchemaVersion := openapi3.NewOperation()
-	setActiveSchemaVersion.OperationID = "set_default_schema_version"
-	setActiveSchemaVersion.Description = "Set the default schema version for a collection"
-	setActiveSchemaVersion.Tags = []string{"schema"}
-	setActiveSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
-		Value: setActiveSchemaVersionRequest,
+	setActiveCollectionVersion := openapi3.NewOperation()
+	setActiveCollectionVersion.OperationID = "set_default_collection_version"
+	setActiveCollectionVersion.Description = "Set the default version for a collection"
+	setActiveCollectionVersion.Tags = []string{"collection"}
+	setActiveCollectionVersion.RequestBody = &openapi3.RequestBodyRef{
+		Value: setActiveCollectionVersionRequest,
 	}
-	setActiveSchemaVersion.Responses = openapi3.NewResponses()
-	setActiveSchemaVersion.Responses.Set("200", successResponse)
-	setActiveSchemaVersion.Responses.Set("400", errorResponse)
+	setActiveCollectionVersion.Responses = openapi3.NewResponses()
+	setActiveCollectionVersion.Responses.Set("200", successResponse)
+	setActiveCollectionVersion.Responses.Set("400", errorResponse)
 
 	backupRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -488,7 +431,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
 		WithSchema(openapi3.NewStringSchema())
-	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("schema_root").
+	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("collection_id").
 		WithDescription("Collection schema root").
 		WithSchema(openapi3.NewStringSchema())
 	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
@@ -534,12 +477,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	viewRefresh.Responses.Set("200", successResponse)
 	viewRefresh.Responses.Set("400", errorResponse)
 
+	patchCollectionRequest := openapi3.NewRequestBody().
+		WithJSONSchemaRef(patchCollectionRequestSchema)
+
 	patchCollection := openapi3.NewOperation()
 	patchCollection.OperationID = "patch_collection"
 	patchCollection.Description = "Update collection definitions"
 	patchCollection.Tags = []string{"collection"}
 	patchCollection.RequestBody = &openapi3.RequestBodyRef{
-		Value: openapi3.NewRequestBody().WithJSONSchema(openapi3.NewStringSchema()),
+		Value: patchCollectionRequest,
 	}
 	patchCollection.Responses = openapi3.NewResponses()
 	patchCollection.Responses.Set("200", successResponse)
@@ -586,39 +532,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	setMigration.Responses = openapi3.NewResponses()
 	setMigration.Responses.Set("200", successResponse)
 	setMigration.Responses.Set("400", errorResponse)
-
-	schemaNameQueryParam := openapi3.NewQueryParameter("name").
-		WithDescription("Schema name").
-		WithSchema(openapi3.NewStringSchema())
-	schemaSchemaRootQueryParam := openapi3.NewQueryParameter("root").
-		WithDescription("Schema root").
-		WithSchema(openapi3.NewStringSchema())
-	schemaVersionIDQueryParam := openapi3.NewQueryParameter("version_id").
-		WithDescription("Schema version id").
-		WithSchema(openapi3.NewStringSchema())
-
-	schemasSchema := openapi3.NewArraySchema()
-	schemasSchema.Items = schemaSchema
-
-	schemaResponseSchema := openapi3.NewOneOfSchema()
-	schemaResponseSchema.OneOf = openapi3.SchemaRefs{
-		schemaSchema,
-		openapi3.NewSchemaRef("", schemasSchema),
-	}
-
-	schemaResponse := openapi3.NewResponse().
-		WithDescription("Schema(s) with matching name, schema id, or version id.").
-		WithJSONSchema(schemaResponseSchema)
-
-	schemaDescribe := openapi3.NewOperation()
-	schemaDescribe.OperationID = "schema_describe"
-	schemaDescribe.Description = "Introspect schema(s) by name, schema root, or version id."
-	schemaDescribe.Tags = []string{"schema"}
-	schemaDescribe.AddParameter(schemaNameQueryParam)
-	schemaDescribe.AddParameter(schemaSchemaRootQueryParam)
-	schemaDescribe.AddParameter(schemaVersionIDQueryParam)
-	schemaDescribe.AddResponse(200, schemaResponse)
-	schemaDescribe.Responses.Set("400", errorResponse)
 
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
@@ -694,15 +607,13 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
 	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
+	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
-	router.AddRoute("/schema", http.MethodPatch, patchSchema, h.PatchSchema)
-	router.AddRoute("/schema", http.MethodGet, schemaDescribe, h.GetSchema)
-	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

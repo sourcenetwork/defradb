@@ -130,7 +130,7 @@ func (this *docGenerator) generatePrimary(
 	result := []gen.GeneratedDoc{}
 	requestedSecondary := toRequestedDoc(secDocMap, secType)
 	for _, secDocField := range secType.GetFields() {
-		if secDocField.IsRelation() && secDocField.IsPrimaryRelation {
+		if secDocField.IsRelation() && secDocField.IsPrimaryRelation && secDocField.Kind.IsObject() {
 			if secDocMapField, hasField := secDocMap[secDocField.Name]; hasField {
 				primaryDef, _ := client.GetDefinition(this.definitionCache, *secType, secDocField.Kind)
 				primType := this.types[primaryDef.GetName()]

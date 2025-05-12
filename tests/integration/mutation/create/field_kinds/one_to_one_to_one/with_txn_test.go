@@ -23,7 +23,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+				// "_docID": "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
 				Doc: `{
 					"name": "Website",
 					"address": "Manning Publications"
@@ -31,7 +31,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+				// "_docID": "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
 				Doc: `{
 					"name": "Online",
 					"address": "Manning Early Access Program (MEAP)"
@@ -41,14 +41,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed"}) {
+					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"create_Book": []map[string]any{
 						{
-							"_docID": "bae-5a378128-1b3f-50e7-a5ff-027e707c4b87",
+							"_docID": "bae-85148ba6-74ea-560a-820d-adf0b4b05531",
 						},
 					},
 				},
@@ -56,14 +56,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-21084f46-b12a-53ab-94dd-04d075b4218c"}) {
+					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"create_Book": []map[string]any{
 						{
-							"_docID": "bae-787391fb-86f8-5cbe-8fc2-ad59f90e267a",
+							"_docID": "bae-635d5e56-599c-52df-842f-a5a2f0bc6c02",
 						},
 					},
 				},
@@ -84,18 +84,17 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-							"name":   "Website",
-							"published": map[string]any{
-								"_docID": "bae-5a378128-1b3f-50e7-a5ff-027e707c4b87",
-								"name":   "Book By Website",
-							},
-						},
-
-						{
-							"_docID":    "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+							"_docID":    "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
 							"name":      "Online",
 							"published": nil,
+						},
+						{
+							"_docID": "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
+							"name":   "Website",
+							"published": map[string]any{
+								"_docID": "bae-85148ba6-74ea-560a-820d-adf0b4b05531",
+								"name":   "Book By Website",
+							},
 						},
 					},
 				},
@@ -116,17 +115,17 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID":    "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-							"name":      "Website",
-							"published": nil,
-						},
-						{
-							"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+							"_docID": "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
 							"name":   "Online",
 							"published": map[string]any{
-								"_docID": "bae-787391fb-86f8-5cbe-8fc2-ad59f90e267a",
+								"_docID": "bae-635d5e56-599c-52df-842f-a5a2f0bc6c02",
 								"name":   "Book By Online",
 							},
+						},
+						{
+							"_docID":    "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
+							"name":      "Website",
+							"published": nil,
 						},
 					},
 				},
@@ -153,19 +152,19 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-5a378128-1b3f-50e7-a5ff-027e707c4b87",
-							"name":   "Book By Website",
+							"_docID": "bae-635d5e56-599c-52df-842f-a5a2f0bc6c02",
+							"name":   "Book By Online",
 							"publisher": map[string]any{
-								"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-								"name":   "Website",
+								"_docID": "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
+								"name":   "Online",
 							},
 						},
 						{
-							"_docID": "bae-787391fb-86f8-5cbe-8fc2-ad59f90e267a",
-							"name":   "Book By Online",
+							"_docID": "bae-85148ba6-74ea-560a-820d-adf0b4b05531",
+							"name":   "Book By Website",
 							"publisher": map[string]any{
-								"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
-								"name":   "Online",
+								"_docID": "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
+								"name":   "Website",
 							},
 						},
 					},
@@ -182,7 +181,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+				// "_docID": "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
 				Doc: `{
 					"name": "Website",
 					"address": "Manning Publications"
@@ -190,7 +189,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
-				// "_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+				// "_docID": "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
 				Doc: `{
 					"name": "Online",
 					"address": "Manning Early Access Program (MEAP)"
@@ -200,14 +199,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed"}) {
+					create_Book(input: {name: "Book By Website", rating: 4.0, publisher_id: "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"create_Book": []map[string]any{
 						{
-							"_docID": "bae-5a378128-1b3f-50e7-a5ff-027e707c4b87",
+							"_docID": "bae-85148ba6-74ea-560a-820d-adf0b4b05531",
 						},
 					},
 				},
@@ -215,14 +214,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-21084f46-b12a-53ab-94dd-04d075b4218c"}) {
+					create_Book(input: {name: "Book By Online", rating: 4.0, publisher_id: "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"create_Book": []map[string]any{
 						{
-							"_docID": "bae-787391fb-86f8-5cbe-8fc2-ad59f90e267a",
+							"_docID": "bae-635d5e56-599c-52df-842f-a5a2f0bc6c02",
 						},
 					},
 				},
@@ -243,10 +242,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-5a378128-1b3f-50e7-a5ff-027e707c4b87",
+							"_docID": "bae-85148ba6-74ea-560a-820d-adf0b4b05531",
 							"name":   "Book By Website",
 							"publisher": map[string]any{
-								"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
+								"_docID": "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
 								"name":   "Website",
 							},
 						},
@@ -269,10 +268,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-787391fb-86f8-5cbe-8fc2-ad59f90e267a",
+							"_docID": "bae-635d5e56-599c-52df-842f-a5a2f0bc6c02",
 							"name":   "Book By Online",
 							"publisher": map[string]any{
-								"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+								"_docID": "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
 								"name":   "Online",
 							},
 						},
@@ -301,20 +300,19 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID": "bae-07fd000a-d023-54b9-b8f3-a4318fac8fed",
-							"name":   "Website",
-							"published": map[string]any{
-								"_docID": "bae-5a378128-1b3f-50e7-a5ff-027e707c4b87",
-								"name":   "Book By Website",
-							},
-						},
-
-						{
-							"_docID": "bae-21084f46-b12a-53ab-94dd-04d075b4218c",
+							"_docID": "bae-2cfd54a8-7f18-5354-a308-805ba1d68f81",
 							"name":   "Online",
 							"published": map[string]any{
-								"_docID": "bae-787391fb-86f8-5cbe-8fc2-ad59f90e267a",
+								"_docID": "bae-635d5e56-599c-52df-842f-a5a2f0bc6c02",
 								"name":   "Book By Online",
+							},
+						},
+						{
+							"_docID": "bae-a69fd0a0-eb5b-53f1-aeed-8833da8c9cc5",
+							"name":   "Website",
+							"published": map[string]any{
+								"_docID": "bae-85148ba6-74ea-560a-820d-adf0b4b05531",
+								"name":   "Book By Website",
 							},
 						},
 					},

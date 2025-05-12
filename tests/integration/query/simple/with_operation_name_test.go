@@ -48,10 +48,10 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "Alice",
 						},
 						{
-							"Name": "Alice",
+							"Name": "Bob",
 						},
 					},
 				},
@@ -71,10 +71,10 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(21),
+							"Age": int64(40),
 						},
 						{
-							"Age": int64(40),
+							"Age": int64(21),
 						},
 					},
 				},

@@ -13,8 +13,6 @@ package move
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -27,23 +25,17 @@ func TestColVersionUpdateMoveName(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
-				SetAsDefaultVersion: immutable.Some(false),
-			},
 			testUtils.PatchCollection{
 				// Make the second collection the active one by moving its name from the first to the second
 				Patch: `
 					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },
 						{
 							"op": "move",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+							"from": "/Users/Name",
+							"path": "/Users/Fields/1/Name"
+						},
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
 				ExpectedError: "collection name can't be empty",
