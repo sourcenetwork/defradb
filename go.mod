@@ -19,7 +19,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.30.0
-	github.com/ipfs/go-block-format v0.2.0
+	github.com/ipfs/go-block-format v0.2.1
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipfs/go-datastore v0.8.2
 	github.com/ipfs/go-ipld-format v0.6.0
@@ -232,7 +232,6 @@ require (
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-ipfs-delay v0.0.1 // indirect
 	github.com/ipfs/go-ipfs-pq v0.0.3 // indirect
-	github.com/ipfs/go-ipfs-util v0.0.3 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.3.0 // indirect
 	github.com/ipfs/go-peertaskqueue v0.8.2 // indirect
