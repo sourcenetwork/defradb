@@ -47,5 +47,6 @@ Create, read, update, and delete documents within a collection.
 * [defradb client collection docIDs](defradb_client_collection_docIDs.md)	 - List all document IDs (docIDs).
 * [defradb client collection get](defradb_client_collection_get.md)	 - View document fields.
 * [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection versions
+* [defradb client collection set-active](defradb_client_collection_set-active.md)	 - Set the active collection version
 * [defradb client collection update](defradb_client_collection_update.md)	 - Update documents by docID or filter.
 

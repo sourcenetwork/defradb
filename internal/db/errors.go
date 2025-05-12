@@ -28,7 +28,6 @@ const (
 	errAddingP2PCollection                      string = "cannot add collection ID"
 	errRemovingP2PCollection                    string = "cannot remove collection ID"
 	errAddCollectionWithPatch                   string = "adding collections via patch is not supported"
-	errAddSchemaWithPatch                       string = "adding schema via patch is not supported"
 	errCollectionIDDoesntMatch                  string = "CollectionID does not match existing"
 	errSchemaRootDoesntMatch                    string = "SchemaRoot does not match existing"
 	errCannotSetVersionID                       string = "setting the VersionID is not supported"
@@ -86,15 +85,14 @@ const (
 	errMultipleActiveCollectionVersions         string = "multiple versions of same collection cannot be active"
 	errCollectionSourcesCannotBeAddedRemoved    string = "collection sources cannot be added or removed"
 	errCollectionSourceIDMutated                string = "collection source ID cannot be mutated"
+	errCollectionSourceWrongCollection          string = "collection source must belong to host collection"
 	errCollectionIndexesCannotBeMutated         string = "collection indexes cannot be mutated"
-	errCollectionFieldsCannotBeMutated          string = "collection fields cannot be mutated"
 	errCollectionPolicyCannotBeMutated          string = "collection policy cannot be mutated"
 	errCollectionIDCannotBeMutated              string = "collection ID cannot be mutated"
 	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
 	errCollectionIDCannotBeEmpty                string = "collection ID cannot be empty"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
 	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
-	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
 	errRelationMissingField                     string = "relation missing field"
 	errNoTransactionInContext                   string = "no transaction in context"
 	errReplicatorExists                         string = "replicator already exists for %s with peerID %s"
@@ -123,6 +121,9 @@ const (
 	errNACIsEnabledButIsMissingPolicyInfo       string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered       string = "node acp is enabled, but object to gate must be registered"
 	errNACIsEnabledButInstanceIsNotAvailable    string = "node acp is enabled, but the acp instance is not available"
+	errRelationNameEmpty                        string = "relation name cannot be empty"
+	errInvalidCID                               string = "invalid CID"
+	errUnknownCID                               string = "unknown CID, collection ids cannot be manually defined"
 )
 
 var (
@@ -146,14 +147,13 @@ var (
 	ErrMultipleActiveCollectionVersions         = errors.New(errMultipleActiveCollectionVersions)
 	ErrCollectionSourcesCannotBeAddedRemoved    = errors.New(errCollectionSourcesCannotBeAddedRemoved)
 	ErrCollectionSourceIDMutated                = errors.New(errCollectionSourceIDMutated)
+	ErrCollectionSourceWrongCollection          = errors.New(errCollectionSourceWrongCollection)
 	ErrCollectionIndexesCannotBeMutated         = errors.New(errCollectionIndexesCannotBeMutated)
-	ErrCollectionFieldsCannotBeMutated          = errors.New(errCollectionFieldsCannotBeMutated)
 	ErrCollectionCollectionIDCannotBeMutated    = errors.New(errCollectionIDCannotBeMutated)
 	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeEmpty                = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
 	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
-	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
 	ErrRelationMissingField                     = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                = errors.New("relation can only have a single field set as primary")
 	ErrP2PColHasPolicy                          = errors.New("p2p collection specified has a policy on it")
@@ -182,6 +182,9 @@ var (
 	ErrNACNodeObjectToGateIsNotRegistered       = errors.New(errNACNodeObjectToGateIsNotRegistered)
 	ErrNACIsEnabledButInstanceIsNotAvailable    = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
 	ErrNACRelationshipOperationRequiresIdentity = errors.New("node acp relationship operation requires identity")
+	ErrRelationNameEmpty                        = errors.New(errRelationNameEmpty)
+	ErrInvalidCID                               = errors.New(errInvalidCID)
+	ErrUnknownCID                               = errors.New(errUnknownCID)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -273,17 +276,10 @@ func NewErrRemovingP2PCollection(inner error) error {
 	return errors.Wrap(errRemovingP2PCollection, inner)
 }
 
-func NewErrAddSchemaWithPatch(name string) error {
-	return errors.New(
-		errAddSchemaWithPatch,
-		errors.NewKV("Name", name),
-	)
-}
-
-func NewErrAddCollectionIDWithPatch(id string) error {
+func NewErrAddCollectionWithPatch(name string) error {
 	return errors.New(
 		errAddCollectionWithPatch,
-		errors.NewKV("ID", id),
+		errors.NewKV("Name", name),
 	)
 }
 
@@ -328,6 +324,13 @@ func NewErrRelationalFieldIDInvalidType(name string, expected, actual client.Fie
 		errors.NewKV("Field", name),
 		errors.NewKV("Expected", expected),
 		errors.NewKV("Actual", actual),
+	)
+}
+
+func NewErrRelationNameEmpty(name string) error {
+	return errors.New(
+		errRelationNameEmpty,
+		errors.NewKV("Field", name),
 	)
 }
 
@@ -621,13 +624,6 @@ func NewErrCollectionIndexesCannotBeMutated(colID string) error {
 	)
 }
 
-func NewErrCollectionFieldsCannotBeMutated(colID string) error {
-	return errors.New(
-		errCollectionFieldsCannotBeMutated,
-		errors.NewKV("CollectionID", colID),
-	)
-}
-
 func NewErrCollectionPolicyCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionPolicyCannotBeMutated,
@@ -653,13 +649,6 @@ func NewErrCollectionsCannotBeDeleted(colID string) error {
 	return errors.New(
 		errCollectionsCannotBeDeleted,
 		errors.NewKV("CollectionID", colID),
-	)
-}
-
-func NewErrSecondaryFieldOnSchema(name string) error {
-	return errors.New(
-		errSecondaryFieldOnSchema,
-		errors.NewKV("Name", name),
 	)
 }
 
@@ -753,4 +742,26 @@ func NewErrCollectionNameMutated(newName string, oldName string) error {
 
 func NewErrUnsupportedTxnType(actual any) error {
 	return errors.New(errUnsupportedTxnType, errors.NewKV("Actual", fmt.Sprintf("%T", actual)))
+}
+
+func NewErrInvalidCID(name string, value string, inner error) error {
+	return errors.New(
+		inner.Error(),
+		errors.NewKV(name, value),
+	)
+}
+
+func NewErrUnknownCID(name string, value string) error {
+	return errors.New(
+		errUnknownCID,
+		errors.NewKV(name, value),
+	)
+}
+
+func NewErrCollectionSourceWrongCollection(hostCollectionID string, sourceCollectionID string) error {
+	return errors.New(
+		errCollectionSourceWrongCollection,
+		errors.NewKV("HostCollectionID", hostCollectionID),
+		errors.NewKV("SourceCollectionID", sourceCollectionID),
+	)
 }

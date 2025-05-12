@@ -191,7 +191,7 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 		},
 	}
 
-	for _, fd := range c.Schema().Fields {
+	for _, fd := range c.Version().Fields {
 		if fd.Kind.IsObject() {
 			continue
 		}

@@ -34,7 +34,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e
+				// bae-8c6381d0-a558-5bac-8d60-67f78ba5ffb8
 				Doc: `{
 					"name": "Shahzad"
 				}`,
@@ -44,7 +44,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -53,8 +53,8 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -70,7 +70,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e") {
+					Users (docID: "bae-8c6381d0-a558-5bac-8d60-67f78ba5ffb8") {
 						name
 						verified
 					}
@@ -117,42 +117,42 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			// and we want to make sure that lenses are being correctly returned
 			// to the pool for reuse after.
 			testUtils.CreateDoc{
-				// bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e
+				// bae-8c6381d0-a558-5bac-8d60-67f78ba5ffb8
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-3a7df128-bfa9-559a-a9c5-96f2bf6d1038
+				// bae-ce0ba9f3-4b91-5ae8-b5b2-bd667b4c443e
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-5622129c-b893-5768-a3f4-8f745db4cc04
+				// bae-01a26764-2c18-5049-b95e-70451f050459
 				Doc: `{
 					"name": "Chris"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc
+				// bae-0623ed7c-0861-5995-a5d7-cce53642a83e
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-38a4ebb2-583a-5b6e-8e90-a6fe9e13be06
+				// bae-225b161c-25d7-5e2b-9014-ac3fc69fca5e
 				Doc: `{
 					"name": "Islam"
 				}`,
 			},
 			testUtils.CreateDoc{
-				// bae-4d2c0f6e-af73-54d9-ac8a-a419077ea1e5
+				// bae-bd4a814b-8338-5552-baec-73eb3d2a51bf
 				Doc: `{
 					"name": "Dave"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -161,8 +161,8 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -178,7 +178,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-48c8dacd-58ab-5fd5-8bbf-91bd823f4d5e") {
+					Users (docID: "bae-8c6381d0-a558-5bac-8d60-67f78ba5ffb8") {
 						name
 						verified
 					}
@@ -194,7 +194,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-3a7df128-bfa9-559a-a9c5-96f2bf6d1038") {
+					Users (docID: "bae-ce0ba9f3-4b91-5ae8-b5b2-bd667b4c443e") {
 						name
 						verified
 					}
@@ -210,7 +210,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-5622129c-b893-5768-a3f4-8f745db4cc04") {
+					Users (docID: "bae-01a26764-2c18-5049-b95e-70451f050459") {
 						name
 						verified
 					}
@@ -226,7 +226,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc") {
+					Users (docID: "bae-0623ed7c-0861-5995-a5d7-cce53642a83e") {
 						name
 						verified
 					}
@@ -242,7 +242,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-38a4ebb2-583a-5b6e-8e90-a6fe9e13be06") {
+					Users (docID: "bae-225b161c-25d7-5e2b-9014-ac3fc69fca5e") {
 						name
 						verified
 					}
@@ -258,7 +258,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users (docID: "bae-4d2c0f6e-af73-54d9-ac8a-a419077ea1e5") {
+					Users (docID: "bae-bd4a814b-8338-5552-baec-73eb3d2a51bf") {
 						name
 						verified
 					}

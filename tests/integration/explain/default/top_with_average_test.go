@@ -69,7 +69,7 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -157,7 +157,7 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{

@@ -153,13 +153,13 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(28),
-						},
-						{
 							"Age": int64(30),
 						},
 						{
 							"Age": int64(21),
+						},
+						{
+							"Age": int64(28),
 						},
 						// Peer sync should not sync new documents to nodes that is not subscribed
 						// to the P2P collection.
@@ -176,7 +176,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(28),
+							"Age": int64(31),
 						},
 						{
 							"Age": int64(30),
@@ -185,7 +185,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 							"Age": int64(21),
 						},
 						{
-							"Age": int64(31),
+							"Age": int64(28),
 						},
 					},
 				},

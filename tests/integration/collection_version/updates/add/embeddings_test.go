@@ -35,7 +35,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldError(t *
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "foo"}
 						}
 					]
@@ -64,12 +64,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldErrorMult
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "foo"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "bar"}
 						}
 					]
@@ -97,7 +97,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_
 				Patch: `
 					[
 						{
-							"op": "add", "path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"op": "add", "path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "foo"]}
 						}
 					]
@@ -126,12 +126,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "foo"]}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "bar"]}
 						}
 					]
@@ -160,7 +160,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithInvalidEmbeddingGenerationFieldK
 					[
 						{
 							"op": "add",
-							"path": "/bafkreidjpk55vtz3l5ouzkgfbxv2rnt3xekjb5aide7i246ngsqtgcbroa/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "custom"]}
 						}
 					]
@@ -189,7 +189,7 @@ func TestColVersionUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -235,7 +235,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldError(t *
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -264,12 +264,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldErrorMult
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -298,7 +298,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *tes
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -327,12 +327,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFields_ShouldErrorMultipl
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Provider": "ollama", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -361,7 +361,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *t
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -390,12 +390,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingProvider_ShouldErrorMulti
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -424,7 +424,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -453,12 +453,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldErrorM
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "deepseek", "Model": "nomic-embed-text",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -487,7 +487,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *test
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -516,12 +516,12 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldErrorMultiple
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama",  "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -550,7 +550,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *test
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name", "about"], "Provider": "ollama", "Model": "nomic-embed-text"}
 						}
 					]
@@ -598,7 +598,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToSelf_ShouldError(t *testi
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -627,12 +627,12 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToSelf_ShouldErrorMultiple(
 					[
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -662,7 +662,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldEr
 					[
 						{
 							"op": "add",
-							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -693,12 +693,12 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldEr
 					[
 						{
 							"op": "add",
-							"path": "/bafkreic752dfcii7xhss3d2d6knx7cbonxsgtuknd7bcvmx6e6i5c64cm4/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreic752dfcii7xhss3d2d6knx7cbonxsgtuknd7bcvmx6e6i5c64cm4/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "desc_v", "Fields": ["about_v", "about"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						}
 
@@ -729,12 +729,12 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_S
 					[
 						{
 							"op": "add",
-							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						}
 					]
@@ -764,17 +764,17 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_S
 					[
 						{
 							"op": "add",
-							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "name_v", "Fields": ["name"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						},
 						{
 							"op": "add",
-							"path": "/bafkreiarmqu34yjxzplqq47vumkwrgltmdic6kwmwygaihhxenlxn2rglu/VectorEmbeddings/-",
+							"path": "/Users/VectorEmbeddings/-",
 							"value": {"FieldName": "about_v", "Fields": ["name_v"], "Provider": "ollama", "Model": "nomic-embed-text", "URL": "http://localhost:11434/api"}
 						}
 					]

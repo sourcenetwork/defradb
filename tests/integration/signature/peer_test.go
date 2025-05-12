@@ -192,12 +192,12 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "John",
-							"age":  int64(21),
-						},
-						{
 							"name": "Fred",
 							"age":  int64(22),
+						},
+						{
+							"name": "John",
+							"age":  int64(21),
 						},
 					},
 				},
@@ -215,14 +215,14 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 					"commits": []map[string]any{
 						{
 							"signature": map[string]any{
-								"type":     coreblock.SignatureTypeECDSA256K,
-								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
+								"type":     coreblock.SignatureTypeEd25519,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(1).Value()),
 							},
 						},
 						{
 							"signature": map[string]any{
-								"type":     coreblock.SignatureTypeEd25519,
-								"identity": newIdentityMatcher(testUtils.NodeIdentity(1).Value()),
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
 							},
 						},
 					},

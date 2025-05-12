@@ -86,13 +86,12 @@ func fromAst(doc *ast.Document) (
 	error,
 ) {
 	results := []core.Collection{}
-	cTypeByFieldNameByObjName := map[string]map[string]client.CType{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
 			td := newObjectDefinition(defType)
-			result, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
+			result, err := fromAstDefinition(td)
 			if err != nil {
 				return nil, err
 			}
@@ -101,7 +100,7 @@ func fromAst(doc *ast.Document) (
 
 		case *ast.InterfaceDefinition:
 			td := newInterfaceDefinition(defType)
-			result, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
+			result, err := fromAstDefinition(td)
 			if err != nil {
 				return nil, err
 			}
@@ -117,7 +116,7 @@ func fromAst(doc *ast.Document) (
 	// The details on the relations between objects depend on both sides
 	// of the relationship.  The relation manager handles this, and must be applied
 	// after all the collections have been processed.
-	err := finalizeRelations(results, cTypeByFieldNameByObjName)
+	err := finalizeRelations(results)
 	if err != nil {
 		return nil, err
 	}
@@ -128,18 +127,12 @@ func fromAst(doc *ast.Document) (
 // fromAstDefinition parses a AST object definition into a set of collection versions.
 func fromAstDefinition(
 	def *typeDefinition,
-	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) (core.Collection, error) {
-	schemaFieldDescriptions := []client.SchemaFieldDescription{
+	collectionFieldDescriptions := []client.CollectionFieldDescription{
 		{
 			Name: request.DocIDFieldName,
 			Kind: client.FieldKind_DocID,
 			Typ:  client.NONE_CRDT,
-		},
-	}
-	collectionFieldDescriptions := []client.CollectionFieldDescription{
-		{
-			Name: request.DocIDFieldName,
 		},
 	}
 
@@ -148,16 +141,14 @@ func fromAstDefinition(
 	indexes := []client.IndexCreateRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
 	for _, field := range def.Fields {
-		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
+		tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
 			def.Name.Value,
-			cTypeByFieldNameByObjName,
 		)
 		if err != nil {
 			return core.Collection{}, err
 		}
 
-		schemaFieldDescriptions = append(schemaFieldDescriptions, tmpSchemaFieldDescriptions...)
 		collectionFieldDescriptions = append(collectionFieldDescriptions, tmpCollectionFieldDescriptions...)
 
 		for _, directive := range field.Directives {
@@ -178,16 +169,6 @@ func fromAstDefinition(
 		}
 	}
 
-	// sort the fields lexicographically
-	sort.Slice(schemaFieldDescriptions, func(i, j int) bool {
-		// make sure that the _docID is always at the beginning
-		if schemaFieldDescriptions[i].Name == request.DocIDFieldName {
-			return true
-		} else if schemaFieldDescriptions[j].Name == request.DocIDFieldName {
-			return false
-		}
-		return schemaFieldDescriptions[i].Name < schemaFieldDescriptions[j].Name
-	})
 	sort.Slice(collectionFieldDescriptions, func(i, j int) bool {
 		// make sure that the _docID is always at the beginning
 		if collectionFieldDescriptions[i].Name == request.DocIDFieldName {
@@ -264,10 +245,6 @@ func fromAstDefinition(
 				IsEmbeddedOnly:   def.IsInterface,
 				IsActive:         true,
 				VectorEmbeddings: vectorEmbeddings,
-			},
-			Schema: client.SchemaDescription{
-				Name:   def.Name.Value,
-				Fields: schemaFieldDescriptions,
 			},
 		},
 		CreateIndexes: indexes,
@@ -475,24 +452,16 @@ func defaultFromAST(
 func fieldsFromAST(
 	field *ast.FieldDefinition,
 	hostObjectName string,
-	cTypeByFieldNameByObjName map[string]map[string]client.CType,
-) ([]client.SchemaFieldDescription, []client.CollectionFieldDescription, error) {
+) ([]client.CollectionFieldDescription, error) {
 	kind, err := astTypeToKind(hostObjectName, field)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	cType, err := setCRDTType(field, kind)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	hostMap := cTypeByFieldNameByObjName[hostObjectName]
-	if hostMap == nil {
-		hostMap = map[string]client.CType{}
-		cTypeByFieldNameByObjName[hostObjectName] = hostMap
-	}
-	hostMap[field.Name.Value] = cType
 
 	var defaultValue any
 	var constraints constraintDescription
@@ -501,23 +470,22 @@ func fieldsFromAST(
 		case types.DefaultDirectiveLabel:
 			defaultValue, err = defaultFromAST(field, directive)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		case types.ConstraintsDirectiveLabel:
 			constraints, err = contraintsFromAST(kind, directive)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 	}
 
-	schemaFieldDescriptions := []client.SchemaFieldDescription{}
 	collectionFieldDescriptions := []client.CollectionFieldDescription{}
 
 	if namedKind, ok := kind.(*client.NamedKind); ok {
 		relationName, err := getRelationshipName(field, hostObjectName, namedKind.Name)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		if kind.IsArray() {
@@ -525,18 +493,21 @@ func fieldsFromAST(
 				collectionFieldDescriptions,
 				client.CollectionFieldDescription{
 					Name:         field.Name.Value,
-					Kind:         immutable.Some(kind),
+					Kind:         kind,
 					RelationName: immutable.Some(relationName),
 				},
 			)
 		} else {
 			idFieldName := fmt.Sprintf("%s_id", field.Name.Value)
+			_, isPrimary := findDirective(field, "primary")
 
 			collectionFieldDescriptions = append(
 				collectionFieldDescriptions,
 				client.CollectionFieldDescription{
 					Name:         idFieldName,
-					Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+					Kind:         client.FieldKind_DocID,
+					Typ:          client.LWW_REGISTER,
+					IsPrimary:    isPrimary,
 					RelationName: immutable.Some(relationName),
 				},
 			)
@@ -545,45 +516,26 @@ func fieldsFromAST(
 				collectionFieldDescriptions,
 				client.CollectionFieldDescription{
 					Name:         field.Name.Value,
-					Kind:         immutable.Some(kind),
+					Kind:         kind,
+					IsPrimary:    isPrimary,
 					RelationName: immutable.Some(relationName),
 				},
 			)
-
-			if _, exists := findDirective(field, "primary"); exists {
-				// Only primary fields exist on the schema.  If primary is automatically set
-				// (e.g. for one-many) a later step will add this property.
-				schemaFieldDescriptions = append(
-					schemaFieldDescriptions,
-					client.SchemaFieldDescription{
-						Name: field.Name.Value,
-						Kind: kind,
-						Typ:  cType,
-					},
-				)
-			}
 		}
 	} else {
-		schemaFieldDescriptions = append(
-			schemaFieldDescriptions,
-			client.SchemaFieldDescription{
-				Name: field.Name.Value,
-				Kind: kind,
-				Typ:  cType,
-			},
-		)
-
 		collectionFieldDescriptions = append(
 			collectionFieldDescriptions,
 			client.CollectionFieldDescription{
 				Name:         field.Name.Value,
+				Kind:         kind,
+				Typ:          cType,
 				DefaultValue: defaultValue,
 				Size:         constraints.Size,
 			},
 		)
 	}
 
-	return schemaFieldDescriptions, collectionFieldDescriptions, nil
+	return collectionFieldDescriptions, nil
 }
 
 // policyFromAST returns the policy description after parsing but the validation
@@ -815,7 +767,6 @@ func genRelationName(t1, t2 string) (string, error) {
 
 func finalizeRelations(
 	results []core.Collection,
-	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) error {
 	for i, result := range results {
 		if result.Definition.Version.IsEmbeddedOnly {
@@ -823,12 +774,8 @@ func finalizeRelations(
 			continue
 		}
 
-		for _, field := range result.Definition.Version.Fields {
-			if !field.Kind.HasValue() {
-				continue
-			}
-
-			namedKind, ok := field.Kind.Value().(*client.NamedKind)
+		for fieldIndex, field := range result.Definition.Version.Fields {
+			namedKind, ok := field.Kind.(*client.NamedKind)
 			if !ok || namedKind.IsArray() {
 				// We only need to process the primary side of a relation here, if the field is not a relation
 				// or if it is an array, we can skip it.
@@ -856,51 +803,39 @@ func finalizeRelations(
 				field.Name,
 			)
 
-			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.Value().IsArray() {
-				if _, exists := result.Definition.Schema.GetFieldByName(field.Name); !exists {
-					// Relations only defined on one side of the object are possible, and so if this is one of them
-					// or if the other side is an array, we need to add the field to the schema (is primary side)
-					// if the field has not been explicitly declared by the user.
-					result.Definition.Schema.Fields = append(
-						result.Definition.Schema.Fields,
-						client.SchemaFieldDescription{
-							Name: field.Name,
-							Kind: field.Kind.Value(),
-							Typ:  cTypeByFieldNameByObjName[result.Definition.Version.Name][field.Name],
-						},
+			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.IsArray() {
+				field.IsPrimary = true
+				result.Definition.Version.Fields[fieldIndex] = field
+
+				idFieldName := fmt.Sprintf("%s_id", field.Name)
+
+				idField, idFieldExists := result.Definition.Version.GetFieldByName(idFieldName)
+				if !idFieldExists {
+					existingFields := result.Definition.Version.Fields
+					result.Definition.Version.Fields = make(
+						[]client.CollectionFieldDescription,
+						len(result.Definition.Version.Fields)+1,
 					)
-				}
-			}
+					copy(result.Definition.Version.Fields, existingFields[:fieldIndex+1])
+					copy(result.Definition.Version.Fields[fieldIndex+2:], existingFields[fieldIndex+1:])
 
-			if !otherColDefinition.Value().Version.IsEmbeddedOnly {
-				var schemaFieldIndex int
-				var schemaFieldExists bool
-				for i, schemaField := range result.Definition.Schema.Fields {
-					if schemaField.Name == field.Name {
-						schemaFieldIndex = i
-						schemaFieldExists = true
-						break
+					// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
+					// does not point to an embedded object.
+					//
+					// It is inserted immediately after the object field to make things nicer for the user.
+					result.Definition.Version.Fields[fieldIndex+1] = client.CollectionFieldDescription{
+						Name:      idFieldName,
+						Kind:      client.FieldKind_DocID,
+						Typ:       defaultCRDTForFieldKind[client.FieldKind_DocID],
+						IsPrimary: true,
 					}
-				}
-
-				if schemaFieldExists {
-					idFieldName := fmt.Sprintf("%s_id", field.Name)
-
-					if _, idFieldExists := result.Definition.Schema.GetFieldByName(idFieldName); !idFieldExists {
-						existingFields := result.Definition.Schema.Fields
-						result.Definition.Schema.Fields = make([]client.SchemaFieldDescription, len(result.Definition.Schema.Fields)+1)
-						copy(result.Definition.Schema.Fields, existingFields[:schemaFieldIndex+1])
-						copy(result.Definition.Schema.Fields[schemaFieldIndex+2:], existingFields[schemaFieldIndex+1:])
-
-						// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
-						// does not point to an embedded object.
-						//
-						// It is inserted immediately after the object field to make things nicer for the user.
-						result.Definition.Schema.Fields[schemaFieldIndex+1] = client.SchemaFieldDescription{
-							Name: idFieldName,
-							Kind: client.FieldKind_DocID,
-							Typ:  defaultCRDTForFieldKind[client.FieldKind_DocID],
+				} else {
+					for i, field := range result.Definition.Version.Fields {
+						if field.Name != idField.Name {
+							continue
 						}
+
+						result.Definition.Version.Fields[i].IsPrimary = true
 					}
 				}
 			}

@@ -167,7 +167,7 @@ func toSelect(
 		return nil, err
 	}
 
-	if len(definition.Schema.Fields) != 0 {
+	if len(definition.Version.Fields) != 0 {
 		fields, err = resolveSecondaryRelationIDs(
 			ctx,
 			store,
@@ -213,6 +213,7 @@ func toSelect(
 	if err != nil {
 		return nil, err
 	}
+
 	return &Select{
 		Targetable:      targetable,
 		DocumentMapping: mapping,
@@ -407,7 +408,7 @@ func resolveAggregates(
 						}
 					}
 
-					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.Name)
+					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.FieldID)
 					if err != nil {
 						return nil, err
 					}
@@ -939,11 +940,6 @@ func getTopLevelInfo(
 		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
 		definition = collection.Definition()
 
-		collectionShortID, err := id.GetShortCollectionID(ctx, definition.Version.CollectionID)
-		if err != nil {
-			return nil, client.CollectionDefinition{}, err
-		}
-
 		// Map all fields from schema into the map as they are fetched automatically
 		for _, f := range definition.GetFields() {
 			if f.Kind.IsObject() {
@@ -952,12 +948,7 @@ func getTopLevelInfo(
 				continue
 			}
 
-			fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, f.Name)
-			if err != nil {
-				return nil, client.CollectionDefinition{}, err
-			}
-
-			mapping.Add(int(fieldShortID), f.Name)
+			mapping.Add(mapping.GetNextIndex(), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as

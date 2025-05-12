@@ -83,21 +83,21 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfCount_Succeed
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_max": int64(1),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_count":   int(1),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_max": int64(1),
 							"_group": []map[string]any{
 								{
 									"Verified": false,
+									"_count":   int(1),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_max": int64(1),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
 									"_count":   int(1),
 								},
 							},

@@ -70,7 +70,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 
 			// check if self referencing and remove from docMap for key creation
 			resetMap := map[string]any{}
-			for _, field := range col.Schema().Fields {
+			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
 						if docMap[request.NewDocIDFieldName] == val {
@@ -213,7 +213,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			isSelfReference := false
 			refFieldName := ""
 			// replace any foreign key if it needs to be changed
-			for _, field := range col.Schema().Fields {
+			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
@@ -232,7 +232,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								// handle this collection.
 								continue
 							}
-							foreignCol, err := db.newCollection(foreignDef.Version, foreignDef.Schema)
+							foreignCol, err := db.newCollection(foreignDef.Version)
 							if err != nil {
 								return err
 							}

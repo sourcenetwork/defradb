@@ -18,7 +18,7 @@ import (
 )
 
 func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
-	schemaVersionID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersionID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, move collection",
@@ -36,7 +36,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// This just moves an object to a new key in a temporary dictionary, it doesn't actually do
 				// anything
 				Patch: `

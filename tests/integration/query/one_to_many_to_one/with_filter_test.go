@@ -246,9 +246,9 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 									"publisher": nil,
 								},
 								{
-									"name": "Theif Lord",
+									"name": "Sooley",
 									"publisher": map[string]any{
-										"yearOpened": int64(2020),
+										"yearOpened": int64(1999),
 									},
 								},
 								{
@@ -264,9 +264,9 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 									},
 								},
 								{
-									"name": "Sooley",
+									"name": "Theif Lord",
 									"publisher": map[string]any{
-										"yearOpened": int64(1999),
+										"yearOpened": int64(2020),
 									},
 								},
 							},

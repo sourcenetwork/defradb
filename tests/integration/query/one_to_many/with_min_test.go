@@ -70,12 +70,12 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":      "Cornelia Funke",
-							"minRating": 4.8,
-						},
-						{
 							"name":      "John Grisham",
 							"minRating": 4.5,
+						},
+						{
+							"name":      "Cornelia Funke",
+							"minRating": 4.8,
 						},
 					},
 				},

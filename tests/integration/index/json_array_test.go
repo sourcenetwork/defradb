@@ -303,9 +303,9 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "John"},
 						{"name": "Fred"},
+						{"name": "Islam"},
 					},
 				},
 			},
@@ -387,9 +387,9 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "John"},
 						{"name": "Fred"},
+						{"name": "Islam"},
 					},
 				},
 			},

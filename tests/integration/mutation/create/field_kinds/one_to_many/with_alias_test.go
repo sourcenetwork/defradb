@@ -31,7 +31,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *te
 			testUtils.CreateDoc{
 				Doc: `{
 					"notName": "Painted House",
-					"author": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"author": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -54,7 +54,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSid
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
-					"published": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 				ExpectedError: "the given field does not exist. Name: published",
 			},
@@ -73,7 +73,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
-					"author": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"author": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 			},
 			testUtils.Request{
@@ -162,7 +162,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
 	// These IDs MUST be shared by both tests below.
-	bookID := "bae-1d943ec7-1701-5910-a467-7d863beada5d"
+	bookID := "bae-8752b6bf-a40f-5c90-a0ea-b3c34834f77f"
 
 	nonAliasedTest := testUtils.TestCase{
 		Description: "One to many update mutation using relation alias name from single side (wrong)",

@@ -25,7 +25,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -33,7 +33,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -41,7 +41,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -49,7 +49,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"author_id": "bae-f62bb529-3508-529d-8098-f97f9b67824c"
 				}`,
 			},
 			testUtils.CreateDoc{

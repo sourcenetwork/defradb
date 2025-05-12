@@ -36,16 +36,12 @@ func (c *Collection) Name() string {
 	return c.Version().Name
 }
 
-func (c *Collection) Schema() client.SchemaDescription {
-	return c.def.Schema
-}
-
 func (c *Collection) VersionID() string {
 	return c.Version().VersionID
 }
 
-func (c *Collection) SchemaRoot() string {
-	return c.Schema().Root
+func (c *Collection) CollectionID() string {
+	return c.Version().CollectionID
 }
 
 func (c *Collection) Definition() client.CollectionDefinition {
@@ -141,7 +137,7 @@ func (c *Collection) Update(
 	var copts cbindings.GoCOptions
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
-	copts.CollectionID = c.Schema().VersionID
+	copts.CollectionID = c.CollectionID()
 	copts.Name = ""
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0

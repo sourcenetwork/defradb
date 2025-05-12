@@ -329,10 +329,10 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Viserys I Targaryen, King of the Andals",
+							"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
 						},
 						{
-							"Name": "Daenerys Stormborn of House Targaryen, the First of Her Name",
+							"Name": "Viserys I Targaryen, King of the Andals",
 						},
 					},
 				},

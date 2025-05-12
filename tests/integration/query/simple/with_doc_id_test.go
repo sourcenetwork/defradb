@@ -29,7 +29,7 @@ func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `query {
-						Users(docID: "bae-d4303725-7db9-53d2-b324-f3ee44020e52") {
+						Users(docID: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
 							Name
 							Age
 						}
@@ -84,7 +84,7 @@ func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 				},
 				testUtils.Request{
 					Request: `query {
-						Users(docID: "bae-d4303725-7db9-53d2-b324-f3ee44020e52") {
+						Users(docID: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
 							Name
 							Age
 						}

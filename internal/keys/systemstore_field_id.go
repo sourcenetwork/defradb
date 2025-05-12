@@ -23,7 +23,7 @@ type FieldID struct {
 	FieldID           string
 }
 
-var _ Key = (*SchemaRootKey)(nil)
+var _ Key = (*CollectionVersionKey)(nil)
 
 func NewFieldID(collectionShortID uint32, fieldID string) FieldID {
 	return FieldID{

@@ -92,10 +92,10 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"age": int64(2),
+							"age": int64(1),
 						},
 						{
-							"age": int64(1),
+							"age": int64(2),
 						},
 					},
 				},
@@ -144,10 +144,10 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 							"name": "John",
 						},
 						{
-							"name": "Shahzad",
+							"name": "Fred",
 						},
 						{
-							"name": "Fred",
+							"name": "Shahzad",
 						},
 					},
 				},

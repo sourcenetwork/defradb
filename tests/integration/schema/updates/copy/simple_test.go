@@ -28,18 +28,18 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Here we esentially use Users as a template, copying it and renaming the
 				// clone. It is deliberately blocked for now, but should function at somepoint.
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users", "path": "/Book" },
-						{ "op": "remove", "path": "/Book/Root" },
+						{ "op": "remove", "path": "/Book/CollectionID" },
 						{ "op": "remove", "path": "/Book/VersionID" },
 						{ "op": "replace", "path": "/Book/Name", "value": "Book" }
 					]
 				`,
-				ExpectedError: "adding schema via patch is not supported. Name: Book",
+				ExpectedError: "adding collections via patch is not supported. Name: Book",
 			},
 		},
 	}

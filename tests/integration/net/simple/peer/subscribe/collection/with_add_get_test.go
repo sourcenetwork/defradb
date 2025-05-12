@@ -77,7 +77,7 @@ func TestP2PCollectionAddGetMultiple(t *testing.T) {
 			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,
-				ExpectedCollectionIDs: []int{0, 2},
+				ExpectedCollectionIDs: []int{2, 0},
 			},
 		},
 	}

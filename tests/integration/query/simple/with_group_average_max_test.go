@@ -83,22 +83,22 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_max": float64(55),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_avg":     float64(55),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_max": float64(19),
 							"_group": []map[string]any{
 								{
 									"Verified": false,
 									"_avg":     float64(19),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_max": float64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(55),
 								},
 							},
 						},

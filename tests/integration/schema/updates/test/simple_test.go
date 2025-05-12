@@ -28,13 +28,13 @@ func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Book" }
 					]
 				`,
-				ExpectedError: "testing value /Users/Name failed: test failed",
+				ExpectedError: "failed: test failed",
 			},
 		},
 	}
@@ -52,7 +52,7 @@ func TestSchemaUpdatesTestCollectionNamePasses(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Users" }

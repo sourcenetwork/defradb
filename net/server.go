@@ -490,7 +490,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 
 	// If the requesting peer is in the replicators list for that collection, then they have access.
 	s.mu.Lock()
-	if peerList, ok := s.replicators[cols[0].SchemaRoot()]; ok {
+	if peerList, ok := s.replicators[cols[0].CollectionID()]; ok {
 		_, exists := peerList[p]
 		if exists {
 			s.mu.Unlock()

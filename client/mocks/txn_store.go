@@ -913,118 +913,6 @@ func (_c *TxnStore_GetNodeIdentity_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
-// GetSchemaByVersionID provides a mock function for the type TxnStore
-func (_mock *TxnStore) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ret := _mock.Called(ctx, versionID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSchemaByVersionID")
-	}
-
-	var r0 client.SchemaDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (client.SchemaDescription, error)); ok {
-		return returnFunc(ctx, versionID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) client.SchemaDescription); ok {
-		r0 = returnFunc(ctx, versionID)
-	} else {
-		r0 = ret.Get(0).(client.SchemaDescription)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, versionID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// TxnStore_GetSchemaByVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemaByVersionID'
-type TxnStore_GetSchemaByVersionID_Call struct {
-	*mock.Call
-}
-
-// GetSchemaByVersionID is a helper method to define mock.On call
-//   - ctx
-//   - versionID
-func (_e *TxnStore_Expecter) GetSchemaByVersionID(ctx interface{}, versionID interface{}) *TxnStore_GetSchemaByVersionID_Call {
-	return &TxnStore_GetSchemaByVersionID_Call{Call: _e.mock.On("GetSchemaByVersionID", ctx, versionID)}
-}
-
-func (_c *TxnStore_GetSchemaByVersionID_Call) Run(run func(ctx context.Context, versionID string)) *TxnStore_GetSchemaByVersionID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *TxnStore_GetSchemaByVersionID_Call) Return(schemaDescription client.SchemaDescription, err error) *TxnStore_GetSchemaByVersionID_Call {
-	_c.Call.Return(schemaDescription, err)
-	return _c
-}
-
-func (_c *TxnStore_GetSchemaByVersionID_Call) RunAndReturn(run func(ctx context.Context, versionID string) (client.SchemaDescription, error)) *TxnStore_GetSchemaByVersionID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetSchemas provides a mock function for the type TxnStore
-func (_mock *TxnStore) GetSchemas(ctx context.Context, options client.SchemaFetchOptions) ([]client.SchemaDescription, error) {
-	ret := _mock.Called(ctx, options)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSchemas")
-	}
-
-	var r0 []client.SchemaDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.SchemaFetchOptions) ([]client.SchemaDescription, error)); ok {
-		return returnFunc(ctx, options)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.SchemaFetchOptions) []client.SchemaDescription); ok {
-		r0 = returnFunc(ctx, options)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.SchemaDescription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.SchemaFetchOptions) error); ok {
-		r1 = returnFunc(ctx, options)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// TxnStore_GetSchemas_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSchemas'
-type TxnStore_GetSchemas_Call struct {
-	*mock.Call
-}
-
-// GetSchemas is a helper method to define mock.On call
-//   - ctx
-//   - options
-func (_e *TxnStore_Expecter) GetSchemas(ctx interface{}, options interface{}) *TxnStore_GetSchemas_Call {
-	return &TxnStore_GetSchemas_Call{Call: _e.mock.On("GetSchemas", ctx, options)}
-}
-
-func (_c *TxnStore_GetSchemas_Call) Run(run func(ctx context.Context, options client.SchemaFetchOptions)) *TxnStore_GetSchemas_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.SchemaFetchOptions))
-	})
-	return _c
-}
-
-func (_c *TxnStore_GetSchemas_Call) Return(schemaDescriptions []client.SchemaDescription, err error) *TxnStore_GetSchemas_Call {
-	_c.Call.Return(schemaDescriptions, err)
-	return _c
-}
-
-func (_c *TxnStore_GetSchemas_Call) RunAndReturn(run func(ctx context.Context, options client.SchemaFetchOptions) ([]client.SchemaDescription, error)) *TxnStore_GetSchemas_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // LensRegistry provides a mock function for the type TxnStore
 func (_mock *TxnStore) LensRegistry() client.LensRegistry {
 	ret := _mock.Called()
@@ -1186,16 +1074,16 @@ func (_c *TxnStore_NewTxn_Call) RunAndReturn(run func(ctx context.Context, readO
 }
 
 // PatchCollection provides a mock function for the type TxnStore
-func (_mock *TxnStore) PatchCollection(ctx context.Context, patch string) error {
-	ret := _mock.Called(ctx, patch)
+func (_mock *TxnStore) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error {
+	ret := _mock.Called(ctx, patch, migration)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PatchCollection")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, patch)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, immutable.Option[model.Lens]) error); ok {
+		r0 = returnFunc(ctx, patch, migration)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1210,13 +1098,14 @@ type TxnStore_PatchCollection_Call struct {
 // PatchCollection is a helper method to define mock.On call
 //   - ctx
 //   - patch
-func (_e *TxnStore_Expecter) PatchCollection(ctx interface{}, patch interface{}) *TxnStore_PatchCollection_Call {
-	return &TxnStore_PatchCollection_Call{Call: _e.mock.On("PatchCollection", ctx, patch)}
+//   - migration
+func (_e *TxnStore_Expecter) PatchCollection(ctx interface{}, patch interface{}, migration interface{}) *TxnStore_PatchCollection_Call {
+	return &TxnStore_PatchCollection_Call{Call: _e.mock.On("PatchCollection", ctx, patch, migration)}
 }
 
-func (_c *TxnStore_PatchCollection_Call) Run(run func(ctx context.Context, patch string)) *TxnStore_PatchCollection_Call {
+func (_c *TxnStore_PatchCollection_Call) Run(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens])) *TxnStore_PatchCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(immutable.Option[model.Lens]))
 	})
 	return _c
 }
@@ -1226,55 +1115,7 @@ func (_c *TxnStore_PatchCollection_Call) Return(err error) *TxnStore_PatchCollec
 	return _c
 }
 
-func (_c *TxnStore_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, patch string) error) *TxnStore_PatchCollection_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// PatchSchema provides a mock function for the type TxnStore
-func (_mock *TxnStore) PatchSchema(ctx context.Context, patch string, migration immutable.Option[model.Lens], setDefault bool) error {
-	ret := _mock.Called(ctx, patch, migration, setDefault)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PatchSchema")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, immutable.Option[model.Lens], bool) error); ok {
-		r0 = returnFunc(ctx, patch, migration, setDefault)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// TxnStore_PatchSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PatchSchema'
-type TxnStore_PatchSchema_Call struct {
-	*mock.Call
-}
-
-// PatchSchema is a helper method to define mock.On call
-//   - ctx
-//   - patch
-//   - migration
-//   - setDefault
-func (_e *TxnStore_Expecter) PatchSchema(ctx interface{}, patch interface{}, migration interface{}, setDefault interface{}) *TxnStore_PatchSchema_Call {
-	return &TxnStore_PatchSchema_Call{Call: _e.mock.On("PatchSchema", ctx, patch, migration, setDefault)}
-}
-
-func (_c *TxnStore_PatchSchema_Call) Run(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens], setDefault bool)) *TxnStore_PatchSchema_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(immutable.Option[model.Lens]), args[3].(bool))
-	})
-	return _c
-}
-
-func (_c *TxnStore_PatchSchema_Call) Return(err error) *TxnStore_PatchSchema_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *TxnStore_PatchSchema_Call) RunAndReturn(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens], setDefault bool) error) *TxnStore_PatchSchema_Call {
+func (_c *TxnStore_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error) *TxnStore_PatchCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1415,48 +1256,48 @@ func (_c *TxnStore_RefreshViews_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
-// SetActiveSchemaVersion provides a mock function for the type TxnStore
-func (_mock *TxnStore) SetActiveSchemaVersion(ctx context.Context, version string) error {
-	ret := _mock.Called(ctx, version)
+// SetActiveCollectionVersion provides a mock function for the type TxnStore
+func (_mock *TxnStore) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
+	ret := _mock.Called(ctx, versionID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetActiveSchemaVersion")
+		panic("no return value specified for SetActiveCollectionVersion")
 	}
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, version)
+		r0 = returnFunc(ctx, versionID)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// TxnStore_SetActiveSchemaVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetActiveSchemaVersion'
-type TxnStore_SetActiveSchemaVersion_Call struct {
+// TxnStore_SetActiveCollectionVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetActiveCollectionVersion'
+type TxnStore_SetActiveCollectionVersion_Call struct {
 	*mock.Call
 }
 
-// SetActiveSchemaVersion is a helper method to define mock.On call
+// SetActiveCollectionVersion is a helper method to define mock.On call
 //   - ctx
-//   - version
-func (_e *TxnStore_Expecter) SetActiveSchemaVersion(ctx interface{}, version interface{}) *TxnStore_SetActiveSchemaVersion_Call {
-	return &TxnStore_SetActiveSchemaVersion_Call{Call: _e.mock.On("SetActiveSchemaVersion", ctx, version)}
+//   - versionID
+func (_e *TxnStore_Expecter) SetActiveCollectionVersion(ctx interface{}, versionID interface{}) *TxnStore_SetActiveCollectionVersion_Call {
+	return &TxnStore_SetActiveCollectionVersion_Call{Call: _e.mock.On("SetActiveCollectionVersion", ctx, versionID)}
 }
 
-func (_c *TxnStore_SetActiveSchemaVersion_Call) Run(run func(ctx context.Context, version string)) *TxnStore_SetActiveSchemaVersion_Call {
+func (_c *TxnStore_SetActiveCollectionVersion_Call) Run(run func(ctx context.Context, versionID string)) *TxnStore_SetActiveCollectionVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *TxnStore_SetActiveSchemaVersion_Call) Return(err error) *TxnStore_SetActiveSchemaVersion_Call {
+func (_c *TxnStore_SetActiveCollectionVersion_Call) Return(err error) *TxnStore_SetActiveCollectionVersion_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *TxnStore_SetActiveSchemaVersion_Call) RunAndReturn(run func(ctx context.Context, version string) error) *TxnStore_SetActiveSchemaVersion_Call {
+func (_c *TxnStore_SetActiveCollectionVersion_Call) RunAndReturn(run func(ctx context.Context, versionID string) error) *TxnStore_SetActiveCollectionVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }

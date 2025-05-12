@@ -126,12 +126,12 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_avg": float64(2.3333333333333335),
-						},
-						{
 							"name": "John Grisham",
 							"_avg": float64(3),
+						},
+						{
+							"name": "Cornelia Funke",
+							"_avg": float64(2.3333333333333335),
 						},
 					},
 				},
@@ -251,12 +251,12 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_avg": float64(2.3333333333333335),
-						},
-						{
 							"name": "John Grisham",
 							"_avg": float64(0),
+						},
+						{
+							"name": "Cornelia Funke",
+							"_avg": float64(2.3333333333333335),
 						},
 					},
 				},

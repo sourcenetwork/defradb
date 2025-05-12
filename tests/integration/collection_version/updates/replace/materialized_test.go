@@ -35,7 +35,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t 
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4/IsMaterialized",
+							"path": "/bafyreiezxal4wrjp2fn6x5pf3kecliun72ky5tvb4deql2j376bmdknuh4/IsMaterialized",
 							"value": false
 						}
 					]
@@ -81,7 +81,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreibdmvzu7gv4iecgms5odn4t7g66jrrgphjqsnnv666ptmx4xgk5my/IsMaterialized",
+							"path": "/UserView/IsMaterialized",
 							"value": false
 						}
 					]

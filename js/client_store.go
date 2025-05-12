@@ -39,7 +39,7 @@ func (c *Client) addSchema(this js.Value, args []js.Value) (js.Value, error) {
 	return goji.MarshalJS(cols)
 }
 
-func (c *Client) patchSchema(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, error) {
 	patch, err := stringArg(args, 0, "patch")
 	if err != nil {
 		return js.Undefined(), err
@@ -48,32 +48,15 @@ func (c *Client) patchSchema(this js.Value, args []js.Value) (js.Value, error) {
 	if err := structArg(args, 1, "lens", &migration); err != nil {
 		return js.Undefined(), err
 	}
-	setAsDefaultVersion, err := boolArg(args, 2, "setAsDefaultVersion")
+	ctx, err := contextArg(args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	err = c.node.DB.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
+	err = c.node.DB.PatchCollection(ctx, patch, migration)
 	return js.Undefined(), err
 }
 
-func (c *Client) patchCollection(this js.Value, args []js.Value) (js.Value, error) {
-	patch, err := stringArg(args, 0, "patch")
-	if err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 1, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	err = c.node.DB.PatchCollection(ctx, patch)
-	return js.Undefined(), err
-}
-
-func (c *Client) setActiveSchemaVersion(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) setActiveCollectionVersion(this js.Value, args []js.Value) (js.Value, error) {
 	version, err := stringArg(args, 0, "version")
 	if err != nil {
 		return js.Undefined(), err
@@ -82,7 +65,7 @@ func (c *Client) setActiveSchemaVersion(this js.Value, args []js.Value) (js.Valu
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.node.DB.SetActiveSchemaVersion(ctx, version)
+	err = c.node.DB.SetActiveCollectionVersion(ctx, version)
 	return js.Undefined(), err
 }
 
@@ -174,38 +157,6 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 		wrappers[i] = newCollection(col, c.txns)
 	}
 	return js.ValueOf(wrappers), nil
-}
-
-func (c *Client) getSchemaByVersionID(this js.Value, args []js.Value) (js.Value, error) {
-	version, err := stringArg(args, 0, "version")
-	if err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 1, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	schema, err := c.node.DB.GetSchemaByVersionID(ctx, version)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	return goji.MarshalJS(schema)
-}
-
-func (c *Client) getSchemas(this js.Value, args []js.Value) (js.Value, error) {
-	var options client.SchemaFetchOptions
-	if err := structArg(args, 0, "options", &options); err != nil {
-		return js.Undefined(), err
-	}
-	ctx, err := contextArg(args, 1, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	schemas, err := c.node.DB.GetSchemas(ctx, options)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	return goji.MarshalJS(schemas)
 }
 
 func (c *Client) getAllIndexes(this js.Value, args []js.Value) (js.Value, error) {

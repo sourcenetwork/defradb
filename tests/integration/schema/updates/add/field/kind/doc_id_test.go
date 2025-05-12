@@ -28,7 +28,7 @@ func TestSchemaUpdatesAddFieldKindDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 1} }
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 1} }
@@ -73,7 +73,7 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55"
+					"foo": "bae-aad433b7-fe14-5a31-a5da-94735bedcd4f"
 				}`,
 			},
 			testUtils.Request{
@@ -87,7 +87,7 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"foo":  "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
+							"foo":  "bae-aad433b7-fe14-5a31-a5da-94735bedcd4f",
 						},
 					},
 				},
@@ -108,7 +108,7 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "ID"} }
@@ -119,7 +119,7 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
-					"foo": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55"
+					"foo": "bae-aad433b7-fe14-5a31-a5da-94735bedcd4f"
 				}`,
 			},
 			testUtils.Request{
@@ -133,7 +133,7 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"foo":  "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
+							"foo":  "bae-aad433b7-fe14-5a31-a5da-94735bedcd4f",
 						},
 					},
 				},

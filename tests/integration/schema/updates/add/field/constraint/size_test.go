@@ -13,8 +13,6 @@ package crdt
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -30,13 +28,12 @@ func TestSchemaUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 9, "Typ":1, "Size": 2} }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(true),
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -44,7 +41,7 @@ func TestSchemaUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 					"name": "John",
 					"foo":  []float32{1, 2, 3},
 				},
-				// ExpectedError: ,
+				ExpectedError: "array size mismatch. Actual: 3, Expected: 2",
 			},
 		},
 	}

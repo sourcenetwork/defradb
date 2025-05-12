@@ -57,14 +57,11 @@ type Collection interface {
 	// VersionID returns the VersionID of this Collection.
 	VersionID() string
 
-	// SchemaRoot returns the Root of the Schema used to define this Collection.
-	SchemaRoot() string
+	// CollectionID returns the Root of the Schema used to define this Collection.
+	CollectionID() string
 
 	// Definition contains the metadata defining what a Collection is.
 	Definition() CollectionDefinition
-
-	// Schema returns the SchemaDescription used to define this Collection.
-	Schema() SchemaDescription
 
 	// Version returns the CollectionVersion of this Collection.
 	Version() CollectionVersion

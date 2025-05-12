@@ -80,7 +80,7 @@ func (f *lensedFetcher) Init(
 
 	f.col = col
 
-	f.fieldDescriptionsByName = make(map[string]client.FieldDefinition, len(col.Schema().Fields))
+	f.fieldDescriptionsByName = make(map[string]client.FieldDefinition, len(col.Version().Fields))
 	// Add cache the field descriptions in reverse, allowing smaller-index fields to overwrite any later
 	// ones.  This should never really happen here, but it ensures the result is consistent with col.GetField
 	// which returns the first one it finds with a matching name.
@@ -89,11 +89,11 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := getTargetedCollectionHistory(ctx, f.col.Schema().Root, f.col.Schema().VersionID)
+	history, err := getTargetedCollectionHistory(ctx, f.col.Version().CollectionID, f.col.Version().VersionID)
 	if err != nil {
 		return err
 	}
-	f.lens = new(ctx, f.registry, f.col.Schema().VersionID, history)
+	f.lens = new(ctx, f.registry, f.col.Version().VersionID, history)
 	f.txn = txn
 
 historyLoop:
@@ -107,7 +107,7 @@ historyLoop:
 		}
 	}
 
-	f.targetVersionID = col.Schema().VersionID
+	f.targetVersionID = col.Version().VersionID
 
 	var innerFetcherFields []client.FieldDefinition
 	if f.hasMigrations {
@@ -257,7 +257,7 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 
 	return &lensEncodedDocument{
 		key:             []byte(key),
-		schemaVersionID: f.col.Schema().VersionID,
+		schemaVersionID: f.col.Version().VersionID,
 		status:          status,
 		properties:      properties,
 	}, nil
@@ -322,7 +322,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			continue
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fieldDesc.Name)
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fieldDesc.FieldID)
 		if err != nil {
 			return err
 		}

@@ -30,7 +30,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "age") {
+					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "age") {
 						cid
 						links {
 							cid
@@ -41,7 +41,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 				Results: map[string]any{
 					"latestCommits": []map[string]any{
 						{
-							"cid":   "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":   "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"links": []map[string]any{},
 						},
 					},
@@ -65,7 +65,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "1") {
+					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "1") {
 						cid
 						links {
 							cid
@@ -97,7 +97,7 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "_C") {
+					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "_C") {
 						cid
 						links {
 							cid
@@ -108,14 +108,14 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 				Results: map[string]any{
 					"latestCommits": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+									"cid":  "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+									"cid":  "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
 									"name": "name",
 								},
 							},

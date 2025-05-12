@@ -94,24 +94,18 @@ func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.Col
 	return txn.CWrapper.AddSchema(ctx, sdl)
 }
 
-func (txn *Transaction) PatchSchema(
+func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setDefault bool,
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.CWrapper.PatchSchema(ctx, patch, migration, setDefault)
+	return txn.CWrapper.PatchCollection(ctx, patch, migration)
 }
 
-func (txn *Transaction) PatchCollection(ctx context.Context, patch string) error {
+func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.CWrapper.PatchCollection(ctx, patch)
-}
-
-func (txn *Transaction) SetActiveSchemaVersion(ctx context.Context, version string) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.CWrapper.SetActiveSchemaVersion(ctx, version)
+	return txn.CWrapper.SetActiveCollectionVersion(ctx, version)
 }
 
 func (txn *Transaction) AddView(
@@ -152,19 +146,6 @@ func (txn *Transaction) GetCollections(
 ) ([]client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.GetCollections(ctx, options)
-}
-
-func (txn *Transaction) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.CWrapper.GetSchemaByVersionID(ctx, versionID)
-}
-
-func (txn *Transaction) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.CWrapper.GetSchemas(ctx, options)
 }
 
 func (txn *Transaction) GetAllIndexes(

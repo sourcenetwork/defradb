@@ -25,7 +25,7 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -33,7 +33,7 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -49,7 +49,7 @@ func TestQueryOneToManyWithChildDocID(t *testing.T) {
 					Author {
 						name
 						published (
-								docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
+								docID: "bae-54426e27-e18b-5b9e-9bbd-edfa36f6bbc4"
 							) {
 							name
 						}

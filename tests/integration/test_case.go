@@ -154,23 +154,8 @@ type Start struct {
 	ExpectedError string
 }
 
-type SchemaPatch struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	Patch string
-
-	// If SetAsDefaultVersion has a value, and that value is false then the schema version
-	// resulting from this patch will not be made default.
-	SetAsDefaultVersion immutable.Option[bool]
-
-	Lens immutable.Option[model.Lens]
-
-	ExpectedError string
-}
-
+// PatchCollection executes a patch collection command, updating 0 to many collections and applying
+// a migration if one is provided.
 type PatchCollection struct {
 	// NodeID may hold the ID (index) of a node to apply this patch to.
 	//
@@ -180,31 +165,13 @@ type PatchCollection struct {
 	// The Patch to apply to the collection version.
 	Patch string
 
-	ExpectedError string
-}
+	// An optional migration that will be set if the patch creates any new CollectionVersions.
+	Lens immutable.Option[model.Lens]
 
-// GetSchema is an action that fetches schema using the provided options.
-type GetSchema struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
+	// Any error expected from the action. Optional.
 	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The VersionID of the schema version to fetch.
-	//
-	// This option will be prioritized over all other options.
-	VersionID immutable.Option[string]
-
-	// The Root of the schema versions to fetch.
-	//
-	// This option will be prioritized over Name.
-	Root immutable.Option[string]
-
-	// The Name of the schema versions to fetch.
-	Name immutable.Option[string]
-
-	ExpectedResults []client.SchemaDescription
-
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
 	ExpectedError string
 }
 
@@ -212,9 +179,9 @@ type GetSchema struct {
 //
 // ID, RootID and SchemaVersionID will only be asserted on if an expected value is provided.
 type GetCollections struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
+	// NodeID may hold the ID (index) of a node to get collections from.
 	//
-	// If a value is not provided the patch will be applied to all nodes.
+	// If a value is not provided collections will be gotten from all nodes.
 	NodeID immutable.Option[int]
 
 	// Used to identify the transaction for this to run against. Optional.
@@ -222,7 +189,7 @@ type GetCollections struct {
 
 	// The expected results.
 	//
-	// Each item will be compared individually, if ID, RootID or SchemaVersionID on the
+	// Each item will be compared individually, if CollectionID, VersionID, or FieldIDs on the
 	// expected item are default they will not be compared with the actual.
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
@@ -236,9 +203,9 @@ type GetCollections struct {
 	ExpectedError string
 }
 
-// SetActiveSchemaVersion is an action that will set the active schema version to the
+// SetActiveCollectionVersion is an action that will set the active schema version to the
 // given value.
-type SetActiveSchemaVersion struct {
+type SetActiveCollectionVersion struct {
 	// NodeID may hold the ID (index) of a node to set the default schema version on.
 	//
 	// If a value is not provided the default will be set on all nodes.

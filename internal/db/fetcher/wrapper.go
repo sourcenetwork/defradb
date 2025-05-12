@@ -126,7 +126,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 
 	fieldsByID := make(map[uint32]client.FieldDefinition, len(f.fields))
 	for _, field := range f.fields {
-		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, field.Name)
+		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, field.FieldID)
 		if err != nil {
 			return err
 		}

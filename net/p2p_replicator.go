@@ -110,10 +110,10 @@ func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collect
 
 	addedCols := []client.Collection{}
 	for _, col := range fetchedCollections {
-		if _, ok := storedCollectionIDs[col.SchemaRoot()]; !ok {
-			storedCollectionIDs[col.SchemaRoot()] = struct{}{}
+		if _, ok := storedCollectionIDs[col.CollectionID()]; !ok {
+			storedCollectionIDs[col.CollectionID()] = struct{}{}
 			addedCols = append(addedCols, col)
-			storedRep.CollectionIDs = append(storedRep.CollectionIDs, col.SchemaRoot())
+			storedRep.CollectionIDs = append(storedRep.CollectionIDs, col.CollectionID())
 		}
 	}
 
@@ -166,7 +166,7 @@ func (p *Peer) pushHeadsForAllDocs(ctx context.Context, col client.Collection, p
 			return docIDResult.Err
 		}
 		docID := docIDResult.ID.String()
-		err := p.pushHeadsForDoc(ctx, docID, col.SchemaRoot(), peerID)
+		err := p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
 		if err != nil {
 			return err
 		}
@@ -253,7 +253,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, coll
 			if len(cols) == 0 {
 				return ErrReplicatorCollections
 			}
-			delete(storedCollectionIDs, cols[0].SchemaRoot())
+			delete(storedCollectionIDs, cols[0].CollectionID())
 		}
 	} else {
 		storedCollectionIDs = make(map[string]struct{})

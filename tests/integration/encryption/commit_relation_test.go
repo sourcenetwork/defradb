@@ -18,8 +18,8 @@ import (
 )
 
 func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedCommit(t *testing.T) {
-	const userDocID = "bae-4d563681-e131-5e01-8ab4-6c65ac0d0478"
-	const deviceDocID = "bae-29ab9ee8-80cb-53eb-a467-f96a170f4cb7"
+	const userDocID = "bae-73ba4fa1-e4ff-5e03-850a-c6d3b1ccd84f"
+	const deviceDocID = "bae-66b61a55-8fd4-5e9d-8d3b-d7838f356297"
 
 	test := testUtils.TestCase{
 		Actions: []any{

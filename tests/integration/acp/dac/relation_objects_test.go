@@ -110,16 +110,16 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 				Results: map[string]any{
 					"Employee": []map[string]any{
 						{
+							"name":    "PubEmp in PubCompany",
+							"company": map[string]any{"name": "Public Company"},
+						},
+						{
 							"name":    "PrivateEmp in PubCompany",
 							"company": map[string]any{"name": "Public Company"},
 						},
 						{
 							"name":    "PrivateEmp in PrivateCompany",
 							"company": map[string]any{"name": "Private Company"},
-						},
-						{
-							"name":    "PubEmp in PubCompany",
-							"company": map[string]any{"name": "Public Company"},
 						},
 						{
 							"name":    "PubEmp in PrivateCompany",
@@ -158,8 +158,8 @@ func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 						{
 							"name": "Public Company",
 							"employees": []map[string]any{
-								{"name": "PrivateEmp in PubCompany"},
 								{"name": "PubEmp in PubCompany"},
+								{"name": "PrivateEmp in PubCompany"},
 							},
 						},
 						{

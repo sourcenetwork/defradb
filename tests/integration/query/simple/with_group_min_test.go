@@ -226,22 +226,22 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_min": int64(55),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_min":     int64(55),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_min": int64(19),
 							"_group": []map[string]any{
 								{
 									"Verified": false,
 									"_min":     int64(19),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_min": int64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_min":     int64(55),
 								},
 							},
 						},
@@ -402,12 +402,12 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Alice",
-							"_min": float64(2.04),
+							"Name": "Carlo",
+							"_min": float64(1.74),
 							"_group": []map[string]any{
 								{
-									"Verified": false,
-									"_min":     float64(2.04),
+									"Verified": true,
+									"_min":     float64(1.74),
 								},
 							},
 						},
@@ -426,12 +426,12 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_min": float64(1.74),
+							"Name": "Alice",
+							"_min": float64(2.04),
 							"_group": []map[string]any{
 								{
-									"Verified": true,
-									"_min":     float64(1.74),
+									"Verified": false,
+									"_min":     float64(2.04),
 								},
 							},
 						},
@@ -506,22 +506,6 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"_min": float64(1.74),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_min":     float64(1.74),
-									"_group": []map[string]any{
-										{
-											"Age":  int64(55),
-											"_min": float64(1.74),
-										},
-									},
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_min": float64(2.04),
 							"_group": []map[string]any{
@@ -562,6 +546,22 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 										{
 											"Age":  int64(34),
 											"_min": float64(2.22),
+										},
+									},
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_min": float64(1.74),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_min":     float64(1.74),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(55),
+											"_min": float64(1.74),
 										},
 									},
 								},

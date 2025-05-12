@@ -34,37 +34,19 @@ type FieldKind interface {
 	IsArray() bool
 }
 
-// SchemaFieldDescription describes a field on a Schema and its associated metadata.
-type SchemaFieldDescription struct {
-	// Name contains the name of this field.
-	//
-	// It is currently immutable.
-	Name string
-
-	// The data type that this field holds.
-	//
-	// Must contain a valid value. It is currently immutable.
-	Kind FieldKind
-
-	// The CRDT Type of this field. If no type has been provided it will default to [LWW_REGISTER].
-	//
-	// It is currently immutable.
-	Typ CType
-}
-
 // ScalarKind represents singular scalar field kinds, such as `Int`.
 type ScalarKind uint8
 
 // ScalarArrayKind represents arrays of simple scalar field kinds, such as `[Int]`.
 type ScalarArrayKind uint8
 
-// SchemaKind represents a relationship with a [SchemaDescription].
-type SchemaKind struct {
+// CollectionKind represents a relationship with a collection.
+type CollectionKind struct {
 	// If true, this side of the relationship points to many related records.
 	Array bool
 
-	// The root ID of the related [SchemaDescription].
-	Root string
+	// The CollectionID of the related collection.
+	CollectionID string
 }
 
 // NamedKind represents a temporary declaration of a relationship to another
@@ -72,7 +54,7 @@ type SchemaKind struct {
 //
 // This is used only to temporarily describe a relationship, this kind will
 // never be persisted in the store and instead will be converted to one of
-// [CollectionKind], [SchemaKind] or [SelfKind] first.
+// [CollectionKind], [CollectionKind] or [SelfKind] first.
 type NamedKind struct {
 	// The current name of the related [CollectionDefinition].
 	Name string
@@ -87,7 +69,7 @@ type NamedKind struct {
 // host at the point at which they were created.
 //
 // For example: the relations in User=>Dog=>User form a circle, and would be
-// defined using [SelfKind] instead of [SchemaKind].
+// defined using [SelfKind] instead of [CollectionKind].
 //
 // This is because schema IDs are content IDs and cannot be generated for a
 // single element within a circular dependency tree.
@@ -102,7 +84,7 @@ type SelfKind struct {
 
 var _ FieldKind = ScalarKind(0)
 var _ FieldKind = ScalarArrayKind(0)
-var _ FieldKind = (*SchemaKind)(nil)
+var _ FieldKind = (*CollectionKind)(nil)
 var _ FieldKind = (*SelfKind)(nil)
 var _ FieldKind = (*NamedKind)(nil)
 
@@ -209,29 +191,29 @@ func (k ScalarArrayKind) SubKind() ScalarKind {
 	}
 }
 
-func NewSchemaKind(root string, isArray bool) *SchemaKind {
-	return &SchemaKind{
-		Root:  root,
-		Array: isArray,
+func NewCollectionKind(root string, isArray bool) *CollectionKind {
+	return &CollectionKind{
+		CollectionID: root,
+		Array:        isArray,
 	}
 }
 
-func (k *SchemaKind) String() string {
+func (k *CollectionKind) String() string {
 	if k.Array {
-		return fmt.Sprintf("[%v]", k.Root)
+		return fmt.Sprintf("[%v]", k.CollectionID)
 	}
-	return k.Root
+	return k.CollectionID
 }
 
-func (k *SchemaKind) IsNillable() bool {
+func (k *CollectionKind) IsNillable() bool {
 	return true
 }
 
-func (k *SchemaKind) IsObject() bool {
+func (k *CollectionKind) IsObject() bool {
 	return true
 }
 
-func (k *SchemaKind) IsArray() bool {
+func (k *CollectionKind) IsArray() bool {
 	return k.Array
 }
 
@@ -355,44 +337,12 @@ var FieldKindStringToEnumMapping = map[string]FieldKind{
 	fmt.Sprintf("[%s]", request.SelfTypeName): NewSelfKind("", true),
 }
 
-// IsRelation returns true if this field is a relation.
-func (f SchemaFieldDescription) IsRelation() bool {
-	return f.Kind.IsObject()
-}
-
-// schemaFieldDescription is a private type used to facilitate the unmarshalling
-// of json to a [SchemaFieldDescription].
-type schemaFieldDescription struct {
-	Name string
-	Typ  CType
-
-	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
-	Kind json.RawMessage
-}
-
-func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
-	var descMap schemaFieldDescription
-	err := json.Unmarshal(bytes, &descMap)
-	if err != nil {
-		return err
-	}
-
-	f.Name = descMap.Name
-	f.Typ = descMap.Typ
-	f.Kind, err = parseFieldKind(descMap.Kind)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // objectKind is a private type used to facilitate the unmarshalling
 // of json to a [FieldKind].
 type objectKind struct {
-	Array      bool
-	Root       string
-	RelativeID string
+	Array        bool
+	CollectionID string
+	RelativeID   string
 }
 
 func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
@@ -407,11 +357,11 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 			return nil, err
 		}
 
-		if objKind.Root == "" {
+		if objKind.CollectionID == "" {
 			return NewSelfKind(objKind.RelativeID, objKind.Array), nil
 		}
 
-		return NewSchemaKind(objKind.Root, objKind.Array), nil
+		return NewCollectionKind(objKind.CollectionID, objKind.Array), nil
 	}
 
 	if bytes[0] != '"' {

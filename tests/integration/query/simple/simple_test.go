@@ -38,7 +38,7 @@ func TestQuerySimple(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
+							"_docID": "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c",
 							"Name":   "John",
 							"Age":    int64(21),
 						},
@@ -109,12 +109,12 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(27),
-						},
-						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(27),
 						},
 					},
 				},

@@ -85,7 +85,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -98,7 +98,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreictgwjdhpmwh6a7uu65oggzcgolwiq5vb53x2ehhijh2yqzgwzjwu",
+							"collectionID":   "bafyreia2gcspqdssazilfdtwdccyb6rc6y2r4ryxeujojcdr46f77xwjwu",
 							"collectionName": "Book",
 							"filter":         nil,
 							"prefixes": []string{
@@ -174,7 +174,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -187,7 +187,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreihlfvtpy72o354ig4qqvyfeh2gelyijemw2brtfyq6cwuglaro5ba",
+							"collectionID":   "bafyreiheklxptjrfaful2lx3rvn35urxgiroucfyusl63cylscjfyxp4p4",
 							"collectionName": "Article",
 							"filter": dataMap{
 								"name": dataMap{
@@ -285,7 +285,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -298,7 +298,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreictgwjdhpmwh6a7uu65oggzcgolwiq5vb53x2ehhijh2yqzgwzjwu",
+							"collectionID":   "bafyreia2gcspqdssazilfdtwdccyb6rc6y2r4ryxeujojcdr46f77xwjwu",
 							"collectionName": "Book",
 							"filter":         nil,
 							"prefixes": []string{
@@ -321,7 +321,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 						OccurancesToSkip:  2,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -334,7 +334,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 						OccurancesToSkip:  3,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreihlfvtpy72o354ig4qqvyfeh2gelyijemw2brtfyq6cwuglaro5ba",
+							"collectionID":   "bafyreiheklxptjrfaful2lx3rvn35urxgiroucfyusl63cylscjfyxp4p4",
 							"collectionName": "Article",
 							"filter":         nil,
 							"prefixes": []string{

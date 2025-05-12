@@ -373,7 +373,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 		}
 
-		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.Name)
+		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
 		if err != nil {
 			return err
 		}

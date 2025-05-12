@@ -84,40 +84,40 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 							},
 						},
 						{
-							"cid":   gomega.And(doc1NameFieldCid, uniqueCid),
+							"cid":   gomega.And(doc2AgeFieldCid, uniqueCid),
 							"links": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc1AgeFieldCid, uniqueCid),
-							"links": []map[string]any{},
-						},
-						{
-							"cid": gomega.And(doc1CompositeCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc1NameFieldCid,
-								},
-								{
-									"cid": doc1AgeFieldCid,
-								},
-							},
 						},
 						{
 							"cid":   gomega.And(doc2NameFieldCid, uniqueCid),
 							"links": []map[string]any{},
 						},
 						{
-							"cid":   gomega.And(doc2AgeFieldCid, uniqueCid),
-							"links": []map[string]any{},
-						},
-						{
 							"cid": gomega.And(doc2CompositeCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": doc2NameFieldCid,
+									"cid": doc2AgeFieldCid,
 								},
 								{
-									"cid": doc2AgeFieldCid,
+									"cid": doc2NameFieldCid,
+								},
+							},
+						},
+						{
+							"cid":   gomega.And(doc1AgeFieldCid, uniqueCid),
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   gomega.And(doc1NameFieldCid, uniqueCid),
+							"links": []map[string]any{},
+						},
+						{
+							"cid": gomega.And(doc1CompositeCid, uniqueCid),
+							"links": []map[string]any{
+								{
+									"cid": doc1AgeFieldCid,
+								},
+								{
+									"cid": doc1NameFieldCid,
 								},
 							},
 						},

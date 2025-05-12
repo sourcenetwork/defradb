@@ -93,7 +93,7 @@ func TestMutationCreate(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-8c89a573-c287-5d8c-8ba6-c47c814c594d",
+							"_docID": "bae-656366a3-0538-5c4a-a950-b8d48efdb9d8",
 							"name":   "John",
 							"age":    int64(27),
 						},
@@ -163,7 +163,7 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 				Results: map[string]any{
 					"create_Users": []map[string]any{
 						{
-							"_docID": "bae-332de69b-47da-5175-863f-2480107f4884",
+							"_docID": "bae-8e9dfe7b-4029-5183-a6aa-e855b5a46d3c",
 						},
 					},
 				},

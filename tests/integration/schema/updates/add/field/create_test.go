@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc",
+							"_docID": "bae-0623ed7c-0861-5995-a5d7-cce53642a83e",
 							"name":   "John",
 							"email":  nil,
 						},
@@ -84,7 +84,7 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 			// We want to make sure that this works across database versions, so we tell
 			// the change detector to split here.
 			testUtils.SetupComplete{},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -108,12 +108,12 @@ func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":  "Shahzad",
-							"email": "sqlizded@yahoo.ca",
-						},
-						{
 							"name":  "John",
 							"email": nil,
+						},
+						{
+							"name":  "Shahzad",
+							"email": "sqlizded@yahoo.ca",
 						},
 					},
 				},

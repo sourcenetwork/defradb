@@ -124,8 +124,8 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"age": int64(32)},
 						{"age": int64(18)},
+						{"age": int64(32)},
 					},
 				},
 			},
@@ -457,8 +457,8 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"age": int64(32)},
 						{"age": int64(18)},
+						{"age": int64(32)},
 					},
 				},
 			},
@@ -709,8 +709,8 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "John"},
+						{"name": "Islam"},
 					},
 				},
 			},

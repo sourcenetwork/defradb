@@ -241,16 +241,12 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return cols, nil
 }
 
-func (w *Wrapper) PatchSchema(
+func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setDefault bool,
 ) error {
-	args := []string{"client", "schema", "patch"}
-	if setDefault {
-		args = append(args, "--set-active")
-	}
+	args := []string{"client", "collection", "patch"}
 	args = append(args, patch)
 
 	if migration.HasValue() {
@@ -265,18 +261,8 @@ func (w *Wrapper) PatchSchema(
 	return err
 }
 
-func (w *Wrapper) PatchCollection(
-	ctx context.Context,
-	patch string,
-) error {
-	args := []string{"client", "collection", "patch"}
-	args = append(args, patch)
-	_, err := w.cmd.execute(ctx, args)
-	return err
-}
-
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	args := []string{"client", "schema", "set-active"}
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	args := []string{"client", "collection", "set-active"}
 	args = append(args, schemaVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
@@ -391,42 +377,6 @@ func (w *Wrapper) GetCollections(
 		cols[i] = &Collection{w.cmd, v}
 	}
 	return cols, err
-}
-
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-
-	// schemas will always have length == 1 here
-	return schemas[0], nil
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	if options.ID.HasValue() {
-		args = append(args, "--version", options.ID.Value())
-	}
-	if options.Root.HasValue() {
-		args = append(args, "--root", options.Root.Value())
-	}
-	if options.Name.HasValue() {
-		args = append(args, "--name", options.Name.Value())
-	}
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
-	}
-	return schema, err
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

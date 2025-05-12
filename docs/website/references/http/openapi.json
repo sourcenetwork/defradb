@@ -171,16 +171,28 @@
                     "CollectionID": {
                         "type": "string"
                     },
+                    "CollectionSet": {},
                     "Fields": {
                         "items": {
                             "properties": {
                                 "DefaultValue": {},
+                                "FieldID": {
+                                    "type": "string"
+                                },
+                                "IsPrimary": {
+                                    "type": "boolean"
+                                },
                                 "Kind": {},
                                 "Name": {
                                     "type": "string"
                                 },
                                 "RelationName": {},
                                 "Size": {
+                                    "type": "integer"
+                                },
+                                "Typ": {
+                                    "maximum": 255,
+                                    "minimum": 0,
                                     "type": "integer"
                                 }
                             },
@@ -233,6 +245,9 @@
                     "IsMaterialized": {
                         "type": "boolean"
                     },
+                    "IsPlaceholder": {
+                        "type": "boolean"
+                    },
                     "Name": {
                         "type": "string"
                     },
@@ -278,52 +293,33 @@
             },
             "collection_definition": {
                 "properties": {
-                    "schema": {
-                        "properties": {
-                            "Fields": {
-                                "items": {
-                                    "properties": {
-                                        "Kind": {},
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "Typ": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Name": {
-                                "type": "string"
-                            },
-                            "Root": {
-                                "type": "string"
-                            },
-                            "VersionID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    },
                     "version": {
                         "properties": {
                             "CollectionID": {
                                 "type": "string"
                             },
+                            "CollectionSet": {},
                             "Fields": {
                                 "items": {
                                     "properties": {
                                         "DefaultValue": {},
+                                        "FieldID": {
+                                            "type": "string"
+                                        },
+                                        "IsPrimary": {
+                                            "type": "boolean"
+                                        },
                                         "Kind": {},
                                         "Name": {
                                             "type": "string"
                                         },
                                         "RelationName": {},
                                         "Size": {
+                                            "type": "integer"
+                                        },
+                                        "Typ": {
+                                            "maximum": 255,
+                                            "minimum": 0,
                                             "type": "integer"
                                         }
                                     },
@@ -374,6 +370,9 @@
                                 "type": "boolean"
                             },
                             "IsMaterialized": {
+                                "type": "boolean"
+                            },
+                            "IsPlaceholder": {
                                 "type": "boolean"
                             },
                             "Name": {
@@ -597,14 +596,11 @@
                 },
                 "type": "object"
             },
-            "patch_schema_request": {
+            "patch_collection_request": {
                 "properties": {
                     "Migration": {},
                     "Patch": {
                         "type": "string"
-                    },
-                    "SetAsDefaultVersion": {
-                        "type": "boolean"
                     }
                 },
                 "type": "object"
@@ -681,37 +677,6 @@
                             }
                         },
                         "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "schema": {
-                "properties": {
-                    "Fields": {
-                        "items": {
-                            "properties": {
-                                "Kind": {},
-                                "Name": {
-                                    "type": "string"
-                                },
-                                "Typ": {
-                                    "maximum": 255,
-                                    "minimum": 0,
-                                    "type": "integer"
-                                }
-                            },
-                            "type": "object"
-                        },
-                        "type": "array"
-                    },
-                    "Name": {
-                        "type": "string"
-                    },
-                    "Root": {
-                        "type": "string"
-                    },
-                    "VersionID": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -1236,7 +1201,7 @@
                     {
                         "description": "Collection schema root",
                         "in": "query",
-                        "name": "schema_root",
+                        "name": "collection_id",
                         "schema": {
                             "type": "string"
                         }
@@ -1296,6 +1261,35 @@
                 "requestBody": {
                     "content": {
                         "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/patch_collection_request"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            }
+        },
+        "/collections/default": {
+            "post": {
+                "description": "Set the default version for a collection",
+                "operationId": "set_default_collection_version",
+                "requestBody": {
+                    "content": {
+                        "text/plain": {
                             "schema": {
                                 "type": "string"
                             }
@@ -2442,94 +2436,6 @@
             }
         },
         "/schema": {
-            "get": {
-                "description": "Introspect schema(s) by name, schema root, or version id.",
-                "operationId": "schema_describe",
-                "parameters": [
-                    {
-                        "description": "Schema name",
-                        "in": "query",
-                        "name": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Schema root",
-                        "in": "query",
-                        "name": "root",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Schema version id",
-                        "in": "query",
-                        "name": "version_id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/schema"
-                                        },
-                                        {
-                                            "items": {
-                                                "$ref": "#/components/schemas/schema"
-                                            },
-                                            "type": "array"
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        "description": "Schema(s) with matching name, schema id, or version id."
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "schema"
-                ]
-            },
-            "patch": {
-                "description": "Update a schema definition",
-                "operationId": "patch_schema",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/patch_schema_request"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "schema"
-                ]
-            },
             "post": {
                 "description": "Add a new schema definition",
                 "operationId": "add_schema",
@@ -2555,35 +2461,6 @@
                             }
                         },
                         "description": "Collection(s)"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "schema"
-                ]
-            }
-        },
-        "/schema/default": {
-            "post": {
-                "description": "Set the default schema version for a collection",
-                "operationId": "set_default_schema_version",
-                "requestBody": {
-                    "content": {
-                        "text/plain": {
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2796,7 +2673,7 @@
                     {
                         "description": "Collection schema root",
                         "in": "query",
-                        "name": "schema_root",
+                        "name": "collection_id",
                         "schema": {
                             "type": "string"
                         }
@@ -2843,7 +2720,7 @@
     ],
     "tags": [
         {
-            "description": "Add or update schema definitions",
+            "description": "Upload GQL schemas to create collections",
             "name": "schema"
         },
         {
@@ -2859,7 +2736,7 @@
             "name": "index"
         },
         {
-            "description": "Migrate documents to and from schema versions",
+            "description": "Migrate documents to and from collection versions",
             "name": "lens"
         },
         {

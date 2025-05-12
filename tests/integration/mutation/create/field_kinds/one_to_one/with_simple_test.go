@@ -32,7 +32,7 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -51,7 +51,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 			},
 			testUtils.Request{
