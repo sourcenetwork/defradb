@@ -395,8 +395,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		clk := coreblock.NewMerkleClock(mp.txn.Headstore(), mp.txn.Blockstore(), mp.txn.Encstore())
-		err = clk.ProcessBlock(ctx, crdt, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, mp.txn, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}

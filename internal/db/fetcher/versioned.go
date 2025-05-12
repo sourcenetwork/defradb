@@ -390,9 +390,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	clk := coreblock.NewMerkleClock(vf.txn.Headstore(), vf.txn.Blockstore(), vf.txn.Encstore())
-	err = clk.ProcessBlock(
+	err = coreblock.ProcessBlock(
 		vf.ctx,
+		vf.txn,
 		mcrdt,
 		block,
 		cidlink.Link{

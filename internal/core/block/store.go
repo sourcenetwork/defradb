@@ -29,26 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
-// MerkleClock is a MerkleCRDT clock that can be used to read/write events (deltas) to the clock.
-type MerkleClock struct {
-	headstore  datastore.DSReaderWriter
-	blockstore datastore.Blockstore
-	encstore   datastore.Blockstore
-}
-
-// NewMerkleClock returns a new MerkleClock.
-func NewMerkleClock(
-	headstore datastore.DSReaderWriter,
-	blockstore datastore.Blockstore,
-	encstore datastore.Blockstore,
-) *MerkleClock {
-	return &MerkleClock{
-		headstore:  headstore,
-		blockstore: blockstore,
-		encstore:   encstore,
-	}
-}
-
 func putBlock(
 	ctx context.Context,
 	blockstore datastore.Blockstore,
@@ -64,15 +44,17 @@ func putBlock(
 	return link.(cidlink.Link), nil //nolint:forcetypeassert
 }
 
-// AddDelta adds a new delta to the existing DAG for this MerkleClock: checks the current heads,
-// sets the delta priority in the Merkle DAG, and adds it to the blockstore then runs ProcessBlock.
-func (mc *MerkleClock) AddDelta(
+// AddDelta adds a new delta to the existing DAG.
+//
+// It checks the current heads, sets the delta priority, adds it to the blockstore, then runs ProcessBlock.
+func AddDelta(
 	ctx context.Context,
+	txn datastore.Txn,
 	crdt core.ReplicatedData,
 	delta core.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
+	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
 
 	heads, height, err := headset.List(ctx)
 	if err != nil {
@@ -87,7 +69,7 @@ func (mc *MerkleClock) AddDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := mc.determineBlockEncryption(ctx, string(block.Delta.GetDocID()), fieldName, heads)
+	encBlock, encLink, err := determineBlockEncryption(ctx, txn, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -102,19 +84,19 @@ func (mc *MerkleClock) AddDelta(
 	}
 
 	if EnabledSigningFromContext(ctx) {
-		err = signBlock(ctx, mc.blockstore, dagBlock)
+		err = signBlock(ctx, txn.Blockstore(), dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
 	}
 
-	link, err := putBlock(ctx, mc.blockstore, dagBlock)
+	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
 
 	// merge the delta and update the state
-	err = mc.ProcessBlock(ctx, crdt, block, link)
+	err = ProcessBlock(ctx, txn, crdt, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -127,8 +109,9 @@ func (mc *MerkleClock) AddDelta(
 	return link, b, err
 }
 
-func (mc *MerkleClock) determineBlockEncryption(
+func determineBlockEncryption(
 	ctx context.Context,
+	txn datastore.Txn,
 	docID string,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
@@ -150,7 +133,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 				encBlock.Key = encKey
 			}
 
-			link, err := putBlock(ctx, mc.encstore, encBlock)
+			link, err := putBlock(ctx, txn.Encstore(), encBlock)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
@@ -160,7 +143,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 
 	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
-		prevBlockBytes, err := mc.blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
+		prevBlockBytes, err := txn.Blockstore().AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
 			return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 		}
@@ -169,7 +152,7 @@ func (mc *MerkleClock) determineBlockEncryption(
 			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
-			prevBlockEncBytes, err := mc.encstore.AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
+			prevBlockEncBytes, err := txn.Encstore().AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 			}
@@ -208,8 +191,9 @@ func encryptBlock(
 }
 
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
-func (mc *MerkleClock) ProcessBlock(
+func ProcessBlock(
 	ctx context.Context,
+	txn datastore.Txn,
 	crdt core.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
@@ -219,16 +203,17 @@ func (mc *MerkleClock) ProcessBlock(
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
-	return mc.updateHeads(ctx, crdt, block, blockLink)
+	return updateHeads(ctx, txn, crdt, block, blockLink)
 }
 
-func (mc *MerkleClock) updateHeads(
+func updateHeads(
 	ctx context.Context,
+	txn datastore.Txn,
 	crdt core.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	headset := NewHeadSet(mc.headstore, crdt.HeadstorePrefix())
+	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
 
 	priority := block.Delta.GetPriority()
 
@@ -257,7 +242,7 @@ func (mc *MerkleClock) updateHeads(
 			continue
 		}
 
-		known, err := mc.blockstore.Has(ctx, linkCid)
+		known, err := txn.Blockstore().Has(ctx, linkCid)
 		if err != nil {
 			return NewErrCouldNotFindBlock(linkCid, err)
 		}
