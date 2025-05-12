@@ -148,7 +148,6 @@ deps\:lint:
 .PHONY: deps\:test
 deps\:test:
 	go install gotest.tools/gotestsum@latest
-	go install github.com/agnivade/wasmbrowsertest@latest
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
@@ -363,7 +362,7 @@ test\:changes:
 
 .PHONY: test\:js
 test\:js:
-	GOOS=js GOARCH=wasm go test -exec wasmbrowsertest ./node/...
+    GOOS=js GOARCH=wasm go test $(JS_TEST_FLAGS) ./node/...
 
 .PHONY: validate\:codecov
 validate\:codecov:
