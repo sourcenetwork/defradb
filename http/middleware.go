@@ -75,7 +75,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		ctx := req.Context()
 		if val, ok := tx.(datastore.Txn); ok {
-			ctx = db.SetContextTxn(ctx, val)
+			ctx = db.InitContext(ctx, val)
 		}
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})

@@ -36,7 +36,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	}
 	defer txn.Discard(ctx)
 
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -106,7 +106,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	}
 	defer txn.Discard(ctx)
 
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}

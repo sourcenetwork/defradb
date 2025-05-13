@@ -1178,7 +1178,7 @@ func getCollections(
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
 		txn := getTransaction(s, node, action.TransactionID, "")
-		ctx := db.SetContextTxn(s.ctx, txn)
+		ctx := db.InitContext(s.ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
@@ -1325,7 +1325,7 @@ func createDocViaColSave(
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.ctx, txn), nodeIndex, &action)
 
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
@@ -1357,7 +1357,7 @@ func createDocViaColCreate(
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.ctx, txn), nodeIndex, &action)
 
 	switch {
 	case len(docs) > 1:
@@ -1418,7 +1418,7 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1866,7 +1866,7 @@ nodeLoop:
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
-		ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {

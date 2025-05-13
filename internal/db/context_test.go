@@ -28,7 +28,7 @@ func TestEnsureContextTxnExplicit(t *testing.T) {
 	require.NoError(t, err)
 
 	// set an explicit transaction
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	ctx, txn, err = ensureContextTxn(ctx, db, true)
 	require.NoError(t, err)

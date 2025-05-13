@@ -575,7 +575,7 @@ func syncIndexedDoc(
 	col *collection,
 ) error {
 	// remove transaction from old context
-	oldCtx := SetContextTxn(ctx, nil)
+	oldCtx := InitContext(ctx, nil)
 
 	oldDoc, err := col.Get(oldCtx, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
