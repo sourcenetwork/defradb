@@ -97,7 +97,6 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							schemaVersionId
 							delta
 							docID
-							fieldId
 							fieldName
 							height
 							links {
@@ -113,7 +112,6 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							"delta":           nil,
 							"docID":           nil,
-							"fieldId":         nil,
 							"fieldName":       nil,
 							"height":          int64(1),
 							"links": []map[string]any{
@@ -128,7 +126,6 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							"delta":           testUtils.CBORValue(21),
 							"docID":           "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-							"fieldId":         "1",
 							"fieldName":       "age",
 							"height":          int64(1),
 							"links":           []map[string]any{},
@@ -138,7 +135,6 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							"delta":           testUtils.CBORValue("John"),
 							"docID":           "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-							"fieldId":         "2",
 							"fieldName":       "name",
 							"height":          int64(1),
 							"links":           []map[string]any{},
@@ -148,8 +144,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							"delta":           nil,
 							"docID":           "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
-							"fieldId":         "C",
-							"fieldName":       nil,
+							"fieldName":       "_C",
 							"height":          int64(1),
 							"links": []map[string]any{
 								{

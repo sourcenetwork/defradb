@@ -34,7 +34,6 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							cid
 							delta
 							docID
-							fieldId
 							fieldName
 							height
 							links {
@@ -50,7 +49,6 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"cid":       "bafyreiba7bxnqquldhojcnkak7afamaxssvjk4uav4ev4lwqgixarvvp4i",
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":     john21DocID,
-							"fieldId":   "1",
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -59,7 +57,6 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"cid":       "bafyreigawlzc5zi2juad5vldnwvels5qsehymb45maoeamdbckajwcao24",
 							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":     john21DocID,
-							"fieldId":   "2",
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -68,8 +65,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"cid":       "bafyreidl77w6pex7uworttm5bsqyvli5qxqoqy3q2n2xqor5vrqfr3woee",
 							"delta":     nil,
 							"docID":     john21DocID,
-							"fieldId":   "C",
-							"fieldName": nil,
+							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
@@ -107,7 +103,7 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldId: "1") {
+						commits(fieldName: "age") {
 							delta
 						}
 					}
@@ -155,7 +151,7 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldId: "1") {
+						commits(fieldName: "age") {
 							delta
 							docID
 						}
@@ -254,7 +250,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldId: "1") {
+						commits(fieldName: "points") {
 							delta
 						}
 					}
@@ -349,7 +345,7 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldId: "1") {
+						commits(fieldName: "age") {
 							delta
 							fieldName
 						}

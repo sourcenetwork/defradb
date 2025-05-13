@@ -202,7 +202,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldId: "C") {
+						commits(fieldName: "_C") {
 							signature {
 								type
 								identity
@@ -306,7 +306,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldId: "C", order: {height: DESC}) {
+						commits(fieldName: "_C", order: {height: DESC}) {
 							signature {
 								type
 								identity

@@ -240,7 +240,6 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 							cid
 							delta
 							docID
-							fieldId
 							fieldName
 							height
 							links {
@@ -261,8 +260,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 									"cid":       "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 									"delta":     nil,
 									"docID":     "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
-									"fieldId":   "C",
-									"fieldName": nil,
+									"fieldName": "_C",
 									"height":    int64(1),
 									"links": []map[string]any{
 										{
@@ -318,7 +316,6 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							cid
 							delta
 							docID
-							fieldId
 							fieldName
 							height
 							links {
@@ -340,8 +337,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 									"cid":       "bafyreichg2fm3tzwibfzakwmzguk5wlmyw7vmyhz6zt6gqu37pnzywk564",
 									"delta":     nil,
 									"docID":     docID,
-									"fieldId":   "C",
-									"fieldName": nil,
+									"fieldName": "_C",
 									"height":    int64(2),
 									"links": []map[string]any{
 										{
@@ -359,8 +355,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 									"cid":       "bafyreidwu4r345cq63vwr7p3hjekedge457y3tp32w7run76uj3le2zx34",
 									"delta":     nil,
 									"docID":     docID,
-									"fieldId":   "C",
-									"fieldName": nil,
+									"fieldName": "_C",
 									"height":    int64(1),
 									"links": []map[string]any{
 										{

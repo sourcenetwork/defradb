@@ -82,7 +82,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 						{
 							"delta":     nil,
 							"docID":     deviceDocID,
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 						{
 							"delta":     encrypt(testUtils.CBORValue("Chris"), userDocID, ""),
@@ -92,7 +92,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 						{
 							"delta":     nil,
 							"docID":     userDocID,
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 					},
 				},

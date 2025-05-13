@@ -98,7 +98,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 							},
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": sameIdentity,
@@ -164,7 +164,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"signature": nil,
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"height":    3,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
@@ -178,7 +178,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							"signature": nil,
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"height":    2,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
@@ -196,7 +196,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 							},
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"height":    1,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
@@ -234,7 +234,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 			testUtils.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}, fieldId: "C") {
+						commits(order: {height: DESC}, fieldName: "_C") {
 							fieldName
 							height
 							signature {
@@ -248,7 +248,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"height":    2,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
@@ -257,7 +257,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 							},
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"height":    1,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
@@ -326,7 +326,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 							},
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
 								"identity": newIdentityMatcher(testUtils.NodeIdentity(0).Value()),
@@ -381,7 +381,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldId: "C", order: {height: DESC}) {
+						commits(fieldName: "_C", order: {height: DESC}) {
 							height
 							signature {
 								type

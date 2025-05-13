@@ -23,8 +23,6 @@ import (
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
-	fieldId immutable.Option[string]
-
 	kvIter corekv.Iterator
 }
 
@@ -38,10 +36,7 @@ func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	txn datastore.Txn,
 	prefix immutable.Option[keys.HeadstoreKey],
-	fieldId immutable.Option[string],
 ) error {
-	hf.fieldId = fieldId
-
 	var prefixBytes []byte
 	if prefix.HasValue() {
 		prefixBytes = prefix.Value().Bytes()
@@ -73,25 +68,6 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 	headStoreKey, err := keys.NewHeadstoreKey(string(hf.kvIter.Key()))
 	if err != nil {
 		return nil, err
-	}
-
-	if hf.fieldId.HasValue() {
-		switch typedHeadStoreKey := headStoreKey.(type) {
-		case keys.HeadstoreDocKey:
-			if hf.fieldId.Value() != typedHeadStoreKey.FieldID {
-				// FieldIds do not match, continue to next row
-				return hf.FetchNext()
-			}
-
-			return &typedHeadStoreKey.Cid, nil
-
-		case keys.HeadstoreColKey:
-			if hf.fieldId.Value() == "" {
-				return &typedHeadStoreKey.Cid, nil
-			} else {
-				return nil, nil
-			}
-		}
 	}
 
 	cid := headStoreKey.GetCid()

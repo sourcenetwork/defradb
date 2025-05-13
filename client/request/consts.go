@@ -19,13 +19,15 @@ const (
 	// that corresponds to the related object's join relation id, i.e. `Author_id`.
 	RelatedObjectID = "_id"
 
-	Cid         = "cid"
-	Input       = "input"
-	CreateInput = "create"
-	UpdateInput = "update"
-	FieldName   = "field"
-	FieldIDName = "fieldId"
-	ShowDeleted = "showDeleted"
+	Cid                = "cid"
+	Input              = "input"
+	CreateInput        = "create"
+	UpdateInput        = "update"
+	FieldName          = "field"
+	FieldIDName        = "fieldId"
+	FieldNameName      = "fieldName"
+	CompositeFieldName = "_C"
+	ShowDeleted        = "showDeleted"
 
 	EncryptDocArgName    = "encrypt"
 	EncryptFieldsArgName = "encryptFields"
@@ -68,7 +70,6 @@ const (
 	CidFieldName             = "cid"
 	SchemaVersionIDFieldName = "schemaVersionId"
 	FieldNameFieldName       = "fieldName"
-	FieldIDFieldName         = "fieldId"
 	DeltaFieldName           = "delta"
 
 	DeltaArgFieldName       = "FieldName"
@@ -142,7 +143,6 @@ var (
 		DocIDArgName,
 		SchemaVersionIDFieldName,
 		FieldNameFieldName,
-		FieldIDFieldName,
 		DeltaFieldName,
 	}
 

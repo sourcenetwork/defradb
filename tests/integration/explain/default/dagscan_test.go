@@ -42,7 +42,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
+					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldName: "name") {
 						links {
 							cid
 						}
@@ -56,10 +56,10 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
 						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": "1",
+							"cid":       nil,
+							"fieldName": "name",
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
 							},
 						},
 					},
@@ -96,8 +96,8 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
 						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": nil,
+							"cid":       nil,
+							"fieldName": nil,
 							"prefixes": []string{
 								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
 							},
@@ -122,7 +122,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
+					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldName: "name") {
 						cid
 						links {
 							cid
@@ -137,10 +137,10 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
 						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": "1",
+							"cid":       nil,
+							"fieldName": "name",
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
 							},
 						},
 					},
@@ -178,8 +178,8 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
 						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": "C",
+							"cid":       nil,
+							"fieldName": "_C",
 							"prefixes": []string{
 								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
 							},
@@ -204,7 +204,7 @@ func TestDefaultExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(fieldId: "1") {
+					latestCommits(fieldName: "name") {
 						cid
 						links {
 							cid

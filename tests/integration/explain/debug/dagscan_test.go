@@ -42,7 +42,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
+					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldName: "name") {
 						links {
 							cid
 						}
@@ -94,7 +94,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
+					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldName: "name") {
 						cid
 						links {
 							cid
@@ -148,7 +148,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(fieldId: "1") {
+					latestCommits(fieldName: "name") {
 						cid
 						links {
 							cid
