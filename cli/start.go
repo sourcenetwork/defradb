@@ -134,6 +134,13 @@ func MakeStartCommand() *cobra.Command {
 					}
 				}
 
+				if !cfg.GetBool("datastore.nosearchableencryption") {
+					opts, err = getOrCreateSearchableEncryptionKey(kr, opts)
+					if err != nil {
+						return err
+					}
+				}
+
 				opts, err = getOrCreateIdentity(kr, opts, cfg)
 				if err != nil {
 					return err
@@ -303,6 +310,10 @@ func MakeStartCommand() *cobra.Command {
 		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
+	cmd.Flags().Bool(
+		"no-searchable-encryption",
+		cfg.GetBool(configFlags["no-searchable-encryption"]),
+		"Skip generating a searchable encryption key. Searchable encryption will be disabled.")
 	cmd.PersistentFlags().String(
 		"dac-type",
 		cfg.GetString(configFlags["acp.dac.type"]),
@@ -333,6 +344,30 @@ func getOrCreateEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Op
 		log.Info("generated encryption key")
 	}
 	opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+	return opts, nil
+}
+
+// getOrCreateSearchableEncryptionKey generates or retrieves the searchable encryption key
+// from the keyring and adds it to the node options.
+func getOrCreateSearchableEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+	seKey, err := kr.Get(searchableEncryptionKeyName)
+	if err != nil {
+		if !errors.Is(err, keyring.ErrNotFound) {
+			return nil, err
+		}
+		seKey, err = crypto.GenerateAES256()
+		if err != nil {
+			return nil, err
+		}
+		err = kr.Set(searchableEncryptionKeyName, seKey)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("generated searchable encryption key")
+	}
+
+	// Add the searchable encryption key to node options
+	opts = append(opts, db.WithSearchableEncryptionKey(seKey))
 	return opts, nil
 }
 

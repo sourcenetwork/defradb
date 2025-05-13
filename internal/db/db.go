@@ -87,6 +87,9 @@ type DB struct {
 
 	// If true, block signing is disabled. By default, block signing is enabled.
 	signingDisabled bool
+
+	// The key used for searchable encryption.
+	searchableEncryptionKey []byte
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -137,6 +140,7 @@ func newDB(
 
 	db.nodeIdentity = opts.identity
 	db.signingDisabled = opts.disableSigning
+	db.searchableEncryptionKey = opts.searchableEncryptionKey
 
 	if lens != nil {
 		lens.Init(db)
