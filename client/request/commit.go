@@ -32,11 +32,12 @@ type CommitSelect struct {
 	// belonging to the given document.
 	DocID immutable.Option[string]
 
-	// FieldID is an optional filter which when provided will limit commits to those
+	// FieldName is an optional filter which when provided will limit commits to those
 	// belonging to the given field.
 	//
-	// `C` may be provided for document-level (composite) commits.
-	FieldID immutable.Option[string]
+	// `_C` may be provided for document-level (composite) commits. An explicit empty
+	// value will return branchable collection commits only.
+	FieldName immutable.Option[string]
 
 	// Depth limits the returned commits to being X places in the history away from the
 	// most current.

@@ -30,39 +30,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "age") {
-						cid
-						links {
-							cid
-							name
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"latestCommits": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-// This test is for documentation reasons only. This is not
-// desired behaviour (Users should not be specifying field ids).
-func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and field id",
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John",
-					"age": 21
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "1") {
+					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "age") {
 						cid
 						links {
 							cid
@@ -85,6 +53,36 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Simple latest commits query with docID and field id",
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "1") {
+						cid
+						links {
+							cid
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"latestCommits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
@@ -99,7 +97,7 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "C") {
+					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "_C") {
 						cid
 						links {
 							cid

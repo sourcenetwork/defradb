@@ -44,6 +44,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 						name
 						_version {
 							schemaVersionId
+							fieldName
 						}
 					}
 				}`,
@@ -54,6 +55,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"_version": []map[string]any{
 								{
 									"schemaVersionId": initialSchemaVersionID,
+									"fieldName":       "_C",
 								},
 							},
 						},
@@ -144,7 +146,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			},
 			testUtils.Request{
 				Request: `query {
-					commits (fieldId: "C") {
+					commits (fieldName: "_C") {
 						schemaVersionId
 					}
 				}`,

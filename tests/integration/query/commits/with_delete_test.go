@@ -48,7 +48,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldId: "C") {
+						commits(fieldName: "_C") {
 							cid
 							fieldName
 							links {
@@ -62,7 +62,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 					"commits": []map[string]any{
 						{
 							"cid":       gomega.And(deleteCid, uniqueCid),
-							"fieldName": nil,
+							"fieldName": "_C",
 							"links": []map[string]any{
 								{
 									"cid":  createCompositeCid,
@@ -72,7 +72,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 						},
 						{
 							"cid":       gomega.And(createCompositeCid, uniqueCid),
-							"fieldName": nil,
+							"fieldName": "_C",
 							"links": []map[string]any{
 								{
 									"cid":  createAgeCid,

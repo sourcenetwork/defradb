@@ -51,7 +51,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 						{
 							"delta":     nil,
 							"docID":     john21DocID,
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 					},
 				},

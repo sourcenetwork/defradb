@@ -92,9 +92,8 @@ func TestQueryCommitsWithNullCID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithNullFieldID(t *testing.T) {
+func TestQueryCommitsWithNullField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null fieldId",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -106,7 +105,7 @@ func TestQueryCommitsWithNullFieldID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldId: null) {
+						commits(fieldName: null) {
 							cid
 						}
 					}`,

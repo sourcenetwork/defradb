@@ -73,14 +73,14 @@ func (n *dagScanNode) Init() error {
 		if n.commitSelect.DocID.HasValue() {
 			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocID.Value())
 
-			if n.commitSelect.FieldID.HasValue() {
-				field := n.commitSelect.FieldID.Value()
-				key = key.WithFieldID(field)
+			if n.commitSelect.FieldName.HasValue() &&
+				n.commitSelect.FieldName.Value() == request.CompositeFieldName {
+				key = key.WithFieldID(core.COMPOSITE_NAMESPACE)
 			}
 
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
-		} else if n.commitSelect.FieldID.HasValue() && n.commitSelect.FieldID.Value() == "" {
-			// If the user has provided an explicit nil value as `FieldID`, then we are only
+		} else if n.commitSelect.FieldName.HasValue() && n.commitSelect.FieldName.Value() == "" {
+			// If the user has provided an explicit nil value as `FieldName`, then we are only
 			// returning collection commits.
 			n.prefix = immutable.Some[keys.HeadstoreKey](keys.HeadstoreColKey{})
 		}
@@ -88,7 +88,7 @@ func (n *dagScanNode) Init() error {
 
 	// only need the head fetcher for non cid specific queries
 	if !n.commitSelect.Cid.HasValue() {
-		return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix, n.commitSelect.FieldID)
+		return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix)
 	}
 	return nil
 }
@@ -108,8 +108,8 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 	}
 
 	var fieldID string
-	if n.commitSelect.FieldID.HasValue() {
-		fieldID = n.commitSelect.FieldID.Value()
+	if n.commitSelect.FieldName.HasValue() && n.commitSelect.FieldName.Value() != request.CompositeFieldName {
+		// no-op, cannot use a field prefix
 	} else {
 		fieldID = core.COMPOSITE_NAMESPACE
 	}
@@ -141,10 +141,10 @@ func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
 	// Add the field attribute to the explanation if it exists.
-	if n.commitSelect.FieldID.HasValue() {
-		simpleExplainMap[request.FieldIDName] = n.commitSelect.FieldID.Value()
+	if n.commitSelect.FieldName.HasValue() {
+		simpleExplainMap[request.FieldNameName] = n.commitSelect.FieldName.Value()
 	} else {
-		simpleExplainMap[request.FieldIDName] = nil
+		simpleExplainMap[request.FieldNameName] = nil
 	}
 
 	// Add the cid attribute to the explanation if it exists.
@@ -231,6 +231,24 @@ func (n *dagScanNode) Next() (bool, error) {
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
 	if err != nil {
 		return false, err
+	}
+
+	if n.commitSelect.FieldName.HasValue() {
+		if n.commitSelect.FieldName.Value() == request.CompositeFieldName {
+			if dagBlock.Delta.IsComposite() {
+				// no-op, block passes the filter and should continue in this func
+			} else {
+				return n.Next()
+			}
+		} else {
+			fieldName := dagBlock.Delta.GetFieldName()
+
+			if fieldName == n.commitSelect.FieldName.Value() {
+				// no-op, block passes the filter and should continue in this func
+			} else {
+				return n.Next()
+			}
+		}
 	}
 
 	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
@@ -343,25 +361,14 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 
 	var fieldName any
-	var fieldID any
-	if block.Delta.DocCompositeDelta != nil {
-		fieldID = core.COMPOSITE_NAMESPACE
-		fieldName = nil
-	} else if block.Delta.CollectionDelta != nil {
-		fieldID = nil
+	if block.Delta.IsComposite() {
+		fieldName = request.CompositeFieldName
+	} else if block.Delta.IsCollection() {
 		fieldName = nil
 	} else {
-		fName := block.Delta.GetFieldName()
-		fieldName = fName
-
-		// Because we only care about the schema, we can safely take the first - the schema is the same
-		// for all in the set.
-		field, ok := cols[0].Definition().GetFieldByName(fName)
-		if !ok {
-			return core.Doc{}, client.NewErrFieldNotExist(fName)
-		}
-		fieldID = field.ID.String()
+		fieldName = block.Delta.GetFieldName()
 	}
+
 	// We need to explicitly set delta to an untyped nil otherwise it will be marshalled
 	// as an empty slice in the JSON response of the HTTP client.
 	d := block.Delta.GetData()
@@ -381,7 +388,6 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	prio := block.Delta.GetPriority()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldIDFieldName, fieldID)
 
 	docID := block.Delta.GetDocID()
 	if docID != nil {

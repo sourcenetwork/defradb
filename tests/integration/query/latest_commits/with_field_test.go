@@ -31,7 +31,7 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits (fieldId: "Age") {
+					latestCommits (fieldName: "Age") {
 						cid
 						links {
 							cid
@@ -62,7 +62,7 @@ func TestQueryLatestCommitsWithFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits (fieldId: "1") {
+					latestCommits (fieldName: "1") {
 						cid
 						links {
 							cid

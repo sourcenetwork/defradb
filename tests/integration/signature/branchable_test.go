@@ -39,7 +39,6 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 				Request: `query {
 						commits {
 							fieldName
-							fieldId
 							signature {
 								type
 								identity
@@ -51,7 +50,6 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 					"commits": []map[string]any{
 						{
 							"fieldName": nil,
-							"fieldId":   nil,
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.Not(gomega.BeEmpty()),
@@ -60,7 +58,6 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 						},
 						{
 							"fieldName": "name",
-							"fieldId":   "1",
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.Not(gomega.BeEmpty()),
@@ -68,8 +65,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 							},
 						},
 						{
-							"fieldName": nil,
-							"fieldId":   "C",
+							"fieldName": "_C",
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,
 								"identity": gomega.Not(gomega.BeEmpty()),

@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
+func TestQueryCommitsBranchables_WithFieldName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -36,11 +36,11 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						commits(
-							fieldId: null
+							fieldName: null
 						) {
 							schemaVersionId
 							docID
-							fieldId
+							fieldName
 						}
 					}`,
 				Results: map[string]any{
@@ -49,7 +49,7 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 							// Extra params are used to verify this is a collection level cid
 							"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
 							"docID":           nil,
-							"fieldId":         nil,
+							"fieldName":       nil,
 						},
 					},
 				},

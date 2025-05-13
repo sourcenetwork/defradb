@@ -44,11 +44,10 @@ An optional docID parameter for this commit query. Only commits for a document
  with a matching docID will be returned.  If no documents match, the result
  set will be empty.
 `
-	commitFieldIDArgDescription string = `
-An optional field ID parameter for this commit query. Only commits for a fields
- matching this ID will be returned. Specifying 'C' will limit the results to 
- composite (document level) commits only, otherwise field IDs are numeric. If no
- fields match, the result set will be empty.
+	commitFieldNameArgDescription string = `
+An optional field name parameter for this commit query. Only commits for a fields
+ matching this name will be returned. Specifying '_C' will limit the results to
+ composite (document level) commits only. If no fields match, the result set will be empty.
 `
 	commitCIDArgDescription string = `
 An optional value that specifies the commit ID of the commits to return. If a
@@ -89,10 +88,6 @@ The ID of the schema version that this commit was committed against. This ID all
 	commitFieldNameFieldDescription string = `
 The name of the field that this commit was committed against. If this is a composite
  or a collection the value will be null.
-`
-	commitFieldIDFieldDescription string = `
-The id of the field that this commit was committed against. If this is a composite field
- the value will be "C". If it is a collection level commit it will be null.
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.

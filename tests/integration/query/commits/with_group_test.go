@@ -269,7 +269,7 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 							"fieldName": "name",
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 					},
 				},
@@ -330,121 +330,7 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 							},
 						},
 						{
-							"fieldName": nil,
-							"_group": []map[string]any{
-								{
-									"height": int64(2),
-								},
-								{
-									"height": int64(1),
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestQueryCommitsWithGroupByFieldID(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by fieldId",
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-					"age":	22
-				}`,
-			},
-			testUtils.Request{
-				Request: ` {
-						commits(groupBy: [fieldId]) {
-							fieldId
-						}
-					}`,
-				Results: map[string]any{
-					"commits": []map[string]any{
-						{
-							"fieldId": "1",
-						},
-						{
-							"fieldId": "2",
-						},
-						{
-							"fieldId": "C",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestQueryCommitsWithGroupByFieldIDWithChild(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by fieldId",
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.UpdateDoc{
-				CollectionID: 0,
-				DocID:        0,
-				Doc: `{
-					"age":	22
-				}`,
-			},
-			testUtils.Request{
-				Request: ` {
-						commits(groupBy: [fieldId]) {
-							fieldId
-							_group {
-								height
-							}
-						}
-					}`,
-				Results: map[string]any{
-					"commits": []map[string]any{
-						{
-							"fieldId": "1",
-							"_group": []map[string]any{
-								{
-									"height": int64(2),
-								},
-								{
-									"height": int64(1),
-								},
-							},
-						},
-						{
-							"fieldId": "2",
-							"_group": []map[string]any{
-								{
-									"height": int64(1),
-								},
-							},
-						},
-						{
-							"fieldId": "C",
+							"fieldName": "_C",
 							"_group": []map[string]any{
 								{
 									"height": int64(2),

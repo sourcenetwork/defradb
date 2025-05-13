@@ -63,10 +63,6 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitFieldNameFieldDescription,
 				Type:        gql.String,
 			},
-			request.FieldIDFieldName: &gql.Field{
-				Type:        gql.String,
-				Description: commitFieldIDFieldDescription,
-			},
 			request.DeltaFieldName: &gql.Field{
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
@@ -169,10 +165,10 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
-			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
-			"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-			"cid":                NewArgConfig(gql.ID, commitCIDArgDescription),
+			request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
+			"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+			"cid":                 NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
@@ -197,10 +193,6 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 										Value:       "fieldName",
 										Description: commitFieldNameFieldDescription,
 									},
-									"fieldId": &gql.EnumValueConfig{
-										Value:       "fieldId",
-										Description: commitFieldIDFieldDescription,
-									},
 								},
 							},
 						),
@@ -221,8 +213,8 @@ func QueryLatestCommits(commitObject *gql.Object) *gql.Field {
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
-			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
+			request.DocIDArgName:  NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
+			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
 		},
 	}
 }
