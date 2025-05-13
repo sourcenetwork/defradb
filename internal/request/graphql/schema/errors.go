@@ -16,29 +16,32 @@ import (
 )
 
 const (
-	errDuplicateField                string = "duplicate field"
-	errFieldMissingRelation          string = "field missing associated relation"
-	errRelationMissingField          string = "relation missing field"
-	errAggregateTargetNotFound       string = "aggregate target not found"
-	errSchemaTypeAlreadyExist        string = "schema type already exists"
-	errMutationInputTypeAlreadyExist string = "mutation input type already exists"
-	errObjectNotFoundDuringThunk     string = "object not found whilst executing fields thunk"
-	errTypeNotFound                  string = "no type found for given name"
-	errRelationNotFound              string = "no relation found"
-	errNonNullForTypeNotSupported    string = "NonNull variants for type are not supported"
-	errIndexMissingFields            string = "index missing fields"
-	errIndexUnknownArgument          string = "index with unknown argument"
-	errIndexInvalidArgument          string = "index with invalid argument"
-	errIndexInvalidName              string = "index with invalid name"
-	errPolicyUnknownArgument         string = "policy with unknown argument"
-	errPolicyInvalidIDProp           string = "policy directive with invalid id property"
-	errPolicyInvalidResourceProp     string = "policy directive with invalid resource property"
-	errDefaultValueType              string = "default value type must match field type"
-	errDefaultValueNotAllowed        string = "default value is not allowed for this field type"
-	errDefaultValueInvalid           string = "default value is invalid"
-	errDefaultValueOneArg            string = "default value must specify one argument"
-	errFieldTypeNotSpecified         string = "field type not specified"
-	errInvalidTypeForContraint       string = "size constraint can only be applied to array fields"
+	errDuplicateField                 string = "duplicate field"
+	errFieldMissingRelation           string = "field missing associated relation"
+	errRelationMissingField           string = "relation missing field"
+	errAggregateTargetNotFound        string = "aggregate target not found"
+	errSchemaTypeAlreadyExist         string = "schema type already exists"
+	errMutationInputTypeAlreadyExist  string = "mutation input type already exists"
+	errObjectNotFoundDuringThunk      string = "object not found whilst executing fields thunk"
+	errTypeNotFound                   string = "no type found for given name"
+	errRelationNotFound               string = "no relation found"
+	errNonNullForTypeNotSupported     string = "NonNull variants for type are not supported"
+	errIndexMissingFields             string = "index missing fields"
+	errIndexUnknownArgument           string = "index with unknown argument"
+	errIndexInvalidArgument           string = "index with invalid argument"
+	errIndexInvalidName               string = "index with invalid name"
+	errPolicyUnknownArgument          string = "policy with unknown argument"
+	errPolicyInvalidIDProp            string = "policy directive with invalid id property"
+	errPolicyInvalidResourceProp      string = "policy directive with invalid resource property"
+	errDefaultValueType               string = "default value type must match field type"
+	errDefaultValueNotAllowed         string = "default value is not allowed for this field type"
+	errDefaultValueInvalid            string = "default value is invalid"
+	errDefaultValueOneArg             string = "default value must specify one argument"
+	errFieldTypeNotSpecified          string = "field type not specified"
+	errInvalidTypeForContraint        string = "size constraint can only be applied to array fields"
+	errEncryptedIndexUnknownArgument  string = "encryptedIndex with unknown argument"
+	errEncryptedIndexInvalidArgument  string = "encryptedIndex with invalid argument"
+	errEncryptedIndexTypeNotSupported string = "encryptedIndex type not supported"
 )
 
 var (
@@ -190,4 +193,25 @@ func NewErrFieldTypeNotSpecified(objectName, fieldName string) error {
 
 func NewErrInvalidTypeForContraint(actual client.FieldKind) error {
 	return errors.New(errInvalidTypeForContraint, errors.NewKV("Actual", actual.String()))
+}
+
+func NewErrEncryptedIndexWithInvalidArg(fieldName string) error {
+	return errors.New(
+		errEncryptedIndexInvalidArgument,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrEncryptedIndexWithUnknownArg(argName string) error {
+	return errors.New(
+		errEncryptedIndexUnknownArgument,
+		errors.NewKV("Argument", argName),
+	)
+}
+
+func NewErrEncryptedIndexTypeNotSupported(typeName string) error {
+	return errors.New(
+		errEncryptedIndexTypeNotSupported,
+		errors.NewKV("Type", typeName),
+	)
 }

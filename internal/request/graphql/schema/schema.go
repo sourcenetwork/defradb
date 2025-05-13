@@ -108,6 +108,7 @@ func defaultDirectivesType(
 		types.BranchableDirective(),
 		types.VectorEmbeddingDirective(),
 		types.ConstraintsDirective(),
+		types.EncryptedIndexDirective(),
 	}
 }
 
