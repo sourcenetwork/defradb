@@ -94,8 +94,6 @@ func SetShortCollectionID(
 
 type collectionShortIDCacheKey struct{}
 
-var collectionShortIDCacheKeyValue = collectionShortIDCacheKey{}
-
 type collectionShortIDCache map[string]uint32
 
 // InitCollectionShortIDCache initialializes the context with a none-nil collection
@@ -104,10 +102,10 @@ type collectionShortIDCache map[string]uint32
 // It is done to avoid an extra check to see if the cache exists or not when fetching
 // it from the context.
 func InitCollectionShortIDCache(ctx context.Context) context.Context {
-	return context.WithValue(ctx, collectionShortIDCacheKeyValue, collectionShortIDCache{})
+	return context.WithValue(ctx, collectionShortIDCacheKey{}, collectionShortIDCache{})
 }
 
 // getCollectionShortIDCache retrieves the collection short-id cache from the given context.
 func getCollectionShortIDCache(ctx context.Context) collectionShortIDCache {
-	return ctx.Value(collectionShortIDCacheKeyValue).(collectionShortIDCache) //nolint:forcetypeassert
+	return ctx.Value(collectionShortIDCacheKey{}).(collectionShortIDCache) //nolint:forcetypeassert
 }
