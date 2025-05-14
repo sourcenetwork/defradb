@@ -83,7 +83,7 @@ func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, er
 	encrypt, encryptFields := contextEncryptionArg(args[index])
 	ctx = encryption.SetContextConfigFromParams(ctx, encrypt, encryptFields)
 	ctx = acpIdentity.WithContext(ctx, identity)
-	ctx = db.SetContextTxn(ctx, txn)
+	ctx = db.InitContext(ctx, txn)
 	return ctx, nil
 }
 
