@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 const (
@@ -65,7 +66,7 @@ func (db *DB) addSchema(
 }
 
 func (db *DB) loadSchema(ctx context.Context) error {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	definitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {
@@ -92,7 +93,7 @@ func (db *DB) patchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
@@ -256,7 +257,7 @@ func (db *DB) getSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	schemas := []client.SchemaDescription{}
 
@@ -391,7 +392,7 @@ func (db *DB) updateSchema(
 			continue
 		}
 
-		txn := mustGetContextTxn(ctx)
+		txn := txnctx.MustGet(ctx)
 		schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 		if err != nil {
 			return err

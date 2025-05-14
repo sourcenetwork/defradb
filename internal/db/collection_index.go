@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
@@ -60,7 +61,7 @@ func (db *DB) getAllIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	prefix := keys.NewCollectionIndexKey(immutable.None[string](), "")
 
 	indexKeys, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](ctx,
@@ -104,7 +105,7 @@ func (db *DB) fetchCollectionIndexDescriptions(
 	collectionID string,
 ) ([]client.IndexDescription, error) {
 	// callers of this function must set a context transaction
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	prefix := keys.NewCollectionIndexKey(immutable.Some(collectionID), "")
 	_, indexDescriptions, err := datastore.DeserializePrefix[client.IndexDescription](
 		ctx,
@@ -132,7 +133,7 @@ func (c *collection) indexNewDoc(ctx context.Context, doc *client.Document) erro
 		return err
 	}
 	// callers of this function must set a context transaction
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	for _, index := range c.indexes {
 		err = index.Save(ctx, txn, doc)
 		if err != nil {
@@ -167,7 +168,7 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
 		if err != nil {
@@ -185,7 +186,7 @@ func (c *collection) deleteIndexedDoc(
 	if err != nil {
 		return err
 	}
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	for _, index := range c.indexes {
 		err = index.Delete(ctx, txn, doc)
 		if err != nil {
@@ -276,7 +277,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	colSeq, err := sequence.Get(
 		ctx,
@@ -326,7 +327,7 @@ func (c *collection) iterateAllDocs(
 	fields []client.FieldDefinition,
 	exec func(doc *client.Document) error,
 ) error {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	df := c.newFetcher()
 	err := df.Init(
@@ -393,7 +394,7 @@ func (c *collection) indexExistingDocs(
 			fields = append(fields, colField)
 		}
 	}
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	return c.iterateAllDocs(ctx, fields, func(doc *client.Document) error {
 		return index.Save(ctx, txn, doc)
 	})
@@ -426,7 +427,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 	if err != nil {
 		return err
 	}
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	var didFind bool
 	for i := range c.indexes {
@@ -518,7 +519,7 @@ func (c *collection) generateIndexNameIfNeededAndCreateKey(
 	desc *client.IndexDescriptionCreateRequest,
 ) (keys.CollectionIndexKey, error) {
 	// callers of this function must set a context transaction
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	var indexKey keys.CollectionIndexKey
 	if desc.Name == "" {

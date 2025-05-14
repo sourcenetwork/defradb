@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
@@ -47,7 +48,7 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		return res
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	planner := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)

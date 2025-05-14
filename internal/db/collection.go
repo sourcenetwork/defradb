@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -79,7 +80,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 }
 
 func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	col, err := description.GetCollectionByID(ctx, txn, id)
 	if err != nil {
@@ -129,7 +130,7 @@ func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	var cols []client.CollectionVersion
 	switch {
@@ -206,7 +207,7 @@ func (db *DB) getCollections(
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
 func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	cols, err := description.GetActiveCollections(ctx, txn)
 	if err != nil {
@@ -267,7 +268,7 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 	if err != nil {
@@ -473,7 +474,7 @@ func (c *collection) create(
 
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		txn := mustGetContextTxn(ctx)
+		txn := txnctx.MustGet(ctx)
 
 		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 		if err != nil {
@@ -661,7 +662,7 @@ func (c *collection) save(
 			return err
 		}
 	}
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	ident := identity.FromContext(ctx)
 	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
@@ -992,7 +993,7 @@ func (c *collection) exists(
 		return false, false, nil
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
@@ -1010,7 +1011,7 @@ func (c *collection) getPrimaryKeyFromDocID(
 	ctx context.Context,
 	docID client.DocID,
 ) (keys.PrimaryDataStoreKey, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
 	if err != nil {
