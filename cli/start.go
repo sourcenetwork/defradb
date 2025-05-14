@@ -190,6 +190,13 @@ func MakeStartCommand() *cobra.Command {
 			if err := n.Start(cmd.Context()); err != nil {
 				return err
 			}
+			// If the context has a messageChans defined, we pass along the relevant information.
+			// For now this is mostly useful for the CLI integration tests.
+			messageChans, ok := tryGetContextMessageChans(cmd.Context())
+			if ok && messageChans.APIURL != nil {
+				messageChans.APIURL <- n.APIURL
+				close(messageChans.APIURL)
+			}
 
 		RESTART:
 			// after a restart we need to resubscribe

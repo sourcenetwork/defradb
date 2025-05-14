@@ -11,9 +11,11 @@
 package action
 
 import (
-	"strings"
+	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/cli"
 )
 
 type StartCli struct {
@@ -64,21 +66,28 @@ func (a *StartCli) Execute() {
 
 	args = append(args, a.inlineArgs...)
 
-	logPrefix := "Providing GraphQL endpoint at "
-	exampleUrl := "http://127.0.0.1:42571"
-
-	// If we expect an error, then we will seek for it...
 	if a.expectedError != nil {
-		readLine, err := executeUntil(a.s.Ctx, a.s, args, a.expectedError.Error())
-		require.NoError(a.s.T, err)
-		require.Contains(a.s.T, readLine, a.expectedError.Error())
+		select {
+		case err := <-asyncExecute(a.s.Ctx, args):
+			require.Contains(a.s.T, err.Error(), a.expectedError.Error())
+		case <-time.After(1 * time.Second):
+			a.s.T.Error("expected error but got none")
+		}
 		return
 	}
 
-	// ...otherwise, we will seek for the logPrefix indicating that the service has started
-	logLine, err := executeUntil(a.s.Ctx, a.s, args, logPrefix)
-	startIndex := strings.Index(logLine, logPrefix)
-	a.s.Url = logLine[startIndex+len(logPrefix) : startIndex+len(logPrefix)+len(exampleUrl)]
+	// Define a messageChans and store it on the context so that
+	// we can be notified when the node is ready.
+	messageChans := &cli.MessageChans{
+		APIURL: make(chan string),
+	}
+	ctx := cli.SetContextMessageChans(a.s.Ctx, messageChans)
 
-	require.NoError(a.s.T, err)
+	select {
+	case err := <-asyncExecute(ctx, args):
+		require.NoError(a.s.T, err)
+	case a.s.Url = <-messageChans.APIURL:
+	case <-time.After(1 * time.Second):
+		a.s.T.Error("expected url but got none")
+	}
 }

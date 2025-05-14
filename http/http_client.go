@@ -25,6 +25,7 @@ import (
 type httpClient struct {
 	client  *http.Client
 	baseURL *url.URL
+	apiURL  *url.URL
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
@@ -37,7 +38,8 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	}
 	return &httpClient{
 		client:  http.DefaultClient,
-		baseURL: baseURL.JoinPath("/api/v0"),
+		baseURL: baseURL,
+		apiURL:  baseURL.JoinPath("/api/v0"),
 	}, nil
 }
 

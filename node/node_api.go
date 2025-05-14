@@ -43,5 +43,15 @@ func (n *Node) startAPI(ctx context.Context) error {
 			log.ErrorContextE(ctx, "HTTP server stopped", err)
 		}
 	}()
+	n.APIURL = n.server.Address()
+	// Check that the server is ready before returning.
+	c, err := http.NewClient(n.APIURL)
+	if err != nil {
+		return err
+	}
+	err = c.HealthCheck(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }

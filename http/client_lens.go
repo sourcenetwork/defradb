@@ -38,7 +38,7 @@ type setMigrationRequest struct {
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
 func (c *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
-	methodURL := c.http.baseURL.JoinPath("lens", "registry")
+	methodURL := c.http.apiURL.JoinPath("lens", "registry")
 
 	body, err := json.Marshal(setMigrationRequest{
 		CollectionID: collectionID,
@@ -56,7 +56,7 @@ func (c *LensRegistry) SetMigration(ctx context.Context, collectionID string, co
 }
 
 func (c *LensRegistry) ReloadLenses(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("lens", "registry", "reload")
+	methodURL := c.http.apiURL.JoinPath("lens", "registry", "reload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
@@ -76,7 +76,7 @@ func (c *LensRegistry) MigrateUp(
 	src enumerable.Enumerable[map[string]any],
 	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	methodURL := c.http.baseURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "up")
+	methodURL := c.http.apiURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "up")
 
 	var data []map[string]any
 	err := enumerable.ForEach(src, func(item map[string]any) {
@@ -111,7 +111,7 @@ func (c *LensRegistry) MigrateDown(
 	src enumerable.Enumerable[map[string]any],
 	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	methodURL := c.http.baseURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "down")
+	methodURL := c.http.apiURL.JoinPath("lens", "registry", fmt.Sprint(collectionID), "down")
 
 	var data []map[string]any
 	err := enumerable.ForEach(src, func(item map[string]any) {
