@@ -62,7 +62,7 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 		return ErrSelfTargetForReplicator
 	}
 
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	storedRep := client.Replicator{}
 	storedSchemas := make(map[string]struct{})
@@ -162,7 +162,7 @@ func (db *DB) getDocsHeads(
 			return
 		}
 		defer txn.Discard(ctx)
-		ctx = SetContextTxn(ctx, txn)
+		ctx = InitContext(ctx, txn)
 		for _, col := range cols {
 			keysCh, err := col.GetAllDocIDs(ctx)
 			if err != nil {
@@ -232,7 +232,7 @@ func (db *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams)
 	}
 
 	// set transaction for all operations
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	storedRep := client.Replicator{}
 	storedSchemas := make(map[string]struct{})

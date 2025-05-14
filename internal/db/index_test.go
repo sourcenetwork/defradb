@@ -149,7 +149,7 @@ func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescript
 }
 
 func (f *indexTestFixture) dropIndex(colName, indexName string) error {
-	ctx := SetContextTxn(f.ctx, f.txn)
+	ctx := InitContext(f.ctx, f.txn)
 	return f.db.dropCollectionIndex(ctx, colName, indexName)
 }
 
@@ -165,7 +165,7 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	collectionName string,
 	desc client.IndexDescriptionCreateRequest,
 ) (client.IndexDescription, error) {
-	ctx := SetContextTxn(f.ctx, f.txn)
+	ctx := InitContext(f.ctx, f.txn)
 	index, err := f.db.createCollectionIndex(ctx, collectionName, desc)
 	if err == nil {
 		f.commitTxn()
@@ -480,7 +480,7 @@ func TestDropIndex_IfCollectionDoesntExist_ReturnError(t *testing.T) {
 func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
-	ctx := SetContextTxn(f.ctx, f.txn)
+	ctx := InitContext(f.ctx, f.txn)
 	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
 	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())

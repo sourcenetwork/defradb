@@ -26,6 +26,12 @@ func GetShortCollectionID(
 	txn datastore.Txn,
 	collectionID string,
 ) (uint32, error) {
+	cache := getCollectionShortIDCache(ctx)
+	shortID, ok := cache[collectionID]
+	if ok {
+		return shortID, nil
+	}
+
 	key := keys.NewCollectionID(collectionID)
 
 	valueBytes, err := txn.Systemstore().Get(ctx, key.Bytes())
@@ -37,7 +43,10 @@ func GetShortCollectionID(
 	if err != nil {
 		return 0, err
 	}
-	return uint32(v), nil
+	shortID = uint32(v)
+
+	cache[collectionID] = shortID
+	return shortID, nil
 }
 
 // SetShortCollectionID sets and stores the short collection id, if it does not already exist.
@@ -46,6 +55,12 @@ func SetShortCollectionID(
 	txn datastore.Txn,
 	collectionID string,
 ) error {
+	cache := getCollectionShortIDCache(ctx)
+	_, ok := cache[collectionID]
+	if ok {
+		return nil
+	}
+
 	key := keys.NewCollectionID(collectionID)
 
 	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
@@ -61,10 +76,36 @@ func SetShortCollectionID(
 		return err
 	}
 
-	shortID, err := colSeq.Next(ctx, txn)
+	sID, err := colSeq.Next(ctx, txn)
+	if err != nil {
+		return err
+	}
+	shortID := uint32(sID)
+
+	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
 	if err != nil {
 		return err
 	}
 
-	return txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
+	cache[collectionID] = shortID
+
+	return nil
+}
+
+type collectionShortIDCacheKey struct{}
+
+type collectionShortIDCache map[string]uint32
+
+// InitCollectionShortIDCache initialializes the context with a none-nil collection
+// short-id cache.
+//
+// It is done to avoid an extra check to see if the cache exists or not when fetching
+// it from the context.
+func InitCollectionShortIDCache(ctx context.Context) context.Context {
+	return context.WithValue(ctx, collectionShortIDCacheKey{}, collectionShortIDCache{})
+}
+
+// getCollectionShortIDCache retrieves the collection short-id cache from the given context.
+func getCollectionShortIDCache(ctx context.Context) collectionShortIDCache {
+	return ctx.Value(collectionShortIDCacheKey{}).(collectionShortIDCache) //nolint:forcetypeassert
 }

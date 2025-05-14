@@ -141,7 +141,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := db.SetContextTxn(cmd.Context(), tx)
+	ctx := db.InitContext(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }
