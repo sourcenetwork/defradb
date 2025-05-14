@@ -60,6 +60,8 @@ func (db *DB) createCollections(
 		newDefinitions[i] = def.Definition
 	}
 
+	setFieldKinds(newDefinitions)
+
 	txn := txnctx.MustGet(ctx)
 	err = id.SetFieldIDs(ctx, txn, newDefinitions)
 	if err != nil {
@@ -121,6 +123,37 @@ func (db *DB) createCollections(
 	}
 
 	return returnDescriptions, nil
+}
+
+func setFieldKinds(definitions []client.CollectionDefinition) {
+	schemasByName := map[string]client.SchemaDescription{}
+	for _, def := range definitions {
+		schemasByName[def.Schema.Name] = def.Schema
+	}
+
+	for i := range definitions {
+		for j := range definitions[i].Version.Fields {
+			if definitions[i].Version.Fields[j].Kind.HasValue() {
+				switch kind := definitions[i].Version.Fields[j].Kind.Value().(type) {
+				case *client.NamedKind:
+					var newKind client.FieldKind
+					if kind.Name == definitions[i].Version.Name {
+						newKind = client.NewSelfKind("", kind.IsArray())
+					} else if otherSchema, ok := schemasByName[kind.Name]; ok {
+						newKind = client.NewSchemaKind(otherSchema.Root, kind.IsArray())
+					} else {
+						// Continue, and let the validation stage return user friendly errors
+						// if appropriate
+						continue
+					}
+
+					definitions[i].Version.Fields[j].Kind = immutable.Some(newKind)
+				default:
+					// no-op
+				}
+			}
+		}
+	}
 }
 
 func (db *DB) patchCollection(

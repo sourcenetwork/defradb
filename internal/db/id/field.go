@@ -13,8 +13,6 @@ package id
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -24,11 +22,6 @@ import (
 
 // SetFieldIDs sets the field IDs hosted on the given collections, mutating the input set.
 func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.CollectionDefinition) error {
-	schemasByName := map[string]client.SchemaDescription{}
-	for _, def := range definitions {
-		schemasByName[def.Schema.Name] = def.Schema
-	}
-
 	for i := range definitions {
 		fieldSeq, err := sequence.Get(ctx, txn, keys.NewFieldIDSequenceKey(definitions[i].Version.CollectionID))
 		if err != nil {
@@ -50,26 +43,6 @@ func SetFieldIDs(ctx context.Context, txn datastore.Txn, definitions []client.Co
 					return err
 				}
 				fieldID = client.FieldID(nextID)
-			}
-
-			if definitions[i].Version.Fields[j].Kind.HasValue() {
-				switch kind := definitions[i].Version.Fields[j].Kind.Value().(type) {
-				case *client.NamedKind:
-					var newKind client.FieldKind
-					if kind.Name == definitions[i].Version.Name {
-						newKind = client.NewSelfKind("", kind.IsArray())
-					} else if otherSchema, ok := schemasByName[kind.Name]; ok {
-						newKind = client.NewSchemaKind(otherSchema.Root, kind.IsArray())
-					} else {
-						// Continue, and let the validation stage return user friendly errors
-						// if appropriate
-						continue
-					}
-
-					definitions[i].Version.Fields[j].Kind = immutable.Some(newKind)
-				default:
-					// no-op
-				}
 			}
 
 			definitions[i].Version.Fields[j].ID = fieldID

@@ -500,6 +500,8 @@ func (db *DB) updateSchema(
 			})
 		}
 
+		setFieldKinds(definitions)
+
 		err = id.SetFieldIDs(ctx, txn, definitions)
 		if err != nil {
 			return err
