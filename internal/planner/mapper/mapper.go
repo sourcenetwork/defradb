@@ -919,18 +919,18 @@ func getTopLevelInfo(
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			return nil, client.CollectionDefinition{}, err
-		} else {
-			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
-			definition = collection.Definition()
-			// Map all fields from schema into the map as they are fetched automatically
-			for _, f := range definition.GetFields() {
-				if f.Kind.IsObject() {
-					// Objects are skipped, as they are not fetched by default and
-					// have to be requested via selects.
-					continue
-				}
-				mapping.Add(int(f.ID), f.Name)
+		}
+
+		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
+		definition = collection.Definition()
+		// Map all fields from schema into the map as they are fetched automatically
+		for _, f := range definition.GetFields() {
+			if f.Kind.IsObject() {
+				// Objects are skipped, as they are not fetched by default and
+				// have to be requested via selects.
+				continue
 			}
+			mapping.Add(int(f.ID), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as
