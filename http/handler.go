@@ -95,8 +95,7 @@ func NewHandler(db client.DB) (*Handler, error) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
 	mux.Get("/health-check", func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-		rw.Write([]byte("Healthy"))
+		responseJSON(rw, http.StatusOK, "Healthy")
 	})
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{

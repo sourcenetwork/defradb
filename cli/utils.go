@@ -51,8 +51,6 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
-	// messageChansContextKey is the context key for the messageChans
-	messageChansContextKey = contextKey("messageChans")
 )
 
 const (
@@ -93,24 +91,6 @@ func mustGetContextHTTP(cmd *cobra.Command) *http.Client {
 // If a config is not set in the current context this function panics.
 func mustGetContextConfig(cmd *cobra.Command) *viper.Viper {
 	return cmd.Context().Value(cfgContextKey).(*viper.Viper) //nolint:forcetypeassert
-}
-
-// MessageChans contains message channels that can be used to relay important information
-// after calling `cli.Start`.
-type MessageChans struct {
-	APIURL chan string
-}
-
-// tryGetContextMessageChans returns the message channels for the current command context
-// and a boolean indicating if the message channels struct was set.
-func tryGetContextMessageChans(ctx context.Context) (*MessageChans, bool) {
-	node, ok := ctx.Value(messageChansContextKey).(*MessageChans)
-	return node, ok
-}
-
-// SetContextMessageChans sets the message channels for the current command context.
-func SetContextMessageChans(ctx context.Context, w *MessageChans) context.Context {
-	return context.WithValue(ctx, messageChansContextKey, w)
 }
 
 // mustGetContextRootDir returns the rootdir for the current command context.

@@ -44,7 +44,8 @@ func (n *Node) startAPI(ctx context.Context) error {
 		}
 	}()
 	n.APIURL = n.server.Address()
-	// Check that the server is ready before returning.
+	// Check that the server is ready before returning. We do this to ensure that
+	// subsequent operation will behave as expected.
 	c, err := http.NewClient(n.APIURL)
 	if err != nil {
 		return err

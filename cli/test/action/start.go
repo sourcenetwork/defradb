@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/cli"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 type StartCli struct {
@@ -78,10 +78,10 @@ func (a *StartCli) Execute() {
 
 	// Define a messageChans and store it on the context so that
 	// we can be notified when the node is ready.
-	messageChans := &cli.MessageChans{
+	messageChans := &node.MessageChans{
 		APIURL: make(chan string),
 	}
-	ctx := cli.SetContextMessageChans(a.s.Ctx, messageChans)
+	ctx := node.SetContextMessageChans(a.s.Ctx, messageChans)
 
 	select {
 	case err := <-asyncExecute(ctx, args):
