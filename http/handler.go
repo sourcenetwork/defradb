@@ -94,6 +94,9 @@ func NewHandler(db client.DB) (*Handler, error) {
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
+	mux.Get("/health-check", func(rw http.ResponseWriter, req *http.Request) {
+		responseJSON(rw, http.StatusOK, "Healthy")
+	})
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
 		db:  db,

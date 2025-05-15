@@ -46,6 +46,8 @@ type Node struct {
 	config *Config
 	// options the node was created with
 	options []Option
+	// the URL the API is served at.
+	APIURL string
 }
 
 // New returns a new node instance configured with the given options.

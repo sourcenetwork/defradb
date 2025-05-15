@@ -22,7 +22,7 @@ import (
 )
 
 func (c *Client) PeerInfo() peer.AddrInfo {
-	methodURL := c.http.baseURL.JoinPath("p2p", "info")
+	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -36,7 +36,7 @@ func (c *Client) PeerInfo() peer.AddrInfo {
 }
 
 func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
+	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)
 	if err != nil {
@@ -51,7 +51,7 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams)
 }
 
 func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
+	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(rep)
 	if err != nil {
@@ -66,7 +66,7 @@ func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorPara
 }
 
 func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "replicators")
+	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -80,7 +80,7 @@ func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, er
 }
 
 func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
+	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
 	if err != nil {
@@ -95,7 +95,7 @@ func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) 
 }
 
 func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
+	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
 	if err != nil {
@@ -110,7 +110,7 @@ func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []strin
 }
 
 func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	methodURL := c.http.baseURL.JoinPath("p2p", "collections")
+	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

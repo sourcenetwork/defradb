@@ -312,11 +312,6 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}
-
-	// make sure the event is published on the network before proceeding
-	// this prevents nodes from missing messages that are sent before
-	// subscriptions are setup
-	time.Sleep(100 * time.Millisecond)
 }
 
 // getEventsForUpdateDoc returns a map of docIDs that should be

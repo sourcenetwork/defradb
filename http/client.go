@@ -54,7 +54,7 @@ func (c *Client) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, erro
 		query.Add("read_only", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("tx")
+	methodURL := c.http.apiURL.JoinPath("tx")
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -74,7 +74,7 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 		query.Add("read_only", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("tx", "concurrent")
+	methodURL := c.http.apiURL.JoinPath("tx", "concurrent")
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -89,7 +89,7 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
-	methodURL := c.http.baseURL.JoinPath("backup", "import")
+	methodURL := c.http.apiURL.JoinPath("backup", "import")
 
 	body, err := json.Marshal(&client.BackupConfig{Filepath: filepath})
 	if err != nil {
@@ -104,7 +104,7 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 }
 
 func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	methodURL := c.http.baseURL.JoinPath("backup", "export")
+	methodURL := c.http.apiURL.JoinPath("backup", "export")
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -119,7 +119,7 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 }
 
 func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL := c.http.apiURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
 	if err != nil {
@@ -144,7 +144,7 @@ func (c *Client) PatchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL := c.http.apiURL.JoinPath("schema")
 
 	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion, migration})
 	if err != nil {
@@ -163,7 +163,7 @@ func (c *Client) PatchCollection(
 	ctx context.Context,
 	patch string,
 ) error {
-	methodURL := c.http.baseURL.JoinPath("collections")
+	methodURL := c.http.apiURL.JoinPath("collections")
 
 	body, err := json.Marshal(patch)
 	if err != nil {
@@ -179,7 +179,7 @@ func (c *Client) PatchCollection(
 }
 
 func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	methodURL := c.http.baseURL.JoinPath("schema", "default")
+	methodURL := c.http.apiURL.JoinPath("schema", "default")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
 	if err != nil {
@@ -201,7 +201,7 @@ func (c *Client) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	methodURL := c.http.baseURL.JoinPath("view")
+	methodURL := c.http.apiURL.JoinPath("view")
 
 	body, err := json.Marshal(addViewRequest{query, sdl, transform})
 	if err != nil {
@@ -222,7 +222,7 @@ func (c *Client) AddView(
 }
 
 func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	methodURL := c.http.baseURL.JoinPath("view", "refresh")
+	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
@@ -248,7 +248,7 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 }
 
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
-	methodURL := c.http.baseURL.JoinPath("lens")
+	methodURL := c.http.apiURL.JoinPath("lens")
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -282,7 +282,7 @@ func (c *Client) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
+	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
@@ -327,7 +327,7 @@ func (c *Client) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
+	methodURL := c.http.apiURL.JoinPath("schema")
 	params := url.Values{}
 	if options.ID.HasValue() {
 		params.Add("version_id", options.ID.Value())
@@ -352,7 +352,7 @@ func (c *Client) GetSchemas(
 }
 
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("indexes")
+	methodURL := c.http.apiURL.JoinPath("indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -370,7 +370,7 @@ func (c *Client) ExecRequest(
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	methodURL := c.http.baseURL.JoinPath("graphql")
+	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
 	gqlOptions := &client.GQLOptions{}
@@ -458,7 +458,7 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult 
 }
 
 func (c *Client) PrintDump(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("debug", "dump")
+	methodURL := c.http.apiURL.JoinPath("debug", "dump")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -469,9 +469,19 @@ func (c *Client) PrintDump(ctx context.Context) error {
 }
 
 func (c *Client) Purge(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("purge")
+	methodURL := c.http.apiURL.JoinPath("purge")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) HealthCheck(ctx context.Context) error {
+	methodURL := c.http.baseURL.JoinPath("health-check")
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -512,7 +522,7 @@ func (c *Client) MaxTxnRetries() int {
 }
 
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	methodURL := c.http.baseURL.JoinPath("node", "identity")
+	methodURL := c.http.apiURL.JoinPath("node", "identity")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -526,7 +536,7 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 }
 
 func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
-	methodURL := c.http.baseURL.JoinPath("block", "verify-signature")
+	methodURL := c.http.apiURL.JoinPath("block", "verify-signature")
 
 	params := url.Values{}
 	params.Add("cid", cid)
