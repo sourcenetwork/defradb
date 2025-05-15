@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -145,7 +146,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 
@@ -232,7 +233,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 }
 
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, txn, col.Version.CollectionID)
 	if err != nil {

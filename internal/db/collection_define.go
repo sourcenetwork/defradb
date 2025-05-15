@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 func (db *DB) createCollections(
@@ -51,7 +52,7 @@ func (db *DB) createCollections(
 		newDefinitions[i].Schema = newSchemas[i]
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	err = id.SetFieldIDs(ctx, txn, newDefinitions)
 	if err != nil {
 		return nil, err
@@ -173,7 +174,7 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	for _, col := range newColsByID {
 		_, err := description.SaveCollection(ctx, txn, col)
 		if err != nil {
@@ -251,7 +252,7 @@ func (db *DB) setActiveSchemaVersion(
 	if schemaVersionID == "" {
 		return ErrSchemaVersionIDEmpty
 	}
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	col, err := description.GetCollectionByID(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err

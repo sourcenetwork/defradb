@@ -21,6 +21,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -77,7 +78,7 @@ func (c *collection) deleteWithFilter(
 		DocIDs: make([]string, 0),
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	// Keep looping until results from the selection plan have been iterated through.
 	for {
@@ -151,7 +152,7 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	ident := identity.FromContext(ctx)
 	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {

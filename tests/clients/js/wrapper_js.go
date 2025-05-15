@@ -17,7 +17,7 @@ import (
 	"syscall/js"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 
 	"github.com/sourcenetwork/goji"
@@ -25,7 +25,7 @@ import (
 
 func execute(ctx context.Context, value js.Value, method string, args ...any) ([]js.Value, error) {
 	contextValues := map[string]any{}
-	tx, ok := db.TryGetContextTxn(ctx)
+	tx, ok := txnctx.TryGet(ctx)
 	if ok {
 		contextValues["transaction"] = tx.ID()
 	}

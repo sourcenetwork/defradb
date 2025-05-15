@@ -19,11 +19,12 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, txn, cfg.DestinationSchemaVersionID)
