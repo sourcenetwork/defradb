@@ -43,7 +43,7 @@ func GetShortFieldID(
 	// going to be more efficient than loading the field short-ids one by one, and we'll
 	// usually want most of them.
 
-	key := keys.NewFieldIDP(collectionShortID)
+	key := keys.NewFieldIDPrefix(collectionShortID)
 	iter, err := txnctx.MustGet(ctx).Systemstore().Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
 	if err != nil {
 		return 0, err

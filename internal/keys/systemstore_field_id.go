@@ -32,7 +32,7 @@ func NewFieldID(collectionShortID uint32, fieldID string) FieldID {
 	}
 }
 
-func NewFieldIDP(collectionShortID uint32) FieldID {
+func NewFieldIDPrefix(collectionShortID uint32) FieldID {
 	return FieldID{
 		CollectionShortID: collectionShortID,
 	}
