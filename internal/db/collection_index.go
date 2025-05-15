@@ -291,7 +291,7 @@ func (c *collection) iterateAllDocs(
 		return errors.Join(err, df.Close())
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}

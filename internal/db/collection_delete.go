@@ -78,8 +78,6 @@ func (c *collection) deleteWithFilter(
 		DocIDs: make([]string, 0),
 	}
 
-	txn := txnctx.MustGet(ctx)
-
 	// Keep looping until results from the selection plan have been iterated through.
 	for {
 		next, err := selectionPlan.Next()
@@ -97,7 +95,7 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +184,7 @@ func (c *collection) applyDelete(
 	})
 
 	if c.def.Version.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}

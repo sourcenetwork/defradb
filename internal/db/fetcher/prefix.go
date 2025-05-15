@@ -56,7 +56,7 @@ func newPrefixFetcher(
 	execInfo *ExecInfo,
 ) (*prefixFetcher, error) {
 	if len(prefixes) == 0 {
-		shortID, err := id.GetShortCollectionID(ctx, txn, col.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
 		if err != nil {
 			return nil, err
 		}

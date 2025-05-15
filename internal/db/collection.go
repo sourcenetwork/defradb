@@ -271,7 +271,7 @@ func (c *collection) getAllDocIDsChan(
 ) (<-chan client.DocIDResult, error) {
 	txn := txnctx.MustGet(ctx)
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +477,7 @@ func (c *collection) create(
 	if len(doc.Values()) == 0 {
 		txn := txnctx.MustGet(ctx)
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -683,7 +683,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -788,7 +788,7 @@ func (c *collection) save(
 	})
 
 	if c.def.Version.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -1012,9 +1012,7 @@ func (c *collection) getPrimaryKeyFromDocID(
 	ctx context.Context,
 	docID client.DocID,
 ) (keys.PrimaryDataStoreKey, error) {
-	txn := txnctx.MustGet(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, err
 	}

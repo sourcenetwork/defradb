@@ -212,7 +212,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, col.Version.CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
 		if err != nil {
 			return err
 		}
@@ -235,7 +235,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
 	txn := txnctx.MustGet(ctx)
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, col.Version.CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
 	if err != nil {
 		return err
 	}

@@ -448,7 +448,7 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 		return immutable.None[core.Doc](), nil
 	}
 
-	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.p.txn, scan.col.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.col.Version().CollectionID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
