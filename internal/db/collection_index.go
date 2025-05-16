@@ -233,12 +233,19 @@ func (c *collection) createIndex(
 	c.def.Version.Indexes = append(c.def.Version.Indexes, desc)
 
 	txn := txnctx.MustGet(ctx)
-	err = description.SaveCollection(ctx, txn, c.Definition().Version)
+	err = description.SaveCollection(ctx, txn, c.def.Version)
 	if err != nil {
+		c.def.Version.Indexes = c.def.Version.Indexes[:len(c.def.Version.Indexes)-1]
 		return nil, err
 	}
 
-	return c.addNewIndex(ctx, desc)
+	index, err := c.addNewIndex(ctx, desc)
+	if err != nil {
+		c.def.Version.Indexes = c.def.Version.Indexes[:len(c.def.Version.Indexes)-1]
+		return nil, err
+	}
+
+	return index, nil
 }
 
 func (c *collection) addNewIndex(ctx context.Context, desc client.IndexDescription) (CollectionIndex, error) {
@@ -389,7 +396,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 // GetIndexes returns all indexes for the collection.
-func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *collection) GetIndexes(context.Context) ([]client.IndexDescription, error) {
 	return c.Version().Indexes, nil
 }
 
