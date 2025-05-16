@@ -32,8 +32,8 @@ type SchemaDefinition struct {
 	Body []byte
 }
 
-type ParsedCollection struct {
-	Collection    client.CollectionDefinition
+type Collection struct {
+	Definition    client.CollectionDefinition
 	CreateIndexes []client.IndexCreateRequest
 }
 
@@ -60,7 +60,7 @@ type Parser interface {
 	// The parsing should validate the syntax, but not validate what that syntax expresses
 	// is valid or not, i.e. we don't want the parser to make remote calls to verify the
 	// policy description is valid or not (that is the callers responsiblity).
-	ParseSDL(ctx context.Context, sdl string) ([]ParsedCollection, error)
+	ParseSDL(ctx context.Context, sdl string) ([]Collection, error)
 
 	// Adds the given schema to this parser's model.
 	//

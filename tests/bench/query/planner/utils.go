@@ -122,7 +122,7 @@ func buildParser(
 
 	collectionDefinitions := make([]client.CollectionDefinition, len(collectionVersions))
 	for i, collectionVersion := range collectionVersions {
-		collectionDefinitions[i] = collectionVersion.Collection
+		collectionDefinitions[i] = collectionVersion.Definition
 	}
 
 	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDefinitions)

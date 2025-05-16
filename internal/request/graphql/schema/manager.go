@@ -76,7 +76,7 @@ func (s *SchemaManager) ResolveTypes() error {
 	return s.schema.AppendType(query)
 }
 
-func (s *SchemaManager) ParseSDL(sdl string) ([]core.ParsedCollection, error) {
+func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
 	src := source.NewSource(&source.Source{
 		Body: []byte(sdl),
 	})

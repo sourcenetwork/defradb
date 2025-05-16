@@ -70,7 +70,7 @@ func (db *DB) addView(
 			Query:     *baseQuery,
 			Transform: transform,
 		}
-		parseResults[i].Collection.Version.Sources = append(parseResults[i].Collection.Version.Sources, &source)
+		parseResults[i].Definition.Version.Sources = append(parseResults[i].Definition.Version.Sources, &source)
 	}
 
 	returnDescriptions, err := db.createCollections(ctx, parseResults)

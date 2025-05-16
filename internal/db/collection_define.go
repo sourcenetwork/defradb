@@ -30,7 +30,7 @@ import (
 
 func (db *DB) createCollections(
 	ctx context.Context,
-	parseResults []core.ParsedCollection,
+	parseResults []core.Collection,
 ) ([]client.CollectionDefinition, error) {
 	returnDescriptions := make([]client.CollectionDefinition, 0, len(parseResults))
 
@@ -41,7 +41,7 @@ func (db *DB) createCollections(
 
 	newSchemas := make([]client.SchemaDescription, len(parseResults))
 	for i, def := range parseResults {
-		newSchemas[i] = def.Collection.Schema
+		newSchemas[i] = def.Definition.Schema
 	}
 
 	err = setSchemaIDs(newSchemas)
@@ -50,14 +50,14 @@ func (db *DB) createCollections(
 	}
 
 	for i := range parseResults {
-		parseResults[i].Collection.Version.VersionID = newSchemas[i].VersionID
-		parseResults[i].Collection.Version.CollectionID = newSchemas[i].Root
-		parseResults[i].Collection.Schema = newSchemas[i]
+		parseResults[i].Definition.Version.VersionID = newSchemas[i].VersionID
+		parseResults[i].Definition.Version.CollectionID = newSchemas[i].Root
+		parseResults[i].Definition.Schema = newSchemas[i]
 	}
 
 	newDefinitions := make([]client.CollectionDefinition, len(parseResults))
 	for i, def := range parseResults {
-		newDefinitions[i] = def.Collection
+		newDefinitions[i] = def.Definition
 	}
 
 	txn := txnctx.MustGet(ctx)
@@ -76,43 +76,43 @@ func (db *DB) createCollections(
 	}
 
 	for _, def := range parseResults {
-		_, err := description.CreateSchemaVersion(ctx, txn, def.Collection.Schema)
+		_, err := description.CreateSchemaVersion(ctx, txn, def.Definition.Schema)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(def.Collection.Version.Fields) == 0 {
+		if len(def.Definition.Version.Fields) == 0 {
 			// This is a schema-only definition, we should not create a collection for it
-			returnDescriptions = append(returnDescriptions, def.Collection)
+			returnDescriptions = append(returnDescriptions, def.Definition)
 			continue
 		}
 
-		def.Collection.Version.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
+		def.Definition.Version.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
 		for _, createIndex := range def.CreateIndexes {
-			desc, err := processCreateIndexRequest(ctx, def.Collection, createIndex)
+			desc, err := processCreateIndexRequest(ctx, def.Definition, createIndex)
 			if err != nil {
 				return nil, err
 			}
-			def.Collection.Version.Indexes = append(def.Collection.Version.Indexes, desc)
+			def.Definition.Version.Indexes = append(def.Definition.Version.Indexes, desc)
 		}
 
-		err = description.SaveCollection(ctx, txn, def.Collection.Version)
+		err = description.SaveCollection(ctx, txn, def.Definition.Version)
 		if err != nil {
 			return nil, err
 		}
 
-		col, err := db.newCollection(def.Collection.Version, def.Collection.Schema)
+		col, err := db.newCollection(def.Definition.Version, def.Definition.Schema)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, index := range def.Collection.Version.Indexes {
+		for _, index := range def.Definition.Version.Indexes {
 			if _, err := col.addNewIndex(ctx, index); err != nil {
 				return nil, err
 			}
 		}
 
-		result, err := db.getCollectionByID(ctx, def.Collection.Version.VersionID)
+		result, err := db.getCollectionByID(ctx, def.Definition.Version.VersionID)
 		if err != nil {
 			return nil, err
 		}

@@ -82,10 +82,10 @@ func newObjectDefinition(def *ast.ObjectDefinition) *typeDefinition {
 
 // fromAst parses a GQL AST into a set of collection versions.
 func fromAst(doc *ast.Document) (
-	[]core.ParsedCollection,
+	[]core.Collection,
 	error,
 ) {
-	results := []core.ParsedCollection{}
+	results := []core.Collection{}
 	cTypeByFieldNameByObjName := map[string]map[string]client.CType{}
 
 	for _, def := range doc.Definitions {
@@ -129,7 +129,7 @@ func fromAst(doc *ast.Document) (
 func fromAstDefinition(
 	def *typeDefinition,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
-) (core.ParsedCollection, error) {
+) (core.Collection, error) {
 	schemaFieldDescriptions := []client.SchemaFieldDescription{
 		{
 			Name: request.DocIDFieldName,
@@ -154,7 +154,7 @@ func fromAstDefinition(
 			cTypeByFieldNameByObjName,
 		)
 		if err != nil {
-			return core.ParsedCollection{}, err
+			return core.Collection{}, err
 		}
 
 		schemaFieldDescriptions = append(schemaFieldDescriptions, tmpSchemaFieldDescriptions...)
@@ -165,13 +165,13 @@ func fromAstDefinition(
 			case types.IndexDirectiveLabel:
 				index, err := indexFromAST(directive, field)
 				if err != nil {
-					return core.ParsedCollection{}, err
+					return core.Collection{}, err
 				}
 				indexes = append(indexes, index)
 			case types.VectorEmbeddingDirectiveLabel:
 				embedding, err := vectorEmbeddingFromAST(directive, field)
 				if err != nil {
-					return core.ParsedCollection{}, err
+					return core.Collection{}, err
 				}
 				vectorEmbeddings = append(vectorEmbeddings, embedding)
 			}
@@ -205,14 +205,14 @@ func fromAstDefinition(
 		case types.IndexDirectiveLabel:
 			index, err := indexFromAST(directive, nil)
 			if err != nil {
-				return core.ParsedCollection{}, err
+				return core.Collection{}, err
 			}
 			indexes = append(indexes, index)
 
 		case types.PolicySchemaDirectiveLabel:
 			policy, err := policyFromAST(directive)
 			if err != nil {
-				return core.ParsedCollection{}, err
+				return core.Collection{}, err
 			}
 			policyDescription = immutable.Some(policy)
 
@@ -253,8 +253,8 @@ func fromAstDefinition(
 		}
 	}
 
-	return core.ParsedCollection{
-		Collection: client.CollectionDefinition{
+	return core.Collection{
+		Definition: client.CollectionDefinition{
 			Version: client.CollectionVersion{
 				Name:             def.Name.Value,
 				Policy:           policyDescription,
@@ -814,16 +814,16 @@ func genRelationName(t1, t2 string) (string, error) {
 }
 
 func finalizeRelations(
-	results []core.ParsedCollection,
+	results []core.Collection,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) error {
 	for i, result := range results {
-		if result.Collection.Version.IsEmbeddedOnly {
+		if result.Definition.Version.IsEmbeddedOnly {
 			// Embedded objects are simpler and require no addition work
 			continue
 		}
 
-		for _, field := range result.Collection.Version.Fields {
+		for _, field := range result.Definition.Version.Fields {
 			if !field.Kind.HasValue() {
 				continue
 			}
@@ -838,8 +838,8 @@ func finalizeRelations(
 			var otherColDefinition immutable.Option[client.CollectionDefinition]
 			for _, otherDef := range results {
 				// Check the 'other' schema name, there can only be a one-one mapping in an SDL.
-				if otherDef.Collection.Version.Name == namedKind.Name {
-					otherColDefinition = immutable.Some(otherDef.Collection)
+				if otherDef.Definition.Version.Name == namedKind.Name {
+					otherColDefinition = immutable.Some(otherDef.Definition)
 					break
 				}
 			}
@@ -852,21 +852,21 @@ func finalizeRelations(
 
 			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().Version.GetFieldByRelation(
 				field.RelationName.Value(),
-				result.Collection.GetName(),
+				result.Definition.GetName(),
 				field.Name,
 			)
 
 			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.Value().IsArray() {
-				if _, exists := result.Collection.Schema.GetFieldByName(field.Name); !exists {
+				if _, exists := result.Definition.Schema.GetFieldByName(field.Name); !exists {
 					// Relations only defined on one side of the object are possible, and so if this is one of them
 					// or if the other side is an array, we need to add the field to the schema (is primary side)
 					// if the field has not been explicitly declared by the user.
-					result.Collection.Schema.Fields = append(
-						result.Collection.Schema.Fields,
+					result.Definition.Schema.Fields = append(
+						result.Definition.Schema.Fields,
 						client.SchemaFieldDescription{
 							Name: field.Name,
 							Kind: field.Kind.Value(),
-							Typ:  cTypeByFieldNameByObjName[result.Collection.Version.Name][field.Name],
+							Typ:  cTypeByFieldNameByObjName[result.Definition.Version.Name][field.Name],
 						},
 					)
 				}
@@ -875,7 +875,7 @@ func finalizeRelations(
 			if !otherColDefinition.Value().Version.IsEmbeddedOnly {
 				var schemaFieldIndex int
 				var schemaFieldExists bool
-				for i, schemaField := range result.Collection.Schema.Fields {
+				for i, schemaField := range result.Definition.Schema.Fields {
 					if schemaField.Name == field.Name {
 						schemaFieldIndex = i
 						schemaFieldExists = true
@@ -886,17 +886,17 @@ func finalizeRelations(
 				if schemaFieldExists {
 					idFieldName := fmt.Sprintf("%s_id", field.Name)
 
-					if _, idFieldExists := result.Collection.Schema.GetFieldByName(idFieldName); !idFieldExists {
-						existingFields := result.Collection.Schema.Fields
-						result.Collection.Schema.Fields = make([]client.SchemaFieldDescription, len(result.Collection.Schema.Fields)+1)
-						copy(result.Collection.Schema.Fields, existingFields[:schemaFieldIndex+1])
-						copy(result.Collection.Schema.Fields[schemaFieldIndex+2:], existingFields[schemaFieldIndex+1:])
+					if _, idFieldExists := result.Definition.Schema.GetFieldByName(idFieldName); !idFieldExists {
+						existingFields := result.Definition.Schema.Fields
+						result.Definition.Schema.Fields = make([]client.SchemaFieldDescription, len(result.Definition.Schema.Fields)+1)
+						copy(result.Definition.Schema.Fields, existingFields[:schemaFieldIndex+1])
+						copy(result.Definition.Schema.Fields[schemaFieldIndex+2:], existingFields[schemaFieldIndex+1:])
 
 						// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
 						// does not point to an embedded object.
 						//
 						// It is inserted immediately after the object field to make things nicer for the user.
-						result.Collection.Schema.Fields[schemaFieldIndex+1] = client.SchemaFieldDescription{
+						result.Definition.Schema.Fields[schemaFieldIndex+1] = client.SchemaFieldDescription{
 							Name: idFieldName,
 							Kind: client.FieldKind_DocID,
 							Typ:  defaultCRDTForFieldKind[client.FieldKind_DocID],
