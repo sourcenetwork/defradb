@@ -41,7 +41,7 @@ func (db *DB) addView(
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
 	query := fmt.Sprintf(`query { %s }`, inputQuery)
 
-	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	parseResults, err := db.parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -65,15 +65,15 @@ func (db *DB) addView(
 		return nil, NewErrInvalidViewQueryCastFailed(inputQuery)
 	}
 
-	for i := range newDefinitions {
+	for i := range parseResults {
 		source := client.QuerySource{
 			Query:     *baseQuery,
 			Transform: transform,
 		}
-		newDefinitions[i].Version.Sources = append(newDefinitions[i].Version.Sources, &source)
+		parseResults[i].Definition.Version.Sources = append(parseResults[i].Definition.Version.Sources, &source)
 	}
 
-	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
+	returnDescriptions, err := db.createCollections(ctx, parseResults)
 	if err != nil {
 		return nil, err
 	}
@@ -152,14 +152,14 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 
 	// temporarily disable the cache in order to query without using it
 	col.Version.IsMaterialized = false
-	col.Version, err = description.SaveCollection(ctx, txn, col.Version)
+	err = description.SaveCollection(ctx, txn, col.Version)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
 		col.Version.IsMaterialized = true
-		col.Version, defErr = description.SaveCollection(ctx, txn, col.Version)
+		defErr = description.SaveCollection(ctx, txn, col.Version)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.

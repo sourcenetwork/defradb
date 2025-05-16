@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -24,15 +25,13 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String @index
 						age: Int
 					}
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
 				Doc: `
 					{
 						"name":	"John",
@@ -42,16 +41,29 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query  {
-						Users {
+						User {
 							name
 							age
 						}
 					}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
+					"User": []map[string]any{
 						{
 							"name": "John",
 							"age":  int64(21),
+						},
+					},
+				},
+			},
+			testUtils.GetIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
 						},
 					},
 				},
@@ -75,8 +87,6 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				CollectionID: 0,
-				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
 				Doc: `
 					{
 						"name":	"John",
@@ -84,9 +94,8 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 					}`,
 			},
 			testUtils.CreateIndex{
-				CollectionID: 0,
-				IndexName:    "some_index",
-				FieldName:    "name",
+				IndexName: "some_index",
+				FieldName: "name",
 			},
 			testUtils.Request{
 				Request: `
@@ -101,6 +110,19 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 						{
 							"name": "John",
 							"age":  int64(21),
+						},
+					},
+				},
+			},
+			testUtils.GetIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "some_index",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
 						},
 					},
 				},

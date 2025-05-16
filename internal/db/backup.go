@@ -232,7 +232,10 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								// handle this collection.
 								continue
 							}
-							foreignCol := db.newCollection(foreignDef.Version, foreignDef.Schema)
+							foreignCol, err := db.newCollection(foreignDef.Version, foreignDef.Schema)
+							if err != nil {
+								return err
+							}
 
 							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {

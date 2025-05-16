@@ -259,7 +259,7 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	descWithoutID := client.IndexDescriptionCreateRequest{
+	descWithoutID := client.IndexCreateRequest{
 		Name:   indexDesc.Name,
 		Fields: indexDesc.Fields,
 		Unique: indexDesc.Unique,

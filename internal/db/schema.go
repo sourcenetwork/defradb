@@ -529,7 +529,7 @@ func (db *DB) updateSchema(
 		}
 
 		for _, def := range definitions {
-			_, err = description.SaveCollection(ctx, txn, def.Version)
+			err = description.SaveCollection(ctx, txn, def.Version)
 			if err != nil {
 				return err
 			}

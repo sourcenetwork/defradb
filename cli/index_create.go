@@ -69,7 +69,7 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 				})
 			}
 
-			desc := client.IndexDescriptionCreateRequest{
+			desc := client.IndexCreateRequest{
 				Name:   nameArg,
 				Fields: fields,
 				Unique: uniqueArg,

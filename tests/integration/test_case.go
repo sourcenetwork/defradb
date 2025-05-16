@@ -572,11 +572,6 @@ type DropIndex struct {
 	// The collection from which the index should be deleted.
 	CollectionID int
 
-	// The index-identifier of the secondary index within the collection.
-	// This is based on the order in which it was created, not the ordering of
-	// the indexes within the database.
-	IndexID int
-
 	// The index name of the secondary index within the collection.
 	// If it is provided, `IndexID` is ignored.
 	IndexName string

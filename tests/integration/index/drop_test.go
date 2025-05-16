@@ -13,8 +13,102 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
+
+func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Drop index should not hinder querying",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						age: Int 
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.DropIndex{
+				IndexName: "User_name_ASC",
+			},
+			testUtils.Request{
+				Request: `
+					query  {
+						User {
+							name
+							age
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String @index
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.DropIndex{
+				IndexName: "User_age_ASC",
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:   1,
+						Name: "User_name_ASC",
+						Fields: []client.IndexedFieldDescription{
+							{Name: "name"},
+						},
+					},
+				},
+			},
+			testUtils.DropIndex{
+				IndexName: "User_name_ASC",
+			},
+			testUtils.GetIndexes{
+				CollectionID:    0,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
 
 func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
@@ -30,7 +124,6 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
 				Doc: `
 					{
 						"name":	"John",
