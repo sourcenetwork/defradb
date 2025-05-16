@@ -113,7 +113,7 @@ type Collection interface {
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(context.Context, IndexDescriptionCreateRequest) (IndexDescription, error)
+	CreateIndex(context.Context, IndexCreateRequest) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
 	DropIndex(ctx context.Context, indexName string) error

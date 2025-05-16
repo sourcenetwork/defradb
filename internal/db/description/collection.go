@@ -24,30 +24,29 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// SaveCollection saves the given collection to the system store overwriting any
-// pre-existing values.
+// SaveCollection saves the given collection to the system store.
 func SaveCollection(
 	ctx context.Context,
 	txn datastore.Txn,
 	desc client.CollectionVersion,
-) (client.CollectionVersion, error) {
+) error {
 	if desc.CollectionID != "" {
 		// Set the collection short id
 		err := id.SetShortCollectionID(ctx, txn, desc.CollectionID)
 		if err != nil {
-			return client.CollectionVersion{}, err
+			return err
 		}
 	}
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
-		return client.CollectionVersion{}, err
+		return err
 	}
 
 	key := keys.NewCollectionKey(desc.VersionID)
 	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
 	if err != nil {
-		return client.CollectionVersion{}, err
+		return err
 	}
 
 	if !desc.IsActive {
@@ -55,14 +54,14 @@ func SaveCollection(
 		idBytes, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 		if err != nil {
 			if !errors.Is(err, corekv.ErrNotFound) {
-				return client.CollectionVersion{}, err
+				return err
 			}
 		}
 
 		if string(idBytes) == desc.VersionID {
 			err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
 			if err != nil {
-				return client.CollectionVersion{}, err
+				return err
 			}
 		}
 	}
@@ -71,11 +70,11 @@ func SaveCollection(
 		nameKey := keys.NewCollectionNameKey(desc.Name)
 		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
 		if err != nil {
-			return client.CollectionVersion{}, err
+			return err
 		}
 	}
 
-	return desc, nil
+	return nil
 }
 
 func GetCollectionByID(

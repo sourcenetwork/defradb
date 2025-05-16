@@ -57,11 +57,19 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion, schema client.SchemaDescription) *collection {
-	return &collection{
+func (db *DB) newCollection(desc client.CollectionVersion, schema client.SchemaDescription) (*collection, error) {
+	col := &collection{
 		db:  db,
 		def: client.CollectionDefinition{Version: desc, Schema: schema},
 	}
+	for _, index := range desc.Indexes {
+		colIndex, err := NewCollectionIndex(col, index)
+		if err != nil {
+			return nil, err
+		}
+		col.indexes = append(col.indexes, colIndex)
+	}
+	return col, nil
 }
 
 // newFetcher returns a new fetcher instance for this collection.
@@ -92,9 +100,7 @@ func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collecti
 		return nil, err
 	}
 
-	collection := db.newCollection(col, schema)
-
-	err = collection.loadIndexes(ctx)
+	collection, err := db.newCollection(col, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -193,13 +199,11 @@ func (db *DB) getCollections(
 			}
 		}
 
-		collection := db.newCollection(col, schema)
-		collections = append(collections, collection)
-
-		err = collection.loadIndexes(ctx)
+		collection, err := db.newCollection(col, schema)
 		if err != nil {
 			return nil, err
 		}
+		collections = append(collections, collection)
 	}
 
 	return collections, nil
@@ -221,13 +225,10 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 			return nil, err
 		}
 
-		collection := db.newCollection(col, schema)
-
-		err = collection.loadIndexes(ctx)
+		collection, err := db.newCollection(col, schema)
 		if err != nil {
 			return nil, err
 		}
-
 		definitions[i] = collection.Definition()
 	}
 

@@ -302,7 +302,7 @@ func (c *Collection) GetAllDocIDs(
 
 func (c *Collection) CreateIndex(
 	ctx context.Context,
-	indexDesc client.IndexDescriptionCreateRequest,
+	indexDesc client.IndexCreateRequest,
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "create"}
 	args = append(args, "--collection", c.Version().Name)

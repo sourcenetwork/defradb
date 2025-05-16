@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
@@ -81,31 +82,31 @@ func newObjectDefinition(def *ast.ObjectDefinition) *typeDefinition {
 
 // fromAst parses a GQL AST into a set of collection versions.
 func fromAst(doc *ast.Document) (
-	[]client.CollectionDefinition,
+	[]core.ParsedCollection,
 	error,
 ) {
-	definitions := []client.CollectionDefinition{}
+	results := []core.ParsedCollection{}
 	cTypeByFieldNameByObjName := map[string]map[string]client.CType{}
 
 	for _, def := range doc.Definitions {
 		switch defType := def.(type) {
 		case *ast.ObjectDefinition:
 			td := newObjectDefinition(defType)
-			description, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
+			result, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
 			if err != nil {
 				return nil, err
 			}
 
-			definitions = append(definitions, description)
+			results = append(results, result)
 
 		case *ast.InterfaceDefinition:
 			td := newInterfaceDefinition(defType)
-			description, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
+			result, err := fromAstDefinition(td, cTypeByFieldNameByObjName)
 			if err != nil {
 				return nil, err
 			}
 
-			definitions = append(definitions, description)
+			results = append(results, result)
 
 		default:
 			// Do nothing, ignore it and continue
@@ -116,19 +117,19 @@ func fromAst(doc *ast.Document) (
 	// The details on the relations between objects depend on both sides
 	// of the relationship.  The relation manager handles this, and must be applied
 	// after all the collections have been processed.
-	err := finalizeRelations(definitions, cTypeByFieldNameByObjName)
+	err := finalizeRelations(results, cTypeByFieldNameByObjName)
 	if err != nil {
 		return nil, err
 	}
 
-	return definitions, nil
+	return results, nil
 }
 
 // fromAstDefinition parses a AST object definition into a set of collection versions.
 func fromAstDefinition(
 	def *typeDefinition,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
-) (client.CollectionDefinition, error) {
+) (core.ParsedCollection, error) {
 	schemaFieldDescriptions := []client.SchemaFieldDescription{
 		{
 			Name: request.DocIDFieldName,
@@ -144,7 +145,7 @@ func fromAstDefinition(
 
 	policyDescription := immutable.None[client.PolicyDescription]()
 
-	indexDescriptions := []client.IndexDescription{}
+	indexes := []client.IndexCreateRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
 	for _, field := range def.Fields {
 		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
@@ -153,7 +154,7 @@ func fromAstDefinition(
 			cTypeByFieldNameByObjName,
 		)
 		if err != nil {
-			return client.CollectionDefinition{}, err
+			return core.ParsedCollection{}, err
 		}
 
 		schemaFieldDescriptions = append(schemaFieldDescriptions, tmpSchemaFieldDescriptions...)
@@ -164,13 +165,13 @@ func fromAstDefinition(
 			case types.IndexDirectiveLabel:
 				index, err := indexFromAST(directive, field)
 				if err != nil {
-					return client.CollectionDefinition{}, err
+					return core.ParsedCollection{}, err
 				}
-				indexDescriptions = append(indexDescriptions, index)
+				indexes = append(indexes, index)
 			case types.VectorEmbeddingDirectiveLabel:
 				embedding, err := vectorEmbeddingFromAST(directive, field)
 				if err != nil {
-					return client.CollectionDefinition{}, err
+					return core.ParsedCollection{}, err
 				}
 				vectorEmbeddings = append(vectorEmbeddings, embedding)
 			}
@@ -204,14 +205,14 @@ func fromAstDefinition(
 		case types.IndexDirectiveLabel:
 			index, err := indexFromAST(directive, nil)
 			if err != nil {
-				return client.CollectionDefinition{}, err
+				return core.ParsedCollection{}, err
 			}
-			indexDescriptions = append(indexDescriptions, index)
+			indexes = append(indexes, index)
 
 		case types.PolicySchemaDirectiveLabel:
 			policy, err := policyFromAST(directive)
 			if err != nil {
-				return client.CollectionDefinition{}, err
+				return core.ParsedCollection{}, err
 			}
 			policyDescription = immutable.Some(policy)
 
@@ -252,22 +253,24 @@ func fromAstDefinition(
 		}
 	}
 
-	return client.CollectionDefinition{
-		Version: client.CollectionVersion{
-			Name:             def.Name.Value,
-			Indexes:          indexDescriptions,
-			Policy:           policyDescription,
-			Fields:           collectionFieldDescriptions,
-			IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
-			IsBranchable:     isBranchable,
-			IsEmbeddedOnly:   def.IsInterface,
-			IsActive:         true,
-			VectorEmbeddings: vectorEmbeddings,
+	return core.ParsedCollection{
+		Collection: client.CollectionDefinition{
+			Version: client.CollectionVersion{
+				Name:             def.Name.Value,
+				Policy:           policyDescription,
+				Fields:           collectionFieldDescriptions,
+				IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
+				IsBranchable:     isBranchable,
+				IsEmbeddedOnly:   def.IsInterface,
+				IsActive:         true,
+				VectorEmbeddings: vectorEmbeddings,
+			},
+			Schema: client.SchemaDescription{
+				Name:   def.Name.Value,
+				Fields: schemaFieldDescriptions,
+			},
 		},
-		Schema: client.SchemaDescription{
-			Name:   def.Name.Value,
-			Fields: schemaFieldDescriptions,
-		},
+		CreateIndexes: indexes,
 	}, nil
 }
 
@@ -290,7 +293,7 @@ func IsValidIndexName(name string) bool {
 	return true
 }
 
-func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.IndexDescription, error) {
+func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.IndexCreateRequest, error) {
 	var name string
 	var unique bool
 
@@ -302,36 +305,36 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		case types.IndexDirectivePropName:
 			nameVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+				return client.IndexCreateRequest{}, ErrIndexWithInvalidArg
 			}
 			name = nameVal.Value
 			if !IsValidIndexName(name) {
-				return client.IndexDescription{}, NewErrIndexWithInvalidName(name)
+				return client.IndexCreateRequest{}, NewErrIndexWithInvalidName(name)
 			}
 
 		case types.IndexDirectivePropIncludes:
 			includesVal, ok := arg.Value.(*ast.ListValue)
 			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+				return client.IndexCreateRequest{}, ErrIndexWithInvalidArg
 			}
 			includes = includesVal
 
 		case types.IndexDirectivePropDirection:
 			directionVal, ok := arg.Value.(*ast.EnumValue)
 			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+				return client.IndexCreateRequest{}, ErrIndexWithInvalidArg
 			}
 			direction = directionVal
 
 		case types.IndexDirectivePropUnique:
 			uniqueVal, ok := arg.Value.(*ast.BooleanValue)
 			if !ok {
-				return client.IndexDescription{}, ErrIndexWithInvalidArg
+				return client.IndexCreateRequest{}, ErrIndexWithInvalidArg
 			}
 			unique = uniqueVal.Value
 
 		default:
-			return client.IndexDescription{}, ErrIndexWithUnknownArg
+			return client.IndexCreateRequest{}, ErrIndexWithUnknownArg
 		}
 	}
 
@@ -342,7 +345,7 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		for _, include := range includes.Values {
 			field, err := indexFieldFromAST(include, direction)
 			if err != nil {
-				return client.IndexDescription{}, err
+				return client.IndexCreateRequest{}, err
 			}
 			if fieldDef != nil && fieldDef.Name.Value == field.Name {
 				containsField = true
@@ -365,10 +368,10 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 	}
 
 	if len(fields) == 0 {
-		return client.IndexDescription{}, ErrIndexMissingFields
+		return client.IndexCreateRequest{}, ErrIndexMissingFields
 	}
 
-	return client.IndexDescription{
+	return client.IndexCreateRequest{
 		Name:   name,
 		Fields: fields,
 		Unique: unique,
@@ -811,16 +814,16 @@ func genRelationName(t1, t2 string) (string, error) {
 }
 
 func finalizeRelations(
-	definitions []client.CollectionDefinition,
+	results []core.ParsedCollection,
 	cTypeByFieldNameByObjName map[string]map[string]client.CType,
 ) error {
-	for i, definition := range definitions {
-		if definition.Version.IsEmbeddedOnly {
+	for i, result := range results {
+		if result.Collection.Version.IsEmbeddedOnly {
 			// Embedded objects are simpler and require no addition work
 			continue
 		}
 
-		for _, field := range definition.Version.Fields {
+		for _, field := range result.Collection.Version.Fields {
 			if !field.Kind.HasValue() {
 				continue
 			}
@@ -833,10 +836,10 @@ func finalizeRelations(
 			}
 
 			var otherColDefinition immutable.Option[client.CollectionDefinition]
-			for _, otherDef := range definitions {
+			for _, otherDef := range results {
 				// Check the 'other' schema name, there can only be a one-one mapping in an SDL.
-				if otherDef.Schema.Name == namedKind.Name {
-					otherColDefinition = immutable.Some(otherDef)
+				if otherDef.Collection.Version.Name == namedKind.Name {
+					otherColDefinition = immutable.Some(otherDef.Collection)
 					break
 				}
 			}
@@ -849,21 +852,21 @@ func finalizeRelations(
 
 			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().Version.GetFieldByRelation(
 				field.RelationName.Value(),
-				definition.GetName(),
+				result.Collection.GetName(),
 				field.Name,
 			)
 
 			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.Value().IsArray() {
-				if _, exists := definition.Schema.GetFieldByName(field.Name); !exists {
+				if _, exists := result.Collection.Schema.GetFieldByName(field.Name); !exists {
 					// Relations only defined on one side of the object are possible, and so if this is one of them
 					// or if the other side is an array, we need to add the field to the schema (is primary side)
 					// if the field has not been explicitly declared by the user.
-					definition.Schema.Fields = append(
-						definition.Schema.Fields,
+					result.Collection.Schema.Fields = append(
+						result.Collection.Schema.Fields,
 						client.SchemaFieldDescription{
 							Name: field.Name,
 							Kind: field.Kind.Value(),
-							Typ:  cTypeByFieldNameByObjName[definition.Schema.Name][field.Name],
+							Typ:  cTypeByFieldNameByObjName[result.Collection.Version.Name][field.Name],
 						},
 					)
 				}
@@ -872,7 +875,7 @@ func finalizeRelations(
 			if !otherColDefinition.Value().Version.IsEmbeddedOnly {
 				var schemaFieldIndex int
 				var schemaFieldExists bool
-				for i, schemaField := range definition.Schema.Fields {
+				for i, schemaField := range result.Collection.Schema.Fields {
 					if schemaField.Name == field.Name {
 						schemaFieldIndex = i
 						schemaFieldExists = true
@@ -883,17 +886,17 @@ func finalizeRelations(
 				if schemaFieldExists {
 					idFieldName := fmt.Sprintf("%s_id", field.Name)
 
-					if _, idFieldExists := definition.Schema.GetFieldByName(idFieldName); !idFieldExists {
-						existingFields := definition.Schema.Fields
-						definition.Schema.Fields = make([]client.SchemaFieldDescription, len(definition.Schema.Fields)+1)
-						copy(definition.Schema.Fields, existingFields[:schemaFieldIndex+1])
-						copy(definition.Schema.Fields[schemaFieldIndex+2:], existingFields[schemaFieldIndex+1:])
+					if _, idFieldExists := result.Collection.Schema.GetFieldByName(idFieldName); !idFieldExists {
+						existingFields := result.Collection.Schema.Fields
+						result.Collection.Schema.Fields = make([]client.SchemaFieldDescription, len(result.Collection.Schema.Fields)+1)
+						copy(result.Collection.Schema.Fields, existingFields[:schemaFieldIndex+1])
+						copy(result.Collection.Schema.Fields[schemaFieldIndex+2:], existingFields[schemaFieldIndex+1:])
 
 						// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
 						// does not point to an embedded object.
 						//
 						// It is inserted immediately after the object field to make things nicer for the user.
-						definition.Schema.Fields[schemaFieldIndex+1] = client.SchemaFieldDescription{
+						result.Collection.Schema.Fields[schemaFieldIndex+1] = client.SchemaFieldDescription{
 							Name: idFieldName,
 							Kind: client.FieldKind_DocID,
 							Typ:  defaultCRDTForFieldKind[client.FieldKind_DocID],
@@ -902,7 +905,7 @@ func finalizeRelations(
 				}
 			}
 
-			definitions[i] = definition
+			results[i] = result
 		}
 	}
 

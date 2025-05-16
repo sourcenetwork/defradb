@@ -19,7 +19,10 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"slices"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/txnctx"
@@ -27,18 +30,18 @@ import (
 
 func (db *DB) createCollections(
 	ctx context.Context,
-	newDefinitions []client.CollectionDefinition,
+	parseResults []core.ParsedCollection,
 ) ([]client.CollectionDefinition, error) {
-	returnDescriptions := make([]client.CollectionDefinition, 0, len(newDefinitions))
+	returnDescriptions := make([]client.CollectionDefinition, 0, len(parseResults))
 
 	existingDefinitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	newSchemas := make([]client.SchemaDescription, len(newDefinitions))
-	for i, def := range newDefinitions {
-		newSchemas[i] = def.Schema
+	newSchemas := make([]client.SchemaDescription, len(parseResults))
+	for i, def := range parseResults {
+		newSchemas[i] = def.Collection.Schema
 	}
 
 	err = setSchemaIDs(newSchemas)
@@ -46,10 +49,15 @@ func (db *DB) createCollections(
 		return nil, err
 	}
 
-	for i := range newDefinitions {
-		newDefinitions[i].Version.VersionID = newSchemas[i].VersionID
-		newDefinitions[i].Version.CollectionID = newSchemas[i].Root
-		newDefinitions[i].Schema = newSchemas[i]
+	for i := range parseResults {
+		parseResults[i].Collection.Version.VersionID = newSchemas[i].VersionID
+		parseResults[i].Collection.Version.CollectionID = newSchemas[i].Root
+		parseResults[i].Collection.Schema = newSchemas[i]
+	}
+
+	newDefinitions := make([]client.CollectionDefinition, len(parseResults))
+	for i, def := range parseResults {
+		newDefinitions[i] = def.Collection
 	}
 
 	txn := txnctx.MustGet(ctx)
@@ -60,50 +68,51 @@ func (db *DB) createCollections(
 
 	err = db.validateNewCollection(
 		ctx,
-		append(
-			append(
-				[]client.CollectionDefinition{},
-				newDefinitions...,
-			),
-			existingDefinitions...,
-		),
+		slices.Concat(newDefinitions, existingDefinitions),
 		existingDefinitions,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, def := range newDefinitions {
-		_, err := description.CreateSchemaVersion(ctx, txn, def.Schema)
+	for _, def := range parseResults {
+		_, err := description.CreateSchemaVersion(ctx, txn, def.Collection.Schema)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(def.Version.Fields) == 0 {
+		if len(def.Collection.Version.Fields) == 0 {
 			// This is a schema-only definition, we should not create a collection for it
-			returnDescriptions = append(returnDescriptions, def)
+			returnDescriptions = append(returnDescriptions, def.Collection)
 			continue
 		}
 
-		desc, err := description.SaveCollection(ctx, txn, def.Version)
+		def.Collection.Version.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
+		for _, createIndex := range def.CreateIndexes {
+			desc, err := processCreateIndexRequest(ctx, def.Collection, createIndex)
+			if err != nil {
+				return nil, err
+			}
+			def.Collection.Version.Indexes = append(def.Collection.Version.Indexes, desc)
+		}
+
+		err = description.SaveCollection(ctx, txn, def.Collection.Version)
 		if err != nil {
 			return nil, err
 		}
 
-		col := db.newCollection(desc, def.Schema)
+		col, err := db.newCollection(def.Collection.Version, def.Collection.Schema)
+		if err != nil {
+			return nil, err
+		}
 
-		for _, index := range desc.Indexes {
-			descWithoutID := client.IndexDescriptionCreateRequest{
-				Name:   index.Name,
-				Fields: index.Fields,
-				Unique: index.Unique,
-			}
-			if _, err := col.createIndex(ctx, descWithoutID); err != nil {
+		for _, index := range def.Collection.Version.Indexes {
+			if _, err := col.addNewIndex(ctx, index); err != nil {
 				return nil, err
 			}
 		}
 
-		result, err := db.getCollectionByID(ctx, desc.VersionID)
+		result, err := db.getCollectionByID(ctx, def.Collection.Version.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -176,7 +185,7 @@ func (db *DB) patchCollection(
 
 	txn := txnctx.MustGet(ctx)
 	for _, col := range newColsByID {
-		_, err := description.SaveCollection(ctx, txn, col)
+		err := description.SaveCollection(ctx, txn, col)
 		if err != nil {
 			return err
 		}
@@ -304,14 +313,14 @@ func (db *DB) setActiveSchemaVersion(
 	}
 
 	col.IsActive = true
-	_, err = description.SaveCollection(ctx, txn, col)
+	err = description.SaveCollection(ctx, txn, col)
 	if err != nil {
 		return err
 	}
 
 	if isActiveFound {
 		activeCol.IsActive = false
-		_, err = description.SaveCollection(ctx, txn, activeCol)
+		err = description.SaveCollection(ctx, txn, activeCol)
 		if err != nil {
 			return err
 		}

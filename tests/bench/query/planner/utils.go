@@ -120,7 +120,12 @@ func buildParser(
 		return nil, err
 	}
 
-	err = parser.SetSchema(ctx, &dummyTxn{}, collectionVersions)
+	collectionDefinitions := make([]client.CollectionDefinition, len(collectionVersions))
+	for i, collectionVersion := range collectionVersions {
+		collectionDefinitions[i] = collectionVersion.Collection
+	}
+
+	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDefinitions)
 	if err != nil {
 		return nil, err
 	}

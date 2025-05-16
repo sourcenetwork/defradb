@@ -1660,7 +1660,7 @@ func createIndex(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
-		indexDesc := client.IndexDescriptionCreateRequest{
+		indexDesc := client.IndexCreateRequest{
 			Name: action.IndexName,
 		}
 		if action.FieldName != "" {

@@ -53,12 +53,12 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			IsMaterialized: true,
 		}
 
-		col, err := description.SaveCollection(ctx, txn, desc)
+		err = description.SaveCollection(ctx, txn, desc)
 		if err != nil {
 			return err
 		}
 
-		sourceCol = col
+		sourceCol = desc
 	}
 
 	isDstCollectionFound := false
@@ -81,7 +81,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	if !isDstCollectionFound {
-		desc := client.CollectionVersion{
+		dstCol = client.CollectionVersion{
 			Name:           sourceCol.Name,
 			VersionID:      cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
@@ -95,12 +95,12 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			},
 		}
 
-		dstCol, err = description.SaveCollection(ctx, txn, desc)
+		err = description.SaveCollection(ctx, txn, dstCol)
 		if err != nil {
 			return err
 		}
 
-		if desc.CollectionID != "" { // todo- this makes no sense
+		if dstCol.CollectionID != "" { // todo- this makes no sense
 			var schemaFound bool
 			// If the root schema id is known, we need to add it to the index, even if the schema is not known locally
 			schema, err := description.GetSchemaVersion(ctx, txn, cfg.SourceSchemaVersionID)
@@ -121,7 +121,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 				dstCol.CollectionID = schema.Root
 
-				dstCol, err = description.SaveCollection(ctx, txn, dstCol)
+				err = description.SaveCollection(ctx, txn, dstCol)
 				if err != nil {
 					return err
 				}
@@ -143,7 +143,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		}
 	}
 
-	_, err = description.SaveCollection(ctx, txn, dstCol)
+	err = description.SaveCollection(ctx, txn, dstCol)
 	if err != nil {
 		return err
 	}
