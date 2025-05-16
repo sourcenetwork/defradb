@@ -138,8 +138,6 @@ type nodeState struct {
 	// Collections by index present in the test.
 	// Indexes matches that of collectionNames.
 	collections []client.Collection
-	// Indexes, by index, by collection index.
-	indexes [][]client.IndexDescription
 	// indicates if the node is closed.
 	closed bool
 	// peerInfo contains the peer information for the node.

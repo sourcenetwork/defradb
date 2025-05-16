@@ -276,7 +276,6 @@ func executeTestCase(
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s)
 	refreshDocuments(s, startActionIndex)
-	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, i, testCase.Actions[i])
@@ -786,7 +785,6 @@ func startNodes(s *state, action Start) {
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func restartNodes(
@@ -915,26 +913,6 @@ func refreshDocuments(
 	}
 }
 
-func refreshIndexes(
-	s *state,
-) {
-	for _, node := range s.nodes {
-		node.indexes = make([][]client.IndexDescription, len(node.collections))
-
-		for i, col := range node.collections {
-			if col == nil {
-				continue
-			}
-			colIndexes, err := col.GetIndexes(s.ctx)
-			if err != nil {
-				continue
-			}
-
-			node.indexes[i] = colIndexes
-		}
-	}
-}
-
 func getIndexes(
 	s *state,
 	action GetIndexes,
@@ -996,16 +974,13 @@ func assertIndexesListsEqual(
 	expectedMap := toMap(expectedIndexes)
 	actualMap := toMap(actualIndexes)
 	for key := range expectedMap {
-		assertIndexesEqual(expectedMap[key], actualMap[key], t, testDescription)
+		assertIndexesEqual(expectedMap[key], actualMap[key], t)
 	}
 }
 
-func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
-	t testing.TB,
-	testDescription string,
-) {
-	assert.Equal(t, expectedIndex.Name, actualIndex.Name, testDescription)
-	assert.Equal(t, expectedIndex.ID, actualIndex.ID, testDescription)
+func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t testing.TB) {
+	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
+	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
 
 	toNames := func(fields []client.IndexedFieldDescription) []string {
 		names := make([]string, len(fields))
@@ -1015,7 +990,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 		return names
 	}
 
-	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), testDescription)
+	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), "index fields' names mismatch")
 
 	toMap := func(fields []client.IndexedFieldDescription) map[string]client.IndexedFieldDescription {
 		resultMap := map[string]client.IndexedFieldDescription{}
@@ -1028,7 +1003,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 	expectedMap := toMap(expectedIndex.Fields)
 	actualMap := toMap(actualIndex.Fields)
 	for key := range expectedMap {
-		assert.Equal(t, expectedMap[key], actualMap[key], testDescription)
+		assert.Equal(t, expectedMap[key], actualMap[key], "index fields' values mismatch")
 	}
 }
 
@@ -1095,7 +1070,6 @@ func updateSchema(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func patchSchema(
@@ -1119,7 +1093,6 @@ func patchSchema(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func patchCollection(
@@ -1136,7 +1109,6 @@ func patchCollection(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func getSchema(
@@ -1207,7 +1179,6 @@ func setActiveSchemaVersion(
 	}
 
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func createView(
@@ -1682,15 +1653,8 @@ func createIndex(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				desc, err := collection.CreateIndex(s.ctx, indexDesc)
-				if err != nil {
+				_, err := collection.CreateIndex(s.ctx, indexDesc)
 					return err
-				}
-				s.nodes[nodeID].indexes[action.CollectionID] = append(
-					s.nodes[nodeID].indexes[action.CollectionID],
-					desc,
-				)
-				return nil
 			},
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
@@ -1712,15 +1676,11 @@ func dropIndex(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
-		indexName := action.IndexName
-		if indexName == "" {
-			indexName = s.nodes[nodeID].indexes[action.CollectionID][action.IndexID].Name
-		}
 
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DropIndex(s.ctx, indexName)
+				return collection.DropIndex(s.ctx, action.IndexName)
 			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)

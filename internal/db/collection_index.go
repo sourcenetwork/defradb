@@ -385,11 +385,19 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 		return NewErrIndexWithNameDoesNotExists(indexName)
 	}
 
+	oldIndexes := make([]client.IndexDescription, len(c.Version().Indexes))
+	copy(oldIndexes, c.Version().Indexes)
 	for i := range c.Version().Indexes {
 		if c.Version().Indexes[i].Name == indexName {
 			c.def.Version.Indexes = slices.Delete(c.Version().Indexes, i, i+1)
 			break
 		}
+	}
+
+	err := description.SaveCollection(ctx, txn, c.def.Version)
+	if err != nil {
+		c.def.Version.Indexes = oldIndexes
+		return err
 	}
 
 	return nil
