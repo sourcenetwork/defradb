@@ -1654,7 +1654,7 @@ func createIndex(
 			node,
 			func() error {
 				_, err := collection.CreateIndex(s.ctx, indexDesc)
-					return err
+				return err
 			},
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
