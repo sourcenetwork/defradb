@@ -141,6 +141,20 @@
                     "CollectionID": {
                         "type": "string"
                     },
+                    "EncryptedIndexes": {
+                        "items": {
+                            "properties": {
+                                "FieldName": {
+                                    "type": "string"
+                                },
+                                "Type": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
@@ -283,6 +297,20 @@
                         "properties": {
                             "CollectionID": {
                                 "type": "string"
+                            },
+                            "EncryptedIndexes": {
+                                "items": {
+                                    "properties": {
+                                        "FieldName": {
+                                            "type": "string"
+                                        },
+                                        "Type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
                             },
                             "Fields": {
                                 "items": {
@@ -436,6 +464,28 @@
                 "additionalProperties": true,
                 "type": "object"
             },
+            "encrypted_index": {
+                "properties": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "encrypted_index_create": {
+                "properties": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "error": {
                 "properties": {
                     "error": {}
@@ -498,7 +548,7 @@
                 },
                 "type": "object"
             },
-            "index_create_request": {
+            "index_create": {
                 "properties": {
                     "Fields": {
                         "items": {
@@ -1354,6 +1404,93 @@
                 ]
             }
         },
+        "/collections/{name}/encrypted-indexes": {
+            "get": {
+                "description": "List encrypted indexes",
+                "operationId": "encrypted_index_list",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/encrypted_index"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "List of encrypted indexes"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            },
+            "post": {
+                "description": "Create an encrypted index",
+                "operationId": "encrypted_index_create",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/encrypted_index_create"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/encrypted_index"
+                                }
+                            }
+                        },
+                        "description": "Encrypted index description"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            }
+        },
         "/collections/{name}/indexes": {
             "get": {
                 "description": "List secondary indexes",
@@ -1412,7 +1549,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_create_request"
+                                "$ref": "#/components/schemas/index_create"
                             }
                         }
                     },

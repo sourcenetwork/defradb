@@ -55,6 +55,9 @@ type CollectionVersion struct {
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
 
+	// EncryptedIndexes contains the encrypted indexes that this Collection has.
+	EncryptedIndexes []EncryptedIndexDescription
+
 	// Policy contains the policy information on this collection.
 	//
 	// It is possible for a collection to not have a policy, a collection
@@ -213,6 +216,7 @@ type collectionVersion struct {
 	IsActive         bool
 	Policy           immutable.Option[PolicyDescription]
 	Indexes          []IndexDescription
+	EncryptedIndexes []EncryptedIndexDescription
 	Fields           []CollectionFieldDescription
 	VectorEmbeddings []VectorEmbeddingDescription
 
@@ -235,6 +239,7 @@ func (c *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 	c.IsEmbeddedOnly = descMap.IsEmbeddedOnly
 	c.IsActive = descMap.IsActive
 	c.Indexes = descMap.Indexes
+	c.EncryptedIndexes = descMap.EncryptedIndexes
 	c.Fields = descMap.Fields
 	c.Sources = make([]any, len(descMap.Sources))
 	c.Policy = descMap.Policy

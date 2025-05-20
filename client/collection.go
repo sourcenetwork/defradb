@@ -150,6 +150,13 @@ type Collection interface {
 
 	// GetIndexes returns all the indexes that exist on the collection.
 	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+
+	// CreateEncryptedIndex creates a new encrypted index on the collection.
+	// `EncryptedIndexCreateRequest` contains the description of the index to be created.
+	CreateEncryptedIndex(context.Context, EncryptedIndexCreateRequest) (EncryptedIndexDescription, error)
+
+	// GetEncryptedIndexes returns all the encrypted indexes that exist on the collection.
+	GetEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

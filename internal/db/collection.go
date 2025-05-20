@@ -44,9 +44,10 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *DB
-	def            client.CollectionDefinition
-	indexes        []CollectionIndex
+	db      *DB
+	def     client.CollectionDefinition
+	indexes []CollectionIndex
+	//encryptedIndexes []EncryptedCollectionIndex
 	fetcherFactory func() fetcher.Fetcher
 }
 

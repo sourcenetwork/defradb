@@ -38,7 +38,7 @@ const (
 	errDefaultValueInvalid            string = "default value is invalid"
 	errDefaultValueOneArg             string = "default value must specify one argument"
 	errFieldTypeNotSpecified          string = "field type not specified"
-	errInvalidTypeForContraint        string = "size constraint can only be applied to array fields"
+	errInvalidTypeForConstraint       string = "size constraint can only be applied to array fields"
 	errEncryptedIndexUnknownArgument  string = "encryptedIndex with unknown argument"
 	errEncryptedIndexInvalidArgument  string = "encryptedIndex with invalid argument"
 	errEncryptedIndexTypeNotSupported string = "encryptedIndex type not supported"
@@ -69,7 +69,7 @@ var (
 	ErrPolicyInvalidIDProp       = errors.New(errPolicyInvalidIDProp)
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
-	ErrInvalidTypeForContraint   = errors.New(errInvalidTypeForContraint)
+	ErrInvalidTypeForContraint   = errors.New(errInvalidTypeForConstraint)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
@@ -192,7 +192,7 @@ func NewErrFieldTypeNotSpecified(objectName, fieldName string) error {
 }
 
 func NewErrInvalidTypeForContraint(actual client.FieldKind) error {
-	return errors.New(errInvalidTypeForContraint, errors.NewKV("Actual", actual.String()))
+	return errors.New(errInvalidTypeForConstraint, errors.NewKV("Actual", actual.String()))
 }
 
 func NewErrEncryptedIndexWithInvalidArg(fieldName string) error {

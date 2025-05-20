@@ -90,6 +90,14 @@ func (db *DB) createCollections(
 			def.Definition.Version.Indexes = append(def.Definition.Version.Indexes, desc)
 		}
 
+		for _, createEncryptedIndex := range def.CreateEncryptedIndexes {
+			desc, err := processCreateEncryptedIndexRequest(def.Definition, createEncryptedIndex)
+			if err != nil {
+				return nil, err
+			}
+			def.Definition.Version.EncryptedIndexes = append(def.Definition.Version.EncryptedIndexes, desc)
+		}
+
 		err = description.SaveCollection(ctx, def.Definition.Version)
 		if err != nil {
 			return nil, err
@@ -146,6 +154,26 @@ func setFieldKinds(definitions []client.CollectionDefinition) {
 			}
 		}
 	}
+}
+
+func processCreateEncryptedIndexRequest(
+	definition client.CollectionDefinition,
+	createEncryptedIndex client.EncryptedIndexCreateRequest,
+) (client.EncryptedIndexDescription, error) {
+	indexType := createEncryptedIndex.Type
+	if indexType == "" {
+		indexType = client.EncryptedIndexTypeEquality
+	}
+
+	err := checkExistingEncryptedFields(definition, createEncryptedIndex)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+
+	return client.EncryptedIndexDescription{
+		FieldName: createEncryptedIndex.FieldName,
+		Type:      indexType,
+	}, nil
 }
 
 func (db *DB) patchCollection(

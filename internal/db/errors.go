@@ -117,6 +117,8 @@ const (
 	errMissingPermission                        string = "missing permission"
 	errCollectionNameMutated                    string = "collection name cannot be mutated"
 	errUnsupportedTxnType                       string = "unsupported transaction type"
+	errEncryptedIndexUnknownField               string = "encryptedIndex on non-existent field"
+	errEncryptedIndexAlreadyExists              string = "encryptedIndex already exists on this field"
 )
 
 var (
@@ -740,4 +742,18 @@ func NewErrCollectionNameMutated(newName string, oldName string) error {
 
 func NewErrUnsupportedTxnType(actual any) error {
 	return errors.New(errUnsupportedTxnType, errors.NewKV("Actual", fmt.Sprintf("%T", actual)))
+}
+
+func NewErrEncryptedIndexOnNonExistentField(fieldName string) error {
+	return errors.New(
+		errEncryptedIndexUnknownField,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrEncryptedIndexAlreadyExists(fieldName string) error {
+	return errors.New(
+		errEncryptedIndexAlreadyExists,
+		errors.NewKV("Field", fieldName),
+	)
 }

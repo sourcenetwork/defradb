@@ -393,6 +393,20 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return indexes, nil
 }
 
+func (w *Wrapper) GetAllEncryptedIndexes(ctx context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	args := []string{"client", "encrypted-index", "list"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var indexes map[client.CollectionName][]client.EncryptedIndexDescription
+	if err := json.Unmarshal(data, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}
+
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,

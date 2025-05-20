@@ -395,3 +395,38 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	}
 	return indexes, nil
 }
+
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	indexDesc client.EncryptedIndexCreateRequest,
+) (client.EncryptedIndexDescription, error) {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
+
+	body, err := json.Marshal(&indexDesc)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	var index client.EncryptedIndexDescription
+	if err := c.http.requestJson(req, &index); err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	return index, nil
+}
+
+func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var indexes []client.EncryptedIndexDescription
+	if err := c.http.requestJson(req, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}

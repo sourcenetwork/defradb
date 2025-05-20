@@ -147,7 +147,7 @@ func fromAstDefinition(
 
 	indexes := []client.IndexCreateRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
-	encryptedIndexes := []client.EncryptedIndexDescription{}
+	encryptedIndexes := []client.EncryptedIndexCreateRequest{}
 	for _, field := range def.Fields {
 		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -178,7 +178,7 @@ func fromAstDefinition(
 			case types.EncryptedIndexDirectiveLabel:
 				encryptedIndex, err := encryptedIndexFromAST(directive, field)
 				if err != nil {
-					return client.CollectionDefinition{}, err
+					return core.Collection{}, err
 				}
 				encryptedIndexes = append(encryptedIndexes, encryptedIndex)
 			}
@@ -277,7 +277,8 @@ func fromAstDefinition(
 				Fields: schemaFieldDescriptions,
 			},
 		},
-		CreateIndexes: indexes,
+		CreateIndexes:          indexes,
+		CreateEncryptedIndexes: encryptedIndexes,
 	}, nil
 }
 
@@ -482,25 +483,27 @@ func defaultFromAST(
 func encryptedIndexFromAST(
 	directive *ast.Directive,
 	fieldDef *ast.FieldDefinition,
-) (client.EncryptedIndexDescription, error) {
-	encryptedIndex := client.EncryptedIndexDescription{}
+) (client.EncryptedIndexCreateRequest, error) {
+	encryptedIndex := client.EncryptedIndexCreateRequest{
+		FieldName: fieldDef.Name.Value,
+	}
 
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.EncryptedIndexDirectivePropType:
 			typeVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
+				return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
 			}
 
 			// Currently only equality is supported
 			if typeVal.Value != string(client.EncryptedIndexTypeEquality) {
-				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexTypeNotSupported(typeVal.Value)
+				return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexTypeNotSupported(typeVal.Value)
 			}
 			encryptedIndex.Type = client.EncryptedIndexType(typeVal.Value)
 
 		default:
-			return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithUnknownArg(arg.Name.Value)
+			return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexWithUnknownArg(arg.Name.Value)
 		}
 	}
 

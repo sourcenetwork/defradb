@@ -394,6 +394,12 @@ func performAction(
 	case GetIndexes:
 		getIndexes(s, action)
 
+	case CreateEncryptedIndex:
+		createEncryptedIndex(s, action)
+
+	case GetEncryptedIndexes:
+		getEncryptedIndexes(s, action)
+
 	case BackupExport:
 		backupExport(s, action)
 
@@ -1689,6 +1695,72 @@ func dropIndex(
 			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func createEncryptedIndex(
+	s *state,
+	action CreateEncryptedIndex,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
+		if action.FieldName == "" {
+			s.t.Fatalf("fieldName is required for encrypted index")
+		}
+
+		indexDesc := client.EncryptedIndexCreateRequest{
+			FieldName: action.FieldName,
+			Type:      client.EncryptedIndexType(action.Type),
+		}
+
+		err := withRetryOnNode(
+			node,
+			func() error {
+				_, err := collection.CreateEncryptedIndex(s.ctx, indexDesc)
+				return err
+			},
+		)
+		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
+			return
+		}
+	}
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
+}
+
+func getEncryptedIndexes(
+	s *state,
+	action GetEncryptedIndexes,
+) {
+	if len(s.nodes) == 0 {
+		return
+	}
+
+	var expectedErrorRaised bool
+
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+	for _, nodeID := range nodeIDs {
+		collections := s.nodes[nodeID].collections
+		err := withRetryOnNode(
+			s.nodes[nodeID],
+			func() error {
+				actualIndexes, err := collections[action.CollectionID].GetEncryptedIndexes(s.ctx)
+				if err != nil {
+					return err
+				}
+
+				require.ElementsMatch(s.t, action.ExpectedIndexes, actualIndexes,
+					s.testCase.Description, "Unexpected encrypted indexes")
+
+				return nil
+			},
+		)
+		expectedErrorRaised = expectedErrorRaised ||
+			AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

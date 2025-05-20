@@ -368,3 +368,39 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	}
 	return indexes, nil
 }
+
+// CreateEncryptedIndex implements client.Collection.
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	indexDesc client.EncryptedIndexCreateRequest,
+) (index client.EncryptedIndexDescription, err error) {
+	args := []string{"client", "encrypted-index", "create"}
+	args = append(args, "--collection", c.Version().Name)
+
+	args = append(args, "--field", indexDesc.FieldName)
+
+	data, err := c.cmd.execute(ctx, args)
+	if err != nil {
+		return index, err
+	}
+	if err := json.Unmarshal(data, &index); err != nil {
+		return index, err
+	}
+	return index, nil
+}
+
+// GetEncryptedIndexes implements client.Collection.
+func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	args := []string{"client", "encrypted-index", "list"}
+	args = append(args, "--collection", c.Version().Name)
+
+	data, err := c.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var indexes []client.EncryptedIndexDescription
+	if err := json.Unmarshal(data, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}
