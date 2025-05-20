@@ -11,6 +11,8 @@
 package keys
 
 import (
+	"strconv"
+
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -19,17 +21,17 @@ import (
 // The sequence is specific to each collection root.  Multiple collection of the same root
 // must maintain consistent field ids.
 type FieldIDSequenceKey struct {
-	SchemaRoot string
+	CollectionShortID uint32
 }
 
 var _ Key = (*FieldIDSequenceKey)(nil)
 
-func NewFieldIDSequenceKey(schemaRoot string) FieldIDSequenceKey {
-	return FieldIDSequenceKey{SchemaRoot: schemaRoot}
+func NewFieldIDSequenceKey(collectionShortID uint32) FieldIDSequenceKey {
+	return FieldIDSequenceKey{CollectionShortID: collectionShortID}
 }
 
 func (k FieldIDSequenceKey) ToString() string {
-	return FIELD_ID_SEQ + "/" + k.SchemaRoot
+	return FIELD_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionShortID))
 }
 
 func (k FieldIDSequenceKey) Bytes() []byte {

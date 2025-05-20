@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const (
@@ -365,6 +366,15 @@ func resolveAggregates(
 	def client.CollectionDefinition,
 	store client.Store,
 ) ([]Requestable, error) {
+	var collectionShortID uint32
+	if def.Version.CollectionID != "" {
+		var err error
+		collectionShortID, err = id.GetShortCollectionID(ctx, def.Version.CollectionID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	fields := inputFields
 	dependenciesByParentId := map[int][]int{}
 	for _, aggregate := range aggregates {
@@ -397,13 +407,18 @@ func resolveAggregates(
 						}
 					}
 
+					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.Name)
+					if err != nil {
+						return nil, err
+					}
+
 					// If the hostExternalName matches a non-object field
 					// we don't have to search for it and can just construct the
 					// targeting info here.
 					hasHost = true
 					host = &Targetable{
 						Field: Field{
-							Index: int(fieldDesc.ID),
+							Index: int(fieldShortID),
 							Name:  target.hostExternalName,
 						},
 						Filter:  ToFilter(target.filter.Value(), mapping),
@@ -919,18 +934,30 @@ func getTopLevelInfo(
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			return nil, client.CollectionDefinition{}, err
-		} else {
-			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
-			definition = collection.Definition()
-			// Map all fields from schema into the map as they are fetched automatically
-			for _, f := range definition.GetFields() {
-				if f.Kind.IsObject() {
-					// Objects are skipped, as they are not fetched by default and
-					// have to be requested via selects.
-					continue
-				}
-				mapping.Add(int(f.ID), f.Name)
+		}
+
+		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
+		definition = collection.Definition()
+
+		collectionShortID, err := id.GetShortCollectionID(ctx, definition.Version.CollectionID)
+		if err != nil {
+			return nil, client.CollectionDefinition{}, err
+		}
+
+		// Map all fields from schema into the map as they are fetched automatically
+		for _, f := range definition.GetFields() {
+			if f.Kind.IsObject() {
+				// Objects are skipped, as they are not fetched by default and
+				// have to be requested via selects.
+				continue
 			}
+
+			fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, f.Name)
+			if err != nil {
+				return nil, client.CollectionDefinition{}, err
+			}
+
+			mapping.Add(int(fieldShortID), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as

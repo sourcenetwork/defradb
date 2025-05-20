@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
@@ -101,17 +102,22 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 			return err
 		}
 
-		existingFields := make(map[client.FieldID]struct{}, len(f.fields))
+		existingFields := make(map[string]struct{}, len(f.fields))
 		for _, field := range f.fields {
-			existingFields[field.ID] = struct{}{}
+			existingFields[field.Name] = struct{}{}
 		}
 
 		for _, field := range parsedFilterFields {
-			if _, ok := existingFields[field.ID]; !ok {
+			if _, ok := existingFields[field.Name]; !ok {
 				f.fields = append(f.fields, field)
 			}
-			existingFields[field.ID] = struct{}{}
+			existingFields[field.Name] = struct{}{}
 		}
+	}
+
+	colShortID, err := id.GetShortCollectionID(ctx, f.col.Definition().Version.CollectionID)
+	if err != nil {
+		return err
 	}
 
 	if len(f.fields) == 0 {
@@ -120,7 +126,12 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 
 	fieldsByID := make(map[uint32]client.FieldDefinition, len(f.fields))
 	for _, field := range f.fields {
-		fieldsByID[uint32(field.ID)] = field
+		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, field.Name)
+		if err != nil {
+			return err
+		}
+
+		fieldsByID[fieldShortID] = field
 	}
 
 	f.execInfo.Reset()
@@ -160,7 +171,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	}
 
 	if f.filter != nil {
-		top = newFilteredFetcher(f.filter, f.docMapper, top)
+		top = newFilteredFetcher(ctx, colShortID, f.filter, f.docMapper, top)
 	}
 
 	f.fetcher = top

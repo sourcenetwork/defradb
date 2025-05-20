@@ -271,7 +271,7 @@ func (c *collection) getAllDocIDsChan(
 ) (<-chan client.DocIDResult, error) {
 	txn := txnctx.MustGet(ctx)
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +477,7 @@ func (c *collection) create(
 	if len(doc.Values()) == 0 {
 		txn := txnctx.MustGet(ctx)
 
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -683,7 +683,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -706,9 +706,9 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldID, fieldExists := c.tryGetFieldID(k)
-			if !fieldExists {
-				return client.NewErrFieldNotExist(k)
+			fieldID, err := id.GetShortFieldID(ctx, shortID, k)
+			if err != nil {
+				return err
 			}
 			fieldKey := keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -788,7 +788,7 @@ func (c *collection) save(
 	})
 
 	if c.def.Version.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -1012,9 +1012,7 @@ func (c *collection) getPrimaryKeyFromDocID(
 	ctx context.Context,
 	docID client.DocID,
 ) (keys.PrimaryDataStoreKey, error) {
-	txn := txnctx.MustGet(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, txn, c.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, err
 	}
@@ -1023,21 +1021,4 @@ func (c *collection) getPrimaryKeyFromDocID(
 		CollectionShortID: shortID,
 		DocID:             docID.String(),
 	}, nil
-}
-
-// tryGetFieldID returns the FieldID of the given fieldName.
-// Will return false if the field is not found.
-func (c *collection) tryGetFieldID(fieldName string) (uint32, bool) {
-	for _, field := range c.Definition().GetFields() {
-		if field.Name == fieldName {
-			if field.Kind.IsObject() {
-				// We do not wish to match navigational properties, only
-				// fields directly on the collection.
-				return uint32(0), false
-			}
-			return uint32(field.ID), true
-		}
-	}
-
-	return uint32(0), false
 }

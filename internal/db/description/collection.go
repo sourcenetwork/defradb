@@ -32,10 +32,15 @@ func SaveCollection(
 ) error {
 	if desc.CollectionID != "" {
 		// Set the collection short id
-		err := id.SetShortCollectionID(ctx, txn, desc.CollectionID)
+		err := id.SetShortCollectionID(ctx, desc.CollectionID)
 		if err != nil {
 			return err
 		}
+	}
+
+	err := id.SetShortFieldIDs(ctx, desc)
+	if err != nil {
+		return err
 	}
 
 	buf, err := json.Marshal(desc)

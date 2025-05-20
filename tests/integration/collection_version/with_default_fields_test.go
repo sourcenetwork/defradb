@@ -41,41 +41,33 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
-								ID:   0,
 								Name: "_docID",
 							},
 							{
-								ID:           1,
 								Name:         "active",
 								DefaultValue: true,
 							},
 							{
-								ID:           2,
 								Name:         "age",
 								DefaultValue: float64(10),
 							},
 							{
-								ID:           3,
 								Name:         "created",
 								DefaultValue: "2000-07-23T03:00:00Z",
 							},
 							{
-								ID:           4,
 								Name:         "image",
 								DefaultValue: "ff0099",
 							},
 							{
-								ID:           5,
 								Name:         "metadata",
 								DefaultValue: "{\"value\":1}",
 							},
 							{
-								ID:           6,
 								Name:         "name",
 								DefaultValue: "Bob",
 							},
 							{
-								ID:           7,
 								Name:         "points",
 								DefaultValue: float64(30),
 							},

@@ -11,11 +11,14 @@
 package fetcher
 
 import (
+	"context"
+
 	"github.com/bits-and-blooms/bitset"
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 type EncodedDocument interface {
@@ -156,7 +159,13 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {
+func DecodeToDoc(
+	ctx context.Context,
+	collectionShortID uint32,
+	encdoc EncodedDocument,
+	mapping *core.DocumentMapping,
+	filter bool,
+) (core.Doc, error) {
 	doc := mapping.NewDoc()
 	doc.SetID(string(encdoc.ID()))
 
@@ -166,7 +175,12 @@ func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter b
 	}
 
 	for desc, value := range properties {
-		doc.Fields[desc.ID] = value
+		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, desc.Name)
+		if err != nil {
+			return core.Doc{}, err
+		}
+
+		doc.Fields[fieldShortID] = value
 	}
 
 	doc.SchemaVersionID = encdoc.SchemaVersionID()

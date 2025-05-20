@@ -14,8 +14,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -23,7 +23,6 @@ import (
 // only in locations where using the full CID would be a waste of storage space.
 func GetShortCollectionID(
 	ctx context.Context,
-	txn datastore.Txn,
 	collectionID string,
 ) (uint32, error) {
 	cache := getCollectionShortIDCache(ctx)
@@ -34,7 +33,7 @@ func GetShortCollectionID(
 
 	key := keys.NewCollectionID(collectionID)
 
-	valueBytes, err := txn.Systemstore().Get(ctx, key.Bytes())
+	valueBytes, err := txnctx.MustGet(ctx).Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
 		return 0, err
 	}
@@ -52,7 +51,6 @@ func GetShortCollectionID(
 // SetShortCollectionID sets and stores the short collection id, if it does not already exist.
 func SetShortCollectionID(
 	ctx context.Context,
-	txn datastore.Txn,
 	collectionID string,
 ) error {
 	cache := getCollectionShortIDCache(ctx)
@@ -61,6 +59,7 @@ func SetShortCollectionID(
 		return nil
 	}
 
+	txn := txnctx.MustGet(ctx)
 	key := keys.NewCollectionID(collectionID)
 
 	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())

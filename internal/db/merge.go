@@ -13,6 +13,7 @@ package db
 import (
 	"container/list"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -48,7 +49,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 			FieldID: core.COMPOSITE_NAMESPACE,
 		}
 	} else {
-		shortID, err := id.GetShortCollectionID(ctx, txn, col.Version().CollectionID)
+		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
 		if err != nil {
 			return err
 		}
@@ -445,7 +446,7 @@ func decryptBlock(
 }
 
 func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (core.ReplicatedData, error) {
-	shortID, err := id.GetShortCollectionID(ctx, mp.txn, mp.col.Version().CollectionID)
+	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -481,6 +482,11 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			return nil, nil
 		}
 
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.Name)
+		if err != nil {
+			return nil, err
+		}
+
 		return crdt.FieldLevelCRDTWithStore(
 			mp.txn.Datastore(),
 			mp.col.Schema().VersionID,
@@ -489,7 +495,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
 				DocID:             docID,
-			}.WithFieldID(fd.ID.String()),
+			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
 	}

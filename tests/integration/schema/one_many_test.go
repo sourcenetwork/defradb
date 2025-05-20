@@ -45,7 +45,6 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name: "dogs",
-								ID:   1,
 								Kind: immutable.Some[client.FieldKind](
 									client.NewSchemaKind("bafkreibtwohjfa5ik3huokzglyneezu4m76fjv57ji2luoiohyhnsmj5lq", true),
 								),
@@ -53,7 +52,6 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   2,
 							},
 						},
 					},
@@ -67,11 +65,9 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name: "name",
-								ID:   1,
 							},
 							{
 								Name: "owner",
-								ID:   2,
 								Kind: immutable.Some[client.FieldKind](
 									client.NewSchemaKind("bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4", false),
 								),
@@ -79,7 +75,6 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name:         "owner_id",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
 								RelationName: immutable.Some("dog_user"),
 							},
@@ -114,19 +109,16 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 							},
 							{
 								Name:         "a",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "a_id",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
 								RelationName: immutable.Some("user_user"),
 							},
@@ -161,19 +153,16 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 							},
 							{
 								Name:         "a",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b_id",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
 								RelationName: immutable.Some("user_user"),
 							},
@@ -213,19 +202,16 @@ func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 							},
 							{
 								Name:         "boss",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "boss_id",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minions",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
 								RelationName: immutable.Some("user_user"),
 							},
