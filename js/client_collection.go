@@ -262,7 +262,7 @@ func (c *clientCollection) getAllDocIDs(this js.Value, args []js.Value) (js.Valu
 }
 
 func (c *clientCollection) createIndex(this js.Value, args []js.Value) (js.Value, error) {
-	var request client.IndexDescriptionCreateRequest
+	var request client.IndexCreateRequest
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}

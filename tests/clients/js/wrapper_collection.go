@@ -244,7 +244,7 @@ func (c *Collection) GetAllDocIDs(
 
 func (c *Collection) CreateIndex(
 	ctx context.Context,
-	indexDesc client.IndexDescriptionCreateRequest,
+	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
 	indexDescVal, err := goji.MarshalJS(indexDesc)
 	if err != nil {
