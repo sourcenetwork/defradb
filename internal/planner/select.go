@@ -177,10 +177,8 @@ func (n *selectNode) Next() (bool, error) {
 
 		if n.docIDs.HasValue() {
 			docID := n.currentValue.GetID()
-			for _, docIDValue := range n.docIDs.Value() {
-				if docID == docIDValue {
-					return true, nil
-				}
+			if slices.Contains(n.docIDs.Value(), docID) {
+				return true, nil
 			}
 
 			continue

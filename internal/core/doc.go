@@ -14,8 +14,9 @@ Package core provides commonly shared interfaces and building blocks.
 package core
 
 import (
+	"slices"
+	
 	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -289,10 +290,8 @@ func (m *DocumentMapping) SetChildAt(index int, childMapping *DocumentMapping) {
 func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string, bool) {
 	// Try to find the name of this index in the IndexesByName.
 	for name, indexes := range mapping.IndexesByName {
-		for _, index := range indexes {
-			if index == targetIndex {
-				return name, true
-			}
+		if slices.Contains(indexes, targetIndex) {
+			return name, true
 		}
 	}
 
