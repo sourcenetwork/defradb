@@ -227,8 +227,8 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.ID.HasValue() {
-		params.Add("version_id", options.ID.Value())
+	if options.VersionID.HasValue() {
+		params.Add("version_id", options.VersionID.Value())
 	}
 	if options.CollectionID.HasValue() {
 		params.Add("collection_id", options.CollectionID.Value())
@@ -287,8 +287,8 @@ func (c *Client) GetCollections(
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.ID.HasValue() {
-		params.Add("version_id", options.ID.Value())
+	if options.VersionID.HasValue() {
+		params.Add("version_id", options.VersionID.Value())
 	}
 	if options.CollectionID.HasValue() {
 		params.Add("collection_id", options.CollectionID.Value())

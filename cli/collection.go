@@ -27,7 +27,7 @@ func MakeCollectionCommand() *cobra.Command {
 	var versionID string
 	var getInactive bool
 	var cmd = &cobra.Command{
-		Use:   "collection [--name <name> --collection-id <collectionID> --version <versionID>]",
+		Use:   "collection [--name <name> --collection-id <collectionID> --version-id <versionID>]",
 		Short: "Interact with a collection.",
 		Long:  `Create, read, update, and delete documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -51,7 +51,7 @@ func MakeCollectionCommand() *cobra.Command {
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
-				options.ID = immutable.Some(versionID)
+				options.VersionID = immutable.Some(versionID)
 			}
 			if collectionID != "" {
 				options.CollectionID = immutable.Some(collectionID)
@@ -84,7 +84,7 @@ func MakeCollectionCommand() *cobra.Command {
 		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")
 	cmd.PersistentFlags().StringVar(&collectionID, "collection-id", "", "Collection ID")
-	cmd.PersistentFlags().StringVar(&versionID, "version", "", "Collection version ID")
+	cmd.PersistentFlags().StringVar(&versionID, "version-id", "", "Collection version ID")
 	cmd.PersistentFlags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
 }

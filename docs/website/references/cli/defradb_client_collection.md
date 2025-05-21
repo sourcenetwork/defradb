@@ -15,7 +15,7 @@ Create, read, update, and delete documents within a collection.
   -i, --identity string        Hex formatted private key used to authenticate with ACP
       --name string            Collection name
       --tx uint                Transaction ID
-      --version string         Collection version ID
+      --version-id string      Collection version ID
 ```
 
 ### Options inherited from parent commands

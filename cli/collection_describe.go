@@ -37,14 +37,14 @@ Example: view collection by collection id
   defradb client collection describe --collection-id bae123
 		
 Example: view collection by version id. This will also return inactive collections
-  defradb client collection describe --version bae123
+  defradb client collection describe --version-id bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
-				options.ID = immutable.Some(versionID)
+				options.VersionID = immutable.Some(versionID)
 			}
 			if collectionID != "" {
 				options.CollectionID = immutable.Some(collectionID)
@@ -72,7 +72,7 @@ Example: view collection by version id. This will also return inactive collectio
 	}
 	cmd.Flags().StringVar(&name, "name", "", "Collection name")
 	cmd.Flags().StringVar(&collectionID, "collection-id", "", "Collection P2P identifier")
-	cmd.Flags().StringVar(&versionID, "version", "", "Collection version ID")
+	cmd.Flags().StringVar(&versionID, "version-id", "", "Collection version ID")
 	cmd.Flags().BoolVar(&getInactive, "get-inactive", false, "Get inactive collections as well as active")
 	return cmd
 }

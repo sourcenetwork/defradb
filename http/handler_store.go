@@ -169,7 +169,7 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
+		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
 	if req.URL.Query().Has("collection_id") {
 		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
@@ -227,7 +227,7 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
+		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
 	if req.URL.Query().Has("collection_id") {
 		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))

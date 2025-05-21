@@ -16,7 +16,7 @@ Example: view collection by collection id
   defradb client collection describe --collection-id bae123
 		
 Example: view collection by version id. This will also return inactive collections
-  defradb client collection describe --version bae123
+  defradb client collection describe --version-id bae123
 		
 
 ```
@@ -30,7 +30,7 @@ defradb client collection describe [flags]
       --get-inactive           Get inactive collections as well as active
   -h, --help                   help for describe
       --name string            Collection name
-      --version string         Collection version ID
+      --version-id string      Collection version ID
 ```
 
 ### Options inherited from parent commands

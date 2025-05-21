@@ -599,7 +599,7 @@ collection at a specific version`,
 			},
 			testUtils.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
-					ID: immutable.Some(schemaVersion1ID),
+					VersionID: immutable.Some(schemaVersion1ID),
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{

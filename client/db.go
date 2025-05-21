@@ -403,7 +403,7 @@ type RequestResult struct {
 // CollectionFetchOptions represents a set of options used for fetching collections.
 type CollectionFetchOptions struct {
 	// If provided, only collections with this version id will be returned.
-	ID immutable.Option[string]
+	VersionID immutable.Option[string]
 
 	// If provided, only collections with this CollectionID will be returned.
 	CollectionID immutable.Option[string]
