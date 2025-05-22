@@ -490,7 +490,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 	cols, err := s.peer.db.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
-			ID: immutable.Some(block.Delta.GetSchemaVersionID()),
+			VersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
 		},
 	)
 	if err != nil {

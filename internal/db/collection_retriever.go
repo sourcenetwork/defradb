@@ -57,7 +57,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	cols, err := r.db.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			ID: immutable.Some(headIterator.CurrentBlock().Delta.GetSchemaVersionID()),
+			VersionID: immutable.Some(headIterator.CurrentBlock().Delta.GetSchemaVersionID()),
 		},
 	)
 

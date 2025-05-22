@@ -147,8 +147,8 @@ func (db *DB) getCollections(
 		}
 		cols = append(cols, col)
 
-	case options.ID.HasValue():
-		col, err := description.GetCollectionByID(ctx, txn, options.ID.Value())
+	case options.VersionID.HasValue():
+		col, err := description.GetCollectionByID(ctx, txn, options.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -179,14 +179,14 @@ func (db *DB) getCollections(
 
 	collections := []client.Collection{}
 	for _, col := range cols {
-		if options.ID.HasValue() {
-			if col.VersionID != options.ID.Value() {
+		if options.VersionID.HasValue() {
+			if col.VersionID != options.VersionID.Value() {
 				continue
 			}
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !options.IncludeInactive.Value() && !col.IsActive && !options.ID.HasValue() {
+		if !options.IncludeInactive.Value() && !col.IsActive && !options.VersionID.HasValue() {
 			continue
 		}
 
