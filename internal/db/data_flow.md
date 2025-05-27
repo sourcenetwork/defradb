@@ -1,6 +1,6 @@
 # DefraDB Data Flow: Create Document Request Lifecycle
 
-This document provides a comprehensive overview of how data flows through DefraDB, from initial client request to distributed synchronization across peers. It serves as a technical reference for developers at all levels working with the codebase.
+This document provides a comprehensive overview of how data flows through DefraDB for creating and updating a document,from initial client request to distributed synchronization across peers. It serves as a technical reference for developers at all levels working with the codebase.
 
 ## Table of Contents
 
