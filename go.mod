@@ -43,14 +43,14 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sourcenetwork/acp_core v0.4.1
+	github.com/sourcenetwork/acp_core v0.5.2
 	github.com/sourcenetwork/corekv v0.1.2-0.20250408190711-a0c842d15118
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
 	github.com/sourcenetwork/goji v0.0.6
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a
 	github.com/sourcenetwork/immutable v0.3.0
-	github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf
+	github.com/sourcenetwork/sourcehub v0.3.0
 	github.com/sourcenetwork/testo v0.1.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
@@ -340,6 +340,7 @@ require (
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/skip-mev/block-sdk/v2 v2.1.5 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
