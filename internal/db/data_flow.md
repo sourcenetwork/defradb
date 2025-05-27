@@ -1,4 +1,4 @@
-# DefraDB Data Flow: Request Lifecycle
+# DefraDB Data Flow: Create Document Request Lifecycle
 
 This document provides a comprehensive overview of how data flows through DefraDB, from initial client request to distributed synchronization across peers. It serves as a technical reference for developers at all levels working with the codebase.
 
@@ -245,18 +245,13 @@ DefraDB uses a multi-store architecture to separate different types of data for 
 - `internal/keys/` - Key formatting for each store type
 
 The `MultiStore` interface defines all available stores:
-
-```go
-type MultiStore interface {
-    Rootstore()   DSReaderWriter  // Base transactional store
-    Datastore()   DSReaderWriter  // Document data (/data namespace)
-    Encstore()    Blockstore      // Encryption keys (/enc namespace)
-    Headstore()   DSReaderWriter  // Document heads (/head namespace)
-    Peerstore()   DSReaderWriter  // Peer information (/peers namespace)
-    Blockstore()  Blockstore      // IPLD blocks (/blocks namespace)
-    Systemstore() DSReaderWriter  // System metadata (/system namespace)
-}
-```
+- Rootstore - base transactional store
+- Datastore - document data (/data namespace)
+- Encstore - encryption keys (/enc namespace)
+- Headstore - document heads (/head namespace)
+- Peerstore - peer information (/peers namespace)
+- Blockstore - iPLD blocks (/blocks namespace)
+- Systemstore - system metadata (/system namespace)
 
 ### AddDelta Function Flow
 
@@ -290,9 +285,9 @@ The `AddDelta` function orchestrates the storage process:
    - **Encrypted/signed block → Blockstore**: The transformed block (with encryption and/or signature) is stored in the blockstore. This is the version that gets distributed to other peers during synchronization.
    - **Original block → Local processing**: The unencrypted block data is used for local operations like updating indexes and merging CRDT states. This ensures the local node can work with the data without decryption overhead.
 5. **Local Processing**:
-   - Merges CRDT changes into the current document state
+   - Merges CRDT changes into the current document state in datastore
    - Updates document heads in headstore to track the latest version
-   - Triggers index updates for query optimization
+   - Triggers index updates in datastore for query optimization
 
 ### Storage Types Explained
 
@@ -523,17 +518,9 @@ DefraDB implements robust error handling throughout the data flow:
 
 ## Summary
 
-The DefraDB data flow represents a sophisticated distributed system that orchestrates multiple components to provide a decentralized database experience.
+DefraDB's data flow follows this path: Client requests → Document updates → CRDT creation → Block storage → Event publication → Network sync → Peer merge.
 
-### Design Benefits
-
-This architecture enables DefraDB to:
-- Accept requests through multiple interfaces while maintaining consistency
-- Transform mutable documents into immutable, content-addressed blocks
-- Manage encrypted and signed data with field-level granularity
-- Synchronize across peers automatically without central coordination
-- Handle failures gracefully with eventual consistency guarantees
-- Scale horizontally while maintaining data integrity
+The architecture uses content-addressed blocks (IPLD), conflict-free data types (CRDTs), and event-driven synchronization to maintain consistency across distributed nodes without central coordination. A multi-store design separates immutable blocks, materialized views, and metadata for optimal performance and network efficiency.
 
 ### Further Reading
 
