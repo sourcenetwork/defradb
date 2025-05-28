@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package core
+package crdt
 
 // Delta represents a delta-state update to delta-CRDT.
 // They are serialized to and from Protobuf (or CBOR).

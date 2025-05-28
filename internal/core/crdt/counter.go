@@ -23,7 +23,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -47,7 +46,7 @@ type CounterDelta struct {
 	Data            []byte
 }
 
-var _ core.Delta = (*CounterDelta)(nil)
+var _ Delta = (*CounterDelta)(nil)
 
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
@@ -85,7 +84,7 @@ type Counter struct {
 }
 
 var _ FieldLevelCRDT = (*Counter)(nil)
-var _ core.ReplicatedData = (*Counter)(nil)
+var _ ReplicatedData = (*Counter)(nil)
 
 // NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
@@ -116,7 +115,7 @@ func (m *Counter) HeadstorePrefix() keys.HeadstoreKey {
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (m *Counter) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
+func (m *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
@@ -150,7 +149,7 @@ func (m *Counter) Delta(ctx context.Context, data *DocField) (core.Delta, error)
 
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
-func (c *Counter) Merge(ctx context.Context, delta core.Delta) error {
+func (c *Counter) Merge(ctx context.Context, delta Delta) error {
 	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType

@@ -13,7 +13,6 @@ package crdt
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -22,7 +21,7 @@ type CollectionDelta struct {
 	SchemaVersionID string
 }
 
-var _ core.Delta = (*CollectionDelta)(nil)
+var _ Delta = (*CollectionDelta)(nil)
 
 func (delta *CollectionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
@@ -45,7 +44,7 @@ type Collection struct {
 	schemaVersionID string
 }
 
-var _ core.ReplicatedData = (*Collection)(nil)
+var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollection(
 	schemaVersionID string,
@@ -67,7 +66,7 @@ func (m *Collection) Delta() *CollectionDelta {
 	}
 }
 
-func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
+func (c *Collection) Merge(ctx context.Context, other Delta) error {
 	// Collection merges don't actually need to do anything, as the delta is empty,
 	// and doc-level merges are handled by the document commits.
 	return nil

@@ -19,13 +19,12 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type FieldLevelCRDT interface {
-	core.ReplicatedData
-	Delta(ctx context.Context, data *DocField) (core.Delta, error)
+	ReplicatedData
+	Delta(ctx context.Context, data *DocField) (Delta, error)
 }
 
 func FieldLevelCRDTWithStore(

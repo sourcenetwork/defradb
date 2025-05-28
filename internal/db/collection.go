@@ -37,6 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -681,6 +682,13 @@ func (c *collection) save(
 		return err
 	}
 
+	// Prepare SE context if configured
+	var err error
+	ctx, err = se.PrepareContextIfConfigured(ctx, c, doc, c.db.searchableEncryptionKey)
+	if err != nil {
+		return err
+	}
+
 	if !isCreate {
 		err := c.updateIndexedDoc(ctx, doc)
 		if err != nil {
@@ -695,7 +703,7 @@ func (c *collection) save(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
+		ctx = core.ContextWithEnabledSigning(ctx)
 	}
 
 	// NOTE: We delay the final Clean() call until we know
@@ -776,7 +784,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
+			link, _, err := core.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -791,7 +799,7 @@ func (c *collection) save(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, headNode, err := core.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -821,7 +829,7 @@ func (c *collection) save(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := coreblock.AddDelta(
+		link, headNode, err := core.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),

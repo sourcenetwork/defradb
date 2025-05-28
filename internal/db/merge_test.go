@@ -261,12 +261,12 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 	}
 
 	compositeBlock := coreblock.New(
-		&crdt.DocCompositeDelta{
+		crdt.NewCRDT(&crdt.DocCompositeDelta{
 			DocID:           d.docID,
 			Priority:        newPriority,
 			SchemaVersionID: d.col.Schema().VersionID,
 			Status:          1,
-		},
+		}),
 		links,
 		heads...,
 	)

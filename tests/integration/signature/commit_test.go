@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -39,7 +40,7 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 		Priority:        1,
 	}
 
-	block := coreblock.New(delta, nil)
+	block := coreblock.New(crdt.NewCRDT(delta), nil)
 	return *block
 }
 
