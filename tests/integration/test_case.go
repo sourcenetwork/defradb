@@ -76,6 +76,10 @@ type TestCase struct {
 	// Use [IdentityTypes] to customize the key type that is used for identity and signing.
 	EnableSigning bool
 
+	// EnableSearchableEncryption indicates if searchable encryption should be enabled for the test.
+	// When enabled, a searchable encryption key will be generated and passed to the database.
+	EnableSearchableEncryption bool
+
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[Identity]crypto.KeyType

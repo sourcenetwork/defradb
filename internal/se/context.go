@@ -76,11 +76,6 @@ func (c *Context) registerReplicationCallback() {
 			return
 		}
 
-		docID := c.doc.ID().String()
-		for i := range c.artifacts {
-			c.artifacts[i].DocID = docID
-		}
-
 		// c.db.QueueSEArtifacts(c.artifacts)
 	})
 }
