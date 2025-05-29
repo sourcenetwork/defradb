@@ -14,11 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPPolicyCommand() *cobra.Command {
+func MakeDocumentACPRelationshipCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "policy",
-		Short: "Interact with the acp policy features of DefraDB instance",
-		Long:  `Interact with the acp policy features of DefraDB instance`,
+		Use:   "relationship",
+		Short: "Interact with the document acp relationship features of DefraDB instance",
+		Long:  `Interact with the document acp relationship features of DefraDB instance`,
 	}
 
 	return cmd

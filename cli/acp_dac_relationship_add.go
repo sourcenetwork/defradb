@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPRelationshipAddCommand() *cobra.Command {
+func MakeDocumentACPRelationshipAddCommand() *cobra.Command {
 	const (
 		collectionFlagLong  string = "collection"
 		collectionFlagShort string = "c"

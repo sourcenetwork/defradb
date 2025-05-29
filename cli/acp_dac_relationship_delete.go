@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPRelationshipDeleteCommand() *cobra.Command {
+func MakeDocumentACPRelationshipDeleteCommand() *cobra.Command {
 	const (
 		collectionFlagLong  string = "collection"
 		collectionFlagShort string = "c"

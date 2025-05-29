@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPPolicyAddCommand() *cobra.Command {
+func MakeDocumentACPPolicyAddCommand() *cobra.Command {
 	const fileFlagLong string = "file"
 	const fileFlagShort string = "f"
 
