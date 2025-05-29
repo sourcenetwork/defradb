@@ -1,48 +1,64 @@
-## defradb client acp relationship delete
+## defradb client acp dac relationship add
 
-Delete relationship
+Add new relationship
 
 ### Synopsis
 
-Delete relationship
+Add new relationship
 
-To revoke access to a document for an actor, we must delete the relationship between the
-actor and the document. In order to delete the relationship we require all of the following:
-
-1) Target DocID: The docID of the document we want to delete a relationship for.
+To share a document (or grant a more restricted access) with another actor, we must add a relationship between the
+actor and the document. In order to make the relationship we require all of the following:
+1) Target DocID: The docID of the document we want to make a relationship for.
 2) Collection Name: The name of the collection that has the Target DocID.
 3) Relation Name: The type of relation (name must be defined within the linked policy on collection).
-4) Target Identity: The identity of the actor the relationship is being deleted for.
+4) Target Identity: The identity of the actor the relationship is being made with.
 5) Requesting Identity: The identity of the actor that is making the request.
 
 Notes:
   - ACP must be available (i.e. ACP can not be disabled).
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
-  - If the relationship record was not found, then it will be a no-op.
+  - If the specified relation was not granted the minimum DRI permissions within the policy,
+  and a relationship is formed, the subject/actor will still not be able to access the resource.
   - Learn more about the DefraDB [ACP System](/acp/README.md)
 
 Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5) read a private document:
-  defradb client acp relationship delete \
+  defradb client acp relationship add \
 	--collection Users \
 	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 	--relation reader \
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 
+Example: Let all actors read a private document:
+  defradb client acp relationship add \
+	--collection Users \
+	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+	--relation reader \
+	--actor "*" \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+
+Example: Creating a dummy relationship does nothing (from database perspective):
+  defradb client acp relationship add \
+	-c Users \
+	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+	-r dummy \
+	-a did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+	-i e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+
 
 ```
-defradb client acp relationship delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
+defradb client acp dac relationship add [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
 ```
 
 ### Options
 
 ```
-  -a, --actor string        Actor to delete relationship for
+  -a, --actor string        Actor to add relationship with
   -c, --collection string   Collection that has the resource and policy for object
-      --docID string        Document Identifier (ObjectID) to delete relationship for
-  -h, --help                help for delete
-  -r, --relation string     Relation that needs to be deleted within the relationship
+      --docID string        Document Identifier (ObjectID) to make relationship for
+  -h, --help                help for add
+  -r, --relation string     Relation that needs to be set for the relationship
 ```
 
 ### Options inherited from parent commands
@@ -69,5 +85,5 @@ defradb client acp relationship delete [--docID] [-c --collection] [-r --relatio
 
 ### SEE ALSO
 
-* [defradb client acp relationship](defradb_client_acp_relationship.md)	 - Interact with the acp relationship features of DefraDB instance
+* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
 
