@@ -24,7 +24,7 @@ func (c *Client) AddPolicyWithDAC(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "policy")
+	methodURL := c.http.apiURL.JoinPath("acp", "dac", "policy")
 
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -59,7 +59,7 @@ func (c *Client) AddActorRelationshipWithDAC(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
+	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
 
 	body, err := json.Marshal(
 		addActorRelationshipWithDACRequest{
@@ -107,7 +107,7 @@ func (c *Client) DeleteActorRelationshipWithDAC(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
+	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
 
 	body, err := json.Marshal(
 		deleteActorRelationshipWithDACRequest{
