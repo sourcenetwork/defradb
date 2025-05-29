@@ -80,9 +80,9 @@ func MakeStartCommand() *cobra.Command {
 
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
-				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
-				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
+				node.WithSourceHubChainID(cfg.GetString("acp.dac.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.dac.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.dac.sourceHub.CometRPCAddress")),
 				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 				node.WithEnableDevelopment(cfg.GetBool("development")),
 				// store options
@@ -111,9 +111,9 @@ func MakeStartCommand() *cobra.Command {
 				opts = append(opts, node.WithDocumentACPPath(rootDir))
 			}
 
-			acpType := cfg.GetString("acp.type")
-			if acpType != "" {
-				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(acpType)))
+			documentACPType := cfg.GetString("acp.dac.type")
+			if documentACPType != "" {
+				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(documentACPType)))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -139,7 +139,7 @@ func MakeStartCommand() *cobra.Command {
 				}
 
 				// setup the sourcehub transaction signer
-				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
+				sourceHubKeyName := cfg.GetString("acp.dac.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
 					if err != nil {
@@ -303,9 +303,9 @@ func MakeStartCommand() *cobra.Command {
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
 	cmd.PersistentFlags().String(
-		"acp-type",
-		cfg.GetString(configFlags["acp.type"]),
-		"Specify the acp engine to use (supported: none (default), local, source-hub)")
+		"dac-type",
+		cfg.GetString(configFlags["acp.dac.type"]),
+		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),

@@ -129,33 +129,33 @@ Possible values:
 - `wasmer` (windows not supported): https://github.com/wasmerio/wasmer-go
 - `wazero`: https://github.com/tetratelabs/wazero
 
-## `acp.type`
+## `acp.dac.type`
 
-The type of ACP module to use.
+The type of Document ACP to use.
 
 Possible values:
-- `none` (default): No ACP
-- `local` local-only ACP
-- `source-hub` source hub ACP: https://github.com/sourcenetwork/sourcehub
+- `none` (default): No Document ACP
+- `local` local-only Document ACP
+- `source-hub` source hub Document ACP: https://github.com/sourcenetwork/sourcehub
 
-## `acp.sourceHub.ChainID`
+## `acp.dac.sourceHub.ChainID`
 
-The ID of the SourceHub chain to store ACP data in. Required when using `acp.type`:`source-hub`.
+The ID of the SourceHub chain to store ACP data in. Required when using `acp.dac.type`:`source-hub`.
 
-## `acp.sourceHub.GRPCAddress`
+## `acp.dac.sourceHub.GRPCAddress`
 
-The address of the SourceHub GRPC server. Required when using `acp.type`:`source-hub`.
+The address of the SourceHub GRPC server. Required when using `acp.dac.type`:`source-hub`.
 
-## `acp.sourceHub.CometRPCAddress`
+## `acp.dac.sourceHub.CometRPCAddress`
 
-The address of the SourceHub Comet RPC server. Required when using `acp.type`:`source-hub`.
+The address of the SourceHub Comet RPC server. Required when using `acp.dac.type`:`source-hub`.
 
-## `acp.sourceHub.KeyName`
+## `acp.dac.sourceHub.KeyName`
 
 The name of the key in the keyring where the SourceHub credentials used to sign (and pay for) SourceHub
-transactions created by the node is stored. Required when using `acp.type`:`source-hub`.
+transactions created by the node is stored. Required when using `acp.dac.type`:`source-hub`.
 
-## `acp.sourceHub.address`
+## `acp.dac.sourceHub.address`
 
 The SourceHub address of the actor that client-side actions should permit to make SourceHub actions on
 their behalf.  This is a client-side only config param.  It is required if the client wishes to make
