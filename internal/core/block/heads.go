@@ -27,11 +27,11 @@ import (
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
-	store     datastore.DSReaderWriter
+	store     datastore.ReaderWriter
 	namespace keys.HeadstoreKey
 }
 
-func NewHeadSet(store datastore.DSReaderWriter, namespace keys.HeadstoreKey) *heads {
+func NewHeadSet(store datastore.ReaderWriter, namespace keys.HeadstoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,

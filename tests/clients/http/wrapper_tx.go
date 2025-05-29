@@ -13,6 +13,8 @@ package http
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -23,6 +25,10 @@ var _ datastore.Txn = (*TxWrapper)(nil)
 type TxWrapper struct {
 	server datastore.Txn
 	client datastore.Txn
+}
+
+func (w *TxWrapper) Store() corekv.Store {
+	return w.server.Store()
 }
 
 func (w *TxWrapper) ID() uint64 {
@@ -59,32 +65,4 @@ func (w *TxWrapper) OnErrorAsync(fn func()) {
 
 func (w *TxWrapper) OnDiscardAsync(fn func()) {
 	w.server.OnDiscardAsync(fn)
-}
-
-func (w *TxWrapper) Rootstore() datastore.DSReaderWriter {
-	return w.server.Rootstore()
-}
-
-func (w *TxWrapper) Datastore() datastore.DSReaderWriter {
-	return w.server.Datastore()
-}
-
-func (w *TxWrapper) Encstore() datastore.Blockstore {
-	return w.server.Encstore()
-}
-
-func (w *TxWrapper) Headstore() datastore.DSReaderWriter {
-	return w.server.Headstore()
-}
-
-func (w *TxWrapper) Peerstore() datastore.DSReaderWriter {
-	return w.server.Peerstore()
-}
-
-func (w *TxWrapper) Blockstore() datastore.Blockstore {
-	return w.server.Blockstore()
-}
-
-func (w *TxWrapper) Systemstore() datastore.DSReaderWriter {
-	return w.server.Systemstore()
 }

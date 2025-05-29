@@ -35,10 +35,13 @@ func (c *Client) PeerInfo() peer.AddrInfo {
 	return res
 }
 
-func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (c *Client) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(rep)
+	body, err := json.Marshal(client.ReplicatorParams{
+		Info:        info,
+		Collections: collections,
+	})
 	if err != nil {
 		return err
 	}
@@ -50,10 +53,13 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams)
 	return err
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (c *Client) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(rep)
+	body, err := json.Marshal(client.ReplicatorParams{
+		Info:        info,
+		Collections: collections,
+	})
 	if err != nil {
 		return err
 	}

@@ -8,13 +8,10 @@ import (
 	"context"
 
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/immutable"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -46,23 +43,23 @@ func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
 }
 
-// AddDACActorRelationship provides a mock function for the type DB
-func (_mock *DB) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
+// AddDocActorRelationship provides a mock function for the type DB
+func (_mock *DB) AddDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddDocActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AddDACActorRelationship")
+		panic("no return value specified for AddDocActorRelationship")
 	}
 
-	var r0 client.AddActorRelationshipResult
+	var r0 client.AddDocActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.AddActorRelationshipResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.AddDocActorRelationshipResult, error)); ok {
 		return returnFunc(ctx, collectionName, docID, relation, targetActor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.AddActorRelationshipResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.AddDocActorRelationshipResult); ok {
 		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor)
 	} else {
-		r0 = ret.Get(0).(client.AddActorRelationshipResult)
+		r0 = ret.Get(0).(client.AddDocActorRelationshipResult)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
 		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor)
@@ -72,44 +69,44 @@ func (_mock *DB) AddDACActorRelationship(ctx context.Context, collectionName str
 	return r0, r1
 }
 
-// DB_AddDACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDACActorRelationship'
-type DB_AddDACActorRelationship_Call struct {
+// DB_AddDocActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDocActorRelationship'
+type DB_AddDocActorRelationship_Call struct {
 	*mock.Call
 }
 
-// AddDACActorRelationship is a helper method to define mock.On call
+// AddDocActorRelationship is a helper method to define mock.On call
 //   - ctx
 //   - collectionName
 //   - docID
 //   - relation
 //   - targetActor
-func (_e *DB_Expecter) AddDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *DB_AddDACActorRelationship_Call {
-	return &DB_AddDACActorRelationship_Call{Call: _e.mock.On("AddDACActorRelationship", ctx, collectionName, docID, relation, targetActor)}
+func (_e *DB_Expecter) AddDocActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *DB_AddDocActorRelationship_Call {
+	return &DB_AddDocActorRelationship_Call{Call: _e.mock.On("AddDocActorRelationship", ctx, collectionName, docID, relation, targetActor)}
 }
 
-func (_c *DB_AddDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *DB_AddDACActorRelationship_Call {
+func (_c *DB_AddDocActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *DB_AddDocActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
 	})
 	return _c
 }
 
-func (_c *DB_AddDACActorRelationship_Call) Return(addActorRelationshipResult client.AddActorRelationshipResult, err error) *DB_AddDACActorRelationship_Call {
-	_c.Call.Return(addActorRelationshipResult, err)
+func (_c *DB_AddDocActorRelationship_Call) Return(addDocActorRelationshipResult client.AddDocActorRelationshipResult, err error) *DB_AddDocActorRelationship_Call {
+	_c.Call.Return(addDocActorRelationshipResult, err)
 	return _c
 }
 
-func (_c *DB_AddDACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *DB_AddDACActorRelationship_Call {
+func (_c *DB_AddDocActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddDocActorRelationshipResult, error)) *DB_AddDocActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// AddDACPolicy provides a mock function for the type DB
-func (_mock *DB) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+// AddPolicy provides a mock function for the type DB
+func (_mock *DB) AddPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
 	ret := _mock.Called(ctx, policy)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AddDACPolicy")
+		panic("no return value specified for AddPolicy")
 	}
 
 	var r0 client.AddPolicyResult
@@ -130,77 +127,31 @@ func (_mock *DB) AddDACPolicy(ctx context.Context, policy string) (client.AddPol
 	return r0, r1
 }
 
-// DB_AddDACPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDACPolicy'
-type DB_AddDACPolicy_Call struct {
+// DB_AddPolicy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddPolicy'
+type DB_AddPolicy_Call struct {
 	*mock.Call
 }
 
-// AddDACPolicy is a helper method to define mock.On call
+// AddPolicy is a helper method to define mock.On call
 //   - ctx
 //   - policy
-func (_e *DB_Expecter) AddDACPolicy(ctx interface{}, policy interface{}) *DB_AddDACPolicy_Call {
-	return &DB_AddDACPolicy_Call{Call: _e.mock.On("AddDACPolicy", ctx, policy)}
+func (_e *DB_Expecter) AddPolicy(ctx interface{}, policy interface{}) *DB_AddPolicy_Call {
+	return &DB_AddPolicy_Call{Call: _e.mock.On("AddPolicy", ctx, policy)}
 }
 
-func (_c *DB_AddDACPolicy_Call) Run(run func(ctx context.Context, policy string)) *DB_AddDACPolicy_Call {
+func (_c *DB_AddPolicy_Call) Run(run func(ctx context.Context, policy string)) *DB_AddPolicy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *DB_AddDACPolicy_Call) Return(addPolicyResult client.AddPolicyResult, err error) *DB_AddDACPolicy_Call {
+func (_c *DB_AddPolicy_Call) Return(addPolicyResult client.AddPolicyResult, err error) *DB_AddPolicy_Call {
 	_c.Call.Return(addPolicyResult, err)
 	return _c
 }
 
-func (_c *DB_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, policy string) (client.AddPolicyResult, error)) *DB_AddDACPolicy_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AddP2PCollections provides a mock function for the type DB
-func (_mock *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
-	ret := _mock.Called(ctx, collectionIDs)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddP2PCollections")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
-		r0 = returnFunc(ctx, collectionIDs)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// DB_AddP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddP2PCollections'
-type DB_AddP2PCollections_Call struct {
-	*mock.Call
-}
-
-// AddP2PCollections is a helper method to define mock.On call
-//   - ctx
-//   - collectionIDs
-func (_e *DB_Expecter) AddP2PCollections(ctx interface{}, collectionIDs interface{}) *DB_AddP2PCollections_Call {
-	return &DB_AddP2PCollections_Call{Call: _e.mock.On("AddP2PCollections", ctx, collectionIDs)}
-}
-
-func (_c *DB_AddP2PCollections_Call) Run(run func(ctx context.Context, collectionIDs []string)) *DB_AddP2PCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]string))
-	})
-	return _c
-}
-
-func (_c *DB_AddP2PCollections_Call) Return(err error) *DB_AddP2PCollections_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *DB_AddP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionIDs []string) error) *DB_AddP2PCollections_Call {
+func (_c *DB_AddPolicy_Call) RunAndReturn(run func(ctx context.Context, policy string) (client.AddPolicyResult, error)) *DB_AddPolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -413,102 +364,23 @@ func (_c *DB_BasicImport_Call) RunAndReturn(run func(ctx context.Context, filepa
 	return _c
 }
 
-// Blockstore provides a mock function for the type DB
-func (_mock *DB) Blockstore() datastore.Blockstore {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Blockstore")
-	}
-
-	var r0 datastore.Blockstore
-	if returnFunc, ok := ret.Get(0).(func() datastore.Blockstore); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.Blockstore)
-		}
-	}
-	return r0
-}
-
-// DB_Blockstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Blockstore'
-type DB_Blockstore_Call struct {
-	*mock.Call
-}
-
-// Blockstore is a helper method to define mock.On call
-func (_e *DB_Expecter) Blockstore() *DB_Blockstore_Call {
-	return &DB_Blockstore_Call{Call: _e.mock.On("Blockstore")}
-}
-
-func (_c *DB_Blockstore_Call) Run(run func()) *DB_Blockstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_Blockstore_Call) Return(blockstore datastore.Blockstore) *DB_Blockstore_Call {
-	_c.Call.Return(blockstore)
-	return _c
-}
-
-func (_c *DB_Blockstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_Blockstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Close provides a mock function for the type DB
-func (_mock *DB) Close() {
-	_mock.Called()
-	return
-}
-
-// DB_Close_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Close'
-type DB_Close_Call struct {
-	*mock.Call
-}
-
-// Close is a helper method to define mock.On call
-func (_e *DB_Expecter) Close() *DB_Close_Call {
-	return &DB_Close_Call{Call: _e.mock.On("Close")}
-}
-
-func (_c *DB_Close_Call) Run(run func()) *DB_Close_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_Close_Call) Return() *DB_Close_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
-	_c.Run(run)
-	return _c
-}
-
-// DeleteDACActorRelationship provides a mock function for the type DB
-func (_mock *DB) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
+// DeleteDocActorRelationship provides a mock function for the type DB
+func (_mock *DB) DeleteDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteDocActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteDACActorRelationship")
+		panic("no return value specified for DeleteDocActorRelationship")
 	}
 
-	var r0 client.DeleteActorRelationshipResult
+	var r0 client.DeleteDocActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.DeleteActorRelationshipResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.DeleteDocActorRelationshipResult, error)); ok {
 		return returnFunc(ctx, collectionName, docID, relation, targetActor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.DeleteActorRelationshipResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.DeleteDocActorRelationshipResult); ok {
 		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor)
 	} else {
-		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
+		r0 = ret.Get(0).(client.DeleteDocActorRelationshipResult)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
 		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor)
@@ -518,33 +390,34 @@ func (_mock *DB) DeleteDACActorRelationship(ctx context.Context, collectionName 
 	return r0, r1
 }
 
-// DB_DeleteDACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDACActorRelationship'
-type DB_DeleteDACActorRelationship_Call struct {
+// DB_DeleteDocActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDocActorRelationship'
+type DB_DeleteDocActorRelationship_Call struct {
 	*mock.Call
 }
 
-// DeleteDACActorRelationship is a helper method to define mock.On call
+// DeleteDocActorRelationship is a helper method to define mock.On call
 //   - ctx
 //   - collectionName
 //   - docID
 //   - relation
 //   - targetActor
-func (_e *DB_Expecter) DeleteDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *DB_DeleteDACActorRelationship_Call {
-	return &DB_DeleteDACActorRelationship_Call{Call: _e.mock.On("DeleteDACActorRelationship", ctx, collectionName, docID, relation, targetActor)}
+func (_e *DB_Expecter) DeleteDocActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *DB_DeleteDocActorRelationship_Call {
+	return &DB_DeleteDocActorRelationship_Call{Call: _e.mock.On("DeleteDocActorRelationship", ctx, collectionName, docID, relation, targetActor)}
 }
 
-func (_c *DB_DeleteDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *DB_DeleteDACActorRelationship_Call {
+func (_c *DB_DeleteDocActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *DB_DeleteDocActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
 	})
 	return _c
 }
 
-func (_c *DB_DeleteDACActorRelationship_Call) Return(deleteActorRelationshipResult client.DeleteActorRelationshipResult, err error) *DB_DeleteDACActorRelationship_Call {
-	_c.Call.Return(deleteActorRelationshipResult, err)
+func (_c *DB_DeleteDocActorRelationship_Call) Return(deleteDocActorRelationshipResult client.DeleteDocActorRelationshipResult, err error) *DB_DeleteDocActorRelationship_Call {
+	_c.Call.Return(deleteDocActorRelationshipResult, err)
 	return _c
 }
 
+<<<<<<< HEAD
 func (_c *DB_DeleteDACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *DB_DeleteDACActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
@@ -684,6 +557,9 @@ func (_c *DB_Events_Call) Return(bus event.Bus) *DB_Events_Call {
 }
 
 func (_c *DB_Events_Call) RunAndReturn(run func() event.Bus) *DB_Events_Call {
+=======
+func (_c *DB_DeleteDocActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteDocActorRelationshipResult, error)) *DB_DeleteDocActorRelationship_Call {
+>>>>>>> e9d71477 (interface refactor)
 	_c.Call.Return(run)
 	return _c
 }
@@ -797,118 +673,6 @@ func (_c *DB_GetAllIndexes_Call) Return(vToIndexDescriptions map[client.Collecti
 }
 
 func (_c *DB_GetAllIndexes_Call) RunAndReturn(run func(context1 context.Context) (map[client.CollectionName][]client.IndexDescription, error)) *DB_GetAllIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllP2PCollections provides a mock function for the type DB
-func (_mock *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllP2PCollections")
-	}
-
-	var r0 []string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// DB_GetAllP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllP2PCollections'
-type DB_GetAllP2PCollections_Call struct {
-	*mock.Call
-}
-
-// GetAllP2PCollections is a helper method to define mock.On call
-//   - ctx
-func (_e *DB_Expecter) GetAllP2PCollections(ctx interface{}) *DB_GetAllP2PCollections_Call {
-	return &DB_GetAllP2PCollections_Call{Call: _e.mock.On("GetAllP2PCollections", ctx)}
-}
-
-func (_c *DB_GetAllP2PCollections_Call) Run(run func(ctx context.Context)) *DB_GetAllP2PCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *DB_GetAllP2PCollections_Call) Return(strings []string, err error) *DB_GetAllP2PCollections_Call {
-	_c.Call.Return(strings, err)
-	return _c
-}
-
-func (_c *DB_GetAllP2PCollections_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *DB_GetAllP2PCollections_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllReplicators provides a mock function for the type DB
-func (_mock *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllReplicators")
-	}
-
-	var r0 []client.Replicator
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.Replicator, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.Replicator); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.Replicator)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// DB_GetAllReplicators_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllReplicators'
-type DB_GetAllReplicators_Call struct {
-	*mock.Call
-}
-
-// GetAllReplicators is a helper method to define mock.On call
-//   - ctx
-func (_e *DB_Expecter) GetAllReplicators(ctx interface{}) *DB_GetAllReplicators_Call {
-	return &DB_GetAllReplicators_Call{Call: _e.mock.On("GetAllReplicators", ctx)}
-}
-
-func (_c *DB_GetAllReplicators_Call) Run(run func(ctx context.Context)) *DB_GetAllReplicators_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *DB_GetAllReplicators_Call) Return(replicators []client.Replicator, err error) *DB_GetAllReplicators_Call {
-	_c.Call.Return(replicators, err)
-	return _c
-}
-
-func (_c *DB_GetAllReplicators_Call) RunAndReturn(run func(ctx context.Context) ([]client.Replicator, error)) *DB_GetAllReplicators_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1193,52 +957,6 @@ func (_c *DB_GetSchemas_Call) RunAndReturn(run func(context1 context.Context, sc
 	return _c
 }
 
-// Headstore provides a mock function for the type DB
-func (_mock *DB) Headstore() corekv.Reader {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Headstore")
-	}
-
-	var r0 corekv.Reader
-	if returnFunc, ok := ret.Get(0).(func() corekv.Reader); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(corekv.Reader)
-		}
-	}
-	return r0
-}
-
-// DB_Headstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Headstore'
-type DB_Headstore_Call struct {
-	*mock.Call
-}
-
-// Headstore is a helper method to define mock.On call
-func (_e *DB_Expecter) Headstore() *DB_Headstore_Call {
-	return &DB_Headstore_Call{Call: _e.mock.On("Headstore")}
-}
-
-func (_c *DB_Headstore_Call) Run(run func()) *DB_Headstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_Headstore_Call) Return(reader corekv.Reader) *DB_Headstore_Call {
-	_c.Call.Return(reader)
-	return _c
-}
-
-func (_c *DB_Headstore_Call) RunAndReturn(run func() corekv.Reader) *DB_Headstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // LensRegistry provides a mock function for the type DB
 func (_mock *DB) LensRegistry() client.LensRegistry {
 	ret := _mock.Called()
@@ -1281,50 +999,6 @@ func (_c *DB_LensRegistry_Call) Return(lensRegistry client.LensRegistry) *DB_Len
 }
 
 func (_c *DB_LensRegistry_Call) RunAndReturn(run func() client.LensRegistry) *DB_LensRegistry_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// MaxTxnRetries provides a mock function for the type DB
-func (_mock *DB) MaxTxnRetries() int {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for MaxTxnRetries")
-	}
-
-	var r0 int
-	if returnFunc, ok := ret.Get(0).(func() int); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-	return r0
-}
-
-// DB_MaxTxnRetries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MaxTxnRetries'
-type DB_MaxTxnRetries_Call struct {
-	*mock.Call
-}
-
-// MaxTxnRetries is a helper method to define mock.On call
-func (_e *DB_Expecter) MaxTxnRetries() *DB_MaxTxnRetries_Call {
-	return &DB_MaxTxnRetries_Call{Call: _e.mock.On("MaxTxnRetries")}
-}
-
-func (_c *DB_MaxTxnRetries_Call) Run(run func()) *DB_MaxTxnRetries_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_MaxTxnRetries_Call) Return(n int) *DB_MaxTxnRetries_Call {
-	_c.Call.Return(n)
-	return _c
-}
-
-func (_c *DB_MaxTxnRetries_Call) RunAndReturn(run func() int) *DB_MaxTxnRetries_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1537,96 +1211,6 @@ func (_c *DB_PatchSchema_Call) RunAndReturn(run func(context1 context.Context, s
 	return _c
 }
 
-// PeerInfo provides a mock function for the type DB
-func (_mock *DB) PeerInfo() peer.AddrInfo {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for PeerInfo")
-	}
-
-	var r0 peer.AddrInfo
-	if returnFunc, ok := ret.Get(0).(func() peer.AddrInfo); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(peer.AddrInfo)
-	}
-	return r0
-}
-
-// DB_PeerInfo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PeerInfo'
-type DB_PeerInfo_Call struct {
-	*mock.Call
-}
-
-// PeerInfo is a helper method to define mock.On call
-func (_e *DB_Expecter) PeerInfo() *DB_PeerInfo_Call {
-	return &DB_PeerInfo_Call{Call: _e.mock.On("PeerInfo")}
-}
-
-func (_c *DB_PeerInfo_Call) Run(run func()) *DB_PeerInfo_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_PeerInfo_Call) Return(addrInfo peer.AddrInfo) *DB_PeerInfo_Call {
-	_c.Call.Return(addrInfo)
-	return _c
-}
-
-func (_c *DB_PeerInfo_Call) RunAndReturn(run func() peer.AddrInfo) *DB_PeerInfo_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Peerstore provides a mock function for the type DB
-func (_mock *DB) Peerstore() datastore.DSReaderWriter {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Peerstore")
-	}
-
-	var r0 datastore.DSReaderWriter
-	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
-		}
-	}
-	return r0
-}
-
-// DB_Peerstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Peerstore'
-type DB_Peerstore_Call struct {
-	*mock.Call
-}
-
-// Peerstore is a helper method to define mock.On call
-func (_e *DB_Expecter) Peerstore() *DB_Peerstore_Call {
-	return &DB_Peerstore_Call{Call: _e.mock.On("Peerstore")}
-}
-
-func (_c *DB_Peerstore_Call) Run(run func()) *DB_Peerstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_Peerstore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *DB_Peerstore_Call {
-	_c.Call.Return(dSReaderWriter)
-	return _c
-}
-
-func (_c *DB_Peerstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *DB_Peerstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // PrintDump provides a mock function for the type DB
 func (_mock *DB) PrintDump(ctx context.Context) error {
 	ret := _mock.Called(ctx)
@@ -1714,98 +1298,6 @@ func (_c *DB_RefreshViews_Call) Return(err error) *DB_RefreshViews_Call {
 }
 
 func (_c *DB_RefreshViews_Call) RunAndReturn(run func(context1 context.Context, collectionFetchOptions client.CollectionFetchOptions) error) *DB_RefreshViews_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveP2PCollections provides a mock function for the type DB
-func (_mock *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	ret := _mock.Called(ctx, collectionIDs)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveP2PCollections")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
-		r0 = returnFunc(ctx, collectionIDs)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// DB_RemoveP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveP2PCollections'
-type DB_RemoveP2PCollections_Call struct {
-	*mock.Call
-}
-
-// RemoveP2PCollections is a helper method to define mock.On call
-//   - ctx
-//   - collectionIDs
-func (_e *DB_Expecter) RemoveP2PCollections(ctx interface{}, collectionIDs interface{}) *DB_RemoveP2PCollections_Call {
-	return &DB_RemoveP2PCollections_Call{Call: _e.mock.On("RemoveP2PCollections", ctx, collectionIDs)}
-}
-
-func (_c *DB_RemoveP2PCollections_Call) Run(run func(ctx context.Context, collectionIDs []string)) *DB_RemoveP2PCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]string))
-	})
-	return _c
-}
-
-func (_c *DB_RemoveP2PCollections_Call) Return(err error) *DB_RemoveP2PCollections_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *DB_RemoveP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionIDs []string) error) *DB_RemoveP2PCollections_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Rootstore provides a mock function for the type DB
-func (_mock *DB) Rootstore() datastore.Rootstore {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Rootstore")
-	}
-
-	var r0 datastore.Rootstore
-	if returnFunc, ok := ret.Get(0).(func() datastore.Rootstore); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.Rootstore)
-		}
-	}
-	return r0
-}
-
-// DB_Rootstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rootstore'
-type DB_Rootstore_Call struct {
-	*mock.Call
-}
-
-// Rootstore is a helper method to define mock.On call
-func (_e *DB_Expecter) Rootstore() *DB_Rootstore_Call {
-	return &DB_Rootstore_Call{Call: _e.mock.On("Rootstore")}
-}
-
-func (_c *DB_Rootstore_Call) Run(run func()) *DB_Rootstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *DB_Rootstore_Call) Return(rootstore datastore.Rootstore) *DB_Rootstore_Call {
-	_c.Call.Return(rootstore)
-	return _c
-}
-
-func (_c *DB_Rootstore_Call) RunAndReturn(run func() datastore.Rootstore) *DB_Rootstore_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1898,52 +1390,6 @@ func (_c *DB_SetMigration_Call) Return(err error) *DB_SetMigration_Call {
 }
 
 func (_c *DB_SetMigration_Call) RunAndReturn(run func(context1 context.Context, lensConfig client.LensConfig) error) *DB_SetMigration_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SetReplicator provides a mock function for the type DB
-func (_mock *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	ret := _mock.Called(ctx, rep)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetReplicator")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.ReplicatorParams) error); ok {
-		r0 = returnFunc(ctx, rep)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// DB_SetReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetReplicator'
-type DB_SetReplicator_Call struct {
-	*mock.Call
-}
-
-// SetReplicator is a helper method to define mock.On call
-//   - ctx
-//   - rep
-func (_e *DB_Expecter) SetReplicator(ctx interface{}, rep interface{}) *DB_SetReplicator_Call {
-	return &DB_SetReplicator_Call{Call: _e.mock.On("SetReplicator", ctx, rep)}
-}
-
-func (_c *DB_SetReplicator_Call) Run(run func(ctx context.Context, rep client.ReplicatorParams)) *DB_SetReplicator_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.ReplicatorParams))
-	})
-	return _c
-}
-
-func (_c *DB_SetReplicator_Call) Return(err error) *DB_SetReplicator_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *DB_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, rep client.ReplicatorParams) error) *DB_SetReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }

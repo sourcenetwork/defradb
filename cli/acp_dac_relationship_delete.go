@@ -65,8 +65,8 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
-			deleteDACActorRelationshipResult, err := db.DeleteDACActorRelationship(
+			client := mustGetContextClient(cmd)
+			deleteDACActorRelationshipResult, err := client.DeleteDACActorRelationship(
 				cmd.Context(),
 				collectionArg,
 				docIDArg,

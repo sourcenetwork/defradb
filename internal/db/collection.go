@@ -24,6 +24,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -33,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -88,7 +88,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 }
 
 func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	col, err := description.GetCollectionByID(ctx, txn, id)
 	if err != nil {
@@ -136,7 +136,7 @@ func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	var cols []client.CollectionVersion
 	switch {
@@ -211,7 +211,7 @@ func (db *DB) getCollections(
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
 func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	cols, err := description.GetActiveCollections(ctx, txn)
 	if err != nil {
@@ -269,7 +269,7 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
@@ -278,7 +278,7 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionShortID: shortID,
 	}
-	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.DatastoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
@@ -478,7 +478,7 @@ func (c *collection) create(
 
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		txn := txnctx.MustGet(ctx)
+		txn := datastore.MustGetTxn(ctx)
 
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
@@ -491,7 +491,7 @@ func (c *collection) create(
 			InstanceType:      keys.ValueKey,
 		}
 
-		err = txn.Datastore().Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
+		err = datastore.DatastoreFrom(txn.Store()).Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -687,7 +687,7 @@ func (c *collection) save(
 			return err
 		}
 	}
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	ident := identity.FromContext(ctx)
 	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
@@ -760,7 +760,7 @@ func (c *collection) save(
 			}
 
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				txn.Datastore(),
+				datastore.DatastoreFrom(txn.Store()),
 				c.Schema().VersionID,
 				val.Type(),
 				fieldDescription.Kind,
@@ -786,7 +786,7 @@ func (c *collection) save(
 	}
 
 	merkleCRDT := crdt.NewDocComposite(
-		txn.Datastore(),
+		datastore.DatastoreFrom(txn.Store()),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
@@ -1018,8 +1018,8 @@ func (c *collection) exists(
 		return false, false, nil
 	}
 
-	txn := txnctx.MustGet(ctx)
-	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
+	txn := datastore.MustGetTxn(ctx)
+	val, err := datastore.DatastoreFrom(txn.Store()).Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {

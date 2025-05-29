@@ -81,8 +81,8 @@ Example: Creating a dummy relationship does nothing (from database perspective):
 	-i e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
-			exists, err := db.AddDACActorRelationship(
+			client := mustGetContextClient(cmd)
+			exists, err := client.AddDACActorRelationship(
 				cmd.Context(),
 				collectionArg,
 				docIDArg,

@@ -34,10 +34,10 @@ func TestNewServerSimple(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func getHead(ctx context.Context, db client.DB, docID client.DocID) (cid.Cid, error) {
+func getHead(ctx context.Context, db testdb, docID client.DocID) (cid.Cid, error) {
 	prefix := keys.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).Bytes()
 
-	entries, err := datastore.FetchKeysForPrefix(ctx, prefix, db.Headstore())
+	entries, err := datastore.FetchKeysForPrefix(ctx, prefix, datastore.HeadstoreFrom(db.Rootstore()))
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -80,7 +80,7 @@ func TestPushLog(t *testing.T) {
 	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	b, err := datastore.BlockstoreFrom(db.Rootstore()).AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	_, err = p.server.pushLogHandler(ctx, &pushLogRequest{

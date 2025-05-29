@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -44,7 +44,8 @@ func GetShortFieldID(
 	// usually want most of them.
 
 	key := keys.NewFieldIDPrefix(collectionShortID)
-	iter, err := txnctx.MustGet(ctx).Systemstore().Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
+	txn := datastore.MustGetTxn(ctx)
+	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
 	if err != nil {
 		return 0, err
 	}
@@ -101,10 +102,10 @@ func SetShortFieldID(
 		return nil
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	key := keys.NewFieldID(collectionShortID, fieldID)
 
-	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
+	hasShortID, err := datastore.SystemstoreFrom(txn.Store()).Has(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func SetShortFieldID(
 		return err
 	}
 
-	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(sID))))
+	err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(sID))))
 	if err != nil {
 		return err
 	}

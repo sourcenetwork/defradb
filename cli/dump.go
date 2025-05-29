@@ -19,8 +19,8 @@ func MakeDumpCommand() *cobra.Command {
 		Use:   "dump",
 		Short: "Dump the contents of DefraDB node-side",
 		RunE: func(cmd *cobra.Command, _ []string) (err error) {
-			db := mustGetContextDB(cmd)
-			return db.PrintDump(cmd.Context())
+			client := mustGetContextClient(cmd)
+			return client.PrintDump(cmd.Context())
 		},
 	}
 	return cmd

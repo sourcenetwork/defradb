@@ -18,8 +18,7 @@ import (
 
 // Txn is a common interface to the db.Txn struct.
 type Txn interface {
-	MultiStore
-
+	Store() corekv.Store
 	// ID returns the unique immutable identifier for this transaction.
 	ID() uint64
 
@@ -53,7 +52,6 @@ type Txn interface {
 }
 
 type txn struct {
-	MultiStore
 	t  corekv.Txn
 	id uint64
 
@@ -71,13 +69,15 @@ var _ Txn = (*txn)(nil)
 // NewTxnFrom returns a new Txn from the rootstore.
 func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) Txn {
 	rootTxn := rootstore.NewTxn(readonly)
-	multistore := MultiStoreFrom(rootTxn)
 
 	return &txn{
-		t:          rootTxn,
-		MultiStore: multistore,
-		id:         id,
+		t:  rootTxn,
+		id: id,
 	}
+}
+
+func (t *txn) Store() corekv.Store {
+	return t.t
 }
 
 func (t *txn) ID() uint64 {
@@ -139,4 +139,17 @@ func (t *txn) OnErrorAsync(fn func()) {
 
 func (t *txn) OnDiscardAsync(fn func()) {
 	t.discardAsyncFns = append(t.discardAsyncFns, fn)
+}
+
+// explicitTxn is a transaction that is managed outside of a db operation.
+type explicitTxn struct {
+	Txn
+}
+
+func (t *explicitTxn) Commit(ctx context.Context) error {
+	return nil // do nothing
+}
+
+func (t *explicitTxn) Discard(ctx context.Context) {
+	// do nothing
 }

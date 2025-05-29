@@ -24,9 +24,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 const (
@@ -65,7 +65,7 @@ func (db *DB) addSchema(
 }
 
 func (db *DB) loadSchema(ctx context.Context) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	definitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {
@@ -92,7 +92,7 @@ func (db *DB) patchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
@@ -256,7 +256,7 @@ func (db *DB) getSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	schemas := []client.SchemaDescription{}
 
@@ -391,7 +391,7 @@ func (db *DB) updateSchema(
 			continue
 		}
 
-		txn := txnctx.MustGet(ctx)
+		txn := datastore.MustGetTxn(ctx)
 		schema, err = description.CreateSchemaVersion(ctx, txn, schema)
 		if err != nil {
 			return err

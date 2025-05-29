@@ -275,9 +275,9 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 }
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 	name := chi.URLParam(req, "name")
-	col, err := store.GetCollectionByName(req.Context(), name)
+	col, err := db.GetCollectionByName(req.Context(), name)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

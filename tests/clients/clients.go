@@ -16,11 +16,16 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 )
 
-// Client implements the P2P interface along with a few other methods
+// Client implements the DB interface along with a few other methods
 // required for testing.
 type Client interface {
 	client.DB
-	Connect(context.Context, peer.AddrInfo) error
+	client.P2P
+	Connect(ctx context.Context, addr peer.AddrInfo) error
+	Close()
+	MaxTxnRetries() int
+	Events() *event.Bus
 }

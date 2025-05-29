@@ -23,14 +23,12 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	sse "github.com/vito/go-sse/sse"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/event"
 )
 
 var _ client.DB = (*Client)(nil)
@@ -489,38 +487,6 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	}
 	_, err = c.http.request(req)
 	return err
-}
-
-func (c *Client) Close() {
-	// do nothing
-}
-
-func (c *Client) Rootstore() datastore.Rootstore {
-	panic("client side database")
-}
-
-func (c *Client) Blockstore() datastore.Blockstore {
-	panic("client side database")
-}
-
-func (c *Client) Encstore() datastore.Blockstore {
-	panic("client side database")
-}
-
-func (c *Client) Peerstore() datastore.DSReaderWriter {
-	panic("client side database")
-}
-
-func (c *Client) Headstore() corekv.Reader {
-	panic("client side database")
-}
-
-func (c *Client) Events() event.Bus {
-	panic("client side database")
-}
-
-func (c *Client) MaxTxnRetries() int {
-	panic("client side database")
 }
 
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {

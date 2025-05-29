@@ -22,12 +22,12 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
@@ -36,7 +36,7 @@ import (
 func (db *DB) getAllIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	collections, err := description.GetCollections(ctx, txn)
 
 	if err != nil {
@@ -65,7 +65,7 @@ func (c *collection) updateDocIndex(ctx context.Context, oldDoc, newDoc *client.
 
 func (c *collection) indexNewDoc(ctx context.Context, doc *client.Document) error {
 	// callers of this function must set a context transaction
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	for _, index := range c.indexes {
 		err := index.Save(ctx, txn, doc)
 		if err != nil {
@@ -95,7 +95,7 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	for _, index := range c.indexes {
 		err = index.Update(ctx, txn, oldDoc, doc)
 		if err != nil {
@@ -109,7 +109,7 @@ func (c *collection) deleteIndexedDoc(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	for _, index := range c.indexes {
 		err := index.Delete(ctx, txn, doc)
 		if err != nil {
@@ -198,7 +198,7 @@ func processCreateIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	colSeq, err := sequence.Get(
 		ctx,
@@ -232,7 +232,7 @@ func (c *collection) createIndex(
 
 	c.def.Version.Indexes = append(c.def.Version.Indexes, desc)
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	err = description.SaveCollection(ctx, txn, c.def.Version)
 	if err != nil {
 		c.def.Version.Indexes = c.def.Version.Indexes[:len(c.def.Version.Indexes)-1]
@@ -258,7 +258,7 @@ func (c *collection) addNewIndex(ctx context.Context, desc client.IndexDescripti
 
 	err = c.indexExistingDocs(ctx, colIndex)
 	if err != nil {
-		txn := txnctx.MustGet(ctx)
+		txn := datastore.MustGetTxn(ctx)
 		removeErr := colIndex.RemoveAll(ctx, txn)
 		return nil, errors.Join(err, removeErr)
 	}
@@ -271,7 +271,7 @@ func (c *collection) iterateAllDocs(
 	fields []client.FieldDefinition,
 	exec func(doc *client.Document) error,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	df := c.newFetcher()
 	err := df.Init(
@@ -338,7 +338,7 @@ func (c *collection) indexExistingDocs(
 			fields = append(fields, colField)
 		}
 	}
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	return c.iterateAllDocs(ctx, fields, func(doc *client.Document) error {
 		return index.Save(ctx, txn, doc)
 	})
@@ -367,7 +367,7 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *collection) dropIndex(ctx context.Context, indexName string) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	var didFind bool
 	for i := range c.indexes {

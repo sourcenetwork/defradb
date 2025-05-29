@@ -18,7 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type cliWrapper struct {
@@ -56,7 +56,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	tx, ok := txnctx.TryGet(ctx)
+	tx, ok := datastore.TryGetTxn(ctx)
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}

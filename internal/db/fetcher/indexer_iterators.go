@@ -58,7 +58,7 @@ func isArrayCondition(op string) bool {
 // It is used to iterate over the index keys that match a specific condition.
 // For example, iteration over condition _eq and _gt will have completely different logic.
 type indexIterator interface {
-	Init(context.Context, datastore.DSReaderWriter) error
+	Init(context.Context, datastore.ReaderWriter) error
 	Next() (indexIterResult, error)
 	Close() error
 }
@@ -94,7 +94,7 @@ type indexMatchIterator struct {
 
 var _ indexIterator = (*indexMatchIterator)(nil)
 
-func (iter *indexMatchIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	if iter.resultIter != nil {
@@ -198,12 +198,12 @@ type eqSingleIndexIterator struct {
 	execInfo *ExecInfo
 
 	ctx   context.Context
-	store datastore.DSReaderWriter
+	store datastore.ReaderWriter
 }
 
 var _ indexIterator = (*eqSingleIndexIterator)(nil)
 
-func (iter *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *eqSingleIndexIterator) Init(ctx context.Context, store datastore.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	return nil
@@ -231,6 +231,7 @@ func (iter *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
+<<<<<<< HEAD
 	inValues        []client.NormalValue
 	nextValIndex    int
 	ctx             context.Context
@@ -240,6 +241,13 @@ type inIndexIterator struct {
 	fieldConditions []fieldFilterCond
 	matchers        []valueMatcher
 	isUnique        bool
+=======
+	inValues     []client.NormalValue
+	nextValIndex int
+	ctx          context.Context
+	store        datastore.ReaderWriter
+	hasIterator  bool
+>>>>>>> e9d71477 (interface refactor)
 }
 
 var _ indexIterator = (*inIndexIterator)(nil)
@@ -270,6 +278,7 @@ func (iter *inIndexIterator) nextIterator() (bool, error) {
 	return true, nil
 }
 
+<<<<<<< HEAD
 // createIteratorForNextValue initializes the next index iterator based on the current value index.
 func (iter *inIndexIterator) createIteratorForNextValue() error {
 	if iter.isUnique {
@@ -295,6 +304,9 @@ func (iter *inIndexIterator) createIteratorForNextValue() error {
 }
 
 func (iter *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+=======
+func (iter *inIndexIterator) Init(ctx context.Context, store datastore.ReaderWriter) error {
+>>>>>>> e9d71477 (interface refactor)
 	iter.ctx = ctx
 	iter.store = store
 	var err error
@@ -352,12 +364,12 @@ type memorizingIndexIterator struct {
 	fetchedDocs map[string]struct{}
 
 	ctx   context.Context
-	store datastore.DSReaderWriter
+	store datastore.ReaderWriter
 }
 
 var _ indexIterator = (*memorizingIndexIterator)(nil)
 
-func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	iter.fetchedDocs = make(map[string]struct{})

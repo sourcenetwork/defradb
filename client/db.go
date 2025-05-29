@@ -16,13 +16,11 @@ import (
 	"encoding/json"
 
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/event"
 )
 
 type CollectionName = string
@@ -31,10 +29,6 @@ type CollectionName = string
 //
 // It should be constructed via the [db] package, via the [db.NewDB] function.
 type DB interface {
-	// Store contains DefraDB functions protected by an internal, short-lived, transaction, allowing safe
-	// access to common database read and write operations.
-	Store
-
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
@@ -45,52 +39,6 @@ type DB interface {
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
 	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
-
-	// Rootstore returns the underlying root store, within which all data managed by DefraDB is held.
-	Rootstore() datastore.Rootstore
-
-	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
-	//
-	// It sits within the rootstore returned by [Root].
-	Blockstore() datastore.Blockstore
-
-	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
-	//
-	// It sits within the rootstore returned by [Root].
-	Encstore() datastore.Blockstore
-
-	// Peerstore returns the peerstore where known host information is stored.
-	//
-	// It sits within the rootstore returned by [Root].
-	Peerstore() datastore.DSReaderWriter
-
-	// Headstore returns the headstore where the current heads of the database are stored.
-	//
-	// It is read-only and sits within the rootstore returned by [Root].
-	Headstore() corekv.Reader
-
-	// Close closes the database instance and releases any resources held.
-	//
-	// The behaviour of other functions in this package after this function has been called is undefined
-	// unless explicitly stated on the function in question.
-	//
-	// It does not explicitly clear any data from persisted storage, and a new [DB] instance may typically
-	// be created after calling this to resume operations on the prior data - this is however dependant on
-	// the behaviour of the rootstore provided on database instance creation, as this function will Close
-	// the provided rootstore.
-	Close()
-
-	// Events returns the database event queue.
-	//
-	// It may be used to monitor database events - a new event will be yielded for each mutation.
-	// Note: it does not copy the queue, just the reference to it.
-	Events() event.Bus
-
-	// MaxTxnRetries returns the number of retries that this DefraDB instance has been configured to
-	// make in the event of a transaction conflict in certain scenarios.
-	//
-	// Currently this is only used within the P2P system and will not affect operations initiated by users.
-	MaxTxnRetries() int
 
 	// PrintDump logs the entire contents of the rootstore (all the data managed by this DefraDB instance).
 	//
@@ -149,17 +97,6 @@ type DB interface {
 	// VerifySignature verifies the signatures of a block using a public key.
 	// Returns an error if any signature verification fails.
 	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
-}
-
-// Store contains the core DefraDB read-write operations.
-type Store interface {
-	// Backup holds the backup related methods that must be implemented by the database.
-	Backup
-
-	// P2P contains functions related to the P2P system.
-	//
-	// These functions are only useful if there is a configured network peer.
-	P2P
 
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
@@ -305,6 +242,13 @@ type Store interface {
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
+
+	// BasicImport imports a json dataset.
+	// filepath must be accessible to the node.
+	BasicImport(ctx context.Context, filepath string) error
+
+	// BasicExport exports the current data or subset of data to file in json format.
+	BasicExport(ctx context.Context, config *BackupConfig) error
 }
 
 // GQLOptions contains optional arguments for GQL requests.

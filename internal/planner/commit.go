@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -187,7 +188,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	var currentCid *cid.Cid
-	store := n.planner.txn.Blockstore()
+	store := datastore.BlockstoreFrom(n.planner.txn.Store())
 
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
@@ -433,7 +434,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 }
 
 func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
-	store := n.planner.txn.Blockstore()
+	store := datastore.BlockstoreFrom(n.planner.txn.Store())
 	sigIPLDBlock, err := store.Get(n.planner.ctx, link.Cid)
 	if err != nil {
 		return err

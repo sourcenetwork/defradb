@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -32,6 +34,10 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 		return nil, err
 	}
 	return &Transaction{id, httpClient}, nil
+}
+
+func (c *Transaction) Store() corekv.Store {
+	return nil
 }
 
 func (c *Transaction) ID() uint64 {
@@ -80,33 +86,5 @@ func (c *Transaction) OnErrorAsync(fn func()) {
 }
 
 func (c *Transaction) OnDiscardAsync(fn func()) {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Rootstore() datastore.DSReaderWriter {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Datastore() datastore.DSReaderWriter {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Encstore() datastore.Blockstore {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Headstore() datastore.DSReaderWriter {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Peerstore() datastore.DSReaderWriter {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Blockstore() datastore.Blockstore {
-	panic("client side transaction")
-}
-
-func (c *Transaction) Systemstore() datastore.DSReaderWriter {
 	panic("client side transaction")
 }

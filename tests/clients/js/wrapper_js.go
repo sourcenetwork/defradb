@@ -16,15 +16,15 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
-
 	"github.com/sourcenetwork/goji"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 func execute(ctx context.Context, value js.Value, method string, args ...any) ([]js.Value, error) {
 	contextValues := map[string]any{}
-	tx, ok := txnctx.TryGet(ctx)
+	tx, ok := datastore.TryGetTxn(ctx)
 	if ok {
 		contextValues["transaction"] = tx.ID()
 	}

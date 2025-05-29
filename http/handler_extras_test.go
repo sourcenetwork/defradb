@@ -33,7 +33,7 @@ func TestPurgeDevModeTrue(t *testing.T) {
 	purgeSub, err := cdb.Events().Subscribe(event.PurgeName)
 	require.NoError(t, err)
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -57,7 +57,7 @@ func TestPurgeDevModeFalse(t *testing.T) {
 	purgeSub, err := cdb.Events().Subscribe(event.PurgeName)
 	require.NoError(t, err)
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 

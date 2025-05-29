@@ -28,7 +28,7 @@ type FieldLevelCRDT interface {
 }
 
 func FieldLevelCRDTWithStore(
-	store datastore.DSReaderWriter,
+	store datastore.ReaderWriter,
 	schemaVersionID string,
 	cType client.CType,
 	kind client.FieldKind,

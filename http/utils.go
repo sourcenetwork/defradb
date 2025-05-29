@@ -33,6 +33,8 @@ var (
 	txsContextKey = contextKey("txs")
 	// dbContextKey is the context key for the client.DB
 	dbContextKey = contextKey("db")
+	// p2pContextKey is the context key for the client.P2P
+	p2pContextKey = contextKey("p2p")
 	// colContextKey is the context key for the client.Collection
 	//
 	// If a transaction exists, all operations will be executed
@@ -54,18 +56,11 @@ func mustGetContextSyncMap(req *http.Request) *sync.Map {
 	return req.Context().Value(txsContextKey).(*sync.Map) //nolint:forcetypeassert
 }
 
-// mustGetContextClientDB returns the client DB from the http request context or panics.
+// mustGetContextClientDB returns the DB from the http request context or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetContextClientDB(req *http.Request) client.DB {
-	return req.Context().Value(dbContextKey).(client.DB) //nolint:forcetypeassert
-}
-
-// mustGetContextClientStore returns the client store from the http request context or panics.
-//
-// This should only be called from functions within the http package.
-func mustGetContextClientStore(req *http.Request) client.Store {
-	return req.Context().Value(dbContextKey).(client.Store) //nolint:forcetypeassert
+func mustGetContextClientDB(req *http.Request) DB {
+	return req.Context().Value(dbContextKey).(DB) //nolint:forcetypeassert
 }
 
 // mustGetDataStoreTxn returns the datastore transaction or panics.
@@ -80,7 +75,10 @@ func mustGetDataStoreTxn(tx any) datastore.Txn {
 //
 // This should only be called from functions within the http package.
 func tryGetContextClientP2P(req *http.Request) (client.P2P, bool) {
-	p2p, ok := req.Context().Value(dbContextKey).(client.P2P)
+	p2p, ok := req.Context().Value(p2pContextKey).(client.P2P)
+	if !ok {
+		return nil, false
+	}
 	return p2p, ok
 }
 

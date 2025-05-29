@@ -19,6 +19,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
@@ -31,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -399,52 +401,38 @@ func (s *server) updatePubSubTopics(evt event.P2PTopic) {
 	s.peer.bus.Publish(event.NewMessage(event.P2PTopicCompletedName, nil))
 }
 
-func (s *server) updateReplicators(evt event.Replicator) {
-	if len(evt.Schemas) == 0 {
+func (s *server) updateReplicators(rep peer.AddrInfo, collectionIDs map[string]struct{}) {
+	if len(collectionIDs) == 0 {
 		// remove peer from store
-		s.peer.host.Peerstore().ClearAddrs(evt.Info.ID)
+		s.peer.host.Peerstore().ClearAddrs(rep.ID)
 	} else {
 		// add peer to store
-		s.peer.host.Peerstore().AddAddrs(evt.Info.ID, evt.Info.Addrs, peerstore.PermanentAddrTTL)
+		s.peer.host.Peerstore().AddAddrs(rep.ID, rep.Addrs, peerstore.PermanentAddrTTL)
 		// connect to the peer
-		if err := s.peer.Connect(s.peer.ctx, evt.Info); err != nil {
+		if err := s.peer.Connect(s.peer.ctx, rep); err != nil {
 			log.ErrorE("Failed to connect to replicator peer", err)
 		}
 	}
 
 	// update the cached replicators
 	s.mu.Lock()
-	for schema, peers := range s.replicators {
-		if _, hasSchema := evt.Schemas[schema]; hasSchema {
-			s.replicators[schema][evt.Info.ID] = struct{}{}
-			delete(evt.Schemas, schema)
+	for collectionID, peers := range s.replicators {
+		if _, hasID := collectionIDs[collectionID]; hasID {
+			s.replicators[collectionID][rep.ID] = struct{}{}
+			delete(collectionIDs, collectionID)
 		} else {
-			if _, exists := peers[evt.Info.ID]; exists {
-				delete(s.replicators[schema], evt.Info.ID)
+			if _, exists := peers[rep.ID]; exists {
+				delete(s.replicators[collectionID], rep.ID)
 			}
 		}
 	}
-	for schema := range evt.Schemas {
-		if _, exists := s.replicators[schema]; !exists {
-			s.replicators[schema] = make(map[libpeer.ID]struct{})
+	for collectionID := range collectionIDs {
+		if _, exists := s.replicators[collectionID]; !exists {
+			s.replicators[collectionID] = make(map[libpeer.ID]struct{})
 		}
-		s.replicators[schema][evt.Info.ID] = struct{}{}
+		s.replicators[collectionID][rep.ID] = struct{}{}
 	}
 	s.mu.Unlock()
-
-	if evt.Docs != nil {
-		for update := range evt.Docs {
-			if err := s.pushLog(update, evt.Info.ID); err != nil {
-				log.ErrorE(
-					"Failed to replicate log",
-					err,
-					corelog.Any("CID", update.Cid),
-					corelog.Any("PeerID", evt.Info.ID),
-				)
-			}
-		}
-	}
-	s.peer.bus.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 }
 
 func (s *server) SendPubSubMessage(
@@ -469,7 +457,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		return true
 	}
 
-	rawblock, err := s.peer.db.Blockstore().Get(s.peer.ctx, c)
+	rawblock, err := datastore.BlockstoreFrom(s.peer.db.Rootstore()).Get(s.peer.ctx, c)
 	if err != nil {
 		log.ErrorE("Failed to get block", err)
 		return false

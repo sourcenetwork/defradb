@@ -23,46 +23,14 @@ var (
 	log = corelog.NewLogger("store")
 )
 
-// Rootstore wraps Batching and TxnDatastore requiring datastore to support both batching and transactions.
-type Rootstore interface {
-	corekv.TxnStore
-}
-
-// MultiStore is an interface wrapper around the 3 main types of stores needed for MerkleCRDTs.
-type MultiStore interface {
-	Rootstore() DSReaderWriter
-
-	// Datastore is a wrapped root DSReaderWriter under the /data namespace
-	Datastore() DSReaderWriter
-
-	// Encstore is a wrapped root DSReaderWriter under the /enc namespace
-	// This store is used for storing symmetric encryption keys for doc encryption.
-	// The store keys are comprised of docID + field name.
-	Encstore() Blockstore
-
-	// Headstore is a wrapped root DSReaderWriter under the /head namespace
-	Headstore() DSReaderWriter
-
-	// Peerstore is a wrapped root DSReaderWriter as a ds.Batching, embedded into a DSBatching
-	// under the /peers namespace
-	Peerstore() DSReaderWriter
-
-	// Blockstore is a wrapped root DSReaderWriter as a Blockstore, embedded into a Blockstore
-	// under the /blocks namespace
-	Blockstore() Blockstore
-
-	// Headstore is a wrapped root DSReaderWriter under the /system namespace
-	Systemstore() DSReaderWriter
-}
-
-// DSReaderWriter simplifies the interface that is exposed by a
-// DSReaderWriter into its sub-components Reader and Writer.
-// Using this simplified interface means that both DSReaderWriter
+// ReaderWriter simplifies the interface that is exposed by a
+// ReaderWriter into its sub-components Reader and Writer.
+// Using this simplified interface means that both ReaderWriter
 // and ds.Txn satisfy the interface. Due to go-datastore#113 and
-// go-datastore#114 ds.Txn no longer implements DSReaderWriter
+// go-datastore#114 ds.Txn no longer implements ReaderWriter
 // Which means we can't swap between the two for Datastores that
 // support TxnDatastore.
-type DSReaderWriter interface {
+type ReaderWriter interface {
 	corekv.Reader
 	corekv.Writer
 }

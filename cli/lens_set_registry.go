@@ -31,7 +31,7 @@ Example: set from an argument string:
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			client := mustGetContextClient(cmd)
 
 			decoder := json.NewDecoder(strings.NewReader(args[1]))
 			decoder.DisallowUnknownFields()
@@ -41,7 +41,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return NewErrInvalidLensConfig(err)
 			}
 
-			return store.LensRegistry().SetMigration(cmd.Context(), args[0], lensCfg)
+			return client.LensRegistry().SetMigration(cmd.Context(), args[0], lensCfg)
 		},
 	}
 	return cmd

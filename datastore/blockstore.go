@@ -30,7 +30,7 @@ import (
 //  `https://github.com/ipfs/go-ipfs-blockstore/blob/master/blockstore.go`
 // Needed a custom implementation that didn't rely on the ds.Batching interface.
 //
-// All datastore operations in DefraDB are interfaced by DSReaderWriter. This
+// All datastore operations in DefraDB are interfaced by ReaderWriter. This
 // simplifies the interface to just that of read/write operations, leaving the
 // management of the datastore to the parent objects. This also allows us to swap
 // between a regular ds.Datastore, and a ds.Txn which as of:
@@ -42,11 +42,11 @@ import (
 // However, in DefraDB, since we rely on a single rootstore for all our various
 // substores (data, heads, blocks), which includes a Txn/Batch system already, our
 // respective substores don't need to optimize or worry about Batching/Txn.
-// Hence the simplified DSReaderWriter.
+// Hence the simplified ReaderWriter.
 
 // NewBlockstore returns a default Blockstore implementation
 // using the provided datastore.Batching backend.
-func newBlockstore(store DSReaderWriter) *bstore {
+func newBlockstore(store ReaderWriter) *bstore {
 	return &bstore{
 		store: store,
 	}
@@ -57,12 +57,11 @@ func newIPLDStore(store blockstore.Blockstore) *bsadapter.Adapter {
 }
 
 type bstore struct {
-	store DSReaderWriter
+	store ReaderWriter
 
 	rehash bool
 }
 
-var _ blockstore.Blockstore = (*bstore)(nil)
 var _ Blockstore = (*bstore)(nil)
 
 // AsIPLDStorage returns an IPLDStorage instance.

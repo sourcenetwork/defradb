@@ -65,7 +65,7 @@ func (delta *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	store           datastore.DSReaderWriter
+	store           datastore.ReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
@@ -77,7 +77,7 @@ var _ core.ReplicatedData = (*LWW)(nil)
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewLWW(
-	store datastore.DSReaderWriter,
+	store datastore.ReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,

@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
@@ -71,7 +70,7 @@ func runStorageBenchTxnGet(
 	if err != nil {
 		return err
 	}
-	defer db.Rootstore().Close() //nolint:errcheck
+	defer db.Close()
 
 	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
 	if err != nil {
@@ -89,7 +88,7 @@ func runStorageBenchTxnGet(
 		for j := 0; j < opCount; j++ {
 			positionInInterval := getSampledIndex(len(keys), opCount, j)
 			key := []byte(keys[positionInInterval])
-			_, err := txn.Rootstore().Get(ctx, key)
+			_, err := txn.Store().Get(ctx, key)
 			if err != nil {
 				return err
 			}
@@ -111,7 +110,7 @@ func runStorageBenchTxnIterator(
 	if err != nil {
 		return err
 	}
-	defer db.Rootstore().Close() //nolint:errcheck
+	defer db.Close()
 
 	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
 	if err != nil {
@@ -131,7 +130,7 @@ func runStorageBenchTxnIterator(
 				positionInInterval := getSampledIndex(len(keys), pointCount, k)
 				startKey := ds.NewKey(keys[positionInInterval])
 
-				iter, err := txn.Rootstore().Iterator(ctx, corekv.IterOptions{
+				iter, err := txn.Store().Iterator(ctx, corekv.IterOptions{
 					Prefix: startKey.Bytes(),
 				})
 				if err != nil {
@@ -200,7 +199,7 @@ func runStorageBenchPut(
 
 func backfillBenchmarkStorageDB(
 	ctx context.Context,
-	db datastore.Rootstore,
+	db corekv.TxnStore,
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
@@ -249,7 +248,7 @@ func backfillBenchmarkTxn(
 		}
 		keys[i] = string(key)
 
-		if err := txn.Rootstore().Set(ctx, key, value); err != nil {
+		if err := txn.Store().Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}

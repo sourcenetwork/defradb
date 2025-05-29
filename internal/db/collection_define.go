@@ -22,9 +22,9 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 func (db *DB) createCollections(
@@ -61,7 +61,7 @@ func (db *DB) createCollections(
 
 	setFieldKinds(newDefinitions)
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	err = db.validateNewCollection(
 		ctx,
@@ -211,7 +211,7 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	for _, col := range newColsByID {
 		err := description.SaveCollection(ctx, txn, col)
 		if err != nil {
@@ -289,7 +289,7 @@ func (db *DB) setActiveSchemaVersion(
 	if schemaVersionID == "" {
 		return ErrSchemaVersionIDEmpty
 	}
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 	col, err := description.GetCollectionByID(ctx, txn, schemaVersionID)
 	if err != nil {
 		return err

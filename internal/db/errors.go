@@ -97,8 +97,6 @@ const (
 	errNoTransactionInContext                   string = "no transaction in context"
 	errReplicatorExists                         string = "replicator already exists for %s with peerID %s"
 	errReplicatorDocID                          string = "failed to get docID for replicator"
-	errReplicatorCollections                    string = "failed to get collections for replicator"
-	errReplicatorNotFound                       string = "replicator not found"
 	errCanNotEncryptBuiltinField                string = "can not encrypt build-in field"
 	errFailedToHandleEncKeysReceivedEvent       string = "failed to handle encryption-keys-received event"
 	errSelfReferenceWithoutSelf                 string = "must specify 'Self' kind for self referencing relations"
@@ -152,16 +150,10 @@ var (
 	ErrP2PColHasPolicy                          = errors.New("p2p collection specified has a policy on it")
 	ErrNoTransactionInContext                   = errors.New(errNoTransactionInContext)
 	ErrReplicatorColHasPolicy                   = errors.New("replicator collection specified has a policy on it")
-	ErrSelfTargetForReplicator                  = errors.New("can't target ourselves as a replicator")
-	ErrReplicatorCollections                    = errors.New(errReplicatorCollections)
-	ErrReplicatorNotFound                       = errors.New(errReplicatorNotFound)
 	ErrCanNotEncryptBuiltinField                = errors.New(errCanNotEncryptBuiltinField)
 	ErrSelfReferenceWithoutSelf                 = errors.New(errSelfReferenceWithoutSelf)
 	ErrColNotMaterialized                       = errors.New(errColNotMaterialized)
 	ErrMaterializedViewAndACPNotSupported       = errors.New(errMaterializedViewAndACPNotSupported)
-	ErrContextDone                              = errors.New("context done")
-	ErrFailedToRetryDoc                         = errors.New("failed to retry doc")
-	ErrTimeoutDocRetry                          = errors.New("timeout while retrying doc")
 	ErrDocIDNotFound                            = errors.New(errDocIDNotFound)
 	ErrorCollectionWithSchemaRootNotFound       = errors.New(errCollectionWithSchemaRootNotFound)
 	ErrColMutatingIsBranchable                  = errors.New(errColMutatingIsBranchable)
@@ -672,10 +664,6 @@ func NewErrReplicatorExists(collection string, peerID peer.ID) error {
 
 func NewErrReplicatorDocID(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errReplicatorDocID, inner, kv...)
-}
-
-func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errReplicatorCollections, inner, kv...)
 }
 
 func NewErrSelfReferenceWithoutSelf(fieldName string) error {

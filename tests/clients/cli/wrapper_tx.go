@@ -14,6 +14,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -22,6 +24,10 @@ var _ datastore.Txn = (*Transaction)(nil)
 type Transaction struct {
 	tx  datastore.Txn
 	cmd *cliWrapper
+}
+
+func (w *Transaction) Store() corekv.Store {
+	return w.tx.Store()
 }
 
 func (w *Transaction) ID() uint64 {
@@ -65,32 +71,4 @@ func (w *Transaction) OnErrorAsync(fn func()) {
 
 func (w *Transaction) OnDiscardAsync(fn func()) {
 	w.tx.OnDiscardAsync(fn)
-}
-
-func (w *Transaction) Rootstore() datastore.DSReaderWriter {
-	return w.tx.Rootstore()
-}
-
-func (w *Transaction) Datastore() datastore.DSReaderWriter {
-	return w.tx.Datastore()
-}
-
-func (w *Transaction) Encstore() datastore.Blockstore {
-	return w.tx.Encstore()
-}
-
-func (w *Transaction) Headstore() datastore.DSReaderWriter {
-	return w.tx.Headstore()
-}
-
-func (w *Transaction) Peerstore() datastore.DSReaderWriter {
-	return w.tx.Peerstore()
-}
-
-func (w *Transaction) Blockstore() datastore.Blockstore {
-	return w.tx.Blockstore()
-}
-
-func (w *Transaction) Systemstore() datastore.DSReaderWriter {
-	return w.tx.Systemstore()
 }

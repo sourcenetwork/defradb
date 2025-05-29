@@ -24,13 +24,13 @@ func MakeTxCreateCommand() *cobra.Command {
 		Short: "Create a new DefraDB transaction.",
 		Long:  `Create a new DefraDB transaction.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			db := mustGetContextDB(cmd)
+			client := mustGetContextClient(cmd)
 
 			var tx datastore.Txn
 			if concurrent {
-				tx, err = db.NewConcurrentTxn(cmd.Context(), readOnly)
+				tx, err = client.NewConcurrentTxn(cmd.Context(), readOnly)
 			} else {
-				tx, err = db.NewTxn(cmd.Context(), readOnly)
+				tx, err = client.NewTxn(cmd.Context(), readOnly)
 			}
 			if err != nil {
 				return err

@@ -17,7 +17,6 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -30,6 +29,7 @@ import (
 )
 
 var _ client.DB = (*Wrapper)(nil)
+var _ client.P2P = (*Wrapper)(nil)
 
 // Wrapper combines an HTTP client and server into a
 // single struct that implements the client.DB interface.
@@ -41,7 +41,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+	handler, err := http.NewHandler(node.DB, node.Peer)
 	if err != nil {
 		return nil, err
 	}
@@ -64,12 +64,12 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	return w.client.SetReplicator(ctx, rep)
+func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+	return w.client.SetReplicator(ctx, info, collections...)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	return w.client.DeleteReplicator(ctx, rep)
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+	return w.client.DeleteReplicator(ctx, info, collections...)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
@@ -236,26 +236,6 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 		return nil, err
 	}
 	return &TxWrapper{server, client}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() corekv.Reader {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
 }
 
 func (w *Wrapper) Close() {

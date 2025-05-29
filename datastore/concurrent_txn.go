@@ -32,12 +32,10 @@ type concurrentTxn struct {
 func NewConcurrentTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) Txn {
 	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
-	multistore := MultiStoreFrom(rootConcurentTxn)
 
 	return &txn{
-		t:          rootConcurentTxn,
-		MultiStore: multistore,
-		id:         id,
+		t:  rootConcurentTxn,
+		id: id,
 	}
 }
 
