@@ -35,7 +35,7 @@ Execute queries, add schema types, obtain node info, etc.`,
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			return setContextDB(cmd)
+			return setContextClient(cmd)
 		},
 	}
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",

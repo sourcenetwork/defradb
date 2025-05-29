@@ -41,7 +41,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := p2p.SetReplicator(req.Context(), rep)
+	err := p2p.SetReplicator(req.Context(), rep.Info, rep.Collections...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -61,7 +61,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := p2p.DeleteReplicator(req.Context(), rep)
+	err := p2p.DeleteReplicator(req.Context(), rep.Info, rep.Collections...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -29,6 +29,9 @@ const eventTimeout = 1 * time.Second
 // waitForNetworkSetupEvents waits for p2p topic completed and
 // replicator completed events to be published on the local node event bus.
 func waitForNetworkSetupEvents(s *state, nodeID int) {
+	if !s.isNetworkEnabled {
+		return
+	}
 	cols, err := s.nodes[nodeID].GetAllP2PCollections(s.ctx)
 	require.NoError(s.t, err)
 
@@ -107,16 +110,6 @@ func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
 //
 // Expected document heads will be updated for the subscriber node.
 func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
-	select {
-	case _, ok := <-s.nodes[action.NodeID].event.p2pTopic.Message():
-		if !ok {
-			require.Fail(s.t, "subscription closed waiting for p2p topic event")
-		}
-
-	case <-time.After(eventTimeout):
-		require.Fail(s.t, "timeout waiting for p2p topic event")
-	}
-
 	// update peer collections of target node
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
@@ -129,16 +122,6 @@ func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
 // waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollection) {
-	select {
-	case _, ok := <-s.nodes[action.NodeID].event.p2pTopic.Message():
-		if !ok {
-			require.Fail(s.t, "subscription closed waiting for p2p topic event")
-		}
-
-	case <-time.After(eventTimeout):
-		require.Fail(s.t, "timeout waiting for p2p topic event")
-	}
-
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections

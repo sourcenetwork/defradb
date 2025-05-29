@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
@@ -80,7 +79,7 @@ func defaultNodeOpts() []node.Option {
 	}
 }
 
-func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
+func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
 	opts := []node.Option{
 		node.WithDisableP2P(true),
 		node.WithDisableAPI(true),
@@ -98,7 +97,7 @@ func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	return node.DB, err
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{

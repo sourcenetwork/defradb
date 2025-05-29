@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -137,19 +139,13 @@ var _ datastore.Txn = (*dummyTxn)(nil)
 
 type dummyTxn struct{}
 
-func (*dummyTxn) Rootstore() datastore.DSReaderWriter   { return nil }
-func (*dummyTxn) Datastore() datastore.DSReaderWriter   { return nil }
-func (*dummyTxn) Encstore() datastore.Blockstore        { return nil }
-func (*dummyTxn) Headstore() datastore.DSReaderWriter   { return nil }
-func (*dummyTxn) Peerstore() datastore.DSReaderWriter   { return nil }
-func (*dummyTxn) Blockstore() datastore.Blockstore      { return nil }
-func (*dummyTxn) Systemstore() datastore.DSReaderWriter { return nil }
-func (*dummyTxn) Commit(ctx context.Context) error      { return nil }
-func (*dummyTxn) Discard(ctx context.Context)           {}
-func (*dummyTxn) OnSuccess(fn func())                   {}
-func (*dummyTxn) OnError(fn func())                     {}
-func (*dummyTxn) OnDiscard(fn func())                   {}
-func (*dummyTxn) OnSuccessAsync(fn func())              {}
-func (*dummyTxn) OnErrorAsync(fn func())                {}
-func (*dummyTxn) OnDiscardAsync(fn func())              {}
-func (*dummyTxn) ID() uint64                            { return 0 }
+func (*dummyTxn) Store() corekv.Store              { return nil }
+func (*dummyTxn) Commit(ctx context.Context) error { return nil }
+func (*dummyTxn) Discard(ctx context.Context)      {}
+func (*dummyTxn) OnSuccess(fn func())              {}
+func (*dummyTxn) OnError(fn func())                {}
+func (*dummyTxn) OnDiscard(fn func())              {}
+func (*dummyTxn) OnSuccessAsync(fn func())         {}
+func (*dummyTxn) OnErrorAsync(fn func())           {}
+func (*dummyTxn) OnDiscardAsync(fn func())         {}
+func (*dummyTxn) ID() uint64                       { return 0 }

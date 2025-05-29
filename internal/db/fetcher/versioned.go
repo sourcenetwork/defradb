@@ -61,7 +61,7 @@ var (
 //
 // Transient/Ephemeral datastores are intanciated for the lifetime of the
 // traversal query request, on a per object basis. This should be a basic map based
-// ds.Datastore, abstracted into a DSReaderWriter.
+// ds.Datastore, abstracted into a ReaderWriter.
 //
 // The goal of the VersionedFetcher is to implement the same external API/Interface as
 // the DocumentFetcher, and to have it return the encoded/decoded document as
@@ -89,7 +89,7 @@ type VersionedFetcher struct {
 	ctx context.Context
 
 	// Transient version store
-	root  datastore.Rootstore
+	root  corekv.TxnStore
 	store datastore.Txn
 
 	queuedCids *list.List
@@ -124,11 +124,11 @@ func (vf *VersionedFetcher) Init(
 
 	// Copy the entire system store into the temp store so that important stuff
 	// such as collection definitions and short-ids are available.
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
+	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err
 	}
-	dst := datastore.MultiStoreFrom(root).Systemstore()
+	dst := datastore.SystemstoreFrom(root)
 	for {
 		hasValue, err := iter.Next()
 		if err != nil {
@@ -279,7 +279,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 	// @body: We could possibly append the DocID to the CID either as a
 	// child key, or an instance on the CID key.
 
-	hasLocalBlock, err := vf.store.Blockstore().Has(vf.ctx, c)
+	hasLocalBlock, err := datastore.BlockstoreFrom(vf.store.Store()).Has(vf.ctx, c)
 	if err != nil {
 		return NewErrVFetcherFailedToFindBlock(err)
 	}
@@ -288,13 +288,13 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 		return nil
 	}
 
-	blk, err := vf.txn.Blockstore().Get(vf.ctx, c)
+	blk, err := datastore.BlockstoreFrom(vf.txn.Store()).Get(vf.ctx, c)
 	if err != nil {
 		return NewErrVFetcherFailedToGetBlock(err)
 	}
 
 	// store the block in the local (transient store)
-	if err := vf.store.Blockstore().Put(vf.ctx, blk); err != nil {
+	if err := datastore.BlockstoreFrom(vf.store.Store()).Put(vf.ctx, blk); err != nil {
 		return NewErrVFetcherFailedToWriteBlock(err)
 	}
 
@@ -358,7 +358,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 	case block.Delta.IsComposite():
 		mcrdt = crdt.NewDocComposite(
-			vf.store.Datastore(),
+			datastore.DatastoreFrom(vf.store.Store()),
 			block.Delta.GetSchemaVersionID(),
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -379,7 +379,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 
 		mcrdt, err = crdt.FieldLevelCRDTWithStore(
-			vf.store.Datastore(),
+			datastore.DatastoreFrom(vf.store.Store()),
 			block.Delta.GetSchemaVersionID(),
 			field.Typ,
 			field.Kind,
@@ -421,7 +421,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 	// get Block
-	blk, err := vf.store.Blockstore().Get(vf.ctx, c)
+	blk, err := datastore.BlockstoreFrom(vf.store.Store()).Get(vf.ctx, c)
 	if err != nil {
 		return nil, NewErrFailedToGetDagNode(err)
 	}

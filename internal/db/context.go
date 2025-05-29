@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 // InitContext returns a new context with all caches initialized and linked to
@@ -25,7 +24,7 @@ import (
 // the cached values must be tied to the transaction, otherwise we risk leaking
 // information between transactions.
 func InitContext(ctx context.Context, txn datastore.Txn) context.Context {
-	ctx = txnctx.Set(ctx, txn)
+	ctx = datastore.SetTxn(ctx, txn)
 	ctx = id.InitCollectionShortIDCache(ctx)
 	ctx = id.InitFieldShortIDCache(ctx)
 

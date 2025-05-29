@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"sync"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -25,9 +24,6 @@ func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
 	docIDQueue := newMergeQueue()
 	schemaRootQueue := newMergeQueue()
 
-	// This is used to ensure we only trigger loadAndPublishP2PCollections and loadAndPublishReplicators
-	// once per db instanciation.
-	loadOnce := sync.Once{}
 	for {
 		select {
 		case <-ctx.Done():
@@ -81,28 +77,6 @@ func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
 							corelog.Any("Event", evt))
 					}
 				}()
-			case event.PeerInfo:
-				db.peerInfo.Store(evt.Info)
-				// Load and publish P2P collections and replicators once per db instance start.
-				// A Go routine is used to ensure the message handler is not blocked by these potentially
-				// long running operations.
-				go loadOnce.Do(func() {
-					err := db.loadAndPublishP2PCollections(ctx)
-					if err != nil {
-						log.ErrorContextE(ctx, "Failed to load P2P collections", err)
-					}
-
-					err = db.loadAndPublishReplicators(ctx)
-					if err != nil {
-						log.ErrorContextE(ctx, "Failed to load replicators", err)
-					}
-				})
-			case event.ReplicatorFailure:
-				// ReplicatorFailure is a notification that a replicator has failed to replicate a document.
-				err := db.handleReplicatorFailure(ctx, evt.PeerID.String(), evt.DocID)
-				if err != nil {
-					log.ErrorContextE(ctx, "Failed to handle replicator failure", err)
-				}
 			}
 		}
 	}

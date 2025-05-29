@@ -54,7 +54,7 @@ func AddDelta(
 	delta core.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
+	headset := NewHeadSet(datastore.HeadstoreFrom(txn.Store()), crdt.HeadstorePrefix())
 
 	heads, height, err := headset.List(ctx)
 	if err != nil {
@@ -84,13 +84,13 @@ func AddDelta(
 	}
 
 	if EnabledSigningFromContext(ctx) {
-		err = signBlock(ctx, txn.Blockstore(), dagBlock)
+		err = signBlock(ctx, datastore.BlockstoreFrom(txn.Store()), dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
 	}
 
-	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
+	link, err := putBlock(ctx, datastore.BlockstoreFrom(txn.Store()), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -116,6 +116,8 @@ func determineBlockEncryption(
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (*Encryption, cidlink.Link, error) {
+	encstore := datastore.EncstoreFrom(txn.Store())
+	blockstore := datastore.BlockstoreFrom(txn.Store())
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
 		encBlock := &Encryption{DocID: []byte(docID)}
@@ -133,7 +135,7 @@ func determineBlockEncryption(
 				encBlock.Key = encKey
 			}
 
-			link, err := putBlock(ctx, txn.Encstore(), encBlock)
+			link, err := putBlock(ctx, encstore, encBlock)
 			if err != nil {
 				return nil, cidlink.Link{}, err
 			}
@@ -143,7 +145,7 @@ func determineBlockEncryption(
 
 	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
-		prevBlockBytes, err := txn.Blockstore().AsIPLDStorage().Get(ctx, headCid.KeyString())
+		prevBlockBytes, err := blockstore.AsIPLDStorage().Get(ctx, headCid.KeyString())
 		if err != nil {
 			return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 		}
@@ -152,7 +154,7 @@ func determineBlockEncryption(
 			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
-			prevBlockEncBytes, err := txn.Encstore().AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
+			prevBlockEncBytes, err := encstore.AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 			}
@@ -213,7 +215,7 @@ func updateHeads(
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
+	headset := NewHeadSet(datastore.HeadstoreFrom(txn.Store()), crdt.HeadstorePrefix())
 
 	priority := block.Delta.GetPriority()
 
@@ -242,7 +244,7 @@ func updateHeads(
 			continue
 		}
 
-		known, err := txn.Blockstore().Has(ctx, linkCid)
+		known, err := datastore.BlockstoreFrom(txn.Store()).Has(ctx, linkCid)
 		if err != nil {
 			return NewErrCouldNotFindBlock(linkCid, err)
 		}

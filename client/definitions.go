@@ -258,7 +258,7 @@ func GetDefinition(
 // If the related definition is not found, or an error occurs, default and false will be returned.
 func GetDefinitionFromStore(
 	ctx context.Context,
-	store Store,
+	store DB,
 	host CollectionDefinition,
 	kind FieldKind,
 ) (CollectionDefinition, bool, error) {

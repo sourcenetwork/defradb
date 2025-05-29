@@ -26,7 +26,6 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 )
@@ -54,11 +53,11 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -382,26 +381,6 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 		server: txn,
 		client: client,
 	}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() corekv.Reader {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
 }
 
 func (w *Wrapper) Close() {

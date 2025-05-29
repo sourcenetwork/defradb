@@ -30,6 +30,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 
 	"github.com/multiformats/go-multiaddr"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
@@ -41,21 +42,22 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/net/config"
 )
 
+var tracer = telemetry.NewTracer()
+
 // DB hold the database related methods that are required by Peer.
 type DB interface {
-	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
-	Blockstore() datastore.Blockstore
-	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
-	Encstore() datastore.Blockstore
 	// GetCollections returns the list of collections according to the given options.
 	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetNodeIdentity returns the node's public raw identity.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+	// Rootstore returns the instance's root store.
+	Rootstore() corekv.TxnStore
 }
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
@@ -81,7 +83,13 @@ type Peer struct {
 	db          DB
 
 	bootCloser io.Closer
+
+	// The intervals at which to retry replicator failures.
+	// For example, this can define an exponential backoff strategy.
+	retryIntervals []time.Duration
 }
+
+var _ client.P2P = (*Peer)(nil)
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
@@ -164,9 +172,10 @@ func NewPeer(
 		return nil, err
 	}
 
+	bs := datastore.BlockstoreFrom(db.Rootstore())
 	bswapnet := bsnet.NewFromIpfsHost(h)
-	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
-	p.blockService = blockservice.New(db.Blockstore(), bswap)
+	bswap := bitswap.New(ctx, bswapnet, ddht, bs, bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
+	p.blockService = blockservice.New(bs, bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
@@ -202,6 +211,20 @@ func NewPeer(
 	}
 
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
+
+	go p.handleReplicatorRetries(ctx)
+
+	err = p.loadAndPublishReplicators(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		// This can be a long running operation so running it in a goroutine
+		// ensures calling `NewPeer` won't block.
+		err := p.loadAndPublishP2PCollections(ctx)
+		log.ErrorE("Error loading P2P collections", err)
+	}()
 
 	return p, nil
 }
@@ -277,9 +300,6 @@ func (p *Peer) handleMessageLoop() {
 		case event.P2PTopic:
 			p.server.updatePubSubTopics(evt)
 
-		case event.Replicator:
-			p.server.updateReplicators(evt)
-
 		default:
 			// ignore other events
 			continue
@@ -298,7 +318,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(evt)
 
-	// Retries are for replicators only and should not polluting the pubsub network.
+	// Retries are for replicators only and should not pollute the pubsub network.
 	if !evt.IsRetry {
 		req := &pushLogRequest{
 			DocID:        evt.DocID,

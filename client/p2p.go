@@ -23,10 +23,10 @@ type P2P interface {
 
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
-	SetReplicator(ctx context.Context, rep ReplicatorParams) error
+	SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error
 	// DeleteReplicator deletes a replicator from the persisted list
 	// or specific schemas if they are specified.
-	DeleteReplicator(ctx context.Context, rep ReplicatorParams) error
+	DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error
 	// GetAllReplicators returns the full list of replicators with their
 	// subscribed schemas.
 	GetAllReplicators(ctx context.Context) ([]Replicator, error)
