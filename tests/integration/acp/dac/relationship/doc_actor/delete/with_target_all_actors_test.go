@@ -107,7 +107,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(), // Give implicit access to all identities.
@@ -315,7 +315,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2), // Give access to this identity explictly before.
@@ -329,7 +329,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(), // Give implicit access to all identities.
@@ -343,7 +343,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(4), // Give access to this identity explictly after.
@@ -647,7 +647,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNo
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(), // Give implicit access to all identities.

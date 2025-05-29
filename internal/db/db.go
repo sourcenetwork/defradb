@@ -297,28 +297,28 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	return nil
 }
 
-func (db *DB) AddDocActorRelationship(
+func (db *DB) AddActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
+) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.documentACP.HasValue() {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
 	collection, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
 	if !hasPolicy {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+		return client.AddActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
 	exists, err := db.documentACP.Value().AddDocActorRelationship(
@@ -332,17 +332,17 @@ func (db *DB) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	if !exists {
 		err = db.publishDocUpdateEvent(ctx, docID, collection)
 		if err != nil {
-			return client.AddDocActorRelationshipResult{}, err
+			return client.AddActorRelationshipResult{}, err
 		}
 	}
 
-	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
+	return client.AddActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
 func (db *DB) DeleteDocActorRelationship(

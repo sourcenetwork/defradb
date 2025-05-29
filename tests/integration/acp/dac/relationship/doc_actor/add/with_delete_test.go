@@ -135,7 +135,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -149,7 +149,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -287,7 +287,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -447,7 +447,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

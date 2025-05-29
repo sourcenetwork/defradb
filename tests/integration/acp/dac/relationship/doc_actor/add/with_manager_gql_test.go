@@ -163,7 +163,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{ // Make admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -177,7 +177,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager makes itself a updater.
+			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -192,7 +192,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			// Note: It is not neccesary to make itself a reader, as becoming an updater allows reading.
-			testUtils.AddDocActorRelationship{ // Manager makes itself a reader
+			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -254,7 +254,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager makes itself a deleter.
+			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a deleter.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -398,7 +398,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Make admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -456,7 +456,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager can manage only.
+			testUtils.AddActorRelationshipWithDAC{ // Manager can manage only.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -574,7 +574,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Make admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -588,7 +588,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Admin tries to make another actor an updater
+			testUtils.AddActorRelationshipWithDAC{ // Admin tries to make another actor an updater
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -602,7 +602,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedError: "UNAUTHORIZED",
 			},
 
-			testUtils.AddDocActorRelationship{ // Admin tries to make another actor a deleter
+			testUtils.AddActorRelationshipWithDAC{ // Admin tries to make another actor a deleter
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),

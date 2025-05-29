@@ -37,13 +37,13 @@ func (w *Wrapper) AddPolicyWithDAC(
 	return addPolicyResult, err
 }
 
-func (w *Wrapper) AddDocActorRelationship(
+func (w *Wrapper) AddActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
+) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "relationship", "add",
 		"--collection", collectionName,
@@ -54,12 +54,12 @@ func (w *Wrapper) AddDocActorRelationship(
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
-	var exists client.AddDocActorRelationshipResult
+	var exists client.AddActorRelationshipResult
 	if err := json.Unmarshal(data, &exists); err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	return exists, err

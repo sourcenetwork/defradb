@@ -161,7 +161,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_AllActorsCanReadButNotUpdat
 				SkipLocalUpdateEvent: true,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),
@@ -397,7 +397,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_GQL_CanReadEvenWithoutIdentityB
 				SkipLocalUpdateEvent: true,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),

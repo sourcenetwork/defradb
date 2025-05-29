@@ -368,8 +368,8 @@ func performAction(
 	case AddPolicyWithDAC:
 		addPolicyWithDAC(s, action)
 
-	case AddDocActorRelationship:
-		addDocActorRelationshipACP(s, action)
+	case AddActorRelationshipWithDAC:
+		addActorRelationshipWithDAC(s, action)
 
 	case DeleteDocActorRelationship:
 		deleteDocActorRelationshipACP(s, action)

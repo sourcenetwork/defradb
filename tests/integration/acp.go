@@ -142,8 +142,8 @@ func addPolicyWithDAC(
 	}
 }
 
-// AddDocActorRelationship will attempt to create a new relationship for a document with an actor.
-type AddDocActorRelationship struct {
+// AddActorRelationshipWithDAC will attempt to create a new relationship for a document with an actor.
+type AddActorRelationshipWithDAC struct {
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be added in all nodes, unless testing with
@@ -188,9 +188,9 @@ type AddDocActorRelationship struct {
 	ExpectedError string
 }
 
-func addDocActorRelationshipACP(
+func addActorRelationshipWithDAC(
 	s *state,
-	action AddDocActorRelationship,
+	action AddActorRelationshipWithDAC,
 ) {
 	var docID string
 	actionNodeID := action.NodeID
@@ -201,7 +201,7 @@ func addDocActorRelationshipACP(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		exists, err := node.AddDocActorRelationship(
+		exists, err := node.AddActorRelationshipWithDAC(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,

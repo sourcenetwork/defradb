@@ -150,7 +150,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

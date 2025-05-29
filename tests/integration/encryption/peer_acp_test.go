@@ -119,13 +119,13 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.ClientIdentity(1),
 				DocID:             0,
 				Relation:          "reader",
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             0,
@@ -205,7 +205,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.ClientIdentity(1),
 				DocID:             0,
@@ -282,7 +282,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             0,
@@ -322,7 +322,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 					}
 				`,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             3,
@@ -438,7 +438,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.Close{
 				NodeID: immutable.Some(0),
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				NodeID:            immutable.Some(1),
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),

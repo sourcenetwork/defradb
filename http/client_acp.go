@@ -52,13 +52,13 @@ type addDocActorRelationshipRequest struct {
 	TargetActor    string
 }
 
-func (c *Client) AddDocActorRelationship(
+func (c *Client) AddActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
+) (client.AddActorRelationshipResult, error) {
 	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
 
 	body, err := json.Marshal(
@@ -71,7 +71,7 @@ func (c *Client) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -82,12 +82,12 @@ func (c *Client) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
-	var addDocActorRelResult client.AddDocActorRelationshipResult
+	var addDocActorRelResult client.AddActorRelationshipResult
 	if err := c.http.requestJson(req, &addDocActorRelResult); err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	return addDocActorRelResult, nil

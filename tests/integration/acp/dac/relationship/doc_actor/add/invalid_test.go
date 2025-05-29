@@ -107,7 +107,7 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -217,7 +217,7 @@ func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -327,7 +327,7 @@ func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -437,7 +437,7 @@ func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.NoIdentity(),
@@ -547,7 +547,7 @@ func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testin
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.NoIdentity(),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

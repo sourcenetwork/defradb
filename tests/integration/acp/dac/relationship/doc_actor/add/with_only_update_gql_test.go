@@ -151,7 +151,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_GQL_Oth
 				SkipLocalUpdateEvent: true,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

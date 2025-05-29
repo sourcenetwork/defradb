@@ -107,7 +107,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -121,7 +121,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner gives an actor read access
+			testUtils.AddActorRelationshipWithDAC{ // Owner gives an actor read access
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -285,7 +285,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -299,7 +299,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager gives an actor read access
+			testUtils.AddActorRelationshipWithDAC{ // Manager gives an actor read access
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -349,7 +349,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager can no longer grant read access.
+			testUtils.AddActorRelationshipWithDAC{ // Manager can no longer grant read access.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(4), // This identity has no access previously.
@@ -476,7 +476,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

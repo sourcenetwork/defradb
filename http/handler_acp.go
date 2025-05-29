@@ -50,7 +50,7 @@ func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	addDocActorRelResult, err := db.AddDocActorRelationship(
+	addDocActorRelResult, err := db.AddActorRelationshipWithDAC(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,

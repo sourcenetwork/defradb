@@ -125,7 +125,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				},
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				NodeID:            immutable.Some(0),
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.NodeIdentity(1),
@@ -152,7 +152,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				},
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				NodeID:            immutable.Some(0),
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(2),
@@ -162,7 +162,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				NodeID:            immutable.Some(1), // Note: Different node than the previous
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(2),

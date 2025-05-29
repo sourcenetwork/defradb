@@ -253,7 +253,7 @@ func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP
 				},
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				CollectionID:      0,

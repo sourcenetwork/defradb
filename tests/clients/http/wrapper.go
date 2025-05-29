@@ -107,14 +107,14 @@ func (w *Wrapper) AddPolicyWithDAC(
 	return w.client.AddPolicyWithDAC(ctx, policy)
 }
 
-func (w *Wrapper) AddDocActorRelationship(
+func (w *Wrapper) AddActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
-	return w.client.AddDocActorRelationship(
+) (client.AddActorRelationshipResult, error) {
+	return w.client.AddActorRelationshipWithDAC(
 		ctx,
 		collectionName,
 		docID,

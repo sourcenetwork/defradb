@@ -47,22 +47,22 @@ func (_m *DB) EXPECT() *DB_Expecter {
 }
 
 // AddDocActorRelationship provides a mock function for the type DB
-func (_mock *DB) AddDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddDocActorRelationshipResult, error) {
+func (_mock *DB) AddDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddDocActorRelationship")
 	}
 
-	var r0 client.AddDocActorRelationshipResult
+	var r0 client.AddActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.AddDocActorRelationshipResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.AddActorRelationshipResult, error)); ok {
 		return returnFunc(ctx, collectionName, docID, relation, targetActor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.AddDocActorRelationshipResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.AddActorRelationshipResult); ok {
 		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor)
 	} else {
-		r0 = ret.Get(0).(client.AddDocActorRelationshipResult)
+		r0 = ret.Get(0).(client.AddActorRelationshipResult)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
 		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor)
@@ -94,12 +94,12 @@ func (_c *DB_AddDocActorRelationship_Call) Run(run func(ctx context.Context, col
 	return _c
 }
 
-func (_c *DB_AddDocActorRelationship_Call) Return(addDocActorRelationshipResult client.AddDocActorRelationshipResult, err error) *DB_AddDocActorRelationship_Call {
+func (_c *DB_AddDocActorRelationship_Call) Return(addDocActorRelationshipResult client.AddActorRelationshipResult, err error) *DB_AddDocActorRelationship_Call {
 	_c.Call.Return(addDocActorRelationshipResult, err)
 	return _c
 }
 
-func (_c *DB_AddDocActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddDocActorRelationshipResult, error)) *DB_AddDocActorRelationship_Call {
+func (_c *DB_AddDocActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *DB_AddDocActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }

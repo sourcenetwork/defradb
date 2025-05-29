@@ -149,7 +149,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationsh
 				SkipLocalUpdateEvent: true,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -163,7 +163,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationsh
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -313,7 +313,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 				SkipLocalUpdateEvent: true,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

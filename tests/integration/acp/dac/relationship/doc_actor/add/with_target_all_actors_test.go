@@ -161,7 +161,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_AllActorsCanReadButNotUpdateOrD
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),
@@ -397,7 +397,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_CanReadEvenWithoutIdentityButNo
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),

@@ -46,7 +46,7 @@ var openApiSchemas = map[string]any{
 	"set_migration_request":           &setMigrationRequest{},
 	"acp_policy_add_result":           &client.AddPolicyResult{},
 	"acp_relationship_add_request":    &addDocActorRelationshipRequest{},
-	"acp_relationship_add_result":     &client.AddDocActorRelationshipResult{},
+	"acp_relationship_add_result":     &client.AddActorRelationshipResult{},
 	"acp_relationship_delete_request": &deleteDocActorRelationshipRequest{},
 	"acp_relationship_delete_result":  &client.DeleteDocActorRelationshipResult{},
 	"identity":                        &identity.PublicRawIdentity{},

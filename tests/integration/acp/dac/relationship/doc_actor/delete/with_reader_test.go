@@ -107,7 +107,7 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -245,7 +245,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

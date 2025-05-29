@@ -107,7 +107,7 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddActorRelationshipWithDAC{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -135,7 +135,7 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 				ExpectedError: "failed to delete document actor relationship with acp",
 			},
 
-			testUtils.AddDocActorRelationship{ // Admin can still perform admin operations.
+			testUtils.AddActorRelationshipWithDAC{ // Admin can still perform admin operations.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -259,7 +259,7 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 				ExpectedError: "failed to delete document actor relationship with acp",
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner can still perform admin operations.
+			testUtils.AddActorRelationshipWithDAC{ // Owner can still perform admin operations.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
