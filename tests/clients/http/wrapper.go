@@ -100,11 +100,11 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
-func (w *Wrapper) AddPolicy(
+func (w *Wrapper) AddPolicyWithDAC(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	return w.client.AddPolicy(ctx, policy)
+	return w.client.AddPolicyWithDAC(ctx, policy)
 }
 
 func (w *Wrapper) AddDocActorRelationship(

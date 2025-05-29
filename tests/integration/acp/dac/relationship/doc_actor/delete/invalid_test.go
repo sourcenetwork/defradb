@@ -22,7 +22,7 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 		Description: "Test acp, delete doc actor relationship with docID missing, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -132,7 +132,7 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 		Description: "Test acp, delete doc actor relationship with collection missing, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -242,7 +242,7 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 		Description: "Test acp, delete doc actor relationship with relation name missing, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -352,7 +352,7 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 		Description: "Test acp, delete doc actor relationship with target actor missing, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -462,7 +462,7 @@ func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *tes
 		Description: "Test acp, delete doc actor relationship with requesting identity missing, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

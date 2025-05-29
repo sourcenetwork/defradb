@@ -59,7 +59,7 @@ resources:
 
 func getSetupEmployeeCompanyActions() []any {
 	return []any{
-		testUtils.AddDocPolicy{
+		testUtils.AddPolicyWithDAC{
 			Identity: testUtils.ClientIdentity(1),
 			Policy:   employeeCompanyPolicy,
 		},

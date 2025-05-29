@@ -76,7 +76,7 @@ func TestACP_LinkSchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaRej
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

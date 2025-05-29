@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (w *Wrapper) AddPolicy(
+func (w *Wrapper) AddPolicyWithDAC(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {

@@ -23,7 +23,7 @@ func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejecte
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -96,7 +96,7 @@ func TestACP_LinkSchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejecte
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

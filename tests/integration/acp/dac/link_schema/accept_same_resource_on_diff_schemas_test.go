@@ -27,7 +27,7 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

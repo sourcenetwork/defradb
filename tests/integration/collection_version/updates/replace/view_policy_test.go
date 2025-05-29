@@ -26,7 +26,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
 			testUtils.CachelessViewType,
 		}),
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
                     name: test

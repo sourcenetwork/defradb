@@ -24,7 +24,7 @@ func TestACP_LinkSchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

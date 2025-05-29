@@ -24,7 +24,7 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *tes
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -124,7 +124,7 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchem
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -224,7 +224,7 @@ func TestACP_LinkSchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *t
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

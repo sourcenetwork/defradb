@@ -23,7 +23,7 @@ func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *tes
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

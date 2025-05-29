@@ -34,7 +34,7 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 
 			testUtils.RandomNetworkingConfig(),
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -152,7 +152,7 @@ func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP
 				TargetNodeID: 0,
 			},
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

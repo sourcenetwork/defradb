@@ -22,7 +22,7 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 		Description: "Test acp, owner revokes read access twice, second time is no-op",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -160,7 +160,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 		Description: "Test acp, owner revokes read access from another actor, they can not read anymore",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

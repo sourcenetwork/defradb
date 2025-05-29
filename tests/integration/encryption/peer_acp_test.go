@@ -81,7 +81,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
@@ -167,7 +167,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
@@ -243,7 +243,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
@@ -389,7 +389,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},

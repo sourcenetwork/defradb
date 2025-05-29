@@ -22,7 +22,7 @@ func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
 		Description: "Test acp, adding empty policy, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: "",
@@ -41,7 +41,7 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 		Description: "Test acp, adding policy, with empty creator, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.NoIdentity(),
 
 				Policy: `
@@ -82,7 +82,7 @@ func TestACP_AddPolicy_EmptyCreatorAndPolicyArgs_Error(t *testing.T) {
 		Description: "Test acp, adding policy, with empty policy and empty creator, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 				Identity: testUtils.NoIdentity(),
 
 				Policy: "",

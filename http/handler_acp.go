@@ -28,7 +28,7 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	addPolicyResult, err := db.AddPolicy(
+	addPolicyResult, err := db.AddPolicyWithDAC(
 		req.Context(),
 		string(policyBytes),
 	)

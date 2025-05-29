@@ -365,8 +365,8 @@ func performAction(
 	case ConfigureMigration:
 		configureMigration(s, action)
 
-	case AddDocPolicy:
-		addPolicyDocumentACP(s, action)
+	case AddPolicyWithDAC:
+		addPolicyWithDAC(s, action)
 
 	case AddDocActorRelationship:
 		addDocActorRelationshipACP(s, action)

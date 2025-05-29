@@ -22,7 +22,7 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
 		Description: "Test acp, add doc actor relationship with a dummy relation defined on policy, nothing happens",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -168,7 +168,7 @@ func TestACP_AddDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t 
 		Description: "Test acp, add doc actor relationship with an invalid relation (not defined on policy), error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

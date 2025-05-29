@@ -31,7 +31,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 			}),
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

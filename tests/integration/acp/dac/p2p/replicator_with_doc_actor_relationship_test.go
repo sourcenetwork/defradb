@@ -34,7 +34,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 
 			testUtils.RandomNetworkingConfig(),
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

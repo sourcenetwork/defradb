@@ -60,8 +60,8 @@ func init() {
 	}
 }
 
-// AddDocPolicy will attempt to add the given policy using DefraDB's Document ACP system.
-type AddDocPolicy struct {
+// AddPolicyWithDAC will attempt to add the given policy using DefraDB's Document ACP system.
+type AddPolicyWithDAC struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
 	// If a value is not provided the policy will be added in all nodes, unless testing with
@@ -88,10 +88,10 @@ type AddDocPolicy struct {
 	ExpectedError string
 }
 
-// addPolicyDocumentACP will attempt to add the given policy using DefraDB's Document ACP system.
-func addPolicyDocumentACP(
+// addPolicyWithDAC will attempt to add the given policy using DefraDB's Document ACP system.
+func addPolicyWithDAC(
 	s *state,
-	action AddDocPolicy,
+	action AddPolicyWithDAC,
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
 	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
@@ -112,7 +112,7 @@ func addPolicyDocumentACP(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
-		policyResult, err := node.AddPolicy(ctx, action.Policy)
+		policyResult, err := node.AddPolicyWithDAC(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)

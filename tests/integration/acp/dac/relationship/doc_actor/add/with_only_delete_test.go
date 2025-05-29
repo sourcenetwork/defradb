@@ -22,7 +22,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 		Description: "Test acp, owner gives delete access without explicit read permission, can still delete",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

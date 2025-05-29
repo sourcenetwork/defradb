@@ -215,7 +215,7 @@ func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
 	return db.documentACP
 }
 
-func (db *DB) AddPolicy(
+func (db *DB) AddPolicyWithDAC(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {

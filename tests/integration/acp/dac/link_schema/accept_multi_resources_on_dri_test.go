@@ -24,7 +24,7 @@ func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -136,7 +136,7 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

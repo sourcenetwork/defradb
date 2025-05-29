@@ -51,14 +51,14 @@ func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_Ac
 		Description: "Test acp, add same policy (DRI compliant) twice by different actors, accept both schemas",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: policyUsedByBoth,
 			},
 
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(2),
 

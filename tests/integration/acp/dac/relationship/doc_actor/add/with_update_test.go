@@ -31,7 +31,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 			}),
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -196,7 +196,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing
 			}),
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -378,7 +378,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwn
 		Description: "Test acp, owner gives update access to another actor, both can read",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

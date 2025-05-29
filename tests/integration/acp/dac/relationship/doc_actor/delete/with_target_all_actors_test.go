@@ -22,7 +22,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 		Description: "Test acp, owner revokes read access from actors that were given read access implicitly",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -230,7 +230,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 		Description: "Test acp, owner revokes read access from actors that were given read access implicitly",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -562,7 +562,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNo
 		Description: "Test acp, owner revokes read access from actors that were given read access implicitly, non-identity actors can't read anymore",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 

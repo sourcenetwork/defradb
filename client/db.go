@@ -97,17 +97,17 @@ type DB interface {
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// AddPolicy adds policy to acp, if acp is available.
+	// AddPolicyWithDAC adds policy to document acp system, if available.
 	//
-	// If policy was successfully added to acp then a policyID is returned,
-	// otherwise if acp was not available then returns the following error:
+	// If policy was successfully added then a policyID is returned,
+	// otherwise if acp system was not available then returns the following error:
 	// [client.ErrPolicyAddFailureNoACP]
 	//
 	// Detects the format of the policy automatically by assuming YAML format if JSON
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
+	AddPolicyWithDAC(ctx context.Context, policy string) (AddPolicyResult, error)
 
 	// AddDocActorRelationship creates a relationship between document and the target actor.
 	//

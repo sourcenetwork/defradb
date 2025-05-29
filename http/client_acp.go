@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (c *Client) AddPolicy(
+func (c *Client) AddPolicyWithDAC(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {

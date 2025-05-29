@@ -22,7 +22,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 		Description: "Test acp, owner gives delete access to another actor twice, no-op",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -174,7 +174,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 		Description: "Test acp, owner gives delete access to another actor",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -362,7 +362,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 		Description: "Test acp, owner gives delete access to another actor, both can read",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddPolicyWithDAC{
 
 				Identity: testUtils.ClientIdentity(1),
 
