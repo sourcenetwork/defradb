@@ -107,7 +107,7 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -217,7 +217,7 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -327,7 +327,7 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -437,7 +437,7 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.NoIdentity(),
@@ -547,7 +547,7 @@ func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *tes
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.NoIdentity(),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

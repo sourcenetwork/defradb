@@ -371,8 +371,8 @@ func performAction(
 	case AddActorRelationshipWithDAC:
 		addActorRelationshipWithDAC(s, action)
 
-	case DeleteDocActorRelationship:
-		deleteDocActorRelationshipACP(s, action)
+	case DeleteActorRelationshipWithDAC:
+		deleteActorRelationshipWithDAC(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)

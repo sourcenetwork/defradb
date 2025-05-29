@@ -157,7 +157,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin revokes access of the other actor that could read.
+			testUtils.DeleteActorRelationshipWithDAC{ // Admin revokes access of the other actor that could read.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -335,7 +335,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin revokes access of the admin.
+			testUtils.DeleteActorRelationshipWithDAC{ // Admin revokes access of the admin.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -490,7 +490,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin tries to revoke owners `owner` relation.
+			testUtils.DeleteActorRelationshipWithDAC{ // Admin tries to revoke owners `owner` relation.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(1),
@@ -504,7 +504,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 				ExpectedError: "OPERATION_FORBIDDEN",
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Owner can still perform owner operations, like restrict admin.
+			testUtils.DeleteActorRelationshipWithDAC{ // Owner can still perform owner operations, like restrict admin.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

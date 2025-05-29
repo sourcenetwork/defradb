@@ -183,7 +183,7 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 				DocID: 1,
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to delete (and read) the document.
+			testUtils.DeleteActorRelationshipWithDAC{ // Revoke access from being able to delete (and read) the document.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

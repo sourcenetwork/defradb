@@ -58,7 +58,7 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 		case
 			AddPolicyWithDAC,
 			AddActorRelationshipWithDAC,
-			DeleteDocActorRelationship:
+			DeleteActorRelationshipWithDAC:
 			isDocumentACPTest = true
 		}
 	}

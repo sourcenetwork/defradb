@@ -123,14 +123,14 @@ func (w *Wrapper) AddActorRelationshipWithDAC(
 	)
 }
 
-func (w *Wrapper) DeleteDocActorRelationship(
+func (w *Wrapper) DeleteActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	return w.client.DeleteDocActorRelationship(
+) (client.DeleteActorRelationshipResult, error) {
+	return w.client.DeleteActorRelationshipWithDAC(
 		ctx,
 		collectionName,
 		docID,

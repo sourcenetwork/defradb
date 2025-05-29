@@ -37,8 +37,8 @@ type AddActorRelationshipResult struct {
 	ExistedAlready bool
 }
 
-// DeleteDocActorRelationshipResult wraps the result of making an object-actor relationship.
-type DeleteDocActorRelationshipResult struct {
+// DeleteActorRelationshipResult wraps the result of making an object-actor relationship.
+type DeleteActorRelationshipResult struct {
 	// RecordFound is true if the relationship record was found, and
 	// is false if the relationship record was not found (no-op).
 	RecordFound bool

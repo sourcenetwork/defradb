@@ -169,7 +169,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from all actors, (ones given access through * implicitly).
+			testUtils.DeleteActorRelationshipWithDAC{ // Revoke access from all actors, (ones given access through * implicitly).
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),
@@ -453,7 +453,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from all actors, (ones given access through * implicitly).
+			testUtils.DeleteActorRelationshipWithDAC{ // Revoke access from all actors, (ones given access through * implicitly).
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),
@@ -685,7 +685,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNo
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from all actors, (ones given access through * implicitly).
+			testUtils.DeleteActorRelationshipWithDAC{ // Revoke access from all actors, (ones given access through * implicitly).
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.AllClientIdentities(),

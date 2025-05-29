@@ -100,13 +100,13 @@ type deleteDocActorRelationshipRequest struct {
 	TargetActor    string
 }
 
-func (c *Client) DeleteDocActorRelationship(
+func (c *Client) DeleteActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
+) (client.DeleteActorRelationshipResult, error) {
 	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
 
 	body, err := json.Marshal(
@@ -119,7 +119,7 @@ func (c *Client) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -130,12 +130,12 @@ func (c *Client) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	var deleteDocActorRelResult client.DeleteDocActorRelationshipResult
+	var deleteDocActorRelResult client.DeleteActorRelationshipResult
 	if err := c.http.requestJson(req, &deleteDocActorRelResult); err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	return deleteDocActorRelResult, nil

@@ -493,22 +493,22 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 }
 
 // DeleteDocActorRelationship provides a mock function for the type DB
-func (_mock *DB) DeleteDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteDocActorRelationshipResult, error) {
+func (_mock *DB) DeleteDocActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteDocActorRelationship")
 	}
 
-	var r0 client.DeleteDocActorRelationshipResult
+	var r0 client.DeleteActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.DeleteDocActorRelationshipResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.DeleteActorRelationshipResult, error)); ok {
 		return returnFunc(ctx, collectionName, docID, relation, targetActor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.DeleteDocActorRelationshipResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.DeleteActorRelationshipResult); ok {
 		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor)
 	} else {
-		r0 = ret.Get(0).(client.DeleteDocActorRelationshipResult)
+		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
 		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor)
@@ -540,12 +540,12 @@ func (_c *DB_DeleteDocActorRelationship_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *DB_DeleteDocActorRelationship_Call) Return(deleteDocActorRelationshipResult client.DeleteDocActorRelationshipResult, err error) *DB_DeleteDocActorRelationship_Call {
+func (_c *DB_DeleteDocActorRelationship_Call) Return(deleteDocActorRelationshipResult client.DeleteActorRelationshipResult, err error) *DB_DeleteDocActorRelationship_Call {
 	_c.Call.Return(deleteDocActorRelationshipResult, err)
 	return _c
 }
 
-func (_c *DB_DeleteDocActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteDocActorRelationshipResult, error)) *DB_DeleteDocActorRelationship_Call {
+func (_c *DB_DeleteDocActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *DB_DeleteDocActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -234,8 +234,8 @@ func addActorRelationshipWithDAC(
 	}
 }
 
-// DeleteDocActorRelationship will attempt to delete a relationship between a document and an actor.
-type DeleteDocActorRelationship struct {
+// DeleteActorRelationshipWithDAC will attempt to delete a relationship between a document and an actor.
+type DeleteActorRelationshipWithDAC struct {
 	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
@@ -281,9 +281,9 @@ type DeleteDocActorRelationship struct {
 	ExpectedError string
 }
 
-func deleteDocActorRelationshipACP(
+func deleteActorRelationshipWithDAC(
 	s *state,
-	action DeleteDocActorRelationship,
+	action DeleteActorRelationshipWithDAC,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
@@ -291,7 +291,7 @@ func deleteDocActorRelationshipACP(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+		deleteActorRelationshipResult, err := node.DeleteActorRelationshipWithDAC(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
@@ -304,7 +304,7 @@ func deleteDocActorRelationshipACP(
 
 		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
-			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
+			require.Equal(s.t, action.ExpectedRecordFound, deleteActorRelationshipResult.RecordFound)
 		}
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through

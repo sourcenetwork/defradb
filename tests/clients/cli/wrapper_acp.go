@@ -65,13 +65,13 @@ func (w *Wrapper) AddActorRelationshipWithDAC(
 	return exists, err
 }
 
-func (w *Wrapper) DeleteDocActorRelationship(
+func (w *Wrapper) DeleteActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
+) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "relationship", "delete",
 		"--collection", collectionName,
@@ -82,12 +82,12 @@ func (w *Wrapper) DeleteDocActorRelationship(
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	var exists client.DeleteDocActorRelationshipResult
+	var exists client.DeleteActorRelationshipResult
 	if err := json.Unmarshal(data, &exists); err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	return exists, err

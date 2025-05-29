@@ -121,7 +121,7 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin tries to revoke it's own relation.
+			testUtils.DeleteActorRelationshipWithDAC{ // Admin tries to revoke it's own relation.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -245,7 +245,7 @@ func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Owner tries to revoke it's own relation.
+			testUtils.DeleteActorRelationshipWithDAC{ // Owner tries to revoke it's own relation.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(1),

@@ -125,7 +125,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -271,7 +271,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

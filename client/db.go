@@ -125,7 +125,7 @@ type DB interface {
 		targetActor string,
 	) (AddActorRelationshipResult, error)
 
-	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	// DeleteActorRelationshipWithDAC deletes a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship record was found and deleted. Upon success the boolean value
@@ -135,13 +135,13 @@ type DB interface {
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
 	//   removed, however this does not revoke access from actors that had explicit relationships.
-	DeleteDocActorRelationship(
+	DeleteActorRelationshipWithDAC(
 		ctx context.Context,
 		collectionName string,
 		docID string,
 		relation string,
 		targetActor string,
-	) (DeleteDocActorRelationshipResult, error)
+	) (DeleteActorRelationshipResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)

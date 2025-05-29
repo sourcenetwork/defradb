@@ -44,7 +44,7 @@ func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedE
 				`,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

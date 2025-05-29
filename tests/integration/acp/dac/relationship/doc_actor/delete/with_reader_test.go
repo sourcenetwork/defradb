@@ -121,7 +121,7 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 				ExpectedExistence: false,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -135,7 +135,7 @@ func TestACP_OwnerRevokesReadAccessTwice_ShowThatTheRecordWasNotFoundSecondTime(
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -283,7 +283,7 @@ func TestACP_OwnerRevokesGivenReadAccess_OtherActorCanNoLongerRead(t *testing.T)
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

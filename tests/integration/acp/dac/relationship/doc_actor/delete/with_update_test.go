@@ -166,7 +166,7 @@ func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) 
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to update (and read) the document.
+			testUtils.DeleteActorRelationshipWithDAC{ // Revoke access from being able to update (and read) the document.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -390,7 +390,7 @@ func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to update (and read) the document.
+			testUtils.DeleteActorRelationshipWithDAC{ // Revoke access from being able to update (and read) the document.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

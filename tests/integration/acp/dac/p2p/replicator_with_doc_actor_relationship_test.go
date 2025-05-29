@@ -217,7 +217,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				NodeID: immutable.Some(1),
 
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -233,7 +233,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteActorRelationshipWithDAC{
 				NodeID: immutable.Some(0), // Note: Different node than the previous
 
 				RequestorIdentity: testUtils.ClientIdentity(1),

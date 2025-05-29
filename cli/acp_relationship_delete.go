@@ -66,7 +66,7 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db := mustGetContextDB(cmd)
-			deleteDocActorRelationshipResult, err := db.DeleteDocActorRelationship(
+			deleteDocActorRelationshipResult, err := db.DeleteActorRelationshipWithDAC(
 				cmd.Context(),
 				collectionArg,
 				docIDArg,

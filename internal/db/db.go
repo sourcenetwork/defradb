@@ -345,28 +345,28 @@ func (db *DB) AddActorRelationshipWithDAC(
 	return client.AddActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
-func (db *DB) DeleteDocActorRelationship(
+func (db *DB) DeleteActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
+) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.documentACP.HasValue() {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
 	collection, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
 	if !hasPolicy {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
 	recordFound, err := db.documentACP.Value().DeleteDocActorRelationship(
@@ -380,10 +380,10 @@ func (db *DB) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
+	return client.DeleteActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
