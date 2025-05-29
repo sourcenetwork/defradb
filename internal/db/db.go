@@ -412,7 +412,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	// Start acp if enabled, this will recover previous state if there is any.
+	// Start document acp if enabled, this will recover previous state if there is any.
 	if db.documentACP.HasValue() {
 		// db is responsible to call db.documentACP.Close() to free acp resources while closing.
 		if err = db.documentACP.Value().Start(ctx); err != nil {
