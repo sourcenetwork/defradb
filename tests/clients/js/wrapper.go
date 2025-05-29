@@ -120,7 +120,7 @@ func (w *Wrapper) AddDocActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddDocActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "addDocActorRelationship", collectionName, docID, relation, targetActor)
+	res, err := execute(ctx, w.value, "addActorRelationshipWithDAC", collectionName, docID, relation, targetActor)
 	if err != nil {
 		return client.AddDocActorRelationshipResult{}, err
 	}
@@ -131,20 +131,20 @@ func (w *Wrapper) AddDocActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) DeleteDocActorRelationship(
+func (w *Wrapper) DeleteActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "deleteDocActorRelationship", collectionName, docID, relation, targetActor)
+) (client.DeleteActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "deleteActorRelationshipWithDAC", collectionName, docID, relation, targetActor)
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
-	var out client.DeleteDocActorRelationshipResult
+	var out client.DeleteActorRelationshipResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 	return out, nil
 }

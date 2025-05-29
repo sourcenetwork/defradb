@@ -45,7 +45,7 @@ func (c *Client) AddPolicyWithDAC(
 	return policyResult, nil
 }
 
-type addDocActorRelationshipRequest struct {
+type addActorRelationshipWithDACRequest struct {
 	CollectionName string
 	DocID          string
 	Relation       string
@@ -62,7 +62,7 @@ func (c *Client) AddActorRelationshipWithDAC(
 	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
 
 	body, err := json.Marshal(
-		addDocActorRelationshipRequest{
+		addActorRelationshipWithDACRequest{
 			CollectionName: collectionName,
 			DocID:          docID,
 			Relation:       relation,
@@ -93,7 +93,7 @@ func (c *Client) AddActorRelationshipWithDAC(
 	return addDocActorRelResult, nil
 }
 
-type deleteDocActorRelationshipRequest struct {
+type deleteActorRelationshipWithDACRequest struct {
 	CollectionName string
 	DocID          string
 	Relation       string
@@ -110,7 +110,7 @@ func (c *Client) DeleteActorRelationshipWithDAC(
 	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
 
 	body, err := json.Marshal(
-		deleteDocActorRelationshipRequest{
+		deleteActorRelationshipWithDACRequest{
 			CollectionName: collectionName,
 			DocID:          docID,
 			Relation:       relation,

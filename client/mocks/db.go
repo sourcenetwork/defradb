@@ -540,8 +540,8 @@ func (_c *DB_DeleteDocActorRelationship_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *DB_DeleteDocActorRelationship_Call) Return(deleteDocActorRelationshipResult client.DeleteActorRelationshipResult, err error) *DB_DeleteDocActorRelationship_Call {
-	_c.Call.Return(deleteDocActorRelationshipResult, err)
+func (_c *DB_DeleteDocActorRelationship_Call) Return(deleteActorRelationshipWithDACResult client.DeleteActorRelationshipResult, err error) *DB_DeleteDocActorRelationship_Call {
+	_c.Call.Return(deleteActorRelationshipWithDACResult, err)
 	return _c
 }
 
