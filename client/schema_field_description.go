@@ -182,7 +182,7 @@ func (k ScalarArrayKind) IsArray() bool {
 	return true
 }
 
-func (k ScalarArrayKind) SubKind() FieldKind {
+func (k ScalarArrayKind) SubKind() ScalarKind {
 	switch k {
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return FieldKind_NILLABLE_BOOL
