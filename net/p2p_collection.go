@@ -24,7 +24,7 @@ import (
 
 const marker = byte(0xff)
 
-func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -71,7 +71,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs []string) er
 	return txn.Commit(ctx)
 }
 
-func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

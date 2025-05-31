@@ -218,7 +218,7 @@ func subscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	err := n.AddP2PCollections(s.ctx, schemaRoots...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -252,7 +252,7 @@ func unsubscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	err := n.RemoveP2PCollections(s.ctx, schemaRoots...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}

@@ -23,7 +23,7 @@ func TestAddP2PCollection_WithInvalidCollection_ShouldError(t *testing.T) {
 	ctx := context.Background()
 	db, peer := newTestPeer(ctx, t)
 	defer db.Close()
-	err := peer.AddP2PCollections(ctx, []string{"invalidCollection"})
+	err := peer.AddP2PCollections(ctx, "invalidCollection")
 	require.ErrorIs(t, err, client.ErrCollectionNotFound)
 }
 
@@ -35,7 +35,7 @@ func TestAddP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
 	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, []string{schema.Root})
+	err = peer.AddP2PCollections(ctx, schema.Root)
 	require.NoError(t, err)
 }
 
@@ -51,7 +51,7 @@ func TestAddP2PCollection_WithMultipleValidCollections_ShouldSucceed(t *testing.
 	require.NoError(t, err)
 	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].VersionID)
 	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, []string{schema1.Root, schema2.Root})
+	err = peer.AddP2PCollections(ctx, schema1.Root, schema2.Root)
 	require.NoError(t, err)
 }
 
@@ -59,7 +59,7 @@ func TestRemoveP2PCollection_WithInvalidCollection_ShouldError(t *testing.T) {
 	ctx := context.Background()
 	db, peer := newTestPeer(ctx, t)
 	defer db.Close()
-	err := peer.RemoveP2PCollections(ctx, []string{"invalidCollection"})
+	err := peer.RemoveP2PCollections(ctx, "invalidCollection")
 	require.ErrorIs(t, err, client.ErrCollectionNotFound)
 }
 
@@ -71,9 +71,9 @@ func TestRemoveP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
 	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, []string{schema.Root})
+	err = peer.AddP2PCollections(ctx, schema.Root)
 	require.NoError(t, err)
-	err = peer.RemoveP2PCollections(ctx, []string{schema.Root})
+	err = peer.RemoveP2PCollections(ctx, schema.Root)
 	require.NoError(t, err)
 }
 
@@ -89,7 +89,7 @@ func TestGetAllP2PCollections_WithMultipleValidCollections_ShouldSucceed(t *test
 	require.NoError(t, err)
 	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].VersionID)
 	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, []string{schema1.Root, schema2.Root})
+	err = peer.AddP2PCollections(ctx, schema1.Root, schema2.Root)
 	require.NoError(t, err)
 	cols, err := peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)

@@ -21,6 +21,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// ReplicatorParams contains the replicator fields that can be modified by the user.
+type ReplicatorParams struct {
+	// Info is the address of the peer to replicate to.
+	Info peer.AddrInfo
+	// Collections is the list of collection names to replicate.
+	Collections []string
+}
+
 func (c *Client) PeerInfo() peer.AddrInfo {
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
@@ -38,7 +46,7 @@ func (c *Client) PeerInfo() peer.AddrInfo {
 func (c *Client) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(client.ReplicatorParams{
+	body, err := json.Marshal(ReplicatorParams{
 		Info:        info,
 		Collections: collections,
 	})
@@ -56,7 +64,7 @@ func (c *Client) SetReplicator(ctx context.Context, info peer.AddrInfo, collecti
 func (c *Client) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(client.ReplicatorParams{
+	body, err := json.Marshal(ReplicatorParams{
 		Info:        info,
 		Collections: collections,
 	})

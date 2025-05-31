@@ -37,7 +37,7 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 }
 
 func (c *Transaction) Store() corekv.Store {
-	return nil
+	panic("client side transaction")
 }
 
 func (c *Transaction) ID() uint64 {

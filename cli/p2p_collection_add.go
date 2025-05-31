@@ -42,7 +42,7 @@ Example: add multiple collections
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return client.AddP2PCollections(cmd.Context(), collectionIDs)
+			return client.AddP2PCollections(cmd.Context(), collectionIDs...)
 		},
 	}
 	return cmd
