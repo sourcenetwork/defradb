@@ -42,7 +42,7 @@ Example: remove multiple collections
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return client.RemoveP2PCollections(cmd.Context(), collectionIDs)
+			return client.RemoveP2PCollections(cmd.Context(), collectionIDs...)
 		},
 	}
 	return cmd

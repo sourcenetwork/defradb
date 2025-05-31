@@ -40,7 +40,7 @@ const (
 	retryLoopInterval = 2 * time.Second
 )
 
-func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collections ...string) error {
+func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -83,9 +83,9 @@ func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collect
 
 	var fetchedCollections []client.Collection
 	switch {
-	case len(collections) > 0:
+	case len(collectionNames) > 0:
 		// if specific collections are chosen get them by name
-		for _, name := range collections {
+		for _, name := range collectionNames {
 			cols, err := p.db.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 			if err != nil {
 				return NewErrReplicatorCollections(err)
@@ -196,7 +196,7 @@ func (p *Peer) pushHeadsForDoc(ctx context.Context, docID, collectionID string, 
 	return nil
 }
 
-func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, collections ...string) error {
+func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -228,9 +228,9 @@ func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, coll
 	for _, id := range storedRep.CollectionIDs {
 		storedCollectionIDs[id] = struct{}{}
 	}
-	if len(collections) > 0 {
+	if len(collectionNames) > 0 {
 		// if specific collections are chosen get them by name
-		for _, name := range collections {
+		for _, name := range collectionNames {
 			cols, err := p.db.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 			if err != nil {
 				return NewErrReplicatorCollections(err)
@@ -710,7 +710,7 @@ func (p *Peer) retryDoc(ctx context.Context, peerIDString string, docID string) 
 			Block:        rawblock,
 			IsRetry:      true,
 		}
-		peerID, err := peer.IDFromBytes([]byte(peerIDString))
+		peerID, err := peer.Decode(peerIDString)
 		if err != nil {
 			return err
 		}

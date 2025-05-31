@@ -14,8 +14,6 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 type p2pHandler struct{}
@@ -36,7 +34,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var rep client.ReplicatorParams
+	var rep ReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -56,7 +54,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	var rep client.ReplicatorParams
+	var rep ReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -96,7 +94,7 @@ func (s *p2pHandler) AddP2PCollection(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := p2p.AddP2PCollections(req.Context(), collectionIDs)
+	err := p2p.AddP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -116,7 +114,7 @@ func (s *p2pHandler) RemoveP2PCollection(rw http.ResponseWriter, req *http.Reque
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs)
+	err := p2p.RemoveP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
