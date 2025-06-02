@@ -51,7 +51,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -90,7 +90,7 @@ func TestCCIPGet_WithSubscription(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -108,7 +108,7 @@ func TestCCIPGet_WithInvalidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -137,7 +137,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -169,7 +169,7 @@ func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -183,7 +183,7 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -191,7 +191,7 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 	assert.Equal(t, 400, res.StatusCode)
 }
 
-func setupDatabase(t *testing.T) client.DB {
+func setupDatabase(t *testing.T) DB {
 	ctx := context.Background()
 
 	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), dac.NoDocumentACP, nil)

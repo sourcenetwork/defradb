@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -47,7 +48,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
+	lsys.SetWriteStorage(datastore.BlockstoreFrom(db.rootstore).AsIPLDStorage())
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -92,7 +93,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
+	lsys.SetWriteStorage(datastore.BlockstoreFrom(db.rootstore).AsIPLDStorage())
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -150,7 +151,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
+	lsys.SetWriteStorage(datastore.BlockstoreFrom(db.rootstore).AsIPLDStorage())
 
 	initialDocState := map[string]any{
 		"name": "John",

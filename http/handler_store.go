@@ -26,14 +26,14 @@ import (
 type storeHandler struct{}
 
 func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := store.BasicImport(req.Context(), config.Filepath)
+	err := db.BasicImport(req.Context(), config.Filepath)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -42,14 +42,14 @@ func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := store.BasicExport(req.Context(), &config)
+	err := db.BasicExport(req.Context(), &config)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -58,14 +58,14 @@ func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	schema, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	cols, err := store.AddSchema(req.Context(), string(schema))
+	cols, err := db.AddSchema(req.Context(), string(schema))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -74,7 +74,7 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var message patchSchemaRequest
 	err := requestJSON(req, &message)
@@ -83,7 +83,7 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = store.PatchSchema(req.Context(), message.Patch, message.Migration, message.SetAsDefaultVersion)
+	err = db.PatchSchema(req.Context(), message.Patch, message.Migration, message.SetAsDefaultVersion)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -92,7 +92,7 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var patch string
 	err := requestJSON(req, &patch)
@@ -101,7 +101,7 @@ func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	err = store.PatchCollection(req.Context(), patch)
+	err = db.PatchCollection(req.Context(), patch)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -110,14 +110,14 @@ func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 }
 
 func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	schemaVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = store.SetActiveSchemaVersion(req.Context(), string(schemaVersionID))
+	err = db.SetActiveSchemaVersion(req.Context(), string(schemaVersionID))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -126,7 +126,7 @@ func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.
 }
 
 func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -135,7 +135,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := store.AddView(req.Context(), message.Query, message.SDL, message.Transform)
+	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.Transform)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -145,7 +145,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var cfg client.LensConfig
 	if err := requestJSON(req, &cfg); err != nil {
@@ -153,7 +153,7 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := store.SetMigration(req.Context(), cfg)
+	err := db.SetMigration(req.Context(), cfg)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -162,7 +162,7 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	options := client.CollectionFetchOptions{}
 	if req.URL.Query().Has("name") {
@@ -185,7 +185,7 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	cols, err := store.GetCollections(req.Context(), options)
+	cols, err := db.GetCollections(req.Context(), options)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -198,7 +198,7 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 }
 
 func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	options := client.SchemaFetchOptions{}
 	if req.URL.Query().Has("version_id") {
@@ -211,7 +211,7 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 
-	schema, err := store.GetSchemas(req.Context(), options)
+	schema, err := db.GetSchemas(req.Context(), options)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -220,7 +220,7 @@ func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	options := client.CollectionFetchOptions{}
 	if req.URL.Query().Has("name") {
@@ -243,7 +243,7 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	err := store.RefreshViews(req.Context(), options)
+	err := db.RefreshViews(req.Context(), options)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -252,9 +252,9 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
-	indexes, err := store.GetAllIndexes(req.Context())
+	indexes, err := db.GetAllIndexes(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -279,7 +279,7 @@ type GraphQLRequest struct {
 }
 
 func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var request GraphQLRequest
 	switch {
@@ -315,7 +315,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	if len(request.Variables) > 0 {
 		options = append(options, client.WithVariables(request.Variables))
 	}
-	result := store.ExecRequest(req.Context(), request.Query, options...)
+	result := db.ExecRequest(req.Context(), request.Query, options...)
 
 	if result.Subscription == nil {
 		responseJSON(rw, http.StatusOK, result.GQL)

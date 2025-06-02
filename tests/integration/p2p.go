@@ -13,7 +13,6 @@ package tests
 import (
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 
 	"github.com/sourcenetwork/corelog"
@@ -177,9 +176,7 @@ func configureReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.PeerInfo(),
-	})
+	err := sourceNode.SetReplicator(s.ctx, targetNode.PeerInfo())
 
 	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
@@ -196,9 +193,7 @@ func deleteReplicator(
 	sourceNode := s.nodes[cfg.SourceNodeID]
 	targetNode := s.nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.PeerInfo(),
-	})
+	err := sourceNode.DeleteReplicator(s.ctx, targetNode.PeerInfo())
 	require.NoError(s.t, err)
 	waitForReplicatorDeleteEvent(s, cfg)
 }
@@ -223,7 +218,7 @@ func subscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	err := n.AddP2PCollections(s.ctx, schemaRoots...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -257,7 +252,7 @@ func unsubscribeToCollection(
 		schemaRoots = append(schemaRoots, col.SchemaRoot())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	err := n.RemoveP2PCollections(s.ctx, schemaRoots...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}

@@ -596,6 +596,12 @@
             },
             "replicator": {
                 "properties": {
+                    "CollectionIDs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "Info": {
                         "properties": {
                             "Addrs": {
@@ -614,12 +620,6 @@
                     "LastStatusChange": {
                         "format": "date-time",
                         "type": "string"
-                    },
-                    "Schemas": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
                     },
                     "Status": {
                         "maximum": 255,

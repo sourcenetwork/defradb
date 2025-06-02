@@ -91,7 +91,7 @@ func newIndexFetcher(
 	}
 
 	f.indexIter = iter
-	return f, iter.Init(ctx, txn.Datastore())
+	return f, iter.Init(ctx, datastore.DatastoreFrom(txn.Store()))
 }
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {

@@ -21,6 +21,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// ReplicatorParams contains the replicator fields that can be modified by the user.
+type ReplicatorParams struct {
+	// Info is the address of the peer to replicate to.
+	Info peer.AddrInfo
+	// Collections is the list of collection names to replicate.
+	Collections []string
+}
+
 func (c *Client) PeerInfo() peer.AddrInfo {
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
@@ -35,10 +43,13 @@ func (c *Client) PeerInfo() peer.AddrInfo {
 	return res
 }
 
-func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (c *Client) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(rep)
+	body, err := json.Marshal(ReplicatorParams{
+		Info:        info,
+		Collections: collections,
+	})
 	if err != nil {
 		return err
 	}
@@ -50,10 +61,13 @@ func (c *Client) SetReplicator(ctx context.Context, rep client.ReplicatorParams)
 	return err
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (c *Client) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(rep)
+	body, err := json.Marshal(ReplicatorParams{
+		Info:        info,
+		Collections: collections,
+	})
 	if err != nil {
 		return err
 	}
@@ -79,7 +93,7 @@ func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, er
 	return reps, nil
 }
 
-func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -94,7 +108,7 @@ func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs []string) 
 	return err
 }
 
-func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)

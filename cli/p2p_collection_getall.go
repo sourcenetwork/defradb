@@ -22,9 +22,9 @@ func MakeP2PCollectionGetAllCommand() *cobra.Command {
 This is the list of collections of the node that are synchronized on the pubsub network.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetContextP2P(cmd)
+			client := mustGetContextClient(cmd)
 
-			cols, err := p2p.GetAllP2PCollections(cmd.Context())
+			cols, err := client.GetAllP2PCollections(cmd.Context())
 			if err != nil {
 				return err
 			}

@@ -35,7 +35,7 @@ type DocHeadBlocksIterator struct {
 // NewHeadBlocksIterator creates a new DocHeadBlocksIterator.
 func NewHeadBlocksIterator(
 	ctx context.Context,
-	headstore datastore.DSReaderWriter,
+	headstore datastore.ReaderWriter,
 	blockstore datastore.Blockstore,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
@@ -61,7 +61,12 @@ func NewHeadBlocksIteratorFromTxn(
 	txn datastore.Txn,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
-	return NewHeadBlocksIterator(ctx, txn.Headstore(), txn.Blockstore(), docID)
+	return NewHeadBlocksIterator(
+		ctx,
+		datastore.HeadstoreFrom(txn.Store()),
+		datastore.BlockstoreFrom(txn.Store()),
+		docID,
+	)
 }
 
 // Next advances the iterator to the next block.

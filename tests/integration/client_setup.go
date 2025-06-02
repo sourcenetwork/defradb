@@ -13,16 +13,12 @@
 package tests
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
-
-	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 func init() {
@@ -52,27 +48,20 @@ func setupClient(s *state, node *node.Node) (clients.Client, error) {
 }
 
 type goClientWrapper struct {
-	client.DB
-	peer node.Peer
+	node.DB
+	node.Peer
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		peer: n.Peer,
+		Peer: n.Peer,
 	}
-}
-
-func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	if w.peer != nil {
-		return w.peer.Connect(ctx, addr)
-	}
-	return nil
 }
 
 func (w *goClientWrapper) Close() {
-	if w.peer != nil {
-		w.peer.Close()
+	if w.Peer != nil {
+		w.Peer.Close()
 	}
 	w.DB.Close()
 }

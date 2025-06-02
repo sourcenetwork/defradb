@@ -42,8 +42,7 @@ func NewSourceHubACP(
 	}
 
 	return &bridgeDocumentACP{
-		clientACP:   acpSourceHub,
-		supportsP2P: true,
+		clientACP: acpSourceHub,
 	}, nil
 }
 

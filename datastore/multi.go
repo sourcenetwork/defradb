@@ -26,64 +26,26 @@ var (
 	encStoreKey    = rootStoreKey.ChildString("enc")
 )
 
-type multistore struct {
-	root   DSReaderWriter
-	data   DSReaderWriter
-	enc    Blockstore
-	head   DSReaderWriter
-	peer   DSReaderWriter
-	system DSReaderWriter
-	dag    Blockstore
+func DatastoreFrom(rootstore corekv.Store) ReaderWriter {
+	return prefix(rootstore, dataStoreKey.Bytes())
 }
 
-var _ MultiStore = (*multistore)(nil)
-
-// MultiStoreFrom creates a MultiStore from a root datastore.
-func MultiStoreFrom(rootstore corekv.Store) MultiStore {
-	ms := &multistore{
-		root:   rootstore,
-		data:   prefix(rootstore, dataStoreKey.Bytes()),
-		enc:    newBlockstore(prefix(rootstore, encStoreKey.Bytes())),
-		head:   prefix(rootstore, headStoreKey.Bytes()),
-		peer:   prefix(rootstore, peerStoreKey.Bytes()),
-		system: prefix(rootstore, systemStoreKey.Bytes()),
-		dag:    newBlockstore(prefix(rootstore, blockStoreKey.Bytes())),
-	}
-
-	return ms
+func EncstoreFrom(rootstore corekv.Store) Blockstore {
+	return newBlockstore(prefix(rootstore, encStoreKey.Bytes()))
 }
 
-// Datastore implements MultiStore.
-func (ms multistore) Datastore() DSReaderWriter {
-	return ms.data
+func HeadstoreFrom(rootstore corekv.Store) ReaderWriter {
+	return prefix(rootstore, headStoreKey.Bytes())
 }
 
-// Encstore implements MultiStore.
-func (ms multistore) Encstore() Blockstore {
-	return ms.enc
+func BlockstoreFrom(rootstore corekv.Store) Blockstore {
+	return newBlockstore(prefix(rootstore, blockStoreKey.Bytes()))
 }
 
-// Headstore implements MultiStore.
-func (ms multistore) Headstore() DSReaderWriter {
-	return ms.head
+func SystemstoreFrom(rootstore corekv.Store) ReaderWriter {
+	return prefix(rootstore, systemStoreKey.Bytes())
 }
 
-// Peerstore implements MultiStore.
-func (ms multistore) Peerstore() DSReaderWriter {
-	return ms.peer
-}
-
-// Blockstore implements MultiStore.
-func (ms multistore) Blockstore() Blockstore {
-	return ms.dag
-}
-
-// Rootstore implements MultiStore.
-func (ms multistore) Rootstore() DSReaderWriter {
-	return ms.root
-}
-
-// Systemstore implements MultiStore.
-func (ms multistore) Systemstore() DSReaderWriter {
-	return ms.system
+func PeerstoreFrom(rootstore corekv.Store) ReaderWriter {
+	return prefix(rootstore, peerStoreKey.Bytes())
 }

@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 // explicitTxn is a transaction that is managed outside of a db operation.
@@ -35,17 +34,16 @@ type transactionDB interface {
 	NewTxn(context.Context, bool) (datastore.Txn, error)
 }
 
-// ensureContextTxn ensures that the returned context has a transaction
-// and an identity.
+// ensureContextTxn ensures that the returned context has a transaction.
 //
 // If a transactions exists on the context it will be made explicit,
 // otherwise a new implicit transaction will be created.
 //
-// The returned context will contain the transaction and identity
+// The returned context will contain the transaction
 // along with the copied values from the input context.
 func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	// explicit transaction
-	txn, ok := txnctx.TryGet(ctx)
+	txn, ok := datastore.TryGetTxn(ctx)
 	if ok {
 		return InitContext(ctx, &explicitTxn{txn}), &explicitTxn{txn}, nil
 	}

@@ -87,8 +87,8 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				options = append(options, client.WithOperationName(operationName))
 			}
 
-			store := mustGetContextStore(cmd)
-			result := store.ExecRequest(cmd.Context(), request, options...)
+			client := mustGetContextClient(cmd)
+			result := client.ExecRequest(cmd.Context(), request, options...)
 
 			if result.Subscription == nil {
 				cmd.Print(REQ_RESULTS_HEADER)

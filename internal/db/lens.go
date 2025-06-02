@@ -17,14 +17,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.MustGetTxn(ctx)
 
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, txn, cfg.DestinationSchemaVersionID)
@@ -114,7 +114,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 			if schemaFound {
 				schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
-				err = txn.Systemstore().Set(ctx, schemaRootKey.Bytes(), []byte{})
+				err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, schemaRootKey.Bytes(), []byte{})
 				if err != nil {
 					return err
 				}

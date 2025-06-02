@@ -36,7 +36,7 @@ func CreateSchemaVersion(
 	}
 
 	key := keys.NewSchemaVersionKey(desc.VersionID)
-	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
+	err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, key.Bytes(), buf)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -45,7 +45,7 @@ func CreateSchemaVersion(
 	if !isNew {
 		// We don't need to add a root key if this is the first version
 		schemaVersionHistoryKey := keys.NewSchemaRootKey(desc.Root, desc.VersionID)
-		err = txn.Systemstore().Set(ctx, schemaVersionHistoryKey.Bytes(), []byte{})
+		err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, schemaVersionHistoryKey.Bytes(), []byte{})
 		if err != nil {
 			return client.SchemaDescription{}, err
 		}
@@ -65,7 +65,7 @@ func GetSchemaVersion(
 ) (client.SchemaDescription, error) {
 	key := keys.NewSchemaVersionKey(versionID)
 
-	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
+	buf, err := datastore.SystemstoreFrom(txn.Store()).Get(ctx, key.Bytes())
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -137,7 +137,7 @@ func GetSchemas(
 	}
 
 	schemaVersionPrefix := keys.NewSchemaVersionKey("")
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
 		Prefix: schemaVersionPrefix.Bytes(),
 	})
 	if err != nil {
@@ -195,7 +195,7 @@ func GetAllSchemas(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewSchemaVersionKey("").Bytes(),
 	})
 	if err != nil {
@@ -252,7 +252,7 @@ func GetSchemaVersionIDs(
 	// It is not present in the history prefix.
 	schemaVersions := []string{schemaRoot}
 
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewSchemaRootKey(schemaRoot, "").Bytes(),
 		KeysOnly: true,
 	})

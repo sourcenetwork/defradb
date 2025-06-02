@@ -13,7 +13,7 @@ package node
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/corekv"
 )
 
 type StoreType string
@@ -29,7 +29,7 @@ const (
 //
 // Is is populated by the `init` functions in the runtime-specific files - this
 // allows it's population to be managed by build flags.
-var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error){}
+var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error){}
 
 // storePurgeFuncs is a map of [StoreType]s to store purge functions.
 //
@@ -72,7 +72,7 @@ func WithStorePath(path string) StoreOpt {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.Rootstore, error) {
+func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, error) {
 	options := DefaultStoreOptions()
 	for _, opt := range opts {
 		opt(options)
