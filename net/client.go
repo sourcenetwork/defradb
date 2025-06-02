@@ -35,14 +35,10 @@ func (s *server) pushLog(evt event.Update, pid peer.ID) (err error) {
 		// When the event is a retry, we don't need to republish the failure as
 		// it is already being handled by the retry mechanism through the success channel.
 		if err != nil && !evt.IsRetry {
-			s.peer.bus.Publish(event.NewMessage(event.ReplicatorFailureName, event.ReplicatorFailure{
-				DocID:  evt.DocID,
-				PeerID: pid,
-			}))
-		}
-		// Success is not nil when the pushLog is called from a retry
-		if evt.Success != nil {
-			evt.Success <- err == nil
+			handleRepErr := s.peer.handleReplicatorFailure(s.peer.ctx, pid.String(), evt.DocID)
+			if handleRepErr != nil {
+				err = errors.Join(err, handleRepErr)
+			}
 		}
 	}()
 

@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/ipfs/boxo/bitswap"
@@ -86,7 +87,8 @@ type Peer struct {
 
 	// The intervals at which to retry replicator failures.
 	// For example, this can define an exponential backoff strategy.
-	retryIntervals []time.Duration
+	retryIntervals   []time.Duration
+	handleRetryMutex *sync.Mutex
 }
 
 var _ client.P2P = (*Peer)(nil)
@@ -139,14 +141,16 @@ func NewPeer(
 	)
 
 	p = &Peer{
-		host:        h,
-		dht:         ddht,
-		ctx:         ctx,
-		cancel:      cancel,
-		bus:         bus,
-		documentACP: documentACP,
-		db:          db,
-		p2pRPC:      grpc.NewServer(options.GRPCServerOptions...),
+		host:             h,
+		dht:              ddht,
+		ctx:              ctx,
+		cancel:           cancel,
+		bus:              bus,
+		documentACP:      documentACP,
+		db:               db,
+		p2pRPC:           grpc.NewServer(options.GRPCServerOptions...),
+		retryIntervals:   options.RetryIntervals,
+		handleRetryMutex: &sync.Mutex{},
 	}
 
 	if options.EnablePubSub {
@@ -190,8 +194,7 @@ func NewPeer(
 	// register the P2P gRPC server
 	go func() {
 		registerServiceServer(p.p2pRPC, p.server)
-		if err := p.p2pRPC.Serve(p2pListener); err != nil &&
-			!errors.Is(err, grpc.ErrServerStopped) {
+		if err := p.p2pRPC.Serve(p2pListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			log.ErrorE("Fatal P2P RPC server error", err)
 		}
 	}()
@@ -223,7 +226,9 @@ func NewPeer(
 		// This can be a long running operation so running it in a goroutine
 		// ensures calling `NewPeer` won't block.
 		err := p.loadAndPublishP2PCollections(ctx)
-		log.ErrorE("Error loading P2P collections", err)
+		if err != nil {
+			log.ErrorE("Error loading P2P collections", err)
+		}
 	}()
 
 	return p, nil

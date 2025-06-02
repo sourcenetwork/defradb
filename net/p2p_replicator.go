@@ -322,6 +322,11 @@ func (p *Peer) handleReplicatorRetries(ctx context.Context) {
 }
 
 func (p *Peer) handleReplicatorFailure(ctx context.Context, peerID, docID string) error {
+	// This method can be called concurrently for the same peerID which can cause some
+	// transaction conflicts. Since this is not a performance critical operation, it's
+	// safe to use a mutex to prevent unnecessary conflicts.
+	p.handleRetryMutex.Lock()
+	defer p.handleRetryMutex.Unlock()
 	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
 	defer txn.Discard(ctx)
 
