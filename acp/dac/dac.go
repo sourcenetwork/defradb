@@ -136,7 +136,4 @@ type DocumentACP interface {
 		requestActor identity.Identity,
 		targetActor string,
 	) (bool, error)
-
-	// SupportsP2P returns true if the implementation supports ACP across a peer network.
-	SupportsP2P() bool
 }

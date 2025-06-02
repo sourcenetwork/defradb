@@ -35,8 +35,7 @@ var _ DocumentACP = (*bridgeDocumentACP)(nil)
 
 func NewLocalDocumentACP() DocumentACP {
 	return &bridgeDocumentACP{
-		clientACP:   &LocalDocumentACP{},
-		supportsP2P: false,
+		clientACP: &LocalDocumentACP{},
 	}
 }
 
