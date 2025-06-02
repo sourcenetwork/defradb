@@ -15,10 +15,12 @@ package net
 import (
 	"context"
 	gonet "net"
+	"time"
 
 	gostream "github.com/libp2p/go-libp2p-gostream"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/connectivity"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -39,6 +41,11 @@ func (s *server) dial(peerID libpeer.ID) (*grpc.ClientConn, error) {
 			return conn, nil
 		}
 	}
+
+	backoffConfig := backoff.DefaultConfig
+	backoffConfig.BaseDelay = time.Millisecond
+	backoffConfig.MaxDelay = 5 * time.Second // Set a maximum delay for backoff
+	s.opts = append(s.opts, grpc.WithConnectParams(grpc.ConnectParams{Backoff: backoffConfig}))
 	// We need the "passthrough:" in the beginning of the target,
 	// otherwise [grpc.NewClient] will assume (the default) "dns" target.
 	// More information here:
