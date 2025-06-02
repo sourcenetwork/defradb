@@ -17,10 +17,10 @@
     "swagger-ui-react": "^5.22.0"
   },
   "devDependencies": {
-    "@types/react": "^19.1.5",
+    "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.2",
     "@types/swagger-ui-react": "^5.18.0",
-    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",
     "@vitejs/plugin-react-swc": "^3.10.0",
     "eslint": "^9.28.0",
