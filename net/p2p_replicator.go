@@ -155,7 +155,7 @@ func (p *Peer) pushHeadsForAllDocs(ctx context.Context, col client.Collection, p
 			return docIDResult.Err
 		}
 		docID := docIDResult.ID.String()
-		err := p.pushHeadsForDoc(ctx, docID, col.Version().CollectionID, peerID)
+		err := p.pushHeadsForDoc(ctx, docID, col.SchemaRoot(), peerID)
 		if err != nil {
 			return err
 		}
