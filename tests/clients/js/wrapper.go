@@ -98,11 +98,11 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return out, nil
 }
 
-func (w *Wrapper) AddPolicy(
+func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	res, err := execute(ctx, w.value, "addPolicy", policy)
+	res, err := execute(ctx, w.value, "addDACPolicy", policy)
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}
@@ -113,38 +113,38 @@ func (w *Wrapper) AddPolicy(
 	return out, nil
 }
 
-func (w *Wrapper) AddDocActorRelationship(
+func (w *Wrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "addDocActorRelationship", collectionName, docID, relation, targetActor)
+) (client.AddActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "addDACActorRelationship", collectionName, docID, relation, targetActor)
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
-	var out client.AddDocActorRelationshipResult
+	var out client.AddActorRelationshipResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 	return out, nil
 }
 
-func (w *Wrapper) DeleteDocActorRelationship(
+func (w *Wrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "deleteDocActorRelationship", collectionName, docID, relation, targetActor)
+) (client.DeleteActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "deleteDACActorRelationship", collectionName, docID, relation, targetActor)
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
-	var out client.DeleteDocActorRelationshipResult
+	var out client.DeleteActorRelationshipResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 	return out, nil
 }

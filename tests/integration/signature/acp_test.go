@@ -59,7 +59,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 			testUtils.GoClientType,
 		}),
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
@@ -105,7 +105,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 			testUtils.GoClientType,
 		}),
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},

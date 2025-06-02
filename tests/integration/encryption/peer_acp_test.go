@@ -81,7 +81,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
@@ -119,13 +119,13 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.ClientIdentity(1),
 				DocID:             0,
 				Relation:          "reader",
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             0,
@@ -167,7 +167,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
@@ -205,7 +205,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.ClientIdentity(1),
 				DocID:             0,
@@ -243,7 +243,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
@@ -282,7 +282,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             0,
@@ -322,7 +322,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 					}
 				`,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             3,
@@ -389,7 +389,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
@@ -438,7 +438,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.Close{
 				NodeID: immutable.Some(0),
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				NodeID:            immutable.Some(1),
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),

@@ -22,7 +22,7 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 		Description: "Test acp, add doc actor relationship on a public document, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -129,7 +129,7 @@ func TestACP_AddDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error(t 
 				},
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

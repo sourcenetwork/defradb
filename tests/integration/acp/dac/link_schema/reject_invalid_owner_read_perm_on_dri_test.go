@@ -24,7 +24,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -109,7 +109,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejec
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -188,7 +188,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_Schem
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -273,7 +273,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDR
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -358,7 +358,7 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_SchemaR
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

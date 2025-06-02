@@ -32,7 +32,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_GQL_Oth
 		),
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -151,7 +151,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_GQL_Oth
 				SkipLocalUpdateEvent: true,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

@@ -22,7 +22,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 		Description: "Test acp, manager revokes read access, other actor that can read before no longer read.",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -107,7 +107,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddDACActorRelationship{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -121,7 +121,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner gives an actor read access
+			testUtils.AddDACActorRelationship{ // Owner gives an actor read access
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -157,7 +157,7 @@ func TestACP_ManagerRevokesReadAccess_OtherActorCanNoLongerRead(t *testing.T) {
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin revokes access of the other actor that could read.
+			testUtils.DeleteDACActorRelationship{ // Admin revokes access of the other actor that could read.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -200,7 +200,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 		Description: "Test acp, owner revokes manager's access, manager can not longer manage others.",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -285,7 +285,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddDACActorRelationship{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -299,7 +299,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager gives an actor read access
+			testUtils.AddDACActorRelationship{ // Manager gives an actor read access
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -335,7 +335,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin revokes access of the admin.
+			testUtils.DeleteDACActorRelationship{ // Admin revokes access of the admin.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -349,7 +349,7 @@ func TestACP_OwnerRevokesManagersAccess_ManagerCanNoLongerManageOthers(t *testin
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.AddDocActorRelationship{ // Manager can no longer grant read access.
+			testUtils.AddDACActorRelationship{ // Manager can no longer grant read access.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(4), // This identity has no access previously.
@@ -391,7 +391,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 		Description: "Test acp, admin tries to revoke owner's access, not allowed error.",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -476,7 +476,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{ // Owner makes admin / manager
+			testUtils.AddDACActorRelationship{ // Owner makes admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -490,7 +490,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Admin tries to revoke owners `owner` relation.
+			testUtils.DeleteDACActorRelationship{ // Admin tries to revoke owners `owner` relation.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(1),
@@ -504,7 +504,7 @@ func TestACP_AdminTriesToRevokeOwnersAccess_NotAllowedError(t *testing.T) {
 				ExpectedError: "OPERATION_FORBIDDEN",
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Owner can still perform owner operations, like restrict admin.
+			testUtils.DeleteDACActorRelationship{ // Owner can still perform owner operations, like restrict admin.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

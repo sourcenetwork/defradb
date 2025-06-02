@@ -22,7 +22,7 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
 		Description: "Test acp, delete doc actor relationship on a public document, return error",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -129,7 +129,7 @@ func TestACP_DeleteDocActorRelationshipWithPublicDocument_CanAlreadyAccess_Error
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{
+			testUtils.DeleteDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

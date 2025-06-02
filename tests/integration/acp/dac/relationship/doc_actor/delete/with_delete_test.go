@@ -22,7 +22,7 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 		Description: "Test acp, owner revokes delete access from another actor, they can not delete anymore",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -121,7 +121,7 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 			},
 
 			// Give access to the other actor to delete and read both documents.
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -134,7 +134,7 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 
 				ExpectedExistence: false,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -183,7 +183,7 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 				DocID: 1,
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to delete (and read) the document.
+			testUtils.DeleteDACActorRelationship{ // Revoke access from being able to delete (and read) the document.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

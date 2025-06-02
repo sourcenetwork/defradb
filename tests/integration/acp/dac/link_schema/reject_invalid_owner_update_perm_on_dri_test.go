@@ -24,7 +24,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionOnDRI_SchemaRejected
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -109,7 +109,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRej
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -188,7 +188,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionExprOnDRI_Sch
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -273,7 +273,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionNoSpaceExprOn
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -358,7 +358,7 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_Schem
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

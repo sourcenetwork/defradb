@@ -30,15 +30,15 @@ type AddPolicyResult struct {
 	PolicyID string
 }
 
-// AddDocActorRelationshipResult wraps the result of making a document-actor relationship.
-type AddDocActorRelationshipResult struct {
+// AddActorRelationshipResult wraps the result of making an object-actor relationship.
+type AddActorRelationshipResult struct {
 	// ExistedAlready is true if the relationship existed already (no-op), and
 	// it is false if a new relationship was created.
 	ExistedAlready bool
 }
 
-// DeleteDocActorRelationshipResult wraps the result of making a document-actor relationship.
-type DeleteDocActorRelationshipResult struct {
+// DeleteActorRelationshipResult wraps the result of making an object-actor relationship.
+type DeleteActorRelationshipResult struct {
 	// RecordFound is true if the relationship record was found, and
 	// is false if the relationship record was not found (no-op).
 	RecordFound bool

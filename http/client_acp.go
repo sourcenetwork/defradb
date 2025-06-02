@@ -20,11 +20,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (c *Client) AddPolicy(
+func (c *Client) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "policy")
+	methodURL := c.http.apiURL.JoinPath("acp", "dac", "policy")
 
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -45,24 +45,24 @@ func (c *Client) AddPolicy(
 	return policyResult, nil
 }
 
-type addDocActorRelationshipRequest struct {
+type addDACActorRelationshipRequest struct {
 	CollectionName string
 	DocID          string
 	Relation       string
 	TargetActor    string
 }
 
-func (c *Client) AddDocActorRelationship(
+func (c *Client) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
+) (client.AddActorRelationshipResult, error) {
+	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
 
 	body, err := json.Marshal(
-		addDocActorRelationshipRequest{
+		addDACActorRelationshipRequest{
 			CollectionName: collectionName,
 			DocID:          docID,
 			Relation:       relation,
@@ -71,7 +71,7 @@ func (c *Client) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -82,35 +82,35 @@ func (c *Client) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
-	var addDocActorRelResult client.AddDocActorRelationshipResult
+	var addDocActorRelResult client.AddActorRelationshipResult
 	if err := c.http.requestJson(req, &addDocActorRelResult); err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	return addDocActorRelResult, nil
 }
 
-type deleteDocActorRelationshipRequest struct {
+type deleteDACActorRelationshipRequest struct {
 	CollectionName string
 	DocID          string
 	Relation       string
 	TargetActor    string
 }
 
-func (c *Client) DeleteDocActorRelationship(
+func (c *Client) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "relationship")
+) (client.DeleteActorRelationshipResult, error) {
+	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
 
 	body, err := json.Marshal(
-		deleteDocActorRelationshipRequest{
+		deleteDACActorRelationshipRequest{
 			CollectionName: collectionName,
 			DocID:          docID,
 			Relation:       relation,
@@ -119,7 +119,7 @@ func (c *Client) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -130,12 +130,12 @@ func (c *Client) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	var deleteDocActorRelResult client.DeleteDocActorRelationshipResult
+	var deleteDocActorRelResult client.DeleteActorRelationshipResult
 	if err := c.http.requestJson(req, &deleteDocActorRelResult); err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	return deleteDocActorRelResult, nil

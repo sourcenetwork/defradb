@@ -23,7 +23,7 @@ func TestACP_LinkSchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -96,7 +96,7 @@ func TestACP_LinkSchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testing.
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

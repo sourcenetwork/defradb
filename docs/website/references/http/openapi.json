@@ -27,15 +27,7 @@
             }
         },
         "schemas": {
-            "acp_policy_add_result": {
-                "properties": {
-                    "PolicyID": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_relationship_add_request": {
+            "acp_dac_relationship_add_request": {
                 "properties": {
                     "CollectionName": {
                         "type": "string"
@@ -47,6 +39,31 @@
                         "type": "string"
                     },
                     "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_dac_relationship_delete_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_policy_add_result": {
+                "properties": {
+                    "PolicyID": {
                         "type": "string"
                     }
                 },
@@ -56,23 +73,6 @@
                 "properties": {
                     "ExistedAlready": {
                         "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_relationship_delete_request": {
-                "properties": {
-                    "CollectionName": {
-                        "type": "string"
-                    },
-                    "DocID": {
-                        "type": "string"
-                    },
-                    "Relation": {
-                        "type": "string"
-                    },
-                    "TargetActor": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -751,10 +751,10 @@
     },
     "openapi": "3.0.3",
     "paths": {
-        "/acp/policy": {
+        "/acp/dac/policy": {
             "post": {
-                "description": "Add a policy using acp system",
-                "operationId": "add policy",
+                "description": "Add a policy using document acp system",
+                "operationId": "add dac policy",
                 "requestBody": {
                     "content": {
                         "text/plain": {
@@ -774,7 +774,7 @@
                                 }
                             }
                         },
-                        "description": "Add acp policy result"
+                        "description": "Add document acp policy result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -784,19 +784,19 @@
                     }
                 },
                 "tags": [
-                    "acp_policy"
+                    "acp_dac_policy"
                 ]
             }
         },
-        "/acp/relationship": {
+        "/acp/dac/relationship": {
             "delete": {
-                "description": "Delete an actor relationship using acp system",
-                "operationId": "delete relationship",
+                "description": "Delete an actor relationship using document acp system",
+                "operationId": "delete dac relationship",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_relationship_delete_request"
+                                "$ref": "#/components/schemas/acp_dac_relationship_delete_request"
                             }
                         }
                     },
@@ -811,7 +811,7 @@
                                 }
                             }
                         },
-                        "description": "Delete acp relationship result"
+                        "description": "Delete document acp relationship result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -821,17 +821,17 @@
                     }
                 },
                 "tags": [
-                    "acp_relationship"
+                    "acp_dac_relationship"
                 ]
             },
             "post": {
-                "description": "Add an actor relationship using acp system",
-                "operationId": "add relationship",
+                "description": "Add an actor relationship using document acp system",
+                "operationId": "add dac relationship",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_relationship_add_request"
+                                "$ref": "#/components/schemas/acp_dac_relationship_add_request"
                             }
                         }
                     },
@@ -846,7 +846,7 @@
                                 }
                             }
                         },
-                        "description": "Add acp relationship result"
+                        "description": "Add document acp relationship result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -856,7 +856,7 @@
                     }
                 },
                 "tags": [
-                    "acp_relationship"
+                    "acp_dac_relationship"
                 ]
             }
         },
@@ -2526,7 +2526,7 @@
             "name": "p2p"
         },
         {
-            "description": "Access control system",
+            "description": "Access control system(s)",
             "name": "acp"
         },
         {

@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPRelationshipAddCommand() *cobra.Command {
+func MakeDocumentACPRelationshipAddCommand() *cobra.Command {
 	const (
 		collectionFlagLong  string = "collection"
 		collectionFlagShort string = "c"
@@ -82,7 +82,7 @@ Example: Creating a dummy relationship does nothing (from database perspective):
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db := mustGetContextDB(cmd)
-			exists, err := db.AddDocActorRelationship(
+			exists, err := db.AddDACActorRelationship(
 				cmd.Context(),
 				collectionArg,
 				docIDArg,

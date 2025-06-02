@@ -1,15 +1,15 @@
-## defradb client acp policy
+## defradb client acp dac relationship
 
-Interact with the acp policy features of DefraDB instance
+Interact with the document acp relationship features of DefraDB instance
 
 ### Synopsis
 
-Interact with the acp policy features of DefraDB instance
+Interact with the document acp relationship features of DefraDB instance
 
 ### Options
 
 ```
-  -h, --help   help for policy
+  -h, --help   help for relationship
 ```
 
 ### Options inherited from parent commands
@@ -36,6 +36,7 @@ Interact with the acp policy features of DefraDB instance
 
 ### SEE ALSO
 
-* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system of a DefraDB node
-* [defradb client acp policy add](defradb_client_acp_policy_add.md)	 - Add new policy
+* [defradb client acp dac](defradb_client_acp_dac.md)	 - Interact with the document access control system of a DefraDB node
+* [defradb client acp dac relationship add](defradb_client_acp_dac_relationship_add.md)	 - Add new relationship
+* [defradb client acp dac relationship delete](defradb_client_acp_dac_relationship_delete.md)	 - Delete relationship
 

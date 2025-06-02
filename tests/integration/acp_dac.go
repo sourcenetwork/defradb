@@ -60,8 +60,8 @@ func init() {
 	}
 }
 
-// AddDocPolicy will attempt to add the given policy using DefraDB's Document ACP system.
-type AddDocPolicy struct {
+// AddDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
+type AddDACPolicy struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
 	// If a value is not provided the policy will be added in all nodes, unless testing with
@@ -88,10 +88,10 @@ type AddDocPolicy struct {
 	ExpectedError string
 }
 
-// addPolicyDocumentACP will attempt to add the given policy using DefraDB's Document ACP system.
-func addPolicyDocumentACP(
+// addDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
+func addDACPolicy(
 	s *state,
-	action AddDocPolicy,
+	action AddDACPolicy,
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
 	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
@@ -112,7 +112,7 @@ func addPolicyDocumentACP(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
-		policyResult, err := node.AddPolicy(ctx, action.Policy)
+		policyResult, err := node.AddDACPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -142,8 +142,8 @@ func addPolicyDocumentACP(
 	}
 }
 
-// AddDocActorRelationship will attempt to create a new relationship for a document with an actor.
-type AddDocActorRelationship struct {
+// AddDACActorRelationship will attempt to create a new relationship for a document with an actor.
+type AddDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be added in all nodes, unless testing with
@@ -188,9 +188,9 @@ type AddDocActorRelationship struct {
 	ExpectedError string
 }
 
-func addDocActorRelationshipACP(
+func addDACActorRelationship(
 	s *state,
-	action AddDocActorRelationship,
+	action AddDACActorRelationship,
 ) {
 	var docID string
 	actionNodeID := action.NodeID
@@ -201,7 +201,7 @@ func addDocActorRelationshipACP(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		exists, err := node.AddDocActorRelationship(
+		exists, err := node.AddDACActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
@@ -234,8 +234,8 @@ func addDocActorRelationshipACP(
 	}
 }
 
-// DeleteDocActorRelationship will attempt to delete a relationship between a document and an actor.
-type DeleteDocActorRelationship struct {
+// DeleteDACActorRelationship will attempt to delete a relationship between a document and an actor.
+type DeleteDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
@@ -281,9 +281,9 @@ type DeleteDocActorRelationship struct {
 	ExpectedError string
 }
 
-func deleteDocActorRelationshipACP(
+func deleteDACActorRelationship(
 	s *state,
-	action DeleteDocActorRelationship,
+	action DeleteDACActorRelationship,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
@@ -291,7 +291,7 @@ func deleteDocActorRelationshipACP(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		deleteDocActorRelationshipResult, err := node.DeleteDocActorRelationship(
+		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
@@ -304,7 +304,7 @@ func deleteDocActorRelationshipACP(
 
 		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
-			require.Equal(s.t, action.ExpectedRecordFound, deleteDocActorRelationshipResult.RecordFound)
+			require.Equal(s.t, action.ExpectedRecordFound, deleteActorRelationshipResult.RecordFound)
 		}
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through

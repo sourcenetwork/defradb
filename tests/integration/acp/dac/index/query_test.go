@@ -20,7 +20,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 	test := testUtils.TestCase{
 		Description: "Test acp, querying private doc without identity should not fetch",
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
@@ -77,7 +77,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 	test := testUtils.TestCase{
 		Description: "Test acp, querying private doc with identity should  fetch",
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
@@ -140,7 +140,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 	test := testUtils.TestCase{
 		Description: "Test acp, querying private doc with wrong identity should not fetch",
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},

@@ -24,7 +24,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredDeletePermissionOnDRI_SchemaRejected
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -109,7 +109,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredDeletePermissionLabelOnDRI_SchemaRej
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -188,7 +188,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnDeletePermissionExprOnDRI_Sch
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -273,7 +273,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnDeletePermissionNoSpaceExprOn
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -358,7 +358,7 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_Schem
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

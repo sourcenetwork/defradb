@@ -24,7 +24,7 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDR
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -110,7 +110,7 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOn
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -196,7 +196,7 @@ func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDRI_S
 
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

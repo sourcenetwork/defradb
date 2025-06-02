@@ -17,11 +17,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (w *Wrapper) AddPolicy(
+func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	args := []string{"client", "acp", "policy", "add"}
+	args := []string{"client", "acp", "dac", "policy", "add"}
 	args = append(args, policy)
 
 	data, err := w.cmd.execute(ctx, args)
@@ -37,15 +37,15 @@ func (w *Wrapper) AddPolicy(
 	return addPolicyResult, err
 }
 
-func (w *Wrapper) AddDocActorRelationship(
+func (w *Wrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
+) (client.AddActorRelationshipResult, error) {
 	args := []string{
-		"client", "acp", "relationship", "add",
+		"client", "acp", "dac", "relationship", "add",
 		"--collection", collectionName,
 		"--docID", docID,
 		"--relation", relation,
@@ -54,26 +54,26 @@ func (w *Wrapper) AddDocActorRelationship(
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
-	var exists client.AddDocActorRelationshipResult
+	var exists client.AddActorRelationshipResult
 	if err := json.Unmarshal(data, &exists); err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	return exists, err
 }
 
-func (w *Wrapper) DeleteDocActorRelationship(
+func (w *Wrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
+) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
-		"client", "acp", "relationship", "delete",
+		"client", "acp", "dac", "relationship", "delete",
 		"--collection", collectionName,
 		"--docID", docID,
 		"--relation", relation,
@@ -82,12 +82,12 @@ func (w *Wrapper) DeleteDocActorRelationship(
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	var exists client.DeleteDocActorRelationshipResult
+	var exists client.DeleteActorRelationshipResult
 	if err := json.Unmarshal(data, &exists); err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	return exists, err

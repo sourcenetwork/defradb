@@ -21,7 +21,7 @@ func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testin
 
 		Description: "Test acp, where a relation is managing another relation, valid policy id",
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `

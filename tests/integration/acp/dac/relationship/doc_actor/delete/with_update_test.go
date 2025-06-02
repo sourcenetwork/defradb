@@ -29,7 +29,7 @@ func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) 
 		}),
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -115,7 +115,7 @@ func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) 
 			},
 
 			// Give access to the other actor to update and read the document.
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -166,7 +166,7 @@ func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) 
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to update (and read) the document.
+			testUtils.DeleteDACActorRelationship{ // Revoke access from being able to update (and read) the document.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -253,7 +253,7 @@ func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing
 		}),
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -339,7 +339,7 @@ func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing
 			},
 
 			// Give access to the other actor to update and read the document.
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -390,7 +390,7 @@ func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing
 				},
 			},
 
-			testUtils.DeleteDocActorRelationship{ // Revoke access from being able to update (and read) the document.
+			testUtils.DeleteDACActorRelationship{ // Revoke access from being able to update (and read) the document.
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

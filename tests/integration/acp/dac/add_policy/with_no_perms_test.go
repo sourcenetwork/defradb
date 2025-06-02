@@ -30,7 +30,7 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, no permissions only owner relation",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -63,7 +63,7 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, no permissions with multi relations",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -99,7 +99,7 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, no permissions label only owner relation",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -130,7 +130,7 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, no permissions label with multi relations",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `

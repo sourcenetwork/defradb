@@ -26,7 +26,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 		Description: "Test acp, create without identity, and delete without identity, can delete",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -126,7 +126,7 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 		Description: "Test acp, create without identity, and delete with identity, can delete",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -223,7 +223,7 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 		Description: "Test acp, create with identity, and delete with identity, can delete",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -324,7 +324,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 		Description: "Test acp, create with identity, and delete without identity, can not delete",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -431,7 +431,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 		Description: "Test acp, create with identity, and delete without identity, can not delete",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

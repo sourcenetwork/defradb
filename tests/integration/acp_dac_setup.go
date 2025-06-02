@@ -56,9 +56,9 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 	for _, a := range s.testCase.Actions {
 		switch a.(type) {
 		case
-			AddDocPolicy,
-			AddDocActorRelationship,
-			DeleteDocActorRelationship:
+			AddDACPolicy,
+			AddDACActorRelationship,
+			DeleteDACActorRelationship:
 			isDocumentACPTest = true
 		}
 	}

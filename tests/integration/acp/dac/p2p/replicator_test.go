@@ -28,7 +28,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
                     name: test
@@ -97,7 +97,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
                     name: test

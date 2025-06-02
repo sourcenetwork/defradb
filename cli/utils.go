@@ -158,7 +158,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 
 	cfg := mustGetContextConfig(cmd)
 
-	sourcehubAddressString := cfg.GetString("acp.sourceHub.address")
+	sourcehubAddressString := cfg.GetString("acp.dac.sourceHub.address")
 	var sourcehubAddress immutable.Option[string]
 	if sourcehubAddressString != "" {
 		sourcehubAddress = immutable.Some(sourcehubAddressString)

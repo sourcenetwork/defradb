@@ -215,7 +215,7 @@ func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
 	return db.documentACP
 }
 
-func (db *DB) AddPolicy(
+func (db *DB) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
@@ -297,28 +297,28 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	return nil
 }
 
-func (db *DB) AddDocActorRelationship(
+func (db *DB) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
+) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.documentACP.HasValue() {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
 	collection, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
 	if !hasPolicy {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+		return client.AddActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
 	exists, err := db.documentACP.Value().AddDocActorRelationship(
@@ -332,41 +332,41 @@ func (db *DB) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 
 	if !exists {
 		err = db.publishDocUpdateEvent(ctx, docID, collection)
 		if err != nil {
-			return client.AddDocActorRelationshipResult{}, err
+			return client.AddActorRelationshipResult{}, err
 		}
 	}
 
-	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
+	return client.AddActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
-func (db *DB) DeleteDocActorRelationship(
+func (db *DB) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
+) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if !db.documentACP.HasValue() {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
+		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
 	collection, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
 	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
 	if !hasPolicy {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
+		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
 
 	recordFound, err := db.documentACP.Value().DeleteDocActorRelationship(
@@ -380,10 +380,10 @@ func (db *DB) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
+	return client.DeleteActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -412,7 +412,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
-	// Start acp if enabled, this will recover previous state if there is any.
+	// Start document acp if enabled, this will recover previous state if there is any.
 	if db.documentACP.HasValue() {
 		// db is responsible to call db.documentACP.Close() to free acp resources while closing.
 		if err = db.documentACP.Value().Start(ctx); err != nil {

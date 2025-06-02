@@ -44,7 +44,7 @@ func TestACP_AddDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedErro
 				`,
 			},
 
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

@@ -1,68 +1,15 @@
-## defradb client acp policy add
+## defradb client acp dac policy
 
-Add new policy
+Interact with the document acp policy features of DefraDB instance
 
 ### Synopsis
 
-Add new policy
-
-Notes:
-  - Can not add a policy without specifying an identity.
-  - ACP must be available (i.e. ACP can not be disabled).
-  - A non-DRI policy will be accepted (will be registered with acp system).
-  - But only a valid DRI policyID & resource can be specified on a schema.
-  - DRI validation happens when attempting to add a schema with '@policy'.
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
-
-Example: add from an argument string:
-  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
-'
-description: A Valid DefraDB Policy Interface
-
-actor:
-  name: actor
-
-resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-'
-
-Example: add from file:
-  defradb client acp policy add -f policy.yml \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: add from file, verbose flags:
-  defradb client acp policy add --file policy.yml \
-  	--identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: add from stdin:
-  cat policy.yml | defradb client acp policy add -
-
-
-
-```
-defradb client acp policy add [-i --identity] [policy] [flags]
-```
+Interact with the document acp policy features of DefraDB instance
 
 ### Options
 
 ```
-  -f, --file string   File to load a policy from
-  -h, --help          help for add
+  -h, --help   help for policy
 ```
 
 ### Options inherited from parent commands
@@ -89,5 +36,6 @@ defradb client acp policy add [-i --identity] [policy] [flags]
 
 ### SEE ALSO
 
-* [defradb client acp policy](defradb_client_acp_policy.md)	 - Interact with the acp policy features of DefraDB instance
+* [defradb client acp dac](defradb_client_acp_dac.md)	 - Interact with the document access control system of a DefraDB node
+* [defradb client acp dac policy add](defradb_client_acp_dac_policy_add.md)	 - Add new policy
 

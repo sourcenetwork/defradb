@@ -21,7 +21,7 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 		Description: "Test acp, with creating new index using separate request on permissioned collection, no error",
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
@@ -72,7 +72,7 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 		Description: "Test acp, with creating new index using directive on permissioned collection, no error",
 		Actions: []any{
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},

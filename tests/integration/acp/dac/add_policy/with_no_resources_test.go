@@ -26,7 +26,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, no resource, valid policy",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -53,7 +53,7 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, no resource label, valid policy",
 
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -80,7 +80,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 			testUtils.LocalDocumentACPType,
 		}),
 		Actions: []any{
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: " ",

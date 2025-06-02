@@ -30,7 +30,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_LocalACP(t *test
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -113,7 +113,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddDocPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
                     name: test

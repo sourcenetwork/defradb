@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPRelationshipDeleteCommand() *cobra.Command {
+func MakeDocumentACPRelationshipDeleteCommand() *cobra.Command {
 	const (
 		collectionFlagLong  string = "collection"
 		collectionFlagShort string = "c"
@@ -66,7 +66,7 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			db := mustGetContextDB(cmd)
-			deleteDocActorRelationshipResult, err := db.DeleteDocActorRelationship(
+			deleteDACActorRelationshipResult, err := db.DeleteDACActorRelationship(
 				cmd.Context(),
 				collectionArg,
 				docIDArg,
@@ -78,7 +78,7 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 				return err
 			}
 
-			return writeJSON(cmd, deleteDocActorRelationshipResult)
+			return writeJSON(cmd, deleteDACActorRelationshipResult)
 		},
 	}
 
