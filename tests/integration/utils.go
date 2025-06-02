@@ -365,14 +365,14 @@ func performAction(
 	case ConfigureMigration:
 		configureMigration(s, action)
 
-	case AddPolicyWithDAC:
-		addPolicyWithDAC(s, action)
+	case AddDACPolicy:
+		addDACPolicy(s, action)
 
-	case AddActorRelationshipWithDAC:
-		addActorRelationshipWithDAC(s, action)
+	case AddDACActorRelationship:
+		addDACActorRelationship(s, action)
 
-	case DeleteActorRelationshipWithDAC:
-		deleteActorRelationshipWithDAC(s, action)
+	case DeleteDACActorRelationship:
+		deleteDACActorRelationship(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)

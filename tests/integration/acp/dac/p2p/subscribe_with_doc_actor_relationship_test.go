@@ -34,7 +34,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 
 			testUtils.RandomNetworkingConfig(),
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -125,7 +125,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				NodeID:            immutable.Some(0),
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.NodeIdentity(1),
@@ -152,7 +152,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				NodeID:            immutable.Some(0),
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(2),
@@ -162,7 +162,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				NodeID:            immutable.Some(1), // Note: Different node than the previous
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(2),
@@ -210,7 +210,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				},
 			},
 
-			testUtils.DeleteActorRelationshipWithDAC{
+			testUtils.DeleteDACActorRelationship{
 				NodeID:              immutable.Some(1),
 				RequestorIdentity:   testUtils.ClientIdentity(1),
 				TargetIdentity:      testUtils.ClientIdentity(2),
@@ -220,7 +220,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRel
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.DeleteActorRelationshipWithDAC{
+			testUtils.DeleteDACActorRelationship{
 				NodeID:              immutable.Some(0), // Note: Different node than the previous
 				RequestorIdentity:   testUtils.ClientIdentity(1),
 				TargetIdentity:      testUtils.ClientIdentity(2),

@@ -215,7 +215,7 @@ func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
 	return db.documentACP
 }
 
-func (db *DB) AddPolicyWithDAC(
+func (db *DB) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
@@ -297,7 +297,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	return nil
 }
 
-func (db *DB) AddActorRelationshipWithDAC(
+func (db *DB) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
@@ -345,7 +345,7 @@ func (db *DB) AddActorRelationshipWithDAC(
 	return client.AddActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
-func (db *DB) DeleteActorRelationshipWithDAC(
+func (db *DB) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,

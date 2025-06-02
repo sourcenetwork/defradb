@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/goji"
 )
 
-func (c *Client) addPolicyWithDAC(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) addDACPolicy(this js.Value, args []js.Value) (js.Value, error) {
 	policy, err := stringArg(args, 0, "policy")
 	if err != nil {
 		return js.Undefined(), err
@@ -29,14 +29,14 @@ func (c *Client) addPolicyWithDAC(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.AddPolicyWithDAC(ctx, policy)
+	res, err := c.node.DB.AddDACPolicy(ctx, policy)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	return goji.MarshalJS(res)
 }
 
-func (c *Client) addActorRelationshipWithDAC(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) addDACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
 	collectionName, err := stringArg(args, 0, "collectionName")
 	if err != nil {
 		return js.Undefined(), err
@@ -57,14 +57,14 @@ func (c *Client) addActorRelationshipWithDAC(this js.Value, args []js.Value) (js
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.AddActorRelationshipWithDAC(ctx, collectionName, docID, relation, targetActor)
+	res, err := c.node.DB.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 	if err != nil {
 		return js.Undefined(), err
 	}
 	return goji.MarshalJS(res)
 }
 
-func (c *Client) deleteActorRelationshipWithDAC(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
 	collectionName, err := stringArg(args, 0, "collectionName")
 	if err != nil {
 		return js.Undefined(), err
@@ -85,7 +85,7 @@ func (c *Client) deleteActorRelationshipWithDAC(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.DeleteActorRelationshipWithDAC(ctx, collectionName, docID, relation, targetActor)
+	res, err := c.node.DB.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 	if err != nil {
 		return js.Undefined(), err
 	}

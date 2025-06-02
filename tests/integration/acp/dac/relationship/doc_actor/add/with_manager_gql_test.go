@@ -32,7 +32,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 		),
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -163,7 +163,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -177,7 +177,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a updater.
+			testUtils.AddDACActorRelationship{ // Manager makes itself a updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -192,7 +192,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 			},
 
 			// Note: It is not neccesary to make itself a reader, as becoming an updater allows reading.
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a reader
+			testUtils.AddDACActorRelationship{ // Manager makes itself a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -254,7 +254,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a deleter.
+			testUtils.AddDACActorRelationship{ // Manager makes itself a deleter.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -313,7 +313,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 		),
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -398,7 +398,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 				`,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -456,7 +456,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager can manage only.
+			testUtils.AddDACActorRelationship{ // Manager can manage only.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -489,7 +489,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 		),
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -574,7 +574,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				`,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -588,7 +588,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin tries to make another actor an updater
+			testUtils.AddDACActorRelationship{ // Admin tries to make another actor an updater
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -602,7 +602,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedError: "UNAUTHORIZED",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin tries to make another actor a deleter
+			testUtils.AddDACActorRelationship{ // Admin tries to make another actor a deleter
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),

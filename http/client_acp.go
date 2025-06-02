@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (c *Client) AddPolicyWithDAC(
+func (c *Client) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
@@ -45,14 +45,14 @@ func (c *Client) AddPolicyWithDAC(
 	return policyResult, nil
 }
 
-type addActorRelationshipWithDACRequest struct {
+type addDACActorRelationshipRequest struct {
 	CollectionName string
 	DocID          string
 	Relation       string
 	TargetActor    string
 }
 
-func (c *Client) AddActorRelationshipWithDAC(
+func (c *Client) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
@@ -62,7 +62,7 @@ func (c *Client) AddActorRelationshipWithDAC(
 	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
 
 	body, err := json.Marshal(
-		addActorRelationshipWithDACRequest{
+		addDACActorRelationshipRequest{
 			CollectionName: collectionName,
 			DocID:          docID,
 			Relation:       relation,
@@ -93,14 +93,14 @@ func (c *Client) AddActorRelationshipWithDAC(
 	return addDocActorRelResult, nil
 }
 
-type deleteActorRelationshipWithDACRequest struct {
+type deleteDACActorRelationshipRequest struct {
 	CollectionName string
 	DocID          string
 	Relation       string
 	TargetActor    string
 }
 
-func (c *Client) DeleteActorRelationshipWithDAC(
+func (c *Client) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
@@ -110,7 +110,7 @@ func (c *Client) DeleteActorRelationshipWithDAC(
 	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
 
 	body, err := json.Marshal(
-		deleteActorRelationshipWithDACRequest{
+		deleteDACActorRelationshipRequest{
 			CollectionName: collectionName,
 			DocID:          docID,
 			Relation:       relation,

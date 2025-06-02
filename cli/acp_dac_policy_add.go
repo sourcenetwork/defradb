@@ -107,7 +107,7 @@ Example: add from stdin:
 			}
 
 			db := mustGetContextDB(cmd)
-			policyResult, err := db.AddPolicyWithDAC(
+			policyResult, err := db.AddDACPolicy(
 				cmd.Context(),
 				policy,
 			)

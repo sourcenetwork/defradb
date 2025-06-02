@@ -22,7 +22,7 @@ func TestACP_AddPolicy_NoRelations_Error(t *testing.T) {
 		Description: "Test acp, add policy, no relations, should return error",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -59,7 +59,7 @@ func TestACP_AddPolicy_NoRelationsLabel_Error(t *testing.T) {
 		Description: "Test acp, add policy, no relations label, should return error",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `

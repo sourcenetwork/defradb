@@ -34,7 +34,7 @@ func TestACP_P2PDeletePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 
 			testUtils.RandomNetworkingConfig(),
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

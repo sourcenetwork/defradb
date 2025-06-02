@@ -34,7 +34,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 
 			testUtils.RandomNetworkingConfig(),
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -143,7 +143,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				NodeID: immutable.Some(0),
 
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -159,7 +159,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				NodeID: immutable.Some(1), // Note: Different node than the previous
 
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -217,7 +217,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				},
 			},
 
-			testUtils.DeleteActorRelationshipWithDAC{
+			testUtils.DeleteDACActorRelationship{
 				NodeID: immutable.Some(1),
 
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -233,7 +233,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.DeleteActorRelationshipWithDAC{
+			testUtils.DeleteDACActorRelationship{
 				NodeID: immutable.Some(0), // Note: Different node than the previous
 
 				RequestorIdentity: testUtils.ClientIdentity(1),

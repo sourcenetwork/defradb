@@ -100,21 +100,21 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return w.client.AddSchema(ctx, schema)
 }
 
-func (w *Wrapper) AddPolicyWithDAC(
+func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	return w.client.AddPolicyWithDAC(ctx, policy)
+	return w.client.AddDACPolicy(ctx, policy)
 }
 
-func (w *Wrapper) AddActorRelationshipWithDAC(
+func (w *Wrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	return w.client.AddActorRelationshipWithDAC(
+	return w.client.AddDACActorRelationship(
 		ctx,
 		collectionName,
 		docID,
@@ -123,14 +123,14 @@ func (w *Wrapper) AddActorRelationshipWithDAC(
 	)
 }
 
-func (w *Wrapper) DeleteActorRelationshipWithDAC(
+func (w *Wrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	return w.client.DeleteActorRelationshipWithDAC(
+	return w.client.DeleteDACActorRelationship(
 		ctx,
 		collectionName,
 		docID,

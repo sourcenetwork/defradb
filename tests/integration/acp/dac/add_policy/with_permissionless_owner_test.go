@@ -29,7 +29,7 @@ func TestACP_AddPolicy_PermissionlessOwnerUpdate_ValidID(t *testing.T) {
 		Description: "Test acp, add policy with owner having no update permissions, valid ID",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -70,7 +70,7 @@ func TestACP_AddPolicy_PermissionlessOwnerDelete_ValidID(t *testing.T) {
 		Description: "Test acp, add policy with owner having no delete permissions, valid ID",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -111,7 +111,7 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 		Description: "Test acp, add policy with owner having no read permissions, valid ID",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -152,7 +152,7 @@ func TestACP_AddPolicy_PermissionlessOwnerReadUpdateDelete_ValidID(t *testing.T)
 		Description: "Test acp, add policy with owner having no read/update/delete permissions, valid ID",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `

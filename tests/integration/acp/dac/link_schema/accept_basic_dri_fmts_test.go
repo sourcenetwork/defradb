@@ -23,7 +23,7 @@ func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 		Description: "Test acp, specify basic policy that was added in YAML format, accept schema",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -118,7 +118,7 @@ func TestACP_LinkSchema_BasicJSON_SchemaAccepted(t *testing.T) {
 		Description: "Test acp, specify basic policy that was added in JSON format, accept schema",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

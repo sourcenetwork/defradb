@@ -22,7 +22,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 		Description: "Test acp, owner gives delete access to another actor twice, no-op",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -135,7 +135,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -149,7 +149,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -174,7 +174,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 		Description: "Test acp, owner gives delete access to another actor",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -287,7 +287,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -362,7 +362,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 		Description: "Test acp, owner gives delete access to another actor, both can read",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -447,7 +447,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 				`,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

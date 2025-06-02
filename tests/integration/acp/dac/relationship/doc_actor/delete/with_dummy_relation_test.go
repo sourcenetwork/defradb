@@ -22,7 +22,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 		Description: "Test acp, delete doc actor relationship with a dummy relation defined on policy, nothing happens",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -125,7 +125,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 				},
 			},
 
-			testUtils.DeleteActorRelationshipWithDAC{
+			testUtils.DeleteDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -168,7 +168,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 		Description: "Test acp, delete doc actor relationship with an invalid relation (not defined on policy), error",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -271,7 +271,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 				},
 			},
 
-			testUtils.DeleteActorRelationshipWithDAC{
+			testUtils.DeleteDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

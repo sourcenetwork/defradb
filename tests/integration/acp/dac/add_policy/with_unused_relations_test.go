@@ -22,7 +22,7 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 		Description: "Test acp, add policy, unused relation in permissions",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `

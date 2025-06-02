@@ -24,7 +24,7 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnDeletePermissionExprOn
 
 		Actions: []any{
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -110,7 +110,7 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnDeletePermissionExpr
 
 		Actions: []any{
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -196,7 +196,7 @@ func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnDeletePermissionExprOnDRI
 
 		Actions: []any{
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

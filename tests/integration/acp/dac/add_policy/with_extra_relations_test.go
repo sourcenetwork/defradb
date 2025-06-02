@@ -22,7 +22,7 @@ func TestACP_AddPolicy_ExtraRelations_ValidPolicyID(t *testing.T) {
 		Description: "Test acp, add policy, extra relations, still valid",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
@@ -66,7 +66,7 @@ func TestACP_AddPolicy_ExtraDuplicateRelations_Error(t *testing.T) {
 		Description: "Test acp, add policy, extra duplicate relations permissions, return error",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `

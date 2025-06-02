@@ -18,7 +18,7 @@ import (
 
 func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 	return []any{
-		testUtils.AddPolicyWithDAC{
+		testUtils.AddDACPolicy{
 			Identity: testUtils.ClientIdentity(1),
 			Policy:   bookAuthorPolicy,
 		},

@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func (w *Wrapper) AddPolicyWithDAC(
+func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
@@ -37,7 +37,7 @@ func (w *Wrapper) AddPolicyWithDAC(
 	return addPolicyResult, err
 }
 
-func (w *Wrapper) AddActorRelationshipWithDAC(
+func (w *Wrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
@@ -65,7 +65,7 @@ func (w *Wrapper) AddActorRelationshipWithDAC(
 	return exists, err
 }
 
-func (w *Wrapper) DeleteActorRelationshipWithDAC(
+func (w *Wrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,

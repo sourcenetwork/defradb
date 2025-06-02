@@ -24,7 +24,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 		Description: "Test acp, owner gives read access to another actor",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -127,7 +127,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -141,7 +141,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin makes another actor a reader
+			testUtils.AddDACActorRelationship{ // Admin makes another actor a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -216,7 +216,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 		Description: "Test acp, owner gives write (update and delete) access to another actor",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -320,7 +320,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -334,7 +334,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin makes another actor an updater
+			testUtils.AddDACActorRelationship{ // Admin makes another actor an updater
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -386,7 +386,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin makes another actor a deleter
+			testUtils.AddDACActorRelationship{ // Admin makes another actor a deleter
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -437,7 +437,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 		Description: "Test acp, owner makes a manager that gives itself read access",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -540,7 +540,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 				},
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -554,7 +554,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a reader
+			testUtils.AddDACActorRelationship{ // Manager makes itself a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -636,7 +636,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			}),
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -767,7 +767,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -781,7 +781,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself an updater.
+			testUtils.AddDACActorRelationship{ // Manager makes itself an updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -796,7 +796,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 			},
 
 			// Note: It is not neccesary to make itself a reader, as becoming an updater allows reading.
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a reader
+			testUtils.AddDACActorRelationship{ // Manager makes itself a reader
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -858,7 +858,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager makes itself a deleter.
+			testUtils.AddDACActorRelationship{ // Manager makes itself a deleter.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -916,7 +916,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 			}),
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -1001,7 +1001,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				`,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -1015,7 +1015,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedExistence: false,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin tries to make another actor an updater.
+			testUtils.AddDACActorRelationship{ // Admin tries to make another actor an updater.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -1029,7 +1029,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				ExpectedError: "UNAUTHORIZED",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Admin tries to make another actor a deleter.
+			testUtils.AddDACActorRelationship{ // Admin tries to make another actor a deleter.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -1105,7 +1105,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 			}),
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -1190,7 +1190,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 				`,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Make admin / manager
+			testUtils.AddDACActorRelationship{ // Make admin / manager
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),
@@ -1248,7 +1248,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{ // Manager can manage only.
+			testUtils.AddDACActorRelationship{ // Manager can manage only.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 
 				TargetIdentity: testUtils.ClientIdentity(3),
@@ -1273,7 +1273,7 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 		Description: "Test acp, cant make relation if identity doesn't own or manage object, return error",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -1358,7 +1358,7 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 				`,
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(2), // This identity can not manage as not an admin yet
 
 				TargetIdentity: testUtils.ClientIdentity(3),

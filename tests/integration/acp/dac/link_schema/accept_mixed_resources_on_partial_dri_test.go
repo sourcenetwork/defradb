@@ -24,7 +24,7 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
 
 		Actions: []any{
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

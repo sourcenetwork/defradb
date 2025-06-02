@@ -60,8 +60,8 @@ func init() {
 	}
 }
 
-// AddPolicyWithDAC will attempt to add the given policy using DefraDB's Document ACP system.
-type AddPolicyWithDAC struct {
+// AddDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
+type AddDACPolicy struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
 	// If a value is not provided the policy will be added in all nodes, unless testing with
@@ -88,10 +88,10 @@ type AddPolicyWithDAC struct {
 	ExpectedError string
 }
 
-// addPolicyWithDAC will attempt to add the given policy using DefraDB's Document ACP system.
-func addPolicyWithDAC(
+// addDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
+func addDACPolicy(
 	s *state,
-	action AddPolicyWithDAC,
+	action AddDACPolicy,
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
 	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
@@ -112,7 +112,7 @@ func addPolicyWithDAC(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
-		policyResult, err := node.AddPolicyWithDAC(ctx, action.Policy)
+		policyResult, err := node.AddDACPolicy(ctx, action.Policy)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -142,8 +142,8 @@ func addPolicyWithDAC(
 	}
 }
 
-// AddActorRelationshipWithDAC will attempt to create a new relationship for a document with an actor.
-type AddActorRelationshipWithDAC struct {
+// AddDACActorRelationship will attempt to create a new relationship for a document with an actor.
+type AddDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be added in all nodes, unless testing with
@@ -188,9 +188,9 @@ type AddActorRelationshipWithDAC struct {
 	ExpectedError string
 }
 
-func addActorRelationshipWithDAC(
+func addDACActorRelationship(
 	s *state,
-	action AddActorRelationshipWithDAC,
+	action AddDACActorRelationship,
 ) {
 	var docID string
 	actionNodeID := action.NodeID
@@ -201,7 +201,7 @@ func addActorRelationshipWithDAC(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		exists, err := node.AddActorRelationshipWithDAC(
+		exists, err := node.AddDACActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
@@ -234,8 +234,8 @@ func addActorRelationshipWithDAC(
 	}
 }
 
-// DeleteActorRelationshipWithDAC will attempt to delete a relationship between a document and an actor.
-type DeleteActorRelationshipWithDAC struct {
+// DeleteDACActorRelationship will attempt to delete a relationship between a document and an actor.
+type DeleteDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
@@ -281,9 +281,9 @@ type DeleteActorRelationshipWithDAC struct {
 	ExpectedError string
 }
 
-func deleteActorRelationshipWithDAC(
+func deleteDACActorRelationship(
 	s *state,
-	action DeleteActorRelationshipWithDAC,
+	action DeleteDACActorRelationship,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
@@ -291,7 +291,7 @@ func deleteActorRelationshipWithDAC(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		deleteActorRelationshipResult, err := node.DeleteActorRelationshipWithDAC(
+		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
 			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,

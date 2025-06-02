@@ -97,7 +97,7 @@ type DB interface {
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// AddPolicyWithDAC adds policy to document acp system, if available.
+	// AddDACPolicy adds policy to document acp system, if available.
 	//
 	// If policy was successfully added then a policyID is returned,
 	// otherwise if acp system was not available then returns the following error:
@@ -107,9 +107,9 @@ type DB interface {
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicyWithDAC(ctx context.Context, policy string) (AddPolicyResult, error)
+	AddDACPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
 
-	// AddActorRelationshipWithDAC creates a relationship between document and the target actor.
+	// AddDACActorRelationship creates a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
@@ -117,7 +117,7 @@ type DB interface {
 	// Note:
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
-	AddActorRelationshipWithDAC(
+	AddDACActorRelationship(
 		ctx context.Context,
 		collectionName string,
 		docID string,
@@ -125,7 +125,7 @@ type DB interface {
 		targetActor string,
 	) (AddActorRelationshipResult, error)
 
-	// DeleteActorRelationshipWithDAC deletes a relationship between document and the target actor.
+	// DeleteDACActorRelationship deletes a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship record was found and deleted. Upon success the boolean value
@@ -135,7 +135,7 @@ type DB interface {
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
 	//   removed, however this does not revoke access from actors that had explicit relationships.
-	DeleteActorRelationshipWithDAC(
+	DeleteDACActorRelationship(
 		ctx context.Context,
 		collectionName string,
 		docID string,

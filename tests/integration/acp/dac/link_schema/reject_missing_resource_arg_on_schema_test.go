@@ -23,7 +23,7 @@ func TestACP_LinkSchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing
 
 		Actions: []any{
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -96,7 +96,7 @@ func TestACP_LinkSchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *te
 
 		Actions: []any{
 
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 

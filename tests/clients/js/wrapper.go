@@ -98,11 +98,11 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return out, nil
 }
 
-func (w *Wrapper) AddPolicyWithDAC(
+func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	res, err := execute(ctx, w.value, "addPolicyWithDAC", policy)
+	res, err := execute(ctx, w.value, "addDACPolicy", policy)
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}
@@ -113,14 +113,14 @@ func (w *Wrapper) AddPolicyWithDAC(
 	return out, nil
 }
 
-func (w *Wrapper) AddActorRelationshipWithDAC(
+func (w *Wrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "addActorRelationshipWithDAC", collectionName, docID, relation, targetActor)
+	res, err := execute(ctx, w.value, "addDACActorRelationship", collectionName, docID, relation, targetActor)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -131,14 +131,14 @@ func (w *Wrapper) AddActorRelationshipWithDAC(
 	return out, nil
 }
 
-func (w *Wrapper) DeleteActorRelationshipWithDAC(
+func (w *Wrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "deleteActorRelationshipWithDAC", collectionName, docID, relation, targetActor)
+	res, err := execute(ctx, w.value, "deleteDACActorRelationship", collectionName, docID, relation, targetActor)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}

@@ -22,7 +22,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 		Description: "Test acp, owner gives delete access without explicit read permission, can still delete",
 
 		Actions: []any{
-			testUtils.AddPolicyWithDAC{
+			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
@@ -135,7 +135,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.AddActorRelationshipWithDAC{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 
 				TargetIdentity: testUtils.ClientIdentity(2),

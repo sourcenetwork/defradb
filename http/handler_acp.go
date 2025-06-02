@@ -19,7 +19,7 @@ import (
 
 type acpHandler struct{}
 
-func (s *acpHandler) AddPolicyWithDAC(rw http.ResponseWriter, req *http.Request) {
+func (s *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	policyBytes, err := io.ReadAll(req.Body)
@@ -28,7 +28,7 @@ func (s *acpHandler) AddPolicyWithDAC(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	addPolicyResult, err := db.AddPolicyWithDAC(
+	addPolicyResult, err := db.AddDACPolicy(
 		req.Context(),
 		string(policyBytes),
 	)
@@ -40,17 +40,17 @@ func (s *acpHandler) AddPolicyWithDAC(rw http.ResponseWriter, req *http.Request)
 	responseJSON(rw, http.StatusOK, addPolicyResult)
 }
 
-func (s *acpHandler) AddActorRelationshipWithDAC(rw http.ResponseWriter, req *http.Request) {
+func (s *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var message addActorRelationshipWithDACRequest
+	var message addDACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	addDocActorRelResult, err := db.AddActorRelationshipWithDAC(
+	addDocActorRelResult, err := db.AddDACActorRelationship(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,
@@ -65,17 +65,17 @@ func (s *acpHandler) AddActorRelationshipWithDAC(rw http.ResponseWriter, req *ht
 	responseJSON(rw, http.StatusOK, addDocActorRelResult)
 }
 
-func (s *acpHandler) DeleteActorRelationshipWithDAC(rw http.ResponseWriter, req *http.Request) {
+func (s *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var message deleteActorRelationshipWithDACRequest
+	var message deleteDACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	deleteDocActorRelResult, err := db.DeleteActorRelationshipWithDAC(
+	deleteDocActorRelResult, err := db.DeleteDACActorRelationship(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,
@@ -165,17 +165,17 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		Value: deleteActorRelationshipDACRequest,
 	}
 
-	router.AddRoute("/acp/dac/policy", http.MethodPost, addPolicyDAC, h.AddPolicyWithDAC)
+	router.AddRoute("/acp/dac/policy", http.MethodPost, addPolicyDAC, h.AddDACPolicy)
 	router.AddRoute(
 		"/acp/dac/relationship",
 		http.MethodPost,
 		addActorRelationshipDAC,
-		h.AddActorRelationshipWithDAC,
+		h.AddDACActorRelationship,
 	)
 	router.AddRoute(
 		"/acp/dac/relationship",
 		http.MethodDelete,
 		deleteActorRelationshipDAC,
-		h.DeleteActorRelationshipWithDAC,
+		h.DeleteDACActorRelationship,
 	)
 }
