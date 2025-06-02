@@ -61,7 +61,7 @@ func (a *StartCli) Execute() {
 		"--store=memory",
 		"--rootdir", a.s.RootDir,
 		"--url=127.0.0.1:",
-		"--acp-type=local",
+		"--dac-type=local",
 	}
 
 	args = append(args, a.inlineArgs...)

@@ -98,11 +98,11 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return out, nil
 }
 
-func (w *Wrapper) AddPolicy(
+func (w *Wrapper) AddPolicyWithDAC(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	res, err := execute(ctx, w.value, "addPolicy", policy)
+	res, err := execute(ctx, w.value, "addPolicyWithDAC", policy)
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}
@@ -113,20 +113,20 @@ func (w *Wrapper) AddPolicy(
 	return out, nil
 }
 
-func (w *Wrapper) AddDocActorRelationship(
+func (w *Wrapper) AddActorRelationshipWithDAC(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
+) (client.AddActorRelationshipResult, error) {
 	res, err := execute(ctx, w.value, "addActorRelationshipWithDAC", collectionName, docID, relation, targetActor)
 	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
-	var out client.AddDocActorRelationshipResult
+	var out client.AddActorRelationshipResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.AddDocActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, err
 	}
 	return out, nil
 }
