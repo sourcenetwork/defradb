@@ -14,7 +14,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -45,6 +44,8 @@ type createNode struct {
 	results planNode
 
 	execInfo createExecInfo
+
+	createOptions []client.DocCreateOption
 }
 
 type createExecInfo struct {
@@ -98,7 +99,7 @@ func (n *createNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	if !n.didCreate {
-		err := n.collection.CreateMany(n.p.ctx, n.docs)
+		err := n.collection.CreateMany(n.p.ctx, n.docs, n.createOptions...)
 		if err != nil {
 			return false, err
 		}
@@ -166,9 +167,11 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
+		createOptions: []client.DocCreateOption{
+			client.CreateDocEncrypted(parsed.Encrypt),
+			client.CreateDocWithEncryptedFields(parsed.EncryptFields),
+		},
 	}
-
-	p.ctx = encryption.SetContextConfigFromParams(p.ctx, parsed.Encrypt, parsed.EncryptFields)
 
 	// get collection
 	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)

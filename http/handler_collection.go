@@ -57,8 +57,10 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	if q.Get(docEncryptFieldsParam) != "" {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
-	if encConf.IsDocEncrypted || len(encConf.EncryptedFields) > 0 {
-		ctx = encryption.SetContextConfig(ctx, encConf)
+
+	createOpts := []client.DocCreateOption{
+		client.CreateDocEncrypted(encConf.IsDocEncrypted),
+		client.CreateDocWithEncryptedFields(encConf.EncryptedFields),
 	}
 
 	switch {
@@ -69,7 +71,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(ctx, docList); err != nil {
+		if err := col.CreateMany(ctx, docList, createOpts...); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -80,7 +82,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(ctx, doc); err != nil {
+		if err := col.Create(ctx, doc, createOpts...); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}

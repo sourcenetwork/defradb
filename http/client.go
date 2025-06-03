@@ -396,8 +396,6 @@ func (c *Client) ExecRequest(
 	}
 	err = c.http.setDefaultHeaders(req)
 
-	setDocEncryptionFlagIfNeeded(ctx, req)
-
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result

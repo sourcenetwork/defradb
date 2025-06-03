@@ -14,6 +14,36 @@ import (
 	"context"
 )
 
+// DocCreateOption is a functional option for creating a document.
+type DocCreateOption func(*DocCreateOptions)
+
+// DocCreateOptions contains options for creating a document.
+type DocCreateOptions struct {
+	EncryptDoc      bool
+	EncryptedFields []string
+}
+
+// Apply applies the given DocCreateOptions to the DocCreateOptions receiver.
+func (o *DocCreateOptions) Apply(opts ...DocCreateOption) {
+	for _, opt := range opts {
+		opt(o)
+	}
+}
+
+// CreateDocEncrypted enables or disables document encryption when creating a document.
+func CreateDocEncrypted(encryptDoc bool) DocCreateOption {
+	return func(opts *DocCreateOptions) {
+		opts.EncryptDoc = encryptDoc
+	}
+}
+
+// CreateDocWithEncryptedFields specifies a list of fields to be encrypted when creating a document.
+func CreateDocWithEncryptedFields(encryptedFields []string) DocCreateOption {
+	return func(opts *DocCreateOptions) {
+		opts.EncryptedFields = encryptedFields
+	}
+}
+
 // Collection represents a defradb collection.
 //
 // A Collection is mostly analogous to a SQL table, however a collection is specific to its
@@ -42,12 +72,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document) error
+	Create(ctx context.Context, doc *Document, opts ...DocCreateOption) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document) error
+	CreateMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
 
 	// Update an existing document with the new values.
 	//
@@ -61,7 +91,7 @@ type Collection interface {
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document) error
+	Save(ctx context.Context, doc *Document, opts ...DocCreateOption) error
 
 	// Delete will attempt to delete a document by DocID.
 	//

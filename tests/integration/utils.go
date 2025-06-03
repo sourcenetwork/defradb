@@ -40,7 +40,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
@@ -1300,7 +1299,7 @@ func createDocViaColSave(
 
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc)
+		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
@@ -1311,8 +1310,14 @@ func createDocViaColSave(
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
 	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
-	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
+}
+
+func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
+	return []client.DocCreateOption{
+		client.CreateDocEncrypted(action.IsDocEncrypted),
+		client.CreateDocWithEncryptedFields(action.EncryptedFields),
+	}
 }
 
 func createDocViaColCreate(
@@ -1332,13 +1337,13 @@ func createDocViaColCreate(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs)
+		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Create(ctx, docs[0])
+		err := collection.Create(ctx, docs[0], makeDocCreateOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
