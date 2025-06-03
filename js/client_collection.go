@@ -13,6 +13,7 @@
 package js
 
 import (
+	"fmt"
 	"sync"
 	"syscall/js"
 
@@ -81,7 +82,13 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	if err := structArg(args, 0, "doc", &docMap); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+
+	opts, err := getCreateOptionsFromArg(args, 1)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	ctx, err := contextArg(args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -89,7 +96,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Create(ctx, doc)
+	err = c.col.Create(ctx, doc, opts...)
 	return js.Undefined(), err
 }
 
@@ -98,7 +105,13 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 	if err := structArg(args, 0, "doc", &docMaps); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+
+	opts, err := getCreateOptionsFromArg(args, 1)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	ctx, err := contextArg(args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -110,8 +123,41 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 		}
 		docs = append(docs, doc)
 	}
-	err = c.col.CreateMany(ctx, docs)
+	err = c.col.CreateMany(ctx, docs, opts...)
 	return js.Undefined(), err
+}
+
+func getCreateOptionsFromArg(args []js.Value, argIndex int) ([]client.DocCreateOption, error) {
+	var createOptions map[string]any
+	if err := structArg(args, argIndex, "options", &createOptions); err != nil {
+		return nil, err
+	}
+
+	opts := []client.DocCreateOption{}
+	if v, ok := createOptions["encryptedFields"]; ok {
+		if encryptedFields, ok := v.([]any); ok {
+			fields := []string{}
+			for _, f := range encryptedFields {
+				if field, ok := f.(string); ok {
+					fields = append(fields, field)
+				} else {
+					return nil, fmt.Errorf("encryptedFields must be an array of strings")
+				}
+			}
+			opts = append(opts, client.CreateDocWithEncryptedFields(fields))
+		} else {
+			return nil, fmt.Errorf("encryptedFields must be an array of strings")
+		}
+	}
+
+	if v, ok := createOptions["encrypt"]; ok {
+		if encrypt, ok := v.(bool); ok {
+			opts = append(opts, client.CreateDocEncrypted(encrypt))
+		} else {
+			return nil, fmt.Errorf("encrypt must be a boolean")
+		}
+	}
+	return opts, nil
 }
 
 func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {

@@ -101,12 +101,26 @@ func (c *Collection) Create(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "create", docVal)
+	_, err = execute(ctx, c.client, "create", docVal, makeDocCreateOptions(opts))
 	if err != nil {
 		return err
 	}
 	doc.Clean()
 	return nil
+}
+
+func makeDocCreateOptions(opts []client.DocCreateOption) map[string]any {
+	createOpts := client.DocCreateOptions{}
+	createOpts.Apply(opts)
+
+	options := make(map[string]any)
+	if createOpts.EncryptDoc {
+		options["encrypt"] = true
+	}
+	if len(createOpts.EncryptedFields) > 0 {
+		options["encryptFields"] = createOpts.EncryptedFields
+	}
+	return options
 }
 
 func (c *Collection) CreateMany(
@@ -118,7 +132,7 @@ func (c *Collection) CreateMany(
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "createMany", docsVal)
+	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocCreateOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -155,7 +169,7 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }

@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 func stringArg(args []js.Value, index int, name string) (string, error) {
@@ -80,25 +79,9 @@ func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, er
 	if err != nil {
 		return ctx, err
 	}
-	encrypt, encryptFields := contextEncryptionArg(args[index])
-	ctx = encryption.SetContextConfigFromParams(ctx, encrypt, encryptFields)
 	ctx = acpIdentity.WithContext(ctx, identity)
 	ctx = db.InitContext(ctx, txn)
 	return ctx, nil
-}
-
-func contextEncryptionArg(value js.Value) (bool, []string) {
-	var encrypt bool
-	if v := value.Get("encrypt"); v.Type() == js.TypeBoolean {
-		encrypt = v.Bool()
-	}
-	var encryptFields []string
-	if v := value.Get("encryptFields"); v.Type() == js.TypeObject {
-		for i := 0; i < v.Length(); i++ {
-			encryptFields = append(encryptFields, v.Index(i).String())
-		}
-	}
-	return encrypt, encryptFields
 }
 
 func contextTransactionArg(value js.Value, txns *sync.Map) (datastore.Txn, error) {
