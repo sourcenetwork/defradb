@@ -13,6 +13,7 @@ package create
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -79,6 +80,22 @@ func TestMutationCreate(t *testing.T) {
 					"age": 27
 				}`,
 			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					Col(0).
+					DocID(0).
+					Field("name"),
+				Value: gomega.Equal(testUtils.CBORValue("John")),
+			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					Col(0).
+					DocID(0).
+					Field("age"),
+				Value: gomega.Equal(testUtils.CBORValue(int64(27))),
+			},
 			testUtils.Request{
 				Request: `
 					query {
@@ -128,6 +145,14 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 					"name": "John",
 					"age": 27
 				}`,
+			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					Col(0).
+					DocID(0).
+					Field("name"),
+				Value: gomega.Equal(testUtils.CBORValue("John")),
 			},
 			testUtils.CreateDoc{
 				Doc: `{

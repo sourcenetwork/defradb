@@ -439,6 +439,9 @@ func performAction(
 	case VerifyBlockSignature:
 		performVerifySignatureAction(s, action)
 
+	case Datastore:
+		fetchDatastore(s, action)
+
 	case SetupComplete:
 		// no-op, just continue.
 
@@ -2549,4 +2552,54 @@ func performVerifySignatureAction(s *state, action VerifyBlockSignature) {
 			require.NoError(s.t, err, s.testCase.Description)
 		}
 	}
+}
+
+// fetchDatastore fetches a value from the datastore using the given key.
+func fetchDatastore(s *state, action Datastore) {
+	if action.ExpectMissingKey && action.Value != nil {
+		s.t.Fatalf("Cannot set both ExpectMissingKey and Value. ExpectMissingKey: %v, Value: %v",
+			action.ExpectMissingKey, action.Value)
+	}
+
+	var expectedErrorRaised bool
+
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for i, node := range nodes {
+		key, err := action.Key.Build(s)
+		if err != nil {
+			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			continue
+		}
+
+		ctx := s.ctx
+		store := node.Datastore()
+
+		value, err := store.Get(ctx, key.Bytes())
+
+		if err != nil {
+			if errors.Is(err, corekv.ErrNotFound) {
+				if !action.ExpectMissingKey {
+					// We expected the key to exist but it doesn't
+					expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+				}
+				// If ExpectMissingKey is true, this is expected behavior
+			} else {
+				expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+			}
+		} else {
+			if action.ExpectMissingKey {
+				// We expected the key to be missing but it exists
+				s.t.Errorf("Expected key to be missing but it exists. Node: %v, Key: %v", nodeIDs[i], key.ToString())
+			} else if action.Value != nil {
+				stack := &assertStack{}
+				stack.pushMap("datastore")
+				stack.pushMap(key.ToString())
+				execGomegaMatcher(action.Value, s, value, stack)
+				stack.pop()
+				stack.pop()
+			}
+		}
+	}
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
