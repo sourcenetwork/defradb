@@ -34,7 +34,7 @@ func GetShortCollectionID(
 	key := keys.NewCollectionID(collectionID)
 
 	txn := datastore.MustGetTxn(ctx)
-	valueBytes, err := datastore.SystemstoreFrom(txn.Store()).Get(ctx, key.Bytes())
+	valueBytes, err := datastore.SystemstoreFrom(txn).Get(ctx, key.Bytes())
 	if err != nil {
 		return 0, err
 	}
@@ -63,7 +63,7 @@ func SetShortCollectionID(
 	txn := datastore.MustGetTxn(ctx)
 	key := keys.NewCollectionID(collectionID)
 
-	hasShortID, err := datastore.SystemstoreFrom(txn.Store()).Has(ctx, key.Bytes())
+	hasShortID, err := datastore.SystemstoreFrom(txn).Has(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func SetShortCollectionID(
 	}
 	shortID := uint32(sID)
 
-	err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
+	err = datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
 	if err != nil {
 		return err
 	}

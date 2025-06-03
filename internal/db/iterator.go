@@ -63,8 +63,8 @@ func NewHeadBlocksIteratorFromTxn(
 ) (*DocHeadBlocksIterator, error) {
 	return NewHeadBlocksIterator(
 		ctx,
-		datastore.HeadstoreFrom(txn.Store()),
-		datastore.BlockstoreFrom(txn.Store()),
+		datastore.HeadstoreFrom(txn),
+		datastore.BlockstoreFrom(txn),
 		docID,
 	)
 }

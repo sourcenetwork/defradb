@@ -188,7 +188,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	var currentCid *cid.Cid
-	store := datastore.BlockstoreFrom(n.planner.txn.Store())
+	store := datastore.BlockstoreFrom(n.planner.txn)
 
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
@@ -434,7 +434,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 }
 
 func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
-	store := datastore.BlockstoreFrom(n.planner.txn.Store())
+	store := datastore.BlockstoreFrom(n.planner.txn)
 	sigIPLDBlock, err := store.Get(n.planner.ctx, link.Cid)
 	if err != nil {
 		return err

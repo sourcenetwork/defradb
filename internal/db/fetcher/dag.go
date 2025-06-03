@@ -48,7 +48,7 @@ func (hf *HeadFetcher) Start(
 		}
 	}
 
-	iter, err := datastore.HeadstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Iterator(ctx, corekv.IterOptions{
 		Prefix: prefixBytes,
 	})
 	if err != nil {

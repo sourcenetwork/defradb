@@ -124,7 +124,7 @@ func (vf *VersionedFetcher) Init(
 
 	// Copy the entire system store into the temp store so that important stuff
 	// such as collection definitions and short-ids are available.
-	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{})
+	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 		return nil
 	}
 
-	blk, err := datastore.BlockstoreFrom(vf.txn.Store()).Get(vf.ctx, c)
+	blk, err := datastore.BlockstoreFrom(vf.txn).Get(vf.ctx, c)
 	if err != nil {
 		return NewErrVFetcherFailedToGetBlock(err)
 	}

@@ -53,7 +53,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err := datastore.SystemstoreFrom(txn.Store()).Set(ctx, key.Bytes(), []byte{marker})
+		err := datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err := datastore.SystemstoreFrom(txn.Store()).Delete(ctx, key.Bytes())
+		err := datastore.SystemstoreFrom(txn).Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
 	defer txn.Discard(ctx)
 
-	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
 		KeysOnly: true,
 	})

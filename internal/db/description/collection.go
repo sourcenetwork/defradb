@@ -49,14 +49,14 @@ func SaveCollection(
 	}
 
 	key := keys.NewCollectionKey(desc.VersionID)
-	err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, key.Bytes(), buf)
+	err = datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), buf)
 	if err != nil {
 		return err
 	}
 
 	if !desc.IsActive {
 		nameKey := keys.NewCollectionNameKey(desc.Name)
-		idBytes, err := datastore.SystemstoreFrom(txn.Store()).Get(ctx, nameKey.Bytes())
+		idBytes, err := datastore.SystemstoreFrom(txn).Get(ctx, nameKey.Bytes())
 		if err != nil {
 			if !errors.Is(err, corekv.ErrNotFound) {
 				return err
@@ -64,7 +64,7 @@ func SaveCollection(
 		}
 
 		if string(idBytes) == desc.VersionID {
-			err := datastore.SystemstoreFrom(txn.Store()).Delete(ctx, nameKey.Bytes())
+			err := datastore.SystemstoreFrom(txn).Delete(ctx, nameKey.Bytes())
 			if err != nil {
 				return err
 			}
@@ -73,7 +73,7 @@ func SaveCollection(
 
 	if desc.IsActive {
 		nameKey := keys.NewCollectionNameKey(desc.Name)
-		err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
+		err = datastore.SystemstoreFrom(txn).Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
 		if err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ func GetCollectionByID(
 	id string,
 ) (client.CollectionVersion, error) {
 	key := keys.NewCollectionKey(id)
-	buf, err := datastore.SystemstoreFrom(txn.Store()).Get(ctx, key.Bytes())
+	buf, err := datastore.SystemstoreFrom(txn).Get(ctx, key.Bytes())
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}
@@ -111,7 +111,7 @@ func GetCollectionByName(
 	name string,
 ) (client.CollectionVersion, error) {
 	nameKey := keys.NewCollectionNameKey(name)
-	idBuf, err := datastore.SystemstoreFrom(txn.Store()).Get(ctx, nameKey.Bytes())
+	idBuf, err := datastore.SystemstoreFrom(txn).Get(ctx, nameKey.Bytes())
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}
@@ -185,7 +185,7 @@ func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionVersion, error) {
-	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.COLLECTION_ID),
 	})
 	if err != nil {
@@ -234,7 +234,7 @@ func GetActiveCollections(
 	ctx context.Context,
 	txn datastore.Txn,
 ) ([]client.CollectionVersion, error) {
-	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
 	})
 	if err != nil {
@@ -285,5 +285,5 @@ func HasCollectionByName(
 	name string,
 ) (bool, error) {
 	nameKey := keys.NewCollectionNameKey(name)
-	return datastore.SystemstoreFrom(txn.Store()).Has(ctx, nameKey.Bytes())
+	return datastore.SystemstoreFrom(txn).Has(ctx, nameKey.Bytes())
 }

@@ -45,7 +45,7 @@ func GetShortFieldID(
 
 	key := keys.NewFieldIDPrefix(collectionShortID)
 	txn := datastore.MustGetTxn(ctx)
-	iter, err := datastore.SystemstoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
+	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
 	if err != nil {
 		return 0, err
 	}
@@ -105,7 +105,7 @@ func SetShortFieldID(
 	txn := datastore.MustGetTxn(ctx)
 	key := keys.NewFieldID(collectionShortID, fieldID)
 
-	hasShortID, err := datastore.SystemstoreFrom(txn.Store()).Has(ctx, key.Bytes())
+	hasShortID, err := datastore.SystemstoreFrom(txn).Has(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func SetShortFieldID(
 		return err
 	}
 
-	err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(sID))))
+	err = datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(sID))))
 	if err != nil {
 		return err
 	}

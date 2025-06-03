@@ -54,7 +54,7 @@ func AddDelta(
 	delta core.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	headset := NewHeadSet(datastore.HeadstoreFrom(txn.Store()), crdt.HeadstorePrefix())
+	headset := NewHeadSet(datastore.HeadstoreFrom(txn), crdt.HeadstorePrefix())
 
 	heads, height, err := headset.List(ctx)
 	if err != nil {
@@ -84,13 +84,13 @@ func AddDelta(
 	}
 
 	if EnabledSigningFromContext(ctx) {
-		err = signBlock(ctx, datastore.BlockstoreFrom(txn.Store()), dagBlock)
+		err = signBlock(ctx, datastore.BlockstoreFrom(txn), dagBlock)
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}
 	}
 
-	link, err := putBlock(ctx, datastore.BlockstoreFrom(txn.Store()), dagBlock)
+	link, err := putBlock(ctx, datastore.BlockstoreFrom(txn), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -116,8 +116,8 @@ func determineBlockEncryption(
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (*Encryption, cidlink.Link, error) {
-	encstore := datastore.EncstoreFrom(txn.Store())
-	blockstore := datastore.BlockstoreFrom(txn.Store())
+	encstore := datastore.EncstoreFrom(txn)
+	blockstore := datastore.BlockstoreFrom(txn)
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
 		encBlock := &Encryption{DocID: []byte(docID)}
@@ -215,7 +215,7 @@ func updateHeads(
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	headset := NewHeadSet(datastore.HeadstoreFrom(txn.Store()), crdt.HeadstorePrefix())
+	headset := NewHeadSet(datastore.HeadstoreFrom(txn), crdt.HeadstorePrefix())
 
 	priority := block.Delta.GetPriority()
 
@@ -244,7 +244,7 @@ func updateHeads(
 			continue
 		}
 
-		known, err := datastore.BlockstoreFrom(txn.Store()).Has(ctx, linkCid)
+		known, err := datastore.BlockstoreFrom(txn).Has(ctx, linkCid)
 		if err != nil {
 			return NewErrCouldNotFindBlock(linkCid, err)
 		}

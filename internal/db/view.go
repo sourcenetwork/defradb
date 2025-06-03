@@ -218,7 +218,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 		}
 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
-		err = datastore.DatastoreFrom(txn.Store()).Set(ctx, itemKey.Bytes(), serializedItem)
+		err = datastore.DatastoreFrom(txn).Set(ctx, itemKey.Bytes(), serializedItem)
 		if err != nil {
 			return err
 		}
@@ -240,7 +240,7 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinitio
 		return err
 	}
 
-	iter, err := datastore.DatastoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.DatastoreFrom(txn).Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewViewCacheColPrefix(shortID).Bytes(),
 		KeysOnly: true,
 	})
@@ -257,7 +257,7 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinitio
 			break
 		}
 
-		err = datastore.DatastoreFrom(txn.Store()).Delete(ctx, iter.Key())
+		err = datastore.DatastoreFrom(txn).Delete(ctx, iter.Key())
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}

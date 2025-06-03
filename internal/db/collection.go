@@ -278,7 +278,7 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionShortID: shortID,
 	}
-	iter, err := datastore.DatastoreFrom(txn.Store()).Iterator(ctx, corekv.IterOptions{
+	iter, err := datastore.DatastoreFrom(txn).Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
@@ -491,7 +491,7 @@ func (c *collection) create(
 			InstanceType:      keys.ValueKey,
 		}
 
-		err = datastore.DatastoreFrom(txn.Store()).Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
+		err = datastore.DatastoreFrom(txn).Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -760,7 +760,7 @@ func (c *collection) save(
 			}
 
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				datastore.DatastoreFrom(txn.Store()),
+				datastore.DatastoreFrom(txn),
 				c.Schema().VersionID,
 				val.Type(),
 				fieldDescription.Kind,
@@ -786,7 +786,7 @@ func (c *collection) save(
 	}
 
 	merkleCRDT := crdt.NewDocComposite(
-		datastore.DatastoreFrom(txn.Store()),
+		datastore.DatastoreFrom(txn),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
@@ -1019,7 +1019,7 @@ func (c *collection) exists(
 	}
 
 	txn := datastore.MustGetTxn(ctx)
-	val, err := datastore.DatastoreFrom(txn.Store()).Get(ctx, primaryKey.Bytes())
+	val, err := datastore.DatastoreFrom(txn).Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {

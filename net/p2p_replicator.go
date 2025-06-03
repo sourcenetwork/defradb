@@ -57,7 +57,7 @@ func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collect
 	}
 
 	repKey := keys.NewReplicatorKey(repInfo.ID.String())
-	hasOldRep, err := datastore.PeerstoreFrom(txn.Store()).Has(ctx, repKey.Bytes())
+	hasOldRep, err := datastore.PeerstoreFrom(txn).Has(ctx, repKey.Bytes())
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collect
 	storedRep := client.Replicator{}
 	storedCollectionIDs := make(map[string]struct{})
 	if hasOldRep {
-		repBytes, err := datastore.PeerstoreFrom(txn.Store()).Get(ctx, repKey.Bytes())
+		repBytes, err := datastore.PeerstoreFrom(txn).Get(ctx, repKey.Bytes())
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collect
 		return err
 	}
 
-	err = datastore.PeerstoreFrom(txn.Store()).Set(ctx, repKey.Bytes(), newRepBytes)
+	err = datastore.PeerstoreFrom(txn).Set(ctx, repKey.Bytes(), newRepBytes)
 	if err != nil {
 		return err
 	}
@@ -210,14 +210,14 @@ func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, coll
 	storedRep := client.Replicator{}
 	storedCollectionIDs := make(map[string]struct{})
 	repKey := keys.NewReplicatorKey(repInfo.ID.String())
-	hasOldRep, err := datastore.PeerstoreFrom(txn.Store()).Has(ctx, repKey.Bytes())
+	hasOldRep, err := datastore.PeerstoreFrom(txn).Has(ctx, repKey.Bytes())
 	if err != nil {
 		return err
 	}
 	if !hasOldRep {
 		return ErrReplicatorNotFound
 	}
-	repBytes, err := datastore.PeerstoreFrom(txn.Store()).Get(ctx, repKey.Bytes())
+	repBytes, err := datastore.PeerstoreFrom(txn).Get(ctx, repKey.Bytes())
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, coll
 	// Persist the replicator to the store, deleting it if no collection remain
 	key := keys.NewReplicatorKey(repInfo.ID.String())
 	if len(storedRep.CollectionIDs) == 0 {
-		err := datastore.PeerstoreFrom(txn.Store()).Delete(ctx, key.Bytes())
+		err := datastore.PeerstoreFrom(txn).Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
@@ -262,7 +262,7 @@ func (p *Peer) DeleteReplicator(ctx context.Context, repInfo peer.AddrInfo, coll
 		if err != nil {
 			return err
 		}
-		err = datastore.PeerstoreFrom(txn.Store()).Set(ctx, key.Bytes(), repBytes)
+		err = datastore.PeerstoreFrom(txn).Set(ctx, key.Bytes(), repBytes)
 		if err != nil {
 			return err
 		}
@@ -286,7 +286,7 @@ func (p *Peer) GetAllReplicators(ctx context.Context) ([]client.Replicator, erro
 	_, reps, err := datastore.DeserializePrefix[client.Replicator](
 		ctx,
 		keys.NewReplicatorKey("").Bytes(),
-		datastore.PeerstoreFrom(txn.Store()),
+		datastore.PeerstoreFrom(txn),
 	)
 
 	return reps, err
@@ -339,7 +339,7 @@ func (p *Peer) handleReplicatorFailure(ctx context.Context, peerID, docID string
 		return err
 	}
 	docIDKey := keys.NewReplicatorRetryDocIDKey(peerID, docID)
-	err = datastore.PeerstoreFrom(txn.Store()).Set(ctx, docIDKey.Bytes(), []byte{})
+	err = datastore.PeerstoreFrom(txn).Set(ctx, docIDKey.Bytes(), []byte{})
 	if err != nil {
 		return err
 	}
@@ -384,7 +384,7 @@ func updateReplicatorStatus(
 	active bool,
 ) error {
 	key := keys.NewReplicatorKey(peerID)
-	repBytes, err := datastore.PeerstoreFrom(txn.Store()).Get(ctx, key.Bytes())
+	repBytes, err := datastore.PeerstoreFrom(txn).Get(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -409,7 +409,7 @@ func updateReplicatorStatus(
 	if err != nil {
 		return err
 	}
-	return datastore.PeerstoreFrom(txn.Store()).Set(ctx, key.Bytes(), b)
+	return datastore.PeerstoreFrom(txn).Set(ctx, key.Bytes(), b)
 }
 
 type retryInfo struct {
@@ -425,7 +425,7 @@ func createIfNotExistsReplicatorRetry(
 	retryIntervals []time.Duration,
 ) error {
 	key := keys.NewReplicatorRetryIDKey(peerID)
-	exists, err := datastore.PeerstoreFrom(txn.Store()).Has(ctx, key.Bytes())
+	exists, err := datastore.PeerstoreFrom(txn).Has(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -440,7 +440,7 @@ func createIfNotExistsReplicatorRetry(
 	if err != nil {
 		return err
 	}
-	err = datastore.PeerstoreFrom(txn.Store()).Set(ctx, key.Bytes(), b)
+	err = datastore.PeerstoreFrom(txn).Set(ctx, key.Bytes(), b)
 	if err != nil {
 		return err
 	}
@@ -536,7 +536,7 @@ func setReplicatorNextRetry(
 	retryIntervals []time.Duration,
 ) error {
 	key := keys.NewReplicatorRetryIDKey(peerID)
-	b, err := datastore.PeerstoreFrom(txn.Store()).Get(ctx, key.Bytes())
+	b, err := datastore.PeerstoreFrom(txn).Get(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -555,7 +555,7 @@ func setReplicatorNextRetry(
 	if err != nil {
 		return err
 	}
-	return datastore.PeerstoreFrom(txn.Store()).Set(ctx, key.Bytes(), b)
+	return datastore.PeerstoreFrom(txn).Set(ctx, key.Bytes(), b)
 }
 
 // retryReplicator retries all unsycned docs for a replicator.
@@ -635,8 +635,8 @@ func (p *Peer) getHeads(ctx context.Context, docID string) ([]head, error) {
 	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
 	defer txn.Discard(ctx)
 
-	headstore := datastore.HeadstoreFrom(txn.Store())
-	blockstore := datastore.BlockstoreFrom(txn.Store()).AsIPLDStorage()
+	headstore := datastore.HeadstoreFrom(txn)
+	blockstore := datastore.BlockstoreFrom(txn).AsIPLDStorage()
 
 	prefix := keys.HeadstoreDocKey{
 		DocID:   docID,
@@ -736,7 +736,7 @@ func deleteReplicatorRetryIfNoMoreDocs(
 	entries, err := datastore.FetchKeysForPrefix(
 		ctx,
 		keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
-		datastore.PeerstoreFrom(txn.Store()),
+		datastore.PeerstoreFrom(txn),
 	)
 	if err != nil {
 		return false, err
@@ -744,7 +744,7 @@ func deleteReplicatorRetryIfNoMoreDocs(
 
 	if len(entries) == 0 {
 		key := keys.NewReplicatorRetryIDKey(peerID)
-		return true, datastore.PeerstoreFrom(txn.Store()).Delete(ctx, key.Bytes())
+		return true, datastore.PeerstoreFrom(txn).Delete(ctx, key.Bytes())
 	}
 	return false, nil
 }
@@ -754,7 +754,7 @@ func (p *Peer) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) 
 	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
 	defer txn.Discard(ctx)
 
-	peerstore := datastore.PeerstoreFrom(txn.Store())
+	peerstore := datastore.PeerstoreFrom(txn)
 
 	key := keys.NewReplicatorRetryIDKey(peerID)
 	err := peerstore.Delete(ctx, key.Bytes())

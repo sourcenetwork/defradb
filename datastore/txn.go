@@ -52,7 +52,7 @@ type Txn interface {
 }
 
 type txn struct {
-	t  corekv.Txn
+	corekv.Txn
 	id uint64
 
 	successFns []func()
@@ -71,24 +71,24 @@ func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, reado
 	rootTxn := rootstore.NewTxn(readonly)
 
 	return &txn{
-		t:  rootTxn,
-		id: id,
+		Txn: rootTxn,
+		id:  id,
 	}
 }
 
-func (t *txn) Store() corekv.Store {
-	return t.t
+func (t *txn) Close() error {
+	return t.Txn.Close()
 }
 
 func (t *txn) ID() uint64 {
 	return t.id
 }
 
-func (t *txn) Commit(ctx context.Context) error {
+func (t *txn) Commit() error {
 	var fns []func()
 	var asyncFns []func()
 
-	err := t.t.Commit()
+	err := t.Txn.Commit()
 	if err != nil {
 		fns = t.errorFns
 		asyncFns = t.errorAsyncFns
@@ -106,8 +106,8 @@ func (t *txn) Commit(ctx context.Context) error {
 	return err
 }
 
-func (t *txn) Discard(ctx context.Context) {
-	t.t.Discard()
+func (t *txn) Discard() {
+	t.Txn.Discard()
 
 	for _, fn := range t.discardAsyncFns {
 		go fn()

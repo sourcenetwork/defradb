@@ -34,8 +34,8 @@ func NewConcurrentTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uin
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
 
 	return &txn{
-		t:  rootConcurentTxn,
-		id: id,
+		Txn: rootConcurentTxn,
+		id:  id,
 	}
 }
 

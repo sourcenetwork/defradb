@@ -114,7 +114,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 			if schemaFound {
 				schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
-				err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, schemaRootKey.Bytes(), []byte{})
+				err = datastore.SystemstoreFrom(txn).Set(ctx, schemaRootKey.Bytes(), []byte{})
 				if err != nil {
 					return err
 				}

@@ -330,14 +330,14 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			return err
 		}
 
-		err = datastore.DatastoreFrom(f.txn.Store()).Set(ctx, fieldKey.Bytes(), bytes)
+		err = datastore.DatastoreFrom(f.txn).Set(ctx, fieldKey.Bytes(), bytes)
 		if err != nil {
 			return err
 		}
 	}
 
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	err = datastore.DatastoreFrom(f.txn.Store()).Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
+	err = datastore.DatastoreFrom(f.txn).Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
 	if err != nil {
 		return err
 	}

@@ -221,7 +221,7 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	txn datastore.Txn,
 	key keys.IndexDataStoreKey,
 ) error {
-	ds := datastore.DatastoreFrom(txn.Store())
+	ds := datastore.DatastoreFrom(txn)
 	exists, err := ds.Has(ctx, key.Bytes())
 	if err != nil {
 		return err
@@ -244,7 +244,7 @@ func (index *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.T
 	prefixKey.CollectionShortID = shortID
 	prefixKey.IndexID = index.desc.ID
 
-	ds := datastore.DatastoreFrom(txn.Store())
+	ds := datastore.DatastoreFrom(txn)
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.Bytes(), ds)
 	if err != nil {
 		return err
@@ -330,7 +330,7 @@ func (index *collectionSimpleIndex) Save(
 	doc *client.Document,
 ) error {
 	return index.generateKeysAndProcess(ctx, txn, doc, true, func(key keys.IndexDataStoreKey) error {
-		return datastore.DatastoreFrom(txn.Store()).Set(ctx, key.Bytes(), []byte{})
+		return datastore.DatastoreFrom(txn).Set(ctx, key.Bytes(), []byte{})
 	})
 }
 
@@ -422,7 +422,7 @@ func validateUniqueKeyValue(
 	fieldsDescs []client.SchemaFieldDescription,
 ) error {
 	if len(val) != 0 {
-		exists, err := datastore.DatastoreFrom(txn.Store()).Has(ctx, key.Bytes())
+		exists, err := datastore.DatastoreFrom(txn).Has(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
@@ -448,7 +448,7 @@ func addNewUniqueKey(
 	if err != nil {
 		return err
 	}
-	err = datastore.DatastoreFrom(txn.Store()).Set(ctx, key.Bytes(), val)
+	err = datastore.DatastoreFrom(txn).Set(ctx, key.Bytes(), val)
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToString(), err)
 	}
@@ -465,7 +465,7 @@ func (index *collectionUniqueIndex) Delete(
 		if err != nil {
 			return err
 		}
-		return datastore.DatastoreFrom(txn.Store()).Delete(ctx, key.Bytes())
+		return datastore.DatastoreFrom(txn).Delete(ctx, key.Bytes())
 	})
 }
 

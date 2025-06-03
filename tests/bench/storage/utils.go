@@ -88,7 +88,7 @@ func runStorageBenchTxnGet(
 		for j := 0; j < opCount; j++ {
 			positionInInterval := getSampledIndex(len(keys), opCount, j)
 			key := []byte(keys[positionInInterval])
-			_, err := txn.Store().Get(ctx, key)
+			_, err := txn.Get(ctx, key)
 			if err != nil {
 				return err
 			}
@@ -130,7 +130,7 @@ func runStorageBenchTxnIterator(
 				positionInInterval := getSampledIndex(len(keys), pointCount, k)
 				startKey := ds.NewKey(keys[positionInInterval])
 
-				iter, err := txn.Store().Iterator(ctx, corekv.IterOptions{
+				iter, err := txn.Iterator(ctx, corekv.IterOptions{
 					Prefix: startKey.Bytes(),
 				})
 				if err != nil {
@@ -248,7 +248,7 @@ func backfillBenchmarkTxn(
 		}
 		keys[i] = string(key)
 
-		if err := txn.Store().Set(ctx, key, value); err != nil {
+		if err := txn.Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}

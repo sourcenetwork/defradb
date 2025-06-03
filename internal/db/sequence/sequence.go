@@ -46,7 +46,7 @@ func Get(ctx context.Context, txn datastore.Txn, key keys.Key) (*Sequence, error
 }
 
 func (seq *Sequence) Get(ctx context.Context, txn datastore.Txn) (uint64, error) {
-	val, err := datastore.SystemstoreFrom(txn.Store()).Get(ctx, seq.key.Bytes())
+	val, err := datastore.SystemstoreFrom(txn).Get(ctx, seq.key.Bytes())
 	if err != nil {
 		return 0, err
 	}
@@ -58,7 +58,7 @@ func (seq *Sequence) Get(ctx context.Context, txn datastore.Txn) (uint64, error)
 func (seq *Sequence) Update(ctx context.Context, txn datastore.Txn) error {
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
-	if err := datastore.SystemstoreFrom(txn.Store()).Set(ctx, seq.key.Bytes(), buf[:]); err != nil {
+	if err := datastore.SystemstoreFrom(txn).Set(ctx, seq.key.Bytes(), buf[:]); err != nil {
 		return err
 	}
 

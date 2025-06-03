@@ -393,7 +393,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		}
 	}
 
-	exists, err := datastore.SystemstoreFrom(txn.Store()).Has(ctx, []byte("/init"))
+	exists, err := datastore.SystemstoreFrom(txn).Has(ctx, []byte("/init"))
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
@@ -416,7 +416,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return txn.Commit(ctx)
 	}
 
-	err = datastore.SystemstoreFrom(txn.Store()).Set(ctx, []byte("/init"), []byte{1})
+	err = datastore.SystemstoreFrom(txn).Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
 		return err
 	}

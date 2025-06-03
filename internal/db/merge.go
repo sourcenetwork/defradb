@@ -163,10 +163,10 @@ func (db *DB) newMergeProcessor(
 	col *collection,
 ) (*mergeProcessor, error) {
 	blockLS := cidlink.DefaultLinkSystem()
-	blockLS.SetReadStorage(datastore.BlockstoreFrom(txn.Store()).AsIPLDStorage())
+	blockLS.SetReadStorage(datastore.BlockstoreFrom(txn).AsIPLDStorage())
 
 	encBlockLS := cidlink.DefaultLinkSystem()
-	encBlockLS.SetReadStorage(datastore.EncstoreFrom(txn.Store()).AsIPLDStorage())
+	encBlockLS.SetReadStorage(datastore.EncstoreFrom(txn).AsIPLDStorage())
 
 	return &mergeProcessor{
 		txn:                       txn,
@@ -457,7 +457,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		mp.docIDs[docID] = struct{}{}
 
 		return crdt.NewDocComposite(
-			datastore.DatastoreFrom(mp.txn.Store()),
+			datastore.DatastoreFrom(mp.txn),
 			mp.col.Schema().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -488,7 +488,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		}
 
 		return crdt.FieldLevelCRDTWithStore(
-			datastore.DatastoreFrom(mp.txn.Store()),
+			datastore.DatastoreFrom(mp.txn),
 			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
@@ -550,7 +550,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 
 // getHeads retrieves the heads associated with the given datastore key.
 func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
-	headset := coreblock.NewHeadSet(datastore.HeadstoreFrom(txn.Store()), key)
+	headset := coreblock.NewHeadSet(datastore.HeadstoreFrom(txn), key)
 
 	cids, _, err := headset.List(ctx)
 	if err != nil {
@@ -562,7 +562,7 @@ func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]
 
 // loadBlockFromBlockStore loads a block from the blockstore.
 func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid) (*coreblock.Block, error) {
-	b, err := datastore.BlockstoreFrom(txn.Store()).Get(ctx, cid)
+	b, err := datastore.BlockstoreFrom(txn).Get(ctx, cid)
 	if err != nil {
 		return nil, err
 	}

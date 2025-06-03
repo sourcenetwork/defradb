@@ -15,8 +15,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/datastore"
 )
 
@@ -34,10 +32,6 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 		return nil, err
 	}
 	return &Transaction{id, httpClient}, nil
-}
-
-func (c *Transaction) Store() corekv.Store {
-	panic("client side transaction")
 }
 
 func (c *Transaction) ID() uint64 {
@@ -63,6 +57,10 @@ func (c *Transaction) Discard(ctx context.Context) {
 		return
 	}
 	c.http.request(req) //nolint:errcheck
+}
+
+func (c *Transaction) Close() error {
+	panic("client side transaction")
 }
 
 func (c *Transaction) OnSuccess(fn func()) {
