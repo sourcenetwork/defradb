@@ -39,16 +39,22 @@ func (_m *Collection) EXPECT() *Collection_Expecter {
 }
 
 // Create provides a mock function for the type Collection
-func (_mock *Collection) Create(ctx context.Context, doc *client.Document) error {
-	ret := _mock.Called(ctx, doc)
+func (_mock *Collection) Create(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, doc, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, doc)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = returnFunc(ctx, doc)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...client.DocCreateOption) error); ok {
+		r0 = returnFunc(ctx, doc, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,13 +69,16 @@ type Collection_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx
 //   - doc
-func (_e *Collection_Expecter) Create(ctx interface{}, doc interface{}) *Collection_Create_Call {
-	return &Collection_Create_Call{Call: _e.mock.On("Create", ctx, doc)}
+//   - opts
+func (_e *Collection_Expecter) Create(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Create_Call {
+	return &Collection_Create_Call{Call: _e.mock.On("Create",
+		append([]interface{}{ctx, doc}, opts...)...)}
 }
 
-func (_c *Collection_Create_Call) Run(run func(ctx context.Context, doc *client.Document)) *Collection_Create_Call {
+func (_c *Collection_Create_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption)) *Collection_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
+		variadicArgs := args[2].([]client.DocCreateOption)
+		run(args[0].(context.Context), args[1].(*client.Document), variadicArgs...)
 	})
 	return _c
 }
@@ -79,7 +88,7 @@ func (_c *Collection_Create_Call) Return(err error) *Collection_Create_Call {
 	return _c
 }
 
-func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document) error) *Collection_Create_Call {
+func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -140,16 +149,22 @@ func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Co
 }
 
 // CreateMany provides a mock function for the type Collection
-func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document) error {
-	ret := _mock.Called(ctx, docs)
+func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docs, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docs)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateMany")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document) error); ok {
-		r0 = returnFunc(ctx, docs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document, ...client.DocCreateOption) error); ok {
+		r0 = returnFunc(ctx, docs, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -164,13 +179,16 @@ type Collection_CreateMany_Call struct {
 // CreateMany is a helper method to define mock.On call
 //   - ctx
 //   - docs
-func (_e *Collection_Expecter) CreateMany(ctx interface{}, docs interface{}) *Collection_CreateMany_Call {
-	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany", ctx, docs)}
+//   - opts
+func (_e *Collection_Expecter) CreateMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_CreateMany_Call {
+	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany",
+		append([]interface{}{ctx, docs}, opts...)...)}
 }
 
-func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*client.Document)) *Collection_CreateMany_Call {
+func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption)) *Collection_CreateMany_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*client.Document))
+		variadicArgs := args[2].([]client.DocCreateOption)
+		run(args[0].(context.Context), args[1].([]*client.Document), variadicArgs...)
 	})
 	return _c
 }
@@ -180,7 +198,7 @@ func (_c *Collection_CreateMany_Call) Return(err error) *Collection_CreateMany_C
 	return _c
 }
 
-func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document) error) *Collection_CreateMany_Call {
+func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error) *Collection_CreateMany_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -657,16 +675,22 @@ func (_c *Collection_Name_Call) RunAndReturn(run func() string) *Collection_Name
 }
 
 // Save provides a mock function for the type Collection
-func (_mock *Collection) Save(ctx context.Context, doc *client.Document) error {
-	ret := _mock.Called(ctx, doc)
+func (_mock *Collection) Save(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, doc, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, doc)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = returnFunc(ctx, doc)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...client.DocCreateOption) error); ok {
+		r0 = returnFunc(ctx, doc, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -681,13 +705,16 @@ type Collection_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx
 //   - doc
-func (_e *Collection_Expecter) Save(ctx interface{}, doc interface{}) *Collection_Save_Call {
-	return &Collection_Save_Call{Call: _e.mock.On("Save", ctx, doc)}
+//   - opts
+func (_e *Collection_Expecter) Save(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Save_Call {
+	return &Collection_Save_Call{Call: _e.mock.On("Save",
+		append([]interface{}{ctx, doc}, opts...)...)}
 }
 
-func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Document)) *Collection_Save_Call {
+func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption)) *Collection_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.Document))
+		variadicArgs := args[2].([]client.DocCreateOption)
+		run(args[0].(context.Context), args[1].(*client.Document), variadicArgs...)
 	})
 	return _c
 }
@@ -697,7 +724,7 @@ func (_c *Collection_Save_Call) Return(err error) *Collection_Save_Call {
 	return _c
 }
 
-func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document) error) *Collection_Save_Call {
+func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }
