@@ -499,6 +499,10 @@ func (c *Client) Blockstore() datastore.Blockstore {
 	panic("client side database")
 }
 
+func (c *Client) Datastore() datastore.DSReaderWriter {
+	panic("client side database")
+}
+
 func (c *Client) Encstore() datastore.Blockstore {
 	panic("client side database")
 }
