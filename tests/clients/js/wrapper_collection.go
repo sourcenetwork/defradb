@@ -95,6 +95,7 @@ func (c *Collection) Definition() client.CollectionDefinition {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	docVal, err := goji.MarshalJS(doc)
 	if err != nil {
@@ -111,6 +112,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	docsVal, err := goji.MarshalJS(docs)
 	if err != nil {
@@ -146,6 +148,7 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {

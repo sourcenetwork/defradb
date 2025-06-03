@@ -56,7 +56,7 @@ func (c *Collection) Create(
 	doc *client.Document,
 	opts ...client.DocCreateOption,
 ) error {
-	args := makeDocCreateArgs(c, opts...)
+	args := makeDocCreateArgs(c, opts)
 
 	document, err := doc.String()
 	if err != nil {
@@ -77,7 +77,7 @@ func (c *Collection) CreateMany(
 	docs []*client.Document,
 	opts ...client.DocCreateOption,
 ) error {
-	args := makeDocCreateArgs(c, opts...)
+	args := makeDocCreateArgs(c, opts)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -101,13 +101,13 @@ func (c *Collection) CreateMany(
 
 func makeDocCreateArgs(
 	c *Collection,
-	opts ...client.DocCreateOption,
+	opts []client.DocCreateOption,
 ) []string {
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Version().Name)
 
 	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts...)
+	createDocOpts.Apply(opts)
 
 	if createDocOpts.EncryptDoc {
 		args = append(args, "--encrypt")

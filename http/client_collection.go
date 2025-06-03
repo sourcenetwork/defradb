@@ -74,7 +74,7 @@ func (c *Collection) Create(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(req, opts...)
+	setDocEncryptionFlagIfNeeded(req, opts)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -110,7 +110,7 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(req, opts...)
+	setDocEncryptionFlagIfNeeded(req, opts)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -123,9 +123,9 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(req *http.Request, opts ...client.DocCreateOption) {
+func setDocEncryptionFlagIfNeeded(req *http.Request, opts []client.DocCreateOption) {
 	createDocsOptions := client.DocCreateOptions{}
-	createDocsOptions.Apply(opts...)
+	createDocsOptions.Apply(opts)
 
 	q := req.URL.Query()
 	if createDocsOptions.EncryptDoc {

@@ -24,7 +24,7 @@ type DocCreateOptions struct {
 }
 
 // Apply applies the given DocCreateOptions to the DocCreateOptions receiver.
-func (o *DocCreateOptions) Apply(opts ...DocCreateOption) {
+func (o *DocCreateOptions) Apply(opts []DocCreateOption) {
 	for _, opt := range opts {
 		opt(o)
 	}
