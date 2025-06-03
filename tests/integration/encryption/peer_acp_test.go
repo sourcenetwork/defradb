@@ -226,6 +226,15 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 					"Users": []map[string]any{},
 				},
 			},
+			testUtils.Datastore{
+				NodeID: immutable.Some(0),
+				Key:    testUtils.NewKey().DatastoreDoc().Field("name"),
+			},
+			testUtils.Datastore{
+				NodeID:           immutable.Some(1),
+				Key:              testUtils.NewKey().DatastoreDoc().Field("name"),
+				ExpectMissingKey: true,
+			},
 		},
 	}
 
