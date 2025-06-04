@@ -492,6 +492,52 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 	return _c
 }
 
+// Datastore provides a mock function for the type DB
+func (_mock *DB) Datastore() datastore.DSReaderWriter {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Datastore")
+	}
+
+	var r0 datastore.DSReaderWriter
+	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(datastore.DSReaderWriter)
+		}
+	}
+	return r0
+}
+
+// DB_Datastore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Datastore'
+type DB_Datastore_Call struct {
+	*mock.Call
+}
+
+// Datastore is a helper method to define mock.On call
+func (_e *DB_Expecter) Datastore() *DB_Datastore_Call {
+	return &DB_Datastore_Call{Call: _e.mock.On("Datastore")}
+}
+
+func (_c *DB_Datastore_Call) Run(run func()) *DB_Datastore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_Datastore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *DB_Datastore_Call {
+	_c.Call.Return(dSReaderWriter)
+	return _c
+}
+
+func (_c *DB_Datastore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *DB_Datastore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type DB
 func (_mock *DB) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
