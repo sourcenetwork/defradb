@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -55,8 +54,9 @@ func (c *Collection) Definition() client.CollectionDefinition {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
-	args := makeDocCreateArgs(ctx, c)
+	args := makeDocCreateArgs(c, opts)
 
 	document, err := doc.String()
 	if err != nil {
@@ -75,8 +75,9 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
+	opts ...client.DocCreateOption,
 ) error {
-	args := makeDocCreateArgs(ctx, c)
+	args := makeDocCreateArgs(c, opts)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -99,20 +100,20 @@ func (c *Collection) CreateMany(
 }
 
 func makeDocCreateArgs(
-	ctx context.Context,
 	c *Collection,
+	opts []client.DocCreateOption,
 ) []string {
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Version().Name)
 
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() {
-		if encConf.Value().IsDocEncrypted {
-			args = append(args, "--encrypt")
-		}
-		if len(encConf.Value().EncryptedFields) > 0 {
-			args = append(args, "--encrypt-fields", strings.Join(encConf.Value().EncryptedFields, ","))
-		}
+	createDocOpts := client.DocCreateOptions{}
+	createDocOpts.Apply(opts)
+
+	if createDocOpts.EncryptDoc {
+		args = append(args, "--encrypt")
+	}
+	if len(createDocOpts.EncryptedFields) > 0 {
+		args = append(args, "--encrypt-fields", strings.Join(createDocOpts.EncryptedFields, ","))
 	}
 
 	return args
@@ -143,13 +144,14 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }

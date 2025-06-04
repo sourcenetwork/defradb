@@ -81,7 +81,13 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	if err := structArg(args, 0, "doc", &docMap); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+
+	opts, err := getCreateOptionsFromArg(args, 1)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	ctx, err := contextArg(args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -89,7 +95,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Create(ctx, doc)
+	err = c.col.Create(ctx, doc, opts...)
 	return js.Undefined(), err
 }
 
@@ -98,7 +104,13 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 	if err := structArg(args, 0, "doc", &docMaps); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
+
+	opts, err := getCreateOptionsFromArg(args, 1)
+	if err != nil {
+		return js.Undefined(), err
+	}
+
+	ctx, err := contextArg(args, 2, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -110,8 +122,25 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 		}
 		docs = append(docs, doc)
 	}
-	err = c.col.CreateMany(ctx, docs)
+	err = c.col.CreateMany(ctx, docs, opts...)
 	return js.Undefined(), err
+}
+
+func getCreateOptionsFromArg(args []js.Value, argIndex int) ([]client.DocCreateOption, error) {
+	var createOptions client.DocCreateOptions
+	if err := structArg(args, argIndex, "options", &createOptions); err != nil {
+		return nil, err
+	}
+
+	opts := []client.DocCreateOption{}
+	if len(createOptions.EncryptedFields) > 0 {
+		opts = append(opts, client.CreateDocWithEncryptedFields(createOptions.EncryptedFields))
+	}
+
+	if createOptions.EncryptDoc {
+		opts = append(opts, client.CreateDocEncrypted(true))
+	}
+	return opts, nil
 }
 
 func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {

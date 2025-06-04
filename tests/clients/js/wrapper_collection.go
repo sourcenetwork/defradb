@@ -95,12 +95,13 @@ func (c *Collection) Definition() client.CollectionDefinition {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	docVal, err := goji.MarshalJS(doc)
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "create", docVal)
+	_, err = execute(ctx, c.client, "create", docVal, makeDocCreateOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -108,15 +109,27 @@ func (c *Collection) Create(
 	return nil
 }
 
+func makeDocCreateOptions(opts []client.DocCreateOption) js.Value {
+	createOpts := client.DocCreateOptions{}
+	createOpts.Apply(opts)
+
+	optsVal, err := goji.MarshalJS(createOpts)
+	if err != nil {
+		return js.Undefined()
+	}
+	return optsVal
+}
+
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	docsVal, err := goji.MarshalJS(docs)
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, c.client, "createMany", docsVal)
+	_, err = execute(ctx, c.client, "createMany", docsVal, makeDocCreateOptions(opts))
 	if err != nil {
 		return err
 	}
@@ -146,13 +159,14 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }

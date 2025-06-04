@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db/txnctx"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 
 	"github.com/sourcenetwork/goji"
 )
@@ -32,16 +31,6 @@ func execute(ctx context.Context, value js.Value, method string, args ...any) ([
 	id := identity.FromContext(ctx)
 	if id.HasValue() && id.Value().PrivateKey != nil {
 		contextValues["identity"] = id.Value().PrivateKey.String()
-	}
-	enc := encryption.GetContextConfig(ctx)
-	if enc.HasValue() {
-		config := enc.Value()
-		fields := make([]any, len(config.EncryptedFields))
-		for i, f := range config.EncryptedFields {
-			fields[i] = f
-		}
-		contextValues["encrypt"] = config.IsDocEncrypted
-		contextValues["encryptFields"] = fields
 	}
 	args = append(args, contextValues)
 	prom := value.Call(method, args...)

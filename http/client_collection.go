@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -61,6 +60,7 @@ func (c *Collection) Definition() client.CollectionDefinition {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -74,7 +74,7 @@ func (c *Collection) Create(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(ctx, req)
+	setDocEncryptionFlagIfNeeded(req, opts)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -87,6 +87,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -109,7 +110,7 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(ctx, req)
+	setDocEncryptionFlagIfNeeded(req, opts)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -122,16 +123,18 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(ctx context.Context, req *http.Request) {
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() {
-		q := req.URL.Query()
-		if encConf.Value().IsDocEncrypted {
-			q.Set(docEncryptParam, "true")
-		}
-		if len(encConf.Value().EncryptedFields) > 0 {
-			q.Set(docEncryptFieldsParam, strings.Join(encConf.Value().EncryptedFields, ","))
-		}
+func setDocEncryptionFlagIfNeeded(req *http.Request, opts []client.DocCreateOption) {
+	createDocsOptions := client.DocCreateOptions{}
+	createDocsOptions.Apply(opts)
+
+	q := req.URL.Query()
+	if createDocsOptions.EncryptDoc {
+		q.Set(docEncryptParam, "true")
+	}
+	if len(createDocsOptions.EncryptedFields) > 0 {
+		q.Set(docEncryptFieldsParam, strings.Join(createDocsOptions.EncryptedFields, ","))
+	}
+	if len(q) > 0 {
 		req.URL.RawQuery = q.Encode()
 	}
 }
@@ -162,13 +165,14 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }
