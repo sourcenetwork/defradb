@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/onsi/gomega"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/keys"

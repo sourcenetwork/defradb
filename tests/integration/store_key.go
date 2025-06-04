@@ -172,7 +172,7 @@ func (b *DatastoreIndexKeyBuilder) Build(s *state) (keys.Key, error) {
 	indexedFields := make([]keys.IndexedField, len(b.fields))
 	for i, f := range b.fields {
 		var value client.NormalValue
-		
+
 		switch v := f.value.(type) {
 		case client.NormalValue:
 			value = v
@@ -190,7 +190,7 @@ func (b *DatastoreIndexKeyBuilder) Build(s *state) (keys.Key, error) {
 		default:
 			return nil, client.NewErrUnexpectedType[any]("Field value", v)
 		}
-		
+
 		indexedFields[i] = keys.IndexedField{
 			Value:      value,
 			Descending: f.descending,
