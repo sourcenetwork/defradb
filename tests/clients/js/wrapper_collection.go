@@ -109,18 +109,15 @@ func (c *Collection) Create(
 	return nil
 }
 
-func makeDocCreateOptions(opts []client.DocCreateOption) map[string]any {
+func makeDocCreateOptions(opts []client.DocCreateOption) js.Value {
 	createOpts := client.DocCreateOptions{}
 	createOpts.Apply(opts)
 
-	options := make(map[string]any)
-	if createOpts.EncryptDoc {
-		options["encrypt"] = true
+	optsVal, err := goji.MarshalJS(createOpts)
+	if err != nil {
+		return js.Undefined()
 	}
-	if len(createOpts.EncryptedFields) > 0 {
-		options["encryptFields"] = createOpts.EncryptedFields
-	}
-	return options
+	return optsVal
 }
 
 func (c *Collection) CreateMany(

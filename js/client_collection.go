@@ -13,7 +13,6 @@
 package js
 
 import (
-	"fmt"
 	"sync"
 	"syscall/js"
 
@@ -128,34 +127,18 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 }
 
 func getCreateOptionsFromArg(args []js.Value, argIndex int) ([]client.DocCreateOption, error) {
-	var createOptions map[string]any
+	var createOptions client.DocCreateOptions
 	if err := structArg(args, argIndex, "options", &createOptions); err != nil {
 		return nil, err
 	}
 
 	opts := []client.DocCreateOption{}
-	if v, ok := createOptions["encryptedFields"]; ok {
-		if encryptedFields, ok := v.([]any); ok {
-			fields := []string{}
-			for _, f := range encryptedFields {
-				if field, ok := f.(string); ok {
-					fields = append(fields, field)
-				} else {
-					return nil, fmt.Errorf("encryptedFields must be an array of strings")
-				}
-			}
-			opts = append(opts, client.CreateDocWithEncryptedFields(fields))
-		} else {
-			return nil, fmt.Errorf("encryptedFields must be an array of strings")
-		}
+	if len(createOptions.EncryptedFields) > 0 {
+		opts = append(opts, client.CreateDocWithEncryptedFields(createOptions.EncryptedFields))
 	}
 
-	if v, ok := createOptions["encrypt"]; ok {
-		if encrypt, ok := v.(bool); ok {
-			opts = append(opts, client.CreateDocEncrypted(encrypt))
-		} else {
-			return nil, fmt.Errorf("encrypt must be a boolean")
-		}
+	if createOptions.EncryptDoc {
+		opts = append(opts, client.CreateDocEncrypted(true))
 	}
 	return opts, nil
 }
