@@ -17,6 +17,7 @@ import (
 	"github.com/valyala/fastjson"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/txnctx"
@@ -33,6 +34,11 @@ func (c *collection) UpdateWithFilter(
 ) (*client.UpdateResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocUpdatePerm)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
