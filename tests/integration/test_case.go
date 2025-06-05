@@ -333,8 +333,14 @@ type SetActiveSchemaVersion struct {
 	// If a value is not provided the default will be set on all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	SchemaVersionID string
-	ExpectedError   string
+
+	ExpectedError string
 }
 
 // CreateView is an action that will create a new View.

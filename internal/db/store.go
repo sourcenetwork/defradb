@@ -244,6 +244,11 @@ func (db *DB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaSetActiveVersionPerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
