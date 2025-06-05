@@ -20,6 +20,7 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
@@ -164,6 +165,11 @@ func (c *collection) CreateIndex(
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminIndexCreatePerm)
+	if err != nil {
+		return client.IndexDescription{}, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -353,6 +359,11 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminIndexDropPerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -404,7 +415,12 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 // GetIndexes returns all indexes for the collection.
-func (c *collection) GetIndexes(context.Context) ([]client.IndexDescription, error) {
+func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminIndexListPerm)
+	if err != nil {
+		return nil, err
+	}
+
 	return c.Version().Indexes, nil
 }
 
