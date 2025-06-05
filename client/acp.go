@@ -12,7 +12,8 @@ package client
 
 // PolicyDescription describes a policy using it's ID and it's resource name, where:
 // 1) the ID is the policyID of the registered policy on the document acp system and
-// 2) the resource name is of a resource that is document resource interface (DRI) compliant.
+// 2) the resource name is of a valid resource that adheres to the corresponding
+// resource interface (RI) rules.
 type PolicyDescription struct {
 	// ID is the local policyID when using local acp, and global policyID when
 	// using remote acp with sourcehub. This identifier is externally managed
@@ -42,4 +43,15 @@ type DeleteActorRelationshipResult struct {
 	// RecordFound is true if the relationship record was found, and
 	// is false if the relationship record was not found (no-op).
 	RecordFound bool
+}
+
+// StatusAACResult wraps the result of current admin acp status.
+type StatusAACResult struct {
+	// IsEnabled is true if adminACP is enabled, false otherwise.
+	IsEnabled bool
+
+	// IsConfigured is false if adminACP is in a clean state (never configured), this is
+	// always true if [IsEnabled] is true. If [IsEnabled] is false and this is true that
+	// means the admin has temporarily disabled admin access control.
+	IsConfigured bool
 }
