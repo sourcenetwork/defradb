@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -372,6 +373,21 @@ func performAction(
 
 	case DeleteDACActorRelationship:
 		deleteDACActorRelationship(s, action)
+
+	case ReEnableAAC:
+		reEnableAAC(s, action)
+
+	case DisableAAC:
+		disableAAC(s, action)
+
+	case AddAACActorRelationship:
+		addAACActorRelationship(s, action)
+
+	case DeleteAACActorRelationship:
+		deleteAACActorRelationship(s, action)
+
+	case GetAACStatus:
+		getAACStatus(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -750,7 +766,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.isNetworkEnabled {
-		st, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
+		st, err := setupNode(s, acpIdentity.None, false, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
 		require.Nil(s.t, err)
 		s.nodes = append(s.nodes, st)
 	}
@@ -763,7 +779,9 @@ func startNodes(s *state, action Start) {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.nodes[nodeIndex].dbPath
-		opts := []node.Option{db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex)))}
+		opts := []node.Option{
+			db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))),
+		}
 		for _, opt := range s.nodes[nodeIndex].netOpts {
 			opts = append(opts, opt)
 		}
@@ -772,12 +790,26 @@ func startNodes(s *state, action Start) {
 			addresses = append(addresses, addr.String())
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
-		node, err := setupNode(s, opts...)
-		require.NoError(s.t, err)
+		node, err := setupNode(
+			s,
+			getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex),
+			action.EnableAAC,
+			opts...,
+		)
 		databaseDir = originalPath
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		if expectedErrorRaised {
+			// If we are testing for failure on start of a node, there will be panics if we don't return
+			// when there are errors, so we exit here to assert errors on start.
+			return
+		}
+
+		require.Equal(s.t, action.ExpectedError, "")
+
 		node.p2p = s.nodes[nodeIndex].p2p
 		s.nodes[nodeIndex] = node
-
 		waitForNetworkSetupEvents(s, nodeIndex)
 	}
 
@@ -883,7 +915,7 @@ func configureNode(
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
 
-	node, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, false, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
 
 	s.nodes = append(s.nodes, node)
