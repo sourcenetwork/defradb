@@ -185,6 +185,11 @@ func (db *DB) PatchSchema(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaPatchPerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
