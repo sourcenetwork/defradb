@@ -2524,12 +2524,19 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
 
+	s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, action.NodeID)
 	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
-	require.NoError(s.t, err, s.testCase.Description)
+	resetStateContext(s)
 
-	expectedIdent := getIdentity(s, action.ExpectedIdentity)
-	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
-	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	if !expectedErrorRaised {
+		require.Equal(s.t, action.ExpectedError, "")
+		require.NoError(s.t, err, s.testCase.Description)
+		expectedIdent := getIdentity(s, action.ExpectedIdentity)
+		expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
+		require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+	}
 }
 
 // execGomegaMatcher executes the given gomega matcher and asserts the result.

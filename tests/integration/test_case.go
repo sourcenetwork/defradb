@@ -899,11 +899,22 @@ type GetNodeIdentity struct {
 	// NodeID holds the ID (index) of a node to get the identity from.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	// ExpectedIdentity holds the identity that is expected to be found.
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[Identity]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // Wait is an action that will wait for the given duration.
