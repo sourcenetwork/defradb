@@ -116,6 +116,12 @@ const (
 	errNoIdentityInContext                      string = "no identity found in context"
 	errMissingPermission                        string = "missing permission"
 	errCollectionNameMutated                    string = "collection name cannot be mutated"
+	errAACIsAlreadyDisabled                     string = "admin acp is already disabled"
+	errAACIsAlreadyEnabled                      string = "admin acp is already enabled"
+	errAACIsNotConfigured                       string = "admin acp is not configured"
+	errAACIsEnabledButIsMissingPolicyInfo       string = "admin acp is enabled, but is missing policy info"
+	errAACNodeObjectToGateIsNotRegistered       string = "admin acp is enabled, but object to gate must be registered"
+	errAACIsEnabledButInstanceIsNotAvailable    string = "admin acp is enabled, but the acp instance is not available"
 )
 
 var (
@@ -173,6 +179,12 @@ var (
 	ErrMissingPermission                        = errors.New(errMissingPermission)
 	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 	ErrCollectionNameMutated                    = errors.New(errCollectionNameMutated)
+	ErrAACIsAlreadyDisabled                     = errors.New(errAACIsAlreadyDisabled)
+	ErrAACIsAlreadyEnabled                      = errors.New(errAACIsAlreadyEnabled)
+	ErrAACIsNotConfigured                       = errors.New(errAACIsNotConfigured)
+	ErrAACIsEnabledButIsMissingPolicyInfo       = errors.New(errAACIsEnabledButIsMissingPolicyInfo)
+	ErrAACNodeObjectToGateIsNotRegistered       = errors.New(errAACNodeObjectToGateIsNotRegistered)
+	ErrAACIsEnabledButInstanceIsNotAvailable    = errors.New(errAACIsEnabledButInstanceIsNotAvailable)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
