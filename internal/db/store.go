@@ -211,6 +211,11 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminPatchCollectionPerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
