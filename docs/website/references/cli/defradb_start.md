@@ -13,6 +13,7 @@ defradb start [flags]
 ### Options
 
 ```
+      --aac-enable false                  Enable the admin access control system. Defaults to false.
       --allowed-origins stringArray       List of origins to allow for CORS requests
       --dac-type string                   Specify the document acp engine to use (supported: none (default), local, source-hub)
       --default-key-type string           Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
@@ -20,6 +21,7 @@ defradb start [flags]
                                            - allows purging of all persisted data 
                                            - generates temporary node identity if keyring is disabled
   -h, --help                              help for start
+  -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
       --no-encryption                     Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
       --no-p2p                            Disable the peer-to-peer network synchronization system
