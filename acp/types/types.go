@@ -88,6 +88,8 @@ const (
 	AdminAACStatusPerm
 	AdminAACRelationAddPerm
 	AdminAACRelationDeletePerm
+	AdminSchemaGetPerm
+	AdminSchemaGetByVersionPerm
 	AdminSchemaAddPerm
 	AdminSchemaPatchPerm
 	AdminPatchCollectionPerm
@@ -111,6 +113,8 @@ var RequiredResourcePermissionsForAdmin = []string{
 	"aac-status",
 	"aac-relation-add",
 	"aac-relation-delete",
+	"schema-get",
+	"schema-get-by-version",
 	"schema-add",
 	"schema-patch",
 	"patch-collection",
@@ -157,6 +161,10 @@ resources:
       aac-relation-add:
         expr: owner + admin
       aac-relation-delete:
+        expr: owner + admin
+      schema-get:
+        expr: owner + admin
+      schema-get-by-version:
         expr: owner + admin
       schema-add:
         expr: owner + admin
