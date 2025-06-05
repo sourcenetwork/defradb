@@ -57,6 +57,8 @@ func ValidateResourceInterfaceAccordingToACPSystem(
 	switch acpType {
 	case acpTypes.LocalDocumentACP, acpTypes.SourceHubDocumentACP:
 		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForDocument
+	case acpTypes.AdminACP:
+		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForAdmin
 	default:
 		return NewErrInvalidACPSystem(resourceName)
 	}
