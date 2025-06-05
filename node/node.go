@@ -119,9 +119,9 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 
 	coreDB, _ := n.DB.(*db.DB)
 
-	// This will purge state.
+	// This will purge document acp state.
 	// They will be restarted when node is started again.
-	err = coreDB.PurgeACPState(ctx)
+	err = coreDB.PurgeDACState(ctx)
 	if err != nil {
 		return err
 	}
