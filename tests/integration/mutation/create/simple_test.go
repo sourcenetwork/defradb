@@ -80,21 +80,11 @@ func TestMutationCreate(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.Datastore{
-				Key: testUtils.NewKey().
-					DatastoreDoc().
-					Col(0).
-					DocID(0).
-					Field("name"),
-				Value: gomega.Equal(testUtils.CBORValue("John")),
-			},
-			testUtils.Datastore{
-				Key: testUtils.NewKey().
-					DatastoreDoc().
-					Col(0).
-					DocID(0).
-					Field("age"),
-				Value: gomega.Equal(testUtils.CBORValue(int64(27))),
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"age": 30
+				}`,
 			},
 			testUtils.Request{
 				Request: `
@@ -109,12 +99,45 @@ func TestMutationCreate(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-8c89a573-c287-5d8c-8ba6-c47c814c594d",
+							"_docID": testUtils.NewDocIndex(0, 1),
+							"name":   "Islam",
+							"age":    int64(30),
+						},
+						{
+							"_docID": testUtils.NewDocIndex(0, 0),
 							"name":   "John",
 							"age":    int64(27),
 						},
 					},
 				},
+			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					DocID(0).
+					Field("name"),
+				Value: gomega.Equal(testUtils.CBORValue("John")),
+			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					DocID(0).
+					Field("age"),
+				Value: gomega.Equal(testUtils.CBORValue(int64(27))),
+			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					DocID(1).
+					Field("name"),
+				Value: gomega.Equal(testUtils.CBORValue("Islam")),
+			},
+			testUtils.Datastore{
+				Key: testUtils.NewKey().
+					DatastoreDoc().
+					DocID(1).
+					Field("age"),
+				Value: gomega.Equal(testUtils.CBORValue(int64(30))),
 			},
 		},
 	}
@@ -145,14 +168,6 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 					"name": "John",
 					"age": 27
 				}`,
-			},
-			testUtils.Datastore{
-				Key: testUtils.NewKey().
-					DatastoreDoc().
-					Col(0).
-					DocID(0).
-					Field("name"),
-				Value: gomega.Equal(testUtils.CBORValue("John")),
 			},
 			testUtils.CreateDoc{
 				Doc: `{
