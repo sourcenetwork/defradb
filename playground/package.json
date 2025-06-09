@@ -21,7 +21,7 @@
     "@types/react-dom": "^19.1.2",
     "@types/swagger-ui-react": "^5.18.0",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
-    "@typescript-eslint/parser": "^8.33.0",
+    "@typescript-eslint/parser": "^8.33.1",
     "@vitejs/plugin-react-swc": "^3.10.0",
     "eslint": "^9.28.0",
     "eslint-plugin-react-hooks": "^5.2.0",
