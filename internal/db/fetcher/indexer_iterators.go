@@ -454,7 +454,7 @@ func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 }
 
 // isIndexOrdered checks if the index is ordered by the first field in the ordering array.
-// The first return value specifies ordered-by field is indexed
+// The first return value specifies if ordered-by field is indexed
 // The second one specifies if the index is ordered in the opposite direction to the given ordering, i.e. reversed.
 func (f *indexFetcher) isIndexOrdered() (bool, bool) {
 	if len(f.ordering) > 0 {
@@ -462,7 +462,8 @@ func (f *indexFetcher) isIndexOrdered() (bool, bool) {
 		if found {
 			indexField := f.indexDesc.Fields[0]
 			if indexField.Name == orderField {
-				return true, f.ordering[0].Direction == mapper.DESC && !indexField.Descending
+				isOrderDesc := f.ordering[0].Direction == mapper.DESC
+				return true, isOrderDesc != indexField.Descending
 			}
 		}
 	}
