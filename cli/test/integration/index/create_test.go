@@ -163,7 +163,7 @@ func TestIndexCreate_WithoutCollection_ShouldReturnError(t *testing.T) {
 				// Collection is empty
 				Name:        "TestIndex",
 				Fields:      []string{"field1"},
-				ExpectError: "error expected",
+				ExpectError: "collection not found",
 			},
 		},
 	}
@@ -186,7 +186,7 @@ func TestIndexCreate_WithoutFields_ShouldReturnError(t *testing.T) {
 				Collection: "User",
 				Name:       "EmptyIndex",
 				// Fields is empty
-				ExpectError: "error expected",
+				ExpectError: "index missing fields",
 			},
 		},
 	}
@@ -209,7 +209,7 @@ func TestIndexCreate_WithInvalidFieldOrder_ShouldReturnError(t *testing.T) {
 				Collection:  "User",
 				Name:        "InvalidOrderIndex",
 				Fields:      []string{"name:INVALID"},
-				ExpectError: "invalid ascension order",
+				ExpectError: "invalid order: expected ASC or DESC",
 			},
 		},
 	}
@@ -232,7 +232,7 @@ func TestIndexCreate_WithNonExistentField_ShouldReturnError(t *testing.T) {
 				Collection:  "User",
 				Name:        "InvalidFieldIndex",
 				Fields:      []string{"nonexistent"},
-				ExpectError: "field not found",
+				ExpectError: "creating an index on a non-existing property",
 			},
 		},
 	}

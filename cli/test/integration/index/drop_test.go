@@ -81,7 +81,7 @@ func TestIndexDrop_WithoutCollection_ShouldReturnError(t *testing.T) {
 			&action.IndexDrop{
 				// Collection is empty
 				Name:        "SomeIndex",
-				ExpectError: "error expected",
+				ExpectError: "collection not found",
 			},
 		},
 	}
@@ -102,7 +102,7 @@ func TestIndexDrop_WithoutName_ShouldReturnError(t *testing.T) {
 			&action.IndexDrop{
 				Collection: "User",
 				// Name is empty
-				ExpectError: "error expected",
+				ExpectError: "malformed document ID",
 			},
 		},
 	}
@@ -124,7 +124,7 @@ func TestIndexDrop_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 			&action.IndexDrop{
 				Collection:  "User",
 				Name:        "NonExistentIndex",
-				ExpectError: "index not found",
+				ExpectError: "index with name doesn't exists",
 			},
 		},
 	}
