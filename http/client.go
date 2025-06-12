@@ -274,6 +274,10 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 		return nil, err
 	}
 
+	if len(cols) == 0 {
+		return nil, NewErrCollectionNotFound(name)
+	}
+
 	// cols will always have length == 1 here
 	return cols[0], nil
 }
@@ -352,7 +356,7 @@ func (c *Client) GetSchemas(
 }
 
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	methodURL := c.http.apiURL.JoinPath("indexes")
+	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {

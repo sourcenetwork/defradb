@@ -667,10 +667,33 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	nodeIdentity.AddResponse(200, identityResponse)
 	nodeIdentity.Responses.Set("400", errorResponse)
 
+	indexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index",
+	}
+	indexArraySchema := openapi3.NewArraySchema()
+	indexArraySchema.Items = indexSchema
+
+	getAllIndexesMapSchema := openapi3.NewObjectSchema()
+	getAllIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
+		Schema: openapi3.NewSchemaRef("", indexArraySchema),
+	}
+
+	getAllIndexesResponse := openapi3.NewResponse().
+		WithDescription("Map of collection names to their indexes").
+		WithJSONSchema(getAllIndexesMapSchema)
+
+	getAllIndexes := openapi3.NewOperation()
+	getAllIndexes.OperationID = "indexes_list_all"
+	getAllIndexes.Description = "List all indexes for all collections"
+	getAllIndexes.Tags = []string{"index"}
+	getAllIndexes.AddResponse(200, getAllIndexesResponse)
+	getAllIndexes.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
+	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
