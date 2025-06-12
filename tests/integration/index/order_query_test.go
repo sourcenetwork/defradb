@@ -535,3 +535,51 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldReturnInReverseOrder(t *testing.T) {
+	req := `query {
+		User(order: {age: ASC}, limit: 3) {
+			name
+			age
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index(direction: DESC)
+					}`,
+			},
+			testUtils.CreatePredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Shahzad",
+							"age":  int64(20),
+						},
+						{
+							"name": "Bruno",
+							"age":  int64(23),
+						},
+						{
+							"name": "Fred",
+							"age":  int64(28),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
