@@ -24,6 +24,7 @@ const (
 	errFailedToGetContext           string = "failed to get context"
 	errPurgeRequestNonDeveloperMode string = "cannot purge database when development mode is disabled"
 	errMissingRequiredParameter     string = "required parameter %s is missing"
+	errCollectionNotFound           string = "collection not found"
 )
 
 // Errors returnable from this package.
@@ -83,4 +84,11 @@ func NewErrFailedToLoadKeys(inner error, publicKeyPath, privateKeyPath string) e
 // NewErrMissingRequiredParameter creates a new error for a missing required parameter
 func NewErrMissingRequiredParameter(paramName string) error {
 	return errors.New(fmt.Sprintf(errMissingRequiredParameter, paramName))
+}
+
+func NewErrCollectionNotFound(collectionName string) error {
+	return errors.New(
+		errCollectionNotFound,
+		errors.NewKV("CollectionName", collectionName),
+	)
 }

@@ -274,6 +274,10 @@ func (c *Client) GetCollectionByName(ctx context.Context, name client.Collection
 		return nil, err
 	}
 
+	if len(cols) == 0 {
+		return nil, NewErrCollectionNotFound(name)
+	}
+
 	// cols will always have length == 1 here
 	return cols[0], nil
 }
