@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -320,9 +321,8 @@ func isOrderedByIndex(plan planNode) bool {
 		return false
 	}
 
-	fieldIndexes := scan.documentMapping.IndexesByName[scan.index.Value().Fields[0].Name]
-	return len(fieldIndexes) > 0 && len(scan.ordering) > 0 &&
-		fieldIndexes[0] == scan.ordering[0].FieldIndexes[0]
+	ok, _ := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
+	return ok
 }
 
 // tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.

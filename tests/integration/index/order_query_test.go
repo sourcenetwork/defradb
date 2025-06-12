@@ -583,3 +583,707 @@ func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldRe
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex(t *testing.T) {
+	req1 := `query {
+		User(order: [{name: ASC}, {age: ASC}]) {
+			name
+			age
+		}
+	}`
+
+	req2 := `query {
+		User(order: [{name: DESC}, {age: DESC}]) {
+			name
+			age
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+				type User @index(includes: [{field: "name"},  {field: "age", direction: DESC}]) {
+					name: String
+					age: Int
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24
+					}`,
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex(t *testing.T) {
+	req1 := `query {
+		User(order: [{name: ASC}, {age: ASC}]) {
+			name
+			age
+		}
+	}`
+
+	req2 := `query {
+		User(order: [{name: DESC}, {age: DESC}]) {
+			name
+			age
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(includes: [{field: "name", direction: DESC},  {field: "age"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24
+					}`,
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(t *testing.T) {
+	req1 := `query {
+		User(order: [{name: ASC}, {age: DESC}]) {
+			name
+			age
+		}
+	}`
+
+	req2 := `query {
+		User(order: [{name: DESC}, {age: ASC}]) {
+			name
+			age
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+				type User @index(includes: [{field: "name"},  {field: "age"}]) {
+					name: String
+					age: Int
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24
+					}`,
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserIndex(t *testing.T) {
+	req1 := `query {
+		User(order: [{name: ASC}, {age: DESC}]) {
+			name
+			age
+		}
+	}`
+
+	req2 := `query {
+		User(order: [{name: DESC}, {age: ASC}]) {
+			name
+			age
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+				type User @index(includes: [{field: "name", direction: DESC},  {field: "age", direction: DESC}]) {
+					name: String
+					age: Int
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24
+					}`,
+			},
+			testUtils.Request{
+				Request: req1,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req1),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+			testUtils.Request{
+				Request: req2,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req2),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserIndex(t *testing.T) {
+	req := `query {
+		User(order: [{name: ASC}, {level: ASC}, {age: ASC}]) {
+			name
+			age
+			level
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+				type User @index(includes: [{field: "name"},  {field: "age"}]) {
+					name: String
+					age: Int
+					level: Int
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22,
+						"level": 1
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29,
+						"level": 2
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38,
+						"level": 3
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24,
+						"level": 2
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24,
+						"level": 1
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24,
+						"level": 3
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name":  "Alan",
+							"age":   29,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 3,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   22,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   38,
+							"level": 3,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserIndex(t *testing.T) {
+	req := `query {
+		User(order: [{name: ASC},  {age: ASC}, {level: ASC}]) {
+			name
+			age
+			level
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+				type User @index(includes: [{field: "name"},  {field: "age"}]) {
+					name: String
+					age: Int
+					level: Int
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22,
+						"level": 1
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alan",
+						"age":	29,
+						"level": 2
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	38,
+						"level": 3
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24,
+						"level": 2
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24,
+						"level": 1
+					}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	24,
+						"level": 3
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name":  "Alan",
+							"age":   29,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 3,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   22,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   38,
+							"level": 3,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
