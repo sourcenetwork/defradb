@@ -134,6 +134,9 @@ issues:
   exclude:
   # - abcdef
 
+  exclude-files:
+    - crypto/ssi-sdk.go
+
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
     # Exclude some linters from running on tests files.

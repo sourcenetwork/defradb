@@ -7,7 +7,6 @@ require (
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/cosmos/cosmos-sdk v0.50.13
 	github.com/cosmos/gogoproto v1.7.0
-	github.com/cyware/ssi-sdk v0.0.0-20231229164914-f93f3006379f
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 	github.com/dgraph-io/badger/v4 v4.7.0
 	github.com/evanphx/json-patch/v5 v5.9.11
@@ -22,7 +21,7 @@ require (
 	github.com/ipfs/go-block-format v0.2.1
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipfs/go-datastore v0.8.2
-	github.com/ipfs/go-ipld-format v0.6.0
+	github.com/ipfs/go-ipld-format v0.6.1
 	github.com/ipld/go-ipld-prime v0.21.0
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20240322071758-198d7dba8fb8
@@ -32,13 +31,14 @@ require (
 	github.com/libp2p/go-libp2p v0.41.1
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-kad-dht v0.33.1
-	github.com/libp2p/go-libp2p-pubsub v0.13.1
+	github.com/libp2p/go-libp2p-pubsub v0.14.0
 	github.com/libp2p/go-libp2p-record v0.3.1
 	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multiaddr v0.15.0
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multicodec v0.9.0
 	github.com/multiformats/go-multihash v0.2.3
+	github.com/multiformats/go-varint v0.0.7
 	github.com/onsi/gomega v1.37.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/philippgille/chromem-go v0.7.0
@@ -247,7 +247,6 @@ require (
 	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
-	github.com/jorrizza/ed2curve25519 v0.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kilic/bls12-381 v0.1.1-0.20210503002446-7b7597926c69 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -294,7 +293,6 @@ require (
 	github.com/multiformats/go-multiaddr-dns v0.4.1 // indirect
 	github.com/multiformats/go-multiaddr-fmt v0.1.0 // indirect
 	github.com/multiformats/go-multistream v0.6.0 // indirect
-	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
@@ -310,12 +308,12 @@ require (
 	github.com/pion/dtls/v2 v2.2.12 // indirect
 	github.com/pion/dtls/v3 v3.0.4 // indirect
 	github.com/pion/ice/v4 v4.0.8 // indirect
-	github.com/pion/interceptor v0.1.37 // indirect
+	github.com/pion/interceptor v0.1.39 // indirect
 	github.com/pion/logging v0.2.3 // indirect
 	github.com/pion/mdns/v2 v2.0.7 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/rtcp v1.2.15 // indirect
-	github.com/pion/rtp v1.8.11 // indirect
+	github.com/pion/rtp v1.8.18 // indirect
 	github.com/pion/sctp v1.8.37 // indirect
 	github.com/pion/sdp/v3 v3.0.10 // indirect
 	github.com/pion/srtp/v3 v3.0.4 // indirect
