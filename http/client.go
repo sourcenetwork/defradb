@@ -356,7 +356,7 @@ func (c *Client) GetSchemas(
 }
 
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	methodURL := c.http.apiURL.JoinPath("indexes")
+	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
