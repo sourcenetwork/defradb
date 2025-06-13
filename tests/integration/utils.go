@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -372,6 +373,21 @@ func performAction(
 
 	case DeleteDACActorRelationship:
 		deleteDACActorRelationship(s, action)
+
+	case ReEnableAAC:
+		reEnableAAC(s, action)
+
+	case DisableAAC:
+		disableAAC(s, action)
+
+	case AddAACActorRelationship:
+		addAACActorRelationship(s, action)
+
+	case DeleteAACActorRelationship:
+		deleteAACActorRelationship(s, action)
+
+	case GetAACStatus:
+		getAACStatus(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -750,7 +766,7 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.isNetworkEnabled {
-		st, err := setupNode(s, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
+		st, err := setupNode(s, acpIdentity.None, false, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
 		require.Nil(s.t, err)
 		s.nodes = append(s.nodes, st)
 	}
@@ -763,7 +779,9 @@ func startNodes(s *state, action Start) {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.nodes[nodeIndex].dbPath
-		opts := []node.Option{db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex)))}
+		opts := []node.Option{
+			db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex))),
+		}
 		for _, opt := range s.nodes[nodeIndex].netOpts {
 			opts = append(opts, opt)
 		}
@@ -772,12 +790,26 @@ func startNodes(s *state, action Start) {
 			addresses = append(addresses, addr.String())
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
-		node, err := setupNode(s, opts...)
-		require.NoError(s.t, err)
+		node, err := setupNode(
+			s,
+			getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex),
+			action.EnableAAC,
+			opts...,
+		)
 		databaseDir = originalPath
+
+		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		if expectedErrorRaised {
+			// If we are testing for failure on start of a node, there will be panics if we don't return
+			// when there are errors, so we exit here to assert errors on start.
+			return
+		}
+
+		require.Equal(s.t, action.ExpectedError, "")
+
 		node.p2p = s.nodes[nodeIndex].p2p
 		s.nodes[nodeIndex] = node
-
 		waitForNetworkSetupEvents(s, nodeIndex)
 	}
 
@@ -858,7 +890,7 @@ func configureNode(
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
 
-	node, err := setupNode(s, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, false, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.t, err)
 
 	s.nodes = append(s.nodes, node)
@@ -925,6 +957,7 @@ func getIndexes(
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, nodeID := range nodeIDs {
 		collections := s.nodes[nodeID].collections
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			s.nodes[nodeID],
 			func() error {
@@ -939,6 +972,7 @@ func getIndexes(
 				return nil
 			},
 		)
+		resetStateContext(s)
 		expectedErrorRaised = expectedErrorRaised ||
 			AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
@@ -1034,9 +1068,9 @@ func updateSchema(
 		// This schema might be modified if the caller needs some substitution magic done.
 		var modifiedSchema = action.Schema
 
+		nodeID := nodeIDs[index]
 		// We need to substitute the policyIDs into the `%policyID% place holders.
 		if len(action.Replace) > 0 {
-			nodeID := nodeIDs[index]
 			nodesPolicyIDs := s.policyIDs[nodeID]
 			templateData := map[string]string{}
 			// Build template with the replacing values.
@@ -1057,7 +1091,9 @@ func updateSchema(
 			modifiedSchema = renderedSchema.String()
 		}
 
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		results, err := node.AddSchema(s.ctx, modifiedSchema)
+		resetStateContext(s)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1075,8 +1111,9 @@ func patchSchema(
 	s *state,
 	action SchemaPatch,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		var setAsDefaultVersion bool
 		if action.SetAsDefaultVersion.HasValue() {
 			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
@@ -1084,7 +1121,9 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
+		resetStateContext(s)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1098,9 +1137,12 @@ func patchCollection(
 	s *state,
 	action PatchCollection,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := node.PatchCollection(s.ctx, action.Patch)
+		resetStateContext(s)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1114,10 +1156,12 @@ func getSchema(
 	s *state,
 	action GetSchema,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		var results []client.SchemaDescription
 		var err error
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		switch {
 		case action.VersionID.HasValue():
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
@@ -1132,6 +1176,7 @@ func getSchema(
 				},
 			)
 		}
+		resetStateContext(s)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1169,9 +1214,12 @@ func setActiveSchemaVersion(
 	s *state,
 	action SetActiveSchemaVersion,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := node.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
+		resetStateContext(s)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
@@ -1655,6 +1703,7 @@ func createIndex(
 		}
 
 		indexDesc.Unique = action.Unique
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1662,6 +1711,7 @@ func createIndex(
 				return err
 			},
 		)
+		resetStateContext(s)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
 			return
 		}
@@ -1682,12 +1732,14 @@ func dropIndex(
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
 
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
 				return collection.DropIndex(s.ctx, action.IndexName)
 			},
 		)
+		resetStateContext(s)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 	}
 
@@ -2478,12 +2530,19 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
 
+	s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, action.NodeID)
 	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
-	require.NoError(s.t, err, s.testCase.Description)
+	resetStateContext(s)
 
-	expectedIdent := getIdentity(s, action.ExpectedIdentity)
-	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
-	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	if !expectedErrorRaised {
+		require.Equal(s.t, action.ExpectedError, "")
+		require.NoError(s.t, err, s.testCase.Description)
+		expectedIdent := getIdentity(s, action.ExpectedIdentity)
+		expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
+		require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+	}
 }
 
 // execGomegaMatcher executes the given gomega matcher and asserts the result.

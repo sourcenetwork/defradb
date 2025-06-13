@@ -33,6 +33,11 @@ func (c *collection) DeleteWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocDeletePerm)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err

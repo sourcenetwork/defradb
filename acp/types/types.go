@@ -10,7 +10,11 @@
 
 package acp_types
 
-import "github.com/sourcenetwork/acp_core/pkg/types"
+import (
+	"strings"
+
+	"github.com/sourcenetwork/acp_core/pkg/types"
+)
 
 // RequiredRegistererRelationName is the required relation name that any registerer will have,
 // as the registerer is guaranteed to be the owner.
@@ -22,9 +26,11 @@ type ACPSystemType int
 const (
 	LocalDocumentACP ACPSystemType = iota
 	SourceHubDocumentACP
+	AdminACP
 )
 
 var _ ResourceInterfacePermission = (*DocumentResourcePermission)(nil)
+var _ ResourceInterfacePermission = (*AdminResourcePermission)(nil)
 
 type ResourceInterfacePermission interface {
 	String() string
@@ -61,6 +67,167 @@ var ImplyDocumentReadPerm = []DocumentResourcePermission{
 	DocumentReadPerm,
 	DocumentUpdatePerm,
 	DocumentDeletePerm,
+}
+
+// AdminResourcePermission is a resource interface permission for admin access control.
+type AdminResourcePermission int
+
+// Resource interface permission types for admin access control.
+const (
+	AdminDACBypassPerm AdminResourcePermission = iota
+	AdminDACEnablePerm
+	AdminDACDisablePerm
+	AdminDACPurgePerm
+	AdminDACStatusPerm
+	AdminDACRelationAddPerm
+	AdminDACRelationDeletePerm
+	AdminDACPolicyAddPerm
+	AdminAACReEnablePerm
+	AdminAACDisablePerm
+	AdminAACPurgePerm
+	AdminAACStatusPerm
+	AdminAACRelationAddPerm
+	AdminAACRelationDeletePerm
+	AdminSchemaGetPerm
+	AdminSchemaGetByVersionPerm
+	AdminSchemaSetActiveVersionPerm
+	AdminSchemaAddPerm
+	AdminSchemaPatchPerm
+	AdminPatchCollectionPerm
+	AdminIndexListPerm
+	AdminIndexCreatePerm
+	AdminIndexDropPerm
+	AdminDocReadPerm
+	AdminDocUpdatePerm
+	AdminDocDeletePerm
+	AdminNodeGetIdentityPerm
+	AdminVerifySignaturePerm
+)
+
+// List of all valid resource interface permissions for admin access control, the order of
+// permissions in this list must match the above defined ordering such that iota matches the
+// index position within the list.
+var RequiredResourcePermissionsForAdmin = []string{
+	"dac-bypass",
+	"dac-enable",
+	"dac-disable",
+	"dac-purge",
+	"dac-status",
+	"dac-relation-add",
+	"dac-relation-delete",
+	"dac-policy-add",
+	"aac-re-enable",
+	"aac-disable",
+	"aac-purge",
+	"aac-status",
+	"aac-relation-add",
+	"aac-relation-delete",
+	"schema-get",
+	"schema-get-by-version",
+	"schema-set-active-version",
+	"schema-add",
+	"schema-patch",
+	"patch-collection",
+	"index-list",
+	"index-create",
+	"index-drop",
+	"doc-read",
+	"doc-update",
+	"doc-delete",
+	"node-get-identity",
+	"verify-signature",
+}
+
+const InternalAdminACPObjectToGate = "NodeObject"
+
+const InternalAdminACPPolicyResourceName = "node"
+
+const InternalAdminACPPolicy = `
+name: Internal Admin ACP Policy
+description: Internal Admin ACP Policy
+
+actor:
+  name: actor
+
+resources:
+  node:
+    permissions:
+      dac-bypass:
+        expr: owner + admin
+      dac-enable:
+        expr: owner + admin
+      dac-disable:
+        expr: owner + admin
+      dac-purge:
+        expr: owner + admin
+      dac-status:
+        expr: owner + admin
+      dac-relation-add:
+        expr: owner + admin
+      dac-relation-delete:
+        expr: owner + admin
+      dac-policy-add:
+        expr: owner + admin
+      aac-re-enable:
+        expr: owner + admin
+      aac-disable:
+        expr: owner + admin
+      aac-purge:
+        expr: owner + admin
+      aac-status:
+        expr: owner + admin
+      aac-relation-add:
+        expr: owner + admin
+      aac-relation-delete:
+        expr: owner + admin
+      schema-get:
+        expr: owner + admin
+      schema-get-by-version:
+        expr: owner + admin
+	  schema-set-active-version:
+        expr: owner + admin
+      schema-add:
+        expr: owner + admin
+      schema-patch:
+        expr: owner + admin
+      patch-collection:
+        expr: owner + admin
+      index-list:
+        expr: owner + admin
+      index-create:
+        expr: owner + admin
+      index-drop:
+        expr: owner + admin
+      doc-read:
+        expr: owner + admin
+      doc-update:
+        expr: owner + admin
+      doc-delete:
+        expr: owner + admin
+      node-get-identity:
+        expr: owner + admin
+      verify-signature:
+        expr: owner + admin
+
+    relations:
+      owner:
+        types:
+          - actor
+      admin:
+        types:
+          - actor
+`
+
+func (resourcePermission AdminResourcePermission) String() string {
+	return RequiredResourcePermissionsForAdmin[resourcePermission]
+}
+
+func (resourcePermission AdminResourcePermission) IsForAACOperation() bool {
+	permission := resourcePermission.String()
+	if len(permission) >= 3 && strings.EqualFold(permission[:3], "aac") {
+		return true
+	}
+	return false
 }
 
 // RegistrationResult is an enum type which indicates the result of a RegisterObject call to SourceHub / ACP Core

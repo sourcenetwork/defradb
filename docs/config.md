@@ -129,6 +129,10 @@ Possible values:
 - `wasmer` (windows not supported): https://github.com/wasmerio/wasmer-go
 - `wazero`: https://github.com/tetratelabs/wazero
 
+## `acp.aac.enable`
+
+Enable the admin access control system. Defaults to `false`. Identity is Required when `acp.aac.enable`:`true`.
+
 ## `acp.dac.type`
 
 The type of Document ACP to use.

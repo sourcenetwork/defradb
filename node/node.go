@@ -76,7 +76,11 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, filterOptions[db.Option](n.options)...)
+	adminACP, err := NewAdminACP(ctx, filterOptions[AdminACPOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	n.DB, err = db.NewDB(ctx, rootstore, adminACP, documentACP, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -108,23 +112,32 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if !n.config.enableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
-	err := n.Close(ctx)
+
+	coreDB, _ := n.DB.(*db.DB)
+
+	// This will purge document acp state.
+	err := coreDB.PurgeDACState(ctx)
 	if err != nil {
 		return err
 	}
+
+	// This will purge admin acp state.
+	err = coreDB.PurgeAACState(ctx)
+	if err != nil {
+		return err
+	}
+
+	// This will close db and all acp instances along with it.
+	err = n.Close(ctx)
+	if err != nil {
+		return err
+	}
+
 	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	coreDB, _ := n.DB.(*db.DB)
-
-	// This will purge state.
-	// They will be restarted when node is started again.
-	err = coreDB.PurgeACPState(ctx)
-	if err != nil {
-		return err
-	}
-
+	// The node is being started again. This restarts the above closed acp states too.
 	return n.Start(ctx)
 }

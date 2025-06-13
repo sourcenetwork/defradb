@@ -46,6 +46,62 @@ func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
 }
 
+// AddAACActorRelationship provides a mock function for the type DB
+func (_mock *DB) AddAACActorRelationship(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
+	ret := _mock.Called(ctx, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddAACActorRelationship")
+	}
+
+	var r0 client.AddActorRelationshipResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.AddActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.AddActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.AddActorRelationshipResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// DB_AddAACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddAACActorRelationship'
+type DB_AddAACActorRelationship_Call struct {
+	*mock.Call
+}
+
+// AddAACActorRelationship is a helper method to define mock.On call
+//   - ctx
+//   - relation
+//   - targetActor
+func (_e *DB_Expecter) AddAACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *DB_AddAACActorRelationship_Call {
+	return &DB_AddAACActorRelationship_Call{Call: _e.mock.On("AddAACActorRelationship", ctx, relation, targetActor)}
+}
+
+func (_c *DB_AddAACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *DB_AddAACActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *DB_AddAACActorRelationship_Call) Return(addActorRelationshipResult client.AddActorRelationshipResult, err error) *DB_AddAACActorRelationship_Call {
+	_c.Call.Return(addActorRelationshipResult, err)
+	return _c
+}
+
+func (_c *DB_AddAACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *DB_AddAACActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddDACActorRelationship provides a mock function for the type DB
 func (_mock *DB) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
@@ -492,6 +548,62 @@ func (_c *DB_Close_Call) RunAndReturn(run func()) *DB_Close_Call {
 	return _c
 }
 
+// DeleteAACActorRelationship provides a mock function for the type DB
+func (_mock *DB) DeleteAACActorRelationship(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
+	ret := _mock.Called(ctx, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAACActorRelationship")
+	}
+
+	var r0 client.DeleteActorRelationshipResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.DeleteActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.DeleteActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// DB_DeleteAACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAACActorRelationship'
+type DB_DeleteAACActorRelationship_Call struct {
+	*mock.Call
+}
+
+// DeleteAACActorRelationship is a helper method to define mock.On call
+//   - ctx
+//   - relation
+//   - targetActor
+func (_e *DB_Expecter) DeleteAACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *DB_DeleteAACActorRelationship_Call {
+	return &DB_DeleteAACActorRelationship_Call{Call: _e.mock.On("DeleteAACActorRelationship", ctx, relation, targetActor)}
+}
+
+func (_c *DB_DeleteAACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *DB_DeleteAACActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *DB_DeleteAACActorRelationship_Call) Return(deleteActorRelationshipResult client.DeleteActorRelationshipResult, err error) *DB_DeleteAACActorRelationship_Call {
+	_c.Call.Return(deleteActorRelationshipResult, err)
+	return _c
+}
+
+func (_c *DB_DeleteAACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *DB_DeleteAACActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type DB
 func (_mock *DB) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
@@ -592,6 +704,51 @@ func (_c *DB_DeleteReplicator_Call) Return(err error) *DB_DeleteReplicator_Call 
 }
 
 func (_c *DB_DeleteReplicator_Call) RunAndReturn(run func(ctx context.Context, rep client.ReplicatorParams) error) *DB_DeleteReplicator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DisableAAC provides a mock function for the type DB
+func (_mock *DB) DisableAAC(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableAAC")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// DB_DisableAAC_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableAAC'
+type DB_DisableAAC_Call struct {
+	*mock.Call
+}
+
+// DisableAAC is a helper method to define mock.On call
+//   - ctx
+func (_e *DB_Expecter) DisableAAC(ctx interface{}) *DB_DisableAAC_Call {
+	return &DB_DisableAAC_Call{Call: _e.mock.On("DisableAAC", ctx)}
+}
+
+func (_c *DB_DisableAAC_Call) Run(run func(ctx context.Context)) *DB_DisableAAC_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_DisableAAC_Call) Return(err error) *DB_DisableAAC_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *DB_DisableAAC_Call) RunAndReturn(run func(ctx context.Context) error) *DB_DisableAAC_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -741,6 +898,60 @@ func (_c *DB_ExecRequest_Call) Return(requestResult *client.RequestResult) *DB_E
 }
 
 func (_c *DB_ExecRequest_Call) RunAndReturn(run func(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult) *DB_ExecRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAACStatus provides a mock function for the type DB
+func (_mock *DB) GetAACStatus(ctx context.Context) (client.StatusAACResult, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAACStatus")
+	}
+
+	var r0 client.StatusAACResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (client.StatusAACResult, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) client.StatusAACResult); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(client.StatusAACResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// DB_GetAACStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAACStatus'
+type DB_GetAACStatus_Call struct {
+	*mock.Call
+}
+
+// GetAACStatus is a helper method to define mock.On call
+//   - ctx
+func (_e *DB_Expecter) GetAACStatus(ctx interface{}) *DB_GetAACStatus_Call {
+	return &DB_GetAACStatus_Call{Call: _e.mock.On("GetAACStatus", ctx)}
+}
+
+func (_c *DB_GetAACStatus_Call) Run(run func(ctx context.Context)) *DB_GetAACStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_GetAACStatus_Call) Return(statusAACResult client.StatusAACResult, err error) *DB_GetAACStatus_Call {
+	_c.Call.Return(statusAACResult, err)
+	return _c
+}
+
+func (_c *DB_GetAACStatus_Call) RunAndReturn(run func(ctx context.Context) (client.StatusAACResult, error)) *DB_GetAACStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1668,6 +1879,51 @@ func (_c *DB_PrintDump_Call) Return(err error) *DB_PrintDump_Call {
 }
 
 func (_c *DB_PrintDump_Call) RunAndReturn(run func(ctx context.Context) error) *DB_PrintDump_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReEnableAAC provides a mock function for the type DB
+func (_mock *DB) ReEnableAAC(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReEnableAAC")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// DB_ReEnableAAC_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReEnableAAC'
+type DB_ReEnableAAC_Call struct {
+	*mock.Call
+}
+
+// ReEnableAAC is a helper method to define mock.On call
+//   - ctx
+func (_e *DB_Expecter) ReEnableAAC(ctx interface{}) *DB_ReEnableAAC_Call {
+	return &DB_ReEnableAAC_Call{Call: _e.mock.On("ReEnableAAC", ctx)}
+}
+
+func (_c *DB_ReEnableAAC_Call) Run(run func(ctx context.Context)) *DB_ReEnableAAC_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_ReEnableAAC_Call) Return(err error) *DB_ReEnableAAC_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *DB_ReEnableAAC_Call) RunAndReturn(run func(ctx context.Context) error) *DB_ReEnableAAC_Call {
 	_c.Call.Return(run)
 	return _c
 }

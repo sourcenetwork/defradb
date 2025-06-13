@@ -92,3 +92,83 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 	return exists, err
 }
+
+func (w *Wrapper) GetAACStatus(ctx context.Context) (client.StatusAACResult, error) {
+	args := []string{"client", "acp", "aac", "status"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.StatusAACResult{}, err
+	}
+
+	var status client.StatusAACResult
+	if err := json.Unmarshal(data, &status); err != nil {
+		return client.StatusAACResult{}, err
+	}
+
+	return status, nil
+}
+
+func (w *Wrapper) ReEnableAAC(ctx context.Context) error {
+	args := []string{"client", "acp", "aac", "re-enable"}
+	if _, err := w.cmd.execute(ctx, args); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *Wrapper) DisableAAC(ctx context.Context) error {
+	args := []string{"client", "acp", "aac", "disable"}
+	if _, err := w.cmd.execute(ctx, args); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *Wrapper) AddAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	args := []string{
+		"client", "acp", "aac", "relationship", "add",
+		"--relation", relation,
+		"--actor", targetActor,
+	}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	var exists client.AddActorRelationshipResult
+	if err := json.Unmarshal(data, &exists); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	return exists, err
+}
+
+func (w *Wrapper) DeleteAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	args := []string{
+		"client", "acp", "aac", "relationship", "delete",
+		"--relation", relation,
+		"--actor", targetActor,
+	}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	var exists client.DeleteActorRelationshipResult
+	if err := json.Unmarshal(data, &exists); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	return exists, err
+}

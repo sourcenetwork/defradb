@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
@@ -78,6 +79,9 @@ type DB struct {
 	// The identity of the current node
 	nodeIdentity immutable.Option[identity.Identity]
 
+	// Admin ACP system along with it's current state information.
+	adminInfo AdminInfo
+
 	// Contains document ACP if it exists
 	documentACP immutable.Option[dac.DocumentACP]
 
@@ -104,16 +108,18 @@ var _ client.DB = (*DB)(nil)
 func NewDB(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
+	adminACP AdminInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, documentACP, lens, options...)
+	return newDB(ctx, rootstore, adminACP, documentACP, lens, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore datastore.Rootstore,
+	adminACP AdminInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -135,6 +141,7 @@ func newDB(
 	db := &DB{
 		rootstore:      rootstore,
 		multistore:     multistore,
+		adminInfo:      adminACP,
 		documentACP:    documentACP,
 		lensRegistry:   lens,
 		parser:         parser,
@@ -222,6 +229,11 @@ func (db *DB) AddDACPolicy(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminDACPolicyAddPerm)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
 	if !db.documentACP.HasValue() {
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -238,12 +250,12 @@ func (db *DB) AddDACPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
-// PurgeACPState purges the ACP state(s), and calls [Close()] on the ACP system(s) before returning.
+// PurgeDACState purges all document ACP state, and calls [Close()] on the acp instance before returning.
 //
-// This will close the ACP system(s), purge it's state(s), then restart it/them, and finally close it/them.
+// This will close the acp system, reset it's state (purge then restart), and finally close it.
 //
-// Note: all ACP state(s) will be lost, and won't be recoverable.
-func (db *DB) PurgeACPState(ctx context.Context) error {
+// Note: all document ACP state will be lost, and won't be recoverable.
+func (db *DB) PurgeDACState(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -255,13 +267,6 @@ func (db *DB) PurgeACPState(ctx context.Context) error {
 			// for now we will just log this error, since SourceHub ACP doesn't yet
 			// implement the ResetState.
 			log.ErrorE("Failed to reset document ACP state", err)
-		}
-
-		// follow up close call on document ACP is required since the node.Start function starts
-		// document ACP again anyways so we need to gracefully close before starting again.
-		err = documentACP.Close()
-		if err != nil {
-			return err
 		}
 	}
 
@@ -306,6 +311,11 @@ func (db *DB) AddDACActorRelationship(
 ) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := db.checkAdminAccess(ctx, acpTypes.AdminDACRelationAddPerm)
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
 
 	if !db.documentACP.HasValue() {
 		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
@@ -355,6 +365,11 @@ func (db *DB) DeleteDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminDACRelationDeletePerm)
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
 	if !db.documentACP.HasValue() {
 		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -386,7 +401,12 @@ func (db *DB) DeleteDACActorRelationship(
 	return client.DeleteActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
-func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (db *DB) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	err := db.checkAdminAccess(ctx, acpTypes.AdminNodeGetIdentityPerm)
+	if err != nil {
+		return immutable.None[identity.PublicRawIdentity](), err
+	}
+
 	if db.nodeIdentity.HasValue() {
 		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
 	}
@@ -411,6 +431,10 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 	defer txn.Discard(ctx)
+
+	if err := db.initializeAdminACP(ctx, txn); err != nil {
+		return err
+	}
 
 	// Start document acp if enabled, this will recover previous state if there is any.
 	if db.documentACP.HasValue() {
@@ -482,6 +506,12 @@ func (db *DB) Close() {
 	err := db.rootstore.Close()
 	if err != nil {
 		log.ErrorE("Failure closing running process", err)
+	}
+
+	if db.adminInfo.AdminACP != nil {
+		if err := db.adminInfo.AdminACP.Close(); err != nil {
+			log.ErrorE("Failure closing admin acp", err)
+		}
 	}
 
 	if db.documentACP.HasValue() {

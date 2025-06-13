@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -90,6 +91,11 @@ func (db *DB) GetSchemaByVersionID(ctx context.Context, versionID string) (clien
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaGetByVersionPerm)
+	if err != nil {
+		return client.SchemaDescription{}, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return client.SchemaDescription{}, err
@@ -108,6 +114,11 @@ func (db *DB) GetSchemas(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaGetPerm)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -123,6 +134,11 @@ func (db *DB) GetAllIndexes(
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := db.checkAdminAccess(ctx, acpTypes.AdminIndexListPerm)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
@@ -141,6 +157,11 @@ func (db *DB) GetAllIndexes(
 func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaAddPerm)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -179,6 +200,11 @@ func (db *DB) PatchSchema(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaPatchPerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -200,6 +226,11 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := db.checkAdminAccess(ctx, acpTypes.AdminPatchCollectionPerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -217,6 +248,11 @@ func (db *DB) PatchCollection(
 func (db *DB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaSetActiveVersionPerm)
+	if err != nil {
+		return err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
