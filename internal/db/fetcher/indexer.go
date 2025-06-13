@@ -153,3 +153,39 @@ func (f *indexFetcher) Close() error {
 	}
 	return nil
 }
+
+// CanBeOrderedByIndex checks if the index can be used to order by the fields in the ordering array.
+// The first return value specifies if index can be used.
+// The second one specifies if the index should be reversed to match the ordering.
+func CanBeOrderedByIndex(
+	ordering []mapper.OrderCondition,
+	index client.IndexDescription,
+	mapping *core.DocumentMapping,
+) (bool, bool) {
+	// if there is not ordering in the query or the query requests ordering on more fields, then index
+	// contains, we can't use index
+	if len(ordering) == 0 || len(ordering) > len(index.Fields) {
+		return false, false
+	}
+
+	orderMismatchCount := 0
+
+	for i := range len(ordering) {
+		fieldIndexes := mapping.IndexesByName[index.Fields[i].Name]
+
+		// if indexed field doesn't match the ordering field, we can't use index
+		if len(fieldIndexes) == 0 || fieldIndexes[0] != ordering[i].FieldIndexes[0] {
+			return false, false
+		}
+
+		isDescending := ordering[i].Direction == mapper.DESC
+		if index.Fields[i].Descending != isDescending {
+			orderMismatchCount++
+		}
+	}
+
+	// if ordering of all fields matches, we can use index
+	// also if ordering of all indexes doesn't match we can use index by reversing it
+	allMismatches := orderMismatchCount == len(ordering)
+	return orderMismatchCount == 0 || allMismatches, allMismatches
+}

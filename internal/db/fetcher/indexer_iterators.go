@@ -368,7 +368,7 @@ func (f *indexFetcher) newPrefixIteratorFromConditions(
 		return nil, err
 	}
 	iter := f.newPrefixIterator(key, matchers, f.execInfo)
-	ordered, reverse := f.isIndexOrdered()
+	ordered, reverse := CanBeOrderedByIndex(f.ordering, f.indexDesc, f.mapping)
 	if ordered {
 		iter.Reverse(reverse)
 	}
@@ -441,7 +441,7 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 }
 
 func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
-	ordered, reverse := f.isIndexOrdered()
+	ordered, reverse := CanBeOrderedByIndex(f.ordering, f.indexDesc, f.mapping)
 	if ordered {
 		key, err := f.newIndexDataStoreKey()
 		if err != nil {
@@ -453,23 +453,6 @@ func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 	return nil, nil
 }
 
-// isIndexOrdered checks if the index is ordered by the first field in the ordering array.
-// The first return value specifies if ordered-by field is indexed
-// The second one specifies if the index is ordered in the opposite direction to the given ordering, i.e. reversed.
-func (f *indexFetcher) isIndexOrdered() (bool, bool) {
-	if len(f.ordering) > 0 {
-		orderField, found := f.mapping.TryToFindNameFromIndex(f.ordering[0].FieldIndexes[0])
-		if found {
-			indexField := f.indexDesc.Fields[0]
-			if indexField.Name == orderField {
-				isOrderDesc := f.ordering[0].Direction == mapper.DESC
-				return true, isOrderDesc != indexField.Descending
-			}
-		}
-	}
-	return false, false
-}
-
 func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	fieldConditions, err := f.determineFieldFilterConditions()
 	if err != nil {
@@ -477,6 +460,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	}
 
 	// fieldConditions might be empty if a query contains an empty condition like User(filter: {name: {}})
+	// or if there is no filter, but other arguments like ordering or limit are specified.
 	if len(fieldConditions) == 0 {
 		return f.tryCreateOrderedIndexIterator()
 	}
