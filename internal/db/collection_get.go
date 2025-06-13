@@ -17,8 +17,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -36,7 +37,10 @@ func (c *collection) Get(
 		return nil, err
 	}
 	defer txn.Discard(ctx)
-	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
 
 	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
@@ -64,19 +68,38 @@ func (c *collection) get(
 	fields []client.FieldDefinition,
 	showDeleted bool,
 ) (*client.Document, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	// create a new document fetcher
 	df := c.newFetcher()
 	// initialize it with the primary index
-	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, immutable.Option[client.IndexDescription]{},
-		c, fields, nil, nil, showDeleted)
+	err := df.Init(
+		ctx,
+		identity.FromContext(ctx),
+		txn,
+		c.db.documentACP,
+		immutable.Option[client.IndexDescription]{},
+		c,
+		fields,
+		nil,
+		nil,
+		nil,
+		showDeleted,
+	)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
 	}
 
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	// construct target DS key from DocID.
-	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
+	targetKey := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             primaryKey.DocID,
+	}
 	// run the doc fetcher
 	err = df.Start(ctx, targetKey)
 	if err != nil {

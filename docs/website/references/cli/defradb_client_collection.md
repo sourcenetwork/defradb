@@ -9,13 +9,13 @@ Create, read, update, and delete documents within a collection.
 ### Options
 
 ```
-      --get-inactive      Get inactive collections as well as active
-  -h, --help              help for collection
-  -i, --identity string   Hex formatted private key used to authenticate with ACP
-      --name string       Collection name
-      --schema string     Collection schema Root
-      --tx uint           Transaction ID
-      --version string    Collection version ID
+      --collection-id string   Collection ID
+      --get-inactive           Get inactive collections as well as active
+  -h, --help                   help for collection
+  -i, --identity string        Hex formatted private key used to authenticate with ACP
+      --name string            Collection name
+      --tx uint                Transaction ID
+      --version-id string      Collection version ID
 ```
 
 ### Options inherited from parent commands
@@ -43,9 +43,9 @@ Create, read, update, and delete documents within a collection.
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client collection create](defradb_client_collection_create.md)	 - Create a new document.
 * [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete documents by docID or filter.
-* [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection description.
+* [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection version.
 * [defradb client collection docIDs](defradb_client_collection_docIDs.md)	 - List all document IDs (docIDs).
 * [defradb client collection get](defradb_client_collection_get.md)	 - View document fields.
-* [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection descriptions
+* [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection versions
 * [defradb client collection update](defradb_client_collection_update.md)	 - Update documents by docID or filter.
 

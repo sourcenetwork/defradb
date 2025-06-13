@@ -13,8 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -45,6 +44,8 @@ type createNode struct {
 	results planNode
 
 	execInfo createExecInfo
+
+	createOptions []client.DocCreateOption
 }
 
 type createExecInfo struct {
@@ -56,12 +57,20 @@ func (n *createNode) Kind() string { return "createNode" }
 
 func (n *createNode) Init() error { return nil }
 
-func docIDsToPrefixes(ids []string, desc client.CollectionDescription) []keys.Walkable {
+func (n *createNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
+	shortID, err := id.GetShortCollectionID(n.p.ctx, desc.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	prefixes := make([]keys.Walkable, len(ids))
 	for i, id := range ids {
-		prefixes[i] = base.MakeDataStoreKeyWithCollectionAndDocID(desc, id)
+		prefixes[i] = keys.DataStoreKey{
+			CollectionShortID: shortID,
+			DocID:             id,
+		}
 	}
-	return prefixes
+	return prefixes, nil
 }
 
 func documentsToDocIDs(docs ...*client.Document) []string {
@@ -90,12 +99,17 @@ func (n *createNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
 	if !n.didCreate {
-		err := n.collection.CreateMany(n.p.ctx, n.docs)
+		err := n.collection.CreateMany(n.p.ctx, n.docs, n.createOptions...)
 		if err != nil {
 			return false, err
 		}
 
-		n.results.Prefixes(docIDsToPrefixes(documentsToDocIDs(n.docs...), n.collection.Description()))
+		prefixes, err := n.docIDsToPrefixes(documentsToDocIDs(n.docs...), n.collection.Version())
+		if err != nil {
+			return false, err
+		}
+
+		n.results.Prefixes(prefixes)
 
 		err = n.results.Init()
 		if err != nil {
@@ -153,9 +167,11 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
+		createOptions: []client.DocCreateOption{
+			client.CreateDocEncrypted(parsed.Encrypt),
+			client.CreateDocWithEncryptedFields(parsed.EncryptFields),
+		},
 	}
-
-	p.ctx = encryption.SetContextConfigFromParams(p.ctx, parsed.Encrypt, parsed.EncryptFields)
 
 	// get collection
 	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)

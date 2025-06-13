@@ -19,32 +19,35 @@ import (
 )
 
 const (
-	errFieldNotExist                       string = "the given field does not exist"
-	errUnexpectedType                      string = "unexpected type"
-	errParsingFailed                       string = "failed to parse argument"
-	errUninitializeProperty                string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries                       string = "reached maximum transaction reties"
-	errCollectionNotFound                  string = "collection not found"
-	errUnknownCRDT                         string = "unknown crdt"
-	errCRDTKindMismatch                    string = "CRDT type %s can't be assigned to field kind %s"
-	errInvalidCRDTType                     string = "CRDT type not supported"
-	errFailedToUnmarshalCollection         string = "failed to unmarshal collection json"
-	errOperationNotPermittedOnNamelessCols string = "operation not permitted on nameless collection"
-	errInvalidJSONPayload                  string = "invalid JSON payload"
-	errCanNotNormalizeValue                string = "can not normalize value"
-	errCanNotTurnNormalValueIntoArray      string = "can not turn normal value into array"
-	errCanNotMakeNormalNilFromFieldKind    string = "can not make normal nil from field kind"
-	errFailedToParseKind                   string = "failed to parse kind"
-	errCannotSetRelationFromSecondarySide  string = "cannot set relation from secondary side"
-	errArraySizeMismatch                   string = "array size mismatch"
-	errInvalidTypeForEmbedding             string = "invalid type for vector embedding"
-	errInvalidTypeForEmbeddingGeneration   string = "invalid field type for vector embedding generation"
-	errEmptyFieldNameForEmbedding          string = "embedding FieldName cannot be empty"
-	errEmptyFieldsForEmbedding             string = "embedding Fields cannot be empty"
-	errEmptyProviderForEmbedding           string = "embedding Provider cannot be empty"
-	errEmptyModelForEmbedding              string = "embedding Model cannot be empty"
-	errUnknownEmbeddingProvider            string = "unknown embedding provider"
-	errEmbeddingFieldEmbedding             string = "embedding fields cannot refer to self or another embedding field"
+	errFieldNotExist                      string = "the given field does not exist"
+	errUnexpectedType                     string = "unexpected type"
+	errParsingFailed                      string = "failed to parse argument"
+	errUninitializeProperty               string = "invalid state, required property is uninitialized"
+	errMaxTxnRetries                      string = "reached maximum transaction reties"
+	errCollectionNotFound                 string = "collection not found"
+	errUnknownCRDT                        string = "unknown crdt"
+	errCRDTKindMismatch                   string = "CRDT type %s can't be assigned to field kind %s"
+	errInvalidCRDTType                    string = "CRDT type not supported"
+	errFailedToUnmarshalCollection        string = "failed to unmarshal collection json"
+	errInvalidJSONPayload                 string = "invalid JSON payload"
+	errCanNotNormalizeValue               string = "can not normalize value"
+	errCanNotTurnNormalValueIntoArray     string = "can not turn normal value into array"
+	errCanNotMakeNormalNilFromFieldKind   string = "can not make normal nil from field kind"
+	errFailedToParseKind                  string = "failed to parse kind"
+	errCannotSetRelationFromSecondarySide string = "cannot set relation from secondary side"
+	errArraySizeMismatch                  string = "array size mismatch"
+	errInvalidTypeForEmbedding            string = "invalid type for vector embedding"
+	errInvalidTypeForEmbeddingGeneration  string = "invalid field type for vector embedding generation"
+	errEmptyFieldNameForEmbedding         string = "embedding FieldName cannot be empty"
+	errEmptyFieldsForEmbedding            string = "embedding Fields cannot be empty"
+	errEmptyProviderForEmbedding          string = "embedding Provider cannot be empty"
+	errEmptyModelForEmbedding             string = "embedding Model cannot be empty"
+	errUnknownEmbeddingProvider           string = "unknown embedding provider"
+	errEmbeddingFieldEmbedding            string = "embedding fields cannot refer to self or another embedding field"
+)
+
+var (
+	errNotFound string = corekv.ErrNotFound.Error()
 )
 
 // Errors returnable from this package.
@@ -55,7 +58,6 @@ var (
 	ErrFieldNotExist                        = errors.New(errFieldNotExist)
 	ErrUnexpectedType                       = errors.New(errUnexpectedType)
 	ErrFailedToUnmarshalCollection          = errors.New(errFailedToUnmarshalCollection)
-	ErrOperationNotPermittedOnNamelessCols  = errors.New(errOperationNotPermittedOnNamelessCols)
 	ErrFieldNotObject                       = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch                    = errors.New("value does not match indicated type")
 	ErrDocumentNotFoundOrNotAuthorized      = errors.New("document not found or not authorized to access")
@@ -81,6 +83,7 @@ var (
 	ErrEmptyModelForEmbedding               = errors.New(errEmptyModelForEmbedding)
 	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding              = errors.New(errEmbeddingFieldEmbedding)
+	ErrNotFound                             = errors.New(errNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -153,10 +156,10 @@ func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
 
-func NewErrCollectionNotFoundForSchemaVersion(schemaVersionID string) error {
+func NewErrCollectionNotFoundForCollectionVersion(collectionVersionID string) error {
 	return errors.New(
 		errCollectionNotFound,
-		errors.NewKV("SchemaVersionID", schemaVersionID),
+		errors.NewKV("CollectionVersionID", collectionVersionID),
 	)
 }
 
@@ -241,4 +244,8 @@ func NewErrUnknownEmbeddingProvider(provider string) error {
 
 func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 	return errors.New(errEmbeddingFieldEmbedding, errors.NewKV("Field", fieldName))
+}
+
+func NewErrNotFound(kv errors.KV) error {
+	return errors.New(errNotFound, kv)
 }

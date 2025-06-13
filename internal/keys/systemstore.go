@@ -12,11 +12,11 @@ package keys
 
 const (
 	COLLECTION                = "collection"
-	COLLECTION_ROOT           = "/collection/root"
-	COLLECTION_INDEX          = "/collection/index"
+	COLLECTION_SHORT_ID       = "/collection/shortID"
 	COLLECTION_NAME           = "/collection/name"
 	COLLECTION_SCHEMA_VERSION = "/collection/version"
 	COLLECTION_ID             = "/collection/id"
+	FIELD_SHORT_ID            = "/field/shortID"
 	P2P_COLLECTION            = "/p2p/collection"
 	SCHEMA_VERSION_ROOT       = "/schema/version/r"
 	SCHEMA_VERSION            = "/schema/version/v"

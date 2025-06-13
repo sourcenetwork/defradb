@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const (
@@ -365,6 +366,15 @@ func resolveAggregates(
 	def client.CollectionDefinition,
 	store client.Store,
 ) ([]Requestable, error) {
+	var collectionShortID uint32
+	if def.Version.CollectionID != "" {
+		var err error
+		collectionShortID, err = id.GetShortCollectionID(ctx, def.Version.CollectionID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	fields := inputFields
 	dependenciesByParentId := map[int][]int{}
 	for _, aggregate := range aggregates {
@@ -397,13 +407,18 @@ func resolveAggregates(
 						}
 					}
 
+					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.Name)
+					if err != nil {
+						return nil, err
+					}
+
 					// If the hostExternalName matches a non-object field
 					// we don't have to search for it and can just construct the
 					// targeting info here.
 					hasHost = true
 					host = &Targetable{
 						Field: Field{
-							Index: int(fieldDesc.ID),
+							Index: int(fieldShortID),
 							Name:  target.hostExternalName,
 						},
 						Filter:  ToFilter(target.filter.Value(), mapping),
@@ -898,7 +913,7 @@ func getCollectionName(
 	return selectRequest.Name, nil
 }
 
-// getTopLevelInfo returns the collection description and maps the fields directly on the object.
+// getTopLevelInfo returns the collection version and maps the fields directly on the object.
 func getTopLevelInfo(
 	ctx context.Context,
 	store client.Store,
@@ -918,46 +933,31 @@ func getTopLevelInfo(
 		var definition client.CollectionDefinition
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			// If the collection is not found, check to see if a schema of that name exists,
-			// if so, this must be an embedded object.
-			//
-			// Note: This is a poor way to check if a collection exists or not, see
-			// https://github.com/sourcenetwork/defradb/issues/2146
-			schemas, err := store.GetSchemas(
-				ctx,
-				client.SchemaFetchOptions{
-					Name: immutable.Some(collectionName),
-				},
-			)
+			return nil, client.CollectionDefinition{}, err
+		}
+
+		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
+		definition = collection.Definition()
+
+		collectionShortID, err := id.GetShortCollectionID(ctx, definition.Version.CollectionID)
+		if err != nil {
+			return nil, client.CollectionDefinition{}, err
+		}
+
+		// Map all fields from schema into the map as they are fetched automatically
+		for _, f := range definition.GetFields() {
+			if f.Kind.IsObject() {
+				// Objects are skipped, as they are not fetched by default and
+				// have to be requested via selects.
+				continue
+			}
+
+			fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, f.Name)
 			if err != nil {
 				return nil, client.CollectionDefinition{}, err
 			}
-			if len(schemas) == 0 {
-				return nil, client.CollectionDefinition{}, NewErrTypeNotFound(collectionName)
-			}
 
-			for i, f := range schemas[0].Fields {
-				// As embedded objects do not have collections/field-ids, we just take the index
-				mapping.Add(int(i), f.Name)
-			}
-
-			definition = client.CollectionDefinition{
-				// `schemas` will contain all versions of that name, as views cannot be updated atm this should
-				// be fine for now
-				Schema: schemas[0],
-			}
-		} else {
-			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
-			definition = collection.Definition()
-			// Map all fields from schema into the map as they are fetched automatically
-			for _, f := range definition.GetFields() {
-				if f.Kind.IsObject() {
-					// Objects are skipped, as they are not fetched by default and
-					// have to be requested via selects.
-					continue
-				}
-				mapping.Add(int(f.ID), f.Name)
-			}
+			mapping.Add(int(fieldShortID), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as
@@ -1294,11 +1294,11 @@ func toCommitSelect(
 		return nil, err
 	}
 	return &CommitSelect{
-		Select:  *underlyingSelect,
-		DocID:   selectRequest.DocID,
-		FieldID: selectRequest.FieldID,
-		Depth:   selectRequest.Depth,
-		Cid:     selectRequest.CID,
+		Select:    *underlyingSelect,
+		DocID:     selectRequest.DocID,
+		FieldName: selectRequest.FieldName,
+		Depth:     selectRequest.Depth,
+		Cid:       selectRequest.CID,
 	}, nil
 }
 

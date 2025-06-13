@@ -36,6 +36,6 @@ func NewErrStoreTypeNotSupported(store StoreType) error {
 	return errors.New(errStoreTypeNotSupported, errors.NewKV("Store", store))
 }
 
-func NewErrACPTypeNotSupported(acp ACPType) error {
+func NewErrACPTypeNotSupported(acp DocumentACPType) error {
 	return errors.New(errACPTypeNotSupported, errors.NewKV("ACP", acp))
 }

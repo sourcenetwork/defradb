@@ -68,7 +68,7 @@ var _ TestStateMatcher = (*anyOf)(nil)
 
 func (matcher *anyOf) Match(actual any) (bool, error) {
 	switch matcher.s.GetClientType() {
-	case HTTPClientType, CLIClientType:
+	case HTTPClientType, CLIClientType, JSClientType:
 		if !areResultsAnyOf(matcher.Values, actual) {
 			return gomega.ContainElement(actual).Match(matcher.Values)
 		}
@@ -195,7 +195,7 @@ func (matcher *SameValue) NegatedFailureMessage(actual any) string {
 // The comparison is relaxed when using client types other than goClientType.
 func assertResultsEqual(t testing.TB, client ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
-	case HTTPClientType, CLIClientType:
+	case HTTPClientType, CLIClientType, JSClientType:
 		if !areResultsEqual(expected, actual) {
 			assert.EqualValues(t, expected, actual, msgAndArgs...)
 		}
@@ -352,28 +352,26 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 	return true
 }
 
-func assertCollectionDescriptions(
+func assertCollectionVersions(
 	s *state,
-	expected []client.CollectionDescription,
-	actual []client.CollectionDescription,
+	expected []client.CollectionVersion,
+	actual []client.CollectionVersion,
 ) {
 	require.Equal(s.t, len(expected), len(actual))
 
 	for i, expected := range expected {
 		actual := actual[i]
-		if expected.ID != 0 {
-			require.Equal(s.t, expected.ID, actual.ID)
+		if expected.VersionID != "" {
+			require.Equal(s.t, expected.VersionID, actual.VersionID)
 		}
-		if expected.RootID != 0 {
-			require.Equal(s.t, expected.RootID, actual.RootID)
-		}
-		if expected.SchemaVersionID != "" {
-			require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
+		if expected.CollectionID != "" {
+			require.Equal(s.t, expected.CollectionID, actual.CollectionID)
 		}
 
 		require.Equal(s.t, expected.Name, actual.Name)
 		require.Equal(s.t, expected.IsMaterialized, actual.IsMaterialized)
 		require.Equal(s.t, expected.IsBranchable, actual.IsBranchable)
+		require.Equal(s.t, expected.IsActive, actual.IsActive)
 
 		if expected.Indexes != nil || len(actual.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.

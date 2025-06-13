@@ -48,19 +48,13 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:              1,
-						SchemaVersionID: "does not exist",
-						IsMaterialized:  true,
-					},
-					{
-						ID:              2,
-						SchemaVersionID: "also does not exist",
-						IsMaterialized:  true,
+						VersionID:      "also does not exist",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -76,6 +70,10 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						VersionID:      "does not exist",
+						IsMaterialized: true,
 					},
 				},
 			},

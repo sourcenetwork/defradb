@@ -177,7 +177,7 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
 
@@ -185,7 +185,7 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	if err != nil {
 		return nil, err
 	}
-	var cols []client.CollectionDescription
+	var cols []client.CollectionVersion
 	if err := json.Unmarshal(data, &cols); err != nil {
 		return nil, err
 	}
@@ -268,11 +268,11 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.VersionID.HasValue() {
+		args = append(args, "--version-id", options.VersionID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -319,11 +319,11 @@ func (w *Wrapper) GetCollections(
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.VersionID.HasValue() {
+		args = append(args, "--version-id", options.VersionID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))

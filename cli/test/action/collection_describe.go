@@ -24,7 +24,7 @@ type CollectionDescribe struct {
 
 	// The expected results.
 	//
-	// Each item will be compared individually, if ID, RootID or SchemaVersionID on the
+	// Each item will be compared individually, if ID or RootID on the
 	// expected item are default they will not be compared with the actual.
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
@@ -47,38 +47,35 @@ func (a *CollectionDescribe) Execute() {
 	for i, expected := range a.Expected {
 		actual := result[i]
 
-		if expected.Description.ID != 0 {
-			require.Equal(a.s.T, expected.Description.ID, actual.Description.ID)
+		if expected.Version.CollectionID != "" {
+			require.Equal(a.s.T, expected.Version.CollectionID, actual.Version.CollectionID)
 		}
-		if expected.Description.RootID != 0 {
-			require.Equal(a.s.T, expected.Description.RootID, actual.Description.RootID)
-		}
-		if expected.Description.SchemaVersionID != "" {
-			require.Equal(a.s.T, expected.Description.SchemaVersionID, actual.Description.SchemaVersionID)
+		if expected.Version.VersionID != "" {
+			require.Equal(a.s.T, expected.Version.VersionID, actual.Version.VersionID)
 		}
 
-		require.Equal(a.s.T, expected.Description.Name, actual.Description.Name)
-		require.Equal(a.s.T, expected.Description.IsMaterialized, actual.Description.IsMaterialized)
-		require.Equal(a.s.T, expected.Description.IsBranchable, actual.Description.IsBranchable)
+		require.Equal(a.s.T, expected.Version.Name, actual.Version.Name)
+		require.Equal(a.s.T, expected.Version.IsMaterialized, actual.Version.IsMaterialized)
+		require.Equal(a.s.T, expected.Version.IsBranchable, actual.Version.IsBranchable)
 
-		if expected.Description.Indexes != nil || len(actual.Description.Indexes) != 0 {
+		if expected.Version.Indexes != nil || len(actual.Version.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			require.Equal(a.s.T, expected.Description.Indexes, actual.Description.Indexes)
+			require.Equal(a.s.T, expected.Version.Indexes, actual.Version.Indexes)
 		}
 
-		if expected.Description.Sources != nil {
+		if expected.Version.Sources != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no sources)
-			require.Equal(a.s.T, expected.Description.Sources, actual.Description.Sources)
+			require.Equal(a.s.T, expected.Version.Sources, actual.Version.Sources)
 		}
 
-		if expected.Description.Fields != nil {
-			require.Equal(a.s.T, expected.Description.Fields, actual.Description.Fields)
+		if expected.Version.Fields != nil {
+			require.Equal(a.s.T, expected.Version.Fields, actual.Version.Fields)
 		}
 
-		if expected.Description.VectorEmbeddings != nil {
-			require.Equal(a.s.T, expected.Description.VectorEmbeddings, actual.Description.VectorEmbeddings)
+		if expected.Version.VectorEmbeddings != nil {
+			require.Equal(a.s.T, expected.Version.VectorEmbeddings, actual.Version.VectorEmbeddings)
 		}
 	}
 }

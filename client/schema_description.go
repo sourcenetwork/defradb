@@ -33,12 +33,9 @@ type SchemaDescription struct {
 
 	// Fields contains the fields globally defined across the node network within this Schema.
 	//
-	// Any [CollectionDescription]s that reference this [SchemaDescription] will have a field
+	// Any [CollectionVersion]s that reference this [SchemaDescription] will have a field
 	// set that contains all of these fields, plus any local only fields (such as the secondary side
 	// of a relation).
-	//
-	// Embedded objects (including within Views) are schema-only, and as such fields of embedded
-	// objects will not have a corresponding [CollectionFieldDescription].
 	//
 	// Currently new fields may be added after initial declaration, but they cannot be removed.
 	Fields []SchemaFieldDescription

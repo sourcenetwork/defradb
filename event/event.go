@@ -63,8 +63,8 @@ type Update struct {
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
 
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
+	// CollectionID is the root identifier of the collection that this document goes by.
+	CollectionID string
 
 	// Block is the encoded contents of this composite commit, it contains the Cids of the field level commits that
 	// also formed this update.
@@ -92,8 +92,8 @@ type Merge struct {
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
 
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
+	// CollectionID is the root identifier of the collection that this document goes by.
+	CollectionID string
 }
 
 // MergeComplete is a notification that a merge has been completed.

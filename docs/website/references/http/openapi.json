@@ -27,15 +27,7 @@
             }
         },
         "schemas": {
-            "acp_policy_add_result": {
-                "properties": {
-                    "PolicyID": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_relationship_add_request": {
+            "acp_dac_relationship_add_request": {
                 "properties": {
                     "CollectionName": {
                         "type": "string"
@@ -47,6 +39,31 @@
                         "type": "string"
                     },
                     "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_dac_relationship_delete_request": {
+                "properties": {
+                    "CollectionName": {
+                        "type": "string"
+                    },
+                    "DocID": {
+                        "type": "string"
+                    },
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_policy_add_result": {
+                "properties": {
+                    "PolicyID": {
                         "type": "string"
                     }
                 },
@@ -56,23 +73,6 @@
                 "properties": {
                     "ExistedAlready": {
                         "type": "boolean"
-                    }
-                },
-                "type": "object"
-            },
-            "acp_relationship_delete_request": {
-                "properties": {
-                    "CollectionName": {
-                        "type": "string"
-                    },
-                    "DocID": {
-                        "type": "string"
-                    },
-                    "Relation": {
-                        "type": "string"
-                    },
-                    "TargetActor": {
-                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -138,15 +138,13 @@
             },
             "collection": {
                 "properties": {
+                    "CollectionID": {
+                        "type": "string"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
                                 "DefaultValue": {},
-                                "ID": {
-                                    "maximum": 4294967295,
-                                    "minimum": 0,
-                                    "type": "integer"
-                                },
                                 "Kind": {},
                                 "Name": {
                                     "type": "string"
@@ -159,11 +157,6 @@
                             "type": "object"
                         },
                         "type": "array"
-                    },
-                    "ID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
                     },
                     "Indexes": {
                         "items": {
@@ -198,22 +191,22 @@
                         },
                         "type": "array"
                     },
+                    "IsActive": {
+                        "type": "boolean"
+                    },
                     "IsBranchable": {
+                        "type": "boolean"
+                    },
+                    "IsEmbeddedOnly": {
                         "type": "boolean"
                     },
                     "IsMaterialized": {
                         "type": "boolean"
                     },
-                    "Name": {},
-                    "Policy": {},
-                    "RootID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
-                    },
-                    "SchemaVersionID": {
+                    "Name": {
                         "type": "string"
                     },
+                    "Policy": {},
                     "Sources": {
                         "items": {},
                         "type": "array"
@@ -246,23 +239,55 @@
                             "type": "object"
                         },
                         "type": "array"
+                    },
+                    "VersionID": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
             },
             "collection_definition": {
                 "properties": {
-                    "description": {
+                    "schema": {
                         "properties": {
                             "Fields": {
                                 "items": {
                                     "properties": {
-                                        "DefaultValue": {},
-                                        "ID": {
-                                            "maximum": 4294967295,
+                                        "Kind": {},
+                                        "Name": {
+                                            "type": "string"
+                                        },
+                                        "Typ": {
+                                            "maximum": 255,
                                             "minimum": 0,
                                             "type": "integer"
-                                        },
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            "Name": {
+                                "type": "string"
+                            },
+                            "Root": {
+                                "type": "string"
+                            },
+                            "VersionID": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "version": {
+                        "properties": {
+                            "CollectionID": {
+                                "type": "string"
+                            },
+                            "Fields": {
+                                "items": {
+                                    "properties": {
+                                        "DefaultValue": {},
                                         "Kind": {},
                                         "Name": {
                                             "type": "string"
@@ -275,11 +300,6 @@
                                     "type": "object"
                                 },
                                 "type": "array"
-                            },
-                            "ID": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
                             },
                             "Indexes": {
                                 "items": {
@@ -314,22 +334,22 @@
                                 },
                                 "type": "array"
                             },
+                            "IsActive": {
+                                "type": "boolean"
+                            },
                             "IsBranchable": {
+                                "type": "boolean"
+                            },
+                            "IsEmbeddedOnly": {
                                 "type": "boolean"
                             },
                             "IsMaterialized": {
                                 "type": "boolean"
                             },
-                            "Name": {},
-                            "Policy": {},
-                            "RootID": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
-                            },
-                            "SchemaVersionID": {
+                            "Name": {
                                 "type": "string"
                             },
+                            "Policy": {},
                             "Sources": {
                                 "items": {},
                                 "type": "array"
@@ -362,34 +382,6 @@
                                     "type": "object"
                                 },
                                 "type": "array"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "schema": {
-                        "properties": {
-                            "Fields": {
-                                "items": {
-                                    "properties": {
-                                        "Kind": {},
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "Typ": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Name": {
-                                "type": "string"
-                            },
-                            "Root": {
-                                "type": "string"
                             },
                             "VersionID": {
                                 "type": "string"
@@ -563,9 +555,7 @@
             "migrate_request": {
                 "properties": {
                     "CollectionID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Data": {
                         "items": {
@@ -699,9 +689,7 @@
             "set_migration_request": {
                 "properties": {
                     "CollectionID": {
-                        "maximum": 4294967295,
-                        "minimum": 0,
-                        "type": "integer"
+                        "type": "string"
                     },
                     "Config": {
                         "properties": {
@@ -763,10 +751,10 @@
     },
     "openapi": "3.0.3",
     "paths": {
-        "/acp/policy": {
+        "/acp/dac/policy": {
             "post": {
-                "description": "Add a policy using acp system",
-                "operationId": "add policy",
+                "description": "Add a policy using document acp system",
+                "operationId": "add dac policy",
                 "requestBody": {
                     "content": {
                         "text/plain": {
@@ -786,7 +774,7 @@
                                 }
                             }
                         },
-                        "description": "Add acp policy result"
+                        "description": "Add document acp policy result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -796,19 +784,19 @@
                     }
                 },
                 "tags": [
-                    "acp_policy"
+                    "acp_dac_policy"
                 ]
             }
         },
-        "/acp/relationship": {
+        "/acp/dac/relationship": {
             "delete": {
-                "description": "Delete an actor relationship using acp system",
-                "operationId": "delete relationship",
+                "description": "Delete an actor relationship using document acp system",
+                "operationId": "delete dac relationship",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_relationship_delete_request"
+                                "$ref": "#/components/schemas/acp_dac_relationship_delete_request"
                             }
                         }
                     },
@@ -823,7 +811,7 @@
                                 }
                             }
                         },
-                        "description": "Delete acp relationship result"
+                        "description": "Delete document acp relationship result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -833,17 +821,17 @@
                     }
                 },
                 "tags": [
-                    "acp_relationship"
+                    "acp_dac_relationship"
                 ]
             },
             "post": {
-                "description": "Add an actor relationship using acp system",
-                "operationId": "add relationship",
+                "description": "Add an actor relationship using document acp system",
+                "operationId": "add dac relationship",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_relationship_add_request"
+                                "$ref": "#/components/schemas/acp_dac_relationship_add_request"
                             }
                         }
                     },
@@ -858,7 +846,7 @@
                                 }
                             }
                         },
-                        "description": "Add acp relationship result"
+                        "description": "Add document acp relationship result"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -868,7 +856,7 @@
                     }
                 },
                 "tags": [
-                    "acp_relationship"
+                    "acp_dac_relationship"
                 ]
             }
         },
@@ -1158,6 +1146,39 @@
                 },
                 "tags": [
                     "collection"
+                ]
+            }
+        },
+        "/collections/indexes": {
+            "get": {
+                "description": "List all indexes for all collections",
+                "operationId": "indexes_list_all",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "items": {
+                                            "$ref": "#/components/schemas/index"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Map of collection names to their indexes"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "index"
                 ]
             }
         },
@@ -2538,7 +2559,7 @@
             "name": "p2p"
         },
         {
-            "description": "Access control policy operations",
+            "description": "Access control system(s)",
             "name": "acp"
         },
         {

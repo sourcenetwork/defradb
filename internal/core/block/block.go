@@ -22,6 +22,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/multiformats/go-multicodec"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -37,6 +38,8 @@ var (
 	// SignatureSchema is the IPLD schema type that represents a `Signature`.
 	SignatureSchema          schema.Type
 	SignatureSchemaPrototype ipld.NodePrototype
+
+	log = corelog.NewLogger("coreblock")
 )
 
 func init() {
@@ -45,8 +48,8 @@ func init() {
 		&Block{},
 		&DAGLink{},
 		&crdt.CRDT{},
-		&crdt.LWWRegDelta{},
-		&crdt.CompositeDAGDelta{},
+		&crdt.LWWDelta{},
+		&crdt.DocCompositeDelta{},
 		&crdt.CounterDelta{},
 		&crdt.CollectionDelta{},
 	)

@@ -54,7 +54,7 @@ func AutoGenerate(definitions []client.CollectionDefinition, options ...Option) 
 	}
 	typeDefs := make(map[string]client.CollectionDefinition)
 	for _, def := range definitions {
-		typeDefs[def.Description.Name.Value()] = def
+		typeDefs[def.Version.Name] = def
 	}
 	generator := newRandomDocGenerator(typeDefs, nil)
 	return generator.generateDocs(options...)
@@ -217,18 +217,18 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 }
 
 func validateDefinitions(definitions []client.CollectionDefinition) error {
-	colIDs := make(map[uint32]struct{})
+	colIDs := make(map[string]struct{})
 	colNames := make(map[string]struct{})
 	defCache := client.NewDefinitionCache(definitions)
 
 	for _, def := range definitions {
-		if def.Description.Name.Value() == "" {
+		if def.Version.Name == "" {
 			return NewErrIncompleteColDefinition("description name is empty")
 		}
 		if def.Schema.Name == "" {
 			return NewErrIncompleteColDefinition("schema name is empty")
 		}
-		if def.Description.Name.Value() != def.Schema.Name {
+		if def.Version.Name != def.Schema.Name {
 			return NewErrIncompleteColDefinition("description name and schema name do not match")
 		}
 		for _, field := range def.GetFields() {
@@ -242,8 +242,8 @@ func validateDefinitions(definitions []client.CollectionDefinition) error {
 				}
 			}
 		}
-		colNames[def.Description.Name.Value()] = struct{}{}
-		colIDs[def.Description.ID] = struct{}{}
+		colNames[def.Version.Name] = struct{}{}
+		colIDs[def.Version.VersionID] = struct{}{}
 	}
 
 	if len(colIDs) != len(definitions) {

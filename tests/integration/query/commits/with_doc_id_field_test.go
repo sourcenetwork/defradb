@@ -30,7 +30,7 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "not a field") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "not a field") {
 							cid
 						}
 					}`,
@@ -58,7 +58,7 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "999999") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "999999") {
 							cid
 						}
 					}`,
@@ -72,8 +72,6 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for docID-field).
 func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field",
@@ -88,37 +86,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "Age") {
-							cid
-						}
-					}`,
-				Results: map[string]any{
-					"commits": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-// This test is for documentation reasons only. This is not
-// desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithDocIDAndFieldId(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and field id",
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.Request{
-				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "1") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "age") {
 							cid
 						}
 					}`,
@@ -136,9 +104,7 @@ func TestQueryCommitsWithDocIDAndFieldId(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
+func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
@@ -152,7 +118,7 @@ func TestQueryCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldId: "C") {
+						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", fieldName: "_C") {
 							cid
 						}
 					}`,

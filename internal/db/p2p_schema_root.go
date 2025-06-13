@@ -36,7 +36,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 	}
 	defer txn.Discard(ctx)
 
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -44,7 +44,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		storeCol, err := db.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
-				SchemaRoot: immutable.Some(col),
+				CollectionID: immutable.Some(col),
 			},
 		)
 		if err != nil {
@@ -56,9 +56,9 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		storeCollections = append(storeCollections, storeCol...)
 	}
 
-	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+	if db.documentACP.HasValue() && !db.documentACP.Value().SupportsP2P() {
 		for _, col := range storeCollections {
-			if col.Description().Policy.HasValue() {
+			if col.Version().Policy.HasValue() {
 				return ErrP2PColHasPolicy
 			}
 		}
@@ -106,7 +106,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 	}
 	defer txn.Discard(ctx)
 
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -114,7 +114,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 		storeCol, err := db.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
-				SchemaRoot: immutable.Some(col),
+				CollectionID: immutable.Some(col),
 			},
 		)
 		if err != nil {

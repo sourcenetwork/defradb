@@ -14,13 +14,13 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/sourcenetwork/defradb/crypto"
+
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/crypto"
 )
 
 const (

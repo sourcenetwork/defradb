@@ -41,31 +41,6 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveSchemaRootErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema root",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-						email: String
-					}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Users/Root" }
-					]
-				`,
-				ExpectedError: "SchemaRoot does not match existing",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, remove schema version id",

@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -55,11 +55,12 @@ type Fetcher interface {
 		ctx context.Context,
 		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
-		acp immutable.Option[acp.ACP],
+		documentACP immutable.Option[dac.DocumentACP],
 		index immutable.Option[client.IndexDescription],
 		col client.Collection,
 		fields []client.FieldDefinition,
 		filter *mapper.Filter,
+		ordering []mapper.OrderCondition,
 		docmapper *core.DocumentMapping,
 		showDeleted bool,
 	) error
@@ -68,8 +69,7 @@ type Fetcher interface {
 	Close() error
 }
 
-// fetcher fetches documents from the store, performing low-level filtering
-// when appropriate (e.g. ACP).
+// fetcher fetches documents from the store, performing low-level filtering when appropriate (e.g. ACP).
 type fetcher interface {
 	// NextDoc progresses the internal iterator(s) to the next document, yielding
 	// its docID if found.

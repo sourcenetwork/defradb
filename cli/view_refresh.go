@@ -19,7 +19,7 @@ import (
 
 func MakeViewRefreshCommand() *cobra.Command {
 	var name string
-	var schemaRoot string
+	var collectionID string
 	var versionID string
 	var getInactive bool
 	var cmd = &cobra.Command{
@@ -42,17 +42,17 @@ Example: refresh views by schema root id
   defradb client view refresh --schema bae123
 
 Example: refresh views by version id. This will also return inactive views
-  defradb client view refresh --version bae123
+  defradb client view refresh --version-id bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store := mustGetContextStore(cmd)
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
-				options.SchemaVersionID = immutable.Some(versionID)
+				options.VersionID = immutable.Some(versionID)
 			}
-			if schemaRoot != "" {
-				options.SchemaRoot = immutable.Some(schemaRoot)
+			if collectionID != "" {
+				options.CollectionID = immutable.Some(collectionID)
 			}
 			if name != "" {
 				options.Name = immutable.Some(name)
@@ -68,8 +68,8 @@ Example: refresh views by version id. This will also return inactive views
 		},
 	}
 	cmd.Flags().StringVar(&name, "name", "", "View name")
-	cmd.Flags().StringVar(&schemaRoot, "schema", "", "View schema Root")
-	cmd.Flags().StringVar(&versionID, "version", "", "View version ID")
+	cmd.Flags().StringVar(&collectionID, "collection-id", "", "View collection ID")
+	cmd.Flags().StringVar(&versionID, "version-id", "", "View version ID")
 	cmd.Flags().BoolVar(&getInactive, "get-inactive", false, "Get inactive views as well as active")
 	return cmd
 }

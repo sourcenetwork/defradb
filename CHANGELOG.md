@@ -1,3 +1,68 @@
+<a name="v0.18.0"></a>
+## [v0.18.0](https://github.com/sourcenetwork/defradb/compare/v0.17.0...v0.18.0)
+
+> 2025-06-13
+
+DefraDB v0.18 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.17.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+
+### Features
+
+* Replace commit query fieldID with fieldName ([#3701](https://github.com/sourcenetwork/defradb/issues/3701))
+* JS client ([#3658](https://github.com/sourcenetwork/defradb/issues/3658))
+* Make Collection.Name immutable ([#3671](https://github.com/sourcenetwork/defradb/issues/3671))
+* Utilize secondary indexes for ordering ([#3652](https://github.com/sourcenetwork/defradb/issues/3652))
+
+### Fixes
+
+* Bypass composite index ordering on order mismatch ([#3781](https://github.com/sourcenetwork/defradb/issues/3781))
+* Check if collection exists in index cli commands ([#3777](https://github.com/sourcenetwork/defradb/issues/3777))
+* Correct index fetching order ([#3776](https://github.com/sourcenetwork/defradb/issues/3776))
+* Enable doc encryption for embedded client ([#3755](https://github.com/sourcenetwork/defradb/issues/3755))
+* Get indexes for a specific collection ([#3643](https://github.com/sourcenetwork/defradb/issues/3643))
+
+### Documentation
+
+* Add data flow documentation ([#3736](https://github.com/sourcenetwork/defradb/issues/3736))
+* Update outdated disclaimer about lack of encryption ([#3647](https://github.com/sourcenetwork/defradb/issues/3647))
+
+### Performance
+
+* Cache collection short ids within txn context ([#3703](https://github.com/sourcenetwork/defradb/issues/3703))
+
+### Refactoring
+
+* Remove collection field id ([#3710](https://github.com/sourcenetwork/defradb/issues/3710))
+* Store index description in collection version ([#3716](https://github.com/sourcenetwork/defradb/issues/3716))
+* Allow retrieval of txn from ctx everywhere ([#3705](https://github.com/sourcenetwork/defradb/issues/3705))
+* Unify crdt packages ([#3679](https://github.com/sourcenetwork/defradb/issues/3679))
+* Rename CollectionDescription.ID to VersionID ([#3677](https://github.com/sourcenetwork/defradb/issues/3677))
+* Rename CollectionDescription to CollectionVersion ([#3676](https://github.com/sourcenetwork/defradb/issues/3676))
+* Replace schema-only collections with boolean ([#3653](https://github.com/sourcenetwork/defradb/issues/3653))
+* Replace CollectionDescription.Root with ColID ([#3644](https://github.com/sourcenetwork/defradb/issues/3644))
+* Replace Collection ID with SchemaVersionID ([#3640](https://github.com/sourcenetwork/defradb/issues/3640))
+
+### Testing
+
+* Update test Lens modules to latest SDK ([#3773](https://github.com/sourcenetwork/defradb/issues/3773))
+
+### Chore
+
+* Improve node startup sync and feedback ([#3707](https://github.com/sourcenetwork/defradb/issues/3707))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-06-09 ([#3768](https://github.com/sourcenetwork/defradb/issues/3768))
+* Update dependencies (bulk dependabot PRs) 2025-06-02 ([#3750](https://github.com/sourcenetwork/defradb/issues/3750))
+* Update dependencies (bulk dependabot PRs) 2025-05-26 ([#3737](https://github.com/sourcenetwork/defradb/issues/3737))
+* Update dependencies (bulk dependabot PRs) 2025-05-20 ([#3724](https://github.com/sourcenetwork/defradb/issues/3724))
+* Update dependencies (bulk dependabot PRs) 2025-05-13 ([#3700](https://github.com/sourcenetwork/defradb/issues/3700))
+* Bump graphiql from 3.9.0 to 4.0.1 in /playground ([#3663](https://github.com/sourcenetwork/defradb/issues/3663))
+* Update dependencies (bulk dependabot PRs) 2025-05-05 ([#3668](https://github.com/sourcenetwork/defradb/issues/3668))
+* Update dependencies (bulk dependabot PRs) 2025-05-01 ([#3655](https://github.com/sourcenetwork/defradb/issues/3655))
+* Update dependencies (bulk dependabot PRs) 2025-04-22 ([#3638](https://github.com/sourcenetwork/defradb/issues/3638))
+
 <a name="v0.17.0"></a>
 ## [v0.17.0](https://github.com/sourcenetwork/defradb/compare/v0.16.0...v0.17.0)
 

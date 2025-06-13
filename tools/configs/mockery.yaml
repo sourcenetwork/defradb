@@ -1,21 +1,17 @@
 # Mockery configuration file for DefraDB.
 
-with-expecter: true
-
-quiet: False
-
-disable-version-string: True
-
 log-level: "info"
 
-dry-run: False
+force-file-write: true
 
-mockname: "{{.InterfaceName}}"
+structname: "{{.InterfaceName}}"
 
-# Makes files names lower case, snake.
-filename: "{{.InterfaceNameSnake}}.go"
+# Makes filenames snake case.
+filename: "{{ .InterfaceName | snakecase }}.go"
 
-outpkg: mocks
+pkgname: mocks
+
+template: testify
 
 packages: # Packages and their interfaces to generate mocks for.
     github.com/ipfs/go-datastore/query:
@@ -28,9 +24,7 @@ packages: # Packages and their interfaces to generate mocks for.
         config:
             dir: "./datastore/mocks"
         interfaces:
-            DAGStore:
             DSReaderWriter:
-            RootStore:
             Txn:
             Blockstore:
 

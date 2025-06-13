@@ -61,21 +61,26 @@ func NewDefraCommand() *cobra.Command {
 		MakeSchemaDescribeCommand(),
 	)
 
-	acp_policy := MakeACPPolicyCommand()
-	acp_policy.AddCommand(
-		MakeACPPolicyAddCommand(),
+	acp_dac_policy := MakeDocumentACPPolicyCommand()
+	acp_dac_policy.AddCommand(
+		MakeDocumentACPPolicyAddCommand(),
 	)
 
-	acp_relationship := MakeACPRelationshipCommand()
-	acp_relationship.AddCommand(
-		MakeACPRelationshipAddCommand(),
-		MakeACPRelationshipDeleteCommand(),
+	acp_dac_relationship := MakeDocumentACPRelationshipCommand()
+	acp_dac_relationship.AddCommand(
+		MakeDocumentACPRelationshipAddCommand(),
+		MakeDocumentACPRelationshipDeleteCommand(),
+	)
+
+	dac := MakeDocumentACPCommand()
+	dac.AddCommand(
+		acp_dac_policy,
+		acp_dac_relationship,
 	)
 
 	acp := MakeACPCommand()
 	acp.AddCommand(
-		acp_policy,
-		acp_relationship,
+		dac,
 	)
 
 	view := MakeViewCommand()

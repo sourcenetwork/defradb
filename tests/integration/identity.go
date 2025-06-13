@@ -137,7 +137,7 @@ func getIdentityForRequest(s *state, identity Identity, nodeIndex int) acpIdenti
 		ident.BearerToken = token
 	} else {
 		audience := getNodeAudience(s, nodeIndex)
-		if acpType == SourceHubACPType || audience.HasValue() {
+		if documentACPType == SourceHubDocumentACPType || audience.HasValue() {
 			err := ident.UpdateToken(authTokenExpiration, audience, immutable.Some(s.sourcehubAddress))
 			require.NoError(s.t, err)
 			identHolder.NodeTokens[nodeIndex] = ident.BearerToken

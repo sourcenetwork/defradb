@@ -58,15 +58,6 @@ type ScalarKind uint8
 // ScalarArrayKind represents arrays of simple scalar field kinds, such as `[Int]`.
 type ScalarArrayKind uint8
 
-// CollectionKind represents a relationship with a [CollectionDescription].
-type CollectionKind struct {
-	// If true, this side of the relationship points to many related records.
-	Array bool
-
-	// The root ID of the related [CollectionDescription].
-	Root uint32
-}
-
 // SchemaKind represents a relationship with a [SchemaDescription].
 type SchemaKind struct {
 	// If true, this side of the relationship points to many related records.
@@ -111,7 +102,6 @@ type SelfKind struct {
 
 var _ FieldKind = ScalarKind(0)
 var _ FieldKind = ScalarArrayKind(0)
-var _ FieldKind = (*CollectionKind)(nil)
 var _ FieldKind = (*SchemaKind)(nil)
 var _ FieldKind = (*SelfKind)(nil)
 var _ FieldKind = (*NamedKind)(nil)
@@ -217,32 +207,6 @@ func (k ScalarArrayKind) SubKind() FieldKind {
 	default:
 		return FieldKind_None
 	}
-}
-
-func NewCollectionKind(root uint32, isArray bool) *CollectionKind {
-	return &CollectionKind{
-		Root:  root,
-		Array: isArray,
-	}
-}
-
-func (k *CollectionKind) String() string {
-	if k.Array {
-		return fmt.Sprintf("[%v]", k.Root)
-	}
-	return strconv.FormatInt(int64(k.Root), 10)
-}
-
-func (k *CollectionKind) IsNillable() bool {
-	return true
-}
-
-func (k *CollectionKind) IsObject() bool {
-	return true
-}
-
-func (k *CollectionKind) IsArray() bool {
-	return k.Array
 }
 
 func NewSchemaKind(root string, isArray bool) *SchemaKind {
@@ -427,7 +391,7 @@ func (f *SchemaFieldDescription) UnmarshalJSON(bytes []byte) error {
 // of json to a [FieldKind].
 type objectKind struct {
 	Array      bool
-	Root       any
+	Root       string
 	RelativeID string
 }
 
@@ -443,18 +407,11 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 			return nil, err
 		}
 
-		if objKind.Root == nil {
+		if objKind.Root == "" {
 			return NewSelfKind(objKind.RelativeID, objKind.Array), nil
 		}
 
-		switch root := objKind.Root.(type) {
-		case float64:
-			return NewCollectionKind(uint32(root), objKind.Array), nil
-		case string:
-			return NewSchemaKind(root, objKind.Array), nil
-		default:
-			return nil, NewErrFailedToParseKind(bytes)
-		}
+		return NewSchemaKind(objKind.Root, objKind.Array), nil
 	}
 
 	if bytes[0] != '"' {

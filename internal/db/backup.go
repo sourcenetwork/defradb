@@ -182,8 +182,8 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 		// set collection
 		err = writeString(
 			f,
-			fmt.Sprintf("\"%s\":[", col.Name().Value()),
-			fmt.Sprintf("  \"%s\": [\n", col.Name().Value()),
+			fmt.Sprintf("\"%s\":[", col.Name()),
+			fmt.Sprintf("  \"%s\": [\n", col.Name()),
 			config.Pretty,
 		)
 		if err != nil {
@@ -232,7 +232,10 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								// handle this collection.
 								continue
 							}
-							foreignCol := db.newCollection(foreignDef.Description, foreignDef.Schema)
+							foreignCol, err := db.newCollection(foreignDef.Version, foreignDef.Schema)
+							if err != nil {
+								return err
+							}
 
 							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
 							if err != nil {

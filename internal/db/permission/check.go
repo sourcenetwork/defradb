@@ -15,8 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -36,9 +37,9 @@ import (
 func CheckAccessOfDocOnCollectionWithACP(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	acpSystem acp.ACP,
+	documentACP dac.DocumentACP,
 	collection client.Collection,
-	permission acp.DPIPermission,
+	permission acpTypes.ResourceInterfacePermission,
 	docID string,
 ) (bool, error) {
 	identityFunc := func() immutable.Option[acpIdentity.Identity] {
@@ -47,7 +48,7 @@ func CheckAccessOfDocOnCollectionWithACP(
 	return CheckDocAccessWithIdentityFunc(
 		ctx,
 		identityFunc,
-		acpSystem,
+		documentACP,
 		collection,
 		permission,
 		docID,
@@ -72,9 +73,9 @@ func CheckAccessOfDocOnCollectionWithACP(
 func CheckDocAccessWithIdentityFunc(
 	ctx context.Context,
 	identityFunc func() immutable.Option[acpIdentity.Identity],
-	acpSystem acp.ACP,
+	documentACP dac.DocumentACP,
 	collection client.Collection,
-	permission acp.DPIPermission,
+	permission acpTypes.ResourceInterfacePermission,
 	docID string,
 ) (bool, error) {
 	// Even if acp exists, but there is no policy on the collection (unpermissioned collection)
@@ -88,7 +89,7 @@ func CheckDocAccessWithIdentityFunc(
 	// acp directly we need to make sure that the document is not public, as public documents will not
 	// be registered with acp. We give unrestricted access to public documents, so it does not matter
 	// whether the request has a signature identity or not at this stage of the check.
-	isRegistered, err := acpSystem.IsDocRegistered(
+	isRegistered, err := documentACP.IsDocRegistered(
 		ctx,
 		policyID,
 		resourceName,
@@ -115,10 +116,15 @@ func CheckDocAccessWithIdentityFunc(
 		identityValue = identity.Value().DID
 	}
 
+	documentResourcePerm, ok := permission.(acpTypes.DocumentResourcePermission)
+	if !ok {
+		return false, ErrInvalidResourcePermissionType
+	}
+
 	// Now actually check using the signature if this identity has access or not.
-	hasAccess, err := acpSystem.CheckDocAccess(
+	hasAccess, err := documentACP.CheckDocAccess(
 		ctx,
-		permission,
+		documentResourcePerm,
 		identityValue,
 		policyID,
 		resourceName,

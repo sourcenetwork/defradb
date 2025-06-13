@@ -15,13 +15,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -87,10 +88,10 @@ type PlanContext struct {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn      datastore.Txn
-	identity immutable.Option[acpIdentity.Identity]
-	acp      immutable.Option[acp.ACP]
-	db       client.Store
+	txn         datastore.Txn
+	identity    immutable.Option[acpIdentity.Identity]
+	documentACP immutable.Option[dac.DocumentACP]
+	db          client.Store
 
 	ctx context.Context
 }
@@ -98,16 +99,16 @@ type Planner struct {
 func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	db client.Store,
 	txn datastore.Txn,
 ) *Planner {
 	return &Planner{
-		txn:      txn,
-		identity: identity,
-		acp:      acp,
-		db:       db,
-		ctx:      ctx,
+		txn:         txn,
+		identity:    identity,
+		documentACP: documentACP,
+		db:          db,
+		ctx:         ctx,
 	}
 }
 
@@ -221,8 +222,8 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 
 	p.expandAggregatePlans(plan)
 
-	// if order
-	if plan.order != nil {
+	// if we have an index that can take over ordering, we ignore the order node
+	if plan.order != nil && !isOrderedByIndex(plan.selectNode.source) {
 		plan.order.plan = plan.planNode
 		plan.planNode = plan.order
 	}
@@ -301,18 +302,62 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
+// isOrderedByIndex checks if the plan is ordered by an index.
+func isOrderedByIndex(plan planNode) bool {
+	var scan *scanNode
+	// the typeIndexJoin has 2 scan nodes for every side of the join
+	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
+	typeJoin := getNode[*typeIndexJoin](plan)
+	if typeJoin != nil {
+		if j, ok := typeJoin.joinPlan.(*typeJoinOne); ok {
+			scan = getNode[*scanNode](j.getFirstSide().plan)
+		} else if j, ok := typeJoin.joinPlan.(*typeJoinMany); ok {
+			scan = getNode[*scanNode](j.getFirstSide().plan)
+		}
+	} else {
+		scan = getNode[*scanNode](plan)
+	}
+	if scan == nil || !scan.index.HasValue() {
+		return false
+	}
+
+	ok, _ := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
+	return ok
+}
+
+// tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.
 func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	if !node.childSide.relFieldDef.HasValue() {
 		// If the relation is one sided we cannot invert the join, so return early
 		return nil
+	}
+	optimized, err := p.tryOptimizeJoinDirectionByFilter(node, parentPlan)
+	if err != nil {
+		return err
+	}
+	if !optimized {
+		_, err = p.tryOptimizeJoinDirectionByOrder(node, parentPlan)
+	}
+
+	return err
+}
+
+// tryOptimizeJoinDirectionByFilter tries to optimize the join direction by using a filter on the child side.
+// If the child side has an index on a field that is filtered on, we can invert the join direction.
+// Returns true if the join direction was optimized, false otherwise.
+func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+	if parentPlan.selectNode.filter == nil {
+		return false, nil
 	}
 
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
 	)
+
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Description()
+	desc := slct.collection.Version()
+
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
@@ -320,20 +365,21 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
 			relevantFilter := filter.CopyField(parentPlan.selectNode.filter, relatedField,
 				mapper.Field{Name: subFieldName, Index: subFieldInd})
+
 			fieldFilter := extractRelatedSubFilter(relevantFilter, node.parentSide.plan.DocumentMap(), relatedField)
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-			err := node.invertJoinDirectionWithIndex(fieldFilter, indexes[0])
+			err := node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
 			if err != nil {
-				return err
+				return false, err
 			}
-			break
+			return true, nil
 		}
 	}
-
-	return nil
+	return false, nil
 }
 
+// extractRelatedSubFilter extracts the sub filter from the parent filter.
 func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
 	subInd := docMap.FirstIndexOfName(relField.Name)
 	relatedField := mapper.Field{Name: relField.Name, Index: subInd}
@@ -341,12 +387,58 @@ func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, rel
 	return subFilter
 }
 
-// expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
-func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
-	if parentPlan.selectNode.filter == nil {
-		return p.expandPlan(node.childSide.plan, parentPlan)
+// tryOptimizeJoinDirectionByOrder tries to optimize the join direction by using an order on the child side.
+// If the child side has an index on a field that is ordered on, we can invert the join direction.
+// Returns true if the join direction was optimized, false otherwise.
+func (p *Planner) tryOptimizeJoinDirectionByOrder(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+	if parentPlan.order == nil || len(parentPlan.order.ordering) == 0 {
+		return false, nil
 	}
 
+	childFieldName, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
+	if err != nil {
+		return false, err
+	}
+
+	slct := node.childSide.plan.(*selectTopNode).selectNode
+	desc := slct.collection.Version()
+	indexes := desc.GetIndexesOnField(childFieldName)
+
+	if len(indexes) == 0 {
+		return false, nil
+	}
+
+	ordering := parentPlan.order.ordering[0]
+	ordering.FieldIndexes = ordering.FieldIndexes[1:]
+
+	err = node.invertJoinDirectionWithIndex(indexes[0], nil, []mapper.OrderCondition{ordering})
+	return err == nil, err
+}
+
+// findOrderedByRelationFields finds the field that is ordered on in the order condition.
+// Returns the field name and an error if the field is not found.
+func findOrderedByRelationFields(
+	ordering mapper.OrderCondition,
+	mapping *core.DocumentMapping,
+) (string, error) {
+	fieldIndex := ordering.FieldIndexes[0]
+	if fieldIndex < len(mapping.ChildMappings) {
+		if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+			// if fieldIndex is from child mapping, then we need to get the sub field index
+			// is must exist, otherwise the query would ill-formed
+			subFieldIndex := ordering.FieldIndexes[1]
+			childFieldName, found := childMapping.TryToFindNameFromIndex(subFieldIndex)
+			if !found {
+				return "", client.NewErrFieldIndexNotExist(subFieldIndex)
+			}
+			return childFieldName, nil
+		}
+	}
+	return "", nil
+}
+
+// expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
+func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	err := p.tryOptimizeJoinDirection(node, parentPlan)
 	if err != nil {
 		return err

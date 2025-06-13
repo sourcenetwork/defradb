@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/immutable"
-
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
@@ -30,8 +28,8 @@ var (
 	pref = ccid.NewDefaultSHA256PrefixV1()
 
 	def = CollectionDefinition{
-		Description: CollectionDescription{
-			Name: immutable.Some("User"),
+		Version: CollectionVersion{
+			Name: "User",
 			Fields: []CollectionFieldDescription{
 				{
 					Name: "Name",

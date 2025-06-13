@@ -20,106 +20,83 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// SaveCollection saves the given collection to the system store overwriting any
-// pre-existing values.
+// SaveCollection saves the given collection to the system store.
 func SaveCollection(
 	ctx context.Context,
 	txn datastore.Txn,
-	desc client.CollectionDescription,
-) (client.CollectionDescription, error) {
-	existing, err := GetCollectionByID(ctx, txn, desc.ID)
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return client.CollectionDescription{}, err
+	desc client.CollectionVersion,
+) error {
+	if desc.CollectionID != "" {
+		// Set the collection short id
+		err := id.SetShortCollectionID(ctx, desc.CollectionID)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := id.SetShortFieldIDs(ctx, desc)
+	if err != nil {
+		return err
 	}
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
-		return client.CollectionDescription{}, err
+		return err
 	}
 
-	key := keys.NewCollectionKey(desc.ID)
+	key := keys.NewCollectionKey(desc.VersionID)
 	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
 	if err != nil {
-		return client.CollectionDescription{}, err
+		return err
 	}
 
-	if existing.Name.HasValue() && existing.Name != desc.Name {
-		nameKey := keys.NewCollectionNameKey(existing.Name.Value())
-		idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
-		nameIndexExsts := true
+	if !desc.IsActive {
+		nameKey := keys.NewCollectionNameKey(desc.Name)
+		idBytes, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 		if err != nil {
-			if errors.Is(err, corekv.ErrNotFound) {
-				nameIndexExsts = false
-			} else {
-				return client.CollectionDescription{}, err
+			if !errors.Is(err, corekv.ErrNotFound) {
+				return err
 			}
 		}
-		if nameIndexExsts {
-			var keyID uint32
-			err = json.Unmarshal(idBuf, &keyID)
+
+		if string(idBytes) == desc.VersionID {
+			err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
 			if err != nil {
-				return client.CollectionDescription{}, err
-			}
-
-			if keyID == desc.ID {
-				// The name index may have already been overwritten, pointing at another collection
-				// we should only remove the existing index if it still points at this collection
-				err := txn.Systemstore().Delete(ctx, nameKey.Bytes())
-				if err != nil {
-					return client.CollectionDescription{}, err
-				}
+				return err
 			}
 		}
 	}
 
-	if desc.Name.HasValue() {
-		idBuf, err := json.Marshal(desc.ID)
+	if desc.IsActive {
+		nameKey := keys.NewCollectionNameKey(desc.Name)
+		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
 		if err != nil {
-			return client.CollectionDescription{}, err
-		}
-
-		nameKey := keys.NewCollectionNameKey(desc.Name.Value())
-		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), idBuf)
-		if err != nil {
-			return client.CollectionDescription{}, err
+			return err
 		}
 	}
 
-	// The need for this key is temporary, we should replace it with the global collection ID
-	// https://github.com/sourcenetwork/defradb/issues/1085
-	schemaVersionKey := keys.NewCollectionSchemaVersionKey(desc.SchemaVersionID, desc.ID)
-	err = txn.Systemstore().Set(ctx, schemaVersionKey.Bytes(), []byte{})
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	rootKey := keys.NewCollectionRootKey(desc.RootID, desc.ID)
-	err = txn.Systemstore().Set(ctx, rootKey.Bytes(), []byte{})
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	return desc, nil
+	return nil
 }
 
 func GetCollectionByID(
 	ctx context.Context,
 	txn datastore.Txn,
-	id uint32,
-) (client.CollectionDescription, error) {
+	id string,
+) (client.CollectionVersion, error) {
 	key := keys.NewCollectionKey(id)
 	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
-		return client.CollectionDescription{}, err
+		return client.CollectionVersion{}, err
 	}
 
-	var col client.CollectionDescription
+	var col client.CollectionVersion
 	err = json.Unmarshal(buf, &col)
 	if err != nil {
-		return client.CollectionDescription{}, err
+		return client.CollectionVersion{}, err
 	}
 
 	return col, nil
@@ -132,130 +109,40 @@ func GetCollectionByName(
 	ctx context.Context,
 	txn datastore.Txn,
 	name string,
-) (client.CollectionDescription, error) {
+) (client.CollectionVersion, error) {
 	nameKey := keys.NewCollectionNameKey(name)
 	idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
 	if err != nil {
-		return client.CollectionDescription{}, err
+		return client.CollectionVersion{}, err
 	}
 
-	var id uint32
-	err = json.Unmarshal(idBuf, &id)
-	if err != nil {
-		return client.CollectionDescription{}, err
-	}
-
-	return GetCollectionByID(ctx, txn, id)
+	return GetCollectionByID(ctx, txn, string(idBuf))
 }
 
-func GetCollectionsByRoot(
-	ctx context.Context,
-	txn datastore.Txn,
-	root uint32,
-) ([]client.CollectionDescription, error) {
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewCollectionRootKey(root, 0).Bytes(),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cols := []client.CollectionDescription{}
-	for {
-		hasValue, err := iter.Next()
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, err
-		}
-
-		if !hasValue {
-			break
-		}
-
-		rootKey, err := keys.NewCollectionRootKeyFromString(string(iter.Key()))
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseCollectionQuery(err)
-			}
-			return nil, err
-		}
-
-		col, err := GetCollectionByID(ctx, txn, rootKey.CollectionID)
-		if err != nil {
-			return nil, errors.Join(err, iter.Close())
-		}
-
-		cols = append(cols, col)
-	}
-
-	return cols, iter.Close()
-}
-
-// GetCollectionsBySchemaVersionID returns all collections that use the given
-// schemaVersionID.
+// GetCollectionsByCollectionID returns all collection versions for the given id.
 //
 // If no collections are found an empty set will be returned.
-func GetCollectionsBySchemaVersionID(
+func GetCollectionsByCollectionID(
 	ctx context.Context,
 	txn datastore.Txn,
-	schemaVersionID string,
-) ([]client.CollectionDescription, error) {
-	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewCollectionSchemaVersionKey(schemaVersionID, 0).Bytes(),
-		KeysOnly: true,
-	})
+	collectionID string,
+) ([]client.CollectionVersion, error) { //todo - this should not be dependent on matching to schema root?
+	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, txn, collectionID)
 	if err != nil {
 		return nil, err
 	}
 
-	colIDs := make([]uint32, 0)
-	for {
-		hasValue, err := iter.Next()
+	cols := []client.CollectionVersion{}
+	for _, schemaVersionID := range schemaVersionIDs {
+		versionCol, err := GetCollectionByID(ctx, txn, schemaVersionID)
 		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
+			if errors.Is(err, corekv.ErrNotFound) {
+				continue
 			}
 			return nil, err
 		}
 
-		if !hasValue {
-			break
-		}
-
-		colSchemaVersionKey, err := keys.NewCollectionSchemaVersionKeyFromString(string(iter.Key()))
-		if err != nil {
-			if err := iter.Close(); err != nil {
-				return nil, NewErrFailedToCloseSchemaQuery(err)
-			}
-			return nil, err
-		}
-
-		colIDs = append(colIDs, colSchemaVersionKey.CollectionID)
-	}
-
-	err = iter.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	cols := make([]client.CollectionDescription, len(colIDs))
-	for i, colID := range colIDs {
-		key := keys.NewCollectionKey(colID)
-		buf, err := txn.Systemstore().Get(ctx, key.Bytes())
-		if err != nil {
-			return nil, err
-		}
-
-		var col client.CollectionDescription
-		err = json.Unmarshal(buf, &col)
-		if err != nil {
-			return nil, err
-		}
-
-		cols[i] = col
+		cols = append(cols, versionCol)
 	}
 
 	return cols, nil
@@ -269,20 +156,23 @@ func GetCollectionsBySchemaRoot(
 	ctx context.Context,
 	txn datastore.Txn,
 	schemaRoot string,
-) ([]client.CollectionDescription, error) {
+) ([]client.CollectionVersion, error) {
 	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, txn, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	cols := []client.CollectionDescription{}
+	cols := []client.CollectionVersion{}
 	for _, schemaVersionID := range schemaVersionIDs {
-		versionCols, err := GetCollectionsBySchemaVersionID(ctx, txn, schemaVersionID)
+		versionCol, err := GetCollectionByID(ctx, txn, schemaVersionID)
 		if err != nil {
+			if errors.Is(err, corekv.ErrNotFound) {
+				continue
+			}
 			return nil, err
 		}
 
-		cols = append(cols, versionCols...)
+		cols = append(cols, versionCol)
 	}
 
 	return cols, nil
@@ -294,7 +184,7 @@ func GetCollectionsBySchemaRoot(
 func GetCollections(
 	ctx context.Context,
 	txn datastore.Txn,
-) ([]client.CollectionDescription, error) {
+) ([]client.CollectionVersion, error) {
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.COLLECTION_ID),
 	})
@@ -302,7 +192,7 @@ func GetCollections(
 		return nil, err
 	}
 
-	cols := make([]client.CollectionDescription, 0)
+	cols := make([]client.CollectionVersion, 0)
 	for {
 		hasValue, err := iter.Next()
 		if err != nil {
@@ -324,7 +214,7 @@ func GetCollections(
 			return nil, err
 		}
 
-		var col client.CollectionDescription
+		var col client.CollectionVersion
 		err = json.Unmarshal(value, &col)
 		if err != nil {
 			if err := iter.Close(); err != nil {
@@ -343,7 +233,7 @@ func GetCollections(
 func GetActiveCollections(
 	ctx context.Context,
 	txn datastore.Txn,
-) ([]client.CollectionDescription, error) {
+) ([]client.CollectionVersion, error) {
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
 	})
@@ -351,7 +241,7 @@ func GetActiveCollections(
 		return nil, err
 	}
 
-	cols := make([]client.CollectionDescription, 0)
+	cols := make([]client.CollectionVersion, 0)
 	for {
 		hasValue, err := iter.Next()
 		if err != nil {
@@ -373,13 +263,7 @@ func GetActiveCollections(
 			return nil, err
 		}
 
-		var id uint32
-		err = json.Unmarshal(value, &id)
-		if err != nil {
-			return nil, errors.Join(err, iter.Close())
-		}
-
-		col, err := GetCollectionByID(ctx, txn, id)
+		col, err := GetCollectionByID(ctx, txn, string(value))
 		if err != nil {
 			return nil, errors.Join(err, iter.Close())
 		}
@@ -388,7 +272,7 @@ func GetActiveCollections(
 	}
 
 	// Sort the results by ID, so that the order matches that of [GetCollections].
-	sort.Slice(cols, func(i, j int) bool { return cols[i].ID < cols[j].ID })
+	sort.Slice(cols, func(i, j int) bool { return cols[i].VersionID < cols[j].VersionID })
 
 	return cols, iter.Close()
 }

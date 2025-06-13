@@ -14,8 +14,8 @@ import "github.com/sourcenetwork/defradb/internal/core"
 
 // CRDT is a union type used for IPLD schemas that can hold any of the CRDT deltas.
 type CRDT struct {
-	LWWRegDelta       *LWWRegDelta
-	CompositeDAGDelta *CompositeDAGDelta
+	LWWDelta          *LWWDelta
+	DocCompositeDelta *DocCompositeDelta
 	CounterDelta      *CounterDelta
 	CollectionDelta   *CollectionDelta
 }
@@ -23,10 +23,10 @@ type CRDT struct {
 // NewCRDT returns a new CRDT.
 func NewCRDT(delta core.Delta) CRDT {
 	switch d := delta.(type) {
-	case *LWWRegDelta:
-		return CRDT{LWWRegDelta: d}
-	case *CompositeDAGDelta:
-		return CRDT{CompositeDAGDelta: d}
+	case *LWWDelta:
+		return CRDT{LWWDelta: d}
+	case *DocCompositeDelta:
+		return CRDT{DocCompositeDelta: d}
 	case *CounterDelta:
 		return CRDT{CounterDelta: d}
 	case *CollectionDelta:
@@ -41,8 +41,8 @@ func NewCRDT(delta core.Delta) CRDT {
 func (c CRDT) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CRDT union {
-		| LWWRegDelta "lww"
-		| CompositeDAGDelta "composite"
+		| LWWDelta "lww"
+		| DocCompositeDelta "composite"
 		| CounterDelta "counter"
 		| CollectionDelta "collection"
 	} representation keyed`)
@@ -51,10 +51,10 @@ func (c CRDT) IPLDSchemaBytes() []byte {
 // GetDelta returns the delta that is stored in the CRDT.
 func (c CRDT) GetDelta() core.Delta {
 	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta
+	case c.LWWDelta != nil:
+		return c.LWWDelta
+	case c.DocCompositeDelta != nil:
+		return c.DocCompositeDelta
 	case c.CounterDelta != nil:
 		return c.CounterDelta
 	case c.CollectionDelta != nil:
@@ -66,10 +66,10 @@ func (c CRDT) GetDelta() core.Delta {
 // GetPriority returns the priority of the delta.
 func (c CRDT) GetPriority() uint64 {
 	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.GetPriority()
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.GetPriority()
+	case c.LWWDelta != nil:
+		return c.LWWDelta.GetPriority()
+	case c.DocCompositeDelta != nil:
+		return c.DocCompositeDelta.GetPriority()
 	case c.CounterDelta != nil:
 		return c.CounterDelta.GetPriority()
 	case c.CollectionDelta != nil:
@@ -81,8 +81,8 @@ func (c CRDT) GetPriority() uint64 {
 // GetFieldName returns the field name of the delta.
 func (c CRDT) GetFieldName() string {
 	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.FieldName
+	case c.LWWDelta != nil:
+		return c.LWWDelta.FieldName
 	case c.CounterDelta != nil:
 		return c.CounterDelta.FieldName
 	}
@@ -92,10 +92,10 @@ func (c CRDT) GetFieldName() string {
 // GetDocID returns the docID of the delta.
 func (c CRDT) GetDocID() []byte {
 	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.DocID
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.DocID
+	case c.LWWDelta != nil:
+		return c.LWWDelta.DocID
+	case c.DocCompositeDelta != nil:
+		return c.DocCompositeDelta.DocID
 	case c.CounterDelta != nil:
 		return c.CounterDelta.DocID
 	case c.CollectionDelta != nil:
@@ -107,10 +107,10 @@ func (c CRDT) GetDocID() []byte {
 // GetSchemaVersionID returns the schema version ID of the delta.
 func (c CRDT) GetSchemaVersionID() string {
 	switch {
-	case c.LWWRegDelta != nil:
-		return c.LWWRegDelta.SchemaVersionID
-	case c.CompositeDAGDelta != nil:
-		return c.CompositeDAGDelta.SchemaVersionID
+	case c.LWWDelta != nil:
+		return c.LWWDelta.SchemaVersionID
+	case c.DocCompositeDelta != nil:
+		return c.DocCompositeDelta.SchemaVersionID
 	case c.CounterDelta != nil:
 		return c.CounterDelta.SchemaVersionID
 	case c.CollectionDelta != nil:
@@ -123,20 +123,20 @@ func (c CRDT) GetSchemaVersionID() string {
 func (c CRDT) Clone() CRDT {
 	var cloned CRDT
 	switch {
-	case c.LWWRegDelta != nil:
-		cloned.LWWRegDelta = &LWWRegDelta{
-			DocID:           c.LWWRegDelta.DocID,
-			FieldName:       c.LWWRegDelta.FieldName,
-			Priority:        c.LWWRegDelta.Priority,
-			SchemaVersionID: c.LWWRegDelta.SchemaVersionID,
-			Data:            c.LWWRegDelta.Data,
+	case c.LWWDelta != nil:
+		cloned.LWWDelta = &LWWDelta{
+			DocID:           c.LWWDelta.DocID,
+			FieldName:       c.LWWDelta.FieldName,
+			Priority:        c.LWWDelta.Priority,
+			SchemaVersionID: c.LWWDelta.SchemaVersionID,
+			Data:            c.LWWDelta.Data,
 		}
-	case c.CompositeDAGDelta != nil:
-		cloned.CompositeDAGDelta = &CompositeDAGDelta{
-			DocID:           c.CompositeDAGDelta.DocID,
-			Priority:        c.CompositeDAGDelta.Priority,
-			SchemaVersionID: c.CompositeDAGDelta.SchemaVersionID,
-			Status:          c.CompositeDAGDelta.Status,
+	case c.DocCompositeDelta != nil:
+		cloned.DocCompositeDelta = &DocCompositeDelta{
+			DocID:           c.DocCompositeDelta.DocID,
+			Priority:        c.DocCompositeDelta.Priority,
+			SchemaVersionID: c.DocCompositeDelta.SchemaVersionID,
+			Status:          c.DocCompositeDelta.Status,
 		}
 	case c.CounterDelta != nil:
 		cloned.CounterDelta = &CounterDelta{
@@ -160,16 +160,16 @@ func (c CRDT) Clone() CRDT {
 //
 // Currently only implemented for CompositeDAGDelta.
 func (c CRDT) GetStatus() uint8 {
-	if c.CompositeDAGDelta != nil {
-		return uint8(c.CompositeDAGDelta.Status)
+	if c.DocCompositeDelta != nil {
+		return uint8(c.DocCompositeDelta.Status)
 	}
 	return 0
 }
 
 // GetData returns the data of the delta.
 func (c CRDT) GetData() []byte {
-	if c.LWWRegDelta != nil {
-		return c.LWWRegDelta.Data
+	if c.LWWDelta != nil {
+		return c.LWWDelta.Data
 	} else if c.CounterDelta != nil {
 		return c.CounterDelta.Data
 	}
@@ -178,8 +178,8 @@ func (c CRDT) GetData() []byte {
 
 // SetData sets the data of the delta.
 func (c CRDT) SetData(data []byte) {
-	if c.LWWRegDelta != nil {
-		c.LWWRegDelta.Data = data
+	if c.LWWDelta != nil {
+		c.LWWDelta.Data = data
 	} else if c.CounterDelta != nil {
 		c.CounterDelta.Data = data
 	}
@@ -187,7 +187,7 @@ func (c CRDT) SetData(data []byte) {
 
 // IsComposite returns true if the CRDT is a composite CRDT.
 func (c CRDT) IsComposite() bool {
-	return c.CompositeDAGDelta != nil
+	return c.DocCompositeDelta != nil
 }
 
 // IsCollection returns true if the CRDT is a collection CRDT.

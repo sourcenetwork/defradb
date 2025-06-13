@@ -16,8 +16,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -47,8 +47,9 @@ type scanNode struct {
 
 	prefixes []keys.Walkable
 
-	filter *mapper.Filter
-	slct   *mapper.Select
+	filter   *mapper.Filter
+	ordering []mapper.OrderCondition
+	slct     *mapper.Select
 
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
@@ -66,11 +67,12 @@ func (n *scanNode) Init() error {
 		n.p.ctx,
 		n.p.identity,
 		n.p.txn,
-		n.p.acp,
+		n.p.documentACP,
 		n.index,
 		n.col,
 		n.fields,
 		n.filter,
+		n.ordering,
 		n.slct.DocumentMapping,
 		n.showDeleted,
 	); err != nil {
@@ -175,7 +177,14 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.prefixes) == 0 {
-		prefix := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
+		shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		prefix := keys.DataStoreKey{
+			CollectionShortID: shortID,
+		}
 		n.prefixes = []keys.Walkable{prefix}
 	}
 
@@ -207,7 +216,12 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	n.currentValue, err = fetcher.DecodeToDoc(doc, n.documentMapping, false)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+	if err != nil {
+		return false, err
+	}
+
+	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
 	if err != nil {
 		return false, err
 	}
@@ -251,8 +265,8 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the collection attributes.
-	simpleExplainMap[collectionNameLabel] = n.col.Name().Value()
-	simpleExplainMap[collectionIDLabel] = n.col.Description().IDString()
+	simpleExplainMap[collectionNameLabel] = n.col.Name()
+	simpleExplainMap[collectionIDLabel] = n.col.Version().VersionID
 
 	// Add the prefixes attribute.
 	simpleExplainMap[prefixesLabel] = n.explainPrefixes()
@@ -286,7 +300,6 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 
 func (p *Planner) Scan(
 	mapperSelect *mapper.Select,
-	colDesc client.CollectionDescription,
 ) (*scanNode, error) {
 	scan := &scanNode{
 		p:         p,

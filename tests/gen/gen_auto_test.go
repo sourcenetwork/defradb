@@ -72,7 +72,7 @@ func getDocIDsFromDocs(docs []*client.Document) []string {
 func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
 	var result []*client.Document
 	for _, doc := range docs {
-		if doc.Col.Description.Name.Value() == name {
+		if doc.Col.Version.Name == name {
 			result = append(result, doc.Doc)
 		}
 	}
@@ -1200,9 +1200,8 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 	getValidDefs := func() []client.CollectionDefinition {
 		return []client.CollectionDefinition{
 			{
-				Description: client.CollectionDescription{
-					Name: immutable.Some("User"),
-					ID:   0,
+				Version: client.CollectionVersion{
+					Name: "User",
 					Fields: []client.CollectionFieldDescription{
 						{
 							Name: "name",
@@ -1224,9 +1223,8 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 				},
 			},
 			{
-				Description: client.CollectionDescription{
-					Name: immutable.Some("Device"),
-					ID:   1,
+				Version: client.CollectionVersion{
+					Name: "Device",
 					Fields: []client.CollectionFieldDescription{
 						{
 							Name: "model",
@@ -1261,13 +1259,7 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 		{
 			name: "description name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = immutable.Some("")
-			},
-		},
-		{
-			name: "description name is none",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Description.Name = immutable.None[string]()
+				defs[0].Version.Name = ""
 			},
 		},
 		{
@@ -1280,19 +1272,13 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 			name: "field name is empty",
 			changeDefs: func(defs []client.CollectionDefinition) {
 				defs[0].Schema.Fields[0].Name = ""
-				defs[0].Description.Fields[0].Name = ""
+				defs[0].Version.Fields[0].Name = ""
 			},
 		},
 		{
 			name: "not matching names",
 			changeDefs: func(defs []client.CollectionDefinition) {
 				defs[0].Schema.Name = "Device"
-			},
-		},
-		{
-			name: "ids are not enumerated",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[1].Description.ID = 0
 			},
 		},
 	}
@@ -1315,10 +1301,9 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 
 	defs := []client.CollectionDefinition{
 		{
-			Description: client.CollectionDescription{
-				Name:   immutable.Some("User"),
-				ID:     0,
-				RootID: 0,
+			Version: client.CollectionVersion{
+				Name:      "User",
+				VersionID: "a",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "name",
@@ -1331,13 +1316,14 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 					},
 					{
 						Name:         "devices",
-						Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(1, true)),
+						Kind:         immutable.Some[client.FieldKind](client.NewSchemaKind("b", true)),
 						RelationName: immutable.Some("Device_owner"),
 					},
 				},
 			},
 			Schema: client.SchemaDescription{
 				Name: "User",
+				Root: "a",
 				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "name",
@@ -1355,17 +1341,16 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			},
 		},
 		{
-			Description: client.CollectionDescription{
-				Name:   immutable.Some("Device"),
-				ID:     1,
-				RootID: 1,
+			Version: client.CollectionVersion{
+				Name:      "Device",
+				VersionID: "b",
 				Fields: []client.CollectionFieldDescription{
 					{
 						Name: "model",
 					},
 					{
 						Name:         "owner",
-						Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(0, false)),
+						Kind:         immutable.Some[client.FieldKind](client.NewSchemaKind("a", false)),
 						RelationName: immutable.Some("Device_owner"),
 					},
 					{
@@ -1376,6 +1361,7 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 			},
 			Schema: client.SchemaDescription{
 				Name: "Device",
+				Root: "b",
 				Fields: []client.SchemaFieldDescription{
 					{
 						Name: "model",

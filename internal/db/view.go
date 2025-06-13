@@ -24,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -39,7 +41,7 @@ func (db *DB) addView(
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
 	query := fmt.Sprintf(`query { %s }`, inputQuery)
 
-	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	parseResults, err := db.parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -63,23 +65,23 @@ func (db *DB) addView(
 		return nil, NewErrInvalidViewQueryCastFailed(inputQuery)
 	}
 
-	for i := range newDefinitions {
+	for i := range parseResults {
 		source := client.QuerySource{
 			Query:     *baseQuery,
 			Transform: transform,
 		}
-		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
+		parseResults[i].Definition.Version.Sources = append(parseResults[i].Definition.Version.Sources, &source)
 	}
 
-	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
+	returnDescriptions, err := db.createCollections(ctx, parseResults)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, definition := range returnDescriptions {
-		for _, source := range definition.Description.QuerySources() {
+		for _, source := range definition.Version.QuerySources() {
 			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())
+				err = db.LensRegistry().SetMigration(ctx, definition.Version.VersionID, source.Transform.Value())
 				if err != nil {
 					return nil, err
 				}
@@ -103,7 +105,7 @@ func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	}
 
 	for _, col := range cols {
-		if !col.Description.IsMaterialized {
+		if !col.Version.IsMaterialized {
 			// We only care about materialized views here, so skip any that aren't
 			continue
 		}
@@ -133,7 +135,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 
 	var views []client.CollectionDefinition
 	for _, col := range cols {
-		if querySrcs := col.Description().QuerySources(); len(querySrcs) == 0 {
+		if querySrcs := col.Version().QuerySources(); len(querySrcs) == 0 {
 			continue
 		}
 
@@ -144,20 +146,20 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
+	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
 
 	// temporarily disable the cache in order to query without using it
-	col.Description.IsMaterialized = false
-	col.Description, err = description.SaveCollection(ctx, txn, col.Description)
+	col.Version.IsMaterialized = false
+	err = description.SaveCollection(ctx, txn, col.Version)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
-		col.Description.IsMaterialized = true
-		col.Description, defErr = description.SaveCollection(ctx, txn, col.Description)
+		col.Version.IsMaterialized = true
+		defErr = description.SaveCollection(ctx, txn, col.Version)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -210,7 +212,12 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		itemKey := keys.NewViewCacheKey(col.Description.RootID, itemID)
+		shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		itemKey := keys.NewViewCacheKey(shortID, itemID)
 		err = txn.Datastore().Set(ctx, itemKey.Bytes(), serializedItem)
 		if err != nil {
 			return err
@@ -226,10 +233,15 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 }
 
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
-	txn := mustGetContextTxn(ctx)
+	txn := txnctx.MustGet(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
+	if err != nil {
+		return err
+	}
 
 	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewViewCacheColPrefix(col.Description.RootID).Bytes(),
+		Prefix:   keys.NewViewCacheColPrefix(shortID).Bytes(),
 		KeysOnly: true,
 	})
 	if err != nil {

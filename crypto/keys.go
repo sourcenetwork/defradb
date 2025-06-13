@@ -17,8 +17,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	"github.com/cyware/ssi-sdk/crypto"
-	"github.com/cyware/ssi-sdk/did/key"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
@@ -217,7 +215,7 @@ func (k *secp256k1PublicKey) String() string {
 }
 
 func (k *secp256k1PublicKey) DID() (string, error) {
-	did, err := key.CreateDIDKey(crypto.SECP256k1, k.key.SerializeUncompressed())
+	did, err := createDIDKey(SECP256k1, k.key.SerializeUncompressed())
 	if err != nil {
 		return "", NewErrFailedToCreateDIDKey(err)
 	}
@@ -280,7 +278,7 @@ func (k *ed25519PublicKey) String() string {
 }
 
 func (k *ed25519PublicKey) DID() (string, error) {
-	did, err := key.CreateDIDKey(crypto.Ed25519, k.key)
+	did, err := createDIDKey(Ed25519, k.key)
 	if err != nil {
 		return "", NewErrFailedToCreateDIDKey(err)
 	}

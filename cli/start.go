@@ -29,7 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/version"
 )
@@ -80,9 +80,9 @@ func MakeStartCommand() *cobra.Command {
 
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithSourceHubChainID(cfg.GetString("acp.sourceHub.ChainID")),
-				node.WithSourceHubGRPCAddress(cfg.GetString("acp.sourceHub.GRPCAddress")),
-				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.sourceHub.CometRPCAddress")),
+				node.WithSourceHubChainID(cfg.GetString("acp.dac.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.dac.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.dac.sourceHub.CometRPCAddress")),
 				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 				node.WithEnableDevelopment(cfg.GetBool("development")),
 				// store options
@@ -92,10 +92,10 @@ func MakeStartCommand() *cobra.Command {
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
-				net.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
-				net.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
-				net.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
-				net.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
+				netConfig.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
+				netConfig.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
+				netConfig.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				netConfig.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
@@ -108,12 +108,12 @@ func MakeStartCommand() *cobra.Command {
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
-				opts = append(opts, node.WithACPPath(rootDir))
+				opts = append(opts, node.WithDocumentACPPath(rootDir))
 			}
 
-			acpType := cfg.GetString("acp.type")
-			if acpType != "" {
-				opts = append(opts, node.WithACPType(node.ACPType(acpType)))
+			documentACPType := cfg.GetString("acp.dac.type")
+			if documentACPType != "" {
+				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(documentACPType)))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -139,7 +139,7 @@ func MakeStartCommand() *cobra.Command {
 				}
 
 				// setup the sourcehub transaction signer
-				sourceHubKeyName := cfg.GetString("acp.sourceHub.KeyName")
+				sourceHubKeyName := cfg.GetString("acp.dac.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
 					if err != nil {
@@ -189,6 +189,13 @@ func MakeStartCommand() *cobra.Command {
 			log.InfoContext(cmd.Context(), "Starting DefraDB")
 			if err := n.Start(cmd.Context()); err != nil {
 				return err
+			}
+			// If the context has a messageChans defined, we pass along the relevant information.
+			// For now this is mostly useful for the CLI integration tests.
+			messageChans, ok := node.TryGetContextMessageChans(cmd.Context())
+			if ok && messageChans.APIURL != nil {
+				messageChans.APIURL <- n.APIURL
+				close(messageChans.APIURL)
 			}
 
 		RESTART:
@@ -296,9 +303,9 @@ func MakeStartCommand() *cobra.Command {
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
 	cmd.PersistentFlags().String(
-		"acp-type",
-		cfg.GetString(configFlags["acp.type"]),
-		"Specify the acp engine to use (supported: none (default), local, source-hub)")
+		"dac-type",
+		cfg.GetString(configFlags["acp.dac.type"]),
+		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),
@@ -343,7 +350,7 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	} else if err != nil {
 		return nil, err
 	}
-	return append(opts, net.WithPrivateKey(peerKey)), nil
+	return append(opts, netConfig.WithPrivateKey(peerKey)), nil
 }
 
 func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Viper) ([]node.Option, error) {

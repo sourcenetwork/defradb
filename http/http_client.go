@@ -19,12 +19,13 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 type httpClient struct {
 	client  *http.Client
 	baseURL *url.URL
+	apiURL  *url.URL
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
@@ -37,7 +38,8 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	}
 	return &httpClient{
 		client:  http.DefaultClient,
-		baseURL: baseURL.JoinPath("/api/v0"),
+		baseURL: baseURL,
+		apiURL:  baseURL.JoinPath("/api/v0"),
 	}, nil
 }
 
@@ -45,7 +47,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	txn, ok := db.TryGetContextTxn(req.Context())
+	txn, ok := txnctx.TryGet(req.Context())
 	if ok {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}

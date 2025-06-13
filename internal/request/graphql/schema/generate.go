@@ -58,7 +58,7 @@ func (m *SchemaManager) NewGenerator() *Generator {
 }
 
 // Generate generates the query-op and mutation-op type definitions from
-// the given CollectionDescriptions.
+// the given CollectionVersions.
 func (g *Generator) Generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
 	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
@@ -90,7 +90,7 @@ func (g *Generator) Generate(ctx context.Context, collections []client.Collectio
 }
 
 // generate generates the query-op and mutation-op type definitions from
-// the given CollectionDescriptions.
+// the given CollectionVersions.
 func (g *Generator) generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
 	// build base types
 	defs, err := g.buildTypes(collections)
@@ -120,7 +120,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		var isEmbedded bool
 		for _, definition := range collections {
-			if t.Name() == definition.Schema.Name && !definition.Description.Name.HasValue() {
+			if t.Name() == definition.Schema.Name && definition.Version.IsEmbeddedOnly {
 				isEmbedded = true
 				break
 			}
@@ -217,8 +217,8 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var isReadOnly bool
 		var collectionFound bool
 		for _, definition := range collections {
-			if t.Name() == definition.Description.Name.Value() {
-				isReadOnly = len(definition.Description.QuerySources()) > 0
+			if t.Name() == definition.Version.Name {
+				isReadOnly = len(definition.Version.QuerySources()) > 0
 				collectionFound = true
 				break
 			}
@@ -435,16 +435,15 @@ func (g *Generator) buildTypes(
 
 	for _, collection := range collections {
 		fieldDescriptions := collection.GetFields()
-		isEmbeddedObject := !collection.Description.Name.HasValue()
-		isQuerySource := len(collection.Description.QuerySources()) > 0
-		isViewObject := isEmbeddedObject || isQuerySource
+		isQuerySource := len(collection.Version.QuerySources()) > 0
+		isViewObject := collection.Version.IsEmbeddedOnly || isQuerySource
 
 		var objectName string
-		if isEmbeddedObject {
+		if collection.Version.IsEmbeddedOnly {
 			// If this is an embedded object, take the type name from the Schema
 			objectName = collection.Schema.Name
 		} else {
-			objectName = collection.Description.Name.Value()
+			objectName = collection.Version.Name
 		}
 
 		// check if type exists
@@ -545,14 +544,13 @@ func (g *Generator) buildTypes(
 // for collection create and update mutation operations.
 func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
 	for _, collection := range collections {
-		if !collection.Description.Name.HasValue() {
-			// If the definition's collection is empty, this must be a collectionless
-			// schema, in which case users cannot mutate documents through it and we
-			// have no need to build mutation input types for it.
+		if collection.Version.IsEmbeddedOnly {
+			// Users cannot mutate documents through embedded collections, so we
+			// have no need to build mutation input types for this collection.
 			continue
 		}
 
-		mutationInputName := collection.Description.Name.Value() + mutationInputNameSuffix
+		mutationInputName := collection.Version.Name + mutationInputNameSuffix
 
 		// check if mutation input type exists
 		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {

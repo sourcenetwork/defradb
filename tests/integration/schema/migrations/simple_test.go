@@ -48,19 +48,13 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:              1,
-						SchemaVersionID: "does not exist",
-						IsMaterialized:  true,
-					},
-					{
-						ID:              2,
-						SchemaVersionID: "also does not exist",
-						IsMaterialized:  true,
+						VersionID:      "also does not exist",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -76,6 +70,10 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						VersionID:      "does not exist",
+						IsMaterialized: true,
 					},
 				},
 			},
@@ -127,19 +125,13 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:              1,
-						SchemaVersionID: "does not exist",
-						IsMaterialized:  true,
-					},
-					{
-						ID:              2,
-						SchemaVersionID: "also does not exist",
-						IsMaterialized:  true,
+						VersionID:      "also does not exist",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -157,17 +149,15 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						},
 					},
 					{
-						ID:              3,
-						IsMaterialized:  true,
-						SchemaVersionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+						IsMaterialized: true,
+						VersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 					},
 					{
-						ID:              4,
-						IsMaterialized:  true,
-						SchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+						IsMaterialized: true,
+						VersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 3,
+								SourceCollectionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -183,6 +173,10 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						VersionID:      "does not exist",
+						IsMaterialized: true,
 					},
 				},
 			},
@@ -235,19 +229,17 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						ID:              1,
-						SchemaVersionID: "a",
-						IsMaterialized:  true,
+						VersionID:      "a",
+						IsMaterialized: true,
 					},
 					{
-						ID:              2,
-						SchemaVersionID: "b",
-						IsMaterialized:  true,
+						VersionID:      "b",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "a",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -265,12 +257,11 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						},
 					},
 					{
-						ID:              3,
-						SchemaVersionID: "c",
-						IsMaterialized:  true,
+						VersionID:      "c",
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: "a",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{

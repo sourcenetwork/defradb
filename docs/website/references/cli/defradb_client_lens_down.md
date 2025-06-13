@@ -24,7 +24,7 @@ defradb client lens down --collection <collectionID> <documents> [flags]
 ### Options
 
 ```
-      --collection uint32   Collection id
+      --collection string   Collection id
   -f, --file string         File containing document(s)
   -h, --help                help for down
 ```

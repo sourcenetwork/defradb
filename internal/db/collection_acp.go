@@ -13,8 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
@@ -33,14 +33,14 @@ func (c *collection) registerDocWithACP(
 	ctx context.Context,
 	docID string,
 ) error {
-	// If acp is not available, then no document is registered.
-	if !c.db.acp.HasValue() {
+	// If document acp is not available, then no document is registered.
+	if !c.db.documentACP.HasValue() {
 		return nil
 	}
-	return permission.RegisterDocOnCollectionWithACP(
+	return permission.RegisterDocOnCollectionWithDocumentACP(
 		ctx,
 		identity.FromContext(ctx),
-		c.db.acp.Value(),
+		c.db.documentACP.Value(),
 		c,
 		docID,
 	)
@@ -48,11 +48,11 @@ func (c *collection) registerDocWithACP(
 
 func (c *collection) checkAccessOfDocWithACP(
 	ctx context.Context,
-	dpiPermission acp.DPIPermission,
+	resourcePermission acpTypes.ResourceInterfacePermission,
 	docID string,
 ) (bool, error) {
-	// If acp is not available, then we have unrestricted access.
-	if !c.db.acp.HasValue() {
+	// If document acp is not available, then we have unrestricted access.
+	if !c.db.documentACP.HasValue() {
 		return true, nil
 	}
 	ident := identity.FromContext(ctx)
@@ -62,9 +62,9 @@ func (c *collection) checkAccessOfDocWithACP(
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		identity.FromContext(ctx),
-		c.db.acp.Value(),
+		c.db.documentACP.Value(),
 		c,
-		dpiPermission,
+		resourcePermission,
 		docID,
 	)
 }

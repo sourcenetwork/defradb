@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -32,54 +31,6 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 	assert.Equal(t, DataStoreKey{}, result)
 	assert.Equal(t, "", resultString)
 	assert.ErrorIs(t, ErrEmptyKey, err)
-}
-
-func TestNewIndexKey_IfEmptyParam_ReturnPrefix(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.None[uint32](), "")
-	assert.Equal(t, "/collection/index", key.ToString())
-}
-
-func TestNewIndexKey_IfParamsAreGiven_ReturnFullKey(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.Some[uint32](1), "idx")
-	assert.Equal(t, "/collection/index/1/idx", key.ToString())
-}
-
-func TestNewIndexKey_InNoCollectionName_ReturnJustPrefix(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.None[uint32](), "idx")
-	assert.Equal(t, "/collection/index", key.ToString())
-}
-
-func TestNewIndexKey_InNoIndexName_ReturnWithoutIndexName(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.Some[uint32](1), "")
-	assert.Equal(t, "/collection/index/1", key.ToString())
-}
-
-func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
-	for _, key := range []string{
-		"",
-		"/collection",
-		"/collection/index",
-		"/collection/index/col/idx/extra",
-		"/wrong/index/col/idx",
-		"/collection/wrong/col/idx",
-	} {
-		_, err := NewCollectionIndexKeyFromString(key)
-		assert.ErrorIs(t, err, ErrInvalidKey)
-	}
-}
-
-func TestNewIndexKeyFromString_IfOnlyCollectionName_ReturnKey(t *testing.T) {
-	key, err := NewCollectionIndexKeyFromString("/collection/index/1")
-	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some[uint32](1), key.CollectionID)
-	assert.Equal(t, "", key.IndexName)
-}
-
-func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
-	key, err := NewCollectionIndexKeyFromString("/collection/index/1/idx")
-	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some[uint32](1), key.CollectionID)
-	assert.Equal(t, "idx", key.IndexName)
 }
 
 func encodePrefix(colID, indexID uint32) []byte {
@@ -183,14 +134,6 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 func TestIndexDatastoreKey_ToDS(t *testing.T) {
 	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: client.NewNormalInt(5)}})
 	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 5, false))))
-}
-
-func TestCollectionIndexKey_Bytes(t *testing.T) {
-	key := CollectionIndexKey{
-		CollectionID: immutable.Some[uint32](1),
-		IndexName:    "idx",
-	}
-	assert.Equal(t, []byte(COLLECTION_INDEX+"/1/idx"), key.Bytes())
 }
 
 func TestDecodeIndexDataStoreKey(t *testing.T) {

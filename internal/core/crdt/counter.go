@@ -75,59 +75,62 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 	delta.Priority = prio
 }
 
-// Counter, is a simple CRDT type that allows increment/decrement
-// of an Int and Float data types that ensures convergence.
+// Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
-	store datastore.DSReaderWriter
-	key   keys.DataStoreKey
-
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey keys.CollectionSchemaVersionKey
-
-	// fieldName holds the name of the field hosting this CRDT, if this is a field level
-	// commit.
-	fieldName string
-
-	AllowDecrement bool
-	Kind           client.ScalarKind
+	store           datastore.DSReaderWriter
+	key             keys.DataStoreKey
+	schemaVersionID string
+	fieldName       string
+	allowDecrement  bool
+	kind            client.ScalarKind
 }
 
+var _ FieldLevelCRDT = (*Counter)(nil)
 var _ core.ReplicatedData = (*Counter)(nil)
 
-// NewCounter returns a new instance of the Counter with the given ID.
+// NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
+// backed by a Counter CRDT.
 func NewCounter(
 	store datastore.DSReaderWriter,
-	schemaVersionKey keys.CollectionSchemaVersionKey,
+	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
-) Counter {
-	return Counter{
-		store:            store,
-		key:              key,
-		schemaVersionKey: schemaVersionKey,
-		fieldName:        fieldName,
-		AllowDecrement:   allowDecrement,
-		Kind:             kind,
+) *Counter {
+	return &Counter{
+		store:           store,
+		key:             key,
+		schemaVersionID: schemaVersionID,
+		fieldName:       fieldName,
+		allowDecrement:  allowDecrement,
+		kind:            kind,
 	}
 }
 
-// Set generates a new delta with the supplied value.
+func (m *Counter) HeadstorePrefix() keys.HeadstoreKey {
+	return m.key.ToHeadStoreKey()
+}
+
+// Save the value of the  Counter to the DAG.
 //
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, error) {
-	// To ensure that the dag block is unique, we add a random number to the delta.
-	// This is done only on update (if the doc doesn't already exist) to ensure that the
-	// initial dag block of a document can be reproducible.
-	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
+func (m *Counter) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
+	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
 	}
+
+	// To ensure that the dag block is unique, we add a random number to the delta.
+	// This is done only on update (if the doc doesn't already exist) to ensure that the
+	// initial dag block of a document can be reproducible.
+	exists, err := m.store.Has(ctx, m.key.ToPrimaryDataStoreKey().Bytes())
+	if err != nil {
+		return nil, err
+	}
+
 	var nonce int64
 	if exists {
 		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
@@ -138,17 +141,17 @@ func (c Counter) Increment(ctx context.Context, value []byte) (*CounterDelta, er
 	}
 
 	return &CounterDelta{
-		DocID:           []byte(c.key.DocID),
-		FieldName:       c.fieldName,
-		Data:            value,
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
+		DocID:           []byte(m.key.DocID),
+		FieldName:       m.fieldName,
+		Data:            bytes,
+		SchemaVersionID: m.schemaVersionID,
 		Nonce:           nonce,
 	}, nil
 }
 
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
-func (c Counter) Merge(ctx context.Context, delta core.Delta) error {
+func (c *Counter) Merge(ctx context.Context, delta core.Delta) error {
 	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -157,7 +160,7 @@ func (c Counter) Merge(ctx context.Context, delta core.Delta) error {
 	return c.incrementValue(ctx, d.Data, d.GetPriority())
 }
 
-func (c Counter) incrementValue(
+func (c *Counter) incrementValue(
 	ctx context.Context,
 	valueAsBytes []byte,
 	priority uint64,
@@ -173,24 +176,24 @@ func (c Counter) incrementValue(
 
 	var resultAsBytes []byte
 
-	switch c.Kind {
+	switch c.kind {
 	case client.FieldKind_NILLABLE_INT:
-		resultAsBytes, err = validateAndIncrement[int64](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		resultAsBytes, err = validateAndIncrement[int64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
 			return err
 		}
 	case client.FieldKind_NILLABLE_FLOAT32:
-		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		resultAsBytes, err = validateAndIncrement[float32](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
 			return err
 		}
 	case client.FieldKind_NILLABLE_FLOAT64:
-		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.AllowDecrement)
+		resultAsBytes, err = validateAndIncrement[float64](ctx, c.store, key, valueAsBytes, c.allowDecrement)
 		if err != nil {
 			return err
 		}
 	default:
-		return NewErrUnsupportedCounterType(c.Kind)
+		return NewErrUnsupportedCounterType(c.kind)
 	}
 
 	err = c.store.Set(ctx, key.Bytes(), resultAsBytes)
@@ -201,8 +204,8 @@ func (c Counter) incrementValue(
 	return setPriority(ctx, c.store, c.key, priority)
 }
 
-func (c Counter) CType() client.CType {
-	if c.AllowDecrement {
+func (c *Counter) CType() client.CType {
+	if c.allowDecrement {
 		return client.PN_COUNTER
 	}
 	return client.P_COUNTER

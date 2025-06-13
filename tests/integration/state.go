@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
@@ -132,14 +132,12 @@ type nodeState struct {
 	// p2p contains p2p states for the node.
 	p2p *p2pState
 	// The network configurations for the nodes
-	netOpts []net.NodeOpt
+	netOpts []netConfig.NodeOpt
 	// The path to any file-based databases active in this test.
 	dbPath string
 	// Collections by index present in the test.
 	// Indexes matches that of collectionNames.
 	collections []client.Collection
-	// Indexes, by index, by collection index.
-	indexes [][]client.IndexDescription
 	// indicates if the node is closed.
 	closed bool
 	// peerInfo contains the peer information for the node.
@@ -196,16 +194,16 @@ type state struct {
 	nodes []*nodeState
 
 	// The ACP options to share between each node.
-	acpOptions []node.ACPOpt
+	documentACPOptions []node.DocumentACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
 	collectionNames []string
 
-	// A map of the collection indexes by their Root, this allows easier
+	// A map of the collection indexes by their CollectionID, this allows easier
 	// identification of collections in a natural, human readable, order
 	// even when they are renamed.
-	collectionIndexesByRoot map[uint32]int
+	collectionIndexesByCollectionID map[string]int
 
 	// Document IDs by index, by collection index.
 	//
@@ -270,24 +268,24 @@ func newState(
 	collectionNames []string,
 ) *state {
 	s := &state{
-		ctx:                      ctx,
-		t:                        t,
-		testCase:                 testCase,
-		kms:                      kms,
-		dbt:                      dbt,
-		clientType:               clientType,
-		txns:                     []datastore.Txn{},
-		identities:               map[Identity]*identityHolder{},
-		nextIdentityGenSeed:      0,
-		allActionsDone:           make(chan struct{}),
-		subscriptionResultsChans: []chan func(){},
-		nodes:                    []*nodeState{},
-		acpOptions:               []node.ACPOpt{},
-		collectionNames:          collectionNames,
-		collectionIndexesByRoot:  map[uint32]int{},
-		docIDs:                   [][]client.DocID{},
-		policyIDs:                [][]string{},
-		isBench:                  false,
+		ctx:                             ctx,
+		t:                               t,
+		testCase:                        testCase,
+		kms:                             kms,
+		dbt:                             dbt,
+		clientType:                      clientType,
+		txns:                            []datastore.Txn{},
+		identities:                      map[Identity]*identityHolder{},
+		nextIdentityGenSeed:             0,
+		allActionsDone:                  make(chan struct{}),
+		subscriptionResultsChans:        []chan func(){},
+		nodes:                           []*nodeState{},
+		documentACPOptions:              []node.DocumentACPOpt{},
+		collectionNames:                 collectionNames,
+		collectionIndexesByCollectionID: map[string]int{},
+		docIDs:                          [][]client.DocID{},
+		policyIDs:                       [][]string{},
+		isBench:                         false,
 	}
 	return s
 }

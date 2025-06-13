@@ -13,6 +13,7 @@ package db
 import (
 	"container/list"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -29,11 +30,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
@@ -50,7 +49,12 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 			FieldID: core.COMPOSITE_NAMESPACE,
 		}
 	} else {
-		key = keys.NewHeadstoreColKey(col.Description().RootID)
+		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		key = keys.NewHeadstoreColKey(shortID)
 	}
 
 	mt, err := getHeadsAsMergeTarget(ctx, txn, key)
@@ -381,7 +385,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(dagBlock.Delta)
+		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -392,7 +396,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, mp.txn, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}
@@ -441,53 +445,63 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
-	schemaVersionKey := keys.CollectionSchemaVersionKey{
-		SchemaVersionID: mp.col.Schema().VersionID,
-		CollectionID:    mp.col.ID(),
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (core.ReplicatedData, error) {
+	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	if err != nil {
+		return nil, err
 	}
 
 	switch {
-	case crdt.IsComposite():
-		docID := string(crdt.GetDocID())
+	case crdtUnion.IsComposite():
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		return merklecrdt.NewMerkleCompositeDAG(
-			mp.txn,
-			schemaVersionKey,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(core.COMPOSITE_NAMESPACE),
+		return crdt.NewDocComposite(
+			mp.txn.Datastore(),
+			mp.col.Schema().VersionID,
+			keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
-	case crdt.IsCollection():
-		return merklecrdt.NewMerkleCollection(
-			mp.txn,
-			schemaVersionKey,
-			keys.NewHeadstoreColKey(mp.col.Description().RootID),
+	case crdtUnion.IsCollection():
+		return crdt.NewCollection(
+			mp.col.Schema().VersionID,
+			keys.NewHeadstoreColKey(shortID),
 		), nil
 
 	default:
-		docID := string(crdt.GetDocID())
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		field := crdt.GetFieldName()
+		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Definition().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.
 			return nil, nil
 		}
 
-		return merklecrdt.FieldLevelCRDTWithStore(
-			mp.txn,
-			schemaVersionKey,
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		return crdt.FieldLevelCRDTWithStore(
+			mp.txn.Datastore(),
+			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(fd.ID.String()),
+			keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
 	}
 }
 
-func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string) (*collection, error) {
+func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -497,14 +511,14 @@ func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string)
 	cols, err := db.getCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(rootSchema),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(rootSchema)
+		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
 	}
 	// We currently only support one active collection per root schema
 	// so it is safe to return the first one.
@@ -536,7 +550,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 
 // getHeads retrieves the heads associated with the given datastore key.
 func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
-	headset := clock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(txn.Headstore(), key)
 
 	cids, _, err := headset.List(ctx)
 	if err != nil {
@@ -567,7 +581,7 @@ func syncIndexedDoc(
 	col *collection,
 ) error {
 	// remove transaction from old context
-	oldCtx := SetContextTxn(ctx, nil)
+	oldCtx := InitContext(ctx, nil)
 
 	oldDoc, err := col.Get(oldCtx, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)

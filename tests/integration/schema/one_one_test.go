@@ -78,35 +78,32 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:           immutable.Some("User"),
+						Name:           "User",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,
 							},
 							{
 								Name:         "boss",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "boss_id",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minion",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minion_id",
-								ID:           4,
 								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
 								RelationName: immutable.Some("user_user"),
 							},

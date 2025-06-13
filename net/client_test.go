@@ -23,10 +23,9 @@ import (
 )
 
 var def = client.CollectionDefinition{
-	Description: client.CollectionDescription{
+	Version: client.CollectionVersion{
 		Fields: []client.CollectionFieldDescription{
 			{
-				ID:   1,
 				Name: "test",
 			},
 		},
@@ -64,10 +63,10 @@ func TestPushlogWithDialFailure(t *testing.T) {
 	)
 
 	err = p.server.pushLog(event.Update{
-		DocID:      id.String(),
-		Cid:        cid,
-		SchemaRoot: "test",
-		Block:      emptyBlock(),
+		DocID:        id.String(),
+		Cid:          cid,
+		CollectionID: "test",
+		Block:        emptyBlock(),
 	}, peer.ID("some-peer-id"))
 	require.Contains(t, err.Error(), "no transport security set")
 }
@@ -87,10 +86,10 @@ func TestPushlogWithInvalidPeerID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = p.server.pushLog(event.Update{
-		DocID:      id.String(),
-		Cid:        cid,
-		SchemaRoot: "test",
-		Block:      emptyBlock(),
+		DocID:        id.String(),
+		Cid:          cid,
+		CollectionID: "test",
+		Block:        emptyBlock(),
 	}, peer.ID("some-peer-id"))
 	require.Contains(t, err.Error(), "failed to parse peer ID")
 }
@@ -138,10 +137,10 @@ func TestPushlog_WithValidPeerID_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = p1.server.pushLog(event.Update{
-		DocID:      doc.ID().String(),
-		Cid:        headCID,
-		SchemaRoot: col.SchemaRoot(),
-		Block:      b,
+		DocID:        doc.ID().String(),
+		Cid:          headCID,
+		CollectionID: col.Version().CollectionID,
+		Block:        b,
 	}, p2.PeerInfo().ID)
 	require.NoError(t, err)
 }

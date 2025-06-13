@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
@@ -162,7 +162,7 @@ func connectPeers(
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
 	// sleep a little.
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 }
 
 // configureReplicator configures a replicator relationship between two existing, started, nodes.
@@ -310,10 +310,10 @@ func reconnectPeers(s *state) {
 }
 
 func RandomNetworkingConfig() ConfigureNode {
-	return func() []net.NodeOpt {
-		return []net.NodeOpt{
-			net.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
-			net.WithEnableRelay(false),
+	return func() []netConfig.NodeOpt {
+		return []netConfig.NodeOpt{
+			netConfig.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
+			netConfig.WithEnableRelay(false),
 		}
 	}
 }

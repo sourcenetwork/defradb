@@ -24,21 +24,21 @@ Examples include field names, field kinds and [CRDTs](https://docs.source.networ
 
 Collections represent [local](#local-definitions), independently queryable datasets sharing the same shape.
 
-Collections are defined by the `CollectionDescription` struct.  This can be mutated via the `PatchCollection` function.
+Collections are defined by the `CollectionVersion` struct.  This can be mutated via the `PatchCollection` function.
 
 A collection will always have a [global](#global-definitions) shape defined by a single [schema](#schemas) version.
 
 ### Versions
 
-`CollectionDescription` instances may be active or inactive.  Inactive `CollectionDescription`s will not have a name, and cannot be queried.
+`CollectionVersion` instances may be active or inactive.  Inactive `CollectionVersion`s will not have a name, and cannot be queried.
 
-When a new [schema](#schemas) version is created and has a collection defined for it, a new `CollectionDescription` instance will be created and linked to the new schema version.  The new `CollectionDescription` instance will share the same root ID as the previous, and may be active or inactive depending on what arguments the user defining the new schema specified.
+When a new [schema](#schemas) version is created and has a collection defined for it, a new `CollectionVersion` instance will be created and linked to the new schema version.  The new `CollectionVersion` instance will share the same root ID as the previous, and may be active or inactive depending on what arguments the user defining the new schema specified.
 
 [Lens migrations](https://docs.source.network/defradb/guides/schema-migration) between collection versions may be defined.  These are, like everything on the collection, [local](#local-definitions).  They allow transformation of data between versions, allowing documents synced across the node network at one schema version to be presented to users at **query time** at another version.
 
 ### Collection fields
 
-The set of fields on a `CollectionDescription` defines [local](#local-definitions) aspects to [globally](#global-definitions) defined fields on the collection's [schema](#schemas).  The set may also include local-only fields that are not defined on the schema, and will not be synced to other nodes - currently these are limited the secondary side of a relationship defined between two collections.
+The set of fields on a `CollectionVersion` defines [local](#local-definitions) aspects to [globally](#global-definitions) defined fields on the collection's [schema](#schemas).  The set may also include local-only fields that are not defined on the schema, and will not be synced to other nodes - currently these are limited the secondary side of a relationship defined between two collections.
 
 ### Views
 

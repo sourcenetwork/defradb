@@ -19,13 +19,13 @@ import (
 func TestCollectIndexesOnField(t *testing.T) {
 	tests := []struct {
 		name     string
-		desc     CollectionDescription
+		version  CollectionVersion
 		field    string
 		expected []IndexDescription
 	}{
 		{
 			name: "no indexes",
-			desc: CollectionDescription{
+			version: CollectionVersion{
 				Indexes: []IndexDescription{},
 			},
 			field:    "test",
@@ -33,7 +33,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 		},
 		{
 			name: "single index on field",
-			desc: CollectionDescription{
+			version: CollectionVersion{
 				Indexes: []IndexDescription{
 					{
 						Name: "index1",
@@ -55,7 +55,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 		},
 		{
 			name: "multiple indexes on field",
-			desc: CollectionDescription{
+			version: CollectionVersion{
 				Indexes: []IndexDescription{
 					{
 						Name: "index1",
@@ -89,7 +89,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 		},
 		{
 			name: "no indexes on field",
-			desc: CollectionDescription{
+			version: CollectionVersion{
 				Indexes: []IndexDescription{
 					{
 						Name: "index1",
@@ -104,7 +104,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 		},
 		{
 			name: "second field in composite index",
-			desc: CollectionDescription{
+			version: CollectionVersion{
 				Indexes: []IndexDescription{
 					{
 						Name: "index1",
@@ -122,7 +122,7 @@ func TestCollectIndexesOnField(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := tt.desc.GetIndexesOnField(tt.field)
+			actual := tt.version.GetIndexesOnField(tt.field)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}

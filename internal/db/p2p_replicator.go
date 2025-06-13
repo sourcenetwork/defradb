@@ -28,8 +28,8 @@ import (
 	dbErrors "github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 const (
@@ -62,7 +62,7 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 		return ErrSelfTargetForReplicator
 	}
 
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	storedRep := client.Replicator{}
 	storedSchemas := make(map[string]struct{})
@@ -108,9 +108,9 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 		}
 	}
 
-	if db.acp.HasValue() && !db.acp.Value().SupportsP2P() {
+	if db.documentACP.HasValue() && !db.documentACP.Value().SupportsP2P() {
 		for _, col := range collections {
-			if col.Description().Policy.HasValue() {
+			if col.Version().Policy.HasValue() {
 				return ErrReplicatorColHasPolicy
 			}
 		}
@@ -162,14 +162,14 @@ func (db *DB) getDocsHeads(
 			return
 		}
 		defer txn.Discard(ctx)
-		ctx = SetContextTxn(ctx, txn)
+		ctx = InitContext(ctx, txn)
 		for _, col := range cols {
 			keysCh, err := col.GetAllDocIDs(ctx)
 			if err != nil {
 				log.ErrorContextE(
 					ctx,
 					"Failed to get all docIDs",
-					NewErrReplicatorDocID(err, dbErrors.NewKV("Collection", col.Name().Value())),
+					NewErrReplicatorDocID(err, dbErrors.NewKV("Collection", col.Name())),
 				)
 				continue
 			}
@@ -179,7 +179,7 @@ func (db *DB) getDocsHeads(
 					continue
 				}
 				docID := keys.DataStoreKeyFromDocID(docIDResult.ID)
-				headset := clock.NewHeadSet(
+				headset := coreblock.NewHeadSet(
 					txn.Headstore(),
 					docID.WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 				)
@@ -204,10 +204,10 @@ func (db *DB) getDocsHeads(
 					}
 
 					updateChan <- event.Update{
-						DocID:      docIDResult.ID.String(),
-						Cid:        c,
-						SchemaRoot: col.SchemaRoot(),
-						Block:      blk.RawData(),
+						DocID:        docIDResult.ID.String(),
+						Cid:          c,
+						CollectionID: col.Version().CollectionID,
+						Block:        blk.RawData(),
 					}
 				}
 			}
@@ -232,7 +232,7 @@ func (db *DB) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams)
 	}
 
 	// set transaction for all operations
-	ctx = SetContextTxn(ctx, txn)
+	ctx = InitContext(ctx, txn)
 
 	storedRep := client.Replicator{}
 	storedSchemas := make(map[string]struct{})
@@ -694,18 +694,18 @@ func (db *DB) retryDoc(ctx context.Context, docID string) error {
 			break
 		}
 
-		schema, err := db.getSchemaByVersionID(ctx, headsIterator.CurrentBlock().Delta.GetSchemaVersionID())
+		col, err := db.getCollectionByID(ctx, headsIterator.CurrentBlock().Delta.GetSchemaVersionID())
 		if err != nil {
 			return err
 		}
 		successChan := make(chan bool)
 		defer close(successChan)
 		updateEvent := event.Update{
-			DocID:      docID,
-			Cid:        headsIterator.CurrentCid(),
-			SchemaRoot: schema.Root,
-			Block:      headsIterator.CurrentRawBlock(),
-			IsRetry:    true,
+			DocID:        docID,
+			Cid:          headsIterator.CurrentCid(),
+			CollectionID: col.Version().CollectionID,
+			Block:        headsIterator.CurrentRawBlock(),
+			IsRetry:      true,
 			// Because the retry is done in a separate goroutine but the retry handling process should be synchronous,
 			// we use a channel to block while waiting for the success status of the retry.
 			Success: successChan,

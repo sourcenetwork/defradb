@@ -11,8 +11,8 @@
 package schema
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
@@ -76,7 +76,7 @@ func (s *SchemaManager) ResolveTypes() error {
 	return s.schema.AppendType(query)
 }
 
-func (s *SchemaManager) ParseSDL(sdl string) ([]client.CollectionDefinition, error) {
+func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
 	src := source.NewSource(&source.Source{
 		Body: []byte(sdl),
 	})

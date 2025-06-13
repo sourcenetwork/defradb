@@ -57,3 +57,58 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Getting indexes for a collection should return only the indexes on that collection",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index
+					}
+
+					type Address {
+						street: String
+						postalCode: String @index
+					}
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_age_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "age",
+								Descending: false,
+							},
+						},
+						Unique: false,
+					},
+				},
+			},
+			testUtils.GetIndexes{
+				CollectionID: 1,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "Address_postalCode_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "postalCode",
+								Descending: false,
+							},
+						},
+						Unique: false,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

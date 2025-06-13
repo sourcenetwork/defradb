@@ -11,6 +11,8 @@
 package fetcher
 
 import (
+	"context"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -20,8 +22,10 @@ import (
 // filteredFetcher fetcher is responsible for the filtering documents based on the provided
 // conditions.
 type filteredFetcher struct {
-	filter  *mapper.Filter
-	mapping *core.DocumentMapping
+	ctx               context.Context
+	collectionShortID uint32
+	filter            *mapper.Filter
+	mapping           *core.DocumentMapping
 
 	fetcher fetcher
 }
@@ -29,14 +33,18 @@ type filteredFetcher struct {
 var _ fetcher = (*filteredFetcher)(nil)
 
 func newFilteredFetcher(
+	ctx context.Context,
+	collectionShortID uint32,
 	filter *mapper.Filter,
 	mapping *core.DocumentMapping,
 	fetcher fetcher,
 ) *filteredFetcher {
 	return &filteredFetcher{
-		filter:  filter,
-		mapping: mapping,
-		fetcher: fetcher,
+		ctx:               ctx,
+		collectionShortID: collectionShortID,
+		filter:            filter,
+		mapping:           mapping,
+		fetcher:           fetcher,
 	}
 }
 
@@ -54,7 +62,7 @@ func (f *filteredFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 		return immutable.None[EncodedDocument](), nil
 	}
 
-	decodedDoc, err := DecodeToDoc(doc.Value(), f.mapping, false)
+	decodedDoc, err := DecodeToDoc(f.ctx, f.collectionShortID, doc.Value(), f.mapping, false)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}

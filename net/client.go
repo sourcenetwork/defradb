@@ -55,11 +55,11 @@ func (s *server) pushLog(evt event.Update, pid peer.ID) (err error) {
 	defer cancel()
 
 	req := pushLogRequest{
-		DocID:      evt.DocID,
-		CID:        evt.Cid.Bytes(),
-		SchemaRoot: evt.SchemaRoot,
-		Creator:    s.peer.host.ID().String(),
-		Block:      evt.Block,
+		DocID:        evt.DocID,
+		CID:          evt.Cid.Bytes(),
+		CollectionID: evt.CollectionID,
+		Creator:      s.peer.host.ID().String(),
+		Block:        evt.Block,
 	}
 	if err := client.Invoke(ctx, servicePushLogName, req, nil); err != nil {
 		return NewErrPushLog(

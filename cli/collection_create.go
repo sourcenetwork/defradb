@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 func MakeCollectionCreateCommand() *cobra.Command {
@@ -87,21 +86,24 @@ Example: create from stdin:
 				return cmd.Usage()
 			}
 
-			setContextDocEncryption(cmd, shouldEncryptDoc, encryptedFields)
+			createOpts := []client.DocCreateOption{
+				client.CreateDocEncrypted(shouldEncryptDoc),
+				client.CreateDocWithEncryptedFields(encryptedFields),
+			}
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(docData, col.Definition())
 				if err != nil {
 					return err
 				}
-				return col.CreateMany(cmd.Context(), docs)
+				return col.CreateMany(cmd.Context(), docs, createOpts...)
 			}
 
 			doc, err := client.NewDocFromJSON(docData, col.Definition())
 			if err != nil {
 				return err
 			}
-			return col.Create(cmd.Context(), doc)
+			return col.Create(cmd.Context(), doc, createOpts...)
 		},
 	}
 	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
@@ -110,14 +112,4 @@ Example: create from stdin:
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	return cmd
-}
-
-// setContextDocEncryption sets doc encryption for the current command context.
-func setContextDocEncryption(cmd *cobra.Command, shouldEncryptDoc bool, encryptFields []string) {
-	if !shouldEncryptDoc && len(encryptFields) == 0 {
-		return
-	}
-	ctx := cmd.Context()
-	ctx = encryption.SetContextConfigFromParams(ctx, shouldEncryptDoc, encryptFields)
-	cmd.SetContext(ctx)
 }

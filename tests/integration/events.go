@@ -171,7 +171,7 @@ func waitForUpdateEvents(
 		expect := make(map[string]struct{}, len(docIDs))
 
 		col := node.collections[collectionIndex]
-		if col.Description().IsBranchable {
+		if col.Version().IsBranchable {
 			expect[col.SchemaRoot()] = struct{}{}
 		}
 		for k := range docIDs {
@@ -277,7 +277,7 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.nodes[nodeID].collections {
-		if c.SchemaRoot() == evt.SchemaRoot {
+		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
 	}
@@ -312,11 +312,6 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}
-
-	// make sure the event is published on the network before proceeding
-	// this prevents nodes from missing messages that are sent before
-	// subscriptions are setup
-	time.Sleep(100 * time.Millisecond)
 }
 
 // getEventsForUpdateDoc returns a map of docIDs that should be
@@ -363,7 +358,7 @@ func getEventsForUpdateWithFilter(
 // returned.  If it is scoped to a schema, the schema root will be returned.
 func getUpdateEventKey(evt event.Update) string {
 	if evt.DocID == "" {
-		return evt.SchemaRoot
+		return evt.CollectionID
 	}
 
 	return evt.DocID
@@ -375,7 +370,7 @@ func getUpdateEventKey(evt event.Update) string {
 // returned.  If it is scoped to a schema, the schema root will be returned.
 func getMergeEventKey(evt event.Merge) string {
 	if evt.DocID == "" {
-		return evt.SchemaRoot
+		return evt.CollectionID
 	}
 
 	return evt.DocID

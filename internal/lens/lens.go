@@ -151,10 +151,10 @@ func (l *lens) Next() (bool, error) {
 		var pipeHead enumerable.Enumerable[LensDoc]
 
 		for {
-			junctionPipe, junctionPreviouslyExisted := l.lensPipesBySchemaVersionIDs[historyLocation.collection.SchemaVersionID]
+			junctionPipe, junctionPreviouslyExisted := l.lensPipesBySchemaVersionIDs[historyLocation.collection.VersionID]
 			if !junctionPreviouslyExisted {
 				versionInputPipe := enumerable.NewQueue[LensDoc]()
-				l.lensInputPipesBySchemaVersionIDs[historyLocation.collection.SchemaVersionID] = versionInputPipe
+				l.lensInputPipesBySchemaVersionIDs[historyLocation.collection.VersionID] = versionInputPipe
 				if inputPipe == nil {
 					// The input pipe will be fed documents which are currently at this schema version
 					inputPipe = versionInputPipe
@@ -162,7 +162,7 @@ func (l *lens) Next() (bool, error) {
 				// It is a source of the schemaVersion junction pipe, other schema versions
 				// may also join as sources to this junction pipe
 				junctionPipe = enumerable.Concat[LensDoc](versionInputPipe)
-				l.lensPipesBySchemaVersionIDs[historyLocation.collection.SchemaVersionID] = junctionPipe
+				l.lensPipesBySchemaVersionIDs[historyLocation.collection.VersionID] = junctionPipe
 			}
 
 			// If we have previously laid pipe, we need to connect it to the current junction.
@@ -181,7 +181,7 @@ func (l *lens) Next() (bool, error) {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
-				pipeHead, err = l.lensRegistry.MigrateUp(l.ctx, junctionPipe, historyLocation.next.Value().collection.ID)
+				pipeHead, err = l.lensRegistry.MigrateUp(l.ctx, junctionPipe, historyLocation.next.Value().collection.VersionID)
 				if err != nil {
 					return false, err
 				}
@@ -191,7 +191,7 @@ func (l *lens) Next() (bool, error) {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
-				pipeHead, err = l.lensRegistry.MigrateDown(l.ctx, junctionPipe, historyLocation.collection.ID)
+				pipeHead, err = l.lensRegistry.MigrateDown(l.ctx, junctionPipe, historyLocation.collection.VersionID)
 				if err != nil {
 					return false, err
 				}

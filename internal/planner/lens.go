@@ -30,7 +30,7 @@ type lensNode struct {
 
 	p          *Planner
 	source     planNode
-	collection client.CollectionDescription
+	collection client.CollectionVersion
 
 	input  enumerable.Queue[map[string]any]
 	output enumerable.Enumerable[map[string]any]
@@ -41,14 +41,14 @@ func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client
 		docMapper:  docMapper{docMap},
 		p:          p,
 		source:     source,
-		collection: col.Description(),
+		collection: col.Version(),
 	}
 }
 
 func (n *lensNode) Init() error {
 	n.input = enumerable.NewQueue[map[string]any]()
 
-	pipe, err := n.p.db.LensRegistry().MigrateUp(n.p.ctx, n.input, n.collection.ID)
+	pipe, err := n.p.db.LensRegistry().MigrateUp(n.p.ctx, n.input, n.collection.VersionID)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (n *lensNode) toDoc(mapping *core.DocumentMapping, mapDoc map[string]any) c
 
 	return core.Doc{
 		Fields:          properties,
-		SchemaVersionID: n.collection.SchemaVersionID,
+		SchemaVersionID: n.collection.VersionID,
 		Status:          status,
 	}
 }

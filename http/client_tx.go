@@ -39,7 +39,7 @@ func (c *Transaction) ID() uint64 {
 }
 
 func (c *Transaction) Commit(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
+	methodURL := c.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func (c *Transaction) Commit(ctx context.Context) error {
 }
 
 func (c *Transaction) Discard(ctx context.Context) {
-	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
+	methodURL := c.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {

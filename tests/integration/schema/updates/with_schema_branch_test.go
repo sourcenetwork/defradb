@@ -134,35 +134,35 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
-						ID:              1,
-						SchemaVersionID: schemaVersion1ID,
-						IsMaterialized:  true,
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						Name:           "Users",
 					},
 					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
-						ID:              2,
-						SchemaVersionID: schemaVersion2ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						IsMaterialized: true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
 					{
 						// The collection version for schema version 3 is present and is active, it also has the first collection
 						// as source.
-						ID:              3,
-						Name:            immutable.Some("Users"),
-						SchemaVersionID: schemaVersion3ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion3ID,
+						IsMaterialized: true,
+						IsActive:       true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
@@ -266,47 +266,50 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive (has no name).
-						ID:              1,
-						SchemaVersionID: schemaVersion1ID,
-						IsMaterialized:  true,
+						// The original collection version is present, it has no source and is inactive
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
+					},
+					{
+						// The collection version for schema version 4 is present and is active, it also has the third collection
+						// as source.
+						Name:           "Users",
+						VersionID:      schemaVersion4ID,
+						IsMaterialized: true,
+						IsActive:       true,
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: schemaVersion3ID,
+							},
+						},
 					},
 					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
-						ID:              2,
-						SchemaVersionID: schemaVersion2ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						IsMaterialized: true,
+						IsActive:       false,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
 					{
 						// The collection version for schema version 3 is present and inactive, it has the first collection
 						// as source.
-						ID:              3,
-						SchemaVersionID: schemaVersion3ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion3ID,
+						IsMaterialized: true,
+						IsActive:       false,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
-							},
-						},
-					},
-					{
-						// The collection version for schema version 4 is present and is active, it also has the third collection
-						// as source.
-						ID:              4,
-						Name:            immutable.Some("Users"),
-						SchemaVersionID: schemaVersion4ID,
-						IsMaterialized:  true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: 3,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
@@ -380,34 +383,36 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive (has no name).
-						ID:              1,
-						SchemaVersionID: schemaVersion1ID,
-						IsMaterialized:  true,
+						// The original collection version is present, it has no source and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
 					},
 					{
 						// The collection version for schema version 2 is present and is active, it has the first collection as a source
-						ID:              2,
-						Name:            immutable.Some("Users"),
-						SchemaVersionID: schemaVersion2ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						IsMaterialized: true,
+						IsActive:       true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
 					{
 						// The collection version for schema version 3 is present and is inactive, it also has the first collection
 						// as source.
-						ID:              3,
-						SchemaVersionID: schemaVersion3ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion3ID,
+						IsMaterialized: true,
+						IsActive:       false,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
@@ -515,47 +520,50 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive (has no name).
-						ID:              1,
-						SchemaVersionID: schemaVersion1ID,
-						IsMaterialized:  true,
+						// The original collection version is present, it has no source and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
 					},
 					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
-						ID:              2,
-						SchemaVersionID: schemaVersion2ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						IsMaterialized: true,
+						IsActive:       false,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
 					{
 						// The collection version for schema version 3 is present and inactive, it has the first collection
 						// as source.
-						ID:              3,
-						SchemaVersionID: schemaVersion3ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion3ID,
+						IsMaterialized: true,
+						IsActive:       false,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 1,
+								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
 					{
 						// The collection version for schema version 4 is present and is active, it also has the second collection
 						// as source.
-						ID:              4,
-						Name:            immutable.Some("Users"),
-						SchemaVersionID: schemaVersion4ID,
-						IsMaterialized:  true,
+						Name:           "Users",
+						VersionID:      schemaVersion4ID,
+						IsMaterialized: true,
+						IsActive:       true,
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: 2,
+								SourceCollectionID: schemaVersion2ID,
 							},
 						},
 					},
@@ -591,14 +599,15 @@ collection at a specific version`,
 			},
 			testUtils.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
-					SchemaVersionID: immutable.Some(schemaVersion1ID),
+					VersionID: immutable.Some(schemaVersion1ID),
 				},
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive (has no name).
-						ID:              1,
-						SchemaVersionID: schemaVersion1ID,
-						IsMaterialized:  true,
+						// The original collection version is present, it has no source and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
 					},
 				},
 			},

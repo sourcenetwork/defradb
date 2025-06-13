@@ -109,7 +109,7 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	return defrap.ParseRequest(*schema, ast, options)
 }
 
-func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error) {
+func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, error) {
 	_, span := tracer.Start(ctx)
 	defer span.End()
 

@@ -19,7 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
@@ -48,12 +48,12 @@ type TestCase struct {
 	// differences between client types, or we need to temporarily document a bug.
 	SupportedClientTypes immutable.Option[[]ClientType]
 
-	// If provided a value, SupportedACPTypes will cause this test to be skipped
+	// If provided a value, SupportedDocumentACPTypes will cause this test to be skipped
 	// if the active acp type is not within the given set.
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between acp types, or we need to temporarily document a bug.
-	SupportedACPTypes immutable.Option[[]ACPType]
+	SupportedDocumentACPTypes immutable.Option[[]DocumentACPType]
 
 	// If provided a value, SupportedACPTypes will cause this test to be skipped
 	// if the active view type is not within the given set.
@@ -105,7 +105,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() []net.NodeOpt
+type ConfigureNode func() []netConfig.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -191,7 +191,7 @@ type SchemaUpdate struct {
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
 	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionDescription
+	ExpectedResults []client.CollectionVersion
 
 	// Any error expected from the action. Optional.
 	//
@@ -223,7 +223,7 @@ type PatchCollection struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
-	// The Patch to apply to the collection description.
+	// The Patch to apply to the collection version.
 	Patch string
 
 	ExpectedError string
@@ -273,7 +273,7 @@ type GetCollections struct {
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
 	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionDescription
+	ExpectedResults []client.CollectionVersion
 
 	// An optional set of fetch options for the collections.
 	FilterOptions client.CollectionFetchOptions
@@ -571,11 +571,6 @@ type DropIndex struct {
 
 	// The collection from which the index should be deleted.
 	CollectionID int
-
-	// The index-identifier of the secondary index within the collection.
-	// This is based on the order in which it was created, not the ordering of
-	// the indexes within the database.
-	IndexID int
 
 	// The index name of the secondary index within the collection.
 	// If it is provided, `IndexID` is ignored.

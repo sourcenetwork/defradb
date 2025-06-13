@@ -36,10 +36,10 @@ type IndexDescription struct {
 	Unique bool
 }
 
-// IndexDescriptionCreateRequest describes an index creation request.
+// IndexCreateRequest describes an index creation request.
 // It does not contain the ID, as it is not a valid field for the request body.
 // Instead it should be automatically generated.
-type IndexDescriptionCreateRequest struct {
+type IndexCreateRequest struct {
 	// Name contains the name of the index.
 	Name string
 	// Fields contains the fields that are being indexed.
@@ -67,8 +67,8 @@ type CollectionIndex interface {
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
 func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 	fieldsMap := make(map[string]bool)
-	fields := make([]FieldDefinition, 0, len(d.Description.Indexes))
-	for _, index := range d.Description.Indexes {
+	fields := make([]FieldDefinition, 0, len(d.Version.Indexes))
+	for _, index := range d.Version.Indexes {
 		for _, field := range index.Fields {
 			if fieldsMap[field.Name] {
 				// If the FieldDescription has already been added to the result do not add it a second time
@@ -86,7 +86,7 @@ func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
 
 // GetIndexesOnField returns all indexes that are indexing the given field.
 // If the field is not the first field of a composite index, the index is not returned.
-func (d CollectionDescription) GetIndexesOnField(fieldName string) []IndexDescription {
+func (d CollectionVersion) GetIndexesOnField(fieldName string) []IndexDescription {
 	result := []IndexDescription{}
 	for _, index := range d.Indexes {
 		if index.Fields[0].Name == fieldName {

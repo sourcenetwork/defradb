@@ -17,42 +17,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// Collection is a simple CRDT type that tracks changes to the contents of a
-// collection in a similar way to a document composite commit, only simpler,
-// without the need to track status and a simpler [Merge] function.
-type Collection struct {
-	// schemaVersionKey is the schema version datastore key at the time of commit.
-	//
-	// It can be used to identify the collection datastructure state at the time of commit.
-	schemaVersionKey keys.CollectionSchemaVersionKey
-}
-
-var _ core.ReplicatedData = (*Collection)(nil)
-
-func NewCollection(schemaVersionKey keys.CollectionSchemaVersionKey) *Collection {
-	return &Collection{
-		schemaVersionKey: schemaVersionKey,
-	}
-}
-
-func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
-	// Collection merges don't actually need to do anything, as the delta is empty,
-	// and doc-level merges are handled by the document commits.
-	return nil
-}
-
-func (c *Collection) NewDelta() *CollectionDelta {
-	return &CollectionDelta{
-		SchemaVersionID: c.schemaVersionKey.SchemaVersionID,
-	}
-}
-
 type CollectionDelta struct {
-	Priority uint64
-
-	// As we do not yet have a global collection id we temporarily rely on the schema
-	// version id for tracking which collection this belongs to.  See:
-	// https://github.com/sourcenetwork/defradb/issues/3215
+	Priority        uint64
 	SchemaVersionID string
 }
 
@@ -72,4 +38,37 @@ func (d *CollectionDelta) GetPriority() uint64 {
 
 func (d *CollectionDelta) SetPriority(priority uint64) {
 	d.Priority = priority
+}
+
+type Collection struct {
+	headstorePrefix keys.HeadstoreKey
+	schemaVersionID string
+}
+
+var _ core.ReplicatedData = (*Collection)(nil)
+
+func NewCollection(
+	schemaVersionID string,
+	key keys.HeadstoreColKey,
+) *Collection {
+	return &Collection{
+		schemaVersionID: schemaVersionID,
+		headstorePrefix: key,
+	}
+}
+
+func (m *Collection) HeadstorePrefix() keys.HeadstoreKey {
+	return m.headstorePrefix
+}
+
+func (m *Collection) Delta() *CollectionDelta {
+	return &CollectionDelta{
+		SchemaVersionID: m.schemaVersionID,
+	}
+}
+
+func (c *Collection) Merge(ctx context.Context, other core.Delta) error {
+	// Collection merges don't actually need to do anything, as the delta is empty,
+	// and doc-level merges are handled by the document commits.
+	return nil
 }

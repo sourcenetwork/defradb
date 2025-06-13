@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (should return all commits for docID-field).
 func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple all commits query with field",
@@ -32,37 +30,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (fieldId: "Age") {
-							cid
-						}
-					}`,
-				Results: map[string]any{
-					"commits": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-// This test is for documentation reasons only. This is not
-// desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithFieldId(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple all commits query with field id",
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.Request{
-				Request: `query {
-						commits (fieldId: "1") {
+						commits (fieldName: "age") {
 							cid
 						}
 					}`,
@@ -80,11 +48,9 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test is for documentation reasons only. This is not
-// desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
+func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and field id",
+		Description: "Simple all commits query with field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -96,7 +62,34 @@ func TestQueryCommitsWithCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldId: "C") {
+						commits (fieldName: "1") {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommitsWithCompositeField(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits(fieldName: "_C") {
 							cid
 						}
 					}`,
@@ -130,7 +123,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldId: "C") {
+						commits(fieldName: "_C") {
 							cid
 							schemaVersionId
 						}

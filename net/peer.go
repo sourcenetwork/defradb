@@ -34,13 +34,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
+	"github.com/sourcenetwork/defradb/net/config"
 )
 
 // DB hold the database related methods that are required by Peer.
@@ -76,8 +77,8 @@ type Peer struct {
 	// peer DAG service
 	blockService blockservice.BlockService
 
-	acp immutable.Option[acp.ACP]
-	db  DB
+	documentACP immutable.Option[dac.DocumentACP]
+	db          DB
 
 	bootCloser io.Closer
 }
@@ -86,9 +87,9 @@ type Peer struct {
 func NewPeer(
 	ctx context.Context,
 	bus *event.Bus,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	db DB,
-	opts ...NodeOpt,
+	opts ...config.NodeOpt,
 ) (p *Peer, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
@@ -103,7 +104,7 @@ func NewPeer(
 		return nil, ErrNilDB
 	}
 
-	options := DefaultOptions()
+	options := config.DefaultOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
@@ -130,14 +131,14 @@ func NewPeer(
 	)
 
 	p = &Peer{
-		host:   h,
-		dht:    ddht,
-		ctx:    ctx,
-		cancel: cancel,
-		bus:    bus,
-		acp:    acp,
-		db:     db,
-		p2pRPC: grpc.NewServer(options.GRPCServerOptions...),
+		host:        h,
+		dht:         ddht,
+		ctx:         ctx,
+		cancel:      cancel,
+		bus:         bus,
+		documentACP: documentACP,
+		db:          db,
+		p2pRPC:      grpc.NewServer(options.GRPCServerOptions...),
 	}
 
 	if options.EnablePubSub {
@@ -300,11 +301,11 @@ func (p *Peer) handleLog(evt event.Update) error {
 	// Retries are for replicators only and should not polluting the pubsub network.
 	if !evt.IsRetry {
 		req := &pushLogRequest{
-			DocID:      evt.DocID,
-			CID:        evt.Cid.Bytes(),
-			SchemaRoot: evt.SchemaRoot,
-			Creator:    p.host.ID().String(),
-			Block:      evt.Block,
+			DocID:        evt.DocID,
+			CID:          evt.Cid.Bytes(),
+			CollectionID: evt.CollectionID,
+			Creator:      p.host.ID().String(),
+			Block:        evt.Block,
 		}
 
 		if evt.DocID != "" {
@@ -313,8 +314,8 @@ func (p *Peer) handleLog(evt event.Update) error {
 			}
 		}
 
-		if err := p.server.publishLog(p.ctx, evt.SchemaRoot, req); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.SchemaRoot)
+		if err := p.server.publishLog(p.ctx, evt.CollectionID, req); err != nil {
+			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
 		}
 	}
 
@@ -330,7 +331,7 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	}
 
 	p.server.mu.Lock()
-	reps, exists := p.server.replicators[lg.SchemaRoot]
+	reps, exists := p.server.replicators[lg.CollectionID]
 	p.server.mu.Unlock()
 
 	if exists {

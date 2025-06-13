@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
@@ -83,7 +83,7 @@ func runMakePlanBench(
 		planner := planner.New(
 			ctx,
 			acpIdentity.None,
-			acp.NoACP,
+			dac.NoDocumentACP,
 			d,
 			txn,
 		)
@@ -115,12 +115,17 @@ func buildParser(
 		return nil, err
 	}
 
-	collectionDescriptions, err := parser.ParseSDL(ctx, schema)
+	collectionVersions, err := parser.ParseSDL(ctx, schema)
 	if err != nil {
 		return nil, err
 	}
 
-	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDescriptions)
+	collectionDefinitions := make([]client.CollectionDefinition, len(collectionVersions))
+	for i, collectionVersion := range collectionVersions {
+		collectionDefinitions[i] = collectionVersion.Definition
+	}
+
+	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDefinitions)
 	if err != nil {
 		return nil, err
 	}

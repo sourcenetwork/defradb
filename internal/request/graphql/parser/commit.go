@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 func parseCommitSelect(
@@ -49,11 +48,11 @@ func parseCommitSelect(
 				commit.CID = immutable.Some(v)
 			}
 
-		case request.FieldIDName:
+		case request.FieldNameName:
 			if value == nil {
-				commit.FieldID = immutable.Some("")
+				commit.FieldName = immutable.Some("")
 			} else if v, ok := value.(string); ok {
-				commit.FieldID = immutable.Some(v)
+				commit.FieldName = immutable.Some(v)
 			}
 
 		case request.OrderClause:
@@ -106,9 +105,9 @@ func parseCommitSelect(
 		// values
 		commit.Depth = immutable.Some(uint64(1))
 
-		if !commit.FieldID.HasValue() {
-			// latest commits defaults to composite commits only at the moment
-			commit.FieldID = immutable.Some(core.COMPOSITE_NAMESPACE)
+		if !commit.FieldName.HasValue() {
+			// latest commits defaults to composite commits only
+			commit.FieldName = immutable.Some(request.CompositeFieldName)
 		}
 	}
 

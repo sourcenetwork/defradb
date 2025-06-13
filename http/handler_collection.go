@@ -57,8 +57,10 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	if q.Get(docEncryptFieldsParam) != "" {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
-	if encConf.IsDocEncrypted || len(encConf.EncryptedFields) > 0 {
-		ctx = encryption.SetContextConfig(ctx, encConf)
+
+	createOpts := []client.DocCreateOption{
+		client.CreateDocEncrypted(encConf.IsDocEncrypted),
+		client.CreateDocWithEncryptedFields(encConf.EncryptedFields),
 	}
 
 	switch {
@@ -69,7 +71,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(ctx, docList); err != nil {
+		if err := col.CreateMany(ctx, docList, createOpts...); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -80,7 +82,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(ctx, doc); err != nil {
+		if err := col.Create(ctx, doc, createOpts...); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -259,7 +261,7 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	descWithoutID := client.IndexDescriptionCreateRequest{
+	descWithoutID := client.IndexCreateRequest{
 		Name:   indexDesc.Name,
 		Fields: indexDesc.Fields,
 		Unique: indexDesc.Unique,
@@ -274,15 +276,16 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 
 func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
 	store := mustGetContextClientStore(req)
-	indexesMap, err := store.GetAllIndexes(req.Context())
-
+	name := chi.URLParam(req, "name")
+	col, err := store.GetCollectionByName(req.Context(), name)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	indexes := make([]client.IndexDescription, 0, len(indexesMap))
-	for _, index := range indexesMap {
-		indexes = append(indexes, index...)
+	indexes, err := col.GetIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
 }

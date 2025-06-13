@@ -24,7 +24,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index with a single field",
 			sdl:         `type user @index(includes: [{field: "name"}]) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
@@ -37,7 +37,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index with a name",
 			sdl:         `type user @index(name: "userIndex", includes: [{field: "name"}]) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "userIndex",
 					Fields: []client.IndexedFieldDescription{
@@ -49,7 +49,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Unique index",
 			sdl:         `type user @index(includes: [{field: "name"}], unique: true) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -61,7 +61,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index explicitly not unique",
 			sdl:         `type user @index(includes: [{field: "name"}], unique: false) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -73,7 +73,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index with explicit ascending field",
 			sdl:         `type user @index(includes: [{field: "name", direction: ASC}]) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"}},
@@ -83,7 +83,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index with descending field",
 			sdl:         `type user @index(includes: [{field: "name", direction: DESC}]) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Descending: true}},
@@ -93,7 +93,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index with 2 fields",
 			sdl:         `type user @index(includes: [{field: "name"}, {field: "age"}]) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -105,7 +105,7 @@ func TestParseIndexOnStruct(t *testing.T) {
 		{
 			description: "Index with 2 fields and 2 directions",
 			sdl:         `type user @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -187,7 +187,7 @@ func TestParseIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
@@ -202,7 +202,7 @@ func TestParseIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(name: "nameIndex")
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "nameIndex",
 					Fields: []client.IndexedFieldDescription{
@@ -217,7 +217,7 @@ func TestParseIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(unique: true)
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -231,7 +231,7 @@ func TestParseIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(unique: false)
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -245,7 +245,7 @@ func TestParseIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(direction: ASC)
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name"},
@@ -259,7 +259,7 @@ func TestParseIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(direction: DESC)
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Descending: true},
@@ -274,7 +274,7 @@ func TestParseIndexOnField(t *testing.T) {
 				name: String @index(direction: DESC, includes: [{field: "age"}])
 				age: Int
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
@@ -291,7 +291,7 @@ func TestParseIndexOnField(t *testing.T) {
 				name: String @index(direction: DESC, includes: [{field: "age", direction: ASC}])
 				age: Int
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
@@ -308,7 +308,7 @@ func TestParseIndexOnField(t *testing.T) {
 				name: String @index(includes: [{field: "age"}, {field: "name"}])
 				age: Int
 			}`,
-			targetDescriptions: []client.IndexDescription{
+			targetDescriptions: []client.IndexCreateRequest{
 				{
 					Name: "",
 					Fields: []client.IndexedFieldDescription{
@@ -388,13 +388,14 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 	schemaManager, err := NewSchemaManager()
 	require.NoError(t, err)
 
-	cols, err := schemaManager.ParseSDL(testCase.sdl)
-	require.NoError(t, err, testCase.description)
+	parseResult, err := schemaManager.ParseSDL(testCase.sdl)
+	require.NoError(t, err, testCase.description, "should parse sdl without error")
 
-	require.Equal(t, len(cols), 1, testCase.description)
-	require.Equal(t, len(cols[0].Description.Indexes), len(testCase.targetDescriptions), testCase.description)
+	require.Equal(t, len(parseResult), 1, testCase.description, "should parse 1 schema")
+	require.Equal(t, len(parseResult[0].CreateIndexes), len(testCase.targetDescriptions), testCase.description,
+		"should parse correct number of indexes")
 
-	for i, d := range cols[0].Description.Indexes {
+	for i, d := range parseResult[0].CreateIndexes {
 		assert.Equal(t, testCase.targetDescriptions[i], d, testCase.description)
 	}
 }
@@ -410,7 +411,7 @@ func parseInvalidIndexAndTest(t *testing.T, testCase invalidIndexTestCase) {
 type indexTestCase struct {
 	description        string
 	sdl                string
-	targetDescriptions []client.IndexDescription
+	targetDescriptions []client.IndexCreateRequest
 }
 
 type invalidIndexTestCase struct {

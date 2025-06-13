@@ -32,6 +32,11 @@ type SchemaDefinition struct {
 	Body []byte
 }
 
+type Collection struct {
+	Definition    client.CollectionDefinition
+	CreateIndexes []client.IndexCreateRequest
+}
+
 // Parser represents the object responsible for handling stuff specific to a query language.
 // This includes schema and request parsing, and introspection.
 type Parser interface {
@@ -50,12 +55,12 @@ type Parser interface {
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
-	// ParseSDL parses an SDL string into a set of collection descriptions.
+	// ParseSDL parses an SDL string into a set of collection versions.
 	//
 	// The parsing should validate the syntax, but not validate what that syntax expresses
 	// is valid or not, i.e. we don't want the parser to make remote calls to verify the
 	// policy description is valid or not (that is the callers responsiblity).
-	ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error)
+	ParseSDL(ctx context.Context, sdl string) ([]Collection, error)
 
 	// Adds the given schema to this parser's model.
 	//

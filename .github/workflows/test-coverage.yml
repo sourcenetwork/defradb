@@ -41,7 +41,7 @@ env:
 
   DEFRA_MUTATION_TYPE: collection-save
   DEFRA_LENS_TYPE: wasm-time
-  DEFRA_ACP_TYPE: local
+  DEFRA_DOCUMENT_ACP_TYPE: local
   DEFRA_VIEW_TYPE: cacheless
 
 
@@ -132,20 +132,20 @@ jobs:
           coverage-path: coverage.txt
 
 
-  # The acp matrix job tests the combinations of source-hub acp and client types on linux.
-  test-acp:
-    name: Test acp job
+  # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
+  test-document-acp:
+    name: Test document acp job
 
     strategy:
       fail-fast: false
       matrix:
         client-type: [go, http, cli]
-        acp-type: [source-hub]
+        document-acp-type: [source-hub]
 
     runs-on: ubuntu-latest
 
     env:
-      DEFRA_ACP_TYPE: ${{ matrix.acp-type }}
+      DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
@@ -172,8 +172,8 @@ jobs:
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
         with:
-          coverage-artifact-name: "coverage_acp\
-            _${{ matrix.acp-type }}\
+          coverage-artifact-name: "coverage_document_acp\
+            _${{ matrix.document-acp-type }}\
             _${{ matrix.client-type }}\
           "
           coverage-path: coverage.txt
@@ -274,6 +274,31 @@ jobs:
           coverage-artifact-name: "coverage_telemetry"
           coverage-path: coverage.txt
 
+  # This job runs the database js tests using default configuration, on linux.
+  test-js:
+    name: Test JS job
+
+    runs-on: ubuntu-latest
+
+    env:
+      CGO_ENABLED: 0
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Run integration tests
+        run: make test:coverage-js
+
+      - name: Save coverage report in an artifact
+        uses: ./.github/composites/upload-coverage-artifact
+        with:
+          coverage-artifact-name: "coverage_js"
+          coverage-path: coverage.txt
+
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job
@@ -281,11 +306,12 @@ jobs:
     needs:
       - test-basic        # 18 test(s)
       - test-os           #  1 test(s) [excluding windows]
-      - test-acp          #  3 test(s)
+      - test-document-acp #  3 test(s)
       - test-lens         #  2 test(s)
       - test-view         #  1 test(s)
       - test-encryption   #  1 test(s)
       - test-telemetry    #  1 test(s)
+      - test-js           #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.

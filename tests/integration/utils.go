@@ -40,9 +40,8 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
-	"github.com/sourcenetwork/defradb/net"
+	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -96,6 +95,8 @@ var (
 	viewType     ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
+	// skipBackupTests will skip any tests that involve backup actions
+	skipBackupTests = false
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -171,8 +172,9 @@ func ExecuteTestCase(
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
-	skipIfACPTypeUnsupported(t, testCase.SupportedACPTypes)
+	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
+	skipIfBackupTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
@@ -185,6 +187,9 @@ func ExecuteTestCase(
 	}
 	if cliClient {
 		clients = append(clients, CLIClientType)
+	}
+	if jsClient {
+		clients = append(clients, JSClientType)
 	}
 
 	var databases []DatabaseType
@@ -270,7 +275,6 @@ func executeTestCase(
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s)
 	refreshDocuments(s, startActionIndex)
-	refreshIndexes(s)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, i, testCase.Actions[i])
@@ -360,14 +364,14 @@ func performAction(
 	case ConfigureMigration:
 		configureMigration(s, action)
 
-	case AddPolicy:
-		addPolicyACP(s, action)
+	case AddDACPolicy:
+		addDACPolicy(s, action)
 
-	case AddDocActorRelationship:
-		addDocActorRelationshipACP(s, action)
+	case AddDACActorRelationship:
+		addDACActorRelationship(s, action)
 
-	case DeleteDocActorRelationship:
-		deleteDocActorRelationshipACP(s, action)
+	case DeleteDACActorRelationship:
+		deleteDACActorRelationship(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -453,7 +457,7 @@ func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Opti
 		if err != nil {
 			s.t.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Description.Name.Value()], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Version.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -463,7 +467,7 @@ func generateDocs(s *state, action GenerateDocs) {
 	collections := s.nodes[firstNodesID].collections
 	defs := make([]client.CollectionDefinition, 0, len(collections))
 	for _, collection := range collections {
-		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name().Value()) {
+		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
 			defs = append(defs, collection.Definition())
 		}
 	}
@@ -554,6 +558,14 @@ func getCollectionNames(testCase TestCase) []string {
 			}
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
+
+		case CreateView:
+			if action.ExpectedError != "" {
+				// If an error is expected then no collections should result from this action
+				continue
+			}
+
+			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.SDL, nextIndex)
 		}
 	}
 
@@ -759,7 +771,7 @@ func startNodes(s *state, action Start) {
 		for _, addr := range s.nodes[nodeIndex].peerInfo.Addrs {
 			addresses = append(addresses, addr.String())
 		}
-		opts = append(opts, net.WithListenAddresses(addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(addresses...))
 		node, err := setupNode(s, opts...)
 		require.NoError(s.t, err)
 		databaseDir = originalPath
@@ -772,7 +784,6 @@ func startNodes(s *state, action Start) {
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func restartNodes(
@@ -800,13 +811,13 @@ func refreshCollections(
 
 		for i, collectionName := range s.collectionNames {
 			for _, collection := range allCollections {
-				if collection.Name().Value() == collectionName {
-					if _, ok := s.collectionIndexesByRoot[collection.Description().RootID]; !ok {
+				if collection.Name() == collectionName {
+					if _, ok := s.collectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
 						// we still wish to preserve the original index so test maintainers can reference
 						// them in a convenient manner.
-						s.collectionIndexesByRoot[collection.Description().RootID] = i
+						s.collectionIndexesByCollectionID[collection.Version().CollectionID] = i
 					}
 					break
 				}
@@ -814,7 +825,7 @@ func refreshCollections(
 		}
 
 		for _, collection := range allCollections {
-			if index, ok := s.collectionIndexesByRoot[collection.Description().RootID]; ok {
+			if index, ok := s.collectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
 				node.collections[index] = collection
 			}
 		}
@@ -839,7 +850,7 @@ func configureNode(
 	require.NoError(s.t, err)
 
 	netNodeOpts := action()
-	netNodeOpts = append(netNodeOpts, net.WithPrivateKey(privateKey))
+	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
@@ -897,26 +908,6 @@ func refreshDocuments(
 			for _, doc := range docs {
 				s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], doc.ID())
 			}
-		}
-	}
-}
-
-func refreshIndexes(
-	s *state,
-) {
-	for _, node := range s.nodes {
-		node.indexes = make([][]client.IndexDescription, len(node.collections))
-
-		for i, col := range node.collections {
-			if col == nil {
-				continue
-			}
-			colIndexes, err := col.GetIndexes(s.ctx)
-			if err != nil {
-				continue
-			}
-
-			node.indexes[i] = colIndexes
 		}
 	}
 }
@@ -982,16 +973,13 @@ func assertIndexesListsEqual(
 	expectedMap := toMap(expectedIndexes)
 	actualMap := toMap(actualIndexes)
 	for key := range expectedMap {
-		assertIndexesEqual(expectedMap[key], actualMap[key], t, testDescription)
+		assertIndexesEqual(expectedMap[key], actualMap[key], t)
 	}
 }
 
-func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
-	t testing.TB,
-	testDescription string,
-) {
-	assert.Equal(t, expectedIndex.Name, actualIndex.Name, testDescription)
-	assert.Equal(t, expectedIndex.ID, actualIndex.ID, testDescription)
+func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t testing.TB) {
+	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
+	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
 
 	toNames := func(fields []client.IndexedFieldDescription) []string {
 		names := make([]string, len(fields))
@@ -1001,7 +989,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 		return names
 	}
 
-	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), testDescription)
+	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), "index fields' names mismatch")
 
 	toMap := func(fields []client.IndexedFieldDescription) map[string]client.IndexedFieldDescription {
 		resultMap := map[string]client.IndexedFieldDescription{}
@@ -1014,7 +1002,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription,
 	expectedMap := toMap(expectedIndex.Fields)
 	actualMap := toMap(actualIndex.Fields)
 	for key := range expectedMap {
-		assert.Equal(t, expectedMap[key], actualMap[key], testDescription)
+		assert.Equal(t, expectedMap[key], actualMap[key], "index fields' values mismatch")
 	}
 }
 
@@ -1075,13 +1063,12 @@ func updateSchema(
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		if action.ExpectedResults != nil {
-			assertCollectionDescriptions(s, action.ExpectedResults, results)
+			assertCollectionVersions(s, action.ExpectedResults, results)
 		}
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func patchSchema(
@@ -1105,7 +1092,6 @@ func patchSchema(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func patchCollection(
@@ -1122,7 +1108,6 @@ func patchCollection(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func getSchema(
@@ -1164,18 +1149,18 @@ func getCollections(
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for _, node := range nodes {
 		txn := getTransaction(s, node, action.TransactionID, "")
-		ctx := db.SetContextTxn(s.ctx, txn)
+		ctx := db.InitContext(s.ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
-		resultDescriptions := make([]client.CollectionDescription, len(results))
+		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
-			resultDescriptions[i] = col.Description()
+			resultDescriptions[i] = col.Version()
 		}
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			assertCollectionDescriptions(s, action.ExpectedResults, resultDescriptions)
+			assertCollectionVersions(s, action.ExpectedResults, resultDescriptions)
 		}
 	}
 }
@@ -1193,7 +1178,6 @@ func setActiveSchemaVersion(
 	}
 
 	refreshCollections(s)
-	refreshIndexes(s)
 }
 
 func createView(
@@ -1311,11 +1295,11 @@ func createDocViaColSave(
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.ctx, txn), nodeIndex, &action)
 
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc)
+		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
@@ -1326,8 +1310,14 @@ func createDocViaColSave(
 
 func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
 	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
-	ctx = encryption.SetContextConfigFromParams(ctx, action.IsDocEncrypted, action.EncryptedFields)
 	return ctx
+}
+
+func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
+	return []client.DocCreateOption{
+		client.CreateDocEncrypted(action.IsDocEncrypted),
+		client.CreateDocWithEncryptedFields(action.EncryptedFields),
+	}
 }
 
 func createDocViaColCreate(
@@ -1343,17 +1333,17 @@ func createDocViaColCreate(
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.SetContextTxn(s.ctx, txn), nodeIndex, &action)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.ctx, txn), nodeIndex, &action)
 
 	switch {
 	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs)
+		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Create(ctx, docs[0])
+		err := collection.Create(ctx, docs[0], makeDocCreateOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
@@ -1400,11 +1390,11 @@ func createDocViaGQL(
 			strings.Join(action.EncryptedFields, ", ") + "]"
 	}
 
-	key := fmt.Sprintf("create_%s", collection.Name().Value())
+	key := fmt.Sprintf("create_%s", collection.Name())
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1589,7 +1579,7 @@ func updateDocViaGQL(
 				_docID
 			}
 		}`,
-		collection.Name().Value(),
+		collection.Name(),
 		docID.String(),
 		input,
 	)
@@ -1646,7 +1636,7 @@ func createIndex(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
-		indexDesc := client.IndexDescriptionCreateRequest{
+		indexDesc := client.IndexCreateRequest{
 			Name: action.IndexName,
 		}
 		if action.FieldName != "" {
@@ -1668,15 +1658,8 @@ func createIndex(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				desc, err := collection.CreateIndex(s.ctx, indexDesc)
-				if err != nil {
-					return err
-				}
-				s.nodes[nodeID].indexes[action.CollectionID] = append(
-					s.nodes[nodeID].indexes[action.CollectionID],
-					desc,
-				)
-				return nil
+				_, err := collection.CreateIndex(s.ctx, indexDesc)
+				return err
 			},
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
@@ -1698,15 +1681,11 @@ func dropIndex(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
-		indexName := action.IndexName
-		if indexName == "" {
-			indexName = s.nodes[nodeID].indexes[action.CollectionID][action.IndexID].Name
-		}
 
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DropIndex(s.ctx, indexName)
+				return collection.DropIndex(s.ctx, action.IndexName)
 			},
 		)
 		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
@@ -1847,11 +1826,12 @@ func executeRequest(
 ) {
 	var expectedErrorRaised bool
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 
-		ctx := getContextWithIdentity(db.SetContextTxn(s.ctx, txn), s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {
@@ -1862,10 +1842,20 @@ func executeRequest(
 		}
 
 		if !expectedErrorRaised && viewType == MaterializedViewType {
-			err := node.RefreshViews(s.ctx, client.CollectionFetchOptions{})
-			expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-			if expectedErrorRaised {
-				continue
+			for _, colName := range s.collectionNames {
+				// Refresh the views in the order in which they were declared, this way
+				// any views of views should be based off of refreshed data, assuming they were declared in
+				// an intuitive order.
+				err := node.RefreshViews(
+					s.ctx,
+					client.CollectionFetchOptions{
+						Name: immutable.Some(colName),
+					},
+				)
+				expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+				if expectedErrorRaised {
+					continue nodeLoop
+				}
 			}
 		}
 
@@ -1912,9 +1902,12 @@ func executeSubscriptionRequest(
 				select {
 				case s := <-result.Subscription:
 					results = append(results, &s)
-
+				case <-time.After(100 * time.Millisecond):
+				}
+				select {
 				case <-s.allActionsDone:
 					allActionsAreDone = true
+				case <-time.After(100 * time.Millisecond):
 				}
 			}
 
@@ -2354,18 +2347,18 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]ACPType]) {
+func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]DocumentACPType]) {
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == acpType {
+			if supportedType == documentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", acpType)
+			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
 		}
 	}
 }
@@ -2407,6 +2400,23 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 	if skipNetworkTests && hasNetworkAction {
 		t.Skip("test involves network actions")
+	}
+}
+
+// skipIfBackupTest skips the current test if the given actions
+// contain backup actions and skipBackupTests is true.
+func skipIfBackupTest(t testing.TB, actions []any) {
+	hasBackupAction := false
+	for _, act := range actions {
+		switch act.(type) {
+		case BackupImport:
+			hasBackupAction = true
+		case BackupExport:
+			hasBackupAction = true
+		}
+	}
+	if skipBackupTests && hasBackupAction {
+		t.Skip("test involves backup actions")
 	}
 }
 

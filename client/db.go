@@ -97,19 +97,19 @@ type DB interface {
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// AddPolicy adds policy to acp, if acp is available.
+	// AddDACPolicy adds policy to document acp system, if available.
 	//
-	// If policy was successfully added to acp then a policyID is returned,
-	// otherwise if acp was not available then returns the following error:
+	// If policy was successfully added then a policyID is returned,
+	// otherwise if acp system was not available then returns the following error:
 	// [client.ErrPolicyAddFailureNoACP]
 	//
 	// Detects the format of the policy automatically by assuming YAML format if JSON
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
+	AddDACPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
 
-	// AddDocActorRelationship creates a relationship between document and the target actor.
+	// AddDACActorRelationship creates a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
@@ -117,15 +117,15 @@ type DB interface {
 	// Note:
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
-	AddDocActorRelationship(
+	AddDACActorRelationship(
 		ctx context.Context,
 		collectionName string,
 		docID string,
 		relation string,
 		targetActor string,
-	) (AddDocActorRelationshipResult, error)
+	) (AddActorRelationshipResult, error)
 
-	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	// DeleteDACActorRelationship deletes a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship record was found and deleted. Upon success the boolean value
@@ -135,13 +135,13 @@ type DB interface {
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
 	//   removed, however this does not revoke access from actors that had explicit relationships.
-	DeleteDocActorRelationship(
+	DeleteDACActorRelationship(
 		ctx context.Context,
 		collectionName string,
 		docID string,
 		relation string,
 		targetActor string,
-	) (DeleteDocActorRelationshipResult, error)
+	) (DeleteActorRelationshipResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
@@ -166,7 +166,7 @@ type Store interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) ([]CollectionDescription, error)
+	AddSchema(context.Context, string) ([]CollectionVersion, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
 	// present in the database.
@@ -189,7 +189,7 @@ type Store interface {
 	// A lens configuration may also be provided, it will be added to all collections using the schema.
 	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
 
-	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionDescriptions
+	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -310,9 +310,9 @@ type Store interface {
 // GQLOptions contains optional arguments for GQL requests.
 type GQLOptions struct {
 	// OperationName is the name of the operation to exec.
-	OperationName string
+	OperationName string `json:"operationName"`
 	// Variables is a map of names to varible values.
-	Variables map[string]any
+	Variables map[string]any `json:"variables"`
 }
 
 // RequestOption sets an optional request setting.
@@ -402,14 +402,11 @@ type RequestResult struct {
 
 // CollectionFetchOptions represents a set of options used for fetching collections.
 type CollectionFetchOptions struct {
-	// If provided, only collections with this schema version id will be returned.
-	SchemaVersionID immutable.Option[string]
+	// If provided, only collections with this version id will be returned.
+	VersionID immutable.Option[string]
 
-	// If provided, only collections with schemas of this root will be returned.
-	SchemaRoot immutable.Option[string]
-
-	// If provided, only collections with this root will be returned.
-	Root immutable.Option[uint32]
+	// If provided, only collections with this CollectionID will be returned.
+	CollectionID immutable.Option[string]
 
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]

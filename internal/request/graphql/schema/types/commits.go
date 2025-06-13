@@ -55,10 +55,6 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.CollectionIDFieldName: &gql.Field{
-				Description: commitCollectionIDFieldDescription,
-				Type:        gql.Int,
-			},
 			request.SchemaVersionIDFieldName: &gql.Field{
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
@@ -66,10 +62,6 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 			request.FieldNameFieldName: &gql.Field{
 				Description: commitFieldNameFieldDescription,
 				Type:        gql.String,
-			},
-			request.FieldIDFieldName: &gql.Field{
-				Type:        gql.String,
-				Description: commitFieldIDFieldDescription,
 			},
 			request.DeltaFieldName: &gql.Field{
 				Description: commitDeltaFieldDescription,
@@ -162,10 +154,6 @@ func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 					Description: commitDocIDFieldDescription,
 					Type:        orderEnum,
 				},
-				"collectionID": &gql.InputObjectFieldConfig{
-					Description: commitCollectionIDFieldDescription,
-					Type:        orderEnum,
-				},
 			},
 		},
 	)
@@ -177,10 +165,10 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
-			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
-			"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-			"cid":                NewArgConfig(gql.ID, commitCIDArgDescription),
+			request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
+			"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+			"cid":                 NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
@@ -201,17 +189,9 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 										Value:       request.DocIDArgName,
 										Description: commitDocIDFieldDescription,
 									},
-									"collectionID": &gql.EnumValueConfig{
-										Value:       "collectionID",
-										Description: commitCollectionIDFieldDescription,
-									},
 									"fieldName": &gql.EnumValueConfig{
 										Value:       "fieldName",
 										Description: commitFieldNameFieldDescription,
-									},
-									"fieldId": &gql.EnumValueConfig{
-										Value:       "fieldId",
-										Description: commitFieldIDFieldDescription,
 									},
 								},
 							},
@@ -233,8 +213,8 @@ func QueryLatestCommits(commitObject *gql.Object) *gql.Field {
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
-			request.FieldIDName:  NewArgConfig(gql.String, commitFieldIDArgDescription),
+			request.DocIDArgName:  NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
+			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
 		},
 	}
 }

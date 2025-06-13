@@ -59,9 +59,9 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo2.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.SchemaRoot(),
 	})
 	require.NoError(t, err)
 
@@ -104,9 +104,9 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo2.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.SchemaRoot(),
 	})
 	require.NoError(t, err)
 
@@ -114,9 +114,9 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo3.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo3.link.Cid,
+		CollectionID: col.SchemaRoot(),
 	})
 	require.NoError(t, err)
 
@@ -162,13 +162,13 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo2.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.SchemaRoot(),
 	})
 	require.NoError(t, err)
 
-	someUnknownBlock := coreblock.Block{Delta: crdt.CRDT{CompositeDAGDelta: &crdt.CompositeDAGDelta{Status: 1}}}
+	someUnknownBlock := coreblock.Block{Delta: crdt.CRDT{DocCompositeDelta: &crdt.DocCompositeDelta{Status: 1}}}
 	someUnknownLink, err := coreblock.GetLinkFromNode(someUnknownBlock.GenerateNode())
 	require.NoError(t, err)
 
@@ -181,9 +181,9 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo3.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo3.link.Cid,
+		CollectionID: col.SchemaRoot(),
 	})
 	require.ErrorContains(t, err, "could not find bafyreibdsxukhmkwea4hdd2svvf6fijvuhdxeil2bf75v4wzooldb74uwq")
 
@@ -240,7 +240,7 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		// Generate new Block and save to lsys
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
-				LWWRegDelta: &crdt.LWWRegDelta{
+				LWWDelta: &crdt.LWWDelta{
 					DocID:           d.docID,
 					FieldName:       field,
 					Priority:        d.fieldsHeight[field],
@@ -260,7 +260,7 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 	}
 
 	compositeBlock := coreblock.New(
-		&crdt.CompositeDAGDelta{
+		&crdt.DocCompositeDelta{
 			DocID:           d.docID,
 			Priority:        newPriority,
 			SchemaVersionID: d.col.Schema().VersionID,

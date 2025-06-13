@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -120,7 +119,7 @@ func setContextDB(cmd *cobra.Command) error {
 	return nil
 }
 
-// setContextConfig sets teh config for the current command context.
+// setContextConfig sets the config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
 	cfg, err := loadConfig(rootdir, cmd.Flags())
@@ -142,7 +141,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := db.SetContextTxn(cmd.Context(), tx)
+	ctx := db.InitContext(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -159,7 +158,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 
 	cfg := mustGetContextConfig(cmd)
 
-	sourcehubAddressString := cfg.GetString("acp.sourceHub.address")
+	sourcehubAddressString := cfg.GetString("acp.dac.sourceHub.address")
 	var sourcehubAddress immutable.Option[string]
 	if sourcehubAddressString != "" {
 		sourcehubAddress = immutable.Some(sourcehubAddressString)
@@ -178,7 +177,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := identity.WithContext(cmd.Context(), immutable.Some(ident))
+	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some(ident))
 	cmd.SetContext(ctx)
 	return nil
 }

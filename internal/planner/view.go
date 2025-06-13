@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -24,7 +25,7 @@ type viewNode struct {
 	docMapper
 
 	p      *Planner
-	desc   client.CollectionDescription
+	desc   client.CollectionVersion
 	source planNode
 
 	// This is cached as a boolean to save rediscovering this in the main Next/Value iteration loop
@@ -33,11 +34,11 @@ type viewNode struct {
 
 func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, error) {
 	// For now, we assume a single source.  This will need to change if/when we support multiple sources
-	querySource := (col.Description().Sources[0].(*client.QuerySource))
+	querySource := (col.Version().Sources[0].(*client.QuerySource))
 	hasTransform := querySource.Transform.HasValue()
 
 	var source planNode
-	if col.Description().IsMaterialized {
+	if col.Version().IsMaterialized {
 		source = p.newCachedViewFetcher(col.Definition(), query.DocumentMapping)
 	} else {
 		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &querySource.Query)
@@ -57,7 +58,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 
 	viewNode := &viewNode{
 		p:            p,
-		desc:         col.Description(),
+		desc:         col.Version(),
 		source:       source,
 		docMapper:    docMapper{query.DocumentMapping},
 		hasTransform: hasTransform,
@@ -200,8 +201,13 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.def.Version.CollectionID)
+	if err != nil {
+		return err
+	}
+
 	iter, err := n.p.txn.Datastore().Iterator(n.p.ctx, corekv.IterOptions{
-		Prefix: keys.NewViewCacheColPrefix(n.def.Description.RootID).Bytes(),
+		Prefix: keys.NewViewCacheColPrefix(shortID).Bytes(),
 	})
 	if err != nil {
 		return err

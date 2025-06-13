@@ -15,9 +15,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -44,12 +42,12 @@ type Node struct {
 	server *http.Server
 	// kms subsystem instance
 	kmsService kms.Service
-	// acp subsystem instance
-	acp immutable.Option[acp.ACP]
 	// config values after applying options
 	config *Config
 	// options the node was created with
 	options []Option
+	// the URL the API is served at.
+	APIURL string
 }
 
 // New returns a new node instance configured with the given options.
@@ -70,15 +68,15 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.acp, err = NewACP(ctx, filterOptions[ACPOpt](n.options)...)
-	if err != nil {
-		return err
-	}
 	lens, err := NewLens(ctx, filterOptions[LenOpt](n.options)...)
 	if err != nil {
 		return err
 	}
-	n.DB, err = db.NewDB(ctx, rootstore, n.acp, lens, filterOptions[db.Option](n.options)...)
+	documentACP, err := NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -118,20 +116,14 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if n.acp.HasValue() {
-		acp := n.acp.Value()
-		err := acp.ResetState(ctx)
-		if err != nil {
-			// for now we will just log this error, since SourceHub ACP doesn't yet
-			// implement the ResetState.
-			log.ErrorE("Failed to reset ACP state", err)
-		}
-		// follow up close call on ACP is required since the node.Start function starts
-		// ACP again anyways so we need to gracefully close before starting again
-		err = acp.Close()
-		if err != nil {
-			return err
-		}
+
+	coreDB, _ := n.DB.(*db.DB)
+
+	// This will purge state.
+	// They will be restarted when node is started again.
+	err = coreDB.PurgeACPState(ctx)
+	if err != nil {
+		return err
 	}
 
 	return n.Start(ctx)

@@ -21,7 +21,7 @@ Example: refresh views by schema root id
   defradb client view refresh --schema bae123
 
 Example: refresh views by version id. This will also return inactive views
-  defradb client view refresh --version bae123
+  defradb client view refresh --version-id bae123
 		
 
 ```
@@ -31,11 +31,11 @@ defradb client view refresh [flags]
 ### Options
 
 ```
-      --get-inactive     Get inactive views as well as active
-  -h, --help             help for refresh
-      --name string      View name
-      --schema string    View schema Root
-      --version string   View version ID
+      --collection-id string   View collection ID
+      --get-inactive           Get inactive views as well as active
+  -h, --help                   help for refresh
+      --name string            View name
+      --version-id string      View version ID
 ```
 
 ### Options inherited from parent commands

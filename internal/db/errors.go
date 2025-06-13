@@ -51,7 +51,6 @@ const (
 	errInvalidStoredIndex                       string = "invalid stored index"
 	errInvalidStoredIndexKey                    string = "invalid stored index key"
 	errNonExistingFieldForIndex                 string = "creating an index on a non-existing property"
-	errCollectionDoesntExisting                 string = "collection with given name doesn't exist"
 	errFailedToStoreIndexedField                string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc              string = "failed to read stored index description"
 	errCanNotDeleteIndexedField                 string = "can not delete indexed field"
@@ -88,9 +87,9 @@ const (
 	errCollectionIndexesCannotBeMutated         string = "collection indexes cannot be mutated"
 	errCollectionFieldsCannotBeMutated          string = "collection fields cannot be mutated"
 	errCollectionPolicyCannotBeMutated          string = "collection policy cannot be mutated"
-	errCollectionRootIDCannotBeMutated          string = "collection root ID cannot be mutated"
+	errCollectionIDCannotBeMutated              string = "collection ID cannot be mutated"
 	errCollectionSchemaVersionIDCannotBeMutated string = "collection schema version ID cannot be mutated"
-	errCollectionIDCannotBeZero                 string = "collection ID cannot be zero"
+	errCollectionIDCannotBeEmpty                string = "collection ID cannot be empty"
 	errCollectionsCannotBeDeleted               string = "collections cannot be deleted"
 	errCanNotHavePolicyWithoutACP               string = "can not specify policy on collection, without acp"
 	errSecondaryFieldOnSchema                   string = "secondary relation fields cannot be defined on the schema"
@@ -116,6 +115,7 @@ const (
 	errMissingSignature                         string = "block is missing required signature"
 	errNoIdentityInContext                      string = "no identity found in context"
 	errMissingPermission                        string = "missing permission"
+	errCollectionNameMutated                    string = "collection name cannot be mutated"
 )
 
 var (
@@ -141,9 +141,9 @@ var (
 	ErrCollectionSourceIDMutated                = errors.New(errCollectionSourceIDMutated)
 	ErrCollectionIndexesCannotBeMutated         = errors.New(errCollectionIndexesCannotBeMutated)
 	ErrCollectionFieldsCannotBeMutated          = errors.New(errCollectionFieldsCannotBeMutated)
-	ErrCollectionRootIDCannotBeMutated          = errors.New(errCollectionRootIDCannotBeMutated)
+	ErrCollectionCollectionIDCannotBeMutated    = errors.New(errCollectionIDCannotBeMutated)
 	ErrCollectionSchemaVersionIDCannotBeMutated = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
-	ErrCollectionIDCannotBeZero                 = errors.New(errCollectionIDCannotBeZero)
+	ErrCollectionIDCannotBeEmpty                = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCollectionsCannotBeDeleted               = errors.New(errCollectionsCannotBeDeleted)
 	ErrCanNotHavePolicyWithoutACP               = errors.New(errCanNotHavePolicyWithoutACP)
 	ErrSecondaryFieldOnSchema                   = errors.New(errSecondaryFieldOnSchema)
@@ -172,6 +172,7 @@ var (
 	ErrMissingSignature                         = errors.New(errMissingSignature)
 	ErrMissingPermission                        = errors.New(errMissingPermission)
 	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
+	ErrCollectionNameMutated                    = errors.New(errCollectionNameMutated)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -202,11 +203,6 @@ func NewErrInvalidStoredIndexKey(key string) error {
 // on a non-existing field.
 func NewErrNonExistingFieldForIndex(field string) error {
 	return errors.New(errNonExistingFieldForIndex, errors.NewKV("Field", field))
-}
-
-// NewErrCanNotReadCollection returns a new error indicating the collection doesn't exist.
-func NewErrCanNotReadCollection(colName string, inner error) error {
-	return errors.Wrap(errCollectionDoesntExisting, inner, errors.NewKV("Collection", colName))
 }
 
 // NewErrFailedToStoreIndexedField returns a new error indicating that the indexed field
@@ -275,14 +271,14 @@ func NewErrAddSchemaWithPatch(name string) error {
 	)
 }
 
-func NewErrAddCollectionIDWithPatch(id uint32) error {
+func NewErrAddCollectionIDWithPatch(id string) error {
 	return errors.New(
 		errAddCollectionWithPatch,
 		errors.NewKV("ID", id),
 	)
 }
 
-func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID uint32) error {
+func NewErrCollectionIDDoesntMatch(name string, existingID, proposedID string) error {
 	return errors.New(
 		errCollectionIDDoesntMatch,
 		errors.NewKV("Name", name),
@@ -578,14 +574,14 @@ func NewErrCollectionAlreadyExists(name string) error {
 	)
 }
 
-func NewErrCollectionIDAlreadyExists(id uint32) error {
+func NewErrCollectionIDAlreadyExists(id string) error {
 	return errors.New(
 		errCollectionAlreadyExists,
 		errors.NewKV("ID", id),
 	)
 }
 
-func NewErrMultipleActiveCollectionVersions(name string, root uint32) error {
+func NewErrMultipleActiveCollectionVersions(name string, root string) error {
 	return errors.New(
 		errMultipleActiveCollectionVersions,
 		errors.NewKV("Name", name),
@@ -593,14 +589,14 @@ func NewErrMultipleActiveCollectionVersions(name string, root uint32) error {
 	)
 }
 
-func NewErrCollectionSourcesCannotBeAddedRemoved(colID uint32) error {
+func NewErrCollectionSourcesCannotBeAddedRemoved(colID string) error {
 	return errors.New(
 		errCollectionSourcesCannotBeAddedRemoved,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionSourceIDMutated(colID uint32, newSrcID uint32, oldSrcID uint32) error {
+func NewErrCollectionSourceIDMutated(colID string, newSrcID string, oldSrcID string) error {
 	return errors.New(
 		errCollectionSourceIDMutated,
 		errors.NewKV("CollectionID", colID),
@@ -609,42 +605,42 @@ func NewErrCollectionSourceIDMutated(colID uint32, newSrcID uint32, oldSrcID uin
 	)
 }
 
-func NewErrCollectionIndexesCannotBeMutated(colID uint32) error {
+func NewErrCollectionIndexesCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionIndexesCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionFieldsCannotBeMutated(colID uint32) error {
+func NewErrCollectionFieldsCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionFieldsCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionPolicyCannotBeMutated(colID uint32) error {
+func NewErrCollectionPolicyCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionPolicyCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionRootIDCannotBeMutated(colID uint32) error {
+func NewErrCollectionIDCannotBeMutated(collectionVersionID string) error {
 	return errors.New(
-		errCollectionRootIDCannotBeMutated,
-		errors.NewKV("CollectionID", colID),
+		errCollectionIDCannotBeMutated,
+		errors.NewKV("CollectionVersionID", collectionVersionID),
 	)
 }
 
-func NewErrCollectionSchemaVersionIDCannotBeMutated(colID uint32) error {
+func NewErrCollectionSchemaVersionIDCannotBeMutated(colID string) error {
 	return errors.New(
 		errCollectionSchemaVersionIDCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
 
-func NewErrCollectionsCannotBeDeleted(colID uint32) error {
+func NewErrCollectionsCannotBeDeleted(colID string) error {
 	return errors.New(
 		errCollectionsCannotBeDeleted,
 		errors.NewKV("CollectionID", colID),
@@ -740,4 +736,12 @@ func NewErrEmbeddingFieldNotFound(field string) error {
 
 func NewErrGetDocForEmbedding(inner error) error {
 	return errors.Wrap(errGetDocForEmbedding, inner)
+}
+
+func NewErrCollectionNameMutated(newName string, oldName string) error {
+	return errors.New(
+		errCollectionNameMutated,
+		errors.NewKV("NewName", newName),
+		errors.NewKV("OldName", oldName),
+	)
 }

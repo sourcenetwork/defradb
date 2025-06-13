@@ -12,19 +12,21 @@ package lens
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -65,11 +67,12 @@ func (f *lensedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACP],
+	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
 	fields []client.FieldDefinition,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -117,11 +120,12 @@ historyLoop:
 		ctx,
 		identity,
 		txn,
-		acp,
+		documentACP,
 		index,
 		col,
 		innerFetcherFields,
 		filter,
+		ordering,
 		docmapper,
 		showDeleted,
 	)
@@ -295,10 +299,15 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		return core.ErrInvalidKey
 	}
 
+	shortID, err := id.GetShortCollectionID(ctx, f.col.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+
 	datastoreKeyBase := keys.DataStoreKey{
-		CollectionRootID: f.col.Description().RootID,
-		DocID:            docID,
-		InstanceType:     keys.ValueKey,
+		CollectionShortID: shortID,
+		DocID:             docID,
+		InstanceType:      keys.ValueKey,
 	}
 
 	for fieldName, value := range modifiedFieldValuesByName {
@@ -308,7 +317,13 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			// in which case we have to skip them for now.
 			continue
 		}
-		fieldKey := datastoreKeyBase.WithFieldID(fieldDesc.ID.String())
+
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fieldDesc.Name)
+		if err != nil {
+			return err
+		}
+
+		fieldKey := datastoreKeyBase.WithFieldID(fmt.Sprint(fieldShortID))
 
 		bytes, err := cbor.Marshal(value)
 		if err != nil {
@@ -322,7 +337,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	}
 
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	err := f.txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
+	err = f.txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
 	if err != nil {
 		return err
 	}

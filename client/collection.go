@@ -12,9 +12,37 @@ package client
 
 import (
 	"context"
-
-	"github.com/sourcenetwork/immutable"
 )
+
+// DocCreateOption is a functional option for creating a document.
+type DocCreateOption func(*DocCreateOptions)
+
+// DocCreateOptions contains options for creating a document.
+type DocCreateOptions struct {
+	EncryptDoc      bool
+	EncryptedFields []string
+}
+
+// Apply applies the given DocCreateOptions to the DocCreateOptions receiver.
+func (o *DocCreateOptions) Apply(opts []DocCreateOption) {
+	for _, opt := range opts {
+		opt(o)
+	}
+}
+
+// CreateDocEncrypted enables or disables document encryption when creating a document.
+func CreateDocEncrypted(encryptDoc bool) DocCreateOption {
+	return func(opts *DocCreateOptions) {
+		opts.EncryptDoc = encryptDoc
+	}
+}
+
+// CreateDocWithEncryptedFields specifies a list of fields to be encrypted when creating a document.
+func CreateDocWithEncryptedFields(encryptedFields []string) DocCreateOption {
+	return func(opts *DocCreateOptions) {
+		opts.EncryptedFields = encryptedFields
+	}
+}
 
 // Collection represents a defradb collection.
 //
@@ -24,10 +52,10 @@ import (
 // Many functions on this object will interact with the underlying datastores.
 type Collection interface {
 	// Name returns the name of this collection.
-	Name() immutable.Option[string]
+	Name() string
 
-	// ID returns the ID of this Collection.
-	ID() uint32
+	// VersionID returns the VersionID of this Collection.
+	VersionID() string
 
 	// SchemaRoot returns the Root of the Schema used to define this Collection.
 	SchemaRoot() string
@@ -38,18 +66,18 @@ type Collection interface {
 	// Schema returns the SchemaDescription used to define this Collection.
 	Schema() SchemaDescription
 
-	// Description returns the CollectionDescription of this Collection.
-	Description() CollectionDescription
+	// Version returns the CollectionVersion of this Collection.
+	Version() CollectionVersion
 
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document) error
+	Create(ctx context.Context, doc *Document, opts ...DocCreateOption) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document) error
+	CreateMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
 
 	// Update an existing document with the new values.
 	//
@@ -63,7 +91,7 @@ type Collection interface {
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document) error
+	Save(ctx context.Context, doc *Document, opts ...DocCreateOption) error
 
 	// Delete will attempt to delete a document by DocID.
 	//
@@ -115,7 +143,7 @@ type Collection interface {
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(context.Context, IndexDescriptionCreateRequest) (IndexDescription, error)
+	CreateIndex(context.Context, IndexCreateRequest) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
 	DropIndex(ctx context.Context, indexName string) error

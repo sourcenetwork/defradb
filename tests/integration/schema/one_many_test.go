@@ -34,46 +34,47 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 						owner: User @primary
 					}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:           immutable.Some("User"),
+						Name:           "User",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 							},
 							{
-								Name:         "dogs",
-								ID:           1,
-								Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(2, true)),
+								Name: "dogs",
+								Kind: immutable.Some[client.FieldKind](
+									client.NewSchemaKind("bafkreibtwohjfa5ik3huokzglyneezu4m76fjv57ji2luoiohyhnsmj5lq", true),
+								),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{
 								Name: "name",
-								ID:   2,
 							},
 						},
 					},
 					{
-						Name:           immutable.Some("Dog"),
+						Name:           "Dog",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 							},
 							{
 								Name: "name",
-								ID:   1,
 							},
 							{
-								Name:         "owner",
-								ID:           2,
-								Kind:         immutable.Some[client.FieldKind](client.NewCollectionKind(1, false)),
+								Name: "owner",
+								Kind: immutable.Some[client.FieldKind](
+									client.NewSchemaKind("bafkreifbk3dtij7vgjhm7xow5i2hnhw5ppieityb2eklzwdst3yph7h4p4", false),
+								),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{
 								Name:         "owner_id",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
 								RelationName: immutable.Some("dog_user"),
 							},
@@ -97,29 +98,27 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 						b: [User]
 					}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:           immutable.Some("User"),
+						Name:           "User",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 							},
 							{
 								Name:         "a",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "a_id",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
 								RelationName: immutable.Some("user_user"),
 							},
@@ -143,29 +142,27 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 						a: [User]
 					}
 				`,
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:           immutable.Some("User"),
+						Name:           "User",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 							},
 							{
 								Name:         "a",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "b_id",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.ScalarKind(client.FieldKind_DocID)),
 								RelationName: immutable.Some("user_user"),
 							},
@@ -194,29 +191,27 @@ func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				ExpectedResults: []client.CollectionDescription{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:           immutable.Some("User"),
+						Name:           "User",
 						IsMaterialized: true,
+						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,
 							},
 							{
 								Name:         "boss",
-								ID:           1,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "boss_id",
-								ID:           2,
 								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minions",
-								ID:           3,
 								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", true)),
 								RelationName: immutable.Some("user_user"),
 							},

@@ -42,8 +42,8 @@ type lensRegistry struct {
 	modulesByPath map[string]module.Module
 	moduleLock    sync.Mutex
 
-	lensPoolsByCollectionID     map[uint32]*lensPool
-	reversedPoolsByCollectionID map[uint32]*lensPool
+	lensPoolsByCollectionID     map[string]*lensPool
+	reversedPoolsByCollectionID map[string]*lensPool
 	poolLock                    sync.RWMutex
 
 	// Writable transaction contexts by transaction ID.
@@ -58,15 +58,15 @@ type lensRegistry struct {
 // from outside.
 type txnContext struct {
 	txn                         datastore.Txn
-	lensPoolsByCollectionID     map[uint32]*lensPool
-	reversedPoolsByCollectionID map[uint32]*lensPool
+	lensPoolsByCollectionID     map[string]*lensPool
+	reversedPoolsByCollectionID map[string]*lensPool
 }
 
 func newTxnCtx(txn datastore.Txn) *txnContext {
 	return &txnContext{
 		txn:                         txn,
-		lensPoolsByCollectionID:     map[uint32]*lensPool{},
-		reversedPoolsByCollectionID: map[uint32]*lensPool{},
+		lensPoolsByCollectionID:     map[string]*lensPool{},
+		reversedPoolsByCollectionID: map[string]*lensPool{},
 	}
 }
 
@@ -84,8 +84,8 @@ func NewRegistry(
 		poolSize:                    poolSize,
 		runtime:                     runtime,
 		modulesByPath:               map[string]module.Module{},
-		lensPoolsByCollectionID:     map[uint32]*lensPool{},
-		reversedPoolsByCollectionID: map[uint32]*lensPool{},
+		lensPoolsByCollectionID:     map[string]*lensPool{},
+		reversedPoolsByCollectionID: map[string]*lensPool{},
 		txnCtxs:                     map[uint64]*txnContext{},
 	}
 
@@ -146,7 +146,7 @@ func (r *lensRegistry) getCtx(txn datastore.Txn, readonly bool) *txnContext {
 func (r *lensRegistry) setMigration(
 	_ context.Context,
 	txnCtx *txnContext,
-	collectionID uint32,
+	collectionID string,
 	cfg model.Lens,
 ) error {
 	inversedModuleCfgs := make([]model.LensModule, len(cfg.Lenses))
@@ -183,9 +183,9 @@ func (r *lensRegistry) setMigration(
 
 func (r *lensRegistry) cachePool(
 	_ datastore.Txn,
-	target map[uint32]*lensPool,
+	target map[string]*lensPool,
 	cfg model.Lens,
-	collectionID uint32,
+	collectionID string,
 ) error {
 	pool := r.newPool(r.poolSize, cfg)
 
@@ -223,7 +223,7 @@ func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) err
 			continue
 		}
 
-		err = r.setMigration(ctx, txnCtx, col.ID, sources[0].Transform.Value())
+		err = r.setMigration(ctx, txnCtx, col.VersionID, sources[0].Transform.Value())
 		if err != nil {
 			return err
 		}
@@ -235,7 +235,7 @@ func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) err
 func (r *lensRegistry) migrateUp(
 	txnCtx *txnContext,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
 	return r.migrate(r.lensPoolsByCollectionID, txnCtx.lensPoolsByCollectionID, src, collectionID)
 }
@@ -243,16 +243,16 @@ func (r *lensRegistry) migrateUp(
 func (r *lensRegistry) migrateDown(
 	txnCtx *txnContext,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
 	return r.migrate(r.reversedPoolsByCollectionID, txnCtx.reversedPoolsByCollectionID, src, collectionID)
 }
 
 func (r *lensRegistry) migrate(
-	pools map[uint32]*lensPool,
-	txnPools map[uint32]*lensPool,
+	pools map[string]*lensPool,
+	txnPools map[string]*lensPool,
 	src enumerable.Enumerable[LensDoc],
-	collectionID uint32,
+	collectionID string,
 ) (enumerable.Enumerable[LensDoc], error) {
 	lensPool, ok := r.getPool(pools, txnPools, collectionID)
 	if !ok {
@@ -271,9 +271,9 @@ func (r *lensRegistry) migrate(
 }
 
 func (r *lensRegistry) getPool(
-	pools map[uint32]*lensPool,
-	txnPools map[uint32]*lensPool,
-	collectionID uint32,
+	pools map[string]*lensPool,
+	txnPools map[string]*lensPool,
+	collectionID string,
 ) (*lensPool, bool) {
 	if pool, ok := txnPools[collectionID]; ok {
 		return pool, true

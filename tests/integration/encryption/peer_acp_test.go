@@ -73,15 +73,15 @@ resources:
 func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
-		SupportedACPTypes: immutable.Some(
-			[]testUtils.ACPType{
-				testUtils.SourceHubACPType,
+		SupportedDocumentACPTypes: immutable.Some(
+			[]testUtils.DocumentACPType{
+				testUtils.SourceHubDocumentACPType,
 			},
 		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
@@ -119,13 +119,13 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.ClientIdentity(1),
 				DocID:             0,
 				Relation:          "reader",
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             0,
@@ -159,15 +159,15 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
-		SupportedACPTypes: immutable.Some(
-			[]testUtils.ACPType{
-				testUtils.SourceHubACPType,
+		SupportedDocumentACPTypes: immutable.Some(
+			[]testUtils.DocumentACPType{
+				testUtils.SourceHubDocumentACPType,
 			},
 		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(0),
 				Policy:   policy,
 			},
@@ -205,7 +205,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(0),
 				TargetIdentity:    testUtils.ClientIdentity(1),
 				DocID:             0,
@@ -235,15 +235,15 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
-		SupportedACPTypes: immutable.Some(
-			[]testUtils.ACPType{
-				testUtils.SourceHubACPType,
+		SupportedDocumentACPTypes: immutable.Some(
+			[]testUtils.DocumentACPType{
+				testUtils.SourceHubDocumentACPType,
 			},
 		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
@@ -282,7 +282,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 				IsDocEncrypted: true,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             0,
@@ -322,7 +322,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 					}
 				`,
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),
 				DocID:             3,
@@ -380,16 +380,16 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailable_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
-		SupportedACPTypes: immutable.Some(
-			[]testUtils.ACPType{
-				testUtils.SourceHubACPType,
+		SupportedDocumentACPTypes: immutable.Some(
+			[]testUtils.DocumentACPType{
+				testUtils.SourceHubDocumentACPType,
 			},
 		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.AddPolicy{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
@@ -438,7 +438,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.Close{
 				NodeID: immutable.Some(0),
 			},
-			testUtils.AddDocActorRelationship{
+			testUtils.AddDACActorRelationship{
 				NodeID:            immutable.Some(1),
 				RequestorIdentity: testUtils.NodeIdentity(0),
 				TargetIdentity:    testUtils.NodeIdentity(1),

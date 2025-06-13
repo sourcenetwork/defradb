@@ -35,10 +35,10 @@ const (
 
 // DataStoreKey is a type that represents a key in the database.
 type DataStoreKey struct {
-	CollectionRootID uint32
-	InstanceType     InstanceType
-	DocID            string
-	FieldID          string
+	CollectionShortID uint32
+	InstanceType      InstanceType
+	DocID             string
+	FieldID           string
 }
 
 var _ Walkable = (*DataStoreKey)(nil)
@@ -88,7 +88,7 @@ func (k DataStoreKey) WithDeletedFlag() DataStoreKey {
 
 func (k DataStoreKey) WithCollectionRoot(colRoot uint32) DataStoreKey {
 	newKey := k
-	newKey.CollectionRootID = colRoot
+	newKey.CollectionShortID = colRoot
 	return newKey
 }
 
@@ -134,8 +134,8 @@ func (k DataStoreKey) ToDS() ds.Key {
 func (k DataStoreKey) PrettyPrint() string {
 	var result string
 
-	if k.CollectionRootID != 0 {
-		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
+	if k.CollectionShortID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionShortID))
 	}
 	if k.InstanceType != "" {
 		result = result + "/" + string(k.InstanceType)
@@ -151,7 +151,7 @@ func (k DataStoreKey) PrettyPrint() string {
 }
 
 func (k DataStoreKey) Equal(other DataStoreKey) bool {
-	return k.CollectionRootID == other.CollectionRootID &&
+	return k.CollectionShortID == other.CollectionShortID &&
 		k.DocID == other.DocID &&
 		k.FieldID == other.FieldID &&
 		k.InstanceType == other.InstanceType
@@ -159,8 +159,8 @@ func (k DataStoreKey) Equal(other DataStoreKey) bool {
 
 func (k DataStoreKey) ToPrimaryDataStoreKey() PrimaryDataStoreKey {
 	return PrimaryDataStoreKey{
-		CollectionRootID: k.CollectionRootID,
-		DocID:            k.DocID,
+		CollectionShortID: k.CollectionShortID,
+		DocID:             k.DocID,
 	}
 }
 
@@ -182,8 +182,8 @@ func (k DataStoreKey) PrefixEnd() Walkable {
 		newKey.InstanceType = InstanceType(bytesPrefixEnd([]byte(k.InstanceType)))
 		return newKey
 	}
-	if k.CollectionRootID != 0 {
-		newKey.CollectionRootID = k.CollectionRootID + 1
+	if k.CollectionShortID != 0 {
+		newKey.CollectionShortID = k.CollectionShortID + 1
 		return newKey
 	}
 
@@ -262,10 +262,10 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 	}
 
 	return DataStoreKey{
-		CollectionRootID: uint32(colRootID),
-		InstanceType:     (instanceType),
-		DocID:            docID,
-		FieldID:          fieldID,
+		CollectionShortID: uint32(colRootID),
+		InstanceType:      (instanceType),
+		DocID:             docID,
+		FieldID:           fieldID,
 	}, nil
 }
 
@@ -273,8 +273,8 @@ func DecodeDataStoreKey(data []byte) (DataStoreKey, error) {
 func EncodeDataStoreKey(key *DataStoreKey) []byte {
 	var result []byte
 
-	if key.CollectionRootID != 0 {
-		result = encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionRootID))
+	if key.CollectionShortID != 0 {
+		result = encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionShortID))
 	}
 
 	if key.InstanceType != "" {
