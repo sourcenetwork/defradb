@@ -181,7 +181,6 @@ func CanBeOrderedByIndex(
 
 		isDescending := ordering[i].Direction == mapper.DESC
 		if index.Fields[i].Descending != isDescending {
-			// if the ordering is not matching the index, we can't use index
 			orderMismatchCount++
 		}
 	}
