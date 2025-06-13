@@ -174,6 +174,7 @@ func CanBeOrderedByIndex(
 		fieldIndexes := mapping.IndexesByName[index.Fields[i].Name]
 
 		// if indexed field doesn't match the ordering field, we can't use index
+		// it's safe to access FieldIndexes[0] as otherwise the query is invalid
 		if len(fieldIndexes) == 0 || fieldIndexes[0] != ordering[i].FieldIndexes[0] {
 			return false, false
 		}

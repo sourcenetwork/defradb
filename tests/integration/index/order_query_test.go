@@ -1287,3 +1287,205 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserInde
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t *testing.T) {
+	req := `query {
+		User(order: {
+			device: {model: ASC}
+		}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User {
+						name: String
+						device: Device
+					} 
+
+					type Device {
+						model: String @index
+						manufacturer: String
+						owner: User @primary
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Fred"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "Playstation",
+					"manufacturer": "Sony",
+					"owner":        testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Andy"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "XBox",
+					"manufacturer": "Microsoft",
+					"owner":        testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Shahzad"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "Arduino",
+					"manufacturer": "Arduino",
+					"owner":        testUtils.NewDocIndex(0, 2),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Keenan"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model":        "Galaxy",
+					"manufacturer": "Samsung",
+					"owner":        testUtils.NewDocIndex(0, 3),
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"}, // Arduino
+						{"name": "Keenan"},  // Galaxy
+						{"name": "Fred"},    // Playstation
+						{"name": "Andy"},    // XBox
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(t *testing.T) {
+	req := `query {
+		User(order: {
+			device: {model: ASC}
+		}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Device {
+						model: String @index
+						manufacturer: String
+						owner: User 
+					}
+
+					type User {
+						name: String
+						device: Device @primary
+					} 
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"model":        "Playstation",
+					"manufacturer": "Sony",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":   "Fred",
+					"device": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"model":        "XBox",
+					"manufacturer": "Microsoft",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":   "Andy",
+					"device": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"model":        "Arduino",
+					"manufacturer": "Arduino",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":   "Shahzad",
+					"device": testUtils.NewDocIndex(0, 2),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"model":        "Galaxy",
+					"manufacturer": "Samsung",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":   "Keenan",
+					"device": testUtils.NewDocIndex(0, 3),
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Shahzad"}, // Arduino
+						{"name": "Keenan"},  // Galaxy
+						{"name": "Fred"},    // Playstation
+						{"name": "Andy"},    // XBox
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
