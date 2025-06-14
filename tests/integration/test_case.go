@@ -124,6 +124,29 @@ type Start struct {
 	//
 	// If a value is not provided the start will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of the user starting the node.
+	//
+	// If this identity if used in combination with enabling admin acp, then this
+	// Identity becomes the admin acp owner for that node.
+	//
+	// To disable/purge/re-enable admin acp after a successful start, must use the
+	// respective client commands instead.
+	Identity immutable.Option[Identity]
+
+	// EnableAAC is true when the node is being started with an attempt to setup and enable
+	// the admin access control for that node.
+	//
+	// Must have a valid identity to enable (if enabling for the first time).
+	//
+	// False by default.
+	EnableAAC bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // SchemaUpdate is an action that will update the database schema.
@@ -135,6 +158,11 @@ type SchemaUpdate struct {
 	//
 	// If a value is not provided the update will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
 
 	// The schema update.
 	Schema string
@@ -206,6 +234,11 @@ type SchemaPatch struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	Patch string
 
 	// If SetAsDefaultVersion has a value, and that value is false then the schema version
@@ -223,6 +256,11 @@ type PatchCollection struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	// The Patch to apply to the collection version.
 	Patch string
 
@@ -235,6 +273,11 @@ type GetSchema struct {
 	//
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
 
 	// The VersionID of the schema version to fetch.
 	//
@@ -290,8 +333,14 @@ type SetActiveSchemaVersion struct {
 	// If a value is not provided the default will be set on all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	SchemaVersionID string
-	ExpectedError   string
+
+	ExpectedError string
 }
 
 // CreateView is an action that will create a new View.
@@ -351,6 +400,8 @@ type CreateDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[Identity]
 
 	// Specifies whether the document should be encrypted.
@@ -423,6 +474,8 @@ type DeleteDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[Identity]
 
 	// The collection in which this document should be deleted.
@@ -456,6 +509,8 @@ type UpdateDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
@@ -499,6 +554,8 @@ type UpdateWithFilter struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[Identity]
 
 	// The collection in which this document exists.
@@ -539,6 +596,11 @@ type CreateIndex struct {
 	// If a value is not provided the index will be created in all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	// The collection for which this index should be created.
 	CollectionID int
 
@@ -569,6 +631,11 @@ type DropIndex struct {
 	// If a value is not provided the index will be deleted from all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	// The collection from which the index should be deleted.
 	CollectionID int
 
@@ -590,6 +657,11 @@ type GetIndexes struct {
 	//
 	// If a value is not provided the indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
 
 	// The collection for which this indexes should be retrieved.
 	CollectionID int
@@ -850,11 +922,22 @@ type GetNodeIdentity struct {
 	// NodeID holds the ID (index) of a node to get the identity from.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	// ExpectedIdentity holds the identity that is expected to be found.
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
 	ExpectedIdentity immutable.Option[Identity]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // Wait is an action that will wait for the given duration.
@@ -872,6 +955,8 @@ type VerifyBlockSignature struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[Identity]
 
 	// The identity of the author of the block to verify the signature of.

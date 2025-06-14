@@ -259,6 +259,10 @@ func (c *collection) GetAllDocIDs(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocReadPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
@@ -389,6 +393,11 @@ func (c *collection) Create(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocUpdatePerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -412,6 +421,11 @@ func (c *collection) CreateMany(
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocUpdatePerm)
+	if err != nil {
+		return err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -533,6 +547,11 @@ func (c *collection) Update(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocUpdatePerm)
+	if err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -606,6 +625,11 @@ func (c *collection) Save(
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocUpdatePerm)
+	if err != nil {
+		return err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -945,6 +969,11 @@ func (c *collection) Delete(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocDeletePerm)
+	if err != nil {
+		return false, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
@@ -975,6 +1004,10 @@ func (c *collection) Exists(
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocReadPerm); err != nil {
+		return false, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
