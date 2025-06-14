@@ -187,6 +187,11 @@ func (db *DB) Rootstore() datastore.Rootstore {
 	return db.rootstore
 }
 
+// Datastore returns the internal DAG store which contains IPLD blocks.
+func (db *DB) Datastore() datastore.DSReaderWriter {
+	return db.multistore.Datastore()
+}
+
 // Blockstore returns the internal DAG store which contains IPLD blocks.
 func (db *DB) Blockstore() datastore.Blockstore {
 	return db.multistore.Blockstore()

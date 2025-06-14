@@ -246,6 +246,10 @@ func (w *Wrapper) Encstore() datastore.Blockstore {
 	return w.node.DB.Encstore()
 }
 
+func (w *Wrapper) Datastore() datastore.DSReaderWriter {
+	return w.node.DB.Datastore()
+}
+
 func (w *Wrapper) Blockstore() datastore.Blockstore {
 	return w.node.DB.Blockstore()
 }

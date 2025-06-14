@@ -17,8 +17,11 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/onsi/gomega"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
@@ -882,4 +885,34 @@ type VerifyBlockSignature struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+}
+
+// Datastore is an action that fetches a value from the datastore for a given key.
+type Datastore struct {
+	// NodeID may hold the ID (index) of a node to fetch from.
+	// If not provided, the fetch will be done on all nodes.
+	NodeID immutable.Option[int]
+
+	// Key is built using the KeyBuilder interface.
+	// Use KeyFactory with NewKey() to create a new key builder.
+	Key KeyBuilder
+
+	// Value is the expected value matcher.
+	// Uses gomega.OmegaMatcher for flexible assertions.
+	// Should only be set if ExpectMissingKey is false.
+	Value gomega.OmegaMatcher
+
+	// ExpectMissingKey indicates whether the key should be missing.
+	// If true, the test will verify the key doesn't exist.
+	// If true and Value is set, test execution will error.
+	ExpectMissingKey bool
+
+	// ExpectedError is any error expected from the action.
+	ExpectedError string
+}
+
+// KeyBuilder is an interface for building datastore keys.
+type KeyBuilder interface {
+	// Build constructs the actual key using the test state
+	Build(s *state) (keys.Key, error)
 }
