@@ -13,6 +13,7 @@ package se
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -174,9 +175,10 @@ func (rc *ReplicationCoordinator) processUpdateEvents() {
 
 // handleReplicationFailure stores failed SE replication attempt for retry
 func (rc *ReplicationCoordinator) handleReplicationFailure(ctx context.Context, evt ReplicationFailureEvent) error {
-	// Store retry information similar to document replicator
 	retryKey := keys.NewPeerstoreSERetry(evt.PeerID.String(), evt.CollectionID, evt.DocID)
 
+	// TODO: think if such scenario is possible: "age" field is updated but failed to replicate and while being retried
+	// another "name" field is updated. In this case we should not overwrite the retry info.
 	retryInfo := SERetryInfo{
 		DocID:        evt.DocID,
 		CollectionID: evt.CollectionID,
@@ -200,123 +202,27 @@ func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt eve
 		return nil
 	}
 
-	// Get collection to check for encrypted indexes
-	cols, err := rc.db.GetCollections(ctx, client.CollectionFetchOptions{
-		CollectionID: immutable.Some(evt.CollectionID),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to get collection: %w", err)
-	}
-	if len(cols) == 0 {
-		return fmt.Errorf("collection not found: %s", evt.CollectionID)
-	}
-
-	col := cols[0]
-	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get encrypted indexes: %w", err)
-	}
-
-	// If no encrypted indexes, nothing to do
-	if len(encryptedIndexes) == 0 {
-		return nil
-	}
-
-	// Deserialize the block from the event
 	block, err := coreblock.GetFromBytes(evt.Block)
 	if err != nil {
 		return fmt.Errorf("failed to deserialize block: %w", err)
 	}
 
-	// Only process composite blocks (document-level updates)
 	if !block.Delta.IsComposite() {
 		return nil
 	}
 
-	// Get the document
-	docIDType, err := client.NewDocIDFromString(evt.DocID)
-	if err != nil {
-		return fmt.Errorf("invalid document ID: %w", err)
-	}
-
-	doc, err := col.Get(ctx, docIDType, false)
-	if err != nil {
-		// Document might have been deleted
-		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-			// TODO: Handle document deletion - generate delete artifacts
-			return nil
-		}
-		return fmt.Errorf("failed to get document: %w", err)
-	}
-
-	// Collect field names that were updated from the block links
-	updatedFields := make(map[string]bool)
+	updatedFields := []string{}
 	for _, link := range block.Links {
 		if link.Name != "" && link.Name != "_head" {
-			updatedFields[link.Name] = true
+			updatedFields = append(updatedFields, link.Name)
 		}
 	}
 
-	// Generate artifacts for updated encrypted fields
-	var artifacts []secore.Artifact
-	for _, encIdx := range encryptedIndexes {
-		// Check if this field was updated
-		if !updatedFields[encIdx.FieldName] {
-			continue
-		}
-
-		// Get the field value from the document
-		fieldValue, err := doc.GetValue(encIdx.FieldName)
-		if err != nil {
-			// Field might not exist
-			continue
-		}
-
-		// Convert to NormalValue and encode
-		normalValue := fieldValue.NormalValue()
-		if normalValue.IsNil() {
-			// Skip nil values
-			continue
-		}
-
-		// Encode field value to bytes using the encoding package
-		valueBytes := encoding.EncodeFieldValue(nil, normalValue, false)
-
-		// Generate search tag
-		var tag []byte
-		switch encIdx.Type {
-		case client.EncryptedIndexTypeEquality:
-			tag, err = secore.GenerateEqualityTag(
-				rc.encKey,
-				evt.CollectionID,
-				encIdx.FieldName,
-				valueBytes,
-			)
-		default:
-			log.ErrorContext(ctx, "Unsupported encrypted index type",
-				corelog.String("Type", string(encIdx.Type)))
-			continue
-		}
-
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to generate search tag", err)
-			continue
-		}
-
-		// Create artifact
-		artifact := secore.Artifact{
-			Type:         secore.ArtifactTypeEqualityTag,
-			CollectionID: evt.CollectionID,
-			FieldName:    encIdx.FieldName,
-			DocID:        evt.DocID,
-			Operation:    secore.OperationAdd,
-			IndexID:      encIdx.FieldName, // For now, use field name as index ID
-			SearchTag:    tag,
-		}
-		artifacts = append(artifacts, artifact)
+	artifacts, err := rc.generateSEArtifacts(ctx, evt.DocID, evt.CollectionID, updatedFields)
+	if err != nil {
+		return fmt.Errorf("failed to generate SE artifacts: %w", err)
 	}
 
-	// If we generated any artifacts, publish them for replication
 	if len(artifacts) > 0 {
 		rc.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
 			DocID:        evt.DocID,
@@ -417,15 +323,13 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 	successChan := make(chan bool)
 	defer close(successChan)
 
-	// Regenerate artifacts from document fields
-	artifacts, err := rc.regenerateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
+	artifacts, err := rc.generateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to regenerate SE artifacts for retry", err)
 		rc.updateRetryStatus(ctx, peerID, retryInfo, false)
 		return
 	}
 
-	// Publish the retry update event
 	rc.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
 		DocID:        retryInfo.DocID,
 		CollectionID: retryInfo.CollectionID,
@@ -434,7 +338,6 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 		Success:      successChan,
 	}))
 
-	// Wait for retry result
 	select {
 	case success := <-successChan:
 		rc.updateRetryStatus(ctx, peerID, retryInfo, success)
@@ -547,20 +450,19 @@ func (rc *ReplicationCoordinator) DeleteSEArtifacts(ctx context.Context, collect
 	return nil
 }
 
-// regenerateArtifactsForRetry regenerates SE artifacts for specified fields
+// generateSEArtifacts regenerates SE artifacts for specified fields
 //
 // This method uses the provided regenerator function to recreate artifacts
 // needed for retry. The regenerator is provided by the DB layer which has
 // access to transactions, collections, and SE keys.
-// regenerateSEArtifacts creates a function that can regenerate SE artifacts for a document.
+// generateSEArtifacts creates a function that can regenerate SE artifacts for a document.
 // This function is provided to the SE ReplicationCoordinator to use during retry.
-func (rc *ReplicationCoordinator) regenerateSEArtifacts(
+func (rc *ReplicationCoordinator) generateSEArtifacts(
 	ctx context.Context,
 	docID, collectionID string,
 	fieldNames []string,
 ) ([]secore.Artifact, error) {
-	return nil, nil
-	/*cols, err := rc.db.GetCollections(ctx, client.CollectionFetchOptions{
+	cols, err := rc.db.GetCollections(ctx, client.CollectionFetchOptions{
 		CollectionID: immutable.Some(collectionID),
 	})
 	if err != nil {
@@ -571,6 +473,15 @@ func (rc *ReplicationCoordinator) regenerateSEArtifacts(
 	}
 
 	col := cols[0]
+	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get encrypted indexes: %w", err)
+	}
+
+	if len(encryptedIndexes) == 0 {
+		return nil, nil
+	}
+
 	docIDType, err := client.NewDocIDFromString(docID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid document ID: %w", err)
@@ -578,97 +489,67 @@ func (rc *ReplicationCoordinator) regenerateSEArtifacts(
 
 	doc, err := col.Get(ctx, docIDType, false)
 	if err != nil {
+		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+			// TODO: Handle document deletion - generate delete artifacts
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to get document: %w", err)
 	}
 
-	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get encrypted indexes: %w", err)
-	}
+	var artifacts []secore.Artifact
+	for _, encIdx := range encryptedIndexes {
+		if !slices.Contains(fieldNames, encIdx.FieldName) {
+			continue
+		}
 
-	// Get the SE key for this collection
-	// TODO: This needs to be properly integrated with the SE key management system
-	seKey := db.searchableEncryptionKey
-
-	// Regenerate artifacts using the helper function
-	return regenerateArtifactsForDoc(ctx, txn, docID, collectionID, encryptedIndexes, fieldNames, seKey)
-	*/
-}
-
-// regenerateArtifactsForDoc regenerates SE artifacts for a document by fetching all field values
-// from the datastore. This is used during retry when we need to regenerate artifacts without
-// having access to the original blocks.
-func regenerateArtifactsForDoc(
-	ctx context.Context,
-	txn datastore.Txn,
-	docID string,
-	collectionID string,
-	encryptedFields []client.EncryptedIndexDescription,
-	fieldNames []string,
-	seKey []byte,
-) ([]secore.Artifact, error) {
-	return nil, nil
-	/*var artifacts []secore.Artifact
-
-	// Create a map of field names for quick lookup if specific fields are requested
-	fieldNameMap := make(map[string]bool)
-	for _, name := range fieldNames {
-		fieldNameMap[name] = true
-	}
-	cols, err := r.db.GetCollections(
-		ctx,
-		client.CollectionFetchOptions{
-			VersionID: immutable.Some(headIterator.CurrentBlock().Delta.GetSchemaVersionID()),
-		},
-	)
-
-	// Get head blocks iterator for the document
-	headsIterator, err := NewHeadBlocksIteratorFromTxn(ctx, txn, docID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create heads iterator: %w", err)
-	}
-
-	// Iterate through all blocks to find field values
-	for {
-		hasNext, err := headsIterator.Next()
+		fieldValue, err := doc.GetValue(encIdx.FieldName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get next block: %w", err)
-		}
-		if !hasNext {
-			break
+			return nil, fmt.Errorf("failed to get field value: %w", err)
 		}
 
-		block := headsIterator.CurrentBlock()
+		normalValue := fieldValue.NormalValue()
 
-		// Skip if specific fields are requested and this isn't one of them
-		if len(fieldNames) > 0 {
-			if block.Delta.IsComposite() || block.Delta.IsCollection() {
-				continue
-			}
-			fieldName := block.Delta.GetFieldName()
-			if !fieldNameMap[fieldName] {
-				continue
-			}
+		valueBytes := encoding.EncodeFieldValue(nil, normalValue, false)
+
+		var tag []byte
+		switch encIdx.Type {
+		case client.EncryptedIndexTypeEquality:
+			tag, err = secore.GenerateEqualityTag(
+				rc.encKey,
+				collectionID,
+				encIdx.FieldName,
+				valueBytes,
+			)
+		default:
+			log.ErrorContext(ctx, "Unsupported encrypted index type",
+				corelog.String("Type", string(encIdx.Type)))
+			continue
 		}
 
-		// Use the helper function to generate artifact
-		artifact, err := se.GenerateArtifactFromBlock(
-			block,
-			collectionID,
-			docID,
-			encryptedFields,
-			seKey,
-		)
 		if err != nil {
-			return nil, err
+			log.ErrorContextE(ctx, "Failed to generate search tag", err)
+			continue
 		}
 
-		// If artifact was generated (field is encrypted), add it to the list
-		if artifact != nil {
-			artifacts = append(artifacts, *artifact)
+		artifact := secore.Artifact{
+			Type:         secore.ArtifactTypeEqualityTag,
+			CollectionID: collectionID,
+			FieldName:    encIdx.FieldName,
+			DocID:        docID,
+			Operation:    secore.OperationAdd,
+			IndexID:      encIdx.FieldName,
+			SearchTag:    tag,
 		}
+		artifacts = append(artifacts, artifact)
+	}
+
+	if len(artifacts) > 0 {
+		rc.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
+			DocID:        docID,
+			CollectionID: collectionID,
+			Artifacts:    artifacts,
+		}))
 	}
 
 	return artifacts, nil
-	*/
 }
