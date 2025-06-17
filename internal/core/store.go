@@ -28,7 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 var log = corelog.NewLogger("core")
@@ -100,10 +99,7 @@ func AddDelta(
 		return cidlink.Link{}, nil, err
 	}
 
-	if err := se.ProcessBlock(ctx, txn, block); err != nil {
-		return cidlink.Link{}, nil, err
-	}
-
+	// merge the delta and update the state
 	err = ProcessBlock(ctx, crdtData, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, err

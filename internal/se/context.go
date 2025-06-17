@@ -81,7 +81,7 @@ func (c *Context) registerReplicationCallback() {
 		}
 
 		// Publish SE update event
-		c.eventBus.Publish(event.NewMessage(UpdateEventName, UpdateEvent{
+		c.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
 			DocID:        c.doc.ID().String(),
 			CollectionID: c.config.CollectionID,
 			Artifacts:    c.artifacts,

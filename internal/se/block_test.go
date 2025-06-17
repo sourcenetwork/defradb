@@ -113,7 +113,7 @@ func TestContext_ArtifactAddition(t *testing.T) {
 		Type:         secore.ArtifactTypeEqualityTag,
 		CollectionID: "collection123",
 		FieldName:    "email",
-		Tag:          []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+		SearchTag:          []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 		Operation:    secore.OperationAdd,
 	}
 
@@ -131,7 +131,7 @@ func TestContext_ArtifactProperties(t *testing.T) {
 		Type:         secore.ArtifactTypeEqualityTag,
 		CollectionID: "collection123",
 		FieldName:    "email",
-		Tag:          []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+		SearchTag:          []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 		Operation:    secore.OperationAdd,
 	}
 
@@ -153,8 +153,8 @@ func TestContext_ArtifactProperties(t *testing.T) {
 		t.Errorf("expected operation add, got %v", seCtx.artifacts[0].Operation)
 	}
 
-	if len(seCtx.artifacts[0].Tag) != 16 {
-		t.Errorf("expected tag length 16, got %d", len(seCtx.artifacts[0].Tag))
+	if len(seCtx.artifacts[0].SearchTag) != 16 {
+		t.Errorf("expected tag length 16, got %d", len(seCtx.artifacts[0].SearchTag))
 	}
 }
 
@@ -165,7 +165,7 @@ func TestContext_MultipleArtifacts(t *testing.T) {
 		Type:         secore.ArtifactTypeEqualityTag,
 		CollectionID: "collection123",
 		FieldName:    "email",
-		Tag:          []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+		SearchTag:          []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 		Operation:    secore.OperationAdd,
 	}
 
@@ -173,7 +173,7 @@ func TestContext_MultipleArtifacts(t *testing.T) {
 		Type:         secore.ArtifactTypeEqualityTag,
 		CollectionID: "collection123",
 		FieldName:    "name",
-		Tag:          []byte{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+		SearchTag:          []byte{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
 		Operation:    secore.OperationAdd,
 	}
 

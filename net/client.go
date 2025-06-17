@@ -93,7 +93,7 @@ func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply
 }
 
 // pushSEArtifacts creates and sends SE artifacts to another node
-func (s *server) pushSEArtifacts(evt se.UpdateEvent, pid peer.ID) (err error) {
+func (s *server) pushSEArtifacts(evt se.ReplicateEvent, pid peer.ID) (err error) {
 	defer func() {
 		if err != nil && !evt.IsRetry {
 			// Collect unique field names from artifacts
@@ -101,12 +101,12 @@ func (s *server) pushSEArtifacts(evt se.UpdateEvent, pid peer.ID) (err error) {
 			for _, artifact := range evt.Artifacts {
 				fieldNamesMap[artifact.FieldName] = struct{}{}
 			}
-			
+
 			var fieldNames []string
 			for fieldName := range fieldNamesMap {
 				fieldNames = append(fieldNames, fieldName)
 			}
-			
+
 			s.peer.bus.Publish(event.NewMessage(se.ReplicationFailureEventName, se.ReplicationFailureEvent{
 				DocID:        evt.DocID,
 				CollectionID: evt.CollectionID,

@@ -22,8 +22,8 @@ const (
 	ReplicationFailureEventName = "se-replication-failure"
 )
 
-// UpdateEvent - Published when SE artifacts need replication
-type UpdateEvent struct {
+// ReplicateEvent - Published when SE artifacts need replication
+type ReplicateEvent struct {
 	DocID        string
 	CollectionID string
 	Artifacts    []secore.Artifact

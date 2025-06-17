@@ -157,7 +157,7 @@ func newDB(
 
 	// Initialize SE replication coordinator
 	if len(db.searchableEncryptionKey) > 0 {
-		coord, err := se.NewReplicationCoordinator(db)
+		coord, err := se.NewReplicationCoordinator(db, db.searchableEncryptionKey)
 		if err != nil {
 			return nil, err
 		}

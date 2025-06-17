@@ -306,7 +306,7 @@ func (p *Peer) handleMessageLoop() {
 		case event.P2PTopic:
 			p.server.updatePubSubTopics(evt)
 
-		case se.UpdateEvent:
+		case se.ReplicateEvent:
 			err := p.handleSELog(evt)
 			if err != nil {
 				log.ErrorE("Error while handling SE log", err)
@@ -382,13 +382,13 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	}
 }
 
-func (p *Peer) handleSELog(evt se.UpdateEvent) error {
+func (p *Peer) handleSELog(evt se.ReplicateEvent) error {
 	// Push to each replicator (similar to handleLog)
 	p.pushSEArtifactsToReplicators(evt)
 	return nil
 }
 
-func (p *Peer) pushSEArtifactsToReplicators(evt se.UpdateEvent) {
+func (p *Peer) pushSEArtifactsToReplicators(evt se.ReplicateEvent) {
 	p.server.mu.Lock()
 	reps, exists := p.server.replicators[evt.CollectionID]
 	p.server.mu.Unlock()
