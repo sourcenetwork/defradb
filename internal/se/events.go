@@ -18,7 +18,7 @@ import (
 // Event names for the event bus
 const (
 	UpdateEventName             = "se-update"
-	MergeEventName              = "se-merge"
+	StoreArtifactsEventName     = "se-store-artifacts"
 	ReplicationFailureEventName = "se-replication-failure"
 )
 
@@ -31,8 +31,8 @@ type ReplicateEvent struct {
 	Success      chan bool // Used for synchronous retry feedback
 }
 
-// MergeEvent - Published when receiving SE artifacts from peers
-type MergeEvent struct {
+// StoreArtifactsEvent - Published when receiving SE artifacts from peers
+type StoreArtifactsEvent struct {
 	Artifacts []secore.Artifact
 	FromPeer  peer.ID
 }

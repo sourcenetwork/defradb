@@ -211,7 +211,7 @@ func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifact
 		}
 	}
 
-	s.peer.bus.Publish(event.NewMessage(se.MergeEventName, se.MergeEvent{
+	s.peer.bus.Publish(event.NewMessage(se.StoreArtifactsEventName, se.StoreArtifactsEvent{
 		Artifacts: artifacts,
 		FromPeer:  pid,
 	}))

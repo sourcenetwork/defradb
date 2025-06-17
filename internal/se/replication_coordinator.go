@@ -82,7 +82,7 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 		encKey:         encKey,
 	}
 
-	sub, err := db.Events().Subscribe(MergeEventName)
+	sub, err := db.Events().Subscribe(StoreArtifactsEventName)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (rc *ReplicationCoordinator) processMergeEvents() {
 			return
 		}
 
-		if evt, ok := msg.Data.(MergeEvent); ok {
+		if evt, ok := msg.Data.(StoreArtifactsEvent); ok {
 			if err := rc.storeSEArtifacts(context.Background(), evt.Artifacts); err != nil {
 				log.ErrorE("Failed to store SE artifacts", err)
 			}
