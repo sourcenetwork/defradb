@@ -684,7 +684,7 @@ func (c *collection) save(
 
 	// Prepare SE context if configured
 	var err error
-	ctx, err = se.PrepareContextIfConfigured(ctx, c, doc, c.db.searchableEncryptionKey)
+	ctx, err = se.PrepareContextIfConfigured(ctx, c, doc, c.db.searchableEncryptionKey, c.db.events)
 	if err != nil {
 		return err
 	}

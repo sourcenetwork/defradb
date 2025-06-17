@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 var (
@@ -89,4 +90,65 @@ func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply
 		)
 	}
 	return resp, nil
+}
+
+// pushSEArtifacts creates and sends SE artifacts to another node
+func (s *server) pushSEArtifacts(evt se.UpdateEvent, pid peer.ID) (err error) {
+	defer func() {
+		if err != nil && !evt.IsRetry {
+			// Collect unique field names from artifacts
+			fieldNamesMap := make(map[string]struct{})
+			for _, artifact := range evt.Artifacts {
+				fieldNamesMap[artifact.FieldName] = struct{}{}
+			}
+			
+			var fieldNames []string
+			for fieldName := range fieldNamesMap {
+				fieldNames = append(fieldNames, fieldName)
+			}
+			
+			s.peer.bus.Publish(event.NewMessage(se.ReplicationFailureEventName, se.ReplicationFailureEvent{
+				DocID:        evt.DocID,
+				CollectionID: evt.CollectionID,
+				PeerID:       pid,
+				FieldNames:   fieldNames,
+			}))
+		}
+		if evt.Success != nil {
+			evt.Success <- err == nil
+		}
+	}()
+
+	client, err := s.dial(pid)
+	if err != nil {
+		return NewErrPushSEArtifacts(err)
+	}
+
+	ctx, cancel := context.WithTimeout(s.peer.ctx, PushTimeout)
+	defer cancel()
+
+	netArtifacts := make([]seArtifact, len(evt.Artifacts))
+	for i, artifact := range evt.Artifacts {
+		netArtifacts[i] = seArtifact{
+			DocID:     artifact.DocID,
+			IndexID:   artifact.IndexID,
+			SearchTag: artifact.SearchTag,
+		}
+	}
+
+	req := pushSEArtifactsRequest{
+		CollectionID: evt.CollectionID,
+		Artifacts:    netArtifacts,
+		Creator:      s.peer.host.ID().String(),
+	}
+
+	if err := client.Invoke(ctx, servicePushSEArtifactsName, req, nil); err != nil {
+		return NewErrPushSEArtifacts(
+			err,
+			errors.NewKV("DocID", evt.DocID),
+			errors.NewKV("CollectionID", evt.CollectionID),
+			errors.NewKV("PeerID", pid),
+		)
+	}
+	return nil
 }

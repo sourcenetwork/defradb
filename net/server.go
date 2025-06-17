@@ -37,6 +37,8 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/se"
+	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
 // server is the request/response instance for all P2P RPC communication.
@@ -185,6 +187,36 @@ func (s *server) getIdentityHandler(
 		return nil, err
 	}
 	return &getIdentityReply{IdentityToken: token}, nil
+}
+
+// pushSEArtifactsHandler receives SE artifacts from peers
+func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifactsRequest) (*pushSEArtifactsReply, error) {
+	pid, err := peerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log.InfoContext(ctx, "Received SE artifacts",
+		corelog.Any("PeerID", pid.String()),
+		corelog.Any("Creator", req.Creator),
+		corelog.Any("CollectionID", req.CollectionID),
+		corelog.Any("ArtifactCount", len(req.Artifacts)))
+
+	artifacts := make([]secore.Artifact, len(req.Artifacts))
+	for i, netArtifact := range req.Artifacts {
+		artifacts[i] = secore.Artifact{
+			DocID:     netArtifact.DocID,
+			IndexID:   netArtifact.IndexID,
+			SearchTag: netArtifact.SearchTag,
+		}
+	}
+
+	s.peer.bus.Publish(event.NewMessage(se.MergeEventName, se.MergeEvent{
+		Artifacts: artifacts,
+		FromPeer:  pid,
+	}))
+
+	return &pushSEArtifactsReply{}, nil
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network

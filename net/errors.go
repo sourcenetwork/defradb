@@ -27,6 +27,7 @@ const (
 	errTopicDoesNotExist        = "topic with name \"%s\" does not exists"
 	errFailedToGetIdentity      = "failed to get identity"
 	errReplicatorCollections    = "failed to get collections for replicator"
+	errPushSEArtifacts          = "failed to push SE artifacts"
 )
 
 var (
@@ -75,4 +76,8 @@ func NewErrFailedToGetIdentity(inner error, kv ...errors.KV) error {
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errReplicatorCollections, inner, kv...)
+}
+
+func NewErrPushSEArtifacts(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errPushSEArtifacts, inner, kv...)
 }

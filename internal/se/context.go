@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -34,6 +35,7 @@ type Context struct {
 	artifacts []secore.Artifact
 	doc       *client.Document
 	txn       datastore.Txn
+	eventBus  *event.Bus
 }
 
 // PrepareContextIfConfigured checks collection configuration and prepares SE context if needed
@@ -42,6 +44,7 @@ func PrepareContextIfConfigured(
 	col client.Collection,
 	doc *client.Document,
 	seKey []byte,
+	eventBus *event.Bus,
 ) (context.Context, error) {
 	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
 	if err != nil {
@@ -62,6 +65,7 @@ func PrepareContextIfConfigured(
 		artifacts: make([]secore.Artifact, 0),
 		doc:       doc,
 		txn:       txn,
+		eventBus:  eventBus,
 	}
 
 	seCtx.registerReplicationCallback()
@@ -76,6 +80,11 @@ func (c *Context) registerReplicationCallback() {
 			return
 		}
 
-		// c.db.QueueSEArtifacts(c.artifacts)
+		// Publish SE update event
+		c.eventBus.Publish(event.NewMessage(UpdateEventName, UpdateEvent{
+			DocID:        c.doc.ID().String(),
+			CollectionID: c.config.CollectionID,
+			Artifacts:    c.artifacts,
+		}))
 	})
 }

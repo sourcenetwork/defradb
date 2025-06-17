@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
@@ -90,6 +91,9 @@ type DB struct {
 
 	// The key used for searchable encryption.
 	searchableEncryptionKey []byte
+
+	// SE replication coordinator
+	seCoordinator *se.ReplicationCoordinator
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -149,6 +153,15 @@ func newDB(
 	err = db.initialize(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Initialize SE replication coordinator
+	if len(db.searchableEncryptionKey) > 0 {
+		coord, err := se.NewReplicationCoordinator(db)
+		if err != nil {
+			return nil, err
+		}
+		db.seCoordinator = coord
 	}
 
 	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
@@ -471,6 +484,10 @@ func (db *DB) Close() {
 		if err := db.documentACP.Value().Close(); err != nil {
 			log.ErrorE("Failure closing acp", err)
 		}
+	}
+
+	if db.seCoordinator != nil {
+		db.seCoordinator.Close()
 	}
 
 	log.Info("Successfully closed running process")

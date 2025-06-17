@@ -42,6 +42,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/net/config"
 )
@@ -51,6 +52,10 @@ var tracer = telemetry.NewTracer()
 // DB hold the database related methods that are required by Peer.
 type DB interface {
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
+	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
+	Blockstore() datastore.Blockstore
+	// GetCollections returns the list of collections according to the given options.
+	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// Rootstore returns the instance's root store.
@@ -159,7 +164,7 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName, se.UpdateEventName)
 		if err != nil {
 			return nil, err
 		}
@@ -301,6 +306,12 @@ func (p *Peer) handleMessageLoop() {
 		case event.P2PTopic:
 			p.server.updatePubSubTopics(evt)
 
+		case se.UpdateEvent:
+			err := p.handleSELog(evt)
+			if err != nil {
+				log.ErrorE("Error while handling SE log", err)
+			}
+
 		default:
 			// ignore other events
 			continue
@@ -364,6 +375,33 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 						err,
 						corelog.String("DocID", lg.DocID),
 						corelog.Any("CID", lg.Cid),
+						corelog.Any("PeerID", peerID))
+				}
+			}(pid)
+		}
+	}
+}
+
+func (p *Peer) handleSELog(evt se.UpdateEvent) error {
+	// Push to each replicator (similar to handleLog)
+	p.pushSEArtifactsToReplicators(evt)
+	return nil
+}
+
+func (p *Peer) pushSEArtifactsToReplicators(evt se.UpdateEvent) {
+	p.server.mu.Lock()
+	reps, exists := p.server.replicators[evt.CollectionID]
+	p.server.mu.Unlock()
+
+	if exists {
+		for pid := range reps {
+			go func(peerID peer.ID) {
+				if err := p.server.pushSEArtifacts(evt, peerID); err != nil {
+					log.ErrorE(
+						"Failed pushing SE artifacts",
+						err,
+						corelog.String("DocID", evt.DocID),
+						corelog.String("CollectionID", evt.CollectionID),
 						corelog.Any("PeerID", peerID))
 				}
 			}(pid)

@@ -32,6 +32,7 @@ type Artifact struct {
 	CollectionID string
 	FieldName    string
 	DocID        string
-	Tag          []byte
 	Operation    OperationType
+	IndexID      string
+	SearchTag    []byte
 }
