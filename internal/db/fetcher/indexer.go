@@ -162,7 +162,7 @@ func CanBeOrderedByIndex(
 	index client.IndexDescription,
 	mapping *core.DocumentMapping,
 ) (bool, bool) {
-	// if there is not ordering in the query or the query requests ordering on more fields, then index
+	// if there is no ordering in the query or the query requests ordering on more fields, then index
 	// contains, we can't use index
 	if len(ordering) == 0 || len(ordering) > len(index.Fields) {
 		return false, false
