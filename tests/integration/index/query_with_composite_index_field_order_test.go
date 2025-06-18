@@ -955,7 +955,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_S
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req),
+				Request: makeExplainQuery(req),
 				// Should fetch all entries with age > 25, then filter by name
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
