@@ -794,3 +794,260 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimization(t *testing.T) {
+	req := `
+		query {
+			User(filter: {age: {_gt: 25}}) {
+				name
+				age
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Description: "Test composite index with range query on first field",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(includes: [{field: "age"}, {field: "name"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	30
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Charlie",
+						"age":	25
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"David",
+						"age":	35
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Eve",
+						"age":	28
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Eve",
+							"age":  28,
+						},
+						{
+							"name": "Bob",
+							"age":  30,
+						},
+						{
+							"name": "David",
+							"age":  35,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_ShouldUseMatchers(t *testing.T) {
+	req := `
+		query {
+			User(filter: {age: {_gt: 25}, name: {_eq: "Bob"}}) {
+				name
+				age
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Description: "Test composite index with range query and additional filter",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(includes: [{field: "age"}, {field: "name"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	30
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Charlie",
+						"age":	25
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"David",
+						"age":	35
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Eve",
+						"age":	28
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	32
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  30,
+						},
+						{
+							"name": "Bob",
+							"age":  32,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				// Should fetch all entries with age > 25, then filter by name
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUseRangeOptimization(t *testing.T) {
+	req := `
+		query {
+			User(filter: {age: {_le: 30}}) {
+				name
+				age
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Description: "Test composite index with descending first field and range query",
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type User @index(includes: [{field: "age", direction: DESC}, {field: "name"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	30
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Charlie",
+						"age":	25
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"David",
+						"age":	35
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Eve",
+						"age":	28
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  30,
+						},
+						{
+							"name": "Eve",
+							"age":  28,
+						},
+						{
+							"name": "Charlie",
+							"age":  25,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

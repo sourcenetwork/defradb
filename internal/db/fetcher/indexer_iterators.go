@@ -687,8 +687,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 				return nil, err
 			}
 		}
-		// TODO: try to combine range ops with other ops, i.e. to get rid of len(fieldConditions) == 1
-	} else if f.isRangeCompatible(fieldConditions[0]) && len(fieldConditions) == 1 {
+	} else if f.isRangeCompatible(fieldConditions[0]) {
 		iter, err = f.newRangeIterator(fieldConditions[0])
 		if err != nil {
 			return nil, err
