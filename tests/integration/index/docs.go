@@ -10,10 +10,18 @@
 
 package index
 
-import "github.com/sourcenetwork/defradb/tests/predefined"
+import (
+	"strings"
+
+	"github.com/sourcenetwork/defradb/tests/predefined"
+)
 
 func makeExplainQuery(req string) string {
-	return "query @explain(type: execute) " + req[6:]
+	ind := strings.Index(req, "query")
+	if ind < 0 {
+		panic("Invalid query: " + req)
+	}
+	return "query @explain(type: execute) " + req[ind+5:]
 }
 
 func getUserDocs() predefined.DocsList {

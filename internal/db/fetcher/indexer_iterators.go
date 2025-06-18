@@ -502,9 +502,9 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
 }
 
-// incrementKey increments a key by appending bytes to create the next possible key boundary.
+// incrementKeyBytes increments a key by appending bytes to create the next possible key boundary.
 // This works because keys are compared lexicographically.
-func incrementKey(key []byte) []byte {
+func incrementKeyBytes(key []byte) []byte {
 	// For non-unique indexes, we need to account for the document ID that comes after the value
 	// Append multiple 0xFF bytes to ensure we include all documents with this value
 	return append(key, 0xFF, 0xFF, 0xFF, 0xFF)
@@ -527,33 +527,65 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 	endKey []byte,
 	err error,
 ) {
-	// Create base index key with collection and index ID
 	baseKey, err := f.newIndexDataStoreKey()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	switch cond.op {
-	case opGt:
-		// Start > value: Need to create key just after the value
-		valueKey := f.createKeyWithValue(baseKey, cond.val)
-		startKey = incrementKey(valueKey.Bytes())
-		endKey = incrementKey(baseKey.Bytes())
-	case opGe:
-		// Start >= value: Use value as-is
-		valueKey := f.createKeyWithValue(baseKey, cond.val)
-		startKey = valueKey.Bytes()
-		endKey = incrementKey(baseKey.Bytes())
-	case opLt:
-		// End < value: Use value as-is (End is exclusive)
-		startKey = baseKey.Bytes()
-		valueKey := f.createKeyWithValue(baseKey, cond.val)
-		endKey = valueKey.Bytes()
-	case opLe:
-		// End <= value: Need to include value, so increment it
-		startKey = baseKey.Bytes()
-		valueKey := f.createKeyWithValue(baseKey, cond.val)
-		endKey = incrementKey(valueKey.Bytes())
+	// For descending indexes, the value encoding is already reversed,
+	// so greater values come first in the index. We need to swap the
+	// start and end boundaries for descending indexes.
+	if descending {
+		switch cond.op {
+		case opGt:
+			// For descending index, we want values > X
+			// Since larger values come first, we start from the beginning
+			// and go until just before X
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = valueKey.Bytes() // Exclusive, so this works
+		case opGe:
+			// For descending index, we want values >= X
+			// Start from beginning and go until just after X
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = incrementKeyBytes(valueKey.Bytes())
+		case opLt:
+			// For descending index, we want values < X
+			// Start just after X and go to the end
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = incrementKeyBytes(valueKey.Bytes())
+			endKey = incrementKeyBytes(baseKey.Bytes())
+		case opLe:
+			// For descending index, we want values <= X
+			// Start from X and go to the end
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = valueKey.Bytes()
+			endKey = incrementKeyBytes(baseKey.Bytes())
+		}
+	} else {
+		switch cond.op {
+		case opGt:
+			// Start > value: Need to create key just after the value
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = incrementKeyBytes(valueKey.Bytes())
+			endKey = incrementKeyBytes(baseKey.Bytes())
+		case opGe:
+			// Start >= value: Use value as-is
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = valueKey.Bytes()
+			endKey = incrementKeyBytes(baseKey.Bytes())
+		case opLt:
+			// End < value: Use value as-is (End is exclusive)
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = valueKey.Bytes()
+		case opLe:
+			// End <= value: Need to include value, so increment it
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = incrementKeyBytes(valueKey.Bytes())
+		}
 	}
 
 	return startKey, endKey, nil
@@ -561,10 +593,6 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 
 // isRangeCompatible checks if a filter condition is compatible with range queries.
 func (f *indexFetcher) isRangeCompatible(cond fieldFilterCond) bool {
-	// TODO: Support descending indexes in range queries
-	if f.indexDesc.Fields[0].Descending {
-		return false
-	}
 
 	switch cond.op {
 	case opGt, opGe, opLt, opLe:
