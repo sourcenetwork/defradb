@@ -878,7 +878,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_ShouldUseMatchers(t *testing.T) {
+func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_ShouldUseRangeOptimization(t *testing.T) {
 	req := `
 		query {
 			User(filter: {age: {_gt: 25}, name: {_eq: "Bob"}}) {

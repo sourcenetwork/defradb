@@ -231,12 +231,11 @@ func (iter *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
-	inValues     []client.NormalValue
-	nextValIndex int
-	ctx          context.Context
-	store        datastore.DSReaderWriter
-	hasIterator  bool
-	// Store iterator creation info to recreate with different values
+	inValues        []client.NormalValue
+	nextValIndex    int
+	ctx             context.Context
+	store           datastore.DSReaderWriter
+	hasIterator     bool
 	fetcher         *indexFetcher
 	fieldConditions []fieldFilterCond
 	matchers        []valueMatcher
@@ -585,7 +584,6 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 
 // isRangeCompatible checks if a filter condition is compatible with range queries.
 func (f *indexFetcher) isRangeCompatible(cond fieldFilterCond) bool {
-
 	switch cond.op {
 	case opGt, opGe, opLt, opLe:
 		switch cond.kind {
