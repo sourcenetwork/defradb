@@ -36,7 +36,7 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multiaddr v0.15.0
 	github.com/multiformats/go-multibase v0.2.0
-	github.com/multiformats/go-multicodec v0.9.0
+	github.com/multiformats/go-multicodec v0.9.1
 	github.com/multiformats/go-multihash v0.2.3
 	github.com/multiformats/go-varint v0.0.7
 	github.com/onsi/gomega v1.37.0
