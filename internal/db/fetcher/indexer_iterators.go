@@ -501,8 +501,12 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 // incrementKeyBytes increments a key by appending bytes to create the next possible key boundary.
 // This works because keys are compared lexicographically.
 func incrementKeyBytes(key []byte) []byte {
-	// For non-unique indexes, we need to account for the document ID that comes after the value
-	// Append multiple 0xFF bytes to ensure we include all documents with this value
+	// For partial index keys (used in range queries), we need to create a boundary that's
+	// greater than any possible completion of this key, including:
+	// - Additional field values (for composite indexes)
+	// - The document ID that's always appended at the end for non-unique indexes
+	// Append multiple 0xFF bytes to ensure we're beyond any possible extension
+	// The specific number 4 is just a reasonable choice that ensures the boundary works reliably.
 	return append(key, 0xFF, 0xFF, 0xFF, 0xFF)
 }
 
