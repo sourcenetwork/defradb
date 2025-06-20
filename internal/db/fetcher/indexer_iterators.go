@@ -330,6 +330,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 	firstVal client.NormalValue,
 	fieldConditions []fieldFilterCond,
 ) (*eqSingleIndexIterator, error) {
+	// fieldConditions is always non-empty, so we can safely access the first element.
 	keyFieldValues := make([]client.NormalValue, len(fieldConditions))
 	keyFieldValues[0] = firstVal
 	for i := 1; i < len(fieldConditions); i++ {
@@ -522,7 +523,14 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 	endKey []byte,
 	err error,
 ) {
-	baseKey, err := f.newIndexDataStoreKey()
+	var baseKey keys.IndexDataStoreKey
+	if len(cond.jsonPath) > 0 {
+		jsonVal, _ := cond.val.JSON()
+		jsonPathVal := client.NewNormalJSON(client.MakeVoidJSON(jsonVal.GetPath()))
+		baseKey, err = f.newIndexDataStoreKeyWithValues([]client.NormalValue{jsonPathVal})
+	} else {
+		baseKey, err = f.newIndexDataStoreKey()
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -590,16 +598,7 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 func (f *indexFetcher) isRangeCompatible(cond fieldFilterCond) bool {
 	switch cond.op {
 	case opGt, opGe, opLt, opLe:
-		switch cond.kind {
-		case client.FieldKind_NILLABLE_INT,
-			client.FieldKind_NILLABLE_FLOAT32,
-			client.FieldKind_NILLABLE_FLOAT64,
-			client.FieldKind_NILLABLE_STRING,
-			client.FieldKind_NILLABLE_DATETIME:
-			return true
-		default:
-			return false
-		}
+		return true
 	}
 	return false
 }

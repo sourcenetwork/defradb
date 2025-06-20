@@ -114,7 +114,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(9),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
 		},
 	}
