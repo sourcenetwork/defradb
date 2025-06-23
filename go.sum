@@ -1859,8 +1859,8 @@ github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s
 github.com/sourcenetwork/corelog v0.0.8/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
-github.com/sourcenetwork/goji v0.0.6 h1:aK1OwaXOXS60LYgJMY8i9XpxtmNgA7GUuMcZPGaXLU8=
-github.com/sourcenetwork/goji v0.0.6/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
+github.com/sourcenetwork/goji v0.0.8 h1:6EqGFt18yJ/CxyiPUKZFbK3KFuzGJ5oLnTvFYObZj5k=
+github.com/sourcenetwork/goji v0.0.8/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a h1:wF7VhX0XKuNqhbbDI7RjoIBKFvdKQKucpZlNr/BGE40=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=

@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 )
 
-func (db *DB) handleMessages(ctx context.Context, sub *event.Subscription) {
+func (db *DB) handleMessages(ctx context.Context, sub event.Subscription) {
 	docIDQueue := newMergeQueue()
 	schemaRootQueue := newMergeQueue()
 

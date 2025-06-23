@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 )
 
-func waitForPeerInfo(db *DB, sub *event.Subscription) {
+func waitForPeerInfo(db *DB, sub event.Subscription) {
 	for msg := range sub.Message() {
 		if msg.Name == event.PeerInfoName {
 			hasPeerInfo := false

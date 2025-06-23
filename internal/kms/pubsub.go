@@ -51,8 +51,8 @@ type pubSubService struct {
 	ctx             context.Context
 	peerID          libpeer.ID
 	pubsub          PubSubServer
-	keyRequestedSub *event.Subscription
-	eventBus        *event.Bus
+	keyRequestedSub event.Subscription
+	eventBus        event.Bus
 	encStore        *ipldEncStorage
 	documentACP     immutable.Option[dac.DocumentACP]
 	colRetriever    CollectionRetriever
@@ -81,7 +81,7 @@ func NewPubSubService(
 	ctx context.Context,
 	peerID libpeer.ID,
 	pubsub PubSubServer,
-	eventBus *event.Bus,
+	eventBus event.Bus,
 	encstore datastore.Blockstore,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,

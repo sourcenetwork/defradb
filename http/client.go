@@ -515,7 +515,7 @@ func (c *Client) Headstore() corekv.Reader {
 	panic("client side database")
 }
 
-func (c *Client) Events() *event.Bus {
+func (c *Client) Events() event.Bus {
 	panic("client side database")
 }
 

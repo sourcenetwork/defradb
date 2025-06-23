@@ -408,7 +408,7 @@ func (w *Wrapper) Close() {
 	_ = w.node.Close(context.Background())
 }
 
-func (w *Wrapper) Events() *event.Bus {
+func (w *Wrapper) Events() event.Bus {
 	return w.node.DB.Events()
 }
 
