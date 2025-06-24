@@ -498,18 +498,6 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
 }
 
-// incrementKeyBytes increments a key by appending bytes to create the next possible key boundary.
-// This works because keys are compared lexicographically.
-func incrementKeyBytes(key []byte) []byte {
-	// For partial index keys (used in range queries), we need to create a boundary that's
-	// greater than any possible completion of this key, including:
-	// - Additional field values (for composite indexes)
-	// - The document ID that's always appended at the end for non-unique indexes
-	// Append multiple 0xFF bytes to ensure we're beyond any possible extension
-	// The specific number 4 is just a reasonable choice that ensures the boundary works reliably.
-	return append(key, 0xFF, 0xFF, 0xFF, 0xFF)
-}
-
 // createKeyWithValue creates an index key with the given value encoded.
 func (f *indexFetcher) createKeyWithValue(key keys.IndexDataStoreKey, val client.NormalValue) keys.IndexDataStoreKey {
 	key.Fields = []keys.IndexedField{
@@ -556,32 +544,32 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 			// Start from beginning and go until just after X
 			startKey = baseKey.Bytes()
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			endKey = incrementKeyBytes(valueKey.Bytes())
+			endKey = valueKey.PrefixEnd()
 		case opLt:
 			// For descending index, we want values < X
 			// Start just after X and go to the end
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			startKey = incrementKeyBytes(valueKey.Bytes())
-			endKey = incrementKeyBytes(baseKey.Bytes())
+			startKey = valueKey.PrefixEnd()
+			endKey = baseKey.PrefixEnd()
 		case opLe:
 			// For descending index, we want values <= X
 			// Start from X and go to the end
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
 			startKey = valueKey.Bytes()
-			endKey = incrementKeyBytes(baseKey.Bytes())
+			endKey = baseKey.PrefixEnd()
 		}
 	} else {
 		switch cond.op {
 		case opGt:
 			// Start > value: Need to create key just after the value
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			startKey = incrementKeyBytes(valueKey.Bytes())
-			endKey = incrementKeyBytes(baseKey.Bytes())
+			startKey = valueKey.PrefixEnd()
+			endKey = baseKey.PrefixEnd()
 		case opGe:
 			// Start >= value: Use value as-is
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
 			startKey = valueKey.Bytes()
-			endKey = incrementKeyBytes(baseKey.Bytes())
+			endKey = baseKey.PrefixEnd()
 		case opLt:
 			// End < value: Use value as-is (End is exclusive)
 			startKey = baseKey.Bytes()
@@ -591,7 +579,7 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 			// End <= value: Need to include value, so increment it
 			startKey = baseKey.Bytes()
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			endKey = incrementKeyBytes(valueKey.Bytes())
+			endKey = valueKey.PrefixEnd()
 		}
 	}
 

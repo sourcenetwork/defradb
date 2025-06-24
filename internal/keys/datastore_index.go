@@ -189,3 +189,10 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 
 	return b
 }
+
+// PrefixEnd returns a key that would sort immediately after all keys with this prefix.
+// It returns a key such that all keys with the prefix are >= k and < k.PrefixEnd().
+// This is implemented by encoding the key to bytes and incrementing it.
+func (k IndexDataStoreKey) PrefixEnd() []byte {
+	return bytesPrefixEnd(k.Bytes())
+}
