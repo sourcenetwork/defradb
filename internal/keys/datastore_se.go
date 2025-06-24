@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
@@ -64,4 +65,37 @@ func (k DatastoreSE) ToString() string {
 
 func (k DatastoreSE) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
+}
+
+// NewDatastoreSEFromString creates a DatastoreSE from a key string
+func NewDatastoreSEFromString(key string) (DatastoreSE, error) {
+	parts := strings.Split(key, "/")
+	// Expected format: /se/<collectionID>/<indexID>/<searchTag>/<docID>
+	if len(parts) < 2 || parts[1] != "se" {
+		return DatastoreSE{}, errors.New("invalid SE key format")
+	}
+
+	k := DatastoreSE{}
+	
+	if len(parts) > 2 {
+		k.CollectionID = parts[2]
+	}
+	
+	if len(parts) > 3 {
+		k.IndexID = parts[3]
+	}
+	
+	if len(parts) > 4 {
+		searchTag, err := hex.DecodeString(parts[4])
+		if err != nil {
+			return DatastoreSE{}, errors.Wrap("failed to decode search tag", err)
+		}
+		k.SearchTag = searchTag
+	}
+	
+	if len(parts) > 5 {
+		k.DocID = parts[5]
+	}
+	
+	return k, nil
 }

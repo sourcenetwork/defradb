@@ -19,9 +19,10 @@ import (
 const (
 	grpcServiceName = "defradb.net.Service"
 
-	servicePushLogName         = "/" + grpcServiceName + "/PushLog"
-	serviceGetIdentityName     = "/" + grpcServiceName + "/GetIdentity"
-	servicePushSEArtifactsName = "/" + grpcServiceName + "/PushSEArtifacts"
+	servicePushLogName           = "/" + grpcServiceName + "/PushLog"
+	serviceGetIdentityName       = "/" + grpcServiceName + "/GetIdentity"
+	servicePushSEArtifactsName   = "/" + grpcServiceName + "/PushSEArtifacts"
+	serviceQuerySEArtifactsName  = "/" + grpcServiceName + "/QuerySEArtifacts"
 )
 
 type pushLogRequest struct {
@@ -62,6 +63,24 @@ type seArtifact struct {
 // Reply type
 type pushSEArtifactsReply struct{}
 
+// querySEArtifactsRequest - Request to query SE artifacts
+type querySEArtifactsRequest struct {
+	CollectionID string
+	Queries      []seFieldQuery
+}
+
+// seFieldQuery - Query for a specific field
+type seFieldQuery struct {
+	FieldName string
+	IndexID   string
+	SearchTag []byte
+}
+
+// querySEArtifactsReply - Reply with matching document IDs
+type querySEArtifactsReply struct {
+	DocIDs []string
+}
+
 type serviceServer interface {
 	// pushLogHandler handles a push log request to sync blocks.
 	pushLogHandler(context.Context, *pushLogRequest) (*pushLogReply, error)
@@ -69,6 +88,8 @@ type serviceServer interface {
 	getIdentityHandler(context.Context, *getIdentityRequest) (*getIdentityReply, error)
 	// pushSEArtifactsHandler handles SE artifacts push request.
 	pushSEArtifactsHandler(context.Context, *pushSEArtifactsRequest) (*pushSEArtifactsReply, error)
+	// querySEArtifactsHandler handles SE artifacts query request.
+	querySEArtifactsHandler(context.Context, *querySEArtifactsRequest) (*querySEArtifactsReply, error)
 }
 
 func getIdentityHandler(
@@ -140,6 +161,29 @@ func pushSEArtifactsHandler(
 	return interceptor(ctx, in, info, handler)
 }
 
+func querySEArtifactsHandler(
+	srv any,
+	ctx context.Context,
+	dec func(any) error,
+	interceptor grpc.UnaryServerInterceptor,
+) (any, error) {
+	in := new(querySEArtifactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(serviceServer).querySEArtifactsHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: serviceQuerySEArtifactsName,
+	}
+	handler := func(ctx context.Context, req any) (any, error) {
+		return srv.(serviceServer).querySEArtifactsHandler(ctx, req.(*querySEArtifactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func registerServiceServer(s grpc.ServiceRegistrar, srv serviceServer) {
 	desc := &grpc.ServiceDesc{
 		ServiceName: grpcServiceName,
@@ -156,6 +200,10 @@ func registerServiceServer(s grpc.ServiceRegistrar, srv serviceServer) {
 			{
 				MethodName: "PushSEArtifacts",
 				Handler:    pushSEArtifactsHandler,
+			},
+			{
+				MethodName: "QuerySEArtifacts",
+				Handler:    querySEArtifactsHandler,
 			},
 		},
 		Streams:  []grpc.StreamDesc{},

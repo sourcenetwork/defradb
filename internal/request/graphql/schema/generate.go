@@ -118,6 +118,11 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 		generatedQueryFields = append(generatedQueryFields, f)
 
+		encryptedField, err := g.GenerateEncryptedQueryInputForGQLType(ctx, t, collections)
+		if err != nil {
+			return nil, err
+		}
+
 		var isEmbedded bool
 		for _, definition := range collections {
 			if t.Name() == definition.Schema.Name && definition.Version.IsEmbeddedOnly {
@@ -135,6 +140,11 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		queryType.AddFieldConfig(f.Name, f)
 		subscriptionType.AddFieldConfig(f.Name, f)
+
+		if encryptedField != nil {
+			queryType.AddFieldConfig(encryptedField.Name, encryptedField)
+			// Note: subscriptions are not supported for encrypted queries
+		}
 	}
 
 	// resolve types
@@ -1121,6 +1131,43 @@ func (g *Generator) GenerateQueryInputForGQLType(
 	return queryField, nil
 }
 
+// GenerateEncryptedQueryInputForGQLType generates the encrypted query field
+// for collections that have encrypted indexes
+func (g *Generator) GenerateEncryptedQueryInputForGQLType(
+	ctx context.Context,
+	obj *gql.Object,
+	collections []client.CollectionDefinition,
+) (*gql.Field, error) {
+	var collection *client.CollectionDefinition
+	for _, col := range collections {
+		if col.Version.Name == obj.Name() {
+			collection = &col
+			break
+		}
+	}
+
+	if collection == nil || len(collection.Version.EncryptedIndexes) == 0 {
+		return nil, nil
+	}
+
+	filterName := obj.Name() + "EncryptedFilterArg"
+	filterInput := g.genEncryptedFilterArgInput(obj, collection.Version.EncryptedIndexes)
+	g.manager.schema.TypeMap()[filterName] = filterInput
+
+	field := &gql.Field{
+		Name:        obj.Name() + "_encrypted",
+		Description: "Query encrypted fields for " + obj.Name(),
+		Type:        gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			"filter":             schemaTypes.NewArgConfig(filterInput, "Filter encrypted fields"),
+			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),
+			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.OffsetArgDescription),
+		},
+	}
+
+	return field, nil
+}
+
 // GenerateMutationInputForGQLType creates all the mutation types and fields
 // for the given graphQL object. It assumes that all the various
 // filterArgs for the given type already exists, and will error otherwise.
@@ -1477,6 +1524,46 @@ func genFilterOperatorName(fieldType gql.Type) string {
 	default:
 		return fieldType.Name() + "OperatorBlock"
 	}
+}
+
+// genEncryptedFilterArgInput generates filter input that only supports _eq on encrypted fields
+func (g *Generator) genEncryptedFilterArgInput(
+	obj *gql.Object,
+	encryptedIndexes []client.EncryptedIndexDescription,
+) *gql.InputObject {
+	inputCfg := gql.InputObjectConfig{
+		Name: obj.Name() + "EncryptedFilterArg",
+	}
+
+	// Build fields directly instead of using a thunk
+	fields := gql.InputObjectConfigFieldMap{}
+
+	for _, encIdx := range encryptedIndexes {
+		// For encrypted fields, we only support string type for now
+		// This is a simplification - in reality we'd need to map from FieldKind to gql.Type
+		fieldType := gql.String
+
+		// Create a simple _eq only operator block for this encrypted field
+		eqOnlyInputCfg := gql.InputObjectConfig{
+			Name: obj.Name() + "_" + encIdx.FieldName + "_EqOnlyOperatorBlock",
+		}
+
+		eqOnlyInputCfg.Fields = gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Type: fieldType,
+			},
+		}
+
+		eqOnlyInput := gql.NewInputObject(eqOnlyInputCfg)
+		g.manager.schema.TypeMap()[eqOnlyInput.Name()] = eqOnlyInput
+
+		fields[encIdx.FieldName] = &gql.InputObjectFieldConfig{
+			Type: eqOnlyInput,
+		}
+	}
+
+	inputCfg.Fields = fields
+	return gql.NewInputObject(inputCfg)
 }
 
 /* Example

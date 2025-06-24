@@ -379,7 +379,7 @@ When an `event.Update` occurs:
 
 When a peer receives an update, it follows this process:
 ```go
-func (s *server) handlePushLogRequest(req *pushLogRequest) error {
+func (s *server) pushLogHandler(req *pushLogRequest) error {
     // 1. Network validation and decoding
     block := decodeBlock(req.Data)
     

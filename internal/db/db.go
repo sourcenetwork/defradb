@@ -519,3 +519,7 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 
 	return iter.Close()
 }
+
+func (db *DB) GetSearchableEncryptionKey() []byte {
+	return db.searchableEncryptionKey
+}

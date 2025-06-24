@@ -90,8 +90,7 @@ type Planner struct {
 	identity    immutable.Option[acpIdentity.Identity]
 	documentACP immutable.Option[dac.DocumentACP]
 	db          client.TxnStore
-
-	ctx context.Context
+	ctx         context.Context
 }
 
 func New(

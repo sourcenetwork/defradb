@@ -54,6 +54,8 @@ type DB interface {
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	Blockstore() datastore.Blockstore
+	// Datastore returns the datastore, which holds artifacts like SE search tags.
+	Datastore() datastore.DSReaderWriter
 	// GetCollections returns the list of collections according to the given options.
 	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
@@ -164,7 +166,13 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName, se.UpdateEventName)
+		p.updateSub, err = p.bus.Subscribe(
+			event.UpdateName,
+			event.P2PTopicName,
+			event.ReplicatorName,
+			se.ReplicateEventName,
+			se.QuerySEArtifactsEventName,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -312,6 +320,9 @@ func (p *Peer) handleMessageLoop() {
 				log.ErrorE("Error while handling SE log", err)
 			}
 
+		case se.QuerySEArtifactsRequest:
+			go p.handleSEQuery(evt)
+
 		default:
 			// ignore other events
 			continue
@@ -383,9 +394,66 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 }
 
 func (p *Peer) handleSELog(evt se.ReplicateEvent) error {
-	// Push to each replicator (similar to handleLog)
 	p.pushSEArtifactsToReplicators(evt)
 	return nil
+}
+
+func (p *Peer) handleSEQuery(req se.QuerySEArtifactsRequest) {
+	p.server.mu.Lock()
+	reps, exists := p.server.replicators[req.CollectionID]
+	p.server.mu.Unlock()
+
+	if !exists || len(reps) == 0 {
+		req.Response <- se.QuerySEArtifactsResponse{
+			DocIDs: []string{},
+			Error:  nil,
+		}
+		return
+	}
+
+	grpcQueries := make([]seFieldQuery, len(req.Queries))
+	for i, q := range req.Queries {
+		grpcQueries[i] = seFieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	grpcReq := querySEArtifactsRequest{
+		CollectionID: req.CollectionID,
+		Queries:      grpcQueries,
+	}
+
+	docIDSet := make(map[string]struct{})
+	var queryErr error
+
+	for pid := range reps {
+		reply, err := p.server.querySEArtifacts(p.ctx, pid, grpcReq)
+		if err != nil {
+			log.ErrorE(
+				"Failed querying SE artifacts from replicator",
+				err,
+				corelog.String("CollectionID", req.CollectionID),
+				corelog.Any("PeerID", pid))
+			queryErr = err
+			continue
+		}
+
+		for _, docID := range reply.DocIDs {
+			docIDSet[docID] = struct{}{}
+		}
+	}
+
+	docIDs := make([]string, 0, len(docIDSet))
+	for docID := range docIDSet {
+		docIDs = append(docIDs, docID)
+	}
+
+	req.Response <- se.QuerySEArtifactsResponse{
+		DocIDs: docIDs,
+		Error:  queryErr,
+	}
 }
 
 func (p *Peer) pushSEArtifactsToReplicators(evt se.ReplicateEvent) {

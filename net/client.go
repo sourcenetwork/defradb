@@ -152,3 +152,24 @@ func (s *server) pushSEArtifacts(evt se.ReplicateEvent, pid peer.ID) (err error)
 	}
 	return nil
 }
+
+// querySEArtifacts queries SE artifacts on a remote node
+func (s *server) querySEArtifacts(ctx context.Context, pid peer.ID, req querySEArtifactsRequest) (*querySEArtifactsReply, error) {
+	client, err := s.dial(pid)
+	if err != nil {
+		return nil, NewErrQuerySEArtifacts(err)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, PullTimeout)
+	defer cancel()
+
+	resp := &querySEArtifactsReply{}
+	if err := client.Invoke(ctx, serviceQuerySEArtifactsName, req, resp); err != nil {
+		return nil, NewErrQuerySEArtifacts(err,
+			errors.NewKV("CollectionID", req.CollectionID),
+			errors.NewKV("PeerID", pid),
+		)
+	}
+
+	return resp, nil
+}

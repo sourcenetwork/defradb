@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"strings"
+
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -90,11 +92,18 @@ func parseSelect(
 	parent *gql.Object,
 	field *ast.Field,
 ) (*request.Select, error) {
+	isEncrypted := strings.HasSuffix(field.Name.Value, "_encrypted")
+	fieldName := field.Name.Value
+	if isEncrypted {
+		fieldName = strings.TrimSuffix(fieldName, "_encrypted")
+	}
+
 	slct := &request.Select{
 		Field: request.Field{
-			Name:  field.Name.Value,
+			Name:  fieldName,
 			Alias: getFieldAlias(field),
 		},
+		IsEncrypted: isEncrypted,
 	}
 
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)

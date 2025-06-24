@@ -582,3 +582,7 @@ func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
+
+func (w *Wrapper) GetSearchableEncryptionKey() []byte {
+	return w.node.DB.GetSearchableEncryptionKey()
+}

@@ -28,6 +28,7 @@ const (
 	errFailedToGetIdentity      = "failed to get identity"
 	errReplicatorCollections    = "failed to get collections for replicator"
 	errPushSEArtifacts          = "failed to push SE artifacts"
+	errQuerySEArtifacts         = "failed to query SE artifacts"
 )
 
 var (
@@ -80,4 +81,8 @@ func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
 
 func NewErrPushSEArtifacts(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errPushSEArtifacts, inner, kv...)
+}
+
+func NewErrQuerySEArtifacts(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errQuerySEArtifacts, inner, kv...)
 }

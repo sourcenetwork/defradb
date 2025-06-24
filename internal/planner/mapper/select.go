@@ -43,6 +43,10 @@ type Select struct {
 	// i.e. it's value doesn't need to be fetched and provided to the user.
 	// It is used to avoid resolving related objects if they are used only in a filter and not requested in a response.
 	SkipResolve bool
+	
+	// IsEncrypted indicates that this is an encrypted query that should
+	// use searchable encryption to query remote nodes.
+	IsEncrypted bool
 }
 
 func (s *Select) AsTargetable() (*Targetable, bool) {
@@ -64,6 +68,8 @@ func (s *Select) cloneTo(index int) *Select {
 		Cid:             s.Cid,
 		CollectionName:  s.CollectionName,
 		Fields:          s.Fields,
+		SkipResolve:     s.SkipResolve,
+		IsEncrypted:     s.IsEncrypted,
 	}
 }
 

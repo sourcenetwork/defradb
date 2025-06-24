@@ -579,8 +579,40 @@ func (p *Planner) SelectFromSource(
 	return top, nil
 }
 
+// SelectEncrypted constructs a plan for searchable encryption queries
+func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
+	col, err := p.db.GetCollectionByName(p.ctx, selectReq.CollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedIndexes, err := col.GetEncryptedIndexes(p.ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(encryptedIndexes) == 0 {
+		return nil, client.NewErrUninitializeProperty("SelectEncrypted", "collection has no encrypted indexes")
+	}
+
+	seScan := &seScanNode{
+		p:                p,
+		collection:       col,
+		collectionID:     col.Version().CollectionID,
+		filter:           selectReq.Filter,
+		encryptedIndexes: encryptedIndexes,
+		docMapper:        docMapper{selectReq.DocumentMapping},
+	}
+
+	// TODO: wrap it in a selectTopNode to support limit, order, etc.
+	return seScan, nil
+}
+
 // Select constructs a SelectPlan
 func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
+	if selectReq.IsEncrypted {
+		return p.SelectEncrypted(selectReq)
+	}
+
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,

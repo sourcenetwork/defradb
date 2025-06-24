@@ -205,18 +205,56 @@ func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifact
 	artifacts := make([]secore.Artifact, len(req.Artifacts))
 	for i, netArtifact := range req.Artifacts {
 		artifacts[i] = secore.Artifact{
-			DocID:     netArtifact.DocID,
-			IndexID:   netArtifact.IndexID,
-			SearchTag: netArtifact.SearchTag,
+			DocID:        netArtifact.DocID,
+			IndexID:      netArtifact.IndexID,
+			SearchTag:    netArtifact.SearchTag,
+			CollectionID: req.CollectionID,
 		}
 	}
 
-	s.peer.bus.Publish(event.NewMessage(se.StoreArtifactsEventName, se.StoreArtifactsEvent{
-		Artifacts: artifacts,
-		FromPeer:  pid,
-	}))
+	// Store artifacts directly in the datastore
+	if err := se.StoreArtifacts(ctx, s.peer.db.Datastore(), artifacts); err != nil {
+		log.ErrorContextE(ctx, "Failed to store SE artifacts", err)
+		return nil, err
+	}
 
 	return &pushSEArtifactsReply{}, nil
+}
+
+// querySEArtifactsHandler handles SE queries from peers
+func (s *server) querySEArtifactsHandler(ctx context.Context, req *querySEArtifactsRequest) (*querySEArtifactsReply, error) {
+	pid, err := peerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log.InfoContext(ctx, "Received SE query",
+		corelog.Any("PeerID", pid.String()),
+		corelog.Any("CollectionID", req.CollectionID),
+		corelog.Any("QueryCount", len(req.Queries)))
+
+	matchingDocIDs, err := s.querySEArtifactsFromDatastore(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &querySEArtifactsReply{
+		DocIDs: matchingDocIDs,
+	}, nil
+}
+
+// querySEArtifactsFromDatastore queries SE artifacts from the local datastore
+func (s *server) querySEArtifactsFromDatastore(ctx context.Context, req *querySEArtifactsRequest) ([]string, error) {
+	queries := make([]se.FieldQuery, len(req.Queries))
+	for i, q := range req.Queries {
+		queries[i] = se.FieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	return se.FetchDocIDs(ctx, s.peer.db.Datastore(), req.CollectionID, queries)
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network

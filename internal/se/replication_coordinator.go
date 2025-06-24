@@ -13,7 +13,6 @@ package se
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -28,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -47,7 +45,6 @@ var log = corelog.NewLogger("defra.se.replication")
 type ReplicationCoordinator struct {
 	db             DB
 	eventBus       *event.Bus
-	mergeSub       *event.Subscription
 	failureSub     *event.Subscription
 	updateSub      *event.Subscription
 	retryIntervals []time.Duration
@@ -82,12 +79,6 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 		encKey:         encKey,
 	}
 
-	sub, err := db.Events().Subscribe(StoreArtifactsEventName)
-	if err != nil {
-		return nil, err
-	}
-	rc.mergeSub = sub
-
 	failureSub, err := db.Events().Subscribe(ReplicationFailureEventName)
 	if err != nil {
 		return nil, err
@@ -100,7 +91,6 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 	}
 	rc.updateSub = updateSub
 
-	go rc.processMergeEvents()
 	go rc.processFailureEvents()
 	go rc.processUpdateEvents()
 
@@ -110,7 +100,6 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 }
 
 func (rc *ReplicationCoordinator) Close() {
-	rc.eventBus.Unsubscribe(rc.mergeSub)
 	rc.eventBus.Unsubscribe(rc.failureSub)
 	rc.eventBus.Unsubscribe(rc.updateSub)
 }
@@ -123,22 +112,6 @@ func defaultRetryIntervals(maxRetries int) []time.Duration {
 		intervals[i] = time.Second * time.Duration(2<<i)
 	}
 	return intervals
-}
-
-// processMergeEvents handles incoming SE artifacts from peers
-func (rc *ReplicationCoordinator) processMergeEvents() {
-	for {
-		msg, isOpen := <-rc.mergeSub.Message()
-		if !isOpen {
-			return
-		}
-
-		if evt, ok := msg.Data.(StoreArtifactsEvent); ok {
-			if err := rc.storeSEArtifacts(context.Background(), evt.Artifacts); err != nil {
-				log.ErrorE("Failed to store SE artifacts", err)
-			}
-		}
-	}
 }
 
 // processFailureEvents handles replication failures
@@ -224,7 +197,7 @@ func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt eve
 	}
 
 	if len(artifacts) > 0 {
-		rc.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
+		rc.eventBus.Publish(event.NewMessage(ReplicateEventName, ReplicateEvent{
 			DocID:        evt.DocID,
 			CollectionID: evt.CollectionID,
 			Artifacts:    artifacts,
@@ -330,7 +303,7 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 		return
 	}
 
-	rc.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
+	rc.eventBus.Publish(event.NewMessage(ReplicateEventName, ReplicateEvent{
 		DocID:        retryInfo.DocID,
 		CollectionID: retryInfo.CollectionID,
 		Artifacts:    artifacts,
@@ -374,31 +347,6 @@ func (rc *ReplicationCoordinator) updateRetryStatus(ctx context.Context, peerID 
 			log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 		}
 	}
-}
-
-// storeSEArtifacts stores artifacts in datastore
-//
-// This stores SE artifacts on the replicator node to enable encrypted search queries.
-// The artifacts contain only the encrypted search tags and document IDs - no actual
-// field values or encryption keys are stored.
-func (rc *ReplicationCoordinator) storeSEArtifacts(ctx context.Context, artifacts []secore.Artifact) error {
-	ds := rc.db.Datastore()
-
-	for _, artifact := range artifacts {
-		key := keys.DatastoreSE{
-			CollectionID: artifact.CollectionID,
-			IndexID:      artifact.IndexID,
-			SearchTag:    artifact.SearchTag,
-			DocID:        artifact.DocID,
-		}
-
-		// Store empty value - we only need the key for search lookups
-		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // DeleteSEArtifacts removes SE artifacts from the datastore.
@@ -452,11 +400,8 @@ func (rc *ReplicationCoordinator) DeleteSEArtifacts(ctx context.Context, collect
 
 // generateSEArtifacts regenerates SE artifacts for specified fields
 //
-// This method uses the provided regenerator function to recreate artifacts
-// needed for retry. The regenerator is provided by the DB layer which has
-// access to transactions, collections, and SE keys.
-// generateSEArtifacts creates a function that can regenerate SE artifacts for a document.
-// This function is provided to the SE ReplicationCoordinator to use during retry.
+// This method uses the extracted GenerateArtifacts function to recreate artifacts
+// needed for retry.
 func (rc *ReplicationCoordinator) generateSEArtifacts(
 	ctx context.Context,
 	docID, collectionID string,
@@ -473,15 +418,6 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 	}
 
 	col := cols[0]
-	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get encrypted indexes: %w", err)
-	}
-
-	if len(encryptedIndexes) == 0 {
-		return nil, nil
-	}
-
 	docIDType, err := client.NewDocIDFromString(docID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid document ID: %w", err)
@@ -496,60 +432,5 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 		return nil, fmt.Errorf("failed to get document: %w", err)
 	}
 
-	var artifacts []secore.Artifact
-	for _, encIdx := range encryptedIndexes {
-		if !slices.Contains(fieldNames, encIdx.FieldName) {
-			continue
-		}
-
-		fieldValue, err := doc.GetValue(encIdx.FieldName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get field value: %w", err)
-		}
-
-		normalValue := fieldValue.NormalValue()
-
-		valueBytes := encoding.EncodeFieldValue(nil, normalValue, false)
-
-		var tag []byte
-		switch encIdx.Type {
-		case client.EncryptedIndexTypeEquality:
-			tag, err = secore.GenerateEqualityTag(
-				rc.encKey,
-				collectionID,
-				encIdx.FieldName,
-				valueBytes,
-			)
-		default:
-			log.ErrorContext(ctx, "Unsupported encrypted index type",
-				corelog.String("Type", string(encIdx.Type)))
-			continue
-		}
-
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to generate search tag", err)
-			continue
-		}
-
-		artifact := secore.Artifact{
-			Type:         secore.ArtifactTypeEqualityTag,
-			CollectionID: collectionID,
-			FieldName:    encIdx.FieldName,
-			DocID:        docID,
-			Operation:    secore.OperationAdd,
-			IndexID:      encIdx.FieldName,
-			SearchTag:    tag,
-		}
-		artifacts = append(artifacts, artifact)
-	}
-
-	if len(artifacts) > 0 {
-		rc.eventBus.Publish(event.NewMessage(UpdateEventName, ReplicateEvent{
-			DocID:        docID,
-			CollectionID: collectionID,
-			Artifacts:    artifacts,
-		}))
-	}
-
-	return artifacts, nil
+	return GenerateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
 }

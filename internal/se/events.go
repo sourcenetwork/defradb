@@ -12,14 +12,15 @@ package se
 
 import (
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/defradb/event"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
 // Event names for the event bus
 const (
-	UpdateEventName             = "se-update"
-	StoreArtifactsEventName     = "se-store-artifacts"
+	ReplicateEventName          = "se-replicate"
 	ReplicationFailureEventName = "se-replication-failure"
+	QuerySEArtifactsEventName   = "se-query-artifacts"
 )
 
 // ReplicateEvent - Published when SE artifacts need replication
@@ -31,16 +32,34 @@ type ReplicateEvent struct {
 	Success      chan bool // Used for synchronous retry feedback
 }
 
-// StoreArtifactsEvent - Published when receiving SE artifacts from peers
-type StoreArtifactsEvent struct {
-	Artifacts []secore.Artifact
-	FromPeer  peer.ID
-}
-
 // ReplicationFailureEvent - Published when artifact replication fails
 type ReplicationFailureEvent struct {
 	DocID        string
 	CollectionID string
 	PeerID       peer.ID
 	FieldNames   []string
+}
+
+// QuerySEArtifactsRequest - Request to query SE artifacts from replicators
+type QuerySEArtifactsRequest struct {
+	CollectionID string
+	Queries      []FieldQuery
+	Response     chan QuerySEArtifactsResponse
+}
+
+// QuerySEArtifactsResponse - Response containing matching document IDs
+type QuerySEArtifactsResponse struct {
+	DocIDs []string
+	Error  error
+}
+
+// NewQuerySEArtifactsMessage creates a new SE query message with response channel
+func NewQuerySEArtifactsMessage(collectionID string, queries []FieldQuery) (event.Message, chan QuerySEArtifactsResponse) {
+	response := make(chan QuerySEArtifactsResponse, 1)
+	request := QuerySEArtifactsRequest{
+		CollectionID: collectionID,
+		Queries:      queries,
+		Response:     response,
+	}
+	return event.NewMessage(QuerySEArtifactsEventName, request), response
 }
