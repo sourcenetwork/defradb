@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,10 +11,13 @@
 package event
 
 import (
-	"github.com/sourcenetwork/defradb/errors"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
-var (
-	ErrSubscribedToClosedChan = errors.New("cannot subscribe to a closed channel")
-	ErrWildcardNotSupported   = errors.New("wildcard subscriptions are not supported")
-)
+func TestChannelBus(t *testing.T) {
+	suite.Run(t, NewBusTestSuite(func(buffer int) Bus {
+		return NewChannelBus(0, buffer)
+	}))
+}

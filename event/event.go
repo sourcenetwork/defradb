@@ -15,6 +15,27 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// Bus handles routing and publishing of messages to subscribers.
+type Bus interface {
+	// Publish broadcasts the given message to the bus subscribers. Non-blocking.
+	Publish(msg Message)
+	// Subscribe returns a new subscription that will receive all of the events
+	// contained in the given list of events.
+	Subscribe(events ...Name) (Subscription, error)
+	// Unsubscribe removes all event subscriptions and closes the subscription.
+	//
+	// Will do nothing if this object is already closed.
+	Unsubscribe(sub Subscription)
+	// Close unsubscribes all active subscribers and closes the bus.
+	Close()
+}
+
+// Subscription receives subscribed messages until closed.
+type Subscription interface {
+	// Message returns the message channel for the subscription.
+	Message() <-chan Message
+}
+
 // Name identifies an event
 type Name string
 
@@ -117,18 +138,6 @@ type Message struct {
 // NewMessage returns a new message with the given name and optional data.
 func NewMessage(name Name, data any) Message {
 	return Message{name, data}
-}
-
-// Subscription is a read-only event stream.
-type Subscription struct {
-	id     uint64
-	value  chan Message
-	events []Name
-}
-
-// Message returns the next event value from the subscription.
-func (s *Subscription) Message() <-chan Message {
-	return s.value
 }
 
 // P2PTopic is an event that is published when a peer has updated the topics it is subscribed to.

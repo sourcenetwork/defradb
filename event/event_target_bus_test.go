@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,13 +8,21 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build js
+
 package event
 
 import (
-	"github.com/sourcenetwork/defradb/errors"
+	"syscall/js"
+	"testing"
+
+	"github.com/sourcenetwork/goji"
+	"github.com/stretchr/testify/suite"
 )
 
-var (
-	ErrSubscribedToClosedChan = errors.New("cannot subscribe to a closed channel")
-	ErrWildcardNotSupported   = errors.New("wildcard subscriptions are not supported")
-)
+func TestEventTargetBus(t *testing.T) {
+	suite.Run(t, NewBusTestSuite(func(buffer int) Bus {
+		value := goji.EventTarget.New()
+		return NewEventTargetBus(js.Value(value), buffer)
+	}))
+}
