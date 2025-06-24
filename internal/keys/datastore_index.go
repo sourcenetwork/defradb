@@ -116,6 +116,10 @@ func DecodeIndexDataStoreKey(
 
 	key := IndexDataStoreKey{CollectionShortID: uint32(colID)}
 
+	if len(data) == 0 {
+		return key, nil
+	}
+
 	if data[0] != '/' {
 		return IndexDataStoreKey{}, ErrInvalidKey
 	}
