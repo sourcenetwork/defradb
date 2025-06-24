@@ -61,6 +61,8 @@ type channelBus struct {
 // NewChannelBus creates a new event bus with the given commandBufferSize and
 // eventBufferSize.
 //
+// This bus is meant for use in environments that benefit from go routine concurrency.
+//
 // Should the buffers be filled, subsequent calls on this bus will block.
 func NewChannelBus(commandBufferSize int, eventBufferSize int) Bus {
 	bus := channelBus{
@@ -115,7 +117,7 @@ func (b *channelBus) Unsubscribe(sub Subscription) {
 	}
 	s, ok := sub.(*channelSub)
 	if !ok {
-		return
+		panic("failed to unsubscribe: invalid subscription type")
 	}
 	b.commandChannel <- unsubscribeCommand(s)
 }

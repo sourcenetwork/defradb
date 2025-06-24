@@ -15,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// Bus handles routing and publishing of messages to subscribers.
 type Bus interface {
 	// Publish broadcasts the given message to the bus subscribers. Non-blocking.
 	Publish(msg Message)
@@ -29,6 +30,7 @@ type Bus interface {
 	Close()
 }
 
+// Subscription receives subscribed messages until closed.
 type Subscription interface {
 	// Message returns the message channel for the subscription.
 	Message() <-chan Message

@@ -42,7 +42,11 @@ type eventTargetBus struct {
 	closeMutex   sync.Mutex
 }
 
-// NewEventTargetBus creates a new bus from the given event target value.
+// NewEventTargetBus creates a new bus from the given JavaScript EventTarget.
+//
+// This bus is meant for use in JavaScript enviroments (browser and NodeJS).
+//
+// Messages are serialized to JSON before being unserialized to a js.Value.
 func NewEventTargetBus(value js.Value, bufferSize uint) Bus {
 	return &eventTargetBus{
 		target:      goji.EventTargetValue(value),
@@ -88,9 +92,10 @@ func (b *eventTargetBus) Unsubscribe(sub Subscription) {
 	defer b.closeMutex.Unlock()
 
 	s, ok := sub.(*eventTargetSub)
-	if ok {
-		b.unsubscribe(s)
+	if !ok {
+		panic("failed to unsubscribe: invalid subscription type")
 	}
+	b.unsubscribe(s)
 }
 
 func (b *eventTargetBus) unsubscribe(sub *eventTargetSub) {
@@ -116,6 +121,8 @@ func (b *eventTargetBus) Close() {
 }
 
 // unmarshalMessage unmarshals a message from a JS EventValue.
+//
+// If the message type is unknown the data will not be parsed.
 func unmarshalMessage(event goji.EventValue) Message {
 	message := Message{
 		Name: Name(event.Type()),
@@ -157,6 +164,8 @@ func unmarshalMessage(event goji.EventValue) Message {
 		var value ReplicatorFailure
 		goji.MustUnmarshalJS(detail, &value)
 		message.Data = value
+	default:
+		// message type is unknown
 	}
 	return message
 }
