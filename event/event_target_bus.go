@@ -13,6 +13,7 @@
 package event
 
 import (
+	"slices"
 	"sync"
 	"sync/atomic"
 	"syscall/js"
@@ -36,7 +37,7 @@ func (s *eventTargetSub) Message() <-chan Message {
 // manage subscribers and publish messages.
 type eventTargetBus struct {
 	target       goji.EventTargetValue
-	bufferSize   uint
+	bufferSize   int
 	subscriberID atomic.Uint64
 	subscribers  map[uint64]*eventTargetSub
 	closeMutex   sync.Mutex
@@ -47,7 +48,7 @@ type eventTargetBus struct {
 // This bus is meant for use in JavaScript enviroments (browser and NodeJS).
 //
 // Messages are serialized to JSON before being unserialized to a js.Value.
-func NewEventTargetBus(value js.Value, bufferSize uint) Bus {
+func NewEventTargetBus(value js.Value, bufferSize int) Bus {
 	return &eventTargetBus{
 		target:      goji.EventTargetValue(value),
 		bufferSize:  bufferSize,
@@ -68,6 +69,10 @@ func (b *eventTargetBus) Subscribe(events ...Name) (Subscription, error) {
 	b.closeMutex.Lock()
 	defer b.closeMutex.Unlock()
 
+	if slices.Contains(events, WildCardName) {
+		return nil, ErrWildcardNotSupported
+	}
+
 	value := make(chan Message, b.bufferSize)
 	listener := goji.EventListener(func(event goji.EventValue) {
 		value <- unmarshalMessage(event)
@@ -81,6 +86,9 @@ func (b *eventTargetBus) Subscribe(events ...Name) (Subscription, error) {
 	}
 	b.subscribers[sub.id] = sub
 
+	for _, e := range events {
+		b.target.AddEventListener(string(e), listener.Value)
+	}
 	return sub, nil
 }
 
@@ -122,7 +130,7 @@ func (b *eventTargetBus) Close() {
 
 // unmarshalMessage unmarshals a message from a JS EventValue.
 //
-// If the message type is unknown the data will not be parsed.
+// If the message type is unknown the data will be unmarshalled to a basic go type.
 func unmarshalMessage(event goji.EventValue) Message {
 	message := Message{
 		Name: Name(event.Type()),
@@ -165,7 +173,7 @@ func unmarshalMessage(event goji.EventValue) Message {
 		goji.MustUnmarshalJS(detail, &value)
 		message.Data = value
 	default:
-		// message type is unknown
+		goji.MustUnmarshalJS(detail, &message.Data)
 	}
 	return message
 }

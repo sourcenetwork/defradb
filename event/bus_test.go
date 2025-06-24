@@ -11,6 +11,7 @@
 package event
 
 import (
+	"errors"
 	"sync"
 	"time"
 
@@ -59,7 +60,7 @@ func (b *BusTestSuite) TestBus_IfSubscriptionIsUnsubscribedTwice_ItShouldNotPani
 	bus := b.setup(0)
 	defer bus.Close()
 
-	sub, err := bus.Subscribe(WildCardName)
+	sub, err := bus.Subscribe("test")
 	b.Assert().NoError(err)
 
 	bus.Unsubscribe(sub)
@@ -71,6 +72,9 @@ func (b *BusTestSuite) TestBus_IfSubscribedToWildCard_ItShouldNotReceiveMessageT
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test", WildCardName)
+	if errors.Is(err, ErrWildcardNotSupported) {
+		b.T().Skipf("wildcard not supported")
+	}
 	b.Assert().NoError(err)
 
 	msg := NewMessage("test", 1)
@@ -91,8 +95,8 @@ func (b *BusTestSuite) TestBus_IfMultipleSubscriptionsToTheSameEvent_EachSubscri
 	bus := b.setup(0)
 	defer bus.Close()
 
-	msg1 := NewMessage("test", 1)
-	msg2 := NewMessage("test", 2)
+	msg1 := NewMessage("test", false)
+	msg2 := NewMessage("test", true)
 
 	sub1, err := bus.Subscribe("test")
 	b.Assert().NoError(err)
@@ -145,8 +149,8 @@ func (b *BusTestSuite) TestBus_IfMultipleBufferedSubscribersWithMultipleEvents_E
 	bus := b.setup(2)
 	defer bus.Close()
 
-	msg1 := NewMessage("test", 1)
-	msg2 := NewMessage("test", 2)
+	msg1 := NewMessage("test", false)
+	msg2 := NewMessage("test", true)
 
 	sub1, err := bus.Subscribe("test")
 	b.Assert().NoError(err)
