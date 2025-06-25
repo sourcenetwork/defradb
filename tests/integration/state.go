@@ -85,20 +85,20 @@ func newP2PState() *p2pState {
 // eventState contains all event related testing state for a node.
 type eventState struct {
 	// merge is the `event.MergeCompleteName` subscription
-	merge *event.Subscription
+	merge event.Subscription
 
 	// update is the `event.UpdateName` subscription
-	update *event.Subscription
+	update event.Subscription
 
 	// replicator is the `event.ReplicatorCompletedName` subscription
-	replicator *event.Subscription
+	replicator event.Subscription
 
 	// p2pTopic is the `event.P2PTopicCompletedName` subscription
-	p2pTopic *event.Subscription
+	p2pTopic event.Subscription
 }
 
 // newEventState returns an eventState with all required subscriptions.
-func newEventState(bus *event.Bus) (*eventState, error) {
+func newEventState(bus event.Bus) (*eventState, error) {
 	merge, err := bus.Subscribe(event.MergeCompleteName)
 	if err != nil {
 		return nil, err

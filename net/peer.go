@@ -61,8 +61,8 @@ type DB interface {
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	bus       *event.Bus
-	updateSub *event.Subscription
+	bus       event.Bus
+	updateSub event.Subscription
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -86,7 +86,7 @@ type Peer struct {
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
 	ctx context.Context,
-	bus *event.Bus,
+	bus event.Bus,
 	documentACP immutable.Option[dac.DocumentACP],
 	db DB,
 	opts ...config.NodeOpt,

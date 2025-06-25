@@ -643,19 +643,19 @@ func (_c *DB_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *DB_En
 }
 
 // Events provides a mock function for the type DB
-func (_mock *DB) Events() *event.Bus {
+func (_mock *DB) Events() event.Bus {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Events")
 	}
 
-	var r0 *event.Bus
-	if returnFunc, ok := ret.Get(0).(func() *event.Bus); ok {
+	var r0 event.Bus
+	if returnFunc, ok := ret.Get(0).(func() event.Bus); ok {
 		r0 = returnFunc()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*event.Bus)
+			r0 = ret.Get(0).(event.Bus)
 		}
 	}
 	return r0
@@ -678,12 +678,12 @@ func (_c *DB_Events_Call) Run(run func()) *DB_Events_Call {
 	return _c
 }
 
-func (_c *DB_Events_Call) Return(bus *event.Bus) *DB_Events_Call {
+func (_c *DB_Events_Call) Return(bus event.Bus) *DB_Events_Call {
 	_c.Call.Return(bus)
 	return _c
 }
 
-func (_c *DB_Events_Call) RunAndReturn(run func() *event.Bus) *DB_Events_Call {
+func (_c *DB_Events_Call) RunAndReturn(run func() event.Bus) *DB_Events_Call {
 	_c.Call.Return(run)
 	return _c
 }
