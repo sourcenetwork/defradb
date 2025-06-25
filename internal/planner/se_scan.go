@@ -13,8 +13,11 @@ package planner
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -37,6 +40,9 @@ type seScanNode struct {
 	fieldSearchTags map[string][]byte
 	remoteDocIDs    []string
 	currentIndex    int
+
+	// Inner scan node for fetching documents
+	innerScan *scanNode
 }
 
 var _ planNode = (*seScanNode)(nil)
@@ -44,6 +50,16 @@ var _ planNode = (*seScanNode)(nil)
 func (n *seScanNode) Kind() string { return "seScanNode" }
 
 func (n *seScanNode) Init() error {
+	mapperSelect := &mapper.Select{
+		CollectionName:  n.collection.Name(),
+		DocumentMapping: n.documentMapping,
+	}
+
+	var err error
+	n.innerScan, err = n.p.Scan(mapperSelect)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -154,54 +170,65 @@ func (n *seScanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	// Get the next document ID
 	docIDStr := n.remoteDocIDs[n.currentIndex]
-	docID, err := client.NewDocIDFromString(docIDStr)
-	if err != nil {
-		n.currentIndex++
-		return n.Next() // Skip invalid doc ID
-	}
-
-	// First, try to get the document from local store (in case it exists)
-	doc, err := n.collection.Get(n.p.ctx, docID, false)
-	if err == nil {
-		// Document exists locally, use it
-		return n.processDocument(doc)
-	}
-
-	// Document not found locally, need to request it from the network
-	// TODO: Implement document request from P2P network
-	// This will require:
-	// 1. Publishing a document request on pubsub
-	// 2. Waiting for pushLog response
-	// 3. Processing the pushLog to trigger merge
-	// 4. Waiting for merge completion
-
-	// For now, skip documents that aren't locally available
 	n.currentIndex++
-	return n.Next()
+
+	doc, err := n.fetchDocumentLocallyByID(docIDStr)
+	if err != nil {
+		return false, err
+	}
+
+	if !doc.HasValue() {
+		// Document not found locally, need to request it from the network
+		// TODO: Implement document request from P2P network
+		// This will require:
+		// 1. Publishing a document request on pubsub
+		// 2. Waiting for pushLog response
+		// 3. Processing the pushLog to trigger merge
+		// 4. Waiting for merge completion
+
+		// For now, skip documents that aren't locally available
+		return n.Next()
+	}
+
+	// Set the current value from the fetched document
+	n.currentValue = doc.Value()
+	return true, nil
 }
 
-func (n *seScanNode) processDocument(doc *client.Document) (bool, error) {
-	// Convert document to core.Doc format
-	fields := make(core.DocFields, 0)
-
-	// Add DocID as first field
-	fields = append(fields, doc.ID().String())
-
-	// TODO: Add proper field mapping based on document mapping
-	// For now, create a simple Doc structure
-	n.currentValue = core.Doc{
-		Fields: fields,
-		Status: client.Active,
+func (n *seScanNode) fetchDocumentLocallyByID(docIDStr string) (immutable.Option[core.Doc], error) {
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.collection.Version().CollectionID)
+	if err != nil {
+		return immutable.None[core.Doc](), err
 	}
-	n.currentIndex++
 
-	return true, nil
+	dsKey := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             docIDStr,
+	}
+
+	prefixes := []keys.Walkable{dsKey}
+	n.innerScan.Prefixes(prefixes)
+
+	if err := n.innerScan.Init(); err != nil {
+		return immutable.None[core.Doc](), err
+	}
+
+	hasValue, err := n.innerScan.Next()
+	if err != nil || !hasValue {
+		return immutable.None[core.Doc](), err
+	}
+
+	return immutable.Some(n.innerScan.Value()), nil
 }
 
 func (n *seScanNode) Prefixes(prefixes []keys.Walkable) {}
 
 func (n *seScanNode) Source() planNode { return nil }
 
-func (n *seScanNode) Close() error { return nil }
+func (n *seScanNode) Close() error {
+	if n.innerScan != nil {
+		return n.innerScan.Close()
+	}
+	return nil
+}
