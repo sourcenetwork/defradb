@@ -233,7 +233,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 					{"name": "Addo"},
 				},
 			},
-			indexFetches: 8,
+			indexFetches: 6,
 		},
 		{
 			name: "With _lt and _eq filters",

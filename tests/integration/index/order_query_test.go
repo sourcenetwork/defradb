@@ -319,7 +319,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldAscending_ShouldUseIndex(t 
 			testUtils.Request{
 				Request: makeExplainQuery(req),
 				// we fetch docs starting from the lowest age and skip the first one
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
 			},
 		},
 	}
@@ -368,7 +368,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldDescending_ShouldUseIndex(t
 			testUtils.Request{
 				Request: makeExplainQuery(req),
 				// we fetch docs starting from the highest age, skipping the first 2
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
 			},
 		},
 	}

@@ -69,22 +69,32 @@ type indexIterResult struct {
 	value    []byte
 }
 
-// indexPrefixIterator is an iterator over index keys with a specific prefix.
-type indexPrefixIterator struct {
+// indexMatchIterator is a unified iterator that can work with either prefix or range queries.
+// It supports filtering with matchers for composite indexes.
+type indexMatchIterator struct {
+	// Index metadata
 	indexDesc     client.IndexDescription
 	indexedFields []client.FieldDefinition
-	indexKey      keys.IndexDataStoreKey
-	matchers      []valueMatcher
 	execInfo      *ExecInfo
-	resultIter    corekv.Iterator
-	ctx           context.Context
-	store         datastore.DSReaderWriter
-	reverse       bool
+
+	// Iterator state
+	resultIter corekv.Iterator
+	ctx        context.Context
+	store      datastore.DSReaderWriter
+	reverse    bool
+
+	matchers []valueMatcher
+
+	// For prefix mode
+	prefixKey []byte
+	// For range mode
+	startKey []byte
+	endKey   []byte
 }
 
-var _ indexIterator = (*indexPrefixIterator)(nil)
+var _ indexIterator = (*indexMatchIterator)(nil)
 
-func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *indexMatchIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	if iter.resultIter != nil {
@@ -93,54 +103,35 @@ func (iter *indexPrefixIterator) Init(ctx context.Context, store datastore.DSRea
 		}
 	}
 	iter.resultIter = nil
-	return nil
-}
 
-func (iter *indexPrefixIterator) checkResultIterator() error {
-	if iter.resultIter == nil {
-		iterator, err := iter.store.Iterator(iter.ctx, corekv.IterOptions{
-			Prefix:  iter.indexKey.Bytes(),
+	var iterOpts corekv.IterOptions
+	if iter.prefixKey == nil {
+		iterOpts = corekv.IterOptions{
+			Start:   iter.startKey,
+			End:     iter.endKey,
 			Reverse: iter.reverse,
-		})
-		if err != nil {
-			return err
 		}
-		iter.resultIter = iterator
+	} else {
+		iterOpts = corekv.IterOptions{
+			Prefix:  iter.prefixKey,
+			Reverse: iter.reverse,
+		}
 	}
+
+	resultIter, err := store.Iterator(ctx, iterOpts)
+	if err != nil {
+		return err
+	}
+	iter.resultIter = resultIter
 	return nil
 }
 
-func (iter *indexPrefixIterator) nextResult() (indexIterResult, error) {
-	hasValue, err := iter.resultIter.Next()
-	if err != nil || !hasValue {
-		return indexIterResult{}, err
-	}
-
-	key, err := keys.DecodeIndexDataStoreKey(iter.resultIter.Key(), &iter.indexDesc, iter.indexedFields)
-	if err != nil {
-		return indexIterResult{}, err
-	}
-
-	value, err := iter.resultIter.Value()
-	if err != nil {
-		return indexIterResult{}, err
-	}
-
-	return indexIterResult{key: key, value: value, foundKey: true}, nil
-}
-
-func (iter *indexPrefixIterator) Next() (indexIterResult, error) {
-	err := iter.checkResultIterator()
-	if err != nil {
-		return indexIterResult{}, err
-	}
-
+func (iter *indexMatchIterator) Next() (indexIterResult, error) {
 	for {
-		res, err := iter.nextResult()
+		res, err := iter.nextRawResult()
 		if err != nil || !res.foundKey {
 			return res, err
 		}
-		iter.execInfo.IndexesFetched++
 		didMatch, err := executeValueMatchers(iter.matchers, res.key.Fields)
 		if err != nil {
 			return indexIterResult{}, err
@@ -151,30 +142,55 @@ func (iter *indexPrefixIterator) Next() (indexIterResult, error) {
 	}
 }
 
-func (iter *indexPrefixIterator) Close() error {
+// nextRawResult fetches the next raw result from the iterator without any filtering.
+func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
+	hasValue, err := iter.resultIter.Next()
+	if err != nil || !hasValue {
+		return indexIterResult{}, err
+	}
+
+	key, err := keys.DecodeIndexDataStoreKey(
+		iter.resultIter.Key(),
+		&iter.indexDesc,
+		iter.indexedFields,
+	)
+	if err != nil {
+		return indexIterResult{}, err
+	}
+
+	value, err := iter.resultIter.Value()
+	if err != nil {
+		return indexIterResult{}, err
+	}
+
+	iter.execInfo.IndexesFetched++
+	return indexIterResult{key: key, value: value, foundKey: true}, nil
+}
+
+func (iter *indexMatchIterator) Close() error {
 	if iter.resultIter == nil {
 		return nil
 	}
 	return iter.resultIter.Close()
 }
 
-func (f *indexFetcher) newPrefixIterator(
+func (f *indexFetcher) newPrefixBaseMatchIterator(
 	indexKey keys.IndexDataStoreKey,
 	matchers []valueMatcher,
 	execInfo *ExecInfo,
-) *indexPrefixIterator {
-	return &indexPrefixIterator{
+) *indexMatchIterator {
+	return &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
-		indexKey:      indexKey,
-		matchers:      matchers,
 		execInfo:      execInfo,
+		prefixKey:     indexKey.Bytes(),
+		matchers:      matchers,
 	}
 }
 
-func (f *indexPrefixIterator) Reverse(reverse bool) *indexPrefixIterator {
-	f.reverse = reverse
-	return f
+func (iter *indexMatchIterator) Reverse(reverse bool) *indexMatchIterator {
+	iter.reverse = reverse
+	return iter
 }
 
 type eqSingleIndexIterator struct {
@@ -215,15 +231,20 @@ func (iter *eqSingleIndexIterator) Close() error {
 
 type inIndexIterator struct {
 	indexIterator
-	inValues     []client.NormalValue
-	nextValIndex int
-	ctx          context.Context
-	store        datastore.DSReaderWriter
-	hasIterator  bool
+	inValues        []client.NormalValue
+	nextValIndex    int
+	ctx             context.Context
+	store           datastore.DSReaderWriter
+	hasIterator     bool
+	fetcher         *indexFetcher
+	fieldConditions []fieldFilterCond
+	matchers        []valueMatcher
+	isUnique        bool
 }
 
 var _ indexIterator = (*inIndexIterator)(nil)
 
+// nextIterator initializes the next index iterator based on the current value index.
 func (iter *inIndexIterator) nextIterator() (bool, error) {
 	if iter.nextValIndex > 0 {
 		err := iter.indexIterator.Close()
@@ -236,18 +257,41 @@ func (iter *inIndexIterator) nextIterator() (bool, error) {
 		return false, nil
 	}
 
-	switch fieldIter := iter.indexIterator.(type) {
-	case *indexPrefixIterator:
-		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
-	case *eqSingleIndexIterator:
-		fieldIter.indexKey.Fields[0].Value = iter.inValues[iter.nextValIndex]
+	err := iter.createIteratorForNextValue()
+	if err != nil {
+		return false, err
 	}
-	err := iter.indexIterator.Init(iter.ctx, iter.store)
+
+	err = iter.indexIterator.Init(iter.ctx, iter.store)
 	if err != nil {
 		return false, err
 	}
 	iter.nextValIndex++
 	return true, nil
+}
+
+// createIteratorForNextValue initializes the next index iterator based on the current value index.
+func (iter *inIndexIterator) createIteratorForNextValue() error {
+	if iter.isUnique {
+		indexIter, err := iter.fetcher.newEqSingleIndexIterator(iter.inValues[iter.nextValIndex], iter.fieldConditions)
+		if err != nil {
+			return err
+		}
+		iter.indexIterator = indexIter
+	} else {
+		indexKey, err := iter.fetcher.newIndexDataStoreKey()
+		if err != nil {
+			return err
+		}
+		indexKey.Fields = []keys.IndexedField{{
+			Value:      iter.inValues[iter.nextValIndex],
+			Descending: iter.fetcher.indexDesc.Fields[0].Descending,
+		}}
+
+		iter.indexIterator = iter.fetcher.newPrefixBaseMatchIterator(indexKey, iter.matchers, iter.fetcher.execInfo)
+	}
+
+	return nil
 }
 
 func (iter *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
@@ -278,6 +322,26 @@ func (iter *inIndexIterator) Next() (indexIterResult, error) {
 
 func (iter *inIndexIterator) Close() error {
 	return nil
+}
+
+// newEqSingleIndexIterator creates a new eqSingleIndexIterator for fetching exactly one index
+// by full key match.
+func (f *indexFetcher) newEqSingleIndexIterator(
+	firstVal client.NormalValue,
+	fieldConditions []fieldFilterCond,
+) (*eqSingleIndexIterator, error) {
+	// fieldConditions is always non-empty, so we can safely access the first element.
+	keyFieldValues := make([]client.NormalValue, len(fieldConditions))
+	keyFieldValues[0] = firstVal
+	for i := 1; i < len(fieldConditions); i++ {
+		keyFieldValues[i] = fieldConditions[i].val
+	}
+
+	key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+	if err != nil {
+		return nil, err
+	}
+	return &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}, nil
 }
 
 // memorizingIndexIterator is an iterator for set of indexes that belong to the same document
@@ -332,12 +396,12 @@ func (iter *memorizingIndexIterator) Close() error {
 	return iter.inner.Close()
 }
 
-// newPrefixIteratorFromConditions creates a new indexPrefixIterator for fetching indexed data.
+// newPrefixBasedMatchIteratorFromConditions creates a new indexPrefixIterator for fetching indexed data.
 // It can modify the input matchers slice.
-func (f *indexFetcher) newPrefixIteratorFromConditions(
+func (f *indexFetcher) newPrefixBasedMatchIteratorFromConditions(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
-) (*indexPrefixIterator, error) {
+) (*indexMatchIterator, error) {
 	keyFieldValues := make([]client.NormalValue, 0, len(fieldConditions))
 	for i := range fieldConditions {
 		c := &fieldConditions[i]
@@ -367,7 +431,7 @@ func (f *indexFetcher) newPrefixIteratorFromConditions(
 	if err != nil {
 		return nil, err
 	}
-	iter := f.newPrefixIterator(key, matchers, f.execInfo)
+	iter := f.newPrefixBaseMatchIterator(key, matchers, f.execInfo)
 	ordered, reverse := CanBeOrderedByIndex(f.ordering, f.indexDesc, f.mapping)
 	if ordered {
 		iter.Reverse(reverse)
@@ -392,28 +456,22 @@ func (f *indexFetcher) newInIndexIterator(
 		matchers[0] = &anyMatcher{}
 	}
 
-	var iter indexIterator
-	if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-		keyFieldValues := make([]client.NormalValue, len(fieldConditions))
-		for i := range fieldConditions {
-			keyFieldValues[i] = fieldConditions[i].val
-		}
+	isUnique := isUniqueFetchByFullKey(&f.indexDesc, fieldConditions)
 
-		key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
-		if err != nil {
-			return nil, err
-		}
-		iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
-	} else {
-		indexKey, err := f.newIndexDataStoreKey()
-		if err != nil {
-			return nil, err
-		}
-		indexKey.Fields = []keys.IndexedField{{Descending: f.indexDesc.Fields[0].Descending}}
-
-		iter = f.newPrefixIterator(indexKey, matchers, f.execInfo)
+	inIter := &inIndexIterator{
+		inValues:        inValues,
+		fetcher:         f,
+		fieldConditions: fieldConditions,
+		matchers:        matchers,
+		isUnique:        isUnique,
 	}
-	return &inIndexIterator{indexIterator: iter, inValues: inValues}, nil
+
+	err = inIter.createIteratorForNextValue()
+	if err != nil {
+		return nil, err
+	}
+
+	return inIter, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
@@ -440,6 +498,137 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
 }
 
+// createKeyWithValue creates an index key with the given value encoded.
+func (f *indexFetcher) createKeyWithValue(key keys.IndexDataStoreKey, val client.NormalValue) keys.IndexDataStoreKey {
+	key.Fields = []keys.IndexedField{
+		{
+			Value:      val,
+			Descending: f.indexDesc.Fields[0].Descending,
+		},
+	}
+	return key
+}
+
+// createRangeBoundaries creates start and end keys for range queries based on the filter condition.
+func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bool) (
+	startKey []byte,
+	endKey []byte,
+	err error,
+) {
+	var baseKey keys.IndexDataStoreKey
+	if len(cond.jsonPath) > 0 {
+		jsonVal, _ := cond.val.JSON()
+		jsonPathVal := client.NewNormalJSON(client.MakeVoidJSON(jsonVal.GetPath()))
+		baseKey, err = f.newIndexDataStoreKeyWithValues([]client.NormalValue{jsonPathVal})
+	} else {
+		baseKey, err = f.newIndexDataStoreKey()
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// For descending indexes, the value encoding is already reversed,
+	// so greater values come first in the index. We need to swap the
+	// start and end boundaries for descending indexes.
+	if descending {
+		switch cond.op {
+		case opGt:
+			// For descending index, we want values > X
+			// Since larger values come first, we start from the beginning
+			// and go until just before X
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = valueKey.Bytes() // Exclusive, so this works
+		case opGe:
+			// For descending index, we want values >= X
+			// Start from beginning and go until just after X
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = valueKey.PrefixEnd()
+		case opLt:
+			// For descending index, we want values < X
+			// Start just after X and go to the end
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = valueKey.PrefixEnd()
+			endKey = baseKey.PrefixEnd()
+		case opLe:
+			// For descending index, we want values <= X
+			// Start from X and go to the end
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = valueKey.Bytes()
+			endKey = baseKey.PrefixEnd()
+		}
+	} else {
+		switch cond.op {
+		case opGt:
+			// Start > value: Need to create key just after the value
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = valueKey.PrefixEnd()
+			endKey = baseKey.PrefixEnd()
+		case opGe:
+			// Start >= value: Use value as-is
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			startKey = valueKey.Bytes()
+			endKey = baseKey.PrefixEnd()
+		case opLt:
+			// End < value: Use value as-is (End is exclusive)
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = valueKey.Bytes()
+		case opLe:
+			// End <= value: Need to include value, so increment it
+			startKey = baseKey.Bytes()
+			valueKey := f.createKeyWithValue(baseKey, cond.val)
+			endKey = valueKey.PrefixEnd()
+		}
+	}
+
+	return startKey, endKey, nil
+}
+
+// isRangeCompatible checks if a filter condition is compatible with range queries.
+func (f *indexFetcher) isRangeCompatible(cond fieldFilterCond) bool {
+	switch cond.op {
+	case opGt, opGe, opLt, opLe:
+		return true
+	}
+	return false
+}
+
+// newRangeBasedMatchIterator creates a new indexRangeIterator for range queries.
+func (f *indexFetcher) newRangeBasedMatchIterator(
+	cond fieldFilterCond,
+	matchers []valueMatcher,
+) (*indexMatchIterator, error) {
+	startKey, endKey, err := f.createRangeBoundaries(cond, f.indexDesc.Fields[0].Descending)
+	if err != nil {
+		return nil, err
+	}
+
+	// Range iterator already handles the first field through the range boundaries,
+	// so we can skip the first matcher
+	if len(matchers) > 0 {
+		matchers[0] = &anyMatcher{}
+	}
+
+	iter := &indexMatchIterator{
+		indexDesc:     f.indexDesc,
+		indexedFields: f.indexedFields,
+		execInfo:      f.execInfo,
+		reverse:       false,
+		startKey:      startKey,
+		endKey:        endKey,
+		matchers:      matchers,
+	}
+
+	ordered, reverse := CanBeOrderedByIndex(f.ordering, f.indexDesc, f.mapping)
+	if ordered {
+		iter.reverse = reverse
+	}
+
+	return iter, nil
+}
+
 func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 	ordered, reverse := CanBeOrderedByIndex(f.ordering, f.indexDesc, f.mapping)
 	if ordered {
@@ -447,7 +636,7 @@ func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 		if err != nil {
 			return nil, err
 		}
-		iter := f.newPrefixIterator(key, nil, f.execInfo).Reverse(reverse)
+		iter := f.newPrefixBaseMatchIterator(key, nil, f.execInfo).Reverse(reverse)
 		return iter, nil
 	}
 	return nil, nil
@@ -471,23 +660,23 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	}
 
 	var iter indexIterator
+
 	if fieldConditions[0].op == opEq {
 		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
-			keyFieldValues := make([]client.NormalValue, len(fieldConditions))
-			for i := range fieldConditions {
-				keyFieldValues[i] = fieldConditions[i].val
-			}
-
-			key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+			iter, err = f.newEqSingleIndexIterator(fieldConditions[0].val, fieldConditions)
 			if err != nil {
 				return nil, err
 			}
-			iter = &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}
 		} else {
-			iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
+			iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
 			if err != nil {
 				return nil, err
 			}
+		}
+	} else if f.isRangeCompatible(fieldConditions[0]) {
+		iter, err = f.newRangeBasedMatchIterator(fieldConditions[0], matchers)
+		if err != nil {
+			return nil, err
 		}
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
@@ -495,7 +684,7 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 			return nil, err
 		}
 	} else {
-		iter, err = f.newPrefixIteratorFromConditions(fieldConditions, matchers)
+		iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
 		if err != nil {
 			return nil, err
 		}
