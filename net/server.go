@@ -432,18 +432,6 @@ func (s *server) updateReplicators(evt event.Replicator) {
 	}
 	s.mu.Unlock()
 
-	if evt.Docs != nil {
-		for update := range evt.Docs {
-			if err := s.pushLog(update, evt.Info.ID); err != nil {
-				log.ErrorE(
-					"Failed to replicate log",
-					err,
-					corelog.Any("CID", update.Cid),
-					corelog.Any("PeerID", evt.Info.ID),
-				)
-			}
-		}
-	}
 	s.peer.bus.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 }
 

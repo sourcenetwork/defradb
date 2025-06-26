@@ -136,14 +136,16 @@ func (db *DB) SetReplicator(ctx context.Context, rep client.ReplicatorParams) er
 		return err
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		// This is a node specific action which means the actor is the node itself.
 		ctx := identity.WithContext(context.Background(), db.nodeIdentity)
 		db.events.Publish(event.NewMessage(event.ReplicatorName, event.Replicator{
 			Info:    rep.Info,
 			Schemas: storedSchemas,
-			Docs:    db.getDocsHeads(ctx, addedCols),
 		}))
+		for evt := range db.getDocsHeads(ctx, addedCols) {
+			db.events.Publish(event.NewMessage(event.ReplicatorHeadName, evt))
+		}
 	})
 
 	return txn.Commit(ctx)

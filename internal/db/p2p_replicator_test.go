@@ -145,7 +145,7 @@ func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
-	sub, err := db.events.Subscribe(event.ReplicatorName)
+	sub, err := db.events.Subscribe(event.ReplicatorName, event.ReplicatorHeadName)
 	require.NoError(t, err)
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
@@ -165,9 +165,10 @@ func TestSetReplicator_WithValidCollectionWithDoc_ShouldSucceed(t *testing.T) {
 	replicator := msg.Data.(event.Replicator)
 	require.Equal(t, peer.ID("other"), replicator.Info.ID)
 	require.Equal(t, map[string]struct{}{col.SchemaRoot(): {}}, replicator.Schemas)
-	for docEvt := range replicator.Docs {
-		require.Equal(t, doc.ID().String(), docEvt.DocID)
-	}
+
+	msg = <-sub.Message()
+	update := msg.Data.(event.Update)
+	require.Equal(t, doc.ID().String(), update.DocID)
 }
 
 func TestDeleteReplicator_WithEmptyPeerInfo_ShouldError(t *testing.T) {

@@ -148,7 +148,7 @@ func unmarshalMessage(event goji.EventValue) Message {
 		var value MergeComplete
 		goji.MustUnmarshalJS(detail, &value)
 		message.Data = value
-	case UpdateName:
+	case UpdateName, ReplicatorHeadName:
 		var value Update
 		goji.MustUnmarshalJS(detail, &value)
 		message.Data = value

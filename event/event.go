@@ -56,6 +56,8 @@ const (
 	PeerInfoName = Name("peer-info")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
+	// ReplicatorHeadName is the name of the replicator head event.
+	ReplicatorHeadName = Name("replicator-head")
 	// ReplicatorFailureName is the name of the replicator failure event.
 	ReplicatorFailureName = Name("replicator-failure")
 	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
@@ -157,9 +159,6 @@ type Replicator struct {
 	Info peer.AddrInfo
 	// The map of schema roots that the replicator will receive updates for.
 	Schemas map[string]struct{}
-	// Docs will receive Updates if new collections have been added to the replicator
-	// and those collections have documents to be replicated.
-	Docs <-chan Update
 }
 
 // ReplicatorFailure is an event that is published when a replicator fails to replicate a document.
