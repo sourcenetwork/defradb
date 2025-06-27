@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -50,7 +50,7 @@ var _ fetcher = (*documentFetcher)(nil)
 
 func newDocumentFetcher(
 	ctx context.Context,
-	txn txnctx.Txn,
+	txn datastore.Txn,
 	fieldsByID map[uint32]client.FieldDefinition,
 	prefix keys.DataStoreKey,
 	status client.DocumentStatus,

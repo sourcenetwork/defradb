@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -44,7 +44,7 @@ func GetShortFieldID(
 	// usually want most of them.
 
 	key := keys.NewFieldIDPrefix(collectionShortID)
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{Prefix: key.Bytes()})
 	if err != nil {
 		return 0, err
@@ -102,7 +102,7 @@ func SetShortFieldID(
 		return nil
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	key := keys.NewFieldID(collectionShortID, fieldID)
 
 	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())

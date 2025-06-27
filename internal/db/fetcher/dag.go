@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -36,7 +36,7 @@ func (hf *HeadFetcher) Start(
 	ctx context.Context,
 	prefix immutable.Option[keys.HeadstoreKey],
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	var prefixBytes []byte
 	if prefix.HasValue() {

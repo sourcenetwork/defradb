@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
+	"github.com/sourcenetwork/defradb/datastore"
 )
 
 var _ client.Txn = (*Transaction)(nil)
@@ -50,12 +50,12 @@ func (txn *Transaction) Discard(ctx context.Context) {
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.PrintDump(ctx)
 }
 
 func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.AddDACPolicy(ctx, policy)
 }
 
@@ -66,7 +66,7 @@ func (txn *Transaction) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
@@ -77,22 +77,22 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.GetNodeIdentity(ctx)
 }
 
 func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
 func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.AddSchema(ctx, sdl)
 }
 
@@ -102,17 +102,17 @@ func (txn *Transaction) PatchSchema(
 	migration immutable.Option[model.Lens],
 	setDefault bool,
 ) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.PatchSchema(ctx, patch, migration, setDefault)
 }
 
 func (txn *Transaction) PatchCollection(ctx context.Context, patch string) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.PatchCollection(ctx, patch)
 }
 
 func (txn *Transaction) SetActiveSchemaVersion(ctx context.Context, version string) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetActiveSchemaVersion(ctx, version)
 }
 
@@ -122,17 +122,17 @@ func (txn *Transaction) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transform)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.RefreshViews(ctx, options)
 }
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetMigration(ctx, config)
 }
 
@@ -144,7 +144,7 @@ func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
 ) (client.Collection, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.GetCollectionByName(ctx, name)
 }
 
@@ -152,12 +152,12 @@ func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.GetCollections(ctx, options)
 }
 
 func (txn *Transaction) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.GetSchemaByVersionID(ctx, versionID)
 }
 
@@ -165,14 +165,14 @@ func (txn *Transaction) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.GetSchemas(ctx, options)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.GetAllIndexes(ctx)
 }
 
@@ -181,16 +181,16 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.ExecRequest(ctx, request, opts...)
 }
 
 func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.BasicImport(ctx, filepath)
 }
 
 func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.BasicExport(ctx, config)
 }

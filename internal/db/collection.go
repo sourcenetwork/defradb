@@ -24,6 +24,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -33,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -263,7 +263,7 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
@@ -472,7 +472,7 @@ func (c *collection) create(
 
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		txn := txnctx.MustGet(ctx)
+		txn := datastore.CtxMustGetTxn(ctx)
 
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
@@ -681,7 +681,7 @@ func (c *collection) save(
 			return err
 		}
 	}
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	ident := identity.FromContext(ctx)
 	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
@@ -1011,7 +1011,7 @@ func (c *collection) exists(
 		return false, false, nil
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil

@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
@@ -220,7 +219,7 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	ctx context.Context,
 	key keys.IndexDataStoreKey,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	ds := txn.Datastore()
 	exists, err := ds.Has(ctx, key.Bytes())
 	if err != nil {
@@ -244,7 +243,7 @@ func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
 	prefixKey.CollectionShortID = shortID
 	prefixKey.IndexID = index.desc.ID
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	ds := txn.Datastore()
 	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.Bytes(), ds)
 	if err != nil {
@@ -328,7 +327,7 @@ func (index *collectionSimpleIndex) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	return index.generateKeysAndProcess(ctx, doc, true, func(key keys.IndexDataStoreKey) error {
 		return txn.Datastore().Set(ctx, key.Bytes(), []byte{})
@@ -418,7 +417,7 @@ func validateUniqueKeyValue(
 	doc *client.Document,
 	fieldsDescs []client.SchemaFieldDescription,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	if len(val) != 0 {
 		exists, err := txn.Datastore().Has(ctx, key.Bytes())
@@ -438,7 +437,7 @@ func addNewUniqueKey(
 	key keys.IndexDataStoreKey,
 	fieldsDescs []client.SchemaFieldDescription,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	key, val, err := makeUniqueKeyValueRecord(key, doc)
 	if err != nil {
@@ -459,7 +458,7 @@ func (index *collectionUniqueIndex) Delete(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
 		key, _, err := makeUniqueKeyValueRecord(key, doc)
 		if err != nil {

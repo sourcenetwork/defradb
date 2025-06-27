@@ -26,8 +26,8 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/keyring"
 )
 
@@ -120,7 +120,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := txnctx.SetFromClient(cmd.Context(), tx)
+	ctx := datastore.CtxSetFromClientTxn(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }

@@ -23,10 +23,10 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -39,7 +39,7 @@ type lensedFetcher struct {
 	registry client.LensRegistry
 	lens     Lens
 
-	txn txnctx.Txn
+	txn datastore.Txn
 
 	col client.Collection
 
@@ -66,7 +66,7 @@ func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fe
 func (f *lensedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	txn txnctx.Txn,
+	txn datastore.Txn,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
@@ -76,7 +76,7 @@ func (f *lensedFetcher) Init(
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
-	ctx = txnctx.Set(ctx, txn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	f.col = col
 
@@ -312,7 +312,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		InstanceType:      keys.ValueKey,
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	for fieldName, value := range modifiedFieldValuesByName {
 		fieldDesc, ok := f.fieldDescriptionsByName[fieldName]

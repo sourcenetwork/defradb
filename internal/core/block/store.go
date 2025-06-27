@@ -26,7 +26,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -54,7 +53,7 @@ func AddDelta(
 	delta core.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
 
@@ -117,7 +116,7 @@ func determineBlockEncryption(
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (*Encryption, cidlink.Link, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
@@ -214,7 +213,7 @@ func updateHeads(
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
 

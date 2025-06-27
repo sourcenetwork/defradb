@@ -18,9 +18,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
@@ -35,7 +35,7 @@ type wrappingFetcher struct {
 	// The below properties are only held in state in order to temporarily adhere to the [Fetcher]
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
 	identity    immutable.Option[acpIdentity.Identity]
-	txn         txnctx.Txn
+	txn         datastore.Txn
 	documentACP immutable.Option[dac.DocumentACP]
 	index       immutable.Option[client.IndexDescription]
 	col         client.Collection
@@ -55,7 +55,7 @@ func NewDocumentFetcher() Fetcher {
 func (f *wrappingFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	txn txnctx.Txn,
+	txn datastore.Txn,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,

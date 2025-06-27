@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -38,7 +38,7 @@ type prefixFetcher struct {
 	// The below properties are only held here in order to pass them on to the next
 	// child fetcher instance.
 	ctx        context.Context
-	txn        txnctx.Txn
+	txn        datastore.Txn
 	fieldsByID map[uint32]client.FieldDefinition
 	status     client.DocumentStatus
 	execInfo   *ExecInfo
@@ -48,7 +48,7 @@ var _ fetcher = (*prefixFetcher)(nil)
 
 func newPrefixFetcher(
 	ctx context.Context,
-	txn txnctx.Txn,
+	txn datastore.Txn,
 	prefixes []keys.DataStoreKey,
 	col client.Collection,
 	fieldsByID map[uint32]client.FieldDefinition,

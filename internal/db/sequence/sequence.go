@@ -16,8 +16,8 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -46,7 +46,7 @@ func Get(ctx context.Context, key keys.Key) (*Sequence, error) {
 }
 
 func (seq *Sequence) Get(ctx context.Context) (uint64, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	val, err := txn.Systemstore().Get(ctx, seq.key.Bytes())
 	if err != nil {
@@ -58,7 +58,7 @@ func (seq *Sequence) Get(ctx context.Context) (uint64, error) {
 }
 
 func (seq *Sequence) Update(ctx context.Context) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)

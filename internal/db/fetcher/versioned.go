@@ -31,7 +31,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -86,12 +85,12 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	Fetcher
 
-	txn txnctx.Txn
+	txn datastore.Txn
 	ctx context.Context
 
 	// Transient version store
 	root  corekv.TxnStore
-	store txnctx.Txn
+	store datastore.Txn
 
 	queuedCids *list.List
 
@@ -104,7 +103,7 @@ type VersionedFetcher struct {
 func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	txn txnctx.Txn,
+	txn datastore.Txn,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,

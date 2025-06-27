@@ -21,11 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -146,7 +146,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
 
@@ -233,7 +233,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 }
 
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
 	if err != nil {

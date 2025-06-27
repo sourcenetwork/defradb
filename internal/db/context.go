@@ -14,8 +14,8 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 // InitContext returns a new context with all caches initialized and linked to
@@ -25,7 +25,7 @@ import (
 // the cached values must be tied to the transaction, otherwise we risk leaking
 // information between transactions.
 func InitContext(ctx context.Context, txn client.Txn) context.Context {
-	ctx = txnctx.SetFromClient(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	ctx = id.InitCollectionShortIDCache(ctx)
 	ctx = id.InitFieldShortIDCache(ctx)
 

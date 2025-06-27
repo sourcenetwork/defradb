@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 // explicitTxn is a transaction that is managed outside of a db operation.
@@ -48,9 +47,9 @@ type transactionDB interface {
 //
 // The returned context will contain the transaction
 // along with the copied values from the input context.
-func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, txnctx.Txn, error) {
+func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
 	// explicit transaction
-	ctxTxn, ok := txnctx.TryGet(ctx)
+	ctxTxn, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
 		switch txn := ctxTxn.(type) {
 		case *Txn:
@@ -67,55 +66,18 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	return InitContext(ctx, txn), txn, nil
 }
 
-// // Txn is a common interface to the db.Txn struct.
-// type Txn interface {
-// 	corekv.Reader
-// 	corekv.Writer
-
-// 	// ID returns the unique immutable identifier for this transaction.
-// 	ID() uint64
-
-// 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
-// 	// May return an error if the transaction has gone stale. The presence of an
-// 	// error is an indication that the data was not committed to the Datastore.
-// 	Commit(ctx context.Context) error
-// 	// Discard throws away changes recorded in a transaction without committing
-// 	// them to the underlying Datastore. Any calls made to Discard after Commit
-// 	// has been successfully called will have no effect on the transaction and
-// 	// state of the Datastore, making it safe to defer.
-// 	Discard(ctx context.Context)
-
-// 	// OnSuccess registers a function to be called when the transaction is committed.
-// 	OnSuccess(fn func())
-
-// 	// OnError registers a function to be called when the transaction is rolled back.
-// 	OnError(fn func())
-
-// 	// OnDiscard registers a function to be called when the transaction is discarded.
-// 	OnDiscard(fn func())
-
-// 	// OnSuccessAsync registers a function to be called asynchronously when the transaction is committed.
-// 	OnSuccessAsync(fn func())
-
-// 	// OnErrorAsync registers a function to be called asynchronously when the transaction is rolled back.
-// 	OnErrorAsync(fn func())
-
-// 	// OnDiscardAsync registers a function to be called asynchronously when the transaction is discarded.
-// 	OnDiscardAsync(fn func())
-// }
-
 type Txn struct {
-	*datastore.Txn
+	*datastore.BasicTxn
 	db *DB
 }
 
 // var _ Txn = (*txn)(nil)
 
 // wrapDatastoreTxn returns a new Txn from the rootstore.
-func wrapDatastoreTxn(txn *datastore.Txn, db *DB) *Txn {
+func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 	return &Txn{
-		Txn: txn,
-		db:  db,
+		BasicTxn: txn,
+		db:       db,
 	}
 }
 

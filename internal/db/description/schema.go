@@ -17,8 +17,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -29,7 +29,7 @@ func CreateSchemaVersion(
 	ctx context.Context,
 	desc client.SchemaDescription,
 ) (client.SchemaDescription, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	buf, err := json.Marshal(desc)
 	if err != nil {
@@ -63,7 +63,7 @@ func GetSchemaVersion(
 	ctx context.Context,
 	versionID string,
 ) (client.SchemaDescription, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	key := keys.NewSchemaVersionKey(versionID)
 
@@ -125,7 +125,7 @@ func GetSchemasByRoot(
 func GetSchemas(
 	ctx context.Context,
 ) ([]client.SchemaDescription, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	cols, err := GetActiveCollections(ctx)
 	if err != nil {
@@ -195,7 +195,7 @@ func GetSchemas(
 func GetAllSchemas(
 	ctx context.Context,
 ) ([]client.SchemaDescription, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewSchemaVersionKey("").Bytes(),
@@ -249,7 +249,7 @@ func GetSchemaVersionIDs(
 	ctx context.Context,
 	schemaRoot string,
 ) ([]string, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	// Add the schema root as the first version here.
 	// It is not present in the history prefix.

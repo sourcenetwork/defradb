@@ -20,9 +20,9 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 // todo: This file, particularly the `lensPool` stuff, contains fairly sensitive code that is both
@@ -57,12 +57,12 @@ type lensRegistry struct {
 // stuff within here should be accessible from within this transaction but not
 // from outside.
 type txnContext struct {
-	txn                         txnctx.Txn
+	txn                         datastore.Txn
 	lensPoolsByCollectionID     map[string]*lensPool
 	reversedPoolsByCollectionID map[string]*lensPool
 }
 
-func newTxnCtx(txn txnctx.Txn) *txnContext {
+func newTxnCtx(txn datastore.Txn) *txnContext {
 	return &txnContext{
 		txn:                         txn,
 		lensPoolsByCollectionID:     map[string]*lensPool{},
@@ -94,7 +94,7 @@ func NewRegistry(
 	}
 }
 
-func (r *lensRegistry) getCtx(txn txnctx.Txn, readonly bool) *txnContext {
+func (r *lensRegistry) getCtx(txn datastore.Txn, readonly bool) *txnContext {
 	r.txnLock.RLock()
 	if txnCtx, ok := r.txnCtxs[txn.ID()]; ok {
 		r.txnLock.RUnlock()

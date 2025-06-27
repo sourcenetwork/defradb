@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/net/txnctx"
 )
 
 const marker = byte(0xff)
@@ -31,7 +30,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 
 	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
 	defer txn.Discard(ctx)
-	ctx = txnctx.Set(ctx, txn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -79,7 +78,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string
 
 	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
 	defer txn.Discard(ctx)
-	ctx = txnctx.Set(ctx, txn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -127,7 +126,7 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 
 	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
 	defer txn.Discard(ctx)
-	ctx = txnctx.Set(ctx, txn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),

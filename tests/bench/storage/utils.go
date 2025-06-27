@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
+	"github.com/sourcenetwork/defradb/datastore"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
@@ -84,7 +84,7 @@ func runStorageBenchTxnGet(
 	}
 	defer clientTxn.Discard(ctx)
 
-	txn := txnctx.MustGetFromClient(clientTxn)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -126,7 +126,7 @@ func runStorageBenchTxnIterator(
 	}
 	defer clientTxn.Discard(ctx)
 
-	txn := txnctx.MustGetFromClient(clientTxn)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -240,7 +240,7 @@ func backfillBenchmarkTxn(
 	}
 	defer clientTxn.Discard(ctx)
 
-	txn := txnctx.MustGetFromClient(clientTxn)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {

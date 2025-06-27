@@ -18,9 +18,9 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -29,7 +29,7 @@ func SaveCollection(
 	ctx context.Context,
 	desc client.CollectionVersion,
 ) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	if desc.CollectionID != "" {
 		// Set the collection short id
@@ -87,7 +87,7 @@ func GetCollectionByID(
 	ctx context.Context,
 	id string,
 ) (client.CollectionVersion, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	key := keys.NewCollectionKey(id)
 	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
@@ -111,7 +111,7 @@ func GetCollectionByName(
 	ctx context.Context,
 	name string,
 ) (client.CollectionVersion, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	nameKey := keys.NewCollectionNameKey(name)
 	idBuf, err := txn.Systemstore().Get(ctx, nameKey.Bytes())
@@ -185,7 +185,7 @@ func GetCollectionsBySchemaRoot(
 func GetCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.COLLECTION_ID),
@@ -235,7 +235,7 @@ func GetCollections(
 func GetActiveCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewCollectionNameKey("").Bytes(),
@@ -286,7 +286,7 @@ func HasCollectionByName(
 	ctx context.Context,
 	name string,
 ) (bool, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	nameKey := keys.NewCollectionNameKey(name)
 	return txn.Systemstore().Has(ctx, nameKey.Bytes())

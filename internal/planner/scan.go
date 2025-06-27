@@ -15,10 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -63,7 +63,7 @@ func (n *scanNode) Kind() string {
 }
 
 func (n *scanNode) Init() error {
-	txn := txnctx.MustGet(n.p.ctx)
+	txn := datastore.CtxMustGetTxn(n.p.ctx)
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,

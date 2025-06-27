@@ -14,46 +14,66 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
-// // Txn is a common interface to the db.Txn struct.
-// type Txn interface {
-// 	corekv.Reader
-// 	corekv.Writer
+// Txn is a common interface to the BasicTxn struct.
+type Txn interface {
+	// Blockstore returns the prefixed store for the blockstore
+	Blockstore() Blockstore
 
-// 	// ID returns the unique immutable identifier for this transaction.
-// 	ID() uint64
+	// Datastore returns the prefixed store for the datastore
+	Datastore() corekv.ReaderWriter
 
-// 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
-// 	// May return an error if the transaction has gone stale. The presence of an
-// 	// error is an indication that the data was not committed to the Datastore.
-// 	Commit(ctx context.Context) error
-// 	// Discard throws away changes recorded in a transaction without committing
-// 	// them to the underlying Datastore. Any calls made to Discard after Commit
-// 	// has been successfully called will have no effect on the transaction and
-// 	// state of the Datastore, making it safe to defer.
-// 	Discard(ctx context.Context)
+	// Encstore returns the prefixed store for the encryption key store
+	Encstore() Blockstore
 
-// 	// OnSuccess registers a function to be called when the transaction is committed.
-// 	OnSuccess(fn func())
+	// Headstore returns the prefixed store for the headstore
+	Headstore() corekv.ReaderWriter
 
-// 	// OnError registers a function to be called when the transaction is rolled back.
-// 	OnError(fn func())
+	// Peerstore returns the prefixed store for the peerstore
+	Peerstore() corekv.ReaderWriter
 
-// 	// OnDiscard registers a function to be called when the transaction is discarded.
-// 	OnDiscard(fn func())
+	// Rootstore returns the rootstore
+	Rootstore() corekv.ReaderWriter
 
-// 	// OnSuccessAsync registers a function to be called asynchronously when the transaction is committed.
-// 	OnSuccessAsync(fn func())
+	// Systemstore returns the prefixed store for the systemstore
+	Systemstore() corekv.ReaderWriter
 
-// 	// OnErrorAsync registers a function to be called asynchronously when the transaction is rolled back.
-// 	OnErrorAsync(fn func())
+	// ID returns the unique immutable identifier for this transaction.
+	ID() uint64
 
-// 	// OnDiscardAsync registers a function to be called asynchronously when the transaction is discarded.
-// 	OnDiscardAsync(fn func())
-// }
+	// Commit finalizes a transaction, attempting to commit it to the Datastore.
+	// May return an error if the transaction has gone stale. The presence of an
+	// error is an indication that the data was not committed to the Datastore.
+	Commit(ctx context.Context) error
+	// Discard throws away changes recorded in a transaction without committing
+	// them to the underlying Datastore. Any calls made to Discard after Commit
+	// has been successfully called will have no effect on the transaction and
+	// state of the Datastore, making it safe to defer.
+	Discard(ctx context.Context)
 
-type Txn struct {
+	// OnSuccess registers a function to be called when the transaction is committed.
+	OnSuccess(fn func())
+
+	// OnError registers a function to be called when the transaction is rolled back.
+	OnError(fn func())
+
+	// OnDiscard registers a function to be called when the transaction is discarded.
+	OnDiscard(fn func())
+
+	// OnSuccessAsync registers a function to be called asynchronously when the transaction is committed.
+	OnSuccessAsync(fn func())
+
+	// OnErrorAsync registers a function to be called asynchronously when the transaction is rolled back.
+	OnErrorAsync(fn func())
+
+	// OnDiscardAsync registers a function to be called asynchronously when the transaction is discarded.
+	OnDiscardAsync(fn func())
+}
+
+type BasicTxn struct {
 	*Multistore
 
 	txn corekv.Txn
@@ -68,24 +88,24 @@ type Txn struct {
 	discardAsyncFns []func()
 }
 
-// var _ Txn = (*txn)(nil)
+var _ Txn = (*BasicTxn)(nil)
 
 // newTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) *Txn {
+func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	multistore := NewMultistore(rootTxn)
-	return &Txn{
+	return &BasicTxn{
 		Multistore: multistore,
 		txn:        rootTxn,
 		id:         id,
 	}
 }
 
-func (t *Txn) ID() uint64 {
+func (t *BasicTxn) ID() uint64 {
 	return t.id
 }
 
-func (t *Txn) Commit(ctx context.Context) error {
+func (t *BasicTxn) Commit(ctx context.Context) error {
 	var fns []func()
 	var asyncFns []func()
 
@@ -107,7 +127,7 @@ func (t *Txn) Commit(ctx context.Context) error {
 	return err
 }
 
-func (t *Txn) Discard(ctx context.Context) {
+func (t *BasicTxn) Discard(ctx context.Context) {
 	t.txn.Discard()
 
 	for _, fn := range t.discardAsyncFns {
@@ -118,26 +138,66 @@ func (t *Txn) Discard(ctx context.Context) {
 	}
 }
 
-func (t *Txn) OnSuccess(fn func()) {
+func (t *BasicTxn) OnSuccess(fn func()) {
 	t.successFns = append(t.successFns, fn)
 }
 
-func (t *Txn) OnError(fn func()) {
+func (t *BasicTxn) OnError(fn func()) {
 	t.errorFns = append(t.errorFns, fn)
 }
 
-func (t *Txn) OnDiscard(fn func()) {
+func (t *BasicTxn) OnDiscard(fn func()) {
 	t.discardFns = append(t.discardFns, fn)
 }
 
-func (t *Txn) OnSuccessAsync(fn func()) {
+func (t *BasicTxn) OnSuccessAsync(fn func()) {
 	t.successAsyncFns = append(t.successAsyncFns, fn)
 }
 
-func (t *Txn) OnErrorAsync(fn func()) {
+func (t *BasicTxn) OnErrorAsync(fn func()) {
 	t.errorAsyncFns = append(t.errorAsyncFns, fn)
 }
 
-func (t *Txn) OnDiscardAsync(fn func()) {
+func (t *BasicTxn) OnDiscardAsync(fn func()) {
 	t.discardAsyncFns = append(t.discardAsyncFns, fn)
+}
+
+type txnKey struct{}
+
+// CtxMustGetTxn returns the transaction from the context or panics.
+func CtxMustGetTxn(ctx context.Context) Txn {
+	return ctx.Value(txnKey{}).(Txn) //nolint:forcetypeassert
+}
+
+// CtxTryGetTxn returns a transaction and a bool indicating if the
+// txn was retrieved from the given context.
+func CtxTryGetTxn(ctx context.Context) (Txn, bool) {
+	txn, ok := ctx.Value(txnKey{}).(Txn)
+	return txn, ok
+}
+
+// CtxTryGetClientTxn returns a client transaction and a bool indicating if the
+// txn was retrieved from the given context.
+func CtxTryGetClientTxn(ctx context.Context) (client.Txn, bool) {
+	txn, ok := ctx.Value(txnKey{}).(client.Txn)
+	return txn, ok
+}
+
+// CtxSetTxn returns a new context with the txn value set.
+//
+// This will overwrite any previously set transaction value.
+func CtxSetTxn(ctx context.Context, txn Txn) context.Context {
+	return context.WithValue(ctx, txnKey{}, txn)
+}
+
+// CtxSetFromClientTxn returns a new context with the txn value set.
+//
+// This will overwrite any previously set transaction value.
+func CtxSetFromClientTxn(ctx context.Context, txn client.Txn) context.Context {
+	return context.WithValue(ctx, txnKey{}, txn)
+}
+
+// MustGetFromClientTxn returns the a Txn from a client.Txn or panics.
+func MustGetFromClientTxn(txn client.Txn) Txn {
+	return txn.(Txn) //nolint:forcetypeassert
 }

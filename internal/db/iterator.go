@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -63,7 +62,7 @@ func NewHeadBlocksIteratorFromTxn(
 	ctx context.Context,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	return NewHeadBlocksIterator(
 		ctx,
 		txn.Headstore(),
