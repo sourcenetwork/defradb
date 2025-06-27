@@ -17,17 +17,17 @@ import (
 	"fmt"
 	sysjs "syscall/js"
 
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/goji"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/js"
 	"github.com/sourcenetwork/defradb/node"
-
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/goji"
-	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.DB = (*Wrapper)(nil)

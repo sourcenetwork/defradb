@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/keyring"
 )
 
@@ -119,7 +120,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := http.SetContextTxn(cmd.Context(), tx)
+	ctx := txnctx.SetFromClient(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }
