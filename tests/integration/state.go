@@ -21,7 +21,6 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
@@ -167,7 +166,7 @@ type state struct {
 	// Any explicit transactions active in this test.
 	//
 	// This is order dependent and the property is accessed by index.
-	txns []datastore.Txn
+	txns []client.Txn
 
 	// identities contains all identities created in this test.
 	// The map key is the identity reference that uniquely identifies identities of different
@@ -274,7 +273,7 @@ func newState(
 		kms:                             kms,
 		dbt:                             dbt,
 		clientType:                      clientType,
-		txns:                            []datastore.Txn{},
+		txns:                            []client.Txn{},
 		identities:                      map[Identity]*identityHolder{},
 		nextIdentityGenSeed:             0,
 		allActionsDone:                  make(chan struct{}),

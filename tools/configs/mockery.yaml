@@ -24,8 +24,6 @@ packages: # Packages and their interfaces to generate mocks for.
         config:
             dir: "./datastore/mocks"
         interfaces:
-            ReaderWriter:
-            Txn:
             Blockstore:
 
     github.com/sourcenetwork/defradb/client:

@@ -39,7 +39,7 @@ type DB interface {
 	client.DB
 	MaxTxnRetries() int
 	Rootstore() corekv.TxnStore
-	Events() *event.Bus
+	Events() event.Bus
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	PurgeACPState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)

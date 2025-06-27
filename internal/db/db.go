@@ -157,15 +157,17 @@ func newDB(
 }
 
 // NewTxn creates a new transaction.
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly), nil
+	txn := datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly), nil
+	txn := datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 func (db *DB) LensRegistry() client.LensRegistry {
@@ -393,7 +395,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		}
 	}
 
-	exists, err := datastore.SystemstoreFrom(txn).Has(ctx, []byte("/init"))
+	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
@@ -416,7 +418,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return txn.Commit(ctx)
 	}
 
-	err = datastore.SystemstoreFrom(txn).Set(ctx, []byte("/init"), []byte{1})
+	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
 		return err
 	}
@@ -470,7 +472,7 @@ func (db *DB) Close() {
 	log.Info("Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store datastore.ReaderWriter) error {
+func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err

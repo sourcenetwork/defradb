@@ -21,11 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -146,20 +146,20 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
-	txn := datastore.MustGetTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
+	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
 
 	// temporarily disable the cache in order to query without using it
 	col.Version.IsMaterialized = false
-	err = description.SaveCollection(ctx, txn, col.Version)
+	err = description.SaveCollection(ctx, col.Version)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
 		col.Version.IsMaterialized = true
-		defErr = description.SaveCollection(ctx, txn, col.Version)
+		defErr = description.SaveCollection(ctx, col.Version)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -218,7 +218,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 		}
 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
-		err = datastore.DatastoreFrom(txn).Set(ctx, itemKey.Bytes(), serializedItem)
+		err = txn.Datastore().Set(ctx, itemKey.Bytes(), serializedItem)
 		if err != nil {
 			return err
 		}
@@ -233,14 +233,14 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 }
 
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
-	txn := datastore.MustGetTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
 	if err != nil {
 		return err
 	}
 
-	iter, err := datastore.DatastoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewViewCacheColPrefix(shortID).Bytes(),
 		KeysOnly: true,
 	})
@@ -257,7 +257,7 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinitio
 			break
 		}
 
-		err = datastore.DatastoreFrom(txn).Delete(ctx, iter.Key())
+		err = txn.Datastore().Delete(ctx, iter.Key())
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}

@@ -29,7 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
@@ -473,7 +472,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 	return resCh
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "create"}
 	if readOnly {
 		args = append(args, "--read-only")
@@ -491,10 +490,10 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{tx, w.cmd}, nil
+	return &Transaction{w, tx}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "create"}
 	args = append(args, "--concurrent")
 
@@ -514,7 +513,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{tx, w.cmd}, nil
+	return &Transaction{w, tx}, nil
 }
 
 func (w *Wrapper) Close() {

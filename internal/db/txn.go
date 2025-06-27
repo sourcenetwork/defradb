@@ -13,12 +13,19 @@ package db
 import (
 	"context"
 
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 // explicitTxn is a transaction that is managed outside of a db operation.
 type explicitTxn struct {
-	datastore.Txn
+	*Txn
 }
 
 func (t *explicitTxn) Commit(ctx context.Context) error {
@@ -31,7 +38,7 @@ func (t *explicitTxn) Discard(ctx context.Context) {
 
 // transactionDB is a db that can create transactions.
 type transactionDB interface {
-	NewTxn(context.Context, bool) (datastore.Txn, error)
+	NewTxn(context.Context, bool) (client.Txn, error)
 }
 
 // ensureContextTxn ensures that the returned context has a transaction.
@@ -41,15 +48,206 @@ type transactionDB interface {
 //
 // The returned context will contain the transaction
 // along with the copied values from the input context.
-func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, datastore.Txn, error) {
+func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (context.Context, txnctx.Txn, error) {
 	// explicit transaction
-	txn, ok := datastore.TryGetTxn(ctx)
+	ctxTxn, ok := txnctx.TryGet(ctx)
 	if ok {
-		return InitContext(ctx, &explicitTxn{txn}), &explicitTxn{txn}, nil
+		switch txn := ctxTxn.(type) {
+		case *Txn:
+			return InitContext(ctx, &explicitTxn{txn}), &explicitTxn{txn}, nil
+		case *explicitTxn:
+			return InitContext(ctx, &explicitTxn{txn.Txn}), &explicitTxn{txn.Txn}, nil
+		}
 	}
-	txn, err := db.NewTxn(ctx, readOnly)
+	clientTxn, err := db.NewTxn(ctx, readOnly)
 	if err != nil {
-		return nil, txn, err
+		return nil, nil, err
 	}
+	txn := clientTxn.(*Txn) //nolint:forcetypeassert
 	return InitContext(ctx, txn), txn, nil
+}
+
+// // Txn is a common interface to the db.Txn struct.
+// type Txn interface {
+// 	corekv.Reader
+// 	corekv.Writer
+
+// 	// ID returns the unique immutable identifier for this transaction.
+// 	ID() uint64
+
+// 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
+// 	// May return an error if the transaction has gone stale. The presence of an
+// 	// error is an indication that the data was not committed to the Datastore.
+// 	Commit(ctx context.Context) error
+// 	// Discard throws away changes recorded in a transaction without committing
+// 	// them to the underlying Datastore. Any calls made to Discard after Commit
+// 	// has been successfully called will have no effect on the transaction and
+// 	// state of the Datastore, making it safe to defer.
+// 	Discard(ctx context.Context)
+
+// 	// OnSuccess registers a function to be called when the transaction is committed.
+// 	OnSuccess(fn func())
+
+// 	// OnError registers a function to be called when the transaction is rolled back.
+// 	OnError(fn func())
+
+// 	// OnDiscard registers a function to be called when the transaction is discarded.
+// 	OnDiscard(fn func())
+
+// 	// OnSuccessAsync registers a function to be called asynchronously when the transaction is committed.
+// 	OnSuccessAsync(fn func())
+
+// 	// OnErrorAsync registers a function to be called asynchronously when the transaction is rolled back.
+// 	OnErrorAsync(fn func())
+
+// 	// OnDiscardAsync registers a function to be called asynchronously when the transaction is discarded.
+// 	OnDiscardAsync(fn func())
+// }
+
+type Txn struct {
+	*datastore.Txn
+	db *DB
+}
+
+// var _ Txn = (*txn)(nil)
+
+// wrapDatastoreTxn returns a new Txn from the rootstore.
+func wrapDatastoreTxn(txn *datastore.Txn, db *DB) *Txn {
+	return &Txn{
+		Txn: txn,
+		db:  db,
+	}
+}
+
+func (txn *Txn) PrintDump(ctx context.Context) error {
+	return printStore(ctx, txn.Rootstore())
+}
+
+func (txn *Txn) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddDACPolicy(ctx, policy)
+}
+
+func (txn *Txn) AddDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+}
+
+func (txn *Txn) DeleteDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+}
+
+func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetNodeIdentity(ctx)
+}
+
+func (txn *Txn) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.VerifySignature(ctx, blockCid, pubKey)
+}
+
+func (txn *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddSchema(ctx, sdl)
+}
+
+func (txn *Txn) PatchSchema(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+	setDefault bool,
+) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.PatchSchema(ctx, patch, migration, setDefault)
+}
+
+func (txn *Txn) PatchCollection(ctx context.Context, patch string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.PatchCollection(ctx, patch)
+}
+
+func (txn *Txn) SetActiveSchemaVersion(ctx context.Context, version string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SetActiveSchemaVersion(ctx, version)
+}
+
+func (txn *Txn) AddView(
+	ctx context.Context,
+	gqlQuery string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddView(ctx, gqlQuery, sdl, transform)
+}
+
+func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.RefreshViews(ctx, options)
+}
+
+func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SetMigration(ctx, config)
+}
+
+func (txn *Txn) LensRegistry() client.LensRegistry {
+	return txn.db.LensRegistry()
+}
+
+func (txn *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetCollectionByName(ctx, name)
+}
+
+func (txn *Txn) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetCollections(ctx, options)
+}
+
+func (txn *Txn) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetSchemaByVersionID(ctx, versionID)
+}
+
+func (txn *Txn) GetSchemas(ctx context.Context, options client.SchemaFetchOptions) ([]client.SchemaDescription, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetSchemas(ctx, options)
+}
+
+func (txn *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetAllIndexes(ctx)
+}
+
+func (txn *Txn) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+	ctx = InitContext(ctx, txn)
+	return txn.db.ExecRequest(ctx, request, opts...)
+}
+
+func (txn *Txn) BasicImport(ctx context.Context, filepath string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.BasicImport(ctx, filepath)
+}
+
+func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.BasicExport(ctx, config)
 }

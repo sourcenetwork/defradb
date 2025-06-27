@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/keyring"
 )
 
@@ -44,9 +43,9 @@ var (
 	cfgContextKey = contextKey("cfg")
 	// rootDirContextKey is the context key for the root directory.
 	rootDirContextKey = contextKey("rootDir")
-	// clientContextKey is the context key for the client.DB
+	// clientContextKey is the context key for the cliClient.DB
 	clientContextKey = contextKey("client")
-	// colContextKey is the context key for the client.Collection
+	// colContextKey is the context key for the cliClient.Collection
 	//
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
@@ -58,17 +57,11 @@ const (
 	authTokenExpiration = time.Minute * 15
 )
 
-type Client interface {
-	client.DB
-	client.P2P
-	Purge(ctx context.Context) error
-}
-
-// mustGetContextClient returns the db for the current command context.
+// mustGetContextCLIClient returns the CLI for the current command context.
 //
-// If a db is not set in the current context this function panics.
-func mustGetContextClient(cmd *cobra.Command) Client {
-	return cmd.Context().Value(clientContextKey).(Client) //nolint:forcetypeassert
+// If a CLI is not set in the current context this function panics.
+func mustGetContextCLIClient(cmd *cobra.Command) CLI {
+	return cmd.Context().Value(clientContextKey).(CLI) //nolint:forcetypeassert
 }
 
 // mustGetContextConfig returns the config for the current command context.
@@ -126,7 +119,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := db.InitContext(cmd.Context(), tx)
+	ctx := http.SetContextTxn(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }

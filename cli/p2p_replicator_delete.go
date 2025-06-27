@@ -30,13 +30,13 @@ Example:
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			var info peer.AddrInfo
 			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
-			return client.DeleteReplicator(cmd.Context(), info, collections...)
+			return cliClient.DeleteReplicator(cmd.Context(), info, collections...)
 		},
 	}
 	cmd.Flags().StringSliceVarP(&collections, "collection", "c",

@@ -16,10 +16,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -29,7 +29,7 @@ import (
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type indexFetcher struct {
 	ctx           context.Context
-	txn           datastore.Txn
+	txn           txnctx.Txn
 	col           client.Collection
 	indexFilter   *mapper.Filter
 	mapping       *core.DocumentMapping
@@ -48,7 +48,7 @@ var _ fetcher = (*indexFetcher)(nil)
 // It can return nil, if there is no efficient way to fetch indexes with given filter conditions.
 func newIndexFetcher(
 	ctx context.Context,
-	txn datastore.Txn,
+	txn txnctx.Txn,
 	fieldsByID map[uint32]client.FieldDefinition,
 	indexDesc client.IndexDescription,
 	docFilter *mapper.Filter,
@@ -91,7 +91,7 @@ func newIndexFetcher(
 	}
 
 	f.indexIter = iter
-	return f, iter.Init(ctx, datastore.DatastoreFrom(txn))
+	return f, iter.Init(ctx, txn.Datastore())
 }
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {

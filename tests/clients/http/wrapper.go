@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
@@ -214,28 +213,28 @@ func (w *Wrapper) ExecRequest(
 	return w.client.ExecRequest(ctx, query, opts...)
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	client, err := w.client.NewTxn(ctx, readOnly)
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewTxn(ctx, readOnly)
 	if err != nil {
 		return nil, err
 	}
-	server, err := w.handler.Transaction(client.ID())
+	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{server, client}, nil
+	return &Transaction{w, serverTxn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	client, err := w.client.NewConcurrentTxn(ctx, readOnly)
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewConcurrentTxn(ctx, readOnly)
 	if err != nil {
 		return nil, err
 	}
-	server, err := w.handler.Transaction(client.ID())
+	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{server, client}, nil
+	return &Transaction{w, serverTxn}, nil
 }
 
 func (w *Wrapper) Close() {

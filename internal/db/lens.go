@@ -17,17 +17,15 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
-	txn := datastore.MustGetTxn(ctx)
-
 	dstFound := true
-	dstCol, err := description.GetCollectionByID(ctx, txn, cfg.DestinationSchemaVersionID)
+	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			dstFound = false
@@ -37,7 +35,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	srcFound := true
-	sourceCol, err := description.GetCollectionByID(ctx, txn, cfg.SourceSchemaVersionID)
+	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceSchemaVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			srcFound = false
@@ -53,7 +51,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			IsMaterialized: true,
 		}
 
-		err = description.SaveCollection(ctx, txn, desc)
+		err = description.SaveCollection(ctx, desc)
 		if err != nil {
 			return err
 		}
@@ -95,7 +93,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			},
 		}
 
-		err = description.SaveCollection(ctx, txn, dstCol)
+		err = description.SaveCollection(ctx, dstCol)
 		if err != nil {
 			return err
 		}
@@ -103,7 +101,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		if dstCol.CollectionID != "" { // todo- this makes no sense
 			var schemaFound bool
 			// If the root schema id is known, we need to add it to the index, even if the schema is not known locally
-			schema, err := description.GetSchemaVersion(ctx, txn, cfg.SourceSchemaVersionID)
+			schema, err := description.GetSchemaVersion(ctx, cfg.SourceSchemaVersionID)
 			if err != nil {
 				if !errors.Is(err, corekv.ErrNotFound) {
 					return err
@@ -113,15 +111,16 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			}
 
 			if schemaFound {
+				txn := txnctx.MustGet(ctx)
 				schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
-				err = datastore.SystemstoreFrom(txn).Set(ctx, schemaRootKey.Bytes(), []byte{})
+				err = txn.Systemstore().Set(ctx, schemaRootKey.Bytes(), []byte{})
 				if err != nil {
 					return err
 				}
 
 				dstCol.CollectionID = schema.Root
 
-				err = description.SaveCollection(ctx, txn, dstCol)
+				err = description.SaveCollection(ctx, dstCol)
 				if err != nil {
 					return err
 				}
@@ -143,7 +142,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		}
 	}
 
-	err = description.SaveCollection(ctx, txn, dstCol)
+	err = description.SaveCollection(ctx, dstCol)
 	if err != nil {
 		return err
 	}

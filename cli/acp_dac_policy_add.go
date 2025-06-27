@@ -106,8 +106,8 @@ Example: add from stdin:
 				return ErrPolicyFileArgCanNotBeEmpty
 			}
 
-			client := mustGetContextClient(cmd)
-			policyResult, err := client.AddDACPolicy(
+			cliClient := mustGetContextCLIClient(cmd)
+			policyResult, err := cliClient.AddDACPolicy(
 				cmd.Context(),
 				policy,
 			)

@@ -25,9 +25,9 @@ Example:
   defradb client p2p replicator getall
   		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
-			reps, err := client.GetAllReplicators(cmd.Context())
+			reps, err := cliClient.GetAllReplicators(cmd.Context())
 			if err != nil {
 				return err
 			}

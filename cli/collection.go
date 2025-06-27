@@ -47,7 +47,7 @@ func MakeCollectionCommand() *cobra.Command {
 			if err := setContextClient(cmd); err != nil {
 				return err
 			}
-			c := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
@@ -63,7 +63,7 @@ func MakeCollectionCommand() *cobra.Command {
 				options.IncludeInactive = immutable.Some(getInactive)
 			}
 
-			cols, err := c.GetCollections(cmd.Context(), options)
+			cols, err := cliClient.GetCollections(cmd.Context(), options)
 			if err != nil {
 				return err
 			}

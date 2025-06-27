@@ -31,7 +31,7 @@ Example to verify the signature of a block:
   defradb client block verify-signature --type <type> <public-key> <cid> 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 			keyType := crypto.KeyTypeSecp256k1
 			if typeStr != "" {
 				keyType = crypto.KeyType(typeStr)
@@ -40,7 +40,7 @@ Example to verify the signature of a block:
 			if err != nil {
 				return err
 			}
-			err = client.VerifySignature(cmd.Context(), args[1], pubKey)
+			err = cliClient.VerifySignature(cmd.Context(), args[1], pubKey)
 			if err != nil {
 				return err
 			}

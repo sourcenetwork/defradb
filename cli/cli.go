@@ -14,12 +14,21 @@ Package cli provides the command-line interface.
 package cli
 
 import (
-	"github.com/spf13/cobra"
+	"context"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 var log = corelog.NewLogger("cli")
+
+type CLI interface {
+	client.DB
+	client.P2P
+	Purge(ctx context.Context) error
+}
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
 func NewDefraCommand() *cobra.Command {

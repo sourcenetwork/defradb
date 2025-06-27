@@ -38,7 +38,7 @@ Example: export data for the 'Users' collection:
   defradb client export --collection Users user_data.json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			if !isValidExportFormat(format) {
 				return ErrInvalidExportFormat
@@ -56,7 +56,7 @@ Example: export data for the 'Users' collection:
 				Collections: collections,
 			}
 
-			return c.BasicExport(cmd.Context(), &data)
+			return cliClient.BasicExport(cmd.Context(), &data)
 		},
 	}
 	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Set the output JSON to be pretty printed")

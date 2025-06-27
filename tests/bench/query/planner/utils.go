@@ -15,12 +15,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/planner"
@@ -75,10 +72,7 @@ func runMakePlanBench(
 	if len(errs) > 0 {
 		return errors.Wrap("failed to parse query string", errors.New(fmt.Sprintf("%v", errs)))
 	}
-	txn, err := d.NewTxn(ctx, false)
-	if err != nil {
-		return errors.Wrap("failed to create txn", err)
-	}
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -87,7 +81,6 @@ func runMakePlanBench(
 			acpIdentity.None,
 			dac.NoDocumentACP,
 			d,
-			txn,
 		)
 		plan, err := planner.MakePlan(q)
 		if err != nil {
@@ -127,25 +120,10 @@ func buildParser(
 		collectionDefinitions[i] = collectionVersion.Definition
 	}
 
-	err = parser.SetSchema(ctx, &dummyTxn{}, collectionDefinitions)
+	err = parser.SetSchema(ctx, collectionDefinitions)
 	if err != nil {
 		return nil, err
 	}
 
 	return parser, nil
 }
-
-var _ datastore.Txn = (*dummyTxn)(nil)
-
-type dummyTxn struct{}
-
-func (*dummyTxn) Store() corekv.Store              { return nil }
-func (*dummyTxn) Commit(ctx context.Context) error { return nil }
-func (*dummyTxn) Discard(ctx context.Context)      {}
-func (*dummyTxn) OnSuccess(fn func())              {}
-func (*dummyTxn) OnError(fn func())                {}
-func (*dummyTxn) OnDiscard(fn func())              {}
-func (*dummyTxn) OnSuccessAsync(fn func())         {}
-func (*dummyTxn) OnErrorAsync(fn func())           {}
-func (*dummyTxn) OnDiscardAsync(fn func())         {}
-func (*dummyTxn) ID() uint64                       { return 0 }

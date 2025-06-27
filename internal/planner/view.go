@@ -14,9 +14,9 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -206,8 +206,8 @@ func (n *cachedViewFetcher) Init() error {
 	if err != nil {
 		return err
 	}
-
-	iter, err := datastore.DatastoreFrom(n.p.txn).Iterator(n.p.ctx, corekv.IterOptions{
+	txn := txnctx.MustGet(n.p.ctx)
+	iter, err := txn.Datastore().Iterator(n.p.ctx, corekv.IterOptions{
 		Prefix: keys.NewViewCacheColPrefix(shortID).Bytes(),
 	})
 	if err != nil {

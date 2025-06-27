@@ -23,18 +23,6 @@ var (
 	log = corelog.NewLogger("store")
 )
 
-// ReaderWriter simplifies the interface that is exposed by a
-// ReaderWriter into its sub-components Reader and Writer.
-// Using this simplified interface means that both ReaderWriter
-// and ds.Txn satisfy the interface. Due to go-datastore#113 and
-// go-datastore#114 ds.Txn no longer implements ReaderWriter
-// Which means we can't swap between the two for Datastores that
-// support TxnDatastore.
-type ReaderWriter interface {
-	corekv.Reader
-	corekv.Writer
-}
-
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
 	blockstore.Blockstore
@@ -47,6 +35,6 @@ type IPLDStorage interface {
 	storage.WritableStorage
 }
 
-func prefix(root corekv.Store, prefix []byte) corekv.Store {
+func prefix(root corekv.ReaderWriter, prefix []byte) corekv.ReaderWriter {
 	return namespace.Wrap(root, prefix)
 }

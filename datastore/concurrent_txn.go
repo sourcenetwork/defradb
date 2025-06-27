@@ -28,14 +28,16 @@ type concurrentTxn struct {
 	mu sync.Mutex
 }
 
-// NewConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
-func NewConcurrentTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) Txn {
+// newConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
+func NewConcurrentTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) *Txn {
 	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
+	multistore := NewMultistore(rootTxn)
 
-	return &txn{
-		Txn: rootConcurentTxn,
-		id:  id,
+	return &Txn{
+		Multistore: multistore,
+		txn:        rootConcurentTxn,
+		id:         id,
 	}
 }
 

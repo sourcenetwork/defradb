@@ -17,8 +17,8 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -27,16 +27,17 @@ import (
 // If the Root is empty it will be set to the new version ID.
 func CreateSchemaVersion(
 	ctx context.Context,
-	txn datastore.Txn,
 	desc client.SchemaDescription,
 ) (client.SchemaDescription, error) {
+	txn := txnctx.MustGet(ctx)
+
 	buf, err := json.Marshal(desc)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
 
 	key := keys.NewSchemaVersionKey(desc.VersionID)
-	err = datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), buf)
+	err = txn.Systemstore().Set(ctx, key.Bytes(), buf)
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -45,7 +46,7 @@ func CreateSchemaVersion(
 	if !isNew {
 		// We don't need to add a root key if this is the first version
 		schemaVersionHistoryKey := keys.NewSchemaRootKey(desc.Root, desc.VersionID)
-		err = datastore.SystemstoreFrom(txn).Set(ctx, schemaVersionHistoryKey.Bytes(), []byte{})
+		err = txn.Systemstore().Set(ctx, schemaVersionHistoryKey.Bytes(), []byte{})
 		if err != nil {
 			return client.SchemaDescription{}, err
 		}
@@ -60,12 +61,13 @@ func CreateSchemaVersion(
 // Will return an error if it is not found.
 func GetSchemaVersion(
 	ctx context.Context,
-	txn datastore.Txn,
 	versionID string,
 ) (client.SchemaDescription, error) {
+	txn := txnctx.MustGet(ctx)
+
 	key := keys.NewSchemaVersionKey(versionID)
 
-	buf, err := datastore.SystemstoreFrom(txn).Get(ctx, key.Bytes())
+	buf, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
 		return client.SchemaDescription{}, err
 	}
@@ -82,10 +84,9 @@ func GetSchemaVersion(
 // GetSchemasByName returns all the schema with the given name.
 func GetSchemasByName(
 	ctx context.Context,
-	txn datastore.Txn,
 	name string,
 ) ([]client.SchemaDescription, error) {
-	allSchemas, err := GetAllSchemas(ctx, txn)
+	allSchemas, err := GetAllSchemas(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -103,10 +104,9 @@ func GetSchemasByName(
 // GetSchemasByRoot returns all the schema with the given root.
 func GetSchemasByRoot(
 	ctx context.Context,
-	txn datastore.Txn,
 	root string,
 ) ([]client.SchemaDescription, error) {
-	allSchemas, err := GetAllSchemas(ctx, txn)
+	allSchemas, err := GetAllSchemas(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +124,10 @@ func GetSchemasByRoot(
 // GetSchemas returns the schema of all the default schema versions in the system.
 func GetSchemas(
 	ctx context.Context,
-	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	cols, err := GetActiveCollections(ctx, txn)
+	txn := txnctx.MustGet(ctx)
+
+	cols, err := GetActiveCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func GetSchemas(
 	}
 
 	schemaVersionPrefix := keys.NewSchemaVersionKey("")
-	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: schemaVersionPrefix.Bytes(),
 	})
 	if err != nil {
@@ -193,9 +194,10 @@ func GetSchemas(
 // GetSchemas returns all schema versions in the system.
 func GetAllSchemas(
 	ctx context.Context,
-	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	txn := txnctx.MustGet(ctx)
+
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewSchemaVersionKey("").Bytes(),
 	})
 	if err != nil {
@@ -245,14 +247,15 @@ func GetAllSchemas(
 
 func GetSchemaVersionIDs(
 	ctx context.Context,
-	txn datastore.Txn,
 	schemaRoot string,
 ) ([]string, error) {
+	txn := txnctx.MustGet(ctx)
+
 	// Add the schema root as the first version here.
 	// It is not present in the history prefix.
 	schemaVersions := []string{schemaRoot}
 
-	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewSchemaRootKey(schemaRoot, "").Bytes(),
 		KeysOnly: true,
 	})
@@ -293,14 +296,13 @@ func GetSchemaVersionIDs(
 // function will need to account for that.
 func GetCollectionlessSchemas(
 	ctx context.Context,
-	txn datastore.Txn,
 ) ([]client.SchemaDescription, error) {
-	cols, err := GetCollections(ctx, txn)
+	cols, err := GetCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	allSchemas, err := GetAllSchemas(ctx, txn)
+	allSchemas, err := GetAllSchemas(ctx)
 	if err != nil {
 		return nil, err
 	}

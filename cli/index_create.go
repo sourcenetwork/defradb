@@ -43,7 +43,7 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 `,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			var fields []client.IndexedFieldDescription
 
@@ -74,7 +74,7 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 				Fields: fields,
 				Unique: uniqueArg,
 			}
-			col, err := c.GetCollectionByName(cmd.Context(), collectionArg)
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
 			}

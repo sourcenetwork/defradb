@@ -16,8 +16,9 @@ package crdt
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -28,7 +29,7 @@ type FieldLevelCRDT interface {
 }
 
 func FieldLevelCRDTWithStore(
-	store datastore.ReaderWriter,
+	store corekv.ReaderWriter,
 	schemaVersionID string,
 	cType client.CType,
 	kind client.FieldKind,

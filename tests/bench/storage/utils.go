@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
@@ -77,18 +78,20 @@ func runStorageBenchTxnGet(
 		return err
 	}
 
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+
+	txn := txnctx.MustGetFromClient(clientTxn)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < opCount; j++ {
 			positionInInterval := getSampledIndex(len(keys), opCount, j)
 			key := []byte(keys[positionInInterval])
-			_, err := txn.Get(ctx, key)
+			_, err := txn.Rootstore().Get(ctx, key)
 			if err != nil {
 				return err
 			}
@@ -117,11 +120,13 @@ func runStorageBenchTxnIterator(
 		return err
 	}
 
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+
+	txn := txnctx.MustGetFromClient(clientTxn)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -130,7 +135,7 @@ func runStorageBenchTxnIterator(
 				positionInInterval := getSampledIndex(len(keys), pointCount, k)
 				startKey := ds.NewKey(keys[positionInInterval])
 
-				iter, err := txn.Iterator(ctx, corekv.IterOptions{
+				iter, err := txn.Rootstore().Iterator(ctx, corekv.IterOptions{
 					Prefix: startKey.Bytes(),
 				})
 				if err != nil {
@@ -153,7 +158,6 @@ func runStorageBenchTxnIterator(
 		}
 	}
 	b.StopTimer()
-	txn.Discard(ctx)
 	return nil
 }
 
@@ -230,11 +234,13 @@ func backfillBenchmarkTxn(
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+
+	txn := txnctx.MustGetFromClient(clientTxn)
 
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {
@@ -248,7 +254,7 @@ func backfillBenchmarkTxn(
 		}
 		keys[i] = string(key)
 
-		if err := txn.Set(ctx, key, value); err != nil {
+		if err := txn.Rootstore().Set(ctx, key, value); err != nil {
 			return nil, err
 		}
 	}

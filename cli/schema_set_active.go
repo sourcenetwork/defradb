@@ -22,8 +22,8 @@ func MakeSchemaSetActiveCommand() *cobra.Command {
 those without it (if they share the same schema root).`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
-			return client.SetActiveSchemaVersion(cmd.Context(), args[0])
+			cliClient := mustGetContextCLIClient(cmd)
+			return cliClient.SetActiveSchemaVersion(cmd.Context(), args[0])
 		},
 	}
 	return cmd

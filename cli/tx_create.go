@@ -13,7 +13,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeTxCreateCommand() *cobra.Command {
@@ -24,13 +24,13 @@ func MakeTxCreateCommand() *cobra.Command {
 		Short: "Create a new DefraDB transaction.",
 		Long:  `Create a new DefraDB transaction.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			client := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
-			var tx datastore.Txn
+			var tx client.Txn
 			if concurrent {
-				tx, err = client.NewConcurrentTxn(cmd.Context(), readOnly)
+				tx, err = cliClient.NewConcurrentTxn(cmd.Context(), readOnly)
 			} else {
-				tx, err = client.NewTxn(cmd.Context(), readOnly)
+				tx, err = cliClient.NewTxn(cmd.Context(), readOnly)
 			}
 			if err != nil {
 				return err

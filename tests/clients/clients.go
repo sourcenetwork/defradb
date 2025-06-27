@@ -27,5 +27,5 @@ type Client interface {
 	Connect(ctx context.Context, addr peer.AddrInfo) error
 	Close()
 	MaxTxnRetries() int
-	Events() *event.Bus
+	Events() event.Bus
 }

@@ -22,11 +22,11 @@ func MakePurgeCommand() *cobra.Command {
 		Long: `Delete all persisted data and restart.
 WARNING this operation cannot be reversed.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 			if !force {
 				return ErrPurgeForceFlagRequired
 			}
-			return client.Purge(cmd.Context())
+			return cliClient.Purge(cmd.Context())
 		},
 	}
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "Must be set for the operation to run")

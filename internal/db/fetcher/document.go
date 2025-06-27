@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -50,7 +50,7 @@ var _ fetcher = (*documentFetcher)(nil)
 
 func newDocumentFetcher(
 	ctx context.Context,
-	txn datastore.Txn,
+	txn txnctx.Txn,
 	fieldsByID map[uint32]client.FieldDefinition,
 	prefix keys.DataStoreKey,
 	status client.DocumentStatus,
@@ -62,7 +62,7 @@ func newDocumentFetcher(
 		prefix = prefix.WithDeletedFlag()
 	}
 
-	iter, err := datastore.DatastoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Start: prefix.Bytes(),
 		End:   prefix.PrefixEnd().Bytes(),
 	})

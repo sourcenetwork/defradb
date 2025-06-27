@@ -16,7 +16,6 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
@@ -77,7 +76,7 @@ type DB interface {
 	//
 	// It may be used to monitor database events - a new event will be yielded for each mutation.
 	// Note: it does not copy the queue, just the reference to it.
-	Events() *event.Bus
+	Events() event.Bus
 }
 
 type Handler struct {
@@ -115,7 +114,7 @@ func NewHandler(db DB, p2p client.P2P) (*Handler, error) {
 	}, nil
 }
 
-func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
+func (h *Handler) Transaction(id uint64) (client.Txn, error) {
 	tx, ok := h.txs.Load(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId

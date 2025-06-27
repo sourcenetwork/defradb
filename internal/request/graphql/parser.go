@@ -21,8 +21,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	defrap "github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -116,7 +116,7 @@ func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, e
 	return p.schemaManager.ParseSDL(sdl)
 }
 
-func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error {
+func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionDefinition) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -129,6 +129,8 @@ func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections [
 	if err != nil {
 		return err
 	}
+
+	txn := txnctx.MustGet(ctx)
 
 	txn.OnSuccess(
 		func() {

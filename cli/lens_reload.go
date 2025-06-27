@@ -20,8 +20,8 @@ func MakeLensReloadCommand() *cobra.Command {
 		Short: "Reload the schema migrations within DefraDB",
 		Long:  `Reload the schema migrations within DefraDB`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
-			return client.LensRegistry().ReloadLenses(cmd.Context())
+			cliClient := mustGetContextCLIClient(cmd)
+			return cliClient.LensRegistry().ReloadLenses(cmd.Context())
 		},
 	}
 	return cmd

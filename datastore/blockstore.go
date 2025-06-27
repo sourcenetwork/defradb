@@ -46,7 +46,7 @@ import (
 
 // NewBlockstore returns a default Blockstore implementation
 // using the provided datastore.Batching backend.
-func newBlockstore(store ReaderWriter) *bstore {
+func newBlockstore(store corekv.ReaderWriter) *bstore {
 	return &bstore{
 		store: store,
 	}
@@ -57,7 +57,7 @@ func newIPLDStore(store blockstore.Blockstore) *bsadapter.Adapter {
 }
 
 type bstore struct {
-	store ReaderWriter
+	store corekv.ReaderWriter
 
 	rehash bool
 }

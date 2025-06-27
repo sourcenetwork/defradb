@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -34,9 +34,10 @@ type HeadFetcher struct {
 // heads.
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
-	txn datastore.Txn,
 	prefix immutable.Option[keys.HeadstoreKey],
 ) error {
+	txn := txnctx.MustGet(ctx)
+
 	var prefixBytes []byte
 	if prefix.HasValue() {
 		prefixBytes = prefix.Value().Bytes()
@@ -48,7 +49,7 @@ func (hf *HeadFetcher) Start(
 		}
 	}
 
-	iter, err := txn.Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: prefixBytes,
 	})
 	if err != nil {

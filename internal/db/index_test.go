@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
@@ -45,7 +44,7 @@ const (
 type indexTestFixture struct {
 	ctx   context.Context
 	db    *DB
-	txn   datastore.Txn
+	txn   client.Txn
 	users client.Collection
 	t     *testing.T
 }
@@ -155,7 +154,8 @@ func (f *indexTestFixture) createCollectionIndexFor(
 	col client.Collection,
 	desc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
-	ctx := InitContext(f.ctx, f.txn)
+	txn := f.txn.(*Txn)
+	ctx := InitContext(f.ctx, txn)
 	index, err := col.CreateIndex(ctx, desc)
 	if err == nil {
 		f.commitTxn()
@@ -440,7 +440,8 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
-	ctx := InitContext(f.ctx, f.txn)
+	txn := f.txn.(*Txn)
+	ctx := InitContext(f.ctx, txn)
 	_, err := f.users.CreateIndex(ctx, getUsersIndexDescOnName())
 	require.NoError(t, err)
 	indOnAge, err := f.users.CreateIndex(ctx, getUsersIndexDescOnAge())

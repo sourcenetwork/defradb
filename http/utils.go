@@ -11,13 +11,13 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 const (
@@ -40,6 +40,9 @@ var (
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
 	colContextKey = contextKey("col")
+
+	// txnContextKey is the context key for the client.Txn
+	txnContextKey = contextKey("txn")
 )
 
 // mustGetContextClientCollection returns the client collection from the http request context or panics.
@@ -66,8 +69,8 @@ func mustGetContextClientDB(req *http.Request) DB {
 // mustGetDataStoreTxn returns the datastore transaction or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetDataStoreTxn(tx any) datastore.Txn {
-	return tx.(datastore.Txn) //nolint:forcetypeassert
+func mustGetDataStoreTxn(tx any) client.Txn {
+	return tx.(client.Txn) //nolint:forcetypeassert
 }
 
 // tryGetContextClientP2P returns the P2P client from the http request context and a boolean
@@ -100,4 +103,13 @@ func responseJSON(rw http.ResponseWriter, status int, data any) {
 	if err != nil {
 		log.ErrorE("failed to write response", err)
 	}
+}
+
+func SetContextTxn(ctx context.Context, txn client.Txn) context.Context {
+	return context.WithValue(ctx, txnContextKey, txn)
+}
+
+func TryGetContextTxn(ctx context.Context) (client.Txn, bool) {
+	txn, ok := ctx.Value(txnContextKey).(client.Txn)
+	return txn, ok
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/net/txnctx"
 )
 
 const marker = byte(0xff)
@@ -28,8 +29,9 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
+	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
 	defer txn.Discard(ctx)
+	ctx = txnctx.Set(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -53,7 +55,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err := datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), []byte{marker})
+		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
 			return err
 		}
@@ -75,8 +77,9 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
+	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
 	defer txn.Discard(ctx)
+	ctx = txnctx.Set(ctx, txn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
@@ -100,7 +103,7 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err := datastore.SystemstoreFrom(txn).Delete(ctx, key.Bytes())
+		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
@@ -122,10 +125,11 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ctx, txn := datastore.EnsureContextTxn(ctx, p.db.Rootstore(), false)
+	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
 	defer txn.Discard(ctx)
+	ctx = txnctx.Set(ctx, txn)
 
-	iter, err := datastore.SystemstoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
 		KeysOnly: true,
 	})

@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 type implicitTxnLensRegistry struct {
@@ -27,7 +27,7 @@ type implicitTxnLensRegistry struct {
 
 type explicitTxnLensRegistry struct {
 	registry *lensRegistry
-	txn      datastore.Txn
+	txn      txnctx.Txn
 }
 
 var _ client.LensRegistry = (*implicitTxnLensRegistry)(nil)
@@ -39,7 +39,7 @@ func (r *implicitTxnLensRegistry) Init(txnSource client.TxnSource) {
 
 func (r *explicitTxnLensRegistry) Init(txnSource client.TxnSource) {}
 
-func (r *explicitTxnLensRegistry) WithTxn(txn datastore.Txn) client.LensRegistry {
+func (r *explicitTxnLensRegistry) WithTxn(txn txnctx.Txn) client.LensRegistry {
 	return &explicitTxnLensRegistry{
 		registry: r.registry,
 		txn:      txn,
@@ -52,7 +52,7 @@ func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID
 		return err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := r.registry.getCtx(txn, false)
+	txnCtx := r.registry.getCtx(txnctx.MustGetFromClient(txn), false)
 
 	err = r.registry.setMigration(ctx, txnCtx, collectionID, cfg)
 	if err != nil {
@@ -72,7 +72,7 @@ func (r *implicitTxnLensRegistry) ReloadLenses(ctx context.Context) error {
 		return err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := r.registry.getCtx(txn, false)
+	txnCtx := r.registry.getCtx(txnctx.MustGetFromClient(txn), false)
 
 	err = r.registry.reloadLenses(ctx, txnCtx)
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *implicitTxnLensRegistry) MigrateUp(
 		return nil, err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := newTxnCtx(txn)
+	txnCtx := newTxnCtx(txnctx.MustGetFromClient(txn))
 
 	return r.registry.migrateUp(txnCtx, src, collectionID)
 }
@@ -119,7 +119,7 @@ func (r *implicitTxnLensRegistry) MigrateDown(
 		return nil, err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := newTxnCtx(txn)
+	txnCtx := newTxnCtx(txnctx.MustGetFromClient(txn))
 
 	return r.registry.migrateDown(txnCtx, src, collectionID)
 }

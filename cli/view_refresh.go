@@ -45,7 +45,7 @@ Example: refresh views by version id. This will also return inactive views
   defradb client view refresh --version-id bae123
 		`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
@@ -61,7 +61,7 @@ Example: refresh views by version id. This will also return inactive views
 				options.IncludeInactive = immutable.Some(getInactive)
 			}
 
-			return c.RefreshViews(
+			return cliClient.RefreshViews(
 				cmd.Context(),
 				options,
 			)

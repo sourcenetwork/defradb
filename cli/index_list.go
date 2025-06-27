@@ -28,11 +28,11 @@ Example: show all index for 'Users' collection:
   defradb client index list --collection Users`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			switch {
 			case collectionArg != "":
-				col, err := client.GetCollectionByName(cmd.Context(), collectionArg)
+				col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
 				if err != nil {
 					return err
 				}
@@ -42,7 +42,7 @@ Example: show all index for 'Users' collection:
 				}
 				return writeJSON(cmd, indexes)
 			default:
-				indexes, err := client.GetAllIndexes(cmd.Context())
+				indexes, err := cliClient.GetAllIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}

@@ -26,7 +26,57 @@ var (
 	encStoreKey    = rootStoreKey.ChildString("enc")
 )
 
-func DatastoreFrom(rootstore corekv.Store) ReaderWriter {
+type Multistore struct {
+	block  Blockstore
+	data   corekv.ReaderWriter
+	enc    Blockstore
+	head   corekv.ReaderWriter
+	peer   corekv.ReaderWriter
+	root   corekv.ReaderWriter
+	system corekv.ReaderWriter
+}
+
+func NewMultistore(rootstore corekv.ReaderWriter) *Multistore {
+	return &Multistore{
+		block:  newBlockstore(prefix(rootstore, blockStoreKey.Bytes())),
+		data:   prefix(rootstore, dataStoreKey.Bytes()),
+		enc:    newBlockstore(prefix(rootstore, encStoreKey.Bytes())),
+		head:   prefix(rootstore, headStoreKey.Bytes()),
+		peer:   prefix(rootstore, peerStoreKey.Bytes()),
+		root:   rootstore,
+		system: prefix(rootstore, systemStoreKey.Bytes()),
+	}
+}
+
+func (m *Multistore) Blockstore() Blockstore {
+	return m.block
+}
+
+func (m *Multistore) Datastore() corekv.ReaderWriter {
+	return m.data
+}
+
+func (m *Multistore) Encstore() Blockstore {
+	return m.enc
+}
+
+func (m *Multistore) Headstore() corekv.ReaderWriter {
+	return m.head
+}
+
+func (m *Multistore) Peerstore() corekv.ReaderWriter {
+	return m.peer
+}
+
+func (m *Multistore) Rootstore() corekv.ReaderWriter {
+	return m.root
+}
+
+func (m *Multistore) Systemstore() corekv.ReaderWriter {
+	return m.system
+}
+
+func DatastoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
 	return prefix(rootstore, dataStoreKey.Bytes())
 }
 
@@ -34,7 +84,7 @@ func EncstoreFrom(rootstore corekv.Store) Blockstore {
 	return newBlockstore(prefix(rootstore, encStoreKey.Bytes()))
 }
 
-func HeadstoreFrom(rootstore corekv.Store) ReaderWriter {
+func HeadstoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
 	return prefix(rootstore, headStoreKey.Bytes())
 }
 
@@ -42,10 +92,10 @@ func BlockstoreFrom(rootstore corekv.Store) Blockstore {
 	return newBlockstore(prefix(rootstore, blockStoreKey.Bytes()))
 }
 
-func SystemstoreFrom(rootstore corekv.Store) ReaderWriter {
+func SystemstoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
 	return prefix(rootstore, systemStoreKey.Bytes())
 }
 
-func PeerstoreFrom(rootstore corekv.Store) ReaderWriter {
+func PeerstoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
 	return prefix(rootstore, peerStoreKey.Bytes())
 }

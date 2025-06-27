@@ -24,7 +24,6 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -34,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -88,14 +88,12 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 }
 
 func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
-	txn := datastore.MustGetTxn(ctx)
-
-	col, err := description.GetCollectionByID(ctx, txn, id)
+	col, err := description.GetCollectionByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, txn, id)
+	schema, err := description.GetSchemaVersion(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -136,19 +134,17 @@ func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	txn := datastore.MustGetTxn(ctx)
-
 	var cols []client.CollectionVersion
 	switch {
 	case options.Name.HasValue():
-		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
+		col, err := description.GetCollectionByName(ctx, options.Name.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
 	case options.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, txn, options.VersionID.Value())
+		col, err := description.GetCollectionByID(ctx, options.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +152,7 @@ func (db *DB) getCollections(
 
 	case options.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, txn, options.CollectionID.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, options.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -164,13 +160,13 @@ func (db *DB) getCollections(
 	default:
 		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
 			var err error
-			cols, err = description.GetCollections(ctx, txn)
+			cols, err = description.GetCollections(ctx)
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			var err error
-			cols, err = description.GetActiveCollections(ctx, txn)
+			cols, err = description.GetActiveCollections(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -190,7 +186,7 @@ func (db *DB) getCollections(
 			continue
 		}
 
-		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
+		schema, err := description.GetSchemaVersion(ctx, col.VersionID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
@@ -211,16 +207,14 @@ func (db *DB) getCollections(
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
 func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
-	txn := datastore.MustGetTxn(ctx)
-
-	cols, err := description.GetActiveCollections(ctx, txn)
+	cols, err := description.GetActiveCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	definitions := make([]client.CollectionDefinition, len(cols))
 	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
+		schema, err := description.GetSchemaVersion(ctx, col.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +226,7 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 		definitions[i] = collection.Definition()
 	}
 
-	schemas, err := description.GetCollectionlessSchemas(ctx, txn)
+	schemas, err := description.GetCollectionlessSchemas(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +263,7 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	txn := datastore.MustGetTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
@@ -278,7 +272,7 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionShortID: shortID,
 	}
-	iter, err := datastore.DatastoreFrom(txn).Iterator(ctx, corekv.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix.Bytes(),
 		KeysOnly: true,
 	})
@@ -478,7 +472,7 @@ func (c *collection) create(
 
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		txn := datastore.MustGetTxn(ctx)
+		txn := txnctx.MustGet(ctx)
 
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
@@ -491,7 +485,7 @@ func (c *collection) create(
 			InstanceType:      keys.ValueKey,
 		}
 
-		err = datastore.DatastoreFrom(txn).Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
+		err = txn.Datastore().Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -687,7 +681,7 @@ func (c *collection) save(
 			return err
 		}
 	}
-	txn := datastore.MustGetTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 
 	ident := identity.FromContext(ctx)
 	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
@@ -760,7 +754,7 @@ func (c *collection) save(
 			}
 
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				datastore.DatastoreFrom(txn),
+				txn.Datastore(),
 				c.Schema().VersionID,
 				val.Type(),
 				fieldDescription.Kind,
@@ -776,7 +770,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, txn, merkleCRDT, delta)
+			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -786,12 +780,12 @@ func (c *collection) save(
 	}
 
 	merkleCRDT := crdt.NewDocComposite(
-		datastore.DatastoreFrom(txn),
+		txn.Datastore(),
 		c.Schema().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := coreblock.AddDelta(ctx, txn, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -823,7 +817,6 @@ func (c *collection) save(
 
 		link, headNode, err := coreblock.AddDelta(
 			ctx,
-			txn,
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,
@@ -1018,8 +1011,8 @@ func (c *collection) exists(
 		return false, false, nil
 	}
 
-	txn := datastore.MustGetTxn(ctx)
-	val, err := datastore.DatastoreFrom(txn).Get(ctx, primaryKey.Bytes())
+	txn := txnctx.MustGet(ctx)
+	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {

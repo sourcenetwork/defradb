@@ -14,8 +14,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -33,8 +33,8 @@ func GetShortCollectionID(
 
 	key := keys.NewCollectionID(collectionID)
 
-	txn := datastore.MustGetTxn(ctx)
-	valueBytes, err := datastore.SystemstoreFrom(txn).Get(ctx, key.Bytes())
+	txn := txnctx.MustGet(ctx)
+	valueBytes, err := txn.Systemstore().Get(ctx, key.Bytes())
 	if err != nil {
 		return 0, err
 	}
@@ -60,10 +60,10 @@ func SetShortCollectionID(
 		return nil
 	}
 
-	txn := datastore.MustGetTxn(ctx)
+	txn := txnctx.MustGet(ctx)
 	key := keys.NewCollectionID(collectionID)
 
-	hasShortID, err := datastore.SystemstoreFrom(txn).Has(ctx, key.Bytes())
+	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
 	if err != nil {
 		return err
 	}
@@ -71,18 +71,18 @@ func SetShortCollectionID(
 		return nil
 	}
 
-	colSeq, err := sequence.Get(ctx, txn, keys.CollectionIDSequenceKey{})
+	colSeq, err := sequence.Get(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
 		return err
 	}
 
-	sID, err := colSeq.Next(ctx, txn)
+	sID, err := colSeq.Next(ctx)
 	if err != nil {
 		return err
 	}
 	shortID := uint32(sID)
 
-	err = datastore.SystemstoreFrom(txn).Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
+	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
 	if err != nil {
 		return err
 	}

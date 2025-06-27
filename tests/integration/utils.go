@@ -37,7 +37,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
@@ -1776,7 +1775,7 @@ func getTransaction(
 	db client.DB,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
-) datastore.Txn {
+) client.Txn {
 	if !transactionSpecifier.HasValue() {
 		return nil
 	}
@@ -1785,7 +1784,7 @@ func getTransaction(
 
 	if transactionID >= len(s.txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		s.txns = append(s.txns, make([]datastore.Txn, transactionID-len(s.txns)+1)...)
+		s.txns = append(s.txns, make([]client.Txn, transactionID-len(s.txns)+1)...)
 	}
 
 	if s.txns[transactionID] == nil {

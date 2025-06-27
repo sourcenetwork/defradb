@@ -22,7 +22,6 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 
@@ -75,7 +74,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		ctx := req.Context()
-		if val, ok := tx.(datastore.Txn); ok {
+		if val, ok := tx.(client.Txn); ok {
 			ctx = db.InitContext(ctx, val)
 		}
 		next.ServeHTTP(rw, req.WithContext(ctx))

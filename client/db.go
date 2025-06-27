@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 type CollectionName = string
@@ -29,17 +28,21 @@ type CollectionName = string
 //
 // It should be constructed via the [db] package, via the [db.NewDB] function.
 type DB interface {
+	Store
+
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
-	NewTxn(context.Context, bool) (datastore.Txn, error)
+	NewTxn(ctx context.Context, readOnly bool) (Txn, error)
 
 	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
-	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
+	NewConcurrentTxn(ctx context.Context, readOnly bool) (Txn, error)
+}
 
+type Store interface {
 	// PrintDump logs the entire contents of the rootstore (all the data managed by this DefraDB instance).
 	//
 	// It is likely unwise to call this on a large database instance.
@@ -92,7 +95,7 @@ type DB interface {
 	) (DeleteActorRelationshipResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
-	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 
 	// VerifySignature verifies the signatures of a block using a public key.
 	// Returns an error if any signature verification fails.
@@ -103,7 +106,7 @@ type DB interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) ([]CollectionVersion, error)
+	AddSchema(ctx context.Context, sdl string) ([]CollectionVersion, error)
 
 	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
 	// present in the database.
@@ -124,7 +127,7 @@ type DB interface {
 	// [FieldKindStringToEnumMapping].
 	//
 	// A lens configuration may also be provided, it will be added to all collections using the schema.
-	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
+	PatchSchema(ctx context.Context, patch string, migration immutable.Option[model.Lens], setDefault bool) error
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.
@@ -135,7 +138,7 @@ type DB interface {
 	// of the full patch.
 	//
 	// Currently only the collection name can be modified.
-	PatchCollection(context.Context, string) error
+	PatchCollection(ctx context.Context, patch string) error
 
 	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
 	// those without it (if they share the same schema root).
@@ -144,7 +147,7 @@ type DB interface {
 	// provided.  This includes GQL queries and Collection operations.
 	//
 	// It will return an error if the provided schema version ID does not exist.
-	SetActiveSchemaVersion(context.Context, string) error
+	SetActiveSchemaVersion(ctx context.Context, version string) error
 
 	// AddView creates a new Defra View.
 	//
@@ -189,7 +192,7 @@ type DB interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
-	RefreshViews(context.Context, CollectionFetchOptions) error
+	RefreshViews(ctx context.Context, options CollectionFetchOptions) error
 
 	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
 	//
@@ -202,7 +205,7 @@ type DB interface {
 	//
 	// Migrations will only run if there is a complete path from the document schema version to the latest local
 	// schema version.
-	SetMigration(context.Context, LensConfig) error
+	SetMigration(ctx context.Context, config LensConfig) error
 
 	// LensRegistry returns the LensRegistry in use by this database instance.
 	//
@@ -215,7 +218,7 @@ type DB interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection] will respect that transaction.
-	GetCollectionByName(context.Context, CollectionName) (Collection, error)
+	GetCollectionByName(ctx context.Context, name CollectionName) (Collection, error)
 
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
@@ -225,20 +228,20 @@ type DB interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection]s will respect that transaction.
-	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
+	GetCollections(ctx context.Context, options CollectionFetchOptions) ([]Collection, error)
 
 	// GetSchemaByVersionID returns the schema description for the schema version of the
 	// ID provided.
 	//
 	// Will return an error if it is not found.
-	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
+	GetSchemaByVersionID(ctx context.Context, versionID string) (SchemaDescription, error)
 
 	// GetSchemas returns all schema versions that currently exist within
 	// this [Store].
-	GetSchemas(context.Context, SchemaFetchOptions) ([]SchemaDescription, error)
+	GetSchemas(ctx context.Context, options SchemaFetchOptions) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
-	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
+	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
@@ -249,6 +252,24 @@ type DB interface {
 
 	// BasicExport exports the current data or subset of data to file in json format.
 	BasicExport(ctx context.Context, config *BackupConfig) error
+}
+
+type Txn interface {
+	Store
+
+	// ID returns the unique immutable identifier for this transaction.
+	ID() uint64
+
+	// Commit finalizes a transaction, attempting to commit it to the Datastore.
+	// May return an error if the transaction has gone stale. The presence of an
+	// error is an indication that the data was not committed to the Datastore.
+	Commit(ctx context.Context) error
+
+	// Discard throws away changes recorded in a transaction without committing
+	// them to the underlying Datastore. Any calls made to Discard after Commit
+	// has been successfully called will have no effect on the transaction and
+	// state of the Datastore, making it safe to defer.
+	Discard(ctx context.Context)
 }
 
 // GQLOptions contains optional arguments for GQL requests.

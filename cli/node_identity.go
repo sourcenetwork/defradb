@@ -31,8 +31,8 @@ Example to get the identity of the node:
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			client := mustGetContextClient(cmd)
-			identity, err := client.GetNodeIdentity(cmd.Context())
+			cliClient := mustGetContextCLIClient(cmd)
+			identity, err := cliClient.GetNodeIdentity(cmd.Context())
 			if err != nil {
 				return err
 			}

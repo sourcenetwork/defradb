@@ -41,7 +41,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 	defer txn.Discard(ctx)
 
-	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, txn, docID)
+	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, docID)
 	if err != nil {
 		return nil, err
 	}

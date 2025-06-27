@@ -15,9 +15,12 @@ import (
 
 	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -35,7 +38,7 @@ type DocHeadBlocksIterator struct {
 // NewHeadBlocksIterator creates a new DocHeadBlocksIterator.
 func NewHeadBlocksIterator(
 	ctx context.Context,
-	headstore datastore.ReaderWriter,
+	headstore corekv.ReaderWriter,
 	blockstore datastore.Blockstore,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
@@ -58,13 +61,13 @@ func NewHeadBlocksIterator(
 // NewHeadBlocksIteratorFromTxn creates a new DocHeadBlocksIterator from a transaction.
 func NewHeadBlocksIteratorFromTxn(
 	ctx context.Context,
-	txn datastore.Txn,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
+	txn := txnctx.MustGet(ctx)
 	return NewHeadBlocksIterator(
 		ctx,
-		datastore.HeadstoreFrom(txn),
-		datastore.BlockstoreFrom(txn),
+		txn.Headstore(),
+		txn.Blockstore(),
 		docID,
 	)
 }
