@@ -14,61 +14,178 @@ package js
 
 import (
 	"context"
-	"syscall/js"
 
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/immutable"
 )
 
-var _ datastore.Txn = (*TxWrapper)(nil)
+var _ client.Txn = (*Transaction)(nil)
 
-// TxWrapper combines a client and server transaction into
-// a single struct that implements the datastore.Txn interface.
-type TxWrapper struct {
-	client js.Value
-	server datastore.Txn
+// Transaction combines a Wrapper and transaction into
+// a single struct that implements the client.Txn interface.
+type Transaction struct {
+	*Wrapper
+	txn client.Txn
 }
 
-func (w *TxWrapper) Store() corekv.Store {
-	return w.server.Store()
+func (txn *Transaction) ID() uint64 {
+	return txn.txn.ID()
 }
 
-func (w *TxWrapper) ID() uint64 {
-	return uint64(w.client.Get("id").Int())
+func (txn *Transaction) Commit(ctx context.Context) error {
+	return txn.txn.Commit(ctx)
 }
 
-func (w *TxWrapper) Commit(ctx context.Context) error {
-	_, err := execute(ctx, w.client, "commit")
-	return err
+func (txn *Transaction) Discard(ctx context.Context) {
+	txn.txn.Discard(ctx)
 }
 
-func (w *TxWrapper) Discard(ctx context.Context) {
-	_, err := execute(ctx, w.client, "discard")
-	if err != nil {
-		panic(err)
-	}
+func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.PrintDump(ctx)
 }
 
-func (w *TxWrapper) OnSuccess(fn func()) {
-	w.server.OnSuccess(fn)
+func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.AddDACPolicy(ctx, policy)
 }
 
-func (w *TxWrapper) OnError(fn func()) {
-	w.server.OnError(fn)
+func (txn *Transaction) AddDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (w *TxWrapper) OnDiscard(fn func()) {
-	w.server.OnDiscard(fn)
+func (txn *Transaction) DeleteDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (w *TxWrapper) OnSuccessAsync(fn func()) {
-	w.server.OnSuccessAsync(fn)
+func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.GetNodeIdentity(ctx)
 }
 
-func (w *TxWrapper) OnErrorAsync(fn func()) {
-	w.server.OnErrorAsync(fn)
+func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
-func (w *TxWrapper) OnDiscardAsync(fn func()) {
-	w.server.OnDiscardAsync(fn)
+func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.AddSchema(ctx, sdl)
+}
+
+func (txn *Transaction) PatchSchema(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+	setDefault bool,
+) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.PatchSchema(ctx, patch, migration, setDefault)
+}
+
+func (txn *Transaction) PatchCollection(ctx context.Context, patch string) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.PatchCollection(ctx, patch)
+}
+
+func (txn *Transaction) SetActiveSchemaVersion(ctx context.Context, version string) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.SetActiveSchemaVersion(ctx, version)
+}
+
+func (txn *Transaction) AddView(
+	ctx context.Context,
+	gqlQuery string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transform)
+}
+
+func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.RefreshViews(ctx, options)
+}
+
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.SetMigration(ctx, config)
+}
+
+func (txn *Transaction) LensRegistry() client.LensRegistry {
+	return txn.Wrapper.LensRegistry()
+}
+
+func (txn *Transaction) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+) (client.Collection, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.GetCollectionByName(ctx, name)
+}
+
+func (txn *Transaction) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.GetCollections(ctx, options)
+}
+
+func (txn *Transaction) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.GetSchemaByVersionID(ctx, versionID)
+}
+
+func (txn *Transaction) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.GetSchemas(ctx, options)
+}
+
+func (txn *Transaction) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.GetAllIndexes(ctx)
+}
+
+func (txn *Transaction) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...client.RequestOption,
+) *client.RequestResult {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.ExecRequest(ctx, request, opts...)
+}
+
+func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.BasicImport(ctx, filepath)
+}
+
+func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx = http.SetContextTxn(ctx, txn)
+	return txn.Wrapper.BasicExport(ctx, config)
 }

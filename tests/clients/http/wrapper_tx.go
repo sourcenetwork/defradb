@@ -24,8 +24,8 @@ import (
 
 var _ client.Txn = (*Transaction)(nil)
 
-// TxWrapper combines a client and server transaction into
-// a single struct that implements the datastore.Txn interface.
+// Transaction combines a Wrapper and transaction into
+// a single struct that implements the client.Txn interface.
 type Transaction struct {
 	*Wrapper
 	txn client.Txn

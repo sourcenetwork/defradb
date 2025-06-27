@@ -19,12 +19,12 @@ import (
 	"github.com/sourcenetwork/goji"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 func execute(ctx context.Context, value js.Value, method string, args ...any) ([]js.Value, error) {
 	contextValues := map[string]any{}
-	tx, ok := datastore.TryGetTxn(ctx)
+	tx, ok := txnctx.TryGetClient(ctx)
 	if ok {
 		contextValues["transaction"] = tx.ID()
 	}

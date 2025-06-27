@@ -83,6 +83,13 @@ func TryGet(ctx context.Context) (Txn, bool) {
 	return txn, ok
 }
 
+// TryGetClient returns a client transaction and a bool indicating if the
+// txn was retrieved from the given context.
+func TryGetClient(ctx context.Context) (client.Txn, bool) {
+	txn, ok := ctx.Value(key{}).(client.Txn)
+	return txn, ok
+}
+
 // Set returns a new context with the txn value set.
 //
 // This will overwrite any previously set transaction value.

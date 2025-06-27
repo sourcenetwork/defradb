@@ -1830,7 +1830,6 @@ nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-
 		ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption
