@@ -51,7 +51,6 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			true,
 		}
 		return InitContext(ctx, explicitTxn), explicitTxn, nil
-
 	}
 	clientTxn, err := db.NewTxn(ctx, readOnly)
 	if err != nil {

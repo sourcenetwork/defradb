@@ -254,6 +254,10 @@ type Store interface {
 	BasicExport(ctx context.Context, config *BackupConfig) error
 }
 
+// Txn is a Store instance that has been wrapped by a transaction.
+//
+// It privides access to all the Store methods and ensures that they are
+// executed under the transaction.
 type Txn interface {
 	Store
 
