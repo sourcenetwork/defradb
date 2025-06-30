@@ -1306,7 +1306,11 @@ func toCommitSelect(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, store client.TxnStore, mutationRequest *request.ObjectMutation) (*Mutation, error) {
+func ToMutation(
+	ctx context.Context,
+	store client.TxnStore,
+	mutationRequest *request.ObjectMutation,
+) (*Mutation, error) {
 	return toMutation(ctx, store, mutationRequest, 0)
 }
 
