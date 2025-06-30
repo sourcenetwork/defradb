@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 

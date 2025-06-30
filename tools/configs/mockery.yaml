@@ -14,15 +14,9 @@ pkgname: mocks
 template: testify
 
 packages: # Packages and their interfaces to generate mocks for.
-    github.com/ipfs/go-datastore/query:
+    github.com/sourcenetwork/defradb/internal/datastore:
         config:
-            dir: "./datastore/mocks"
-        interfaces:
-            Results:
-
-    github.com/sourcenetwork/defradb/datastore:
-        config:
-            dir: "./datastore/mocks"
+            dir: "./internal/datastore/mocks"
         interfaces:
             Blockstore:
 
@@ -30,7 +24,7 @@ packages: # Packages and their interfaces to generate mocks for.
         config:
             dir: "./client/mocks"
         interfaces:
-            DB:
+            TxnStore:
             Collection:
 
     github.com/sourcenetwork/defradb/internal/db/fetcher:

@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/goji"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 func execute(ctx context.Context, value js.Value, method string, args ...any) ([]js.Value, error) {

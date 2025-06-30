@@ -21,8 +21,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	defrap "github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	"github.com/sourcenetwork/defradb/internal/telemetry"

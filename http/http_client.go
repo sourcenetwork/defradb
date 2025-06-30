@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type httpClient struct {

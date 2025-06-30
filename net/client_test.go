@@ -19,8 +19,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 var def = client.CollectionDefinition{

@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
