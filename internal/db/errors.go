@@ -11,6 +11,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -114,6 +116,7 @@ const (
 	errNoIdentityInContext                      string = "no identity found in context"
 	errMissingPermission                        string = "missing permission"
 	errCollectionNameMutated                    string = "collection name cannot be mutated"
+	errUnsupportedTxnType                       string = "unsupported transaction type"
 )
 
 var (
@@ -165,6 +168,7 @@ var (
 	ErrMissingPermission                        = errors.New(errMissingPermission)
 	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 	ErrCollectionNameMutated                    = errors.New(errCollectionNameMutated)
+	ErrUnsupportedTxnType                       = errors.New(errUnsupportedTxnType)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -732,4 +736,8 @@ func NewErrCollectionNameMutated(newName string, oldName string) error {
 		errors.NewKV("NewName", newName),
 		errors.NewKV("OldName", oldName),
 	)
+}
+
+func NewErrUnsupportedTxnType(actual any) error {
+	return errors.New(errUnsupportedTxnType, errors.NewKV("Actual", fmt.Sprintf("%T", actual)))
 }
