@@ -22,19 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// explicitTxn is a transaction that is managed outside of a db operation.
-type explicitTxn struct {
-	*Txn
-}
-
-func (t *explicitTxn) Commit(ctx context.Context) error {
-	return nil // do nothing
-}
-
-func (t *explicitTxn) Discard(ctx context.Context) {
-	// do nothing
-}
-
 // transactionDB is a db that can create transactions.
 type transactionDB interface {
 	NewTxn(context.Context, bool) (client.Txn, error)
@@ -51,12 +38,20 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	// explicit transaction
 	ctxTxn, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
-		switch txn := ctxTxn.(type) {
-		case *Txn:
-			return InitContext(ctx, &explicitTxn{txn}), &explicitTxn{txn}, nil
-		case *explicitTxn:
-			return InitContext(ctx, &explicitTxn{txn.Txn}), &explicitTxn{txn.Txn}, nil
+		txn := ctxTxn.(*Txn) //nolint:forcetypeassert
+		if txn.explicit {
+			// if it's already an explicit txn we return it as is.
+			return InitContext(ctx, txn), txn, nil
 		}
+		// If the txn has already been set on the context buty it hasn't already been set as explicit,
+		// we create a copy of the txn and mark it as an explicit txn.
+		explicitTxn := &Txn{
+			txn.BasicTxn,
+			txn.db,
+			true,
+		}
+		return InitContext(ctx, explicitTxn), explicitTxn, nil
+
 	}
 	clientTxn, err := db.NewTxn(ctx, readOnly)
 	if err != nil {
@@ -68,10 +63,11 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 
 type Txn struct {
 	*datastore.BasicTxn
-	db *DB
+	db       *DB
+	explicit bool
 }
 
-// var _ Txn = (*txn)(nil)
+var _ client.Txn = (*Txn)(nil)
 
 // wrapDatastoreTxn returns a new Txn from the rootstore.
 func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
@@ -79,6 +75,20 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 		BasicTxn: txn,
 		db:       db,
 	}
+}
+
+func (txn *Txn) Commit(ctx context.Context) error {
+	if txn.explicit {
+		return nil
+	}
+	return txn.BasicTxn.Commit(ctx)
+}
+
+func (txn *Txn) Discard(ctx context.Context) {
+	if txn.explicit {
+		return
+	}
+	txn.BasicTxn.Discard(ctx)
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {
