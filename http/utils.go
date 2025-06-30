@@ -30,7 +30,7 @@ type contextKey string
 var (
 	// txsContextKey is the context key for the transaction *sync.Map
 	txsContextKey = contextKey("txs")
-	// dbContextKey is the context key for the client.DB
+	// dbContextKey is the context key for the client.TxnStore
 	dbContextKey = contextKey("db")
 	// p2pContextKey is the context key for the client.P2P
 	p2pContextKey = contextKey("p2p")

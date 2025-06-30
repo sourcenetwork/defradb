@@ -30,7 +30,7 @@ import (
 var log = corelog.NewLogger("cli")
 
 type DB interface {
-	client.DB
+	client.TxnStore
 	Close()
 }
 

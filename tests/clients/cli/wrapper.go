@@ -34,7 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
 var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {

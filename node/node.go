@@ -36,7 +36,7 @@ type Peer interface {
 }
 
 type DB interface {
-	client.DB
+	client.TxnStore
 	MaxTxnRetries() int
 	Rootstore() corekv.TxnStore
 	Events() event.Bus

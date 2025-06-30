@@ -30,9 +30,9 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
 
-// Wrapper implements the client.DB
+// Wrapper implements the client.TxnStore
 // interface using the JS client.
 type Wrapper struct {
 	client *js.Client

@@ -48,7 +48,7 @@ func init() {
 func SetupCollections(
 	b *testing.B,
 	ctx context.Context,
-	db client.DB,
+	db client.TxnStore,
 	fixture fixtures.Generator,
 ) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())

@@ -48,7 +48,7 @@ const (
 // yielded by the [Operation].
 func ToOperation(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	operationRequest *request.OperationDefinition,
 ) (*Operation, error) {
 	operation := &Operation{
@@ -95,7 +95,7 @@ func ToOperation(
 // yielded by the [Select].
 func ToSelect(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 ) (*Select, error) {
@@ -109,7 +109,7 @@ func ToSelect(
 // yielded by the [Select].
 func toSelect(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	thisIndex int,
 	selectRequest *request.Select,
@@ -226,7 +226,7 @@ func toSelect(
 // Modifies the consumed existingFields and mapping accordingly.
 func resolveOrderDependencies(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	descName string,
 	source immutable.Option[request.OrderBy],
@@ -309,7 +309,7 @@ outer:
 // and add a coorsponding select field(s)
 func resolveChildOrder(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	descName string,
 	orderChildField string,
@@ -364,7 +364,7 @@ func resolveAggregates(
 	mapping *core.DocumentMapping,
 	collectionName string,
 	def client.CollectionDefinition,
-	store client.DB,
+	store client.TxnStore,
 ) ([]Requestable, error) {
 	var collectionShortID uint32
 	if def.Version.CollectionID != "" {
@@ -769,7 +769,7 @@ func getRequestables(
 	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
 	collectionName string,
-	store client.DB,
+	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
 	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
@@ -876,7 +876,7 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 // if this is a commit request.
 func getCollectionName(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	parentCollectionName string,
@@ -916,7 +916,7 @@ func getCollectionName(
 // getTopLevelInfo returns the collection version and maps the fields directly on the object.
 func getTopLevelInfo(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	collectionName string,
@@ -1000,7 +1000,7 @@ func getTopLevelInfo(
 
 func resolveFilterDependencies(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	source immutable.Option[request.Filter],
@@ -1025,7 +1025,7 @@ func resolveFilterDependencies(
 
 func resolveInnerFilterDependencies(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	source map[string]any,
@@ -1163,7 +1163,7 @@ func resolveInnerFilterDependencies(
 // constructEmptyJoin constructs a valid empty join with no requested fields.
 func constructEmptyJoin(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	parentMapping *core.DocumentMapping,
@@ -1210,7 +1210,7 @@ func constructEmptyJoin(
 // They copying itself is handled within [typeJoinOne].
 func resolveSecondaryRelationIDs(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	collectionName string,
 	schema client.CollectionDefinition,
@@ -1273,7 +1273,7 @@ func resolveSecondaryRelationIDs(
 // yielded by the [Select] embedded in the [CommitSelect].
 func ToCommitSelect(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	selectRequest *request.CommitSelect,
 ) (*CommitSelect, error) {
 	return toCommitSelect(ctx, store, selectRequest, 0)
@@ -1285,7 +1285,7 @@ func ToCommitSelect(
 // yielded by the [Select] embedded in the [CommitSelect].
 func toCommitSelect(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	selectRequest *request.CommitSelect,
 	thisIndex int,
 ) (*CommitSelect, error) {
@@ -1306,7 +1306,7 @@ func toCommitSelect(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, store client.DB, mutationRequest *request.ObjectMutation) (*Mutation, error) {
+func ToMutation(ctx context.Context, store client.TxnStore, mutationRequest *request.ObjectMutation) (*Mutation, error) {
 	return toMutation(ctx, store, mutationRequest, 0)
 }
 
@@ -1316,7 +1316,7 @@ func ToMutation(ctx context.Context, store client.DB, mutationRequest *request.O
 // yielded by the [Select] embedded in the [Mutation].
 func toMutation(
 	ctx context.Context,
-	store client.DB,
+	store client.TxnStore,
 	mutationRequest *request.ObjectMutation,
 	thisIndex int,
 ) (*Mutation, error) {

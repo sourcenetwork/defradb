@@ -68,7 +68,7 @@ func createCID(doc *client.Document) (cid.Cid, error) {
 const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
 type testdb interface {
-	client.DB
+	client.TxnStore
 	Rootstore() corekv.TxnStore
 	Close()
 }

@@ -230,7 +230,7 @@ func backfillBenchmarkStorageDB(
 
 func backfillBenchmarkTxn(
 	ctx context.Context,
-	db client.DB,
+	db client.TxnStore,
 	objCount int,
 	valueSize int,
 ) ([]string, error) {

@@ -30,9 +30,9 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-var _ client.DB = (*Client)(nil)
+var _ client.TxnStore = (*Client)(nil)
 
-// Client implements the client.DB interface over HTTP.
+// Client implements the client.TxnStore interface over HTTP.
 type Client struct {
 	http *httpClient
 }

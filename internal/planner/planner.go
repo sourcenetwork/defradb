@@ -89,7 +89,7 @@ type PlanContext struct {
 type Planner struct {
 	identity    immutable.Option[acpIdentity.Identity]
 	documentACP immutable.Option[dac.DocumentACP]
-	db          client.DB
+	db          client.TxnStore
 
 	ctx context.Context
 }
@@ -98,7 +98,7 @@ func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	documentACP immutable.Option[dac.DocumentACP],
-	db client.DB,
+	db client.TxnStore,
 ) *Planner {
 	return &Planner{
 		identity:    identity,

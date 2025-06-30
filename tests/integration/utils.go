@@ -1228,7 +1228,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.DB, int, client.Collection) ([]client.DocID, error)
+	var mutation func(*state, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = createDocViaColSave
@@ -1285,7 +1285,7 @@ func createDoc(
 func createDocViaColSave(
 	s *state,
 	action CreateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
@@ -1323,7 +1323,7 @@ func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
 func createDocViaColCreate(
 	s *state,
 	action CreateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
@@ -1359,7 +1359,7 @@ func createDocViaColCreate(
 func createDocViaGQL(
 	s *state,
 	action CreateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
@@ -1475,7 +1475,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, client.DB, int, client.Collection) error
+	var mutation func(*state, UpdateDoc, client.TxnStore, int, client.Collection) error
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1524,7 +1524,7 @@ func updateDoc(
 func updateDocViaColSave(
 	s *state,
 	action UpdateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
@@ -1544,7 +1544,7 @@ func updateDocViaColSave(
 func updateDocViaColUpdate(
 	s *state,
 	action UpdateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
@@ -1564,7 +1564,7 @@ func updateDocViaColUpdate(
 func updateDocViaGQL(
 	s *state,
 	action UpdateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
@@ -1772,7 +1772,7 @@ func withRetryOnNode(
 
 func getTransaction(
 	s *state,
-	db client.DB,
+	db client.TxnStore,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
 ) client.Txn {

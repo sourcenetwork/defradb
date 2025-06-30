@@ -22,7 +22,7 @@ import (
 // Client implements the DB interface along with a few other methods
 // required for testing.
 type Client interface {
-	client.DB
+	client.TxnStore
 	client.P2P
 	Connect(ctx context.Context, addr peer.AddrInfo) error
 	Close()

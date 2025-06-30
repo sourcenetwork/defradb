@@ -27,11 +27,11 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
 var _ client.P2P = (*Wrapper)(nil)
 
 // Wrapper combines an HTTP client and server into a
-// single struct that implements the client.DB interface.
+// single struct that implements the client.TxnStore interface.
 type Wrapper struct {
 	node       *node.Node
 	handler    *http.Handler

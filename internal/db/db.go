@@ -9,7 +9,7 @@
 // licenses/APL.txt.
 
 /*
-Package db provides the implementation of the [client.DB] interface, collection operations,
+Package db provides the implementation of the [client.TxnStore] interface, collection operations,
 and related components.
 */
 package db
@@ -89,7 +89,7 @@ type DB struct {
 	signingDisabled bool
 }
 
-var _ client.DB = (*DB)(nil)
+var _ client.TxnStore = (*DB)(nil)
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(

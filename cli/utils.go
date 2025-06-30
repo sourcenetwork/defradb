@@ -44,7 +44,7 @@ var (
 	cfgContextKey = contextKey("cfg")
 	// rootDirContextKey is the context key for the root directory.
 	rootDirContextKey = contextKey("rootDir")
-	// clientContextKey is the context key for the cliClient.DB
+	// clientContextKey is the context key for the cliclient.TxnStore
 	clientContextKey = contextKey("client")
 	// colContextKey is the context key for the cliClient.Collection
 	//

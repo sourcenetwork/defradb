@@ -25,7 +25,7 @@ import (
 var log = corelog.NewLogger("cli")
 
 type CLI interface {
-	client.DB
+	client.TxnStore
 	client.P2P
 	Purge(ctx context.Context) error
 }

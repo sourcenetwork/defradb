@@ -24,10 +24,10 @@ import (
 
 type CollectionName = string
 
-// DB is the primary public programmatic access point to the local DefraDB instance.
+// TxnStore is the primary public programmatic access point to the local DefraDB instance.
 //
 // It should be constructed via the [db] package, via the [db.NewDB] function.
-type DB interface {
+type TxnStore interface {
 	Store
 
 	// NewTxn returns a new transaction on the root store that may be managed externally.

@@ -71,7 +71,7 @@ func NewApiRouter() (*Router, error) {
 }
 
 type DB interface {
-	client.DB
+	client.TxnStore
 	// Events returns the database event queue.
 	//
 	// It may be used to monitor database events - a new event will be yielded for each mutation.
