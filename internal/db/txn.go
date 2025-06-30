@@ -78,6 +78,9 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 
 func (txn *Txn) Commit(ctx context.Context) error {
 	if txn.explicit {
+		// If the transaction has been explicitly defined, `Commit` should
+		// only be executed by the transaction creator. As such, a call to
+		// `Commit` on an explicit transaction should result in a no-op.
 		return nil
 	}
 	return txn.BasicTxn.Commit(ctx)
@@ -85,6 +88,9 @@ func (txn *Txn) Commit(ctx context.Context) error {
 
 func (txn *Txn) Discard(ctx context.Context) {
 	if txn.explicit {
+		// If the transaction has been explicitly defined, `Discard` should
+		// only be executed by the transaction creator. As such, a call to
+		// `Discard` on an explicit transaction should result in a no-op.
 		return
 	}
 	txn.BasicTxn.Discard(ctx)
