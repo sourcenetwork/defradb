@@ -23,11 +23,14 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-var identity1, _ = identity.FromPublicKey(nil)
+var identity1 = identity.FromDID(
+	"did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn",
+)
 
-//var identity2, _ = identity.FromPublicKey(nil)
-//
-//var invalidIdentity, _ = identity.FromPublicKey(nil)
+// var identity2 = identity.FromDID(
+// 	"did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F",
+// )
+// var invalidIdentity = identity.FromDID("did:something")
 
 var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 var validPolicy string = `
