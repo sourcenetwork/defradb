@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,23 +13,58 @@ package dac
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/immutable"
 )
 
-var identity1 = identity.Identity{
-	DID: "did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn",
+var identity1, _ = identity.Generate(crypto.KeyTypeSecp256k1)
+var identity2, _ = identity.Generate(crypto.KeyTypeSecp256k1)
+
+// Create a mock invalid identity for testing
+type mockInvalidIdentity struct{}
+
+func (m *mockInvalidIdentity) PublicKey() crypto.PublicKey {
+	return nil
 }
-var identity2 = identity.Identity{
-	DID: "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F",
+
+func (m *mockInvalidIdentity) PrivateKey() crypto.PrivateKey {
+	return nil
 }
-var invalidIdentity = identity.Identity{
-	DID: "did:something",
+
+func (m *mockInvalidIdentity) DID() string {
+	return "did:something"
 }
+
+func (m *mockInvalidIdentity) ToPublicRawIdentity() identity.PublicRawIdentity {
+	return identity.PublicRawIdentity{}
+}
+
+func (m *mockInvalidIdentity) BearerToken() string {
+	return ""
+}
+
+func (m *mockInvalidIdentity) SetBearerToken(token string) {}
+
+func (m *mockInvalidIdentity) IntoRawIdentity() (identity.RawIdentity, error) {
+	return identity.RawIdentity{}, nil
+}
+
+func (m *mockInvalidIdentity) UpdateToken(duration time.Duration, audience immutable.Option[string], authorizedAccount immutable.Option[string]) error {
+	return nil
+}
+
+func (m *mockInvalidIdentity) NewToken(duration time.Duration, audience immutable.Option[string], authorizedAccount immutable.Option[string]) ([]byte, error) {
+	return nil, nil
+}
+
+var invalidIdentity = &mockInvalidIdentity{}
 
 var validPolicyID string = "196f584c831c596489278ed2c98ee7a42fc2cf85b2e86276165a03b53b4684fa"
 var validPolicy string = `
@@ -608,7 +643,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"",
 		"",
@@ -621,7 +656,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"",
 		"",
@@ -634,7 +669,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentDeletePerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"",
 		"",
@@ -647,7 +682,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -669,7 +704,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -681,7 +716,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -720,7 +755,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"",
 		"",
@@ -733,7 +768,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"",
 		"",
@@ -746,7 +781,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentDeletePerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"",
 		"",
@@ -759,7 +794,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -781,7 +816,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -793,7 +828,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -813,7 +848,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity1.DID,
+		identity1.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -825,7 +860,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -871,7 +906,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoO
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -887,7 +922,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoO
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errAddDocActorRelationship)
 	require.False(t, exists)
@@ -900,7 +935,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoO
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errAddDocActorRelationship)
 	require.True(t, exists) // Exists already this time
@@ -909,7 +944,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_FalseIfExistsBeforeTrueIfNoO
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -958,7 +993,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -974,7 +1009,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errAddDocActorRelationship)
 	require.False(t, exists)
@@ -987,7 +1022,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errAddDocActorRelationship)
 	require.True(t, exists) // Exists already this time
@@ -996,7 +1031,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1016,7 +1051,7 @@ func Test_LocalACP_PersistentMemory_AddDocActorRelationship_FalseIfExistsBeforeT
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1066,7 +1101,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errAddDocActorRelationship)
 	require.False(t, exists)
@@ -1075,7 +1110,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1091,7 +1126,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errDeleteDocActorRelationship)
 	require.True(t, foundRecord)
@@ -1104,7 +1139,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errDeleteDocActorRelationship)
 	require.False(t, foundRecord) // Is a no-op
@@ -1113,7 +1148,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_TrueIfFoundAndDeletedFals
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1166,7 +1201,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errAddDocActorRelationship)
 	require.False(t, exists)
@@ -1175,7 +1210,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	hasAccess, errCheckDocAccess := localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1191,7 +1226,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errDeleteDocActorRelationship)
 	require.True(t, foundRecord)
@@ -1204,7 +1239,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.Nil(t, errDeleteDocActorRelationship)
 	require.False(t, foundRecord) // Is a no-op
@@ -1213,7 +1248,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1233,7 +1268,7 @@ func Test_LocalACP_PersistentMemory_DeleteDocActorRelationship_TrueIfFoundAndDel
 	hasAccess, errCheckDocAccess = localACP.CheckDocAccess(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		identity2.DID,
+		identity2.DID(),
 		validPolicyID,
 		"users",
 		"documentID_XYZ",
@@ -1353,7 +1388,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError
 		"documentID_XYZ",
 		"reader",
 		invalidIdentity,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrInvalidActorID)
@@ -1366,7 +1401,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		invalidIdentity.DID,
+		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationshipWithACP)
@@ -1394,7 +1429,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 		"documentID_XYZ",
 		"reader",
 		invalidIdentity,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrInvalidActorID)
@@ -1407,7 +1442,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		invalidIdentity.DID,
+		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationshipWithACP)
@@ -1432,7 +1467,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnEr
 		"documentID_XYZ",
 		"reader",
 		invalidIdentity,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrInvalidActorID)
@@ -1445,7 +1480,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnEr
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		invalidIdentity.DID,
+		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationshipWithACP)
@@ -1473,7 +1508,7 @@ func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturn
 		"documentID_XYZ",
 		"reader",
 		invalidIdentity,
-		identity2.DID,
+		identity2.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrInvalidActorID)
@@ -1486,7 +1521,7 @@ func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturn
 		"documentID_XYZ",
 		"reader",
 		identity1,
-		invalidIdentity.DID,
+		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
 	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationshipWithACP)
