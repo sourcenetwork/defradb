@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -191,16 +191,22 @@ func fromSourceHubPermission(perm *coreTypes.Permission) *acpTypes.Permission {
 
 func (a *SourceHubDocumentACP) RegisterObject(
 	ctx context.Context,
-	identity identity.Identity,
+	ident identity.Identity,
 	policyID string,
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
+	// Check if the identity is a TokenIdentity (has BearerToken)
+	tokenIdentity, ok := ident.(identity.TokenIdentity)
+	if !ok {
+		return fmt.Errorf("identity must be a TokenIdentity to register objects")
+	}
+
 	msgSet := sourcehub.MsgSet{}
 	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
-		BearerToken: identity.BearerToken,
+		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
 		Cmd:         sourcehubTypes.NewRegisterObjectCmd(coreTypes.NewObject(resourceName, objectID)),
 	})
@@ -300,6 +306,12 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	// Check if the requester is a TokenIdentity (has BearerToken)
+	tokenIdentity, ok := requester.(identity.TokenIdentity)
+	if !ok {
+		return false, fmt.Errorf("requester must be a TokenIdentity to add actor relationships")
+	}
+
 	msgSet := sourcehub.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
@@ -320,7 +332,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
-		BearerToken: requester.BearerToken,
+		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
 		Cmd:         sourcehubTypes.NewSetRelationshipCmd(newActorRelationship),
 	})
@@ -359,6 +371,12 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	// Check if the requester is a TokenIdentity (has BearerToken)
+	tokenIdentity, ok := requester.(identity.TokenIdentity)
+	if !ok {
+		return false, fmt.Errorf("requester must be a TokenIdentity to delete actor relationships")
+	}
+
 	msgSet := sourcehub.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
@@ -379,16 +397,14 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
-		BearerToken: requester.BearerToken,
+		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
 		Cmd:         sourcehubTypes.NewDeleteRelationshipCmd(newActorRelationship),
 	})
-
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
 		return false, err
 	}
-
 	resp, err := a.client.BroadcastTx(ctx, tx)
 	if err != nil {
 		return false, err
@@ -398,7 +414,6 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	if err != nil {
 		return false, err
 	}
-
 	if result.Error() != nil {
 		return false, result.Error()
 	}
@@ -408,5 +423,5 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 		return false, err
 	}
 
-	return cmdResult.GetResult().GetDeleteRelationshipResult().GetRecordFound(), nil
+	return cmdResult.GetResult().GetSetRelationshipResult().RecordExisted, nil
 }
