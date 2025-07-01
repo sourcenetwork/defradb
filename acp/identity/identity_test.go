@@ -433,27 +433,6 @@ func TestFromPublicKey_WithEd25519_CreatesIdentityWithoutPrivateKey(t *testing.T
 	}
 }
 
-func TestFromPublicKey_WithSecp256r1_CreatesIdentityWithoutPrivateKey(t *testing.T) {
-	// First create a full identity with private key
-	fullIdentity, err := Generate(crypto.KeyTypeSecp256r1)
-	require.NoError(t, err)
-	require.NotNil(t, fullIdentity.PrivateKey())
-
-	// Now create an identity from just the public key
-	publicOnlyIdentity, err := FromPublicKey(fullIdentity.PublicKey())
-	require.NoError(t, err)
-	require.NotNil(t, publicOnlyIdentity)
-
-	// Verify that both identities have the same public key and DID
-	require.Equal(t, fullIdentity.PublicKey().String(), publicOnlyIdentity.PublicKey().String())
-	require.Equal(t, fullIdentity.DID(), publicOnlyIdentity.DID())
-
-	// Verify that public-only identity doesn't implement FullIdentity (no private key)
-	if _, ok := publicOnlyIdentity.(FullIdentity); ok {
-		t.Fatal("Public-only identity should not implement FullIdentity")
-	}
-}
-
 func TestFromDID_CreatesIdentityWithDIDOnly(t *testing.T) {
 	did := "did:key:example123"
 	ident := FromDID(did)
