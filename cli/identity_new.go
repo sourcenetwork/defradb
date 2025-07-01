@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -43,7 +43,12 @@ Example: generate a new identity with ed25519 key:
 				return err
 			}
 
-			return writeJSON(cmd, newIdentity.IntoRawIdentity())
+			rawIdentity, err := newIdentity.IntoRawIdentity()
+			if err != nil {
+				return err
+			}
+
+			return writeJSON(cmd, rawIdentity)
 		},
 	}
 

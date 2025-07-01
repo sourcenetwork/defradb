@@ -177,7 +177,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some(ident))
+	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some(ident.(acpIdentity.Identity)))
 	cmd.SetContext(ctx)
 	return nil
 }

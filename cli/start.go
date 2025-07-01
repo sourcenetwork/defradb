@@ -364,7 +364,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 		if err != nil {
 			return nil, err
 		}
-		rawKey := ident.PrivateKey.Raw()
+		rawKey := ident.PrivateKey().Raw()
 		// Make sure the outerscope knows about the newly created identity
 		identityBytes = append([]byte(keyType+":"), rawKey...)
 		err = kr.Set(nodeIdentityKeyName, identityBytes)
@@ -397,15 +397,15 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 	return append(opts, db.WithNodeIdentity(ident)), nil
 }
 
-func generateIdentity(keyType string) (identity.Identity, error) {
+func generateIdentity(keyType string) (identity.FullIdentity, error) {
 	privateKey, err := crypto.GenerateKey(crypto.KeyType(keyType))
 	if err != nil {
-		return identity.Identity{}, err
+		return nil, err
 	}
 
 	nodeIdentity, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
-		return identity.Identity{}, err
+		return nil, err
 	}
 
 	return nodeIdentity, nil
