@@ -45,7 +45,7 @@ func (a *bridgeDocumentACP) Start(ctx context.Context) error {
 
 func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error) {
 	// Having a creator identity is a MUST requirement for adding a policy.
-	if creator.DID() == "" {
+	if creator == nil || creator.DID() == "" {
 		return "", acp.ErrPolicyCreatorMustNotBeEmpty
 	}
 
@@ -252,12 +252,16 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 		relation == "" ||
 		requestActor == nil ||
 		targetActor == "" {
+		var requestActorDID string
+		if requestActor != nil {
+			requestActorDID = requestActor.DID()
+		}
 		return false, acp.NewErrMissingRequiredArgToAddDocActorRelationship(
 			policyID,
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID(),
+			requestActorDID,
 			targetActor,
 		)
 	}
@@ -316,12 +320,16 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 		relation == "" ||
 		requestActor == nil ||
 		targetActor == "" {
+		var requestActorDID string
+		if requestActor != nil {
+			requestActorDID = requestActor.DID()
+		}
 		return false, acp.NewErrMissingRequiredArgToDeleteDocActorRelationship(
 			policyID,
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID(),
+			requestActorDID,
 			targetActor,
 		)
 	}
