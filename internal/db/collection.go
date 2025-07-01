@@ -640,6 +640,14 @@ func (c *collection) Save(
 	return txn.Commit(ctx)
 }
 
+// hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
+func hasPrivateKey(ident identity.Identity) bool {
+	if fullIdent, ok := ident.(identity.FullIdentity); ok {
+		return fullIdent.PrivateKey() != nil
+	}
+	return false
+}
+
 func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	encConf := encryption.GetContextConfig(ctx)
 	if !encConf.HasValue() {
@@ -682,7 +690,7 @@ func (c *collection) save(
 	txn := txnctx.MustGet(ctx)
 
 	ident := identity.FromContext(ctx)
-	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
+	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
