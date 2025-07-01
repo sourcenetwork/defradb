@@ -55,7 +55,9 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	if !id.HasValue() {
 		return nil
 	}
-	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, []byte(id.Value().BearerToken)))
+	if tokenIdentity, ok := id.Value().(identity.TokenIdentity); ok {
+		req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
+	}
 	return nil
 }
 
