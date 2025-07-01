@@ -528,7 +528,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 				log.ErrorE("Failed to parse identity token", err)
 				return immutable.None[identity.Identity]()
 			}
-			err = identity.VerifyAuthToken(ident, s.peer.PeerID().String())
+			err = identity.VerifyAuthToken(ident.(identity.TokenIdentity), s.peer.PeerID().String())
 			if err != nil {
 				log.ErrorE("Failed to verify auth token", err)
 				return immutable.None[identity.Identity]()
@@ -589,7 +589,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
 		s.peer.ctx,
 		func() immutable.Option[identity.Identity] {
-			return immutable.Some(identity.Identity{DID: ident.Value().DID})
+			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
 		s.peer.documentACP.Value(),
 		cols[0], // For now we assume there is only one collection.
