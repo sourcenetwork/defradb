@@ -49,7 +49,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := acpIdentity.WithContext(req.Context(), immutable.Some(ident.(acpIdentity.Identity)))
+		identity, ok := ident.(acpIdentity.Identity)
+		if !ok {
+			http.Error(rw, "forbidden", http.StatusForbidden)
+			return
+		}
+		ctx := acpIdentity.WithContext(req.Context(), immutable.Some(identity))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

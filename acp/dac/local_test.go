@@ -15,13 +15,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/immutable"
 )
 
 var identity1, _ = identity.Generate(crypto.KeyTypeSecp256k1)

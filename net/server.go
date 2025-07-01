@@ -528,7 +528,12 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 				log.ErrorE("Failed to parse identity token", err)
 				return immutable.None[identity.Identity]()
 			}
-			err = identity.VerifyAuthToken(ident.(identity.TokenIdentity), s.peer.PeerID().String())
+			tokenIdent, ok := ident.(identity.TokenIdentity)
+			if !ok {
+				log.ErrorE(fmt.Sprintf("Identity is not of type TokenIdentity (got %T)", ident), nil)
+				return immutable.None[identity.Identity]()
+			}
+			err = identity.VerifyAuthToken(tokenIdent, s.peer.PeerID().String())
 			if err != nil {
 				log.ErrorE("Failed to verify auth token", err)
 				return immutable.None[identity.Identity]()

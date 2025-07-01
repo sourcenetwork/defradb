@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/crypto"
+
 	"github.com/sourcenetwork/immutable"
 )
 

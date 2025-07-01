@@ -18,7 +18,9 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
+
 	"github.com/sourcenetwork/defradb/crypto"
+
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -33,7 +35,8 @@ type identity struct {
 	publicKey crypto.PublicKey
 }
 
-// fullIdentity is the concrete implementation of the FullIdentity interface, holding both public and private keys and a bearer token.
+// fullIdentity is the concrete implementation of the FullIdentity interface,
+// holding both public and private keys and a bearer token.
 type fullIdentity struct {
 	identity
 	bearerToken string
