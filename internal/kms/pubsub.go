@@ -377,7 +377,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		immutable.Some(identity.Identity{DID: actorIdentity}),
+		immutable.Some(identity.FromDID(actorIdentity)),
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,

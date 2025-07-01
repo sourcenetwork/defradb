@@ -113,7 +113,7 @@ func CheckDocAccessWithIdentityFunc(
 		// a document registered with acp. So we pass an empty `did` to accommodate that case.
 		identityValue = ""
 	} else {
-		identityValue = identity.Value().DID
+		identityValue = identity.Value().DID()
 	}
 
 	documentResourcePerm, ok := permission.(acpTypes.DocumentResourcePermission)
