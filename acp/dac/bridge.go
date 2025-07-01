@@ -45,7 +45,7 @@ func (a *bridgeDocumentACP) Start(ctx context.Context) error {
 
 func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error) {
 	// Having a creator identity is a MUST requirement for adding a policy.
-	if creator.DID == "" {
+	if creator.DID() == "" {
 		return "", acp.ErrPolicyCreatorMustNotBeEmpty
 	}
 
@@ -67,7 +67,7 @@ func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Iden
 	)
 
 	if err != nil {
-		return "", acp.NewErrFailedToAddPolicyWithACP(err, "Local", creator.DID)
+		return "", acp.NewErrFailedToAddPolicyWithACP(err, "Local", creator.DID())
 	}
 
 	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
@@ -122,7 +122,7 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 	)
 
 	if err != nil {
-		return acp.NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID, resourceName, docID)
+		return acp.NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID(), resourceName, docID)
 	}
 
 	return nil
@@ -250,14 +250,14 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 		resourceName == "" ||
 		docID == "" ||
 		relation == "" ||
-		requestActor == (identity.Identity{}) ||
+		requestActor == nil ||
 		targetActor == "" {
 		return false, acp.NewErrMissingRequiredArgToAddDocActorRelationship(
 			policyID,
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActor.DID(),
 			targetActor,
 		)
 	}
@@ -281,7 +281,7 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActor.DID(),
 			targetActor,
 		)
 	}
@@ -293,7 +293,7 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 		corelog.Any("ResourceName", resourceName),
 		corelog.Any("DocID", docID),
 		corelog.Any("Relation", relation),
-		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("RequestActor", requestActor.DID()),
 		corelog.Any("TargetActor", targetActor),
 		corelog.Any("Existed", exists),
 	)
@@ -314,14 +314,14 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 		resourceName == "" ||
 		docID == "" ||
 		relation == "" ||
-		requestActor == (identity.Identity{}) ||
+		requestActor == nil ||
 		targetActor == "" {
 		return false, acp.NewErrMissingRequiredArgToDeleteDocActorRelationship(
 			policyID,
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActor.DID(),
 			targetActor,
 		)
 	}
@@ -345,7 +345,7 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActor.DID(),
 			targetActor,
 		)
 	}
@@ -357,7 +357,7 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 		corelog.Any("ResourceName", resourceName),
 		corelog.Any("DocID", docID),
 		corelog.Any("Relation", relation),
-		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("RequestActor", requestActor.DID()),
 		corelog.Any("TargetActor", targetActor),
 		corelog.Any("RecordFound", recordFound),
 	)
