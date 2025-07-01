@@ -16,9 +16,13 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
 	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
@@ -678,4 +682,142 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	}
 
 	return peerHasAccess, nil
+}
+
+func (s *server) handleDocUpdateRequest(req event.DocUpdateRequest) {
+	pubsubReq := &docUpdateRequest{
+		CollectionID: req.CollectionID,
+		DocID:        req.DocID,
+		RequestorID:  s.peer.PeerID().String(),
+	}
+
+	data, err := cbor.Marshal(pubsubReq)
+	if err != nil {
+		req.Response <- event.DocUpdateResponse{
+			Found: false,
+			Error: errors.Wrap("failed to marshal doc update request", err),
+		}
+		return
+	}
+
+	respChan, err := s.SendPubSubMessage(s.peer.ctx, onDemandDocUpdateTopic, data)
+	if err != nil {
+		req.Response <- event.DocUpdateResponse{
+			Found: false,
+			Error: errors.Wrap("failed to publish doc update request", err),
+		}
+		return
+	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(s.peer.ctx, 5*time.Second)
+		defer cancel()
+
+		select {
+		case resp := <-respChan:
+			if resp.Err != nil {
+				req.Response <- event.DocUpdateResponse{
+					Found: false,
+					Error: resp.Err,
+				}
+				return
+			}
+			if len(resp.Data) > 0 {
+				var docUpdateReply docUpdateReply
+				if err := cbor.Unmarshal(resp.Data, &docUpdateReply); err != nil {
+					log.ErrorContextE(ctx, "Failed to unmarshal doc update response", err)
+					return
+				}
+
+				blockStore := &bsrvadapter.Adapter{Wrapped: s.peer.blockService}
+
+				linkSys := cidlink.DefaultLinkSystem()
+				linkSys.SetReadStorage(blockStore)
+				linkSys.TrustedStorage = true
+
+				_, docCid, err := cid.CidFromBytes(docUpdateReply.CID)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to convert CID from bytes", err)
+					return
+				}
+
+				nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to load document node", err)
+					return
+				}
+				linkBlock, err := coreblock.GetFromNode(nd)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to get block from node", err)
+					return
+				}
+
+				err = syncDAG(ctx, s.peer.blockService, linkBlock)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to sync DAG", err)
+					return
+				}
+
+				req.Response <- event.DocUpdateResponse{Found: true}
+			}
+		case <-ctx.Done():
+			req.Response <- event.DocUpdateResponse{
+				Found: false,
+				Error: err,
+			}
+		}
+	}()
+}
+
+// docUpdateMessageHandler handles incoming document update requests from the pubsub network.
+func (s *server) docUpdateMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	log.Info("Received doc update request",
+		corelog.String("PeerID", s.peer.PeerID().String()),
+		corelog.Any("SenderId", from),
+		corelog.String("Topic", topic))
+
+	req := &docUpdateRequest{}
+	if err := cbor.Unmarshal(msg, req); err != nil {
+		log.ErrorE("Failed to unmarshal doc update request", err)
+		return nil, err
+	}
+
+	if req.RequestorID == s.peer.PeerID().String() {
+		return []byte{}, nil
+	}
+
+	cols, err := s.peer.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{
+		CollectionID: immutable.Some(req.CollectionID),
+	})
+
+	if err != nil {
+		log.ErrorE("Failed to get collections", err)
+		return []byte{}, nil
+	}
+
+	if len(cols) == 0 {
+		return []byte{}, nil
+	}
+
+	col := cols[0]
+	docIDStr, err := client.NewDocIDFromString(req.DocID)
+	if err != nil {
+		log.ErrorE("Failed to parse DocID", err)
+		return []byte{}, nil
+	}
+
+	doc, err := col.Get(s.peer.ctx, docIDStr, false)
+	if err != nil {
+		log.ErrorE("Failed to get document", err)
+		return []byte{}, nil
+	}
+
+	reply := &docUpdateReply{
+		DocID:        docIDStr.String(),
+		CID:          doc.Head().Bytes(),
+		CollectionID: col.SchemaRoot(),
+		Sender:       s.peer.host.ID().String(),
+	}
+
+	return cbor.Marshal(reply)
 }

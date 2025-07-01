@@ -11,11 +11,14 @@
 package planner
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -166,12 +169,23 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 }
 
 func (n *seScanNode) Next() (bool, error) {
-	if n.currentIndex >= len(n.remoteDocIDs) {
-		return false, nil
+	tries := 0
+	for n.currentIndex < len(n.remoteDocIDs) && tries < 3 {
+		fetched, err := n.fetchCurrentDocument()
+		if err != nil {
+			return false, err
+		}
+		if fetched {
+			n.currentIndex++
+			return true, nil
+		}
+		tries++
 	}
+	return false, nil
+}
 
+func (n *seScanNode) fetchCurrentDocument() (bool, error) {
 	docIDStr := n.remoteDocIDs[n.currentIndex]
-	n.currentIndex++
 
 	doc, err := n.fetchDocumentLocallyByID(docIDStr)
 	if err != nil {
@@ -179,21 +193,46 @@ func (n *seScanNode) Next() (bool, error) {
 	}
 
 	if !doc.HasValue() {
-		// Document not found locally, need to request it from the network
-		// TODO: Implement document request from P2P network
-		// This will require:
-		// 1. Publishing a document request on pubsub
-		// 2. Waiting for pushLog response
-		// 3. Processing the pushLog to trigger merge
-		// 4. Waiting for merge completion
+		found, err := n.requestDocumentFromNetwork(docIDStr)
+		if err != nil {
+			return false, err
+		}
 
-		// For now, skip documents that aren't locally available
-		return n.Next()
+		if !found {
+			return false, nil
+		}
 	}
 
-	// Set the current value from the fetched document
 	n.currentValue = doc.Value()
 	return true, nil
+}
+
+func (n *seScanNode) requestDocumentFromNetwork(docIDStr string) (bool, error) {
+	responseChan := make(chan event.DocUpdateResponse, 1)
+	defer close(responseChan)
+
+	request := event.DocUpdateRequest{
+		CollectionID: n.collectionID,
+		DocID:        docIDStr,
+		Response:     responseChan,
+	}
+
+	// TODO: waiting for every single document is not efficient.
+	// We should consider ways of prefetching docs.
+	n.p.db.Events().Publish(event.NewMessage(event.DocUpdateRequestName, request))
+
+	ctx, cancel := context.WithTimeout(n.p.ctx, 10*time.Second)
+	defer cancel()
+
+	select {
+	case response := <-responseChan:
+		if response.Error != nil {
+			return false, response.Error
+		}
+		return response.Found, nil
+	case <-ctx.Done():
+		return false, fmt.Errorf("timeout waiting for document %s", docIDStr)
+	}
 }
 
 func (n *seScanNode) fetchDocumentLocallyByID(docIDStr string) (immutable.Option[core.Doc], error) {

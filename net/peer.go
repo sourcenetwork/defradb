@@ -49,6 +49,8 @@ import (
 
 var tracer = telemetry.NewTracer()
 
+const onDemandDocUpdateTopic = "on-demand-doc-update"
+
 // DB hold the database related methods that are required by Peer.
 type DB interface {
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
@@ -172,6 +174,7 @@ func NewPeer(
 			event.ReplicatorName,
 			se.ReplicateEventName,
 			se.QuerySEArtifactsEventName,
+			event.DocUpdateRequestName,
 		)
 		if err != nil {
 			return nil, err
@@ -220,6 +223,11 @@ func NewPeer(
 	case <-time.After(5 * time.Second):
 		// This can only happen if the listening address has been mistakenly set to a zero value.
 		return nil, ErrTimeoutWaitingForPeerInfo
+	}
+
+	_, err = p.server.addPubSubTopic(onDemandDocUpdateTopic, true, p.server.docUpdateMessageHandler)
+	if err != nil {
+		return nil, errors.Wrap("failed to add on-demand doc update topic", err)
 	}
 
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
@@ -322,6 +330,9 @@ func (p *Peer) handleMessageLoop() {
 
 		case se.QuerySEArtifactsRequest:
 			go p.handleSEQuery(evt)
+
+		case event.DocUpdateRequest:
+			go p.server.handleDocUpdateRequest(evt)
 
 		default:
 			// ignore other events
@@ -428,6 +439,7 @@ func (p *Peer) handleSEQuery(req se.QuerySEArtifactsRequest) {
 	docIDSet := make(map[string]struct{})
 	var queryErr error
 
+	// TODO: ask replicators one-by-one.
 	for pid := range reps {
 		reply, err := p.server.querySEArtifacts(p.ctx, pid, grpcReq)
 		if err != nil {

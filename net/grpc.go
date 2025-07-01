@@ -19,10 +19,10 @@ import (
 const (
 	grpcServiceName = "defradb.net.Service"
 
-	servicePushLogName           = "/" + grpcServiceName + "/PushLog"
-	serviceGetIdentityName       = "/" + grpcServiceName + "/GetIdentity"
-	servicePushSEArtifactsName   = "/" + grpcServiceName + "/PushSEArtifacts"
-	serviceQuerySEArtifactsName  = "/" + grpcServiceName + "/QuerySEArtifacts"
+	servicePushLogName          = "/" + grpcServiceName + "/PushLog"
+	serviceGetIdentityName      = "/" + grpcServiceName + "/GetIdentity"
+	servicePushSEArtifactsName  = "/" + grpcServiceName + "/PushSEArtifacts"
+	serviceQuerySEArtifactsName = "/" + grpcServiceName + "/QuerySEArtifacts"
 )
 
 type pushLogRequest struct {
@@ -79,6 +79,20 @@ type seFieldQuery struct {
 // querySEArtifactsReply - Reply with matching document IDs
 type querySEArtifactsReply struct {
 	DocIDs []string
+}
+
+// docUpdateRequest - Request for a specific document update
+type docUpdateRequest struct {
+	CollectionID string
+	DocID        string
+	RequestorID  string
+}
+
+type docUpdateReply struct {
+	DocID        string
+	CID          []byte
+	CollectionID string
+	Sender       string
 }
 
 type serviceServer interface {
