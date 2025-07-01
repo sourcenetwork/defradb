@@ -388,16 +388,23 @@ func (db *DB) DeleteDACActorRelationship(
 
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
-		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
+		return immutable.Some(db.nodeIdentity.Value().ToPublicRawIdentity()), nil
 	}
 	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
 func (db *DB) GetNodeIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
-	if db.nodeIdentity.HasValue() {
-		return db.nodeIdentity.Value().NewToken(time.Hour*24, audience, immutable.None[string]())
+	if !db.nodeIdentity.HasValue() {
+		return nil, nil
 	}
-	return nil, nil
+
+	ident := db.nodeIdentity.Value()
+	fullIdentity, ok := ident.(identity.FullIdentity)
+	if !ok || fullIdentity.PrivateKey() == nil {
+		return nil, identity.ErrPrivateKeyNotAvailable
+	}
+
+	return fullIdentity.NewToken(time.Hour*24, audience, immutable.None[string]())
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
