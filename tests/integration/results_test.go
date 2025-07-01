@@ -33,7 +33,7 @@ func (m *mockTestState) GetCurrentNodeID() int {
 }
 
 func (m *mockTestState) GetIdentity(_ Identity) acpIdentity.Identity {
-	return acpIdentity.Identity{}
+	return nil
 }
 
 func TestAnyOfMatcher(t *testing.T) {

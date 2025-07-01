@@ -96,7 +96,7 @@ func newIdentityHolder(ident acpIdentity.Identity) *identityHolder {
 // If the identity does not exist, it will be generated.
 func getIdentity(s *state, identity immutable.Option[Identity]) acpIdentity.Identity {
 	if !identity.HasValue() {
-		return acpIdentity.Identity{}
+		return nil
 	}
 
 	// The selector must never be "*" here because this function returns a specific identity from the
@@ -132,15 +132,17 @@ func getIdentityForRequest(s *state, identity Identity, nodeIndex int) acpIdenti
 	identHolder := getIdentityHolder(s, identity)
 	ident := identHolder.Identity
 
-	token, ok := identHolder.NodeTokens[nodeIndex]
-	if ok {
-		ident.BearerToken = token
-	} else {
-		audience := getNodeAudience(s, nodeIndex)
-		if documentACPType == SourceHubDocumentACPType || audience.HasValue() {
-			err := ident.UpdateToken(authTokenExpiration, audience, immutable.Some(s.sourcehubAddress))
-			require.NoError(s.t, err)
-			identHolder.NodeTokens[nodeIndex] = ident.BearerToken
+	if fullIdent, ok := ident.(acpIdentity.FullIdentity); ok {
+		token, ok := identHolder.NodeTokens[nodeIndex]
+		if ok {
+			fullIdent.SetBearerToken(token)
+		} else {
+			audience := getNodeAudience(s, nodeIndex)
+			if documentACPType == SourceHubDocumentACPType || audience.HasValue() {
+				err := fullIdent.UpdateToken(authTokenExpiration, audience, immutable.Some(s.sourcehubAddress))
+				require.NoError(s.t, err)
+				identHolder.NodeTokens[nodeIndex] = fullIdent.BearerToken()
+			}
 		}
 	}
 	return ident
@@ -202,7 +204,7 @@ func getIdentityDID(s *state, identity immutable.Option[Identity]) string {
 		if identity.Value().selector == "*" {
 			return identity.Value().selector
 		}
-		return getIdentity(s, identity).DID
+		return getIdentity(s, identity).DID()
 	}
 	return ""
 }

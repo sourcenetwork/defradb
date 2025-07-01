@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -54,13 +55,17 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 	}
 
 	ident := matcher.s.GetIdentity(testUtils.NodeIdentity(matcher.s.GetCurrentNodeID()).Value())
+	fullIdent, ok := ident.(acpIdentity.FullIdentity)
+	if !ok {
+		return false, fmt.Errorf("identity does not implement FullIdentity")
+	}
 
-	if ident.PrivateKey.Type() != matcher.expectedKeyType {
-		matcher.unexpectedKeyType = immutable.Some(ident.PrivateKey.Type())
+	if fullIdent.PrivateKey().Type() != matcher.expectedKeyType {
+		matcher.unexpectedKeyType = immutable.Some(fullIdent.PrivateKey().Type())
 		return false, nil
 	}
 
-	expectedSigBytes, err := ident.PrivateKey.Sign(blockBytes)
+	expectedSigBytes, err := fullIdent.PrivateKey().Sign(blockBytes)
 	if err != nil {
 		return false, err
 	}
@@ -156,11 +161,11 @@ func (matcher *identityMatcher) Match(actual any) (bool, error) {
 		actualString = string(actualBytes)
 	}
 
-	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey.Type(), actualString)
+	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey().Type(), actualString)
 	if err != nil {
 		return false, errors.Wrap("failed to convert actual to public key", err)
 	}
-	return ident.PublicKey.Equal(pubKey), nil
+	return ident.PublicKey().Equal(pubKey), nil
 }
 
 func (matcher *identityMatcher) FailureMessage(actual any) string {
