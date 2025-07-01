@@ -61,9 +61,11 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
 	id := identity.FromContext(ctx)
-	if id.HasValue() && id.Value().PrivateKey != nil {
-		args = append(args, "--identity", id.Value().PrivateKey.String())
-		args = append(args, "--source-hub-address", w.sourceHubAddress)
+	if id.HasValue() {
+		if fullIdent, ok := id.Value().(identity.FullIdentity); ok && fullIdent.PrivateKey() != nil {
+			args = append(args, "--identity", fullIdent.PrivateKey().String())
+			args = append(args, "--source-hub-address", w.sourceHubAddress)
+		}
 	}
 	args = append(args, "--url", w.address)
 
