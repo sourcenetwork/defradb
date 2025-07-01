@@ -34,7 +34,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -2483,10 +2482,7 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	require.NoError(s.t, err, s.testCase.Description)
 
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
-	fullIdent, ok := expectedIdent.(identity.FullIdentity)
-	require.True(s.t, ok, "expectedIdent does not implement FullIdentity")
-	expectedRawIdent, err := fullIdent.IntoRawIdentity()
-	require.NoError(s.t, err, s.testCase.Description)
+	expectedRawIdent := expectedIdent.ToPublicRawIdentity()
 	expectedRawIdentOpt := immutable.Some(expectedRawIdent)
 	require.Equal(s.t, expectedRawIdentOpt, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
