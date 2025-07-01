@@ -45,28 +45,34 @@ func signBlock(
 		return nil
 	}
 
-	ident := identity.FromContext(ctx)
-	if !ident.HasValue() {
-		return nil
-	}
-
 	blockBytes, err := block.Marshal()
 	if err != nil {
 		return err
 	}
 
+	ident := identity.FromContext(ctx)
+	if !ident.HasValue() {
+		return nil
+	}
+
+	// Check if the identity is a FullIdentity (has private key)
+	fullIdent, ok := ident.Value().(identity.FullIdentity)
+	if !ok {
+		return nil
+	}
+
 	var sigType string
 
-	switch ident.Value().PrivateKey.Type() {
+	switch fullIdent.PrivateKey().Type() {
 	case crypto.KeyTypeSecp256k1:
 		sigType = SignatureTypeECDSA256K
 	case crypto.KeyTypeEd25519:
 		sigType = SignatureTypeEd25519
 	default:
-		return NewErrUnsupportedKeyForSigning(ident.Value().PrivateKey.Type())
+		return NewErrUnsupportedKeyForSigning(fullIdent.PrivateKey().Type())
 	}
 
-	sigBytes, err := ident.Value().PrivateKey.Sign(blockBytes)
+	sigBytes, err := fullIdent.PrivateKey().Sign(blockBytes)
 	if err != nil {
 		return err
 	}
@@ -74,7 +80,7 @@ func signBlock(
 	sig := &Signature{
 		Header: SignatureHeader{
 			Type:     sigType,
-			Identity: []byte(ident.Value().PublicKey.String()),
+			Identity: []byte(fullIdent.PublicKey().String()),
 		},
 		Value: sigBytes,
 	}
