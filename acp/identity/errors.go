@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,6 +18,7 @@ const (
 	errUnsupportedKeyType      = "unsupported key type"
 	errMissingKeyType          = "missing key type in token"
 	errInvalidKeyTypeClaimType = "key type claim must be a string"
+	errPrivateKeyNotAvailable  = "private key not available"
 )
 
 var (
@@ -27,8 +28,6 @@ var (
 	ErrMissingKeyType = errors.New(errMissingKeyType)
 	// ErrInvalidKeyTypeClaimType is returned when the key_type claim in a JWT token is not a string.
 	ErrInvalidKeyTypeClaimType = errors.New(errInvalidKeyTypeClaimType)
+	// ErrPrivateKeyNotAvailable is returned when attempting to use identity with no private key.
+	ErrPrivateKeyNotAvailable = errors.New(errPrivateKeyNotAvailable)
 )
-
-func newErrUnsupportedKeyType(keyType string) error {
-	return errors.New(errUnsupportedKeyType, errors.NewKV("KeyType", keyType))
-}
