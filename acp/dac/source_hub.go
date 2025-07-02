@@ -200,7 +200,7 @@ func (a *SourceHubDocumentACP) RegisterObject(
 	// Check if the identity is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := ident.(identity.TokenIdentity)
 	if !ok {
-		return fmt.Errorf("identity must be a TokenIdentity to register objects")
+		return identity.ErrMustBeTokenIdentity
 	}
 
 	msgSet := sourcehub.MsgSet{}
@@ -309,7 +309,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	// Check if the requester is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := requester.(identity.TokenIdentity)
 	if !ok {
-		return false, fmt.Errorf("requester must be a TokenIdentity to add actor relationships")
+		return false, identity.ErrMustBeTokenIdentity
 	}
 
 	msgSet := sourcehub.MsgSet{}
@@ -374,7 +374,7 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	// Check if the requester is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := requester.(identity.TokenIdentity)
 	if !ok {
-		return false, fmt.Errorf("requester must be a TokenIdentity to delete actor relationships")
+		return false, identity.ErrMustBeTokenIdentity
 	}
 
 	msgSet := sourcehub.MsgSet{}

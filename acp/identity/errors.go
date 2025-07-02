@@ -19,6 +19,7 @@ const (
 	errMissingKeyType          = "missing key type in token"
 	errInvalidKeyTypeClaimType = "key type claim must be a string"
 	errPrivateKeyNotAvailable  = "private key not available"
+	errMustBeTokenIdentity     = "identity must be a TokenIdentity"
 )
 
 var (
@@ -30,4 +31,6 @@ var (
 	ErrInvalidKeyTypeClaimType = errors.New(errInvalidKeyTypeClaimType)
 	// ErrPrivateKeyNotAvailable is returned when attempting to use identity with no private key.
 	ErrPrivateKeyNotAvailable = errors.New(errPrivateKeyNotAvailable)
+	// ErrMustBeTokenIdentity is returned when used identity does not implement TokenIdentity.
+	ErrMustBeTokenIdentity = errors.New(errMustBeTokenIdentity)
 )
