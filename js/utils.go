@@ -110,5 +110,5 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}
-	return immutable.Some(acpIdentity.Identity(identity)), nil
+	return immutable.Some[acpIdentity.Identity](identity), nil
 }
