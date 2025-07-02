@@ -358,7 +358,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 		return false, err
 	}
 
-	return cmdResult.GetResult().GetSetRelationshipResult().RecordExisted, nil
+	return cmdResult.GetResult().GetSetRelationshipResult().GetRecordExisted(), nil
 }
 
 func (a *SourceHubDocumentACP) DeleteActorRelationship(
