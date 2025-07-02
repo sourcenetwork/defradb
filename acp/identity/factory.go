@@ -52,8 +52,8 @@ func FromPublicKey(publicKey crypto.PublicKey) (Identity, error) {
 }
 
 // FromToken constructs a new identity from a bearer token.
-// The returned identity implements FullIdentity but cannot create or update tokens
-// since it doesn't have access to the private key.
+// The returned identity implements TokenIdentity which cannot create/update tokens
+// since it doesn't have access to the private key and NewToken/UpdateToken methods.
 func FromToken(data []byte) (TokenIdentity, error) {
 	token, err := jwt.Parse(data, jwt.WithVerify(false))
 	if err != nil {
