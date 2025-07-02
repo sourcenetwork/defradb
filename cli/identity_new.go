@@ -43,10 +43,7 @@ Example: generate a new identity with ed25519 key:
 				return err
 			}
 
-			rawIdentity, err := newIdentity.IntoRawIdentity()
-			if err != nil {
-				return err
-			}
+			rawIdentity := newIdentity.IntoRawIdentity()
 
 			return writeJSON(cmd, rawIdentity)
 		},

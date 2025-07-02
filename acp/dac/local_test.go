@@ -53,8 +53,8 @@ func (m *mockInvalidIdentity) BearerToken() string {
 
 func (m *mockInvalidIdentity) SetBearerToken(token string) {}
 
-func (m *mockInvalidIdentity) IntoRawIdentity() (identity.RawIdentity, error) {
-	return identity.RawIdentity{}, nil
+func (m *mockInvalidIdentity) IntoRawIdentity() identity.RawIdentity {
+	return identity.RawIdentity{}
 }
 
 func (m *mockInvalidIdentity) UpdateToken(duration time.Duration, audience immutable.Option[string], authorizedAccount immutable.Option[string]) error {

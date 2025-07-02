@@ -39,10 +39,10 @@ func (m *mockIdentity) ToPublicRawIdentity() PublicRawIdentity {
 		DID:       m.did,
 	}
 }
-func (m *mockIdentity) BearerToken() string                   { return m.bearerToken }
-func (m *mockIdentity) SetBearerToken(string)                 {}
-func (m *mockIdentity) PrivateKey() crypto.PrivateKey         { return nil }
-func (m *mockIdentity) IntoRawIdentity() (RawIdentity, error) { return RawIdentity{}, nil }
+func (m *mockIdentity) BearerToken() string           { return m.bearerToken }
+func (m *mockIdentity) SetBearerToken(string)         {}
+func (m *mockIdentity) PrivateKey() crypto.PrivateKey { return nil }
+func (m *mockIdentity) IntoRawIdentity() RawIdentity  { return RawIdentity{} }
 func (m *mockIdentity) UpdateToken(time.Duration, immutable.Option[string], immutable.Option[string]) error {
 	return nil
 }
@@ -61,8 +61,7 @@ func TestGenerate_WithSecp256k1_ReturnsNewIdentity(t *testing.T) {
 
 	require.Equal(t, "did:key", identity.DID()[:7])
 
-	rawIdentity, err := identity.IntoRawIdentity()
-	require.NoError(t, err)
+	rawIdentity := identity.IntoRawIdentity()
 	require.Equal(t, string(crypto.KeyTypeSecp256k1), rawIdentity.KeyType)
 
 	privKeyBytes, err := hex.DecodeString(rawIdentity.PrivateKey)
@@ -85,8 +84,7 @@ func TestGenerate_WithEd25519_ReturnsNewIdentity(t *testing.T) {
 
 	require.Equal(t, "did:key", identity.DID()[:7])
 
-	rawIdentity, err := identity.IntoRawIdentity()
-	require.NoError(t, err)
+	rawIdentity := identity.IntoRawIdentity()
 	require.Equal(t, string(crypto.KeyTypeEd25519), rawIdentity.KeyType)
 
 	privKeyBytes, err := hex.DecodeString(rawIdentity.PrivateKey)
@@ -120,10 +118,8 @@ func TestGenerate_ReturnsUniqueIdentities(t *testing.T) {
 	require.Equal(t, "did:key", identity1.DID()[:7])
 	require.Equal(t, "did:key", identity2.DID()[:7])
 
-	raw1, err := identity1.IntoRawIdentity()
-	require.NoError(t, err)
-	raw2, err := identity2.IntoRawIdentity()
-	require.NoError(t, err)
+	raw1 := identity1.IntoRawIdentity()
+	raw2 := identity2.IntoRawIdentity()
 
 	require.NotEqual(t, raw1.PrivateKey, raw2.PrivateKey)
 	require.NotEqual(t, raw1.PublicKey, raw2.PublicKey)
@@ -134,8 +130,7 @@ func TestIdentity_IntoRawIdentityWithSecp256k1_Success(t *testing.T) {
 	identity, err := Generate(crypto.KeyTypeSecp256k1)
 	require.NoError(t, err)
 
-	rawIdentity, err := identity.IntoRawIdentity()
-	require.NoError(t, err)
+	rawIdentity := identity.IntoRawIdentity()
 
 	require.Equal(t, string(crypto.KeyTypeSecp256k1), rawIdentity.KeyType)
 	require.Equal(t, identity.DID(), rawIdentity.DID)
@@ -151,8 +146,7 @@ func TestIdentity_IntoRawIdentityWithEd25519_Success(t *testing.T) {
 	identity, err := Generate(crypto.KeyTypeEd25519)
 	require.NoError(t, err)
 
-	rawIdentity, err := identity.IntoRawIdentity()
-	require.NoError(t, err)
+	rawIdentity := identity.IntoRawIdentity()
 
 	require.Equal(t, string(crypto.KeyTypeEd25519), rawIdentity.KeyType)
 	require.Equal(t, identity.DID(), rawIdentity.DID)
@@ -215,8 +209,7 @@ func TestIdentity_RoundTripConversion(t *testing.T) {
 	identity, err := Generate(crypto.KeyTypeSecp256k1)
 	require.NoError(t, err)
 
-	rawIdentity, err := identity.IntoRawIdentity()
-	require.NoError(t, err)
+	rawIdentity := identity.IntoRawIdentity()
 
 	privKeyBytes, err := hex.DecodeString(rawIdentity.PrivateKey)
 	require.NoError(t, err)

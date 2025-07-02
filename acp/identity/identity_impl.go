@@ -92,7 +92,7 @@ func (p *fullIdentity) PrivateKey() crypto.PrivateKey {
 }
 
 // IntoRawIdentity converts a fullIdentity into a RawIdentity struct.
-func (p *fullIdentity) IntoRawIdentity() (RawIdentity, error) {
+func (p *fullIdentity) IntoRawIdentity() RawIdentity {
 	privKeyBytes := p.privateKey.Raw()
 	keyType := string(p.privateKey.Type())
 	pubKeyBytes := p.publicKey.Raw()
@@ -102,7 +102,7 @@ func (p *fullIdentity) IntoRawIdentity() (RawIdentity, error) {
 		PublicKey:  hex.EncodeToString(pubKeyBytes),
 		DID:        p.did,
 		KeyType:    keyType,
-	}, nil
+	}
 }
 
 // NewToken creates and returns a new signed bearer token for the fullIdentity.

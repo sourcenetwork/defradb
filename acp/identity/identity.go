@@ -66,7 +66,7 @@ type FullIdentity interface {
 	// PrivateKey returns the actor's private key.
 	PrivateKey() crypto.PrivateKey
 	// IntoRawIdentity converts an `Identity` into a `RawIdentity`.
-	IntoRawIdentity() (RawIdentity, error)
+	IntoRawIdentity() RawIdentity
 	// NewToken creates and returns a new `BearerToken`.
 	NewToken(
 		duration time.Duration,
