@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -377,7 +377,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		immutable.Some(identity.Identity{DID: actorIdentity}),
+		immutable.Some(identity.FromDID(actorIdentity)),
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,

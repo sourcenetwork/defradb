@@ -2482,8 +2482,9 @@ func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
 	require.NoError(s.t, err, s.testCase.Description)
 
 	expectedIdent := getIdentity(s, action.ExpectedIdentity)
-	expectedRawIdent := immutable.Some(expectedIdent.IntoRawIdentity().Public())
-	require.Equal(s.t, expectedRawIdent, actualIdent, "raw identity at %d mismatch", action.NodeID)
+	expectedRawIdent := expectedIdent.ToPublicRawIdentity()
+	expectedRawIdentOpt := immutable.Some(expectedRawIdent)
+	require.Equal(s.t, expectedRawIdentOpt, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
 
 // execGomegaMatcher executes the given gomega matcher and asserts the result.
@@ -2540,7 +2541,7 @@ func performVerifySignatureAction(s *state, action VerifyBlockSignature) {
 	for i, node := range nodes {
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, i)
 		signerIdentity := getIdentity(s, immutable.Some(action.SignerIdentity))
-		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey)
+		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey())
 
 		if action.ExpectedError != "" {
 			require.Error(s.t, err, s.testCase.Description)

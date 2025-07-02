@@ -29,8 +29,10 @@ func execute(ctx context.Context, value js.Value, method string, args ...any) ([
 		contextValues["transaction"] = tx.ID()
 	}
 	id := identity.FromContext(ctx)
-	if id.HasValue() && id.Value().PrivateKey != nil {
-		contextValues["identity"] = id.Value().PrivateKey.String()
+	if id.HasValue() {
+		if full, ok := id.Value().(identity.FullIdentity); ok && full.PrivateKey() != nil {
+			contextValues["identity"] = full.PrivateKey().String()
+		}
 	}
 	args = append(args, contextValues)
 	prom := value.Call(method, args...)

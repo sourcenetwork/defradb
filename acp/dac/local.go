@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -136,9 +136,9 @@ func (l *LocalDocumentACP) AddPolicy(
 	marshalType acpTypes.PolicyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	principal, err := types.NewDIDPrincipal(creator.DID)
+	principal, err := types.NewDIDPrincipal(creator.DID())
 	if err != nil {
-		return "", acp.NewErrInvalidActorID(err, creator.DID)
+		return "", acp.NewErrInvalidActorID(err, creator.DID())
 	}
 	ctx = auth.InjectPrincipal(ctx, principal)
 
@@ -183,9 +183,9 @@ func (l *LocalDocumentACP) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
-	principal, err := types.NewDIDPrincipal(identity.DID)
+	principal, err := types.NewDIDPrincipal(identity.DID())
 	if err != nil {
-		return acp.NewErrInvalidActorID(err, identity.DID)
+		return acp.NewErrInvalidActorID(err, identity.DID())
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)
@@ -263,9 +263,9 @@ func (l *LocalDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	principal, err := types.NewDIDPrincipal(requester.DID)
+	principal, err := types.NewDIDPrincipal(requester.DID())
 	if err != nil {
-		return false, acp.NewErrInvalidActorID(err, requester.DID)
+		return false, acp.NewErrInvalidActorID(err, requester.DID())
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)
@@ -309,9 +309,9 @@ func (l *LocalDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	principal, err := types.NewDIDPrincipal(requester.DID)
+	principal, err := types.NewDIDPrincipal(requester.DID())
 	if err != nil {
-		return false, acp.NewErrInvalidActorID(err, requester.DID)
+		return false, acp.NewErrInvalidActorID(err, requester.DID())
 	}
 
 	ctx = auth.InjectPrincipal(ctx, principal)

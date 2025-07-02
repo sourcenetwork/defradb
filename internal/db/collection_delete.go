@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -153,7 +153,7 @@ func (c *collection) applyDelete(
 	txn := txnctx.MustGet(ctx)
 
 	ident := identity.FromContext(ctx)
-	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
+	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 

@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -55,7 +55,9 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	if !id.HasValue() {
 		return nil
 	}
-	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, []byte(id.Value().BearerToken)))
+	if tokenIdentity, ok := id.Value().(identity.TokenIdentity); ok {
+		req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
+	}
 	return nil
 }
 

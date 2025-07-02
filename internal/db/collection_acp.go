@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -56,7 +56,7 @@ func (c *collection) checkAccessOfDocWithACP(
 		return true, nil
 	}
 	ident := identity.FromContext(ctx)
-	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID == c.db.nodeIdentity.Value().DID {
+	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID() == c.db.nodeIdentity.Value().DID() {
 		return true, nil
 	}
 	return permission.CheckAccessOfDocOnCollectionWithACP(

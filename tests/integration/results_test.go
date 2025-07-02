@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -33,7 +33,7 @@ func (m *mockTestState) GetCurrentNodeID() int {
 }
 
 func (m *mockTestState) GetIdentity(_ Identity) acpIdentity.Identity {
-	return acpIdentity.Identity{}
+	return nil
 }
 
 func TestAnyOfMatcher(t *testing.T) {
