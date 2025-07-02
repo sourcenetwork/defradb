@@ -530,7 +530,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 			}
 			tokenIdent, ok := ident.(identity.TokenIdentity)
 			if !ok {
-				log.ErrorE(fmt.Sprintf("Identity is not of type TokenIdentity (got %T)", ident), nil)
+				log.ErrorE("Identity is not of type TokenIdentity", nil, corelog.String("Actual", fmt.Sprintf("%T", ident)))
 				return immutable.None[identity.Identity]()
 			}
 			err = identity.VerifyAuthToken(tokenIdent, s.peer.PeerID().String())
