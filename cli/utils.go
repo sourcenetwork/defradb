@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -178,11 +177,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	identity, ok := ident.(acpIdentity.Identity)
-	if !ok {
-		return errors.New("identity is not an acpIdentity.Identity")
-	}
-	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some(identity))
+	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some[acpIdentity.Identity](ident))
 	cmd.SetContext(ctx)
 	return nil
 }
