@@ -37,7 +37,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -51,12 +50,9 @@ var tracer = telemetry.NewTracer()
 
 // DB hold the database related methods that are required by Peer.
 type DB interface {
-	// GetCollections returns the list of collections according to the given options.
-	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
+	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
-	// GetNodeIdentity returns the node's public raw identity.
-	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 	// Rootstore returns the instance's root store.
 	Rootstore() corekv.TxnStore
 }

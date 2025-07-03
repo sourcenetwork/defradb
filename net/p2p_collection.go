@@ -28,14 +28,17 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
-	defer txn.Discard(ctx)
-	ctx = datastore.CtxSetTxn(ctx, txn)
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.GetCollections(
+		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
 				CollectionID: immutable.Some(col),
@@ -76,14 +79,17 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
-	defer txn.Discard(ctx)
-	ctx = datastore.CtxSetTxn(ctx, txn)
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := p.db.GetCollections(
+		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
 				CollectionID: immutable.Some(col),
@@ -124,9 +130,12 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	txn := datastore.NewTxnFrom(ctx, p.db.Rootstore(), 0, false)
-	defer txn.Discard(ctx)
-	ctx = datastore.CtxSetTxn(ctx, txn)
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
@@ -168,8 +177,14 @@ func (p *Peer) loadAndPublishP2PCollections(ctx context.Context) error {
 		}
 	}
 
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+
 	// Get all DocIDs across all collections in the DB
-	cols, err := p.db.GetCollections(ctx, client.CollectionFetchOptions{})
+	cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{})
 	if err != nil {
 		return err
 	}

@@ -457,7 +457,15 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		return true
 	}
 
-	rawblock, err := datastore.BlockstoreFrom(s.peer.db.Rootstore()).Get(s.peer.ctx, c)
+	clientTxn, err := s.peer.db.NewTxn(s.peer.ctx, false)
+	if err != nil {
+		log.ErrorE("Failed to get new transaction", err)
+		return false
+	}
+	defer clientTxn.Discard(s.peer.ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
+	rawblock, err := txn.Blockstore().Get(s.peer.ctx, c)
 	if err != nil {
 		log.ErrorE("Failed to get block", err)
 		return false
@@ -475,7 +483,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		return false
 	}
 
-	cols, err := s.peer.db.GetCollections(
+	cols, err := clientTxn.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
 			VersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
@@ -559,7 +567,13 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 		return true, nil
 	}
 
-	cols, err := s.peer.db.GetCollections(
+	clientTxn, err := s.peer.db.NewTxn(s.peer.ctx, false)
+	if err != nil {
+		return false, err
+	}
+	defer clientTxn.Discard(s.peer.ctx)
+
+	cols, err := clientTxn.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
 			CollectionID: immutable.Some(p2pID),
@@ -571,7 +585,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	if len(cols) == 0 {
 		return false, client.ErrCollectionNotFound
 	}
-	ident, err := s.peer.db.GetNodeIdentity(s.peer.ctx)
+	ident, err := clientTxn.GetNodeIdentity(s.peer.ctx)
 	if err != nil {
 		return false, err
 	}
