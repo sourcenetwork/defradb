@@ -282,12 +282,14 @@ func (c *collection) getAllDocIDsChan(
 
 	resCh := make(chan client.DocIDResult)
 	go func() {
-		defer func() {
+		closeIterator := func() {
 			if err := iter.Close(); err != nil {
 				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
+		}
+		defer func() {
+			closeIterator()
 			close(resCh)
-			txn.Discard(ctx)
 		}()
 		for {
 			// check for Done on context first
@@ -301,6 +303,7 @@ func (c *collection) getAllDocIDsChan(
 
 			hasNext, err := iter.Next()
 			if err != nil {
+				closeIterator()
 				resCh <- client.DocIDResult{
 					Err: err,
 				}
@@ -315,6 +318,7 @@ func (c *collection) getAllDocIDsChan(
 
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
+				closeIterator()
 				resCh <- client.DocIDResult{
 					Err: err,
 				}
@@ -328,6 +332,7 @@ func (c *collection) getAllDocIDsChan(
 			)
 
 			if err != nil {
+				closeIterator()
 				resCh <- client.DocIDResult{
 					Err: err,
 				}
