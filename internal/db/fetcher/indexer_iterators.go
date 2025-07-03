@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -58,7 +57,7 @@ func isArrayCondition(op string) bool {
 // It is used to iterate over the index keys that match a specific condition.
 // For example, iteration over condition _eq and _gt will have completely different logic.
 type indexIterator interface {
-	Init(context.Context, datastore.DSReaderWriter) error
+	Init(context.Context, corekv.ReaderWriter) error
 	Next() (indexIterResult, error)
 	Close() error
 }
@@ -80,7 +79,7 @@ type indexMatchIterator struct {
 	// Iterator state
 	resultIter corekv.Iterator
 	ctx        context.Context
-	store      datastore.DSReaderWriter
+	store      corekv.ReaderWriter
 	reverse    bool
 
 	matchers []valueMatcher
@@ -94,7 +93,7 @@ type indexMatchIterator struct {
 
 var _ indexIterator = (*indexMatchIterator)(nil)
 
-func (iter *indexMatchIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *indexMatchIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	if iter.resultIter != nil {
@@ -198,12 +197,12 @@ type eqSingleIndexIterator struct {
 	execInfo *ExecInfo
 
 	ctx   context.Context
-	store datastore.DSReaderWriter
+	store corekv.ReaderWriter
 }
 
 var _ indexIterator = (*eqSingleIndexIterator)(nil)
 
-func (iter *eqSingleIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *eqSingleIndexIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	return nil
@@ -234,7 +233,7 @@ type inIndexIterator struct {
 	inValues        []client.NormalValue
 	nextValIndex    int
 	ctx             context.Context
-	store           datastore.DSReaderWriter
+	store           corekv.ReaderWriter
 	hasIterator     bool
 	fetcher         *indexFetcher
 	fieldConditions []fieldFilterCond
@@ -294,7 +293,7 @@ func (iter *inIndexIterator) createIteratorForNextValue() error {
 	return nil
 }
 
-func (iter *inIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *inIndexIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	var err error
@@ -352,12 +351,12 @@ type memorizingIndexIterator struct {
 	fetchedDocs map[string]struct{}
 
 	ctx   context.Context
-	store datastore.DSReaderWriter
+	store corekv.ReaderWriter
 }
 
 var _ indexIterator = (*memorizingIndexIterator)(nil)
 
-func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.DSReaderWriter) error {
+func (iter *memorizingIndexIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
 	iter.ctx = ctx
 	iter.store = store
 	iter.fetchedDocs = make(map[string]struct{})

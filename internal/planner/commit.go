@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -88,7 +89,7 @@ func (n *dagScanNode) Init() error {
 
 	// only need the head fetcher for non cid specific queries
 	if !n.commitSelect.Cid.HasValue() {
-		return n.fetcher.Start(n.planner.ctx, n.planner.txn, n.prefix)
+		return n.fetcher.Start(n.planner.ctx, n.prefix)
 	}
 	return nil
 }
@@ -184,10 +185,11 @@ func (n *dagScanNode) Explain(explainType request.ExplainType) (map[string]any, 
 }
 
 func (n *dagScanNode) Next() (bool, error) {
+	txn := datastore.CtxMustGetTxn(n.planner.ctx)
+
 	n.execInfo.iterations++
 
 	var currentCid *cid.Cid
-	store := n.planner.txn.Blockstore()
 
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
@@ -223,7 +225,7 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	// use the stored cid to scan through the blockstore
 	// clear the cid after
-	block, err := store.Get(n.planner.ctx, *currentCid)
+	block, err := txn.Blockstore().Get(n.planner.ctx, *currentCid)
 	if err != nil {
 		return false, errors.Join(ErrMissingCID, err)
 	}
@@ -433,8 +435,9 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 }
 
 func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
-	store := n.planner.txn.Blockstore()
-	sigIPLDBlock, err := store.Get(n.planner.ctx, link.Cid)
+	txn := datastore.CtxMustGetTxn(n.planner.ctx)
+
+	sigIPLDBlock, err := txn.Blockstore().Get(n.planner.ctx, link.Cid)
 	if err != nil {
 		return err
 	}

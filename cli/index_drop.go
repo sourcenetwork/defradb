@@ -26,9 +26,9 @@ Example: drop the index 'UsersByName' for 'Users' collection:
   defradb client index drop --collection Users --name UsersByName`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
-			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
 			}

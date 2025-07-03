@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -76,7 +75,7 @@ func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 
 // DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type DocComposite struct {
-	store           datastore.DSReaderWriter
+	store           corekv.ReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 }
@@ -86,7 +85,7 @@ var _ core.ReplicatedData = (*DocComposite)(nil)
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
 func NewDocComposite(
-	store datastore.DSReaderWriter,
+	store corekv.ReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 ) *DocComposite {

@@ -20,9 +20,9 @@ import (
 type lensHandler struct{}
 
 func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
-	err := store.LensRegistry().ReloadLenses(req.Context())
+	err := db.LensRegistry().ReloadLenses(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -31,7 +31,7 @@ func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var request setMigrationRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -39,7 +39,7 @@ func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := store.LensRegistry().SetMigration(req.Context(), request.CollectionID, request.Config)
+	err := db.LensRegistry().SetMigration(req.Context(), request.CollectionID, request.Config)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -48,7 +48,7 @@ func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var request migrateRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -56,7 +56,7 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := store.LensRegistry().MigrateUp(req.Context(), enumerable.New(request.Data), request.CollectionID)
+	result, err := db.LensRegistry().MigrateUp(req.Context(), enumerable.New(request.Data), request.CollectionID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -73,7 +73,7 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var request migrateRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -81,7 +81,7 @@ func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := store.LensRegistry().MigrateDown(req.Context(), enumerable.New(request.Data), request.CollectionID)
+	result, err := db.LensRegistry().MigrateDown(req.Context(), enumerable.New(request.Data), request.CollectionID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

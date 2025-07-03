@@ -59,13 +59,3 @@ func TestConcurrentTxnSync(t *testing.T) {
 	err := cTxn.Sync(ctx)
 	require.NoError(t, err)
 }
-
-func TestConcurrentTxnClose(t *testing.T) {
-	rootstore := getBadgerTxnDB(t)
-
-	txn := rootstore.NewTxn(false)
-
-	cTxn := &concurrentTxn{Txn: txn}
-	err := cTxn.Close()
-	require.NoError(t, err)
-}

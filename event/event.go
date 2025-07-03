@@ -93,10 +93,6 @@ type Update struct {
 
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
-
-	// Success is a channel that will receive a boolean value indicating if the update was successful.
-	// It is used during retries.
-	Success chan bool
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.

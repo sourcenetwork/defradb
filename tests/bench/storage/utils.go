@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 )
 
@@ -71,18 +71,20 @@ func runStorageBenchTxnGet(
 	if err != nil {
 		return err
 	}
-	defer db.Rootstore().Close() //nolint:errcheck
+	defer db.Close()
 
 	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
 	if err != nil {
 		return err
 	}
 
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -111,18 +113,20 @@ func runStorageBenchTxnIterator(
 	if err != nil {
 		return err
 	}
-	defer db.Rootstore().Close() //nolint:errcheck
+	defer db.Close()
 
 	keys, err := backfillBenchmarkTxn(ctx, db, objCount, valueSize)
 	if err != nil {
 		return err
 	}
 
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -154,7 +158,6 @@ func runStorageBenchTxnIterator(
 		}
 	}
 	b.StopTimer()
-	txn.Discard(ctx)
 	return nil
 }
 
@@ -200,7 +203,7 @@ func runStorageBenchPut(
 
 func backfillBenchmarkStorageDB(
 	ctx context.Context,
-	db datastore.Rootstore,
+	db corekv.TxnStore,
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
@@ -227,15 +230,17 @@ func backfillBenchmarkStorageDB(
 
 func backfillBenchmarkTxn(
 	ctx context.Context,
-	db client.DB,
+	db client.TxnStore,
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	keys := make([]string, objCount)
 	for i := 0; i < objCount; i++ {

@@ -44,7 +44,7 @@ require (
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.4.1
-	github.com/sourcenetwork/corekv v0.1.2-0.20250408190711-a0c842d15118
+	github.com/sourcenetwork/corekv v0.1.2
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14
 	github.com/sourcenetwork/goji v0.0.8
@@ -410,3 +410,5 @@ require (
 	pgregory.net/rapid v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+// replace github.com/sourcenetwork/corekv => /Users/fredcarle/code/sourcenetwork/corekv

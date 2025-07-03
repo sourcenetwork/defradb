@@ -24,8 +24,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 
@@ -84,7 +84,7 @@ func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, er
 	return ctx, nil
 }
 
-func contextTransactionArg(value js.Value, txns *sync.Map) (datastore.Txn, error) {
+func contextTransactionArg(value js.Value, txns *sync.Map) (client.Txn, error) {
 	id := value.Get("transaction")
 	if id.Type() != js.TypeNumber {
 		return nil, nil
@@ -93,7 +93,7 @@ func contextTransactionArg(value js.Value, txns *sync.Map) (datastore.Txn, error
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}
-	return txn.(datastore.Txn), nil //nolint:forcetypeassert
+	return txn.(client.Txn), nil //nolint:forcetypeassert
 }
 
 func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity], error) {

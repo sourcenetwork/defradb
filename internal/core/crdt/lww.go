@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -65,7 +64,7 @@ func (delta *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	store           datastore.DSReaderWriter
+	store           corekv.ReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
@@ -77,7 +76,7 @@ var _ core.ReplicatedData = (*LWW)(nil)
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewLWW(
-	store datastore.DSReaderWriter,
+	store corekv.ReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,

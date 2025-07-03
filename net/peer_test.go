@@ -18,6 +18,7 @@ import (
 	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
 	"github.com/sourcenetwork/corekv/memory"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
@@ -29,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net/config"
 )
@@ -65,7 +67,13 @@ func createCID(doc *client.Document) (cid.Cid, error) {
 
 const randomMultiaddr = "/ip4/127.0.0.1/tcp/0"
 
-func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
+type testdb interface {
+	client.TxnStore
+	Rootstore() corekv.TxnStore
+	Close()
+}
+
+func newTestPeer(ctx context.Context, t *testing.T) (testdb, *Peer) {
 	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	require.NoError(t, err)
 
@@ -76,7 +84,6 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 		store,
 		immutable.Some(localDocumentACP),
 		nil,
-		db.WithRetryInterval([]time.Duration{time.Second}),
 	)
 	require.NoError(t, err)
 
@@ -86,6 +93,7 @@ func newTestPeer(ctx context.Context, t *testing.T) (client.DB, *Peer) {
 		immutable.None[dac.DocumentACP](),
 		db,
 		config.WithListenAddresses(randomMultiaddr),
+		config.WithRetryInterval([]time.Duration{time.Second}),
 	)
 	require.NoError(t, err)
 
@@ -105,7 +113,7 @@ func TestNewPeer_NoError(t *testing.T) {
 
 func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 	ctx := context.Background()
-	_, err := NewPeer(ctx, nil, immutable.None[dac.DocumentACP](), nil)
+	_, err := NewPeer(ctx, nil, immutable.None[dac.DocumentACP](), nil, nil)
 	require.ErrorIs(t, err, ErrNilDB)
 }
 
@@ -168,7 +176,7 @@ func TestHandleLog_NoError(t *testing.T) {
 	headCID, err := getHead(ctx, db, doc.ID())
 	require.NoError(t, err)
 
-	b, err := db.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	b, err := datastore.BlockstoreFrom(db.Rootstore()).AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	err = p.handleLog(event.Update{
@@ -252,8 +260,7 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	require.ErrorContains(t, err, "topic already exists")
 }
 
-func fixtureNewMemoryDBWithBroadcaster(t *testing.T) *db.DB {
-	ctx := context.Background()
+func newTestDB(ctx context.Context, t *testing.T) *db.DB {
 	rootstore := memory.NewDatastore(ctx)
 	database, err := db.NewDB(ctx, rootstore, dac.NoDocumentACP, nil)
 	require.NoError(t, err)

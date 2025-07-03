@@ -118,7 +118,7 @@ func (c *Client) newTxn(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	c.txns.Store(txn.ID(), txn)
-	return newTransaction(txn), nil
+	return newTransaction(txn, c.txns), nil
 }
 
 func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, error) {
@@ -135,7 +135,7 @@ func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, err
 		return js.Undefined(), err
 	}
 	c.txns.Store(txn.ID(), txn)
-	return newTransaction(txn), nil
+	return newTransaction(txn, c.txns), nil
 }
 
 func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, error) {

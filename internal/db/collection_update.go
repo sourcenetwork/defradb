@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
@@ -169,13 +168,11 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
-	txn := txnctx.MustGet(ctx)
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
 		c.db.documentACP,
 		c.db,
-		txn,
 	)
 
 	return planner.MakeSelectionPlan(slct)

@@ -31,8 +31,7 @@ var _ DocumentACP = (*bridgeDocumentACP)(nil)
 // bridgeDocumentACP wraps an [ACPSystemClient], hosting the DefraDB specific logic away
 // from ACP client specific code.
 type bridgeDocumentACP struct {
-	clientACP   acp.ACPSystemClient
-	supportsP2P bool
+	clientACP acp.ACPSystemClient
 }
 
 func (a *bridgeDocumentACP) Init(ctx context.Context, path string) {
@@ -371,10 +370,6 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 	)
 
 	return recordFound, nil
-}
-
-func (a *bridgeDocumentACP) SupportsP2P() bool {
-	return a.supportsP2P
 }
 
 func (a *bridgeDocumentACP) Close() error {

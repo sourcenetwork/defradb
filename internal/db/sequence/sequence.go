@@ -16,8 +16,8 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -26,15 +26,15 @@ type Sequence struct {
 	val uint64
 }
 
-func Get(ctx context.Context, txn datastore.Txn, key keys.Key) (*Sequence, error) {
+func Get(ctx context.Context, key keys.Key) (*Sequence, error) {
 	seq := &Sequence{
 		key: key,
 		val: uint64(0),
 	}
 
-	_, err := seq.Get(ctx, txn)
+	_, err := seq.Get(ctx)
 	if errors.Is(err, corekv.ErrNotFound) {
-		err = seq.Update(ctx, txn)
+		err = seq.Update(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +45,9 @@ func Get(ctx context.Context, txn datastore.Txn, key keys.Key) (*Sequence, error
 	return seq, nil
 }
 
-func (seq *Sequence) Get(ctx context.Context, txn datastore.Txn) (uint64, error) {
+func (seq *Sequence) Get(ctx context.Context) (uint64, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	val, err := txn.Systemstore().Get(ctx, seq.key.Bytes())
 	if err != nil {
 		return 0, err
@@ -55,7 +57,9 @@ func (seq *Sequence) Get(ctx context.Context, txn datastore.Txn) (uint64, error)
 	return seq.val, nil
 }
 
-func (seq *Sequence) Update(ctx context.Context, txn datastore.Txn) error {
+func (seq *Sequence) Update(ctx context.Context) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], seq.val)
 	if err := txn.Systemstore().Set(ctx, seq.key.Bytes(), buf[:]); err != nil {
@@ -65,12 +69,12 @@ func (seq *Sequence) Update(ctx context.Context, txn datastore.Txn) error {
 	return nil
 }
 
-func (seq *Sequence) Next(ctx context.Context, txn datastore.Txn) (uint64, error) {
-	_, err := seq.Get(ctx, txn)
+func (seq *Sequence) Next(ctx context.Context) (uint64, error) {
+	_, err := seq.Get(ctx)
 	if err != nil {
 		return 0, err
 	}
 
 	seq.val++
-	return seq.val, seq.Update(ctx, txn)
+	return seq.val, seq.Update(ctx)
 }

@@ -14,26 +14,25 @@ package js
 
 import (
 	"context"
+	"fmt"
 	sysjs "syscall/js"
+
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/goji"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/js"
 	"github.com/sourcenetwork/defradb/node"
-
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/goji"
-	"github.com/sourcenetwork/immutable"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
 
-// Wrapper implements the client.DB
+// Wrapper implements the client.TxnStore
 // interface using the JS client.
 type Wrapper struct {
 	client *js.Client
@@ -54,11 +53,11 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -66,11 +65,11 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
@@ -350,7 +349,7 @@ func handleSubscription(value sysjs.Value) <-chan client.GQLResult {
 	return sub
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	res, err := execute(ctx, w.value, "newTxn", readOnly)
 	if err != nil {
 		return nil, err
@@ -361,13 +360,11 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{
-		server: txn,
-		client: client,
-	}, nil
+	fmt.Println("txn id:", id)
+	return &Transaction{w, txn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	res, err := execute(ctx, w.value, "newConcurrentTxn", readOnly)
 	if err != nil {
 		return nil, err
@@ -378,30 +375,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{
-		server: txn,
-		client: client,
-	}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() corekv.Reader {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
+	return &Transaction{w, txn}, nil
 }
 
 func (w *Wrapper) Close() {

@@ -90,12 +90,11 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_LocalACP(t *test
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: "p2p collection specified has a policy on it",
 			},
 
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,
-				ExpectedCollectionIDs: []int{}, // Note: Empty
+				ExpectedCollectionIDs: []int{0},
 			},
 		},
 	}

@@ -14,9 +14,13 @@ import (
 	"context"
 
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
@@ -26,16 +30,26 @@ var log = corelog.NewLogger("node")
 
 // Peer defines the minimal p2p network interface.
 type Peer interface {
+	client.P2P
+	Connect(ctx context.Context, addr peer.AddrInfo) error
 	Close()
-	PeerID() peer.ID
-	PeerInfo() peer.AddrInfo
-	Connect(context.Context, peer.AddrInfo) error
+}
+
+type DB interface {
+	client.TxnStore
+	MaxTxnRetries() int
+	Rootstore() corekv.TxnStore
+	Events() event.Bus
+	DocumentACP() immutable.Option[dac.DocumentACP]
+	PurgeACPState(ctx context.Context) error
+	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	Close()
 }
 
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
 	// DB is the database instance
-	DB client.DB
+	DB DB
 	// Peer is the p2p networking subsystem instance
 	Peer Peer
 	// api http server instance
@@ -117,11 +131,9 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		return err
 	}
 
-	coreDB, _ := n.DB.(*db.DB)
-
 	// This will purge state.
 	// They will be restarted when node is started again.
-	err = coreDB.PurgeACPState(ctx)
+	err = n.DB.PurgeACPState(ctx)
 	if err != nil {
 		return err
 	}

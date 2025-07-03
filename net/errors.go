@@ -26,6 +26,7 @@ const (
 	errTopicAlreadyExist        = "topic with name \"%s\" already exists"
 	errTopicDoesNotExist        = "topic with name \"%s\" does not exists"
 	errFailedToGetIdentity      = "failed to get identity"
+	errReplicatorCollections    = "failed to get collections for replicator"
 )
 
 var (
@@ -36,6 +37,12 @@ var (
 	ErrNilUpdateChannel          = errors.New("tried to subscribe to update channel, but update channel is nil")
 	ErrCheckingForExistingBlock  = errors.New(errCheckingForExistingBlock)
 	ErrTimeoutWaitingForPeerInfo = errors.New("timeout waiting for peer info")
+	ErrSelfTargetForReplicator   = errors.New("can't target ourselves as a replicator")
+	ErrReplicatorNotFound        = errors.New("replicator not found")
+	ErrContextDone               = errors.New("context done")
+	ErrFailedToRetryDoc          = errors.New("failed to retry doc")
+	ErrTimeoutDocRetry           = errors.New("timeout while retrying doc")
+	ErrReplicatorCollections     = errors.New(errReplicatorCollections)
 )
 
 func NewErrPushLog(inner error, kv ...errors.KV) error {
@@ -64,4 +71,8 @@ func NewErrTopicDoesNotExist(topic string) error {
 
 func NewErrFailedToGetIdentity(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errFailedToGetIdentity, inner, kv...)
+}
+
+func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errReplicatorCollections, inner, kv...)
 }
