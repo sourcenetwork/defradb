@@ -49,6 +49,9 @@ type DB interface {
 	// Rootstore returns the underlying root store, within which all data managed by DefraDB is held.
 	Rootstore() datastore.Rootstore
 
+	// Datastore returns the datastore, within which all data (documents) managed by DefraDB is held.
+	Datastore() datastore.DSReaderWriter
+
 	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
 	//
 	// It sits within the rootstore returned by [Root].
