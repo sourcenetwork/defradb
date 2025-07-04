@@ -35,6 +35,8 @@ function App() {
           } else {
             // @ts-expect-error - defradb is a global object created by Wasm
             const db = await window.defradb.open();
+            // @ts-expect-error - expose window.defradbClient
+            window.defradbClient = db;
             initRef.current = true;
             console.log('DefraDB Wasm client initialized.');
             setClient(db);
