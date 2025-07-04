@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 const (
@@ -65,14 +64,12 @@ func (db *DB) addSchema(
 }
 
 func (db *DB) loadSchema(ctx context.Context) error {
-	txn := txnctx.MustGet(ctx)
-
 	definitions, err := db.getAllActiveDefinitions(ctx)
 	if err != nil {
 		return err
 	}
 
-	return db.parser.SetSchema(ctx, txn, definitions)
+	return db.parser.SetSchema(ctx, definitions)
 }
 
 // patchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
@@ -92,14 +89,12 @@ func (db *DB) patchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	txn := txnctx.MustGet(ctx)
-
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
 	}
 
-	schemas, err := description.GetSchemas(ctx, txn)
+	schemas, err := description.GetSchemas(ctx)
 	if err != nil {
 		return err
 	}
@@ -256,13 +251,11 @@ func (db *DB) getSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	txn := txnctx.MustGet(ctx)
-
 	schemas := []client.SchemaDescription{}
 
 	switch {
 	case options.ID.HasValue():
-		schema, err := description.GetSchemaVersion(ctx, txn, options.ID.Value())
+		schema, err := description.GetSchemaVersion(ctx, options.ID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -270,18 +263,18 @@ func (db *DB) getSchemas(
 
 	case options.Root.HasValue():
 		var err error
-		schemas, err = description.GetSchemasByRoot(ctx, txn, options.Root.Value())
+		schemas, err = description.GetSchemasByRoot(ctx, options.Root.Value())
 		if err != nil {
 			return nil, err
 		}
 	case options.Name.HasValue():
 		var err error
-		schemas, err = description.GetSchemasByName(ctx, txn, options.Name.Value())
+		schemas, err = description.GetSchemasByName(ctx, options.Name.Value())
 		if err != nil {
 			return nil, err
 		}
 	default:
-		return description.GetAllSchemas(ctx, txn)
+		return description.GetAllSchemas(ctx)
 	}
 
 	result := []client.SchemaDescription{}
@@ -391,8 +384,7 @@ func (db *DB) updateSchema(
 			continue
 		}
 
-		txn := txnctx.MustGet(ctx)
-		schema, err = description.CreateSchemaVersion(ctx, txn, schema)
+		schema, err = description.CreateSchemaVersion(ctx, schema)
 		if err != nil {
 			return err
 		}
@@ -402,7 +394,7 @@ func (db *DB) updateSchema(
 		// is true.
 
 		previousVersionID := existingSchemaByName[schema.Name].VersionID
-		col, err := description.GetCollectionByID(ctx, txn, previousVersionID)
+		col, err := description.GetCollectionByID(ctx, previousVersionID)
 		if err != nil {
 			if errors.Is(err, corekv.ErrNotFound) {
 				return NewErrAddSchemaWithPatch(schema.Name)
@@ -412,7 +404,7 @@ func (db *DB) updateSchema(
 		}
 
 		existingColFound := true
-		existingCol, err := description.GetCollectionByID(ctx, txn, schema.VersionID)
+		existingCol, err := description.GetCollectionByID(ctx, schema.VersionID)
 		if err != nil {
 			if errors.Is(err, corekv.ErrNotFound) {
 				existingColFound = false
@@ -516,7 +508,7 @@ func (db *DB) updateSchema(
 		}
 
 		for _, def := range definitions {
-			err = description.SaveCollection(ctx, txn, def.Version)
+			err = description.SaveCollection(ctx, def.Version)
 			if err != nil {
 				return err
 			}

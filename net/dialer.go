@@ -39,6 +39,7 @@ func (s *server) dial(peerID libpeer.ID) (*grpc.ClientConn, error) {
 			return conn, nil
 		}
 	}
+
 	// We need the "passthrough:" in the beginning of the target,
 	// otherwise [grpc.NewClient] will assume (the default) "dns" target.
 	// More information here:

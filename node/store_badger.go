@@ -16,15 +16,13 @@ import (
 	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
-
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // BadgerStore specifies the badger datastore
 const BadgerStore = StoreType("badger")
 
 func init() {
-	constructor := func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error) {
+	constructor := func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error) {
 		var path string
 		if !options.badgerInMemory {
 			// Badger will error if we give it a path and set `InMemory` to true

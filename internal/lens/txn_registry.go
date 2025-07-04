@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type implicitTxnLensRegistry struct {
@@ -52,7 +52,7 @@ func (r *implicitTxnLensRegistry) SetMigration(ctx context.Context, collectionID
 		return err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := r.registry.getCtx(txn, false)
+	txnCtx := r.registry.getCtx(datastore.MustGetFromClientTxn(txn), false)
 
 	err = r.registry.setMigration(ctx, txnCtx, collectionID, cfg)
 	if err != nil {
@@ -72,7 +72,7 @@ func (r *implicitTxnLensRegistry) ReloadLenses(ctx context.Context) error {
 		return err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := r.registry.getCtx(txn, false)
+	txnCtx := r.registry.getCtx(datastore.MustGetFromClientTxn(txn), false)
 
 	err = r.registry.reloadLenses(ctx, txnCtx)
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *implicitTxnLensRegistry) MigrateUp(
 		return nil, err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := newTxnCtx(txn)
+	txnCtx := newTxnCtx(datastore.MustGetFromClientTxn(txn))
 
 	return r.registry.migrateUp(txnCtx, src, collectionID)
 }
@@ -119,7 +119,7 @@ func (r *implicitTxnLensRegistry) MigrateDown(
 		return nil, err
 	}
 	defer txn.Discard(ctx)
-	txnCtx := newTxnCtx(txn)
+	txnCtx := newTxnCtx(datastore.MustGetFromClientTxn(txn))
 
 	return r.registry.migrateDown(txnCtx, src, collectionID)
 }

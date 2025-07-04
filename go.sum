@@ -1853,8 +1853,8 @@ github.com/sourcegraph/go-diff v0.6.1/go.mod h1:iBszgVvyxdc8SFZ7gm69go2KDdt3ag07
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/sourcenetwork/acp_core v0.4.1 h1:3p5AsVYszeZun99GdbV+96/IuAmxOzm30xuMTEMUw2g=
 github.com/sourcenetwork/acp_core v0.4.1/go.mod h1:lzxkAEyyRhAeBSJhPhGHaSV0ddpLuAWwwVXUXJt9034=
-github.com/sourcenetwork/corekv v0.1.2-0.20250408190711-a0c842d15118 h1:S8Bx8tlCL5kRF3FwKDYAe93EJ3PUjNzjauOVdzUtsgc=
-github.com/sourcenetwork/corekv v0.1.2-0.20250408190711-a0c842d15118/go.mod h1:H10TM3iQN/ZbEV8QfjbPj8pk65SJ7+dPoLouTw5JfOU=
+github.com/sourcenetwork/corekv v0.1.2 h1:voT9juLLwNusAQt5k2cVp6EmOin5taH2HJryWL+ZUE0=
+github.com/sourcenetwork/corekv v0.1.2/go.mod h1:H10TM3iQN/ZbEV8QfjbPj8pk65SJ7+dPoLouTw5JfOU=
 github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s2ME3RY=
 github.com/sourcenetwork/corelog v0.0.8/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=

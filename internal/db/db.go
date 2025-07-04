@@ -9,7 +9,7 @@
 // licenses/APL.txt.
 
 /*
-Package db provides the implementation of the [client.DB] interface, collection operations,
+Package db provides the implementation of the [client.TxnStore] interface, collection operations,
 and related components.
 */
 package db
@@ -27,10 +27,10 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -57,8 +57,7 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
-	rootstore  datastore.Rootstore
-	multistore datastore.MultiStore
+	rootstore corekv.TxnStore
 
 	events event.Bus
 
@@ -81,29 +80,21 @@ type DB struct {
 	// Contains document ACP if it exists
 	documentACP immutable.Option[dac.DocumentACP]
 
-	// The peer ID and network address information for the current node
-	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
-	peerInfo atomic.Value
-
 	// To be able to close the context passed to NewDB on DB close,
 	// we need to keep a reference to the cancel function. Otherwise,
 	// some goroutines might leak.
 	ctxCancel context.CancelFunc
 
-	// The intervals at which to retry replicator failures.
-	// For example, this can define an exponential backoff strategy.
-	retryIntervals []time.Duration
-
 	// If true, block signing is disabled. By default, block signing is enabled.
 	signingDisabled bool
 }
 
-var _ client.DB = (*DB)(nil)
+var _ client.TxnStore = (*DB)(nil)
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
-	rootstore datastore.Rootstore,
+	rootstore corekv.TxnStore,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -113,19 +104,17 @@ func NewDB(
 
 func newDB(
 	ctx context.Context,
-	rootstore datastore.Rootstore,
+	rootstore corekv.TxnStore,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	multistore := datastore.MultiStoreFrom(rootstore)
-
 	parser, err := graphql.NewParser()
 	if err != nil {
 		return nil, err
 	}
 
-	opts := defaultOptions()
+	opts := &dbOptions{}
 	for _, opt := range options {
 		opt(opts)
 	}
@@ -133,15 +122,13 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:      rootstore,
-		multistore:     multistore,
-		documentACP:    documentACP,
-		lensRegistry:   lens,
-		parser:         parser,
-		options:        options,
-		events:         event.NewChannelBus(commandBufferSize, eventBufferSize),
-		ctxCancel:      cancel,
-		retryIntervals: opts.RetryIntervals,
+		rootstore:    rootstore,
+		documentACP:  documentACP,
+		lensRegistry: lens,
+		parser:       parser,
+		options:      options,
+		events:       event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctxCancel:    cancel,
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -160,51 +147,27 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, event.ReplicatorFailureName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
 	if err != nil {
 		return nil, err
 	}
 	go db.handleMessages(ctx, sub)
-	go db.handleReplicatorRetries(ctx)
 
 	return db, nil
 }
 
 // NewTxn creates a new transaction.
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly), nil
+	txn := datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly), nil
-}
-
-// Rootstore returns the root datastore.
-func (db *DB) Rootstore() datastore.Rootstore {
-	return db.rootstore
-}
-
-// Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Blockstore() datastore.Blockstore {
-	return db.multistore.Blockstore()
-}
-
-// Encstore returns the internal enc store which contains encryption key for documents and their fields.
-func (db *DB) Encstore() datastore.Blockstore {
-	return db.multistore.Encstore()
-}
-
-// Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Peerstore() datastore.DSReaderWriter {
-	return db.multistore.Peerstore()
-}
-
-// Headstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Headstore() corekv.Reader {
-	return db.multistore.Headstore()
+	txn := datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 func (db *DB) LensRegistry() client.LensRegistry {
@@ -272,7 +235,12 @@ func (db *DB) PurgeACPState(ctx context.Context) error {
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
-	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
+	headsIterator, err := NewHeadBlocksIterator(
+		ctx,
+		datastore.HeadstoreFrom(db.rootstore),
+		datastore.BlockstoreFrom(db.rootstore),
+		docID,
+	)
 	if err != nil {
 		return err
 	}
@@ -458,6 +426,10 @@ func (db *DB) initialize(ctx context.Context) error {
 	return txn.Commit(ctx)
 }
 
+func (db *DB) Rootstore() corekv.TxnStore {
+	return db.rootstore
+}
+
 // Events returns the events Channel.
 func (db *DB) Events() event.Bus {
 	return db.events
@@ -474,7 +446,7 @@ func (db *DB) MaxTxnRetries() int {
 
 // PrintDump prints the entire database to console.
 func (db *DB) PrintDump(ctx context.Context) error {
-	return printStore(ctx, db.multistore.Rootstore())
+	return printStore(ctx, db.rootstore)
 }
 
 // Close is called when we are shutting down the database.
@@ -500,7 +472,7 @@ func (db *DB) Close() {
 	log.Info("Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
+func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err

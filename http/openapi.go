@@ -37,7 +37,7 @@ var openApiSchemas = map[string]any{
 	"update_result":                       &client.UpdateResult{},
 	"lens_config":                         &client.LensConfig{},
 	"replicator":                          &client.Replicator{},
-	"replicator_params":                   &client.ReplicatorParams{},
+	"replicator_params":                   &ReplicatorParams{},
 	"ccip_request":                        &CCIPRequest{},
 	"ccip_response":                       &CCIPResponse{},
 	"patch_schema_request":                &patchSchemaRequest{},

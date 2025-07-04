@@ -37,13 +37,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 )
@@ -852,7 +852,7 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
+	nodeOpts := []node.Option{netConfig.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
@@ -1228,7 +1228,7 @@ func createDoc(
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.DB, int, client.Collection) ([]client.DocID, error)
+	var mutation func(*state, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = createDocViaColSave
@@ -1285,7 +1285,7 @@ func createDoc(
 func createDocViaColSave(
 	s *state,
 	action CreateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
@@ -1323,7 +1323,7 @@ func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
 func createDocViaColCreate(
 	s *state,
 	action CreateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
@@ -1359,7 +1359,7 @@ func createDocViaColCreate(
 func createDocViaGQL(
 	s *state,
 	action CreateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
@@ -1475,7 +1475,7 @@ func updateDoc(
 	s *state,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, client.DB, int, client.Collection) error
+	var mutation func(*state, UpdateDoc, client.TxnStore, int, client.Collection) error
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1524,7 +1524,7 @@ func updateDoc(
 func updateDocViaColSave(
 	s *state,
 	action UpdateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
@@ -1544,7 +1544,7 @@ func updateDocViaColSave(
 func updateDocViaColUpdate(
 	s *state,
 	action UpdateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
@@ -1564,7 +1564,7 @@ func updateDocViaColUpdate(
 func updateDocViaGQL(
 	s *state,
 	action UpdateDoc,
-	node client.DB,
+	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
@@ -1756,7 +1756,7 @@ func backupImport(
 // about this in our tests so we just retry a few times until it works (or the
 // retry limit is breached - important incase this is a different error)
 func withRetryOnNode(
-	node client.DB,
+	node clients.Client,
 	action func() error,
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
@@ -1772,10 +1772,10 @@ func withRetryOnNode(
 
 func getTransaction(
 	s *state,
-	db client.DB,
+	db client.TxnStore,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
-) datastore.Txn {
+) client.Txn {
 	if !transactionSpecifier.HasValue() {
 		return nil
 	}
@@ -1784,7 +1784,7 @@ func getTransaction(
 
 	if transactionID >= len(s.txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		s.txns = append(s.txns, make([]datastore.Txn, transactionID-len(s.txns)+1)...)
+		s.txns = append(s.txns, make([]client.Txn, transactionID-len(s.txns)+1)...)
 	}
 
 	if s.txns[transactionID] == nil {
@@ -1830,7 +1830,6 @@ nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-
 		ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption

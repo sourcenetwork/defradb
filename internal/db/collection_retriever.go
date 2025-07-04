@@ -20,11 +20,11 @@ import (
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
 type collectionRetriever struct {
-	db client.DB
+	db client.TxnStore
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
-func NewCollectionRetriever(db client.DB) collectionRetriever {
+func NewCollectionRetriever(db client.TxnStore) collectionRetriever {
 	return collectionRetriever{
 		db: db,
 	}
@@ -41,7 +41,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 	defer txn.Discard(ctx)
 
-	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, txn, docID)
+	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, docID)
 	if err != nil {
 		return nil, err
 	}

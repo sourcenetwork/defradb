@@ -22,6 +22,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
@@ -33,7 +34,7 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 		return err
 	}
 
-	blockStore := &bsadapter.Adapter{Wrapped: db.Blockstore()}
+	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore)}
 	linkSys := cidlink.DefaultLinkSystem()
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true

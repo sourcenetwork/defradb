@@ -16,7 +16,7 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/goji"
 )
@@ -64,10 +64,10 @@ func (c *Client) JSValue() js.Value {
 	})
 }
 
-func (c *Client) Transaction(id uint64) (datastore.Txn, error) {
+func (c *Client) Transaction(id uint64) (client.Txn, error) {
 	tx, ok := c.txns.Load(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}
-	return tx.(datastore.Txn), nil //nolint:forcetypeassert
+	return tx.(client.Txn), nil //nolint:forcetypeassert
 }

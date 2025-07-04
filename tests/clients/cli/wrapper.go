@@ -23,20 +23,19 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
+var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {
 	node       *node.Node
@@ -49,7 +48,7 @@ type Wrapper struct {
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
 func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+	handler, err := http.NewHandler(node.DB, node.Peer)
 	if err != nil {
 		return nil, err
 	}
@@ -79,29 +78,29 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return info
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "set"}
-	args = append(args, "--collection", strings.Join(rep.Collections, ","))
+	args = append(args, "--collection", strings.Join(collections, ","))
 
-	info, err := json.Marshal(rep.Info)
+	infoBytes, err := json.Marshal(info)
 	if err != nil {
 		return err
 	}
-	args = append(args, string(info))
+	args = append(args, string(infoBytes))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
-	args = append(args, "--collection", strings.Join(rep.Collections, ","))
+	args = append(args, "--collection", strings.Join(collections, ","))
 
-	info, err := json.Marshal(rep.Info)
+	infoBytes, err := json.Marshal(info)
 	if err != nil {
 		return err
 	}
-	args = append(args, string(info))
+	args = append(args, string(infoBytes))
 
 	_, err = w.cmd.execute(ctx, args)
 	return err
@@ -121,7 +120,7 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return reps, nil
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	args := []string{"client", "p2p", "collection", "add"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
@@ -129,7 +128,7 @@ func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string)
 	return err
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	args := []string{"client", "p2p", "collection", "remove"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
@@ -473,7 +472,7 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 	return resCh
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "create"}
 	if readOnly {
 		args = append(args, "--read-only")
@@ -491,10 +490,10 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{tx, w.cmd}, nil
+	return &Transaction{w, tx}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "create"}
 	args = append(args, "--concurrent")
 
@@ -514,27 +513,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{tx, w.cmd}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() corekv.Reader {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
+	return &Transaction{w, tx}, nil
 }
 
 func (w *Wrapper) Close() {

@@ -20,8 +20,8 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
@@ -166,11 +166,11 @@ func (r *lensRegistry) setMigration(
 		Lenses: inversedModuleCfgs,
 	}
 
-	err := r.cachePool(txnCtx.txn, txnCtx.lensPoolsByCollectionID, cfg, collectionID)
+	err := r.cachePool(txnCtx.lensPoolsByCollectionID, cfg, collectionID)
 	if err != nil {
 		return err
 	}
-	err = r.cachePool(txnCtx.txn, txnCtx.reversedPoolsByCollectionID, reversedCfg, collectionID)
+	err = r.cachePool(txnCtx.reversedPoolsByCollectionID, reversedCfg, collectionID)
 	// For now, checking this error is the best way of determining if a migration has an inverse.
 	// Inverses are optional.
 	//nolint:revive
@@ -182,7 +182,6 @@ func (r *lensRegistry) setMigration(
 }
 
 func (r *lensRegistry) cachePool(
-	_ datastore.Txn,
 	target map[string]*lensPool,
 	cfg model.Lens,
 	collectionID string,
@@ -203,7 +202,7 @@ func (r *lensRegistry) cachePool(
 }
 
 func (r *lensRegistry) reloadLenses(ctx context.Context, txnCtx *txnContext) error {
-	cols, err := description.GetCollections(ctx, txnCtx.txn)
+	cols, err := description.GetCollections(ctx)
 	if err != nil {
 		return err
 	}

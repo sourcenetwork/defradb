@@ -90,12 +90,13 @@ func MakeStartCommand() *cobra.Command {
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
-				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
 				netConfig.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				netConfig.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
 				netConfig.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
 				netConfig.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
+				netConfig.WithRetryInterval(replicatorRetryIntervals),
+
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),

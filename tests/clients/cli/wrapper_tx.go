@@ -14,83 +14,183 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-var _ datastore.Txn = (*Transaction)(nil)
+var _ client.Txn = (*Transaction)(nil)
 
 type Transaction struct {
-	tx  datastore.Txn
-	cmd *cliWrapper
+	*Wrapper
+	tx client.Txn
 }
 
-func (w *Transaction) ID() uint64 {
-	return w.tx.ID()
+func (txn *Transaction) ID() uint64 {
+	return txn.tx.ID()
 }
 
-func (w *Transaction) Commit(ctx context.Context) error {
+func (txn *Transaction) Commit(ctx context.Context) error {
 	args := []string{"client", "tx", "commit"}
-	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
+	args = append(args, fmt.Sprintf("%d", txn.tx.ID()))
 
-	_, err := w.cmd.execute(ctx, args)
+	_, err := txn.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Transaction) Discard(ctx context.Context) {
+func (txn *Transaction) Discard(ctx context.Context) {
 	args := []string{"client", "tx", "discard"}
-	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
+	args = append(args, fmt.Sprintf("%d", txn.tx.ID()))
 
-	w.cmd.execute(ctx, args) //nolint:errcheck
+	txn.cmd.execute(ctx, args) //nolint:errcheck
 }
 
-func (w *Transaction) OnSuccess(fn func()) {
-	w.tx.OnSuccess(fn)
+func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.PrintDump(ctx)
 }
 
-func (w *Transaction) OnError(fn func()) {
-	w.tx.OnError(fn)
+func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddDACPolicy(ctx, policy)
 }
 
-func (w *Transaction) OnDiscard(fn func()) {
-	w.tx.OnDiscard(fn)
+func (txn *Transaction) AddDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (w *Transaction) OnSuccessAsync(fn func()) {
-	w.tx.OnSuccessAsync(fn)
+func (txn *Transaction) DeleteDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (w *Transaction) OnErrorAsync(fn func()) {
-	w.tx.OnErrorAsync(fn)
+func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetNodeIdentity(ctx)
 }
 
-func (w *Transaction) OnDiscardAsync(fn func()) {
-	w.tx.OnDiscardAsync(fn)
+func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
-func (w *Transaction) Rootstore() datastore.DSReaderWriter {
-	return w.tx.Rootstore()
+func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddSchema(ctx, sdl)
 }
 
-func (w *Transaction) Datastore() datastore.DSReaderWriter {
-	return w.tx.Datastore()
+func (txn *Transaction) PatchSchema(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+	setDefault bool,
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.PatchSchema(ctx, patch, migration, setDefault)
 }
 
-func (w *Transaction) Encstore() datastore.Blockstore {
-	return w.tx.Encstore()
+func (txn *Transaction) PatchCollection(ctx context.Context, patch string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.PatchCollection(ctx, patch)
 }
 
-func (w *Transaction) Headstore() datastore.DSReaderWriter {
-	return w.tx.Headstore()
+func (txn *Transaction) SetActiveSchemaVersion(ctx context.Context, version string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.SetActiveSchemaVersion(ctx, version)
 }
 
-func (w *Transaction) Peerstore() datastore.DSReaderWriter {
-	return w.tx.Peerstore()
+func (txn *Transaction) AddView(
+	ctx context.Context,
+	gqlQuery string,
+	sdl string,
+	transform immutable.Option[model.Lens],
+) ([]client.CollectionDefinition, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transform)
 }
 
-func (w *Transaction) Blockstore() datastore.Blockstore {
-	return w.tx.Blockstore()
+func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.RefreshViews(ctx, options)
 }
 
-func (w *Transaction) Systemstore() datastore.DSReaderWriter {
-	return w.tx.Systemstore()
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.SetMigration(ctx, config)
+}
+
+func (txn *Transaction) LensRegistry() client.LensRegistry {
+	return txn.Wrapper.LensRegistry()
+}
+
+func (txn *Transaction) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+) (client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetCollectionByName(ctx, name)
+}
+
+func (txn *Transaction) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetCollections(ctx, options)
+}
+
+func (txn *Transaction) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetSchemaByVersionID(ctx, versionID)
+}
+
+func (txn *Transaction) GetSchemas(
+	ctx context.Context,
+	options client.SchemaFetchOptions,
+) ([]client.SchemaDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetSchemas(ctx, options)
+}
+
+func (txn *Transaction) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetAllIndexes(ctx)
+}
+
+func (txn *Transaction) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...client.RequestOption,
+) *client.RequestResult {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.ExecRequest(ctx, request, opts...)
+}
+
+func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.BasicImport(ctx, filepath)
+}
+
+func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.BasicExport(ctx, config)
 }

@@ -24,8 +24,8 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -49,11 +49,12 @@ func putBlock(
 // It checks the current heads, sets the delta priority, adds it to the blockstore, then runs ProcessBlock.
 func AddDelta(
 	ctx context.Context,
-	txn datastore.Txn,
 	crdt core.ReplicatedData,
 	delta core.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
 
 	heads, height, err := headset.List(ctx)
@@ -69,7 +70,7 @@ func AddDelta(
 	if block.Delta.GetFieldName() != "" {
 		fieldName = immutable.Some(block.Delta.GetFieldName())
 	}
-	encBlock, encLink, err := determineBlockEncryption(ctx, txn, string(block.Delta.GetDocID()), fieldName, heads)
+	encBlock, encLink, err := determineBlockEncryption(ctx, string(block.Delta.GetDocID()), fieldName, heads)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -96,7 +97,7 @@ func AddDelta(
 	}
 
 	// merge the delta and update the state
-	err = ProcessBlock(ctx, txn, crdt, block, link)
+	err = ProcessBlock(ctx, crdt, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, err
 	}
@@ -111,11 +112,12 @@ func AddDelta(
 
 func determineBlockEncryption(
 	ctx context.Context,
-	txn datastore.Txn,
 	docID string,
 	fieldName immutable.Option[string],
 	heads []cid.Cid,
 ) (*Encryption, cidlink.Link, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	// if new encryption was requested by the user
 	if encryption.ShouldEncryptDocField(ctx, fieldName) {
 		encBlock := &Encryption{DocID: []byte(docID)}
@@ -193,7 +195,6 @@ func encryptBlock(
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
 func ProcessBlock(
 	ctx context.Context,
-	txn datastore.Txn,
 	crdt core.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
@@ -203,16 +204,17 @@ func ProcessBlock(
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 
-	return updateHeads(ctx, txn, crdt, block, blockLink)
+	return updateHeads(ctx, crdt, block, blockLink)
 }
 
 func updateHeads(
 	ctx context.Context,
-	txn datastore.Txn,
 	crdt core.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	headset := NewHeadSet(txn.Headstore(), crdt.HeadstorePrefix())
 
 	priority := block.Delta.GetPriority()

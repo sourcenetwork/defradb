@@ -8,40 +8,37 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package net
 
 import (
 	"context"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 const marker = byte(0xff)
 
-func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
-
-	ctx = InitContext(ctx, txn)
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := db.GetCollections(
+		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
 				CollectionID: immutable.Some(col),
@@ -55,63 +52,44 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionIDs []string) err
 		}
 		storeCollections = append(storeCollections, storeCol...)
 	}
-
-	if db.documentACP.HasValue() && !db.documentACP.Value().SupportsP2P() {
-		for _, col := range storeCollections {
-			if col.Version().Policy.HasValue() {
-				return ErrP2PColHasPolicy
-			}
-		}
-	}
-
-	evt := event.P2PTopic{}
 
 	// Ensure we can add all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
+		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
 			return err
-		}
-		evt.ToAdd = append(evt.ToAdd, col.SchemaRoot())
-	}
-
-	// This is a node specific action which means the actor is the node itself.
-	ctx = identity.WithContext(ctx, db.nodeIdentity)
-	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocIDs(ctx)
-		if err != nil {
-			return err
-		}
-		for key := range keyChan {
-			evt.ToRemove = append(evt.ToRemove, key.ID.String())
 		}
 	}
 
 	txn.OnSuccess(func() {
-		db.events.Publish(event.NewMessage(event.P2PTopicName, evt))
+		for _, col := range storeCollections {
+			_, err := p.server.addPubSubTopic(col.SchemaRoot(), true, nil)
+			if err != nil {
+				log.ErrorE("Failed to add pubsub topic.", err)
+			}
+		}
 	})
 
 	return txn.Commit(ctx)
 }
 
-func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	txn, err := db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
-
-	ctx = InitContext(ctx, txn)
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
 	for _, col := range collectionIDs {
-		storeCol, err := db.GetCollections(
+		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
 				CollectionID: immutable.Some(col),
@@ -126,47 +104,38 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionIDs []string) 
 		storeCollections = append(storeCollections, storeCol...)
 	}
 
-	evt := event.P2PTopic{}
-
 	// Ensure we can remove all the collections to the store on the transaction
 	// before adding to topics.
 	for _, col := range storeCollections {
 		key := keys.NewP2PCollectionKey(col.SchemaRoot())
-		err = txn.Systemstore().Delete(ctx, key.Bytes())
+		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
-		}
-		evt.ToRemove = append(evt.ToRemove, col.SchemaRoot())
-	}
-
-	// This is a node specific action which means the actor is the node itself.
-	ctx = identity.WithContext(ctx, db.nodeIdentity)
-	for _, col := range storeCollections {
-		keyChan, err := col.GetAllDocIDs(ctx)
-		if err != nil {
-			return err
-		}
-		for key := range keyChan {
-			evt.ToAdd = append(evt.ToAdd, key.ID.String())
 		}
 	}
 
 	txn.OnSuccess(func() {
-		db.events.Publish(event.NewMessage(event.P2PTopicName, evt))
+		for _, col := range storeCollections {
+			err := p.server.removePubSubTopic(col.SchemaRoot())
+			if err != nil {
+				log.ErrorE("Failed to remove pubsub topic.", err)
+			}
+		}
 	})
 
 	return txn.Commit(ctx)
 }
 
-func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	txn, err := db.NewTxn(ctx, true)
+	clientTxn, err := p.db.NewTxn(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
@@ -196,37 +165,37 @@ func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return collectionIDs, iter.Close()
 }
 
-func (db *DB) PeerInfo() peer.AddrInfo {
-	peerInfo := db.peerInfo.Load()
-	if peerInfo != nil {
-		return peerInfo.(peer.AddrInfo)
-	}
-	return peer.AddrInfo{}
-}
-
-func (db *DB) loadAndPublishP2PCollections(ctx context.Context) error {
-	schemaRoots, err := db.GetAllP2PCollections(ctx)
+func (p *Peer) loadAndPublishP2PCollections(ctx context.Context) error {
+	collectionIDs, err := p.GetAllP2PCollections(ctx)
 	if err != nil {
 		return err
 	}
-	db.events.Publish(event.NewMessage(event.P2PTopicName, event.P2PTopic{
-		ToAdd: schemaRoots,
-	}))
+	for _, id := range collectionIDs {
+		_, err := p.server.addPubSubTopic(id, true, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
 
 	// Get all DocIDs across all collections in the DB
-	cols, err := db.GetCollections(ctx, client.CollectionFetchOptions{})
+	cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{})
 	if err != nil {
 		return err
 	}
 
 	// Index the schema roots for faster lookup.
 	colMap := make(map[string]struct{})
-	for _, schemaRoot := range schemaRoots {
-		colMap[schemaRoot] = struct{}{}
+	for _, id := range collectionIDs {
+		colMap[id] = struct{}{}
 	}
 
 	// This is a node specific action which means the actor is the node itself.
-	ctx = identity.WithContext(ctx, db.nodeIdentity)
 	for _, col := range cols {
 		// If we subscribed to the collection, we skip subscribing to the collection's docIDs.
 		if _, ok := colMap[col.SchemaRoot()]; ok {
@@ -238,9 +207,10 @@ func (db *DB) loadAndPublishP2PCollections(ctx context.Context) error {
 		}
 
 		for docID := range docIDChan {
-			db.events.Publish(event.NewMessage(event.P2PTopicName, event.P2PTopic{
-				ToAdd: []string{docID.ID.String()},
-			}))
+			_, err := p.server.addPubSubTopic(docID.ID.String(), true, nil)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

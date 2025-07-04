@@ -31,7 +31,7 @@ Example: remove multiple collections
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetContextP2P(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			var collectionIDs []string
 			for _, id := range strings.Split(args[0], ",") {
@@ -42,7 +42,7 @@ Example: remove multiple collections
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return p2p.RemoveP2PCollections(cmd.Context(), collectionIDs)
+			return cliClient.RemoveP2PCollections(cmd.Context(), collectionIDs...)
 		},
 	}
 	return cmd

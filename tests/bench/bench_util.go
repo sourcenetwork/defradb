@@ -22,8 +22,8 @@ import (
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -48,7 +48,7 @@ func init() {
 func SetupCollections(
 	b *testing.B,
 	ctx context.Context,
-	db client.DB,
+	db client.TxnStore,
 	fixture fixtures.Generator,
 ) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
@@ -99,7 +99,7 @@ func SetupDBAndCollections(
 	b *testing.B,
 	ctx context.Context,
 	fixture fixtures.Generator,
-) (client.DB, []client.Collection, error) {
+) (node.DB, []client.Collection, error) {
 	db, err := NewTestDB(ctx, b)
 	if err != nil {
 		return nil, nil, err
@@ -209,18 +209,18 @@ func BackfillBenchmarkDB(
 	}
 }
 
-func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
+func NewTestDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi, err
 }
 
-func NewTestStorage(ctx context.Context, t testing.TB) (datastore.Rootstore, error) {
+func NewTestStorage(ctx context.Context, t testing.TB) (corekv.TxnStore, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.Rootstore(), err
 }
 
-func newBenchStoreInfo(ctx context.Context, t testing.TB) (client.DB, error) {
-	var db client.DB
+func newBenchStoreInfo(ctx context.Context, t testing.TB) (node.DB, error) {
+	var db node.DB
 	var err error
 
 	switch storage {

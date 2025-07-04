@@ -25,16 +25,16 @@ type ClientType string
 
 const (
 	// goClientType enables running the test suite using
-	// the go implementation of the client.DB interface.
+	// the go implementation of the client.TxnStore interface.
 	GoClientType ClientType = "go"
 	// httpClientType enables running the test suite using
-	// the http implementation of the client.DB interface.
+	// the http implementation of the client.TxnStore interface.
 	HTTPClientType ClientType = "http"
 	// cliClientType enables running the test suite using
-	// the cli implementation of the client.DB interface.
+	// the cli implementation of the client.TxnStore interface.
 	CLIClientType ClientType = "cli"
 	// JSClientType enables running the test suite using
-	// the JS implementation of the client.DB interface.
+	// the JS implementation of the client.TxnStore interface.
 	JSClientType ClientType = "js"
 )
 

@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/corekv"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,52 +36,6 @@ type Txn_Expecter struct {
 
 func (_m *Txn) EXPECT() *Txn_Expecter {
 	return &Txn_Expecter{mock: &_m.Mock}
-}
-
-// Blockstore provides a mock function for the type Txn
-func (_mock *Txn) Blockstore() datastore.Blockstore {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Blockstore")
-	}
-
-	var r0 datastore.Blockstore
-	if returnFunc, ok := ret.Get(0).(func() datastore.Blockstore); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.Blockstore)
-		}
-	}
-	return r0
-}
-
-// Txn_Blockstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Blockstore'
-type Txn_Blockstore_Call struct {
-	*mock.Call
-}
-
-// Blockstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Blockstore() *Txn_Blockstore_Call {
-	return &Txn_Blockstore_Call{Call: _e.mock.On("Blockstore")}
-}
-
-func (_c *Txn_Blockstore_Call) Run(run func()) *Txn_Blockstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Blockstore_Call) Return(blockstore datastore.Blockstore) *Txn_Blockstore_Call {
-	_c.Call.Return(blockstore)
-	return _c
-}
-
-func (_c *Txn_Blockstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_Blockstore_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // Commit provides a mock function for the type Txn
@@ -129,52 +83,6 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func(ctx context.Context) error) *Tx
 	return _c
 }
 
-// Datastore provides a mock function for the type Txn
-func (_mock *Txn) Datastore() datastore.DSReaderWriter {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Datastore")
-	}
-
-	var r0 datastore.DSReaderWriter
-	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
-		}
-	}
-	return r0
-}
-
-// Txn_Datastore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Datastore'
-type Txn_Datastore_Call struct {
-	*mock.Call
-}
-
-// Datastore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Datastore() *Txn_Datastore_Call {
-	return &Txn_Datastore_Call{Call: _e.mock.On("Datastore")}
-}
-
-func (_c *Txn_Datastore_Call) Run(run func()) *Txn_Datastore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Datastore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *Txn_Datastore_Call {
-	_c.Call.Return(dSReaderWriter)
-	return _c
-}
-
-func (_c *Txn_Datastore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Datastore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Discard provides a mock function for the type Txn
 func (_mock *Txn) Discard(ctx context.Context) {
 	_mock.Called(ctx)
@@ -206,98 +114,6 @@ func (_c *Txn_Discard_Call) Return() *Txn_Discard_Call {
 
 func (_c *Txn_Discard_Call) RunAndReturn(run func(ctx context.Context)) *Txn_Discard_Call {
 	_c.Run(run)
-	return _c
-}
-
-// Encstore provides a mock function for the type Txn
-func (_mock *Txn) Encstore() datastore.Blockstore {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Encstore")
-	}
-
-	var r0 datastore.Blockstore
-	if returnFunc, ok := ret.Get(0).(func() datastore.Blockstore); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.Blockstore)
-		}
-	}
-	return r0
-}
-
-// Txn_Encstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Encstore'
-type Txn_Encstore_Call struct {
-	*mock.Call
-}
-
-// Encstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Encstore() *Txn_Encstore_Call {
-	return &Txn_Encstore_Call{Call: _e.mock.On("Encstore")}
-}
-
-func (_c *Txn_Encstore_Call) Run(run func()) *Txn_Encstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Encstore_Call) Return(blockstore datastore.Blockstore) *Txn_Encstore_Call {
-	_c.Call.Return(blockstore)
-	return _c
-}
-
-func (_c *Txn_Encstore_Call) RunAndReturn(run func() datastore.Blockstore) *Txn_Encstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Headstore provides a mock function for the type Txn
-func (_mock *Txn) Headstore() datastore.DSReaderWriter {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Headstore")
-	}
-
-	var r0 datastore.DSReaderWriter
-	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
-		}
-	}
-	return r0
-}
-
-// Txn_Headstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Headstore'
-type Txn_Headstore_Call struct {
-	*mock.Call
-}
-
-// Headstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Headstore() *Txn_Headstore_Call {
-	return &Txn_Headstore_Call{Call: _e.mock.On("Headstore")}
-}
-
-func (_c *Txn_Headstore_Call) Run(run func()) *Txn_Headstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Headstore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *Txn_Headstore_Call {
-	_c.Call.Return(dSReaderWriter)
-	return _c
-}
-
-func (_c *Txn_Headstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Headstore_Call {
-	_c.Call.Return(run)
 	return _c
 }
 
@@ -549,140 +365,48 @@ func (_c *Txn_OnSuccessAsync_Call) RunAndReturn(run func(fn func())) *Txn_OnSucc
 	return _c
 }
 
-// Peerstore provides a mock function for the type Txn
-func (_mock *Txn) Peerstore() datastore.DSReaderWriter {
+// Store provides a mock function for the type Txn
+func (_mock *Txn) Store() corekv.Store {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for Peerstore")
+		panic("no return value specified for Store")
 	}
 
-	var r0 datastore.DSReaderWriter
-	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
+	var r0 corekv.Store
+	if returnFunc, ok := ret.Get(0).(func() corekv.Store); ok {
 		r0 = returnFunc()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
+			r0 = ret.Get(0).(corekv.Store)
 		}
 	}
 	return r0
 }
 
-// Txn_Peerstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Peerstore'
-type Txn_Peerstore_Call struct {
+// Txn_Store_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Store'
+type Txn_Store_Call struct {
 	*mock.Call
 }
 
-// Peerstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Peerstore() *Txn_Peerstore_Call {
-	return &Txn_Peerstore_Call{Call: _e.mock.On("Peerstore")}
+// Store is a helper method to define mock.On call
+func (_e *Txn_Expecter) Store() *Txn_Store_Call {
+	return &Txn_Store_Call{Call: _e.mock.On("Store")}
 }
 
-func (_c *Txn_Peerstore_Call) Run(run func()) *Txn_Peerstore_Call {
+func (_c *Txn_Store_Call) Run(run func()) *Txn_Store_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *Txn_Peerstore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *Txn_Peerstore_Call {
-	_c.Call.Return(dSReaderWriter)
+func (_c *Txn_Store_Call) Return(store corekv.Store) *Txn_Store_Call {
+	_c.Call.Return(store)
 	return _c
 }
 
-func (_c *Txn_Peerstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Peerstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Rootstore provides a mock function for the type Txn
-func (_mock *Txn) Rootstore() datastore.DSReaderWriter {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Rootstore")
-	}
-
-	var r0 datastore.DSReaderWriter
-	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
-		}
-	}
-	return r0
-}
-
-// Txn_Rootstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rootstore'
-type Txn_Rootstore_Call struct {
-	*mock.Call
-}
-
-// Rootstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Rootstore() *Txn_Rootstore_Call {
-	return &Txn_Rootstore_Call{Call: _e.mock.On("Rootstore")}
-}
-
-func (_c *Txn_Rootstore_Call) Run(run func()) *Txn_Rootstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Rootstore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *Txn_Rootstore_Call {
-	_c.Call.Return(dSReaderWriter)
-	return _c
-}
-
-func (_c *Txn_Rootstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Rootstore_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Systemstore provides a mock function for the type Txn
-func (_mock *Txn) Systemstore() datastore.DSReaderWriter {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Systemstore")
-	}
-
-	var r0 datastore.DSReaderWriter
-	if returnFunc, ok := ret.Get(0).(func() datastore.DSReaderWriter); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.DSReaderWriter)
-		}
-	}
-	return r0
-}
-
-// Txn_Systemstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Systemstore'
-type Txn_Systemstore_Call struct {
-	*mock.Call
-}
-
-// Systemstore is a helper method to define mock.On call
-func (_e *Txn_Expecter) Systemstore() *Txn_Systemstore_Call {
-	return &Txn_Systemstore_Call{Call: _e.mock.On("Systemstore")}
-}
-
-func (_c *Txn_Systemstore_Call) Run(run func()) *Txn_Systemstore_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_Systemstore_Call) Return(dSReaderWriter datastore.DSReaderWriter) *Txn_Systemstore_Call {
-	_c.Call.Return(dSReaderWriter)
-	return _c
-}
-
-func (_c *Txn_Systemstore_Call) RunAndReturn(run func() datastore.DSReaderWriter) *Txn_Systemstore_Call {
+func (_c *Txn_Store_Call) RunAndReturn(run func() corekv.Store) *Txn_Store_Call {
 	_c.Call.Return(run)
 	return _c
 }

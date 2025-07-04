@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
@@ -57,11 +56,10 @@ type targetedCollectionHistoryLink struct {
 // This includes any history items that are only known via registered schema migrations.
 func getTargetedCollectionHistory(
 	ctx context.Context,
-	txn datastore.Txn,
 	schemaRoot string,
 	targetSchemaVersionID string,
 ) (map[schemaVersionID]*targetedCollectionHistoryLink, error) {
-	history, err := getCollectionHistory(ctx, txn, schemaRoot)
+	history, err := getCollectionHistory(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -146,10 +144,9 @@ func linkBackwards(
 // This includes any history items that are only known via registered schema migrations.
 func getCollectionHistory(
 	ctx context.Context,
-	txn datastore.Txn,
 	schemaRoot string,
 ) (map[schemaVersionID]*collectionHistoryLink, error) {
-	cols, err := description.GetCollectionsBySchemaRoot(ctx, txn, schemaRoot)
+	cols, err := description.GetCollectionsBySchemaRoot(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
 	}

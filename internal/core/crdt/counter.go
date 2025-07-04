@@ -22,7 +22,6 @@ import (
 	"golang.org/x/exp/constraints"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
@@ -77,7 +76,7 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 
 // Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
-	store           datastore.DSReaderWriter
+	store           corekv.ReaderWriter
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
@@ -91,7 +90,7 @@ var _ core.ReplicatedData = (*Counter)(nil)
 // NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
 func NewCounter(
-	store datastore.DSReaderWriter,
+	store corekv.ReaderWriter,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
@@ -213,7 +212,7 @@ func (c *Counter) CType() client.CType {
 
 func validateAndIncrement[T Incrementable](
 	ctx context.Context,
-	store datastore.DSReaderWriter,
+	store corekv.ReaderWriter,
 	key keys.DataStoreKey,
 	valueAsBytes []byte,
 	allowDecrement bool,
@@ -238,7 +237,7 @@ func validateAndIncrement[T Incrementable](
 
 func getCurrentValue[T Incrementable](
 	ctx context.Context,
-	store datastore.DSReaderWriter,
+	store corekv.ReaderWriter,
 	key keys.DataStoreKey,
 ) (T, error) {
 	curValue, err := store.Get(ctx, key.Bytes())

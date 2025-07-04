@@ -38,7 +38,7 @@ Example: The following command generates 100 User documents and 500 Device docum
   gendocs --demand '{"User": 100, "Device": 500 }'`,
 		ValidArgs: []string{"demand"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store, err := http.NewClient(url)
+			c, err := http.NewClient(url)
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return NewErrInvalidDemandValue(err)
 			}
 
-			collections, err := store.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
+			collections, err := c.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
 			if err != nil {
 				return err
 			}
