@@ -53,6 +53,9 @@ type ConfigureReplicator struct {
 	// TargetNodeID is the node ID (index) of the node to which data should be replicated.
 	TargetNodeID int
 
+	// SEEnabled indicates whether searchable encryption is enabled for the replicator.
+	SEEnabled bool
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
