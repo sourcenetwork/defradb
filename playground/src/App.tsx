@@ -29,13 +29,13 @@ function App() {
           if (initRef.current) {
             return;
           }
-          // @ts-expect-error - defradbClient is set by Go
+          // @ts-expect-error - window.defradb is set in main_js.go.
           if (!window.defradb) {
             setTimeout(initClient, 100);
           } else {
-            // @ts-expect-error - defradb is a global object created by Wasm
+            // @ts-expect-error - window.defradb.open() creates a db client.
             const db = await window.defradb.open();
-            // @ts-expect-error - expose window.defradbClient
+            // @ts-expect-error - expose window.defradbClient globally.
             window.defradbClient = db;
             initRef.current = true;
             console.log('DefraDB Wasm client initialized.');
@@ -56,37 +56,7 @@ function App() {
       try {
         const query = graphQLParams.query || '';
         const variables = graphQLParams.variables || {};
-        const lowerQuery = query.toLowerCase();
-        if (lowerQuery.includes('addschema')) {
-          const schemaMatch = query.match(/schema:\s*"""([\s\S]*)"""/);
-          if (schemaMatch && schemaMatch[1]) {
-            const schema = schemaMatch[1];
-            const result = await client.addSchema(schema);
-            return { data: { addSchema: result } };
-          }
-        }
-        if (lowerQuery.includes('patchschema')) {
-          const patchMatch = query.match(/patch:\s*"""([\s\S]*?)"""/);
-          const migrationMatch = query.match(/migration:\s*"""([\s\S]*?)"""/);
-          const setActiveMatch = query.match(/setasdefaultversion:\s*(true|false)/i);
-          const patch = patchMatch ? patchMatch[1] : '';
-          const migration = migrationMatch ? JSON.parse(migrationMatch[1]) : undefined;
-          const setAsDefaultVersion = setActiveMatch ? setActiveMatch[1].toLowerCase() === 'true' : false;
-          const result = await client.patchSchema(patch, migration, setAsDefaultVersion);
-          return { data: { patchSchema: result } };
-        }
-        if (lowerQuery.includes('addview')) {
-          const queryMatch = query.match(/query:\s*"""([\s\S]*?)"""/);
-          const sdlMatch = query.match(/sdl:\s*"""([\s\S]*?)"""/);
-          const transformMatch = query.match(/transform:\s*"""([\s\S]*?)"""/);
-          const gqlQuery = queryMatch ? queryMatch[1] : '';
-          const sdl = sdlMatch ? sdlMatch[1] : '';
-          const transform = transformMatch ? JSON.parse(transformMatch[1]) : undefined;
-          const result = await client.addView(gqlQuery, sdl, transform);
-          await client.refreshViews({});
-          return { data: { addView: result } };
-        }
-        // All other operations (queries, other mutations) go through execRequest.
+        // All operations go through execRequest.
         const result = await client.execRequest(query, JSON.stringify(variables));
         return result.gql;
       } catch (error) {
