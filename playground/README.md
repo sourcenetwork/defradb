@@ -4,18 +4,37 @@ A web based playground for DefraDB.
 
 ## Developing
 
-Run a development server bound to `localhost:5173`.
+The playground supports two modes, selectable via npm scripts:
 
-```bash
-npm install
-npm run dev
-```
+#### Wasm mode
+Runs DefraDB wasm in the browser.
 
-Start DefraDB with CORS allowed.
+**Steps:**
+- Build the **defradb.wasm** binary:
+  ```bash
+  GOOS=js GOARCH=wasm go build -o playground/defradb.wasm ./cmd/defradb
+  ```
+- Then run:
+  ```bash
+  cd playground
+  npm install
+  npm run dev:wasm
+  ```
 
-```bash
-defradb start --allowed-origins="*"
-```
+#### Remote mode
+Connects to a running DefraDB node.
+
+**Steps:**
+- Start DefraDB with CORS allowed:
+  ```bash
+  defradb start --allowed-origins="*"
+  ```
+- Then run:
+  ```bash
+  cd playground
+  npm install
+  npm run dev:remote
+  ```
 
 ## Building
 
