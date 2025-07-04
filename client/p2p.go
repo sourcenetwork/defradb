@@ -31,17 +31,17 @@ type P2P interface {
 	// subscribed schemas.
 	GetAllReplicators(ctx context.Context) ([]Replicator, error)
 
-	// AddP2PCollections adds the given collection IDs to the P2P system and
+	// AddP2PCollections adds the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
-	// collection IDs are invalid.
-	AddP2PCollections(ctx context.Context, collectionIDs ...string) error
+	// collection names are invalid.
+	AddP2PCollections(ctx context.Context, collectionNames ...string) error
 
-	// RemoveP2PCollections removes the given collection IDs from the P2P system and
+	// RemoveP2PCollections removes the given collections from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
-	// collection IDs are invalid.
-	RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error
+	// collection names are invalid.
+	RemoveP2PCollections(ctx context.Context, collectionNames ...string) error
 
-	// GetAllP2PCollections returns the list of persisted collection IDs that
+	// GetAllP2PCollections returns the list of persisted collection names that
 	// the P2P system subscribes to.
 	GetAllP2PCollections(ctx context.Context) ([]string, error)
 }

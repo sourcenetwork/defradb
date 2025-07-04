@@ -24,7 +24,7 @@ import (
 
 const marker = byte(0xff)
 
-func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (p *Peer) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -37,18 +37,18 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
-	for _, col := range collectionIDs {
+	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
-				CollectionID: immutable.Some(col),
+				Name: immutable.Some(col),
 			},
 		)
 		if err != nil {
 			return err
 		}
 		if len(storeCol) == 0 {
-			return client.NewErrCollectionNotFoundForSchema(col)
+			return client.NewErrCollectionNotFoundForName(col)
 		}
 		storeCollections = append(storeCollections, storeCol...)
 	}
@@ -75,7 +75,7 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionIDs ...string) e
 	return txn.Commit(ctx)
 }
 
-func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -88,18 +88,18 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionIDs ...string
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
-	for _, col := range collectionIDs {
+	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
-				CollectionID: immutable.Some(col),
+				Name: immutable.Some(col),
 			},
 		)
 		if err != nil {
 			return err
 		}
 		if len(storeCol) == 0 {
-			return client.NewErrCollectionNotFoundForSchema(col)
+			return client.NewErrCollectionNotFoundForName(col)
 		}
 		storeCollections = append(storeCollections, storeCol...)
 	}
@@ -145,6 +145,58 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 
+	collectionNames := []string{}
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		key, err := keys.NewP2PCollectionKeyFromString(string(iter.Key()))
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		storeCol, err := clientTxn.GetCollections(
+			ctx,
+			client.CollectionFetchOptions{
+				CollectionID: immutable.Some(key.CollectionID),
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(storeCol) == 0 {
+			return nil, client.NewErrCollectionNotFoundForSchema(key.CollectionID)
+		}
+		collectionNames = append(collectionNames, storeCol[0].Name())
+	}
+
+	return collectionNames, iter.Close()
+}
+
+func (p *Peer) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	collectionIDs := []string{}
 	for {
 		hasNext, err := iter.Next()
@@ -166,7 +218,7 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 }
 
 func (p *Peer) loadAndPublishP2PCollections(ctx context.Context) error {
-	collectionIDs, err := p.GetAllP2PCollections(ctx)
+	collectionIDs, err := p.getAllP2PCollectionIDs(ctx)
 	if err != nil {
 		return err
 	}
