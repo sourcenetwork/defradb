@@ -32,7 +32,7 @@ var openApiSchemas = map[string]any{
 	"schema":                              &client.SchemaDescription{},
 	"collection_definition":               &client.CollectionDefinition{},
 	"index":                               &client.IndexDescription{},
-	"index_create_request":                &client.IndexCreateRequest{},
+	"index_create":                        &client.IndexCreateRequest{},
 	"encrypted_index":                     &client.EncryptedIndexDescription{},
 	"encrypted_index_create":              &client.EncryptedIndexCreateRequest{},
 	"delete_result":                       &client.DeleteResult{},
