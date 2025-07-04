@@ -7,7 +7,7 @@ A web based playground for DefraDB.
 The playground supports two modes, selectable via npm scripts:
 
 #### Wasm mode
-Runs DefraDB wasm in the browser. 
+Runs DefraDB wasm in the browser.
 
 **Steps:**
 - Build the **defradb.wasm** binary:
@@ -22,6 +22,43 @@ Runs DefraDB wasm in the browser.
   ```
 
 When running the playground, the DefraDB client is available in the developer console via the `window.defradbClient` object.
+
+**Examples:**
+```js
+// Add a schema
+const schema = `
+type User {
+  name: String
+  age: Int
+}
+`;
+
+window.defradbClient.addSchema(schema);
+```
+
+
+```js
+// Add a document
+const query = `
+mutation CreateUser($input: [UserMutationInputArg!]!) {
+  create_User(input: $input) {
+    _docID
+    name
+    age
+  }
+}
+`;
+
+const variables = {
+  input: [
+    { name: "John Doe", age: 33 }
+  ]
+};
+
+const operationName = "CreateUser";
+
+window.defradbClient.execRequest(query, { variables, operationName });
+```
 
 #### Remote mode
 Connects to a running DefraDB node.
@@ -46,7 +83,3 @@ Create a static build and output files to `./dist`.
 npm install
 npm run build
 ```
-
-## Usage in the Browser Console
-
-When running the playground, the DefraDB client is available in the browser's developer console via the `window.defradbClient` object. You can use this object to interact with DefraDB directly from the console for testing and debugging purposes.
