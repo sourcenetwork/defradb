@@ -262,7 +262,7 @@ type Store interface {
 
 // Txn is a Store instance that has been wrapped by a transaction.
 //
-// It privides access to all the Store methods and ensures that they are
+// It provides access to all the Store methods and ensures that they are
 // executed under the transaction.
 type Txn interface {
 	Store

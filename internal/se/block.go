@@ -15,7 +15,6 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -31,7 +30,6 @@ type BlockData struct {
 // ProcessBlock handles SE for a block
 func ProcessBlock(
 	ctx context.Context,
-	txn datastore.Txn,
 	block *coreblock.Block,
 ) error {
 	seCtx, ok := ctx.Value(contextKey{}).(*Context)

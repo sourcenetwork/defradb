@@ -23,10 +23,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -44,18 +44,17 @@ var log = corelog.NewLogger("defra.se.replication")
 // ReplicationCoordinator manages SE artifact replication and storage
 type ReplicationCoordinator struct {
 	db             DB
-	eventBus       *event.Bus
-	failureSub     *event.Subscription
-	updateSub      *event.Subscription
+	eventBus       event.Bus
+	failureSub     event.Subscription
+	updateSub      event.Subscription
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 }
 
 // DB interface required by ReplicationCoordinator
 type DB interface {
-	Datastore() datastore.DSReaderWriter
-	Peerstore() datastore.DSReaderWriter
-	Events() *event.Bus
+	Rootstore() corekv.TxnStore
+	Events() event.Bus
 	MaxTxnRetries() int
 	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
 }
@@ -165,7 +164,8 @@ func (rc *ReplicationCoordinator) handleReplicationFailure(ctx context.Context, 
 		return err
 	}
 
-	return rc.db.Peerstore().Set(ctx, retryKey.Bytes(), b)
+	ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+	return ps.Set(ctx, retryKey.Bytes(), b)
 }
 
 // handleUpdateEvent processes SE update events and stores artifacts
@@ -224,7 +224,8 @@ func (rc *ReplicationCoordinator) retrySEReplicators(ctx context.Context) {
 
 // processSERetries checks for due retries and processes them
 func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
-	iter, err := rc.db.Peerstore().Iterator(ctx, corekv.IterOptions{
+	ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+	iter, err := ps.Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewPeerstoreSERetry("", "", "").Bytes(),
 	})
 	if err != nil {
@@ -272,7 +273,8 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 				log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
 				continue
 			}
-			if err := rc.db.Peerstore().Set(ctx, iter.Key(), b); err != nil {
+			ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+			if err := ps.Set(ctx, iter.Key(), b); err != nil {
 				log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 				continue
 			}
@@ -327,7 +329,8 @@ func (rc *ReplicationCoordinator) updateRetryStatus(ctx context.Context, peerID 
 	retryKey := keys.NewPeerstoreSERetry(peerID, retryInfo.CollectionID, retryInfo.DocID)
 
 	if success {
-		if err := rc.db.Peerstore().Delete(ctx, retryKey.Bytes()); err != nil {
+		ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+		if err := ps.Delete(ctx, retryKey.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete SE retry entry", err)
 		}
 	} else {
@@ -343,7 +346,8 @@ func (rc *ReplicationCoordinator) updateRetryStatus(ctx context.Context, peerID 
 			log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
 			return
 		}
-		if err := rc.db.Peerstore().Set(ctx, retryKey.Bytes(), b); err != nil {
+		ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+		if err := ps.Set(ctx, retryKey.Bytes(), b); err != nil {
 			log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 		}
 	}
@@ -359,7 +363,7 @@ func (rc *ReplicationCoordinator) updateRetryStatus(ctx context.Context, peerID 
 //   - A document is deleted (searchTags is empty)
 //   - A field value changes (searchTags contains the old search tags to remove)
 func (rc *ReplicationCoordinator) DeleteSEArtifacts(ctx context.Context, collectionID string, indexID string, docID string, searchTags [][]byte) error {
-	ds := rc.db.Datastore()
+	ds := datastore.DatastoreFrom(rc.db.Rootstore())
 
 	if len(searchTags) > 0 {
 		for _, tag := range searchTags {

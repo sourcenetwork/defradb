@@ -28,11 +28,11 @@ Example: show all encrypted indexes for 'Users' collection:
   defradb client encrypted-index list --collection Users`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			switch {
 			case collectionArg != "":
-				col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
+				col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
 				if err != nil {
 					return err
 				}
@@ -42,7 +42,7 @@ Example: show all encrypted indexes for 'Users' collection:
 				}
 				return writeJSON(cmd, indexes)
 			default:
-				indexes, err := store.GetAllEncryptedIndexes(cmd.Context())
+				indexes, err := cliClient.GetAllEncryptedIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}

@@ -154,6 +154,13 @@ func (txn *Txn) VerifySignature(ctx context.Context, blockCid string, pubKey cry
 	return txn.db.VerifySignature(ctx, blockCid, pubKey)
 }
 
+func (txn *Txn) GetSearchableEncryptionKey() []byte {
+	if txn.db == nil {
+		return nil
+	}
+	return txn.db.searchableEncryptionKey
+}
+
 func (txn *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddSchema(ctx, sdl)
@@ -229,6 +236,13 @@ func (txn *Txn) GetSchemas(ctx context.Context, options client.SchemaFetchOption
 func (txn *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetAllIndexes(ctx)
+}
+
+func (txn *Txn) GetAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetAllEncryptedIndexes(ctx)
 }
 
 func (txn *Txn) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {

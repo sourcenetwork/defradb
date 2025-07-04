@@ -192,6 +192,13 @@ func (txn *Transaction) GetAllIndexes(
 	return txn.Client.GetAllIndexes(ctx)
 }
 
+func (txn *Transaction) GetAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.GetAllEncryptedIndexes(ctx)
+}
+
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,

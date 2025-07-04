@@ -32,13 +32,13 @@ Example: create an index for 'Users' collection on 'name' field:
 `,
 		ValidArgs: []string{"collection", "field", "type"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			desc := client.EncryptedIndexCreateRequest{
 				FieldName: fieldArg,
 				Type:      client.EncryptedIndexType(typeArg),
 			}
-			col, err := store.GetCollectionByName(cmd.Context(), collectionArg)
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
 			if err != nil {
 				return err
 			}

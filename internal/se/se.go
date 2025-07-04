@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
@@ -29,7 +28,7 @@ import (
 
 // StoreArtifacts stores SE artifacts directly in the datastore.
 // This is called by the server when receiving artifacts from peers.
-func StoreArtifacts(ctx context.Context, ds datastore.DSReaderWriter, artifacts []secore.Artifact) error {
+func StoreArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []secore.Artifact) error {
 	for _, artifact := range artifacts {
 		key := keys.DatastoreSE{
 			CollectionID: artifact.CollectionID,
@@ -49,7 +48,7 @@ func StoreArtifacts(ctx context.Context, ds datastore.DSReaderWriter, artifacts 
 
 // FetchDocIDs queries the datastore for SE artifacts matching the given queries
 // and returns the unique document IDs that match.
-func FetchDocIDs(ctx context.Context, ds datastore.DSReaderWriter, collectionID string, queries []FieldQuery) ([]string, error) {
+func FetchDocIDs(ctx context.Context, ds corekv.ReaderWriter, collectionID string, queries []FieldQuery) ([]string, error) {
 	docIDSet := make(map[string]struct{})
 
 	for _, query := range queries {

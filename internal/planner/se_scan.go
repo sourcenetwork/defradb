@@ -157,7 +157,7 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 	// 1. Query replicator nodes for matching SE artifacts
 	// 2. Aggregate results from multiple nodes
 	// 3. Send the response back via the channel
-	msg, responseChan := se.NewQuerySEArtifactsMessage(n.collectionID, queries)
+	/*msg, responseChan := se.NewQuerySEArtifactsMessage(n.collectionID, queries)
 	n.p.db.Events().Publish(msg)
 
 	response := <-responseChan
@@ -165,7 +165,8 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 		return nil, response.Error
 	}
 
-	return response.DocIDs, nil
+	return response.DocIDs, nil*/
+	return nil, nil
 }
 
 func (n *seScanNode) Next() (bool, error) {
@@ -211,15 +212,15 @@ func (n *seScanNode) requestDocumentFromNetwork(docIDStr string) (bool, error) {
 	responseChan := make(chan event.DocUpdateResponse, 1)
 	defer close(responseChan)
 
-	request := event.DocUpdateRequest{
+	/*request := event.DocUpdateRequest{
 		CollectionID: n.collectionID,
 		DocID:        docIDStr,
 		Response:     responseChan,
-	}
+	}*/
 
 	// TODO: waiting for every single document is not efficient.
 	// We should consider ways of prefetching docs.
-	n.p.db.Events().Publish(event.NewMessage(event.DocUpdateRequestName, request))
+	//n.p.db.Events().Publish(event.NewMessage(event.DocUpdateRequestName, request))
 
 	ctx, cancel := context.WithTimeout(n.p.ctx, 10*time.Second)
 	defer cancel()

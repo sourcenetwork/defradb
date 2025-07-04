@@ -14,9 +14,8 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
@@ -35,7 +34,7 @@ type Context struct {
 	artifacts []secore.Artifact
 	doc       *client.Document
 	txn       datastore.Txn
-	eventBus  *event.Bus
+	eventBus  event.Bus
 }
 
 // PrepareContextIfConfigured checks collection configuration and prepares SE context if needed
@@ -44,7 +43,7 @@ func PrepareContextIfConfigured(
 	col client.Collection,
 	doc *client.Document,
 	seKey []byte,
-	eventBus *event.Bus,
+	eventBus event.Bus,
 ) (context.Context, error) {
 	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
 	if err != nil {
@@ -54,7 +53,7 @@ func PrepareContextIfConfigured(
 		return ctx, nil
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	seCtx := &Context{
 		config: Config{

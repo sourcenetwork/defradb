@@ -54,10 +54,6 @@ const onDemandDocUpdateTopic = "on-demand-doc-update"
 // DB hold the database related methods that are required by Peer.
 type DB interface {
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
-	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
-	Blockstore() datastore.Blockstore
-	// Datastore returns the datastore, which holds artifacts like SE search tags.
-	Datastore() datastore.DSReaderWriter
 	// GetCollections returns the list of collections according to the given options.
 	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.

@@ -10,12 +10,6 @@
 
 package client
 
-import (
-	"context"
-
-	"github.com/sourcenetwork/defradb/datastore"
-)
-
 type EncryptedIndexType string
 
 const (
@@ -39,20 +33,4 @@ type EncryptedIndexCreateRequest struct {
 	// Type is the type of searchable encryption.
 	// Currently only "equality" is supported.
 	Type EncryptedIndexType
-}
-
-// EncryptedCollectionIndex is an interface for indexing documents in a collection.
-type EncryptedCollectionIndex interface {
-	// Save indexes a document by storing indexed field values.
-	// It doesn't retire previous values. For this [Update] should be used.
-	Save(context.Context, datastore.Txn, *Document) error
-	// Update updates an existing document in the index.
-	// It removes the previous indexed field values and stores the new ones.
-	Update(context.Context, datastore.Txn, *Document, *Document) error
-	// Delete deletes an existing document from the index
-	Delete(context.Context, datastore.Txn, *Document) error
-	// Name returns the name of the index
-	Name() string
-	// Description returns the description of the index
-	Description() EncryptedIndexDescription
 }

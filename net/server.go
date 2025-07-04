@@ -217,7 +217,7 @@ func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifact
 	}
 
 	// Store artifacts directly in the datastore
-	if err := se.StoreArtifacts(ctx, s.peer.db.Datastore(), artifacts); err != nil {
+	if err := se.StoreArtifacts(ctx, datastore.DatastoreFrom(s.peer.db.Rootstore()), artifacts); err != nil {
 		log.ErrorContextE(ctx, "Failed to store SE artifacts", err)
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func (s *server) querySEArtifactsFromDatastore(ctx context.Context, req *querySE
 		}
 	}
 
-	return se.FetchDocIDs(ctx, s.peer.db.Datastore(), req.CollectionID, queries)
+	return se.FetchDocIDs(ctx, datastore.DatastoreFrom(s.peer.db.Rootstore()), req.CollectionID, queries)
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network

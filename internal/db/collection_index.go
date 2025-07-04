@@ -428,8 +428,7 @@ func (c *collection) createEncryptedIndex(
 
 	c.def.Version.EncryptedIndexes = append(c.def.Version.EncryptedIndexes, desc)
 
-	txn := txnctx.MustGet(ctx)
-	err = description.SaveCollection(ctx, txn, c.def.Version)
+	err = description.SaveCollection(ctx, c.def.Version)
 	if err != nil {
 		c.def.Version.EncryptedIndexes = c.def.Version.EncryptedIndexes[:len(c.def.Version.EncryptedIndexes)-1]
 		return client.EncryptedIndexDescription{}, err
@@ -553,8 +552,7 @@ func generateIndexName(colName string, fields []client.IndexedFieldDescription, 
 func (db *DB) getAllEncryptedIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	txn := txnctx.MustGet(ctx)
-	collections, err := description.GetCollections(ctx, txn)
+	collections, err := description.GetCollections(ctx)
 
 	if err != nil {
 		return nil, err
