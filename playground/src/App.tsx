@@ -29,7 +29,7 @@ function App() {
           if (initRef.current) {
             return;
           }
-          // @ts-expect-error - window.defradb is set in main_js.go.
+          // @ts-expect-error - window.defradb is set in cmd/defradb/main_js.go.
           if (!window.defradb) {
             setTimeout(initClient, 100);
           } else {
@@ -56,8 +56,13 @@ function App() {
       try {
         const query = graphQLParams.query || '';
         const variables = graphQLParams.variables || {};
+        const operationName = graphQLParams.operationName || {};
+        const args = {
+          operationName,
+          variables,
+      };
         // All operations go through execRequest.
-        const result = await client.execRequest(query, JSON.stringify(variables));
+        const result = await client.execRequest(query, args);
         return result.gql;
       } catch (error) {
         console.error('Error executing Wasm request:', error);
