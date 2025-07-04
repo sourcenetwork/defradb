@@ -248,11 +248,13 @@ func (p *Peer) Close() {
 		}
 
 		// stop gRPC server
+		p.server.connMu.Lock()
 		for _, c := range p.server.conns {
 			if err := c.Close(); err != nil {
 				log.ErrorE("Failed closing server RPC connections", err)
 			}
 		}
+		p.server.connMu.Unlock()
 	}
 
 	if p.updateSub != nil {
