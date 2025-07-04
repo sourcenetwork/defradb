@@ -60,7 +60,7 @@ function App() {
         const args = {
           operationName,
           variables,
-      };
+        };
         // All operations go through execRequest.
         const result = await client.execRequest(query, args);
         return result.gql;
