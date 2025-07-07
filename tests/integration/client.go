@@ -19,6 +19,7 @@ const (
 	clientGoEnvName   = "DEFRA_CLIENT_GO"
 	clientHttpEnvName = "DEFRA_CLIENT_HTTP"
 	clientCliEnvName  = "DEFRA_CLIENT_CLI"
+	clientCEnvName    = "DEFRA_CLIENT_C"
 )
 
 type ClientType string
@@ -36,6 +37,9 @@ const (
 	// JSClientType enables running the test suite using
 	// the JS implementation of the client.TxnStore interface.
 	JSClientType ClientType = "js"
+	// CClientType enables running the test suite using
+	// the C implementation of the client.TxnStore interface.
+	CClientType ClientType = "c"
 )
 
 var (
@@ -43,6 +47,7 @@ var (
 	goClient   bool
 	cliClient  bool
 	jsClient   bool
+	cClient    bool
 )
 
 func init() {
@@ -51,8 +56,9 @@ func init() {
 	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
 	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
 	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
+	cClient, _ = strconv.ParseBool(os.Getenv(clientCEnvName))
 
-	if !goClient && !httpClient && !cliClient {
+	if !goClient && !httpClient && !cliClient && !cClient {
 		// Default is to test go client type.
 		goClient = true
 	}

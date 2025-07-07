@@ -191,6 +191,9 @@ func ExecuteTestCase(
 	if jsClient {
 		clients = append(clients, JSClientType)
 	}
+	if cClient {
+		clients = append(clients, CClientType)
+	}
 
 	var databases []DatabaseType
 	if badgerInMemory {

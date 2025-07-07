@@ -150,6 +150,7 @@ deps\:lint:
 .PHONY: deps\:test
 deps\:test:
 	go install gotest.tools/gotestsum@latest
+	go install github.com/agnivade/wasmbrowsertest@latest
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
@@ -167,7 +168,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v3@v3.2
+	go install github.com/vektra/mockery/v2@v2.43.0
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -244,7 +245,7 @@ clean\:test:
 
 .PHONY: clean\:coverage
 clean\:coverage:
-	rm -rf $(COVERAGE_DIRECTORY)
+	rm -rf $(COVERAGE_DIRECTORY) 
 	rm -f $(COVERAGE_FILE)
 
 # Example: `make tls-certs path="~/.defradb/certs"`
@@ -287,7 +288,7 @@ test\:col-named-mutations:
 
 .PHONY: test\:source-hub
 test\:source-hub:
-	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+	DEFRA_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:
@@ -350,7 +351,7 @@ test\:coverage-html:
 	@$(MAKE) test:coverage path=$(path)
 	go tool cover -html=$(COVERAGE_FILE)
 	@$(MAKE) clean:coverage
-
+  
 .PHONY: test\:coverage-js
 test\:coverage-js:
 	@$(MAKE) clean:coverage
@@ -358,13 +359,17 @@ test\:coverage-js:
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
+
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
 
 .PHONY: test\:js
 test\:js:
+
+	GOOS=js GOARCH=wasm go test -exec wasmbrowsertest ./node/...
 	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
+
 
 .PHONY: validate\:codecov
 validate\:codecov:
@@ -431,3 +436,11 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
+	
+build-c-shared-linux:
+	@echo "Building c-shared library for Linux..."
+	@rm -f build/libdefradb.so build/libdefradb.h
+	@CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
+		-buildmode=c-shared -o build/libdefradb.so ./cbindings
+	@cp ./cbindings/defra_structs.h ./build/
+	@echo "Build complete: build/libdefradb.so"

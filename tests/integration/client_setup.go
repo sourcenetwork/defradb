@@ -17,14 +17,19 @@ import (
 
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
+	cwrap "github.com/sourcenetwork/defradb/tests/clients/c"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
 )
 
 func init() {
-	if !goClient && !httpClient && !cliClient {
+	if !goClient && !httpClient && !cliClient && !cClient {
 		// Default is to test go client type.
 		goClient = true
+	}
+	if cClient {
+		skipNetworkTests = true
+		skipBackupTests = true
 	}
 }
 
@@ -41,6 +46,9 @@ func setupClient(s *state, node *node.Node) (clients.Client, error) {
 
 	case GoClientType:
 		return newGoClientWrapper(node), nil
+
+	case CClientType:
+		return cwrap.NewCWrapper(), nil
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.dbt)
