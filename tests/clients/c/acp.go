@@ -17,7 +17,6 @@ import "C"
 
 import (
 	"context"
-	"fmt"
 )
 
 func AcpAddPolicy(cIdentity *C.char, cPolicy *C.char, cTxnID C.ulonglong) *C.Result {
@@ -25,12 +24,9 @@ func AcpAddPolicy(cIdentity *C.char, cPolicy *C.char, cTxnID C.ulonglong) *C.Res
 	policy := C.GoString(cPolicy)
 	identityStr := C.GoString(cIdentity)
 
-	fmt.Printf("Identity is: %v\n", identityStr)
-
 	// Attach the identity to the context
 	newctx, err := contextWithIdentity(ctx, identityStr)
 	if err != nil {
-		fmt.Printf("Error attaching identity: %v\n", err)
 		return returnC(1, err.Error(), "")
 	}
 	ctx = newctx
@@ -38,7 +34,6 @@ func AcpAddPolicy(cIdentity *C.char, cPolicy *C.char, cTxnID C.ulonglong) *C.Res
 	// Set the transaction
 	newctx, err = contextWithTransaction(ctx, cTxnID)
 	if err != nil {
-		fmt.Printf("Error attaching transaction: %v\n", err)
 		return returnC(1, err.Error(), "")
 	}
 	ctx = newctx
@@ -46,7 +41,6 @@ func AcpAddPolicy(cIdentity *C.char, cPolicy *C.char, cTxnID C.ulonglong) *C.Res
 	// Try to add the policy
 	policyResult, err := globalNode.DB.AddDACPolicy(ctx, policy)
 	if err != nil {
-		fmt.Printf("Error adding policy: %v\n", err)
 		return returnC(1, err.Error(), "")
 	}
 

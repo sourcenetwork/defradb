@@ -28,8 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-type transactionContextKey struct{}
-
 var TxnStore sync.Map
 
 //export transactionCreate
@@ -93,16 +91,4 @@ func transactionDiscard(cTxnID C.ulonglong) *C.Result {
 	txn.Discard(ctx)
 	TxnStore.Delete(TxnIDu64)
 	return returnC(0, "", "")
-}
-
-// The following function exists to accomodate test functionality with
-// the C client wrapper. But it is not exported.
-
-func getTxnHandle(cTxnID C.ulonglong) any {
-	TxnIDu64 := uint64(cTxnID)
-	val, ok := TxnStore.Load(TxnIDu64)
-	if !ok {
-		return 0
-	}
-	return val
 }

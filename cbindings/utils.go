@@ -35,9 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-type collectionContextKey struct{}
-type schemaNameContextKey struct{}
-type identityContextKey struct{}
+type transactionContextKey struct{}
 
 // Helper function which builds a return struct from Go to C
 func returnC(status int, errortext string, valuetext string) *C.Result {

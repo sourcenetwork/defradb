@@ -37,9 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-type collectionContextKey struct{}
-type schemaNameContextKey struct{}
-type identityContextKey struct{}
+type transactionContextKey struct{}
 
 // Helper function which builds a return struct from Go to C
 func returnC(status int, errortext string, valuetext string) *C.Result {
@@ -229,7 +227,6 @@ func cEncryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) *C.char
 // Get Identity, as a *C.char, from a context, returning "" if not present
 // After calling this, you are responsible for freeing the memory
 func cIdentityFromContext(ctx context.Context) *C.char {
-
 	idf := identity.FullFromContext(ctx)
 	if !idf.HasValue() {
 		return C.CString("")
@@ -373,4 +370,16 @@ func freeCResult(result *C.Result) {
 		}
 		C.free(unsafe.Pointer(result))
 	}
+}
+
+// Helper function
+// Gets a client.Txn from a C.ulonglong representing it in the C-side TxnStore
+// This function is only necessary to allow for the test wrapper to function
+func GetTxnFromHandle(cTxnID C.ulonglong) any {
+	TxnIDu64 := uint64(cTxnID)
+	val, ok := TxnStore.Load(TxnIDu64)
+	if !ok {
+		return 0
+	}
+	return val
 }
