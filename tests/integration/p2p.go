@@ -207,18 +207,18 @@ func subscribeToCollection(
 ) {
 	n := s.nodes[action.NodeID]
 
-	schemaRoots := []string{}
+	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
 		col := s.nodes[action.NodeID].collections[collectionIndex]
-		schemaRoots = append(schemaRoots, col.SchemaRoot())
+		collectionNames = append(collectionNames, col.Name())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots...)
+	err := n.AddP2PCollections(s.ctx, collectionNames...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -241,18 +241,18 @@ func unsubscribeToCollection(
 ) {
 	n := s.nodes[action.NodeID]
 
-	schemaRoots := []string{}
+	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
 		col := s.nodes[action.NodeID].collections[collectionIndex]
-		schemaRoots = append(schemaRoots, col.SchemaRoot())
+		collectionNames = append(collectionNames, col.Name())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots...)
+	err := n.RemoveP2PCollections(s.ctx, collectionNames...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
@@ -277,7 +277,7 @@ func getAllP2PCollections(
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.nodes[action.NodeID].collections[collectionIndex]
-		expectedCollections = append(expectedCollections, col.SchemaRoot())
+		expectedCollections = append(expectedCollections, col.Name())
 	}
 
 	n := s.nodes[action.NodeID]
