@@ -53,7 +53,8 @@ type server struct {
 	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
 
-	conns map[libpeer.ID]*grpc.ClientConn
+	conns  map[libpeer.ID]*grpc.ClientConn
+	connMu sync.RWMutex
 
 	peerIdentities map[libpeer.ID]identity.Identity
 	piMux          sync.RWMutex
