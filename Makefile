@@ -150,7 +150,6 @@ deps\:lint:
 .PHONY: deps\:test
 deps\:test:
 	go install gotest.tools/gotestsum@latest
-	go install github.com/agnivade/wasmbrowsertest@latest
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
@@ -168,7 +167,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v2@v2.43.0
+	go install github.com/vektra/mockery/v3@v3.2
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -245,7 +244,7 @@ clean\:test:
 
 .PHONY: clean\:coverage
 clean\:coverage:
-	rm -rf $(COVERAGE_DIRECTORY) 
+	rm -rf $(COVERAGE_DIRECTORY)
 	rm -f $(COVERAGE_FILE)
 
 # Example: `make tls-certs path="~/.defradb/certs"`
@@ -288,7 +287,7 @@ test\:col-named-mutations:
 
 .PHONY: test\:source-hub
 test\:source-hub:
-	DEFRA_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:
@@ -301,6 +300,10 @@ test\:http:
 .PHONY: test\:cli
 test\:cli:
 	DEFRA_CLIENT_CLI=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+	
+.PHONY: test\:c
+test\:c:
+	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -351,7 +354,7 @@ test\:coverage-html:
 	@$(MAKE) test:coverage path=$(path)
 	go tool cover -html=$(COVERAGE_FILE)
 	@$(MAKE) clean:coverage
-  
+
 .PHONY: test\:coverage-js
 test\:coverage-js:
 	@$(MAKE) clean:coverage
@@ -359,17 +362,13 @@ test\:coverage-js:
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
-
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
 
 .PHONY: test\:js
 test\:js:
-
-	GOOS=js GOARCH=wasm go test -exec wasmbrowsertest ./node/...
 	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
-
 
 .PHONY: validate\:codecov
 validate\:codecov:
