@@ -26,6 +26,7 @@ import (
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/defradb/client"
+
 	"github.com/sourcenetwork/immutable"
 )
 

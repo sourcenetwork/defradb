@@ -632,7 +632,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 	}
 
 	retTxn := GetTxnFromHandle(C.ulonglong(data.ID))
-	retTxnCast := retTxn.(client.Txn)
+	retTxnCast := retTxn.(client.Txn) //nolint:forcetypeassert
 	return retTxnCast, nil
 }
 
@@ -661,7 +661,7 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 	}
 
 	retTxn := GetTxnFromHandle(C.ulonglong(data.ID))
-	retTxnCast := retTxn.(client.Txn)
+	retTxnCast := retTxn.(client.Txn) //nolint:forcetypeassert
 	return retTxnCast, nil
 }
 
