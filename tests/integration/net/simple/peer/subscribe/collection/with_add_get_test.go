@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PSubscribeAddRemoveGetSingle(t *testing.T) {
+func TestP2PCollectionAddGetSingle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -36,13 +36,9 @@ func TestP2PSubscribeAddRemoveGetSingle(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.UnsubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
-			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,
-				ExpectedCollectionIDs: []int{},
+				ExpectedCollectionIDs: []int{0},
 			},
 		},
 	}
@@ -50,17 +46,22 @@ func TestP2PSubscribeAddRemoveGetSingle(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddRemoveGetMultiple(t *testing.T) {
+func TestP2PCollectionAddGetMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
+				// Note: If a test is failing here in the error trace, you likely need to change the
+				// order of these schema types declared below (some renaming can cause this).
 				Schema: `
 					type Users {
 						name: String
 					}
 					type Giraffes {
+						name: String
+					}
+					type Bears {
 						name: String
 					}
 				`,
@@ -71,16 +72,11 @@ func TestP2PSubscribeAddRemoveGetMultiple(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{0, 1},
-			},
-			testUtils.UnsubscribeToCollection{
-				NodeID: 1,
-				// Unsubscribe from Users, but remain subscribed to Giraffes
-				CollectionIDs: []int{0},
+				CollectionIDs: []int{0, 2},
 			},
 			testUtils.GetAllP2PCollections{
 				NodeID:                1,
-				ExpectedCollectionIDs: []int{1},
+				ExpectedCollectionIDs: []int{0, 2},
 			},
 		},
 	}

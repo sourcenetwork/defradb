@@ -80,7 +80,6 @@ type DB interface {
 }
 
 type Handler struct {
-	db  DB
 	mux *chi.Mux
 	txs *sync.Map
 }
@@ -108,7 +107,6 @@ func NewHandler(db DB, p2p client.P2P) (*Handler, error) {
 	})
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
-		db:  db,
 		mux: mux,
 		txs: txs,
 	}, nil

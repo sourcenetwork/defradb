@@ -1,0 +1,382 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package subscribe_test
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/immutable"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+// TestP2PCollectionAddSingle ensures that created documents reach the node that subscribes
+// to the P2P collection topic but not the one that doesn't.
+func TestP2PCollectionAddSingle(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+						// Peer sync should not sync new documents to nodes that is not subscribed
+						// to the P2P collection.
+					},
+				},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCollectionAddMultiple(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+					type Giraffes {
+						name: String
+					}
+					type Bears {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, 2},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 1,
+				Doc: `{
+					"name": "Gillian"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID:       immutable.Some(0),
+				CollectionID: 2,
+				Doc: `{
+					"name": "Bjorn"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// John the User has been synced.
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				// Gillian the Giraffe has not been synced, as the collection (1)
+				// was not subscribed to.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Giraffes {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Giraffes": []map[string]any{},
+				},
+			},
+			testUtils.Request{
+				// Bjorn the Bear has been synced.
+				Request: `query {
+					Bears {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Bears": []map[string]any{
+						{
+							"name": "Bjorn",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{testUtils.NonExistentCollectionID},
+				ExpectedError: "collection not found",
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Nothing should sync
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
+				ExpectedError: "collection not found",
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// Nothing should sync, although the collection 0 was valid, as it was included in the same
+				// `Add` call it should have been rolled back.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{testUtils.NonExistentCollectionID},
+				ExpectedError: "collection not found",
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				// The subscription for collection 0 should still be active
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCollectionAddNone(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

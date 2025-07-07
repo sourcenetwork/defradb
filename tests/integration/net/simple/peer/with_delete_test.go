@@ -51,6 +51,12 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -110,6 +116,12 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
@@ -183,6 +195,12 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
@@ -264,6 +282,12 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
@@ -349,6 +373,12 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 1),
+				},
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the second node only

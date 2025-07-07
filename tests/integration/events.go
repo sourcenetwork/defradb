@@ -32,28 +32,19 @@ func waitForNetworkSetupEvents(s *state, nodeID int) {
 	if !s.isNetworkEnabled {
 		return
 	}
-	cols, err := s.nodes[nodeID].GetAllP2PCollections(s.ctx)
-	require.NoError(s.t, err)
 
 	reps, err := s.nodes[nodeID].GetAllReplicators(s.ctx)
 	require.NoError(s.t, err)
 
 	replicatorEvents := len(reps)
-	p2pTopicEvent := len(cols) > 0
 
-	for p2pTopicEvent && replicatorEvents > 0 {
+	for replicatorEvents > 0 {
 		select {
 		case _, ok := <-s.nodes[nodeID].event.replicator.Message():
 			if !ok {
 				require.Fail(s.t, "subscription closed waiting for network setup events")
 			}
 			replicatorEvents--
-
-		case _, ok := <-s.nodes[nodeID].event.p2pTopic.Message():
-			if !ok {
-				require.Fail(s.t, "subscription closed waiting for network setup events")
-			}
-			p2pTopicEvent = false
 
 		case <-time.After(eventTimeout):
 			s.t.Fatalf("timeout waiting for network setup events")
@@ -127,6 +118,31 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 			continue // don't track non existent collections
 		}
 		delete(s.nodes[action.NodeID].p2p.peerCollections, collectionIndex)
+	}
+}
+
+// waitForSubscribeToDocumentEvent waits for a node to publish a
+// p2p topic completed event on the local event bus.
+//
+// Expected document heads will be updated for the subscriber node.
+func waitForSubscribeToDocumentEvent(s *state, action SubscribeToDocument) {
+	// update peer documents of target node
+	for _, colDocIndex := range action.DocIDs {
+		if colDocIndex.Doc == NonExistentDocID {
+			continue // don't track non existent documents
+		}
+		s.nodes[action.NodeID].p2p.peerDocuments[colDocIndex] = struct{}{}
+	}
+}
+
+// waitForUnsubscribeToDocumentEvent waits for a node to publish a
+// p2p topic completed event on the local event bus.
+func waitForUnsubscribeToDocumentEvent(s *state, action UnsubscribeToDocument) {
+	for _, colDocIndex := range action.DocIDs {
+		if colDocIndex.Doc == NonExistentDocID {
+			continue // don't track non existent documents
+		}
+		delete(s.nodes[action.NodeID].p2p.peerDocuments, colDocIndex)
 	}
 }
 
@@ -264,6 +280,14 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 			collectionID = i
 		}
 	}
+	docIndex := -1
+	if collectionID != -1 {
+		for i, docID := range s.docIDs[collectionID] {
+			if docID.String() == evt.DocID {
+				docIndex = i
+			}
+		}
+	}
 
 	node := s.nodes[nodeID]
 
@@ -279,10 +303,6 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 
 	// update the expected document heads of connected nodes
 	for id := range node.p2p.connections {
-		// connected nodes share updates of documents they have in common
-		if _, ok := s.nodes[id].p2p.actualDAGHeads[getUpdateEventKey(evt)]; ok {
-			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
-		}
 		if ident.HasValue() && ident.Value().selector != strconv.Itoa(id) {
 			// If the document is created by a specific identity, only the node with the
 			// same index as the identity can initially access it.
@@ -292,6 +312,10 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.nodes[id].p2p.peerCollections[collectionID]; ok {
+			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		}
+		// peer document subscribers receive updates from any other subscriber node
+		if _, ok := s.nodes[id].p2p.peerDocuments[NewColDocIndex(collectionID, docIndex)]; ok {
 			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}

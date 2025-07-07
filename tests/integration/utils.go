@@ -337,6 +337,15 @@ func performAction(
 	case GetAllP2PCollections:
 		getAllP2PCollections(s, action)
 
+	case SubscribeToDocument:
+		subscribeToDocument(s, action)
+
+	case UnsubscribeToDocument:
+		unsubscribeToDocument(s, action)
+
+	case GetAllP2PDocuments:
+		getAllP2PDocuments(s, action)
+
 	case SchemaUpdate:
 		updateSchema(s, action)
 

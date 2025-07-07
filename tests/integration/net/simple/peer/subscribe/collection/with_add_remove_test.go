@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,9 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2PSubscribeAddSingle ensures that created documents reach the node that subscribes
-// to the P2P collection topic but not the one that doesn't.
-func TestP2PSubscribeAddSingle(t *testing.T) {
+func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -37,6 +35,10 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UnsubscribeToCollection{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -54,23 +56,7 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				NodeID: immutable.Some(0),
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-						},
-						// Peer sync should not sync new documents to nodes that is not subscribed
-						// to the P2P collection.
-					},
-				},
-			},
-			testUtils.Request{
+				// John has not been synced, as it was removed from the subscription set
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -82,9 +68,6 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 						{
 							"name": "Fred",
 						},
-						{
-							"name": "John",
-						},
 					},
 				},
 			},
@@ -94,7 +77,7 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddMultiple(t *testing.T) {
+func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -107,9 +90,6 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 					type Giraffes {
 						name: String
 					}
-					type Bears {
-						name: String
-					}
 				`,
 			},
 			testUtils.ConnectPeers{
@@ -118,7 +98,12 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{0, 2},
+				CollectionIDs: []int{0, 1},
+			},
+			testUtils.UnsubscribeToCollection{
+				NodeID: 1,
+				// Unsubscribe from Users, but remain subscribed to Giraffes
+				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -133,32 +118,21 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 					"name": "Gillian"
 				}`,
 			},
-			testUtils.CreateDoc{
-				NodeID:       immutable.Some(0),
-				CollectionID: 2,
-				Doc: `{
-					"name": "Bjorn"
-				}`,
-			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				// John the User has been synced.
+				// John the User has not been synced, as Users was removed from the subscription set.
+				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 			testUtils.Request{
-				// Gillian the Giraffe has not been synced, as the collection (1)
-				// was not subscribed to.
+				// Gillian the Giraffe has still been synced, as it was not removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Giraffes {
@@ -166,20 +140,9 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"Giraffes": []map[string]any{},
-				},
-			},
-			testUtils.Request{
-				// Bjorn the Bear has been synced.
-				Request: `query {
-					Bears {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Bears": []map[string]any{
+					"Giraffes": []map[string]any{
 						{
-							"name": "Bjorn",
+							"name": "Gillian",
 						},
 					},
 				},
@@ -190,100 +153,7 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{testUtils.NonExistentCollectionID},
-				ExpectedError: "collection not found",
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				// Nothing should sync
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
-				ExpectedError: "collection not found",
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				// Nothing should sync, although the collection 0 was valid, as it was included in the same
-				// `Add` call it should have been rolled back.
-				NodeID: immutable.Some(1),
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
+func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -303,9 +173,9 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.UnsubscribeToCollection{
 				NodeID:        1,
-				CollectionIDs: []int{testUtils.NonExistentCollectionID},
+				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
 			testUtils.CreateDoc{
@@ -316,8 +186,8 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				// The subscription for collection 0 should still be active
-				NodeID: immutable.Some(1),
+				// John has been synced, as the unsubscribe errored and should not have affected
+				// the subscription to collection 0.
 				Request: `query {
 					Users {
 						name
@@ -337,7 +207,7 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddNone(t *testing.T) {
+func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -355,6 +225,10 @@ func TestP2PSubscribeAddNone(t *testing.T) {
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
 				CollectionIDs: []int{},
 			},
 			testUtils.CreateDoc{
@@ -365,14 +239,18 @@ func TestP2PSubscribeAddNone(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				NodeID: immutable.Some(1),
+				// John has been synced, as nothing was removed from the subscription set
 				Request: `query {
 					Users {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
 				},
 			},
 		},

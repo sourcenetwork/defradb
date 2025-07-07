@@ -150,6 +150,36 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return cols, nil
 }
 
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+	args := []string{"client", "p2p", "document", "add"}
+	args = append(args, strings.Join(docIDs, ","))
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+	args := []string{"client", "p2p", "document", "remove"}
+	args = append(args, strings.Join(docIDs, ","))
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	args := []string{"client", "p2p", "document", "getall"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var docIDs []string
+	if err := json.Unmarshal(data, &docIDs); err != nil {
+		return nil, err
+	}
+	return docIDs, nil
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	args := []string{"client", "backup", "import"}
 	args = append(args, filepath)

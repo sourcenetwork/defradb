@@ -21,6 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+var _ client.P2P = (*Client)(nil)
+
 // ReplicatorParams contains the replicator fields that can be modified by the user.
 type ReplicatorParams struct {
 	// Info is the address of the peer to replicate to.
@@ -125,6 +127,50 @@ func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs ...stri
 
 func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var cols []string
+	if err := c.http.requestJson(req, &cols); err != nil {
+		return nil, err
+	}
+	return cols, nil
+}
+
+func (c *Client) AddP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
+
+	body, err := json.Marshal(collectionIDs)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
+
+	body, err := json.Marshal(collectionIDs)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
