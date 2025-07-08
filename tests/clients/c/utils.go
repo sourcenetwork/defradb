@@ -385,7 +385,7 @@ func GetTxnFromHandle(cTxnID C.ulonglong) any {
 func convertCResultToGQLResult(res *C.Result) (client.GQLResult, error) {
 	var gql client.GQLResult
 	if res.status != 0 {
-		return gql, fmt.Errorf(C.GoString(res.value))
+		return gql, errors.New(C.GoString(res.value))
 	}
 	err := json.Unmarshal([]byte(C.GoString(res.value)), &gql)
 	return gql, err

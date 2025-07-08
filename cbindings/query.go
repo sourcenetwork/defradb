@@ -8,9 +8,6 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
 package main
 
 /*
@@ -21,7 +18,63 @@ import "C"
 import (
 	"context"
 	"strings"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/sourcenetwork/defradb/client"
 )
+
+var subscriptionStore sync.Map // map[string]*client.RequestResult
+
+// Helper function
+func storeSubscription(res *client.RequestResult) string {
+	id := uuid.NewString()
+	subscriptionStore.Store(id, res)
+	return id
+}
+
+// Helper function
+func getSubscription(id string) (*client.RequestResult, bool) {
+	val, ok := subscriptionStore.Load(id)
+	if !ok {
+		return nil, false
+	}
+	//nolint:forcetypeassert
+	return val.(*client.RequestResult), true
+}
+
+// Helper function
+func removeSubscription(id string) {
+	subscriptionStore.Delete(id)
+}
+
+//export pollSubscription
+func pollSubscription(cID *C.char) *C.Result {
+	id := C.GoString(cID)
+	res, ok := getSubscription(id)
+	if !ok {
+		return returnC(1, "Invalid subscription ID", "")
+	}
+
+	select {
+	case msg, ok := <-res.Subscription:
+		if !ok {
+			removeSubscription(id)
+			return returnC(0, "", "") // closed
+		}
+		return marshalJSONToCResult(msg)
+	case <-time.After(time.Second):
+		return returnC(1, "Timeout waiting for subscription event", "")
+	}
+}
+
+//export CloseSubscription
+func closeSubscription(cID *C.char) {
+	id := C.GoString(cID)
+	removeSubscription(id)
+}
 
 //export executeQuery
 func executeQuery(
@@ -67,12 +120,18 @@ func executeQuery(
 		return returnC(1, sb.String(), "")
 	}
 
+	if res.Subscription != nil {
+		id := storeSubscription(res)
+		return returnC(2, "", id)
+	}
+
 	// Try to marshall the JSON and return it
 	dataMap, ok := res.GQL.Data.(map[string]any)
-	if !ok || dataMap == nil || len(dataMap) == 0 {
-		return returnC(1, "GraphQL response data is nil or empty.", "")
+	if !ok || dataMap == nil {
+		return returnC(1, "GraphQL response data is nil or invalid.", "")
 	}
-	return marshalJSONToCResult(dataMap)
+	wrapped := map[string]any{
+		"data": dataMap,
+	}
+	return marshalJSONToCResult(wrapped)
 }
-
-func main() {}

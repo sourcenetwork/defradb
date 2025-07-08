@@ -28,20 +28,24 @@ import (
 
 var subscriptionStore sync.Map // map[string]*client.RequestResult
 
+// Helper function
 func storeSubscription(res *client.RequestResult) string {
 	id := uuid.NewString()
 	subscriptionStore.Store(id, res)
 	return id
 }
 
+// Helper function
 func getSubscription(id string) (*client.RequestResult, bool) {
 	val, ok := subscriptionStore.Load(id)
 	if !ok {
 		return nil, false
 	}
+	//nolint:forcetypeassert
 	return val.(*client.RequestResult), true
 }
 
+// Helper function
 func removeSubscription(id string) {
 	subscriptionStore.Delete(id)
 }
