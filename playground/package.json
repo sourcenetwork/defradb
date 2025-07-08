@@ -16,7 +16,7 @@
     "graphql": "^16.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "swagger-ui-react": "^5.26.1"
+    "swagger-ui-react": "^5.26.2"
   },
   "devDependencies": {
     "@types/react": "^19.1.6",
