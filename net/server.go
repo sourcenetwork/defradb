@@ -292,16 +292,24 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 		if err != nil {
 			return NewErrPushLog(err, errors.NewKV("Topic", topic))
 		}
+		return nil
 	}
 
 	// If the topic hasn't been explicitly subscribed to, we temporarily join it
 	// to publish the log.
+	return s.publishDirectToTopic(ctx, topic, data, false)
+}
+
+// publishDirectToTopic temporarily joins a pubsub topic to publish data and immediately closes it.
+//
+// This is useful to publish messages without incurring the cost of a full pubsub rpc topic.
+func (s *server) publishDirectToTopic(ctx context.Context, topic string, data []byte, isRetry bool) error {
 	psTopic, err := s.peer.ps.Join(topic)
 	if err != nil {
-		if strings.Contains(err.Error(), "topic already exists") {
+		if strings.Contains(err.Error(), "topic already exists") && !isRetry {
 			// Reaching this is really rare and probably only possible
-			// through from tests. We can handle this by simply trying again.
-			return s.publishLog(ctx, topic, req)
+			// through from tests. We can handle this by simply trying again a single time.
+			return s.publishDirectToTopic(ctx, topic, data, true)
 		}
 		return NewErrPushLog(err, errors.NewKV("Topic", topic))
 	}

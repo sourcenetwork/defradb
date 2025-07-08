@@ -30,7 +30,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net/config"
 )
@@ -153,37 +152,16 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 }
 
 func TestHandleLog_NoError(t *testing.T) {
+	docID := "bae-7fca96a2-5f01-5558-a81f-09b47587f26d"
+	collectionID := "bafkreia7ljiy5oief4dp5xsk7t7zlgfjzqh3537hw7rtttjzchybfxtn4u"
 	ctx := context.Background()
 	db, p := newTestPeer(ctx, t)
 	defer db.Close()
 	defer p.Close()
 
-	_, err := db.AddSchema(ctx, `type User {
-		name: String
-		age: Int
-	}`)
-	require.NoError(t, err)
-
-	col, err := db.GetCollectionByName(ctx, "User")
-	require.NoError(t, err)
-
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
-	require.NoError(t, err)
-
-	err = col.Create(ctx, doc)
-	require.NoError(t, err)
-
-	headCID, err := getHead(ctx, db, doc.ID())
-	require.NoError(t, err)
-
-	b, err := datastore.BlockstoreFrom(db.Rootstore()).AsIPLDStorage().Get(ctx, headCID.KeyString())
-	require.NoError(t, err)
-
-	err = p.handleLog(event.Update{
-		DocID:        doc.ID().String(),
-		Cid:          headCID,
-		CollectionID: col.Version().CollectionID,
-		Block:        b,
+	err := p.handleLog(event.Update{
+		DocID:        docID,
+		CollectionID: collectionID,
 	})
 	require.NoError(t, err)
 }
