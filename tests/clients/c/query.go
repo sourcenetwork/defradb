@@ -18,7 +18,57 @@ import "C"
 import (
 	"context"
 	"strings"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/sourcenetwork/defradb/client"
 )
+
+var subscriptionStore sync.Map // map[string]*client.RequestResult
+
+func storeSubscription(res *client.RequestResult) string {
+	id := uuid.NewString()
+	subscriptionStore.Store(id, res)
+	return id
+}
+
+func getSubscription(id string) (*client.RequestResult, bool) {
+	val, ok := subscriptionStore.Load(id)
+	if !ok {
+		return nil, false
+	}
+	return val.(*client.RequestResult), true
+}
+
+func removeSubscription(id string) {
+	subscriptionStore.Delete(id)
+}
+
+func PollSubscription(cID *C.char) *C.Result {
+	id := C.GoString(cID)
+	res, ok := getSubscription(id)
+	if !ok {
+		return returnC(1, "Invalid subscription ID", "")
+	}
+
+	select {
+	case msg, ok := <-res.Subscription:
+		if !ok {
+			removeSubscription(id)
+			return returnC(0, "", "") // closed
+		}
+		return marshalJSONToCResult(msg)
+	case <-time.After(time.Second):
+		return returnC(1, "Timeout waiting for subscription event", "")
+	}
+}
+
+func CloseSubscription(cID *C.char) {
+	id := C.GoString(cID)
+	removeSubscription(id)
+}
 
 func ExecuteQuery(
 	cQuery *C.char,
@@ -51,7 +101,7 @@ func ExecuteQuery(
 
 	res := globalNode.DB.ExecRequest(ctx, query, opts...)
 
-	// Caheck for errors in the GQL response, wrangling them into a single string
+	// Check for errors in the GQL response, wrangling them into a single string
 	if len(res.GQL.Errors) > 0 {
 		var sb strings.Builder
 		sb.WriteString("Error executing query:\n")
@@ -61,6 +111,11 @@ func ExecuteQuery(
 			sb.WriteString("\n")
 		}
 		return returnC(1, sb.String(), "")
+	}
+
+	if res.Subscription != nil {
+		id := storeSubscription(res)
+		return returnC(2, "", id)
 	}
 
 	// Try to marshall the JSON and return it
@@ -73,5 +128,3 @@ func ExecuteQuery(
 	}
 	return marshalJSONToCResult(wrapped)
 }
-
-func main() {}

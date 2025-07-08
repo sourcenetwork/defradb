@@ -593,6 +593,14 @@ func (w *CWrapper) ExecRequest(
 	defer C.free(unsafe.Pointer(cVariables))
 	defer freeCResult(result)
 
+	if result.status == 2 {
+		id := C.GoString(result.value)
+		newchan := WrapSubscriptionAsChannel(id)
+		return &client.RequestResult{
+			Subscription: newchan,
+		}
+	}
+
 	// Unmarshal the result into a *client.RequestResult
 	raw := C.GoString(result.value)
 	rawError := C.GoString(result.error)

@@ -37,9 +37,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-type collectionContextKey struct{}
-type schemaNameContextKey struct{}
-
 // Helper function which builds a return struct from Go to C
 func returnC(status int, errortext string, valuetext string) *C.Result {
 	result := (*C.Result)(C.malloc(C.size_t(unsafe.Sizeof(C.Result{}))))
@@ -383,4 +380,36 @@ func GetTxnFromHandle(cTxnID C.ulonglong) any {
 		return 0
 	}
 	return val
+}
+
+func convertCResultToGQLResult(res *C.Result) (client.GQLResult, error) {
+	var gql client.GQLResult
+	if res.status != 0 {
+		return gql, fmt.Errorf(C.GoString(res.value))
+	}
+	err := json.Unmarshal([]byte(C.GoString(res.value)), &gql)
+	return gql, err
+}
+
+func WrapSubscriptionAsChannel(subID string) <-chan client.GQLResult {
+	ch := make(chan client.GQLResult)
+	go func() {
+		defer close(ch)
+		cID := C.CString(subID)
+		defer C.free(unsafe.Pointer(cID))
+		for {
+			res := PollSubscription(cID)
+			if res == nil {
+				return
+			}
+			goRes, err := convertCResultToGQLResult(res)
+			freeCResult(res)
+			if err != nil {
+				goRes.Errors = append(goRes.Errors, err)
+			}
+
+			ch <- goRes
+		}
+	}()
+	return ch
 }
