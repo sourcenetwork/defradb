@@ -70,7 +70,7 @@ func pollSubscription(cID *C.char) *C.Result {
 	}
 }
 
-//export CloseSubscription
+//export closeSubscription
 func closeSubscription(cID *C.char) {
 	id := C.GoString(cID)
 	removeSubscription(id)
