@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/fxamacker/cbor/v2"
@@ -297,6 +298,11 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	// to publish the log.
 	psTopic, err := s.peer.ps.Join(topic)
 	if err != nil {
+		if strings.Contains(err.Error(), "topic already exists") {
+			// Reaching this is really rare and probably only possible
+			// through from tests. We can handle this by simply trying again.
+			return s.publishLog(ctx, topic, req)
+		}
 		return NewErrPushLog(err, errors.NewKV("Topic", topic))
 	}
 	err = psTopic.Publish(ctx, data)
