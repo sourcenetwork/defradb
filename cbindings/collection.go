@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 
 	"github.com/sourcenetwork/immutable"
@@ -65,16 +64,10 @@ func parseCollectionOptions(cOptions C.CollectionOptions) client.CollectionFetch
 // Set the transaction associated with a given context from the value inside a C.CollectionOptions struct
 func setTransactionOfCollectionCommand(ctx context.Context, cOptions C.CollectionOptions) (context.Context, error) {
 	TxnIDu64 := uint64(cOptions.tx)
-	if TxnIDu64 == 0 {
-		return ctx, nil
+	ctx2, err := contextWithTransaction(ctx, TxnIDu64)
+	if err != nil {
+		return ctx, err
 	}
-	tx, ok := TxnStore.Load(TxnIDu64)
-	if !ok {
-		return ctx, fmt.Errorf(cerrTxnDoesNotExist, TxnIDu64)
-	}
-
-	txn := tx.(datastore.Txn) //nolint:forcetypeassert
-	ctx2 := context.WithValue(ctx, transactionContextKey{}, txn)
 	return ctx2, nil
 }
 

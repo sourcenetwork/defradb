@@ -39,7 +39,6 @@ import (
 
 type collectionContextKey struct{}
 type schemaNameContextKey struct{}
-type transactionContextKey struct{}
 
 // Helper function which builds a return struct from Go to C
 func returnC(status int, errortext string, valuetext string) *C.Result {
@@ -82,7 +81,7 @@ func contextWithTransaction(ctx context.Context, cTxnID C.ulonglong) (context.Co
 		return ctx, fmt.Errorf(cerrTxnDoesNotExist, TxnIDu64)
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
-	ctx2 := context.WithValue(ctx, transactionContextKey{}, txn)
+	ctx2 := datastore.CtxSetTxn(ctx, txn)
 	return ctx2, nil
 }
 
