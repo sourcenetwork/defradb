@@ -25,8 +25,9 @@ import (
 	"strings"
 
 	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/immutable"
+	
+	"github.com/sourcenetwork/defradb/client"
 )
 
 //export addSchema
