@@ -64,7 +64,7 @@ func parseCollectionOptions(cOptions C.CollectionOptions) client.CollectionFetch
 // Set the transaction associated with a given context from the value inside a C.CollectionOptions struct
 func setTransactionOfCollectionCommand(ctx context.Context, cOptions C.CollectionOptions) (context.Context, error) {
 	TxnIDu64 := uint64(cOptions.tx)
-	ctx2, err := contextWithTransaction(ctx, TxnIDu64)
+	ctx2, err := contextWithTransaction(ctx, C.ulonglong(TxnIDu64))
 	if err != nil {
 		return ctx, err
 	}
@@ -139,9 +139,6 @@ func collectionCreate(
 		return returnC(1, err.Error(), "")
 	}
 	col := foundcol
-
-	// Set the context's collection to the selected one
-	ctx = context.WithValue(ctx, collectionContextKey{}, col)
 
 	// Set the encryption
 	raw := C.GoString(cEncryptedFields)
@@ -417,10 +414,6 @@ func collectionUpdate(cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOption
 	if err != nil {
 		return returnC(1, err.Error(), "")
 	}
-
-	// Set the context's collection to the selected one
-	ctx = context.WithValue(ctx, collectionContextKey{}, col)
-	ctx = context.WithValue(ctx, schemaNameContextKey{}, options.CollectionID.Value())
 
 	switch {
 	// Update by filter

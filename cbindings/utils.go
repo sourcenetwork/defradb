@@ -35,9 +35,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-type collectionContextKey struct{}
-type schemaNameContextKey struct{}
-
 // Helper function which builds a return struct from Go to C
 func returnC(status int, errortext string, valuetext string) *C.Result {
 	result := (*C.Result)(C.malloc(C.size_t(unsafe.Sizeof(C.Result{}))))
