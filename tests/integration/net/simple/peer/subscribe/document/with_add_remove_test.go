@@ -92,10 +92,6 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -107,6 +103,10 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 				Doc: `{
 					"name": "Andy"
 				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
@@ -139,7 +139,6 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
-				// John the User has not been synced, as Users was removed from the subscription set.
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -158,7 +157,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				// John the User has not been synced, as Users was removed from the subscription set.
+				// Andy the User has not been synced, as the docID was removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
