@@ -1,15 +1,27 @@
-## defradb client p2p
+## defradb client p2p document add
 
-Interact with the DefraDB P2P system
+Add P2P documents
 
 ### Synopsis
 
-Interact with the DefraDB P2P system
+Add P2P documents to the synchronized pubsub topics.
+The documents are synchronized between nodes of a pubsub network.
+
+Example: add single document
+  defradb client p2p document add bae123
+
+Example: add multiple documents
+  defradb client p2p document add bae123,bae456
+		
+
+```
+defradb client p2p document add [docIDs] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for p2p
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
@@ -36,9 +48,5 @@ Interact with the DefraDB P2P system
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 * [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
-* [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

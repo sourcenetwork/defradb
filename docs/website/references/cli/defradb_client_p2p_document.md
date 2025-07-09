@@ -1,15 +1,16 @@
-## defradb client p2p
+## defradb client p2p document
 
-Interact with the DefraDB P2P system
+Configure the P2P document system
 
 ### Synopsis
 
-Interact with the DefraDB P2P system
+Add, delete, or get the list of P2P documents.
+The selected documents synchronize their events on the pubsub network.
 
 ### Options
 
 ```
-  -h, --help   help for p2p
+  -h, --help   help for document
 ```
 
 ### Options inherited from parent commands
@@ -36,9 +37,8 @@ Interact with the DefraDB P2P system
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
-* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
-* [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
+* [defradb client p2p document add](defradb_client_p2p_document_add.md)	 - Add P2P documents
+* [defradb client p2p document getall](defradb_client_p2p_document_getall.md)	 - Get all P2P documents
+* [defradb client p2p document remove](defradb_client_p2p_document_remove.md)	 - Remove P2P documents
 
