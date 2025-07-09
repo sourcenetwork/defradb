@@ -26,32 +26,6 @@ import (
 // for an event before timing out
 const eventTimeout = 1 * time.Second
 
-// waitForNetworkSetupEvents waits for p2p topic completed and
-// replicator completed events to be published on the local node event bus.
-func waitForNetworkSetupEvents(s *state, nodeID int) {
-	if !s.isNetworkEnabled {
-		return
-	}
-
-	reps, err := s.nodes[nodeID].GetAllReplicators(s.ctx)
-	require.NoError(s.t, err)
-
-	replicatorEvents := len(reps)
-
-	for replicatorEvents > 0 {
-		select {
-		case _, ok := <-s.nodes[nodeID].event.replicator.Message():
-			if !ok {
-				require.Fail(s.t, "subscription closed waiting for network setup events")
-			}
-			replicatorEvents--
-
-		case <-time.After(eventTimeout):
-			s.t.Fatalf("timeout waiting for network setup events")
-		}
-	}
-}
-
 // waitForReplicatorConfigureEvent waits for a  node to publish a
 // replicator completed event on the local event bus.
 //

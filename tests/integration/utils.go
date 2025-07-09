@@ -786,8 +786,6 @@ func startNodes(s *state, action Start) {
 		databaseDir = originalPath
 		node.p2p = s.nodes[nodeIndex].p2p
 		s.nodes[nodeIndex] = node
-
-		waitForNetworkSetupEvents(s, nodeIndex)
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
