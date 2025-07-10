@@ -401,7 +401,6 @@ docs:
 	@$(MAKE) docs\:manpages
 	@$(MAKE) docs\:http
 	@$(MAKE) toc
-	@$(MAKE) toc\:playground
 
 .PHONY: docs\:cli
 docs\:cli:
@@ -424,9 +423,6 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
-
-.PHONY: toc\:playground
-toc\:playground:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
