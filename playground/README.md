@@ -2,11 +2,20 @@
 
 A web based playground for DefraDB.
 
+## Table of Contents
+
+<!--ts-->
+   * [Developing](#developing)
+      * [Wasm mode](#wasm-mode)
+      * [Remote mode](#remote-mode)
+   * [Building](#building)
+<!--te-->
+
 ## Developing
 
 The playground supports two modes, selectable via npm scripts:
 
-#### Wasm mode
+### Wasm mode
 Runs DefraDB wasm in the browser.
 
 **Steps:**
@@ -60,7 +69,7 @@ const operationName = "CreateUser";
 window.defradbClient.execRequest(query, { variables, operationName });
 ```
 
-#### Remote mode
+### Remote mode
 Connects to a running DefraDB node.
 
 **Steps:**
