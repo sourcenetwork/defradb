@@ -103,3 +103,29 @@ jobs:
           fail-if-changed: true
           files: |
              README.md
+
+  check-playground-readme-toc:
+    name: Check playground readme toc job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup Go environment explicitly
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
+
+      - name: Try generating playground readme toc
+        run: make toc:playground
+
+      - name: Check no new changes exist
+        uses: tj-actions/verify-changed-files@v20
+        with:
+          fail-if-changed: true
+          files: |
+             playground/README.md
