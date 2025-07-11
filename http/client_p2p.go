@@ -136,3 +136,43 @@ func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	}
 	return cols, nil
 }
+
+func (c *Client) SyncDocuments(
+	ctx context.Context,
+	collectionID string,
+	docIDs []string,
+	opts ...client.DocSyncOption,
+) (map[string]client.DocSyncResult, error) {
+	options := &client.DocSyncOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	methodURL := c.http.apiURL.JoinPath("p2p", "sync", "documents")
+
+	req := map[string]any{
+		"collectionID": collectionID,
+		"docIDs":       docIDs,
+	}
+
+	if options.Timeout > 0 {
+		req["timeout"] = options.Timeout.String()
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	var response map[string]client.DocSyncResult
+	if err := c.http.requestJson(httpReq, &response); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}

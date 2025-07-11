@@ -159,7 +159,12 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		p.updateSub, err = p.bus.Subscribe(
+			event.UpdateName,
+			event.P2PTopicName,
+			event.ReplicatorName,
+			event.DocSyncRequestName,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -300,6 +305,9 @@ func (p *Peer) handleMessageLoop() {
 
 		case event.P2PTopic:
 			p.server.updatePubSubTopics(evt)
+
+		case event.DocSyncRequest:
+			go p.server.handleDocSyncRequest(evt)
 
 		default:
 			// ignore other events

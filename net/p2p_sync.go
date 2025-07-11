@@ -1,0 +1,62 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package net
+
+import (
+	"context"
+	"time"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
+)
+
+// SyncDocuments requests the latest versions of specified documents from the network
+// and synchronizes their DAGs locally. After successful sync, automatically subscribes
+// to the documents and their collection for future updates.
+func (p *Peer) SyncDocuments(
+	ctx context.Context,
+	collectionID string,
+	docIDs []string,
+	opts ...client.DocSyncOption,
+) (map[string]client.DocSyncResult, error) {
+	options := &client.DocSyncOptions{
+		Timeout: 10 * time.Second,
+	}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	responseChan := make(chan event.DocSyncResponse, 1)
+	defer close(responseChan)
+
+	request := event.DocSyncRequest{
+		CollectionID: collectionID,
+		DocIDs:       docIDs,
+		Timeout:      options.Timeout,
+		Response:     responseChan,
+	}
+
+	p.bus.Publish(event.NewMessage(event.DocSyncRequestName, request))
+
+	response := <-responseChan
+	if response.Error != nil {
+		return nil, response.Error
+	}
+
+	results := make(map[string]client.DocSyncResult, len(response.Results))
+	for _, resultItem := range response.Results {
+		results[resultItem.DocID] = client.DocSyncResult{
+			Heads:  resultItem.Heads,
+			Sender: response.Sender,
+		}
+	}
+	return results, nil
+}

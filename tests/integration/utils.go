@@ -421,6 +421,9 @@ func performAction(
 	case WaitForSync:
 		waitForSync(s, action)
 
+	case SyncDocs:
+		syncDocs(s, action)
+
 	case Wait:
 		<-time.After(action.Duration)
 
@@ -2549,4 +2552,47 @@ func performVerifySignatureAction(s *state, action VerifyBlockSignature) {
 			require.NoError(s.t, err, s.testCase.Description)
 		}
 	}
+}
+
+// syncDocs handles document sync requests from the event bus.
+func syncDocs(s *state, action SyncDocs) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+
+	var expectedErrorRaised bool
+
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+
+		docIDStrings := make([]string, len(action.DocIDs))
+		for i, docIndex := range action.DocIDs {
+			docIDStrings[i] = s.docIDs[action.CollectionID][docIndex].String()
+		}
+
+		collectionIDString := s.nodes[nodeID].collections[action.CollectionID].SchemaRoot()
+
+		results, err := node.SyncDocuments(
+			s.ctx,
+			collectionIDString,
+			docIDStrings,
+		)
+
+		expectedErrorRaised = AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+		if !expectedErrorRaised && action.ExpectedDocIDs != nil {
+			for _, expectedDocIndex := range action.ExpectedDocIDs {
+				expectedDocIDString := s.docIDs[action.CollectionID][expectedDocIndex].String()
+
+				actualResult, found := results[expectedDocIDString]
+				require.True(s.t, found, "Expected result for document index %d (docID %s) not found",
+					expectedDocIndex, expectedDocIDString)
+
+				require.NotEmpty(s.t, actualResult.Head, "Expected non-empty head for document index %d (docID %s)",
+					expectedDocIndex, expectedDocIDString)
+				require.NotEmpty(s.t, actualResult.Sender, "Expected non-empty sender for document index %d (docID %s)",
+					expectedDocIndex, expectedDocIDString)
+			}
+		}
+	}
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }

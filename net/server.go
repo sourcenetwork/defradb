@@ -34,10 +34,15 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+// DocSyncTopic is the fixed topic for document sync operations.
+const docSyncTopic = "doc-sync"
 
 // server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -52,6 +57,8 @@ type server struct {
 	// replicators is a map from collection CollectionID => peerId
 	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
+
+	docSyncTopic pubsubTopic
 
 	conns map[libpeer.ID]*grpc.ClientConn
 
@@ -85,6 +92,13 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	}
 
 	s.opts = append(defaultOpts, opts...)
+
+	docSyncTopic, err := s.addPubSubTopic(docSyncTopic, true, s.docSyncMessageHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	s.docSyncTopic = docSyncTopic
 
 	return s, nil
 }
@@ -608,4 +622,101 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	}
 
 	return peerHasAccess, nil
+}
+
+// docSyncMessageHandler handles incoming document sync requests from the pubsub network.
+func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	req := &docSyncRequest{}
+	if err := cbor.Unmarshal(msg, req); err != nil {
+		return nil, err
+	}
+
+	var results []docSyncItem
+
+	for _, docID := range req.DocIDs {
+		result, err := s.processDocSyncItem(req.CollectionID, docID)
+		if err != nil {
+			log.ErrorE("Failed to process doc sync item", err,
+				corelog.String("DocID", docID),
+				corelog.String("CollectionID", req.CollectionID))
+			continue // Skip failed items
+		}
+		results = append(results, result)
+	}
+
+	reply := &docSyncReply{
+		Sender:       s.peer.host.ID().String(),
+		CollectionID: req.CollectionID,
+		Results:      results,
+	}
+
+	return cbor.Marshal(reply)
+}
+
+// processDocSyncItem processes a single document sync request and returns the result.
+func (s *server) processDocSyncItem(collectionID, docID string) (docSyncItem, error) {
+	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to create transaction: %w", err)
+	}
+	defer txn.Discard(s.peer.ctx)
+
+	cols, err := txn.GetCollections(s.peer.ctx, client.CollectionFetchOptions{
+		CollectionID: immutable.Some(collectionID),
+	})
+
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to get collection %s: %w", collectionID, err)
+	}
+
+	if len(cols) == 0 {
+		return docSyncItem{}, fmt.Errorf("collection %s not found", collectionID)
+	}
+
+	key := keys.HeadstoreDocKey{
+		DocID:   docID,
+		FieldID: core.COMPOSITE_NAMESPACE,
+	}
+
+	headstore := datastore.HeadstoreFrom(s.peer.db.Rootstore())
+	headset := coreblock.NewHeadSet(headstore, key)
+
+	cids, _, err := headset.List(s.peer.ctx)
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to get list of heads docID %s: %w", key.ToString(), err)
+	}
+
+	if len(cids) == 0 {
+		return docSyncItem{}, fmt.Errorf("Heads not found for %s", key.ToString())
+	}
+
+	result := docSyncItem{
+		DocID: docID,
+		Heads: make([][]byte, len(cids)),
+	}
+
+	for _, cid := range cids {
+		result.Heads = append(result.Heads, cid.Bytes())
+	}
+
+	return result, nil
+}
+
+// subscribeToDocument subscribes to document and collection topics after successful sync.
+func (s *server) subscribeToDocument(collectionID, docID string) {
+	if !s.hasPubSubTopicAndSubscribed(collectionID) {
+		_, err := s.addPubSubTopic(collectionID, true, nil)
+		if err != nil {
+			log.ErrorE("Failed to subscribe to collection topic", err,
+				corelog.String("CollectionID", collectionID))
+		}
+	}
+
+	if !s.hasPubSubTopicAndSubscribed(docID) {
+		_, err := s.addPubSubTopic(docID, true, nil)
+		if err != nil {
+			log.ErrorE("Failed to subscribe to document topic", err,
+				corelog.String("DocID", docID))
+		}
+	}
 }

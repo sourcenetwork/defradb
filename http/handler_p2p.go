@@ -11,9 +11,13 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 type p2pHandler struct{}
@@ -137,6 +141,43 @@ func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 	responseJSON(rw, http.StatusOK, cols)
 }
 
+func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
+	p2p, ok := tryGetContextClientP2P(req)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrP2PDisabled})
+		return
+	}
+
+	var reqBody struct {
+		CollectionID string   `json:"collectionID"`
+		DocIDs       []string `json:"docIDs"`
+		Timeout      string   `json:"timeout"`
+	}
+
+	if err := requestJSON(req, &reqBody); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	var opts []client.DocSyncOption
+	if reqBody.Timeout != "" {
+		timeout, err := time.ParseDuration(reqBody.Timeout)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("invalid timeout format: %v", err)})
+			return
+		}
+		opts = append(opts, client.DocSyncWithTimeout(timeout))
+	}
+
+	results, err := p2p.SyncDocuments(req.Context(), reqBody.CollectionID, reqBody.DocIDs, opts...)
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, results)
+}
+
 func (h *p2pHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -243,6 +284,38 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	removePeerCollections.Responses.Set("200", successResponse)
 	removePeerCollections.Responses.Set("400", errorResponse)
 
+	// Document sync operation definitions
+	syncDocumentsRequestSchema := openapi3.NewObjectSchema().
+		WithProperty("collectionID", openapi3.NewStringSchema()).
+		WithProperty("docIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
+		WithProperty("timeout", openapi3.NewStringSchema())
+
+	syncDocumentsResponseSchema := openapi3.NewObjectSchema().
+		WithAdditionalProperties(openapi3.NewObjectSchema().
+			WithProperty("head", openapi3.NewStringSchema()).
+			WithProperty("height", openapi3.NewInt64Schema()).
+			WithProperty("sender", openapi3.NewStringSchema()))
+
+	syncDocumentsRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(syncDocumentsRequestSchema))
+
+	syncDocumentsResponse := openapi3.NewResponse().
+		WithDescription("Document sync results").
+		WithContent(openapi3.NewContentWithJSONSchema(syncDocumentsResponseSchema))
+
+	syncDocuments := openapi3.NewOperation()
+	syncDocuments.Description = "Synchronize documents from the network"
+	syncDocuments.OperationID = "peer_sync_documents"
+	syncDocuments.Tags = []string{"p2p"}
+	syncDocuments.RequestBody = &openapi3.RequestBodyRef{
+		Value: syncDocumentsRequest,
+	}
+	syncDocuments.Responses = openapi3.NewResponses()
+	syncDocuments.Responses.Set("200", &openapi3.ResponseRef{Value: syncDocumentsResponse})
+	syncDocuments.Responses.Set("400", errorResponse)
+	syncDocuments.Responses.Set("500", errorResponse)
+
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)
@@ -250,4 +323,5 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollection)
 	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollection)
+	router.AddRoute("/p2p/sync/documents", http.MethodPost, syncDocuments, h.SyncDocuments)
 }

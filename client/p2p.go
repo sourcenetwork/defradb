@@ -12,7 +12,9 @@ package client
 
 import (
 	"context"
+	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
@@ -44,4 +46,39 @@ type P2P interface {
 	// GetAllP2PCollections returns the list of persisted collection IDs that
 	// the P2P system subscribes to.
 	GetAllP2PCollections(ctx context.Context) ([]string, error)
+
+	// SyncDocuments requests the latest versions of specified documents from the network
+	// and synchronizes their DAGs locally. After successful sync, automatically subscribes
+	// to the documents and their collection for future updates.
+	//
+	// Returns a map of document ID to sync result with head CIDs.
+	SyncDocuments(
+		ctx context.Context,
+		collectionID string,
+		docIDs []string,
+		opts ...DocSyncOption,
+	) (map[string]DocSyncResult, error)
+}
+
+// DocSyncOption configures the document sync operation.
+type DocSyncOption func(*DocSyncOptions)
+
+// DocSyncOptions contains options for document sync operations.
+type DocSyncOptions struct {
+	Timeout time.Duration
+}
+
+// DocSyncWithTimeout sets the timeout for the sync operation.
+func DocSyncWithTimeout(timeout time.Duration) DocSyncOption {
+	return func(opts *DocSyncOptions) {
+		opts.Timeout = timeout
+	}
+}
+
+// DocSyncResult represents the result of synchronizing a single document.
+type DocSyncResult struct {
+	// Heads is the list of CID heads of the document.
+	Heads []cid.Cid
+	// Sender is the ID of the peer that provided the document.
+	Sender string
 }

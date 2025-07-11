@@ -44,6 +44,25 @@ type getIdentityReply struct {
 	IdentityToken []byte
 }
 
+// docSyncRequest represents a request to synchronize specific documents.
+type docSyncRequest struct {
+	CollectionID string   `json:"collectionID"`
+	DocIDs       []string `json:"docIDs"`
+}
+
+// docSyncReply represents the response to a document sync request.
+type docSyncReply struct {
+	Results      []docSyncItem `json:"results"`
+	Sender       string        `json:"sender"`
+	CollectionID string        `json:"collectionID"`
+}
+
+// docSyncItem represents the sync result for a single document.
+type docSyncItem struct {
+	DocID string   `json:"docID"`
+	Heads [][]byte `json:"heads"`
+}
+
 type serviceServer interface {
 	// pushLogHandler handles a push log request to sync blocks.
 	pushLogHandler(context.Context, *pushLogRequest) (*pushLogReply, error)

@@ -150,6 +150,34 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return cols, nil
 }
 
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionID string,
+	docIDs []string,
+	opts ...client.DocSyncOption,
+) (map[string]client.DocSyncResult, error) {
+	args := []string{"client", "p2p", "sync", "docs", collectionID}
+	args = append(args, docIDs...)
+
+	options := &client.DocSyncOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+	if options.Timeout > 0 {
+		args = append(args, "--timeout", options.Timeout.String())
+	}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var results map[string]client.DocSyncResult
+	if err := json.Unmarshal(data, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	args := []string{"client", "backup", "import"}
 	args = append(args, filepath)

@@ -14,12 +14,22 @@ package net
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+	libpeer "github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 )
 
 var (
@@ -89,4 +99,165 @@ func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply
 		)
 	}
 	return resp, nil
+}
+
+// handleDocSyncRequest handles document sync requests from the event bus.
+func (s *server) handleDocSyncRequest(req event.DocSyncRequest) {
+	pubsubReq := &docSyncRequest{
+		CollectionID: req.CollectionID,
+		DocIDs:       req.DocIDs,
+	}
+
+	data, err := cbor.Marshal(pubsubReq)
+	if err != nil {
+		s.handleDocSyncError(req.Response, err)
+		return
+	}
+
+	respChan, err := s.docSyncTopic.Publish(s.peer.ctx, data, rpc.WithMultiResponse(true))
+	if err != nil {
+		s.handleDocSyncError(req.Response, fmt.Errorf("failed to publish doc sync request: %w", err))
+		return
+	}
+
+	go s.processDocSyncResponses(req, respChan)
+}
+
+// handleDocSyncError sends an error response back to the requester.
+func (s *server) handleDocSyncError(responseChan chan event.DocSyncResponse, err error) {
+	select {
+	case responseChan <- event.DocSyncResponse{
+		Results: nil,
+		Sender:  s.peer.host.ID().String(),
+		Error:   err,
+	}:
+	default:
+		log.ErrorE("Failed to send document sync error response - channel closed", err)
+	}
+}
+
+// processDocSyncResponses handles multiple responses from different peers.
+func (s *server) processDocSyncResponses(req event.DocSyncRequest, respChan <-chan rpc.Response) {
+	timeout := req.Timeout
+	if timeout == 0 {
+		timeout = 10 * time.Second
+	}
+
+	ctx, cancel := context.WithTimeout(s.peer.ctx, timeout)
+	defer cancel()
+
+	response := event.DocSyncResponse{
+		Sender: s.peer.host.ID().String(),
+	}
+
+loop:
+	for {
+		select {
+		case resp := <-respChan:
+			if resp.Err != nil {
+				log.ErrorE("Received error response from peer", resp.Err)
+				continue
+			}
+
+			if len(resp.Data) == 0 {
+				continue
+			}
+
+			var reply docSyncReply
+			if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
+				log.ErrorE("Failed to unmarshal doc sync reply", err)
+				continue
+			}
+
+			sender, err := libpeer.Decode(reply.Sender)
+			if err != nil {
+				log.ErrorE("Failed to decode peer id of sender", err)
+				continue
+			}
+
+			for _, item := range reply.Results {
+				for _, headBytes := range item.Heads {
+					_, docCid, err := cid.CidFromBytes(headBytes)
+					if err != nil {
+						log.ErrorE("Failed to parse CID from bytes", err,
+							corelog.String("DocID", item.DocID))
+						continue
+					}
+
+					docInd := slices.IndexFunc(response.Results, func(r event.DocSyncResult) bool {
+						return r.DocID == item.DocID
+					})
+
+					if docInd >= 0 {
+						if !slices.Contains(response.Results[docInd].Heads, docCid) {
+							response.Results[docInd].Heads = append(response.Results[docInd].Heads, docCid)
+						} else {
+							// we've seen this head already, just skip
+							continue
+						}
+					} else {
+						result := event.DocSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
+						response.Results = append(response.Results, result)
+					}
+
+					err = s.syncDocumentAndMerge(ctx, sender, req.CollectionID, item.DocID, docCid)
+					if err != nil {
+						log.ErrorE("Failed to sync document", err,
+							corelog.String("DocID", item.DocID),
+							corelog.String("CID", docCid.String()))
+						continue
+					}
+				}
+			}
+
+			if len(response.Results) >= len(req.DocIDs) {
+				break loop
+			}
+
+		case <-ctx.Done():
+			if len(response.Results) == 0 {
+				response.Error = ErrTimeoutDocSync
+			}
+			break loop
+		}
+	}
+
+	req.Response <- response
+}
+
+func (s *server) syncDocumentAndMerge(ctx context.Context, sender libpeer.ID, collectionID string, docID string, head cid.Cid) error {
+	err := s.syncDocumentDAG(ctx, head)
+
+	if err != nil {
+		return err
+	}
+
+	s.subscribeToDocument(collectionID, docID)
+
+	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
+		DocID:        docID,
+		ByPeer:       sender,
+		FromPeer:     s.peer.PeerInfo().ID,
+		Cid:          head,
+		CollectionID: collectionID,
+	}))
+
+	return nil
+}
+
+// syncDocumentDAG synchronizes the DAG for a specific document CID.
+func (s *server) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
+	linkSys := makeLinkSystem(s.peer.blockService)
+
+	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
+	if err != nil {
+		return err
+	}
+
+	linkBlock, err := coreblock.GetFromNode(nd)
+	if err != nil {
+		return err
+	}
+
+	return syncDAG(ctx, s.peer.blockService, linkBlock)
 }
