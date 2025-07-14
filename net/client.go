@@ -26,10 +26,11 @@ import (
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/corelog"
+	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
+
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 )
 
 var (
@@ -228,7 +229,12 @@ loop:
 
 // syncDocumentAndMerge synchronizes a document from a remote peer and publishes a merge event.
 // This function performs the following operations:
-func (s *server) syncDocumentAndMerge(ctx context.Context, sender libpeer.ID, collectionID string, docID string, head cid.Cid) error {
+func (s *server) syncDocumentAndMerge(
+	ctx context.Context,
+	sender libpeer.ID,
+	collectionID, docID string,
+	head cid.Cid,
+) error {
 	err := s.syncDocumentDAG(ctx, head)
 
 	if err != nil {

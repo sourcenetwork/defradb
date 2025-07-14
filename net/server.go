@@ -688,7 +688,7 @@ func (s *server) processDocSyncItem(collectionID, docID string) (docSyncItem, er
 	}
 
 	if len(cids) == 0 {
-		return docSyncItem{}, fmt.Errorf("Heads not found for %s", key.ToString())
+		return docSyncItem{}, fmt.Errorf("heads not found for %s", key.ToString())
 	}
 
 	result := docSyncItem{

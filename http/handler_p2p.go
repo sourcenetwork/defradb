@@ -11,7 +11,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -163,7 +162,7 @@ func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 	if reqBody.Timeout != "" {
 		timeout, err := time.ParseDuration(reqBody.Timeout)
 		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("invalid timeout format: %v", err)})
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
 		opts = append(opts, client.DocSyncWithTimeout(timeout))
