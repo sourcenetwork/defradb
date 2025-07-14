@@ -174,8 +174,8 @@ func (c *Client) SyncDocuments(
 		return resultChan
 	}
 
-	var response map[string]client.DocSyncResult
-	if err := c.http.requestJson(httpReq, &response); err != nil {
+	_, err = c.http.request(httpReq)
+	if err != nil {
 		resultChan <- err
 		return resultChan
 	}
