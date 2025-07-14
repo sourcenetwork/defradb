@@ -169,13 +169,13 @@ func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 		opts = append(opts, client.DocSyncWithTimeout(timeout))
 	}
 
-	results, err := p2p.SyncDocuments(req.Context(), reqBody.CollectionID, reqBody.DocIDs, opts...)
+	err := <-p2p.SyncDocuments(req.Context(), reqBody.CollectionID, reqBody.DocIDs, opts...)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
-	responseJSON(rw, http.StatusOK, results)
+	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *p2pHandler) bindRoutes(router *Router) {

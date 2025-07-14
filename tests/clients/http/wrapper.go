@@ -92,7 +92,7 @@ func (w *Wrapper) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) (map[string]client.DocSyncResult, error) {
+) <-chan error {
 	return w.client.SyncDocuments(ctx, collectionID, docIDs, opts...)
 }
 

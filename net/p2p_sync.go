@@ -26,7 +26,7 @@ func (p *Peer) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) (map[string]client.DocSyncResult, error) {
+) <-chan error {
 	options := &client.DocSyncOptions{
 		Timeout: 10 * time.Second,
 	}
@@ -35,7 +35,6 @@ func (p *Peer) SyncDocuments(
 	}
 
 	responseChan := make(chan event.DocSyncResponse, 1)
-	defer close(responseChan)
 
 	request := event.DocSyncRequest{
 		CollectionID: collectionID,
@@ -46,17 +45,17 @@ func (p *Peer) SyncDocuments(
 
 	p.bus.Publish(event.NewMessage(event.DocSyncRequestName, request))
 
-	response := <-responseChan
-	if response.Error != nil {
-		return nil, response.Error
-	}
+	resultChan := make(chan error, 1)
 
-	results := make(map[string]client.DocSyncResult, len(response.Results))
-	for _, resultItem := range response.Results {
-		results[resultItem.DocID] = client.DocSyncResult{
-			Heads:  resultItem.Heads,
-			Sender: response.Sender,
+	go func() {
+		defer close(resultChan)
+		response := <-responseChan
+		if response.Error != nil {
+			resultChan <- response.Error
+		} else {
+			resultChan <- nil
 		}
-	}
-	return results, nil
+	}()
+
+	return resultChan
 }

@@ -223,8 +223,11 @@ loop:
 	}
 
 	req.Response <- response
+	close(req.Response)
 }
 
+// syncDocumentAndMerge synchronizes a document from a remote peer and publishes a merge event.
+// This function performs the following operations:
 func (s *server) syncDocumentAndMerge(ctx context.Context, sender libpeer.ID, collectionID string, docID string, head cid.Cid) error {
 	err := s.syncDocumentDAG(ctx, head)
 

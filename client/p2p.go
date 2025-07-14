@@ -52,12 +52,7 @@ type P2P interface {
 	// to the documents and their collection for future updates.
 	//
 	// Returns a map of document ID to sync result with head CIDs.
-	SyncDocuments(
-		ctx context.Context,
-		collectionID string,
-		docIDs []string,
-		opts ...DocSyncOption,
-	) (map[string]DocSyncResult, error)
+	SyncDocuments(ctx context.Context, collectionID string, docIDs []string, opts ...DocSyncOption) <-chan error
 }
 
 // DocSyncOption configures the document sync operation.

@@ -155,7 +155,7 @@ func (w *Wrapper) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) (map[string]client.DocSyncResult, error) {
+) <-chan error {
 	args := []string{"client", "p2p", "sync", "docs", collectionID}
 	args = append(args, docIDs...)
 
@@ -167,15 +167,22 @@ func (w *Wrapper) SyncDocuments(
 		args = append(args, "--timeout", options.Timeout.String())
 	}
 
+	resultChan := make(chan error, 1)
+	defer close(resultChan)
+
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return nil, err
+		resultChan <- err
+		return resultChan
 	}
 	var results map[string]client.DocSyncResult
 	if err := json.Unmarshal(data, &results); err != nil {
-		return nil, err
+		resultChan <- err
+		return resultChan
 	}
-	return results, nil
+
+	resultChan <- nil
+	return resultChan
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

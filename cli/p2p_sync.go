@@ -42,12 +42,7 @@ func MakeP2PSyncDocumentsCommand() *cobra.Command {
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			results, err := cliClient.SyncDocuments(cmd.Context(), collectionID, docIDs, opts...)
-			if err != nil {
-				return err
-			}
-
-			return writeJSON(cmd, results)
+			return <-cliClient.SyncDocuments(cmd.Context(), collectionID, docIDs, opts...)
 		},
 	}
 
