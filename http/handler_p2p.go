@@ -290,19 +290,12 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 		WithProperty("docIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 		WithProperty("timeout", openapi3.NewStringSchema())
 
-	syncDocumentsResponseSchema := openapi3.NewObjectSchema().
-		WithAdditionalProperties(openapi3.NewObjectSchema().
-			WithProperty("head", openapi3.NewStringSchema()).
-			WithProperty("height", openapi3.NewInt64Schema()).
-			WithProperty("sender", openapi3.NewStringSchema()))
-
 	syncDocumentsRequest := openapi3.NewRequestBody().
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithJSONSchema(syncDocumentsRequestSchema))
 
 	syncDocumentsResponse := openapi3.NewResponse().
-		WithDescription("Document sync results").
-		WithContent(openapi3.NewContentWithJSONSchema(syncDocumentsResponseSchema))
+		WithDescription("Document sync completed successfully")
 
 	syncDocuments := openapi3.NewOperation()
 	syncDocuments.Description = "Synchronize documents from the network"
