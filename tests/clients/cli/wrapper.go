@@ -170,18 +170,13 @@ func (w *Wrapper) SyncDocuments(
 	resultChan := make(chan error, 1)
 	defer close(resultChan)
 
-	data, err := w.cmd.execute(ctx, args)
+	_, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		resultChan <- err
-		return resultChan
-	}
-	var results map[string]client.DocSyncResult
-	if err := json.Unmarshal(data, &results); err != nil {
-		resultChan <- err
-		return resultChan
+	} else {
+		resultChan <- nil
 	}
 
-	resultChan <- nil
 	return resultChan
 }
 
