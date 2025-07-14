@@ -155,61 +155,7 @@ loop:
 	for {
 		select {
 		case resp := <-respChan:
-			if resp.Err != nil {
-				log.ErrorE("Received error response from peer", resp.Err)
-				continue
-			}
-
-			if len(resp.Data) == 0 {
-				continue
-			}
-
-			var reply docSyncReply
-			if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
-				log.ErrorE("Failed to unmarshal doc sync reply", err)
-				continue
-			}
-
-			sender, err := libpeer.Decode(reply.Sender)
-			if err != nil {
-				log.ErrorE("Failed to decode peer id of sender", err)
-				continue
-			}
-
-			for _, item := range reply.Results {
-				for _, headBytes := range item.Heads {
-					_, docCid, err := cid.CidFromBytes(headBytes)
-					if err != nil {
-						log.ErrorE("Failed to parse CID from bytes", err,
-							corelog.String("DocID", item.DocID))
-						continue
-					}
-
-					docInd := slices.IndexFunc(response.Results, func(r event.DocSyncResult) bool {
-						return r.DocID == item.DocID
-					})
-
-					if docInd >= 0 {
-						if !slices.Contains(response.Results[docInd].Heads, docCid) {
-							response.Results[docInd].Heads = append(response.Results[docInd].Heads, docCid)
-						} else {
-							// we've seen this head already, just skip
-							continue
-						}
-					} else {
-						result := event.DocSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
-						response.Results = append(response.Results, result)
-					}
-
-					err = s.syncDocumentAndMerge(ctx, sender, req.CollectionID, item.DocID, docCid)
-					if err != nil {
-						log.ErrorE("Failed to sync document", err,
-							corelog.String("DocID", item.DocID),
-							corelog.String("CID", docCid.String()))
-						continue
-					}
-				}
-			}
+			s.processDocSyncResponse(ctx, resp, req.CollectionID, &response)
 
 			if len(response.Results) >= len(req.DocIDs) {
 				break loop
@@ -225,6 +171,70 @@ loop:
 
 	req.Response <- response
 	close(req.Response)
+}
+
+// processDocSyncResponse processes a single response from a peer.
+func (s *server) processDocSyncResponse(ctx context.Context, resp rpc.Response, collectionID string, response *event.DocSyncResponse) {
+	if resp.Err != nil {
+		log.ErrorE("Received error response from peer", resp.Err)
+		return
+	}
+
+	if len(resp.Data) == 0 {
+		return
+	}
+
+	var reply docSyncReply
+	if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
+		log.ErrorE("Failed to unmarshal doc sync reply", err)
+		return
+	}
+
+	sender, err := libpeer.Decode(reply.Sender)
+	if err != nil {
+		log.ErrorE("Failed to decode peer id of sender", err)
+		return
+	}
+
+	for _, item := range reply.Results {
+		s.handleDocSyncItem(ctx, item, sender, collectionID, response)
+	}
+}
+
+// handleDocSyncItem handles a single document sync item from a peer response.
+func (s *server) handleDocSyncItem(ctx context.Context, item docSyncItem, sender libpeer.ID, collectionID string, response *event.DocSyncResponse) {
+	for _, headBytes := range item.Heads {
+		_, docCid, err := cid.CidFromBytes(headBytes)
+		if err != nil {
+			log.ErrorE("Failed to parse CID from bytes", err,
+				corelog.String("DocID", item.DocID))
+			continue
+		}
+
+		docInd := slices.IndexFunc(response.Results, func(r event.DocSyncResult) bool {
+			return r.DocID == item.DocID
+		})
+
+		if docInd >= 0 {
+			if !slices.Contains(response.Results[docInd].Heads, docCid) {
+				response.Results[docInd].Heads = append(response.Results[docInd].Heads, docCid)
+			} else {
+				// we've seen this head already, just skip
+				continue
+			}
+		} else {
+			result := event.DocSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
+			response.Results = append(response.Results, result)
+		}
+
+		err = s.syncDocumentAndMerge(ctx, sender, collectionID, item.DocID, docCid)
+		if err != nil {
+			log.ErrorE("Failed to sync document", err,
+				corelog.String("DocID", item.DocID),
+				corelog.String("CID", docCid.String()))
+			continue
+		}
+	}
 }
 
 // syncDocumentAndMerge synchronizes a document from a remote peer and publishes a merge event.
