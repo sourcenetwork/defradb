@@ -174,13 +174,14 @@ loop:
 }
 
 // processDocSyncResponse processes a single response from a peer.
-func (s *server) processDocSyncResponse(ctx context.Context, resp rpc.Response, collectionID string, response *event.DocSyncResponse) {
+func (s *server) processDocSyncResponse(
+	ctx context.Context,
+	resp rpc.Response,
+	collectionID string,
+	response *event.DocSyncResponse,
+) {
 	if resp.Err != nil {
 		log.ErrorE("Received error response from peer", resp.Err)
-		return
-	}
-
-	if len(resp.Data) == 0 {
 		return
 	}
 
@@ -202,7 +203,13 @@ func (s *server) processDocSyncResponse(ctx context.Context, resp rpc.Response, 
 }
 
 // handleDocSyncItem handles a single document sync item from a peer response.
-func (s *server) handleDocSyncItem(ctx context.Context, item docSyncItem, sender libpeer.ID, collectionID string, response *event.DocSyncResponse) {
+func (s *server) handleDocSyncItem(
+	ctx context.Context,
+	item docSyncItem,
+	sender libpeer.ID,
+	collectionID string,
+	response *event.DocSyncResponse,
+) {
 	for _, headBytes := range item.Heads {
 		_, docCid, err := cid.CidFromBytes(headBytes)
 		if err != nil {
