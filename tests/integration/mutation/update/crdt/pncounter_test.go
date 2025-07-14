@@ -322,22 +322,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 				Doc: fmt.Sprintf(`{
 					"points": %g
 				}`, math.MaxFloat64/10),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						points
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name":   "John",
-							"points": math.Inf(1),
-						},
-					},
-				},
+				ExpectedError: "error merging delta: operation results in a NaN, Inf, or -Inf value.",
 			},
 		},
 	}
@@ -376,22 +361,7 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 				Doc: fmt.Sprintf(`{
 					"points": %g
 				}`, -math.MaxFloat64/10),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-						points
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name":   "John",
-							"points": math.Inf(-1),
-						},
-					},
-				},
+				ExpectedError: "error merging delta: operation results in a NaN, Inf, or -Inf value.",
 			},
 		},
 	}
@@ -439,6 +409,82 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 						},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPNCounterCreate_FloatKindWithPositiveInfValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Attempt to set a PN Counter with a value of Inf",
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// Infinite values are not supported in GQL queries
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: pncounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %g
+				}`, math.Inf(1)),
+				ExpectedError: "error merging delta: operation results in a NaN, Inf, or -Inf value.",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPNCounterCreate_FloatKindWithNegativeInfValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Description: "Attempt to set a PN Counter with a value of -Inf",
+		SupportedMutationTypes: immutable.Some(
+			[]testUtils.MutationType{
+				// Infinite values are not supported in GQL queries
+				testUtils.CollectionNamedMutationType,
+				testUtils.CollectionSaveMutationType,
+			}),
+		SupportedClientTypes: immutable.Some(
+			[]testUtils.ClientType{
+				// This test only supports the Go client at the moment due to
+				// https://github.com/sourcenetwork/defradb/issues/2569
+				testUtils.GoClientType,
+			},
+		),
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						points: Float @crdt(type: pncounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: fmt.Sprintf(`{
+					"name": "John",
+					"points": %g
+				}`, math.Inf(-1)),
+				ExpectedError: "error merging delta: operation results in a NaN, Inf, or -Inf value.",
 			},
 		},
 	}

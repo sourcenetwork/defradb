@@ -232,6 +232,20 @@ func validateAndIncrement[T Incrementable](
 	}
 
 	newValue := curValue + value
+
+	// Disallow increments that cause overflow, and throw error
+	switch any(newValue).(type) {
+	case float32:
+		f := float64(newValue)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return nil, errCounterInfiniteOverflowOperation
+		}
+	case float64:
+		f := float64(newValue)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return nil, errCounterInfiniteOverflowOperation
+		}
+	}
 	return cbor.Marshal(newValue)
 }
 
