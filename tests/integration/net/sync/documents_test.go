@@ -153,3 +153,73 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
+	createDocOnNode := func(nodeId int) testUtils.CreateDoc {
+		return testUtils.CreateDoc{
+			NodeID: immutable.Some(nodeId),
+			Doc: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		}
+	}
+
+	test := testUtils.TestCase{
+		Description: "Test synchronization of a single document that is available on multiple nodes",
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+				type Users {
+					Name: String
+					Age: Int
+				}
+			`,
+			},
+			createDocOnNode(0),
+			createDocOnNode(1),
+			createDocOnNode(2),
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 3,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 3,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 3,
+			},
+			testUtils.SyncDocs{
+				NodeID:      3,
+				DocIDs:      []int{0},
+				SourceNodes: []int{0},
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(3),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
