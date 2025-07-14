@@ -33,9 +33,7 @@ func TestAddP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 	defer db.Close()
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
-	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, schema.Root)
+	err = peer.AddP2PCollections(ctx, cols[0].Name)
 	require.NoError(t, err)
 }
 
@@ -45,13 +43,9 @@ func TestAddP2PCollection_WithMultipleValidCollections_ShouldSucceed(t *testing.
 	defer db.Close()
 	cols1, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].VersionID)
-	require.NoError(t, err)
 	cols2, err := db.AddSchema(ctx, `type Books { name: String }`)
 	require.NoError(t, err)
-	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].VersionID)
-	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, schema1.Root, schema2.Root)
+	err = peer.AddP2PCollections(ctx, cols1[0].Name, cols2[0].Name)
 	require.NoError(t, err)
 }
 
@@ -69,11 +63,9 @@ func TestRemoveP2PCollection_WithValidCollection_ShouldSucceed(t *testing.T) {
 	defer db.Close()
 	cols, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema, err := db.GetSchemaByVersionID(ctx, cols[0].VersionID)
+	err = peer.AddP2PCollections(ctx, cols[0].Name)
 	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, schema.Root)
-	require.NoError(t, err)
-	err = peer.RemoveP2PCollections(ctx, schema.Root)
+	err = peer.RemoveP2PCollections(ctx, cols[0].Name)
 	require.NoError(t, err)
 }
 
@@ -83,15 +75,11 @@ func TestGetAllP2PCollections_WithMultipleValidCollections_ShouldSucceed(t *test
 	defer db.Close()
 	cols1, err := db.AddSchema(ctx, `type User { name: String }`)
 	require.NoError(t, err)
-	schema1, err := db.GetSchemaByVersionID(ctx, cols1[0].VersionID)
-	require.NoError(t, err)
 	cols2, err := db.AddSchema(ctx, `type Books { name: String }`)
 	require.NoError(t, err)
-	schema2, err := db.GetSchemaByVersionID(ctx, cols2[0].VersionID)
-	require.NoError(t, err)
-	err = peer.AddP2PCollections(ctx, schema1.Root, schema2.Root)
+	err = peer.AddP2PCollections(ctx, cols1[0].Name, cols2[0].Name)
 	require.NoError(t, err)
 	cols, err := peer.GetAllP2PCollections(ctx)
 	require.NoError(t, err)
-	require.Equal(t, []string{schema2.Root, schema1.Root}, cols)
+	require.Equal(t, []string{cols2[0].Name, cols1[0].Name}, cols)
 }

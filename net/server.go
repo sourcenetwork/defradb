@@ -60,7 +60,8 @@ type server struct {
 
 	docSyncTopic pubsubTopic
 
-	conns map[libpeer.ID]*grpc.ClientConn
+	conns  map[libpeer.ID]*grpc.ClientConn
+	connMu sync.RWMutex
 
 	peerIdentities map[libpeer.ID]identity.Identity
 	piMux          sync.RWMutex
