@@ -159,6 +159,8 @@ func waitForUpdateEvents(
 		}
 		for k := range docIDs {
 			expect[k] = struct{}{}
+			// Mark document as subscribed since this node is waiting for updates
+			node.p2p.subscribedDocuments[k] = struct{}{}
 		}
 
 		for len(expect) > 0 {
@@ -279,6 +281,16 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 
 	// update the expected document heads of connected nodes
 	for id := range node.p2p.connections {
+		// Check if this node should receive updates for this document
+		_, isSubscribedToDoc := s.nodes[id].p2p.subscribedDocuments[getUpdateEventKey(evt)]
+		_, isSubscribedToCollection := s.nodes[id].p2p.peerCollections[collectionID]
+		
+		// Only update expectedDAGHeads for nodes that are subscribed to this document
+		// or subscribed to the collection via P2P
+		if !isSubscribedToDoc && !isSubscribedToCollection {
+			continue
+		}
+		
 		// connected nodes share updates of documents they have in common
 		if _, ok := s.nodes[id].p2p.actualDAGHeads[getUpdateEventKey(evt)]; ok {
 			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid

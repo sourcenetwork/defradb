@@ -223,3 +223,64 @@ func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.SyncDocs{
+				NodeID:       1,
+				CollectionID: 0,
+				DocIDs:       []int{0},
+				SourceNodes:  []int{0},
+			},
+			testUtils.WaitForSync{},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
