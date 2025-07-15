@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
