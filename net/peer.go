@@ -308,9 +308,6 @@ func (p *Peer) handleMessageLoop() {
 		case event.P2PTopic:
 			p.server.updatePubSubTopics(evt)
 
-		case event.DocSyncRequest:
-			go p.server.handleDocSyncRequest(evt)
-
 		default:
 			// ignore other events
 			continue

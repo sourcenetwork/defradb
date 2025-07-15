@@ -662,18 +662,6 @@ func (s *server) processDocSyncItem(collectionID, docID string) (docSyncItem, er
 	}
 	defer txn.Discard(s.peer.ctx)
 
-	cols, err := txn.GetCollections(s.peer.ctx, client.CollectionFetchOptions{
-		CollectionID: immutable.Some(collectionID),
-	})
-
-	if err != nil {
-		return docSyncItem{}, fmt.Errorf("failed to get collection %s: %w", collectionID, err)
-	}
-
-	if len(cols) == 0 {
-		return docSyncItem{}, fmt.Errorf("collection %s not found", collectionID)
-	}
-
 	key := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
@@ -701,23 +689,4 @@ func (s *server) processDocSyncItem(collectionID, docID string) (docSyncItem, er
 	}
 
 	return result, nil
-}
-
-// subscribeToDocument subscribes to document and collection topics after successful sync.
-func (s *server) subscribeToDocument(collectionID, docID string) {
-	if !s.hasPubSubTopicAndSubscribed(collectionID) {
-		_, err := s.addPubSubTopic(collectionID, true, nil)
-		if err != nil {
-			log.ErrorE("Failed to subscribe to collection topic", err,
-				corelog.String("CollectionID", collectionID))
-		}
-	}
-
-	if !s.hasPubSubTopicAndSubscribed(docID) {
-		_, err := s.addPubSubTopic(docID, true, nil)
-		if err != nil {
-			log.ErrorE("Failed to subscribe to document topic", err,
-				corelog.String("DocID", docID))
-		}
-	}
 }

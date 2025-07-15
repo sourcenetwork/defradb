@@ -12,11 +12,28 @@ package net
 
 import (
 	"context"
-	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
 )
+
+// docSyncResponse represents the response to a document sync request.
+type docSyncResponse struct {
+	// Results is a slice of sync results with document IDs.
+	Results []docSyncResult
+	// Sender is the peer ID of the responder.
+	Sender string
+	// Error is any error that occurred during the sync operation.
+	Error error
+}
+
+// docSyncResult represents the result of synchronizing a single document.
+type docSyncResult struct {
+	// DocID is the document ID.
+	DocID string
+	// Heads is the list of the CID heads for the document.
+	Heads []cid.Cid
+}
 
 // SyncDocuments requests the latest versions of specified documents from the network
 // and synchronizes their DAGs locally. After successful sync, automatically subscribes
@@ -27,23 +44,12 @@ func (p *Peer) SyncDocuments(
 	docIDs []string,
 	opts ...client.DocSyncOption,
 ) <-chan error {
-	options := &client.DocSyncOptions{
-		Timeout: 10 * time.Second,
-	}
+	options := &client.DocSyncOptions{}
 	for _, opt := range opts {
 		opt(options)
 	}
 
-	responseChan := make(chan event.DocSyncResponse, 1)
-
-	request := event.DocSyncRequest{
-		CollectionID: collectionID,
-		DocIDs:       docIDs,
-		Timeout:      options.Timeout,
-		Response:     responseChan,
-	}
-
-	p.bus.Publish(event.NewMessage(event.DocSyncRequestName, request))
+	responseChan := p.server.handleDocSyncRequest(collectionID, docIDs, options.Timeout)
 
 	resultChan := make(chan error, 1)
 

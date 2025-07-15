@@ -11,8 +11,6 @@
 package event
 
 import (
-	"time"
-
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -168,34 +166,4 @@ type ReplicatorFailure struct {
 	PeerID peer.ID
 	// DocID is the unique immutable identifier of the document that failed to replicate.
 	DocID string
-}
-
-// DocSyncRequest represents a request to synchronize specific documents from the network.
-type DocSyncRequest struct {
-	// CollectionID is the root identifier of the collection containing the documents.
-	CollectionID string
-	// DocIDs is the list of document IDs to synchronize. Supports batch requests.
-	DocIDs []string
-	// Timeout is the maximum duration to wait for the operation to complete.
-	Timeout time.Duration
-	// Response is the channel to send the sync response back to the requester.
-	Response chan DocSyncResponse
-}
-
-// DocSyncResponse represents the response to a document sync request.
-type DocSyncResponse struct {
-	// Results is a slice of sync results with document IDs.
-	Results []DocSyncResult
-	// Sender is the peer ID of the responder.
-	Sender string
-	// Error is any error that occurred during the sync operation.
-	Error error
-}
-
-// DocSyncResult represents the result of synchronizing a single document.
-type DocSyncResult struct {
-	// DocID is the document ID.
-	DocID string
-	// Heads is the list of the CID heads for the document.
-	Heads []cid.Cid
 }

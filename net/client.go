@@ -103,31 +103,38 @@ func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply
 }
 
 // handleDocSyncRequest handles document sync requests from the event bus.
-func (s *server) handleDocSyncRequest(req event.DocSyncRequest) {
+func (s *server) handleDocSyncRequest(
+	collectionID string,
+	docIDs []string,
+	timeout time.Duration,
+) <-chan docSyncResponse {
 	pubsubReq := &docSyncRequest{
-		CollectionID: req.CollectionID,
-		DocIDs:       req.DocIDs,
+		CollectionID: collectionID,
+		DocIDs:       docIDs,
 	}
+
+	responseChan := make(chan docSyncResponse, 1)
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
-		s.handleDocSyncError(req.Response, err)
-		return
+		s.handleDocSyncError(responseChan, err)
+		return responseChan
 	}
 
-	respChan, err := s.docSyncTopic.Publish(s.peer.ctx, data, rpc.WithMultiResponse(true))
+	pubSubRespChan, err := s.docSyncTopic.Publish(s.peer.ctx, data, rpc.WithMultiResponse(true))
 	if err != nil {
-		s.handleDocSyncError(req.Response, fmt.Errorf("failed to publish doc sync request: %w", err))
-		return
+		s.handleDocSyncError(responseChan, fmt.Errorf("failed to publish doc sync request: %w", err))
+		return responseChan
 	}
 
-	go s.processDocSyncResponses(req, respChan)
+	go s.processDocSyncResponses(collectionID, docIDs, timeout, responseChan, pubSubRespChan)
+	return responseChan
 }
 
 // handleDocSyncError sends an error response back to the requester.
-func (s *server) handleDocSyncError(responseChan chan event.DocSyncResponse, err error) {
+func (s *server) handleDocSyncError(responseChan chan<- docSyncResponse, err error) {
 	select {
-	case responseChan <- event.DocSyncResponse{
+	case responseChan <- docSyncResponse{
 		Results: nil,
 		Sender:  s.peer.host.ID().String(),
 		Error:   err,
@@ -138,8 +145,13 @@ func (s *server) handleDocSyncError(responseChan chan event.DocSyncResponse, err
 }
 
 // processDocSyncResponses handles multiple responses from different peers.
-func (s *server) processDocSyncResponses(req event.DocSyncRequest, respChan <-chan rpc.Response) {
-	timeout := req.Timeout
+func (s *server) processDocSyncResponses(
+	collectionID string,
+	docIDs []string,
+	timeout time.Duration,
+	responseChan chan<- docSyncResponse,
+	pubSubRespChan <-chan rpc.Response,
+) {
 	if timeout == 0 {
 		timeout = 10 * time.Second
 	}
@@ -147,17 +159,17 @@ func (s *server) processDocSyncResponses(req event.DocSyncRequest, respChan <-ch
 	ctx, cancel := context.WithTimeout(s.peer.ctx, timeout)
 	defer cancel()
 
-	response := event.DocSyncResponse{
+	response := docSyncResponse{
 		Sender: s.peer.host.ID().String(),
 	}
 
 loop:
 	for {
 		select {
-		case resp := <-respChan:
-			s.processDocSyncResponse(ctx, resp, req.CollectionID, &response)
+		case resp := <-pubSubRespChan:
+			s.processDocSyncResponse(ctx, resp, collectionID, &response)
 
-			if len(response.Results) >= len(req.DocIDs) {
+			if len(response.Results) >= len(docIDs) {
 				break loop
 			}
 
@@ -169,8 +181,8 @@ loop:
 		}
 	}
 
-	req.Response <- response
-	close(req.Response)
+	responseChan <- response
+	close(responseChan)
 }
 
 // processDocSyncResponse processes a single response from a peer.
@@ -178,7 +190,7 @@ func (s *server) processDocSyncResponse(
 	ctx context.Context,
 	resp rpc.Response,
 	collectionID string,
-	response *event.DocSyncResponse,
+	response *docSyncResponse,
 ) {
 	if resp.Err != nil {
 		log.ErrorE("Received error response from peer", resp.Err)
@@ -208,7 +220,7 @@ func (s *server) handleDocSyncItem(
 	item docSyncItem,
 	sender libpeer.ID,
 	collectionID string,
-	response *event.DocSyncResponse,
+	response *docSyncResponse,
 ) {
 	for _, headBytes := range item.Heads {
 		_, docCid, err := cid.CidFromBytes(headBytes)
@@ -218,7 +230,7 @@ func (s *server) handleDocSyncItem(
 			continue
 		}
 
-		docInd := slices.IndexFunc(response.Results, func(r event.DocSyncResult) bool {
+		docInd := slices.IndexFunc(response.Results, func(r docSyncResult) bool {
 			return r.DocID == item.DocID
 		})
 
@@ -230,7 +242,7 @@ func (s *server) handleDocSyncItem(
 				continue
 			}
 		} else {
-			result := event.DocSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
+			result := docSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
 			response.Results = append(response.Results, result)
 		}
 
@@ -245,7 +257,6 @@ func (s *server) handleDocSyncItem(
 }
 
 // syncDocumentAndMerge synchronizes a document from a remote peer and publishes a merge event.
-// This function performs the following operations:
 func (s *server) syncDocumentAndMerge(
 	ctx context.Context,
 	sender libpeer.ID,
@@ -257,8 +268,6 @@ func (s *server) syncDocumentAndMerge(
 	if err != nil {
 		return err
 	}
-
-	s.subscribeToDocument(collectionID, docID)
 
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:        docID,
