@@ -1,15 +1,27 @@
-## defradb client p2p
+## defradb client p2p document remove
 
-Interact with the DefraDB P2P system
+Remove P2P documents
 
 ### Synopsis
 
-Interact with the DefraDB P2P system
+Remove P2P documents from the followed pubsub topics.
+The removed documents will no longer be synchronized between nodes.
+
+Example: remove single document
+  defradb client p2p document remove bae123
+
+Example: remove multiple documents
+  defradb client p2p document remove bae123,bae456
+		
+
+```
+defradb client p2p document remove [docIDs] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for p2p
+  -h, --help   help for remove
 ```
 
 ### Options inherited from parent commands
@@ -36,9 +48,5 @@ Interact with the DefraDB P2P system
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 * [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
-* [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

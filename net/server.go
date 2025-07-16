@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/fxamacker/cbor/v2"
@@ -152,15 +153,6 @@ func (s *server) processPushlog(
 		corelog.Any("PeerID", pid.String()),
 		corelog.Any("DocID", req.DocID))
 
-	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-	// subscribed to the collection.
-	if !s.hasPubSubTopicAndSubscribed(req.CollectionID) && req.DocID != "" {
-		_, err = s.addPubSubTopic(req.DocID, true, nil)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:        req.DocID,
 		ByPeer:       byPeer,
@@ -238,14 +230,6 @@ func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) er
 	return err
 }
 
-// hasPubSubTopicAndSubscribed checks if we are subscribed to a topic.
-func (s *server) hasPubSubTopicAndSubscribed(topic string) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	t, ok := s.topics[topic]
-	return ok && t.subscribed
-}
-
 // removePubSubTopic unsubscribes to a topic
 func (s *server) removePubSubTopic(topic string) error {
 	if s.peer.ps == nil {
@@ -290,42 +274,50 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
-	s.mu.Lock()
-	t, ok := s.topics[topic]
-	s.mu.Unlock()
-	if !ok {
-		subscribe := topic != req.CollectionID && !s.hasPubSubTopicAndSubscribed(req.CollectionID)
-		_, err := s.addPubSubTopic(topic, subscribe, nil)
-		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
-		}
-		return s.publishLog(ctx, topic, req)
-	}
-
-	if topic == req.CollectionID && req.DocID == "" && !t.subscribed {
-		// If the push log request is scoped to the schema and not to a document, subscribe to the
-		// schema.
-		var err error
-		t, err = s.addPubSubTopic(topic, true, nil)
-		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
-		}
-	}
-
-	log.InfoContext(ctx, "Publish log",
-		corelog.String("PeerID", s.peer.PeerID().String()),
-		corelog.String("Topic", topic))
 
 	data, err := cbor.Marshal(req)
 	if err != nil {
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
-	if err != nil {
-		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
+	log.InfoContext(ctx, "Publish log",
+		corelog.String("PeerID", s.peer.PeerID().String()),
+		corelog.String("Topic", topic))
+
+	s.mu.Lock()
+	t, ok := s.topics[topic]
+	s.mu.Unlock()
+	if ok {
+		_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
+		if err != nil {
+			return NewErrPushLog(err, errors.NewKV("Topic", topic))
+		}
+		return nil
 	}
-	return nil
+
+	// If the topic hasn't been explicitly subscribed to, we temporarily join it
+	// to publish the log.
+	return s.publishDirectToTopic(ctx, topic, data, false)
+}
+
+// publishDirectToTopic temporarily joins a pubsub topic to publish data and immediately closes it.
+//
+// This is useful to publish messages without incurring the cost of a full pubsub rpc topic.
+func (s *server) publishDirectToTopic(ctx context.Context, topic string, data []byte, isRetry bool) error {
+	psTopic, err := s.peer.ps.Join(topic)
+	if err != nil {
+		if strings.Contains(err.Error(), "topic already exists") && !isRetry {
+			// Reaching this is really rare and probably only possible
+			// through from tests. We can handle this by simply trying again a single time.
+			return s.publishDirectToTopic(ctx, topic, data, true)
+		}
+		return NewErrPushLog(err, errors.NewKV("Topic", topic))
+	}
+	err = psTopic.Publish(ctx, data)
+	if err != nil {
+		return NewErrPushLog(err, errors.NewKV("Topic", topic))
+	}
+	return psTopic.Close()
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
@@ -383,23 +375,6 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 		return "", errors.Wrap("parsing stream PeerID", err)
 	}
 	return pid, nil
-}
-
-func (s *server) updatePubSubTopics(evt event.P2PTopic) {
-	for _, topic := range evt.ToAdd {
-		_, err := s.addPubSubTopic(topic, true, nil)
-		if err != nil {
-			log.ErrorE("Failed to add pubsub topic.", err)
-		}
-	}
-
-	for _, topic := range evt.ToRemove {
-		err := s.removePubSubTopic(topic)
-		if err != nil {
-			log.ErrorE("Failed to remove pubsub topic.", err)
-		}
-	}
-	s.peer.bus.Publish(event.NewMessage(event.P2PTopicCompletedName, nil))
 }
 
 func (s *server) updateReplicators(rep peer.AddrInfo, collectionIDs map[string]struct{}) {

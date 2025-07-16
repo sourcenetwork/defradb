@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package peer_test
+package subscribe_test
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
+func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -27,15 +27,19 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 				Schema: `
 					type Users {
 						name: String
-						points: Int @crdt(type: pcounter)
 					}
 				`,
 			},
 			testUtils.CreateDoc{
-				// Create Shahzad on all nodes
+				NodeID: immutable.Some(0),
 				Doc: `{
-					"name": "Shahzad",
-					"points": 10
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Fred"
 				}`,
 			},
 			testUtils.ConnectPeers{
@@ -49,23 +53,43 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 				},
 			},
 			testUtils.UpdateDoc{
-				NodeID: immutable.Some(0),
-				DocID:  0,
+				NodeID:       immutable.Some(0),
+				CollectionID: 0,
+				DocID:        0,
 				Doc: `{
-					"points": 10
+					"name": "Andy"
 				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
+				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
-						points
+						name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"points": int64(20),
+							"name": "Fred",
+						},
+						{
+							"name": "Andy",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Andy",
 						},
 					},
 				},
@@ -76,7 +100,7 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
+func TestP2PDocument_AddSingleErroneousDocID_ShouldNotSync(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -84,59 +108,42 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users {
-						Name: String
-						Age: Int @crdt(type: pcounter)
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
-				// Create John on all nodes
+				NodeID: immutable.Some(0),
 				Doc: `{
-					"Name": "John",
-					"Age": 0
+					"name": "John"
 				}`,
 			},
 			testUtils.ConnectPeers{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
+				SourceNodeID: 1,
+				TargetNodeID: 0,
 			},
 			testUtils.SubscribeToDocument{
-				NodeID: 0,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
-				},
-			},
-			testUtils.SubscribeToDocument{
-				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
-				},
+				NodeID:        1,
+				DocIDs:        []testUtils.ColDocIndex{testUtils.NewColDocIndex(0, testUtils.NonExistentDocID)},
+				ExpectedError: "malformed document ID, missing either version or cid",
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"Age": 45
-				}`,
-			},
-			testUtils.UpdateDoc{
-				NodeID: immutable.Some(1),
-				Doc: `{
-					"Age": 45
+					"name": "Andy"
 				}`,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
+				// Nothing should sync
+				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
-						Age
+						name
 					}
 				}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Age": int64(90),
-						},
-					},
+					"Users": []map[string]any{},
 				},
 			},
 		},

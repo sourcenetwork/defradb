@@ -44,6 +44,12 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
@@ -98,6 +104,12 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the second node only, and allow the value to sync
 				NodeID: immutable.Some(1),
@@ -150,6 +162,18 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node to 60
@@ -211,6 +235,12 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node to 60
@@ -384,6 +414,18 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),

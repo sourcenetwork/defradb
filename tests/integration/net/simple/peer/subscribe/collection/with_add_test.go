@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,9 +18,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2PSubscribeAddSingle ensures that created documents reach the node that subscribes
+// TestP2PCollectionAddSingle ensures that created documents reach the node that subscribes
 // to the P2P collection topic but not the one that doesn't.
-func TestP2PSubscribeAddSingle(t *testing.T) {
+func TestP2PCollectionAddSingle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -94,7 +94,7 @@ func TestP2PSubscribeAddSingle(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddMultiple(t *testing.T) {
+func TestP2PCollectionAddMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -190,7 +190,7 @@ func TestP2PSubscribeAddMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
+func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -236,7 +236,7 @@ func TestP2PSubscribeAddSingleErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
+func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -283,7 +283,7 @@ func TestP2PSubscribeAddValidAndErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
+func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -337,7 +337,7 @@ func TestP2PSubscribeAddValidThenErroneousCollectionID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddNone(t *testing.T) {
+func TestP2PCollectionAddNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

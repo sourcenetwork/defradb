@@ -70,6 +70,14 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
+			testUtils.SubscribeToCollection{
+				NodeID:        0,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{
 				// Update node 1 after the peer connection has been established, this will cause the `Shahzad` commit

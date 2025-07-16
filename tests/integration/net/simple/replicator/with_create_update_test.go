@@ -103,6 +103,12 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 			// Wait for John to be synced to the target before attempting to update
 			// it.
 			testUtils.WaitForSync{},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the seond node only, and allow the value to sync
 				// back to the original node that created the document.

@@ -46,6 +46,12 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.DeleteDoc{
 				// Delete John from the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
