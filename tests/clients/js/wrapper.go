@@ -82,7 +82,7 @@ func (w *Wrapper) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) <-chan error {
+) error {
 	panic("not implemented")
 }
 

@@ -142,7 +142,7 @@ func (c *Client) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) <-chan error {
+) error {
 	options := &client.DocSyncOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -159,27 +159,16 @@ func (c *Client) SyncDocuments(
 		req["timeout"] = options.Timeout.String()
 	}
 
-	resultChan := make(chan error, 1)
-	defer close(resultChan)
-
 	body, err := json.Marshal(req)
 	if err != nil {
-		resultChan <- err
-		return resultChan
+		return err
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		resultChan <- err
-		return resultChan
+		return err
 	}
 
 	_, err = c.http.request(httpReq)
-	if err != nil {
-		resultChan <- err
-		return resultChan
-	}
-
-	resultChan <- nil
-	return resultChan
+	return err
 }

@@ -155,7 +155,7 @@ func (w *Wrapper) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) <-chan error {
+) error {
 	args := []string{"client", "p2p", "sync", "docs", collectionID}
 	args = append(args, docIDs...)
 
@@ -167,17 +167,8 @@ func (w *Wrapper) SyncDocuments(
 		args = append(args, "--timeout", options.Timeout.String())
 	}
 
-	resultChan := make(chan error, 1)
-	defer close(resultChan)
-
 	_, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		resultChan <- err
-	} else {
-		resultChan <- nil
-	}
-
-	return resultChan
+	return err
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

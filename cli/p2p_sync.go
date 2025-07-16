@@ -42,7 +42,7 @@ func MakeP2PSyncDocumentsCommand() *cobra.Command {
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return <-cliClient.SyncDocuments(cmd.Context(), collectionID, docIDs, opts...)
+			return cliClient.SyncDocuments(cmd.Context(), collectionID, docIDs, opts...)
 		},
 	}
 

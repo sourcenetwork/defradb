@@ -49,9 +49,7 @@ type P2P interface {
 	// SyncDocuments requests the latest versions of specified documents from the network
 	// and synchronizes their DAGs locally. After successful sync, automatically subscribes
 	// to the documents and their collection for future updates.
-	//
-	// Returns a channel to allow asynchronous handling of the operation.
-	SyncDocuments(ctx context.Context, collectionID string, docIDs []string, opts ...DocSyncOption) <-chan error
+	SyncDocuments(ctx context.Context, collectionID string, docIDs []string, opts ...DocSyncOption) error
 }
 
 // DocSyncOption configures the document sync operation.

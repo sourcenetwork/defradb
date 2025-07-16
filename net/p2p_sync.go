@@ -44,7 +44,7 @@ func (p *Peer) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 	opts ...client.DocSyncOption,
-) <-chan error {
+) error {
 	options := &client.DocSyncOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -52,17 +52,6 @@ func (p *Peer) SyncDocuments(
 
 	responseChan := p.server.handleDocSyncRequest(collectionID, docIDs, options.Timeout)
 
-	resultChan := make(chan error, 1)
-
-	go func() {
-		defer close(resultChan)
-		response := <-responseChan
-		if response.Error != nil {
-			resultChan <- response.Error
-		} else {
-			resultChan <- nil
-		}
-	}()
-
-	return resultChan
+	response := <-responseChan
+	return response.Error
 }

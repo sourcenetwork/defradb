@@ -168,7 +168,7 @@ func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 		opts = append(opts, client.DocSyncWithTimeout(timeout))
 	}
 
-	err := <-p2p.SyncDocuments(req.Context(), reqBody.CollectionID, reqBody.DocIDs, opts...)
+	err := p2p.SyncDocuments(req.Context(), reqBody.CollectionID, reqBody.DocIDs, opts...)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

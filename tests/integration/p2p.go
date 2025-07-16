@@ -327,7 +327,7 @@ func syncDocs(s *state, action SyncDocs) {
 	err := withRetryOnNode(
 		node,
 		func() error {
-			return <-node.SyncDocuments(
+			return node.SyncDocuments(
 				s.ctx,
 				collectionIDString,
 				docIDStrings,
