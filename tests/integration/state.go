@@ -59,12 +59,6 @@ type p2pState struct {
 	// This tracks composite commits for documents, and collection commits for
 	// branchable collections
 	expectedDAGHeads map[string]cid.Cid
-
-	// subscribedDocuments contains all documents that this node is subscribed to.
-	//
-	// The map key is the doc id. Subscribed documents will receive automatic
-	// updates when new commits are made by other nodes.
-	subscribedDocuments map[string]struct{}
 }
 
 // docHeadState contains the state of a document head.
@@ -79,12 +73,11 @@ type docHeadState struct {
 // newP2PState returns a new empty p2p state.
 func newP2PState() *p2pState {
 	return &p2pState{
-		connections:         make(map[int]struct{}),
-		replicators:         make(map[int]struct{}),
-		peerCollections:     make(map[int]struct{}),
-		actualDAGHeads:      make(map[string]docHeadState),
-		expectedDAGHeads:    make(map[string]cid.Cid),
-		subscribedDocuments: make(map[string]struct{}),
+		connections:      make(map[int]struct{}),
+		replicators:      make(map[int]struct{}),
+		peerCollections:  make(map[int]struct{}),
+		actualDAGHeads:   make(map[string]docHeadState),
+		expectedDAGHeads: make(map[string]cid.Cid),
 	}
 }
 
