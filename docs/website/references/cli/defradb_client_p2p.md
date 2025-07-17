@@ -41,5 +41,4 @@ Interact with the DefraDB P2P system
 * [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 * [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
 * [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
-* [defradb client p2p sync](defradb_client_p2p_sync.md)	 - P2P document synchronization commands
 

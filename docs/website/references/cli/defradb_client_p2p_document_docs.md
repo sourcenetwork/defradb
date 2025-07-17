@@ -1,9 +1,9 @@
-## defradb client p2p sync docs
+## defradb client p2p document docs
 
 Synchronize specific documents from the network
 
 ```
-defradb client p2p sync docs [collection-id] [doc-id...] [flags]
+defradb client p2p document docs [collection-id] [doc-id...] [flags]
 ```
 
 ### Options
@@ -37,5 +37,5 @@ defradb client p2p sync docs [collection-id] [doc-id...] [flags]
 
 ### SEE ALSO
 
-* [defradb client p2p sync](defradb_client_p2p_sync.md)	 - P2P document synchronization commands
+* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 

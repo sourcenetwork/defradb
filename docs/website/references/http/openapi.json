@@ -2096,6 +2096,53 @@
                 ]
             }
         },
+        "/p2p/documents/sync": {
+            "post": {
+                "description": "Synchronize documents from the network",
+                "operationId": "peer_sync_documents",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "collectionID": {
+                                        "type": "string"
+                                    },
+                                    "docIDs": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "timeout": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document sync completed successfully"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
         "/p2p/info": {
             "get": {
                 "operationId": "peer_info",
@@ -2197,53 +2244,6 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "p2p"
-                ]
-            }
-        },
-        "/p2p/sync/documents": {
-            "post": {
-                "description": "Synchronize documents from the network",
-                "operationId": "peer_sync_documents",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "collectionID": {
-                                        "type": "string"
-                                    },
-                                    "docIDs": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "timeout": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "Document sync completed successfully"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "500": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {
