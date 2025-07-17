@@ -156,10 +156,6 @@ func unmarshalMessage(event goji.EventValue) Message {
 		var value PubSub
 		goji.MustUnmarshalJS(detail, &value)
 		message.Data = value
-	case P2PTopicName:
-		var value P2PTopic
-		goji.MustUnmarshalJS(detail, &value)
-		message.Data = value
 	case PeerInfoName:
 		var value PeerInfo
 		goji.MustUnmarshalJS(detail, &value)

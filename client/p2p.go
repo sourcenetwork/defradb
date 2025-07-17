@@ -46,9 +46,23 @@ type P2P interface {
 	// the P2P system subscribes to.
 	GetAllP2PCollections(ctx context.Context) ([]string, error)
 
+	// AddP2PDocuments adds the given docIDs to the P2P system and
+	// subscribes to their topics. It will error if any of the provided
+	// docIDs are invalid.
+	AddP2PDocuments(ctx context.Context, docIDs ...string) error
+
+	// RemoveP2PDocuments removes the given docIDs from the P2P system and
+	// unsubscribes from their topics. It will error if the provided
+	// docIDs are invalid.
+	RemoveP2PDocuments(ctx context.Context, docIDs ...string) error
+
+	// GetAllP2PDocuments returns the list of persisted docIDs that
+	// the P2P system subscribes to.
+	GetAllP2PDocuments(ctx context.Context) ([]string, error)
+
 	// SyncDocuments requests the latest versions of specified documents from the network
-	// and synchronizes their DAGs locally. After successful sync, automatically subscribes
-	// to the documents and their collection for future updates.
+	// and synchronizes their DAGs locally. It doesn't automatically subscribe
+	// to the documents or their collection for future updates.
 	SyncDocuments(ctx context.Context, collectionID string, docIDs []string, opts ...DocSyncOption) error
 }
 

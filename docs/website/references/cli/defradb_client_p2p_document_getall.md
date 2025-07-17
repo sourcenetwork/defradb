@@ -1,15 +1,20 @@
-## defradb client p2p
+## defradb client p2p document getall
 
-Interact with the DefraDB P2P system
+Get all P2P documents
 
 ### Synopsis
 
-Interact with the DefraDB P2P system
+Get all P2P documents in the pubsub topics.
+This is the list of documents of the node that are synchronized on the pubsub network.
+
+```
+defradb client p2p document getall [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for p2p
+  -h, --help   help for getall
 ```
 
 ### Options inherited from parent commands
@@ -36,10 +41,5 @@ Interact with the DefraDB P2P system
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 * [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
-* [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
-* [defradb client p2p sync](defradb_client_p2p_sync.md)	 - P2P document synchronization commands
 
