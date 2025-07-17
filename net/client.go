@@ -119,11 +119,11 @@ func (s *server) syncDocuments(
 		return nil, err
 	}
 
-	return s.processDocSyncResponses(ctx, collectionID, docIDs, pubSubRespChan)
+	return s.waitAndHandleDocSyncResponses(ctx, collectionID, docIDs, pubSubRespChan)
 }
 
-// processDocSyncResponses handles multiple responses from different peers.
-func (s *server) processDocSyncResponses(
+// waitAndHandleDocSyncResponses handles multiple responses from different peers.
+func (s *server) waitAndHandleDocSyncResponses(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
@@ -135,7 +135,7 @@ loop:
 	for {
 		select {
 		case resp := <-pubSubRespChan:
-			s.processDocSyncResponse(ctx, resp, collectionID, result)
+			s.handleDocSyncResponse(ctx, resp, collectionID, result)
 
 			if len(result) >= len(docIDs) {
 				break loop
@@ -152,8 +152,8 @@ loop:
 	return result, nil
 }
 
-// processDocSyncResponse processes a single response from a peer.
-func (s *server) processDocSyncResponse(
+// handleDocSyncResponse processes a single response from a peer.
+func (s *server) handleDocSyncResponse(
 	ctx context.Context,
 	resp rpc.Response,
 	collectionID string,
