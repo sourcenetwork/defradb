@@ -159,11 +159,7 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(
-			event.UpdateName,
-			event.ReplicatorName,
-			event.DocSyncRequestName,
-		)
+		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.ReplicatorName)
 		if err != nil {
 			return nil, err
 		}

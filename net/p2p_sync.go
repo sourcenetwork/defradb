@@ -18,16 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// docSyncResponse represents the response to a document sync request.
-type docSyncResponse struct {
-	// Results is a slice of sync results with document IDs.
-	Results []docSyncResult
-	// Sender is the peer ID of the responder.
-	Sender string
-	// Error is any error that occurred during the sync operation.
-	Error error
-}
-
 // docSyncResult represents the result of synchronizing a single document.
 type docSyncResult struct {
 	// DocID is the document ID.
@@ -50,8 +40,6 @@ func (p *Peer) SyncDocuments(
 		opt(options)
 	}
 
-	responseChan := p.server.handleDocSyncRequest(collectionID, docIDs, options.Timeout)
-
-	response := <-responseChan
-	return response.Error
+	_, err := p.server.syncDocuments(collectionID, docIDs, options.Timeout)
+	return err
 }

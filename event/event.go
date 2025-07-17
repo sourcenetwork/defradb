@@ -60,8 +60,6 @@ const (
 	ReplicatorCompletedName = Name("replicator-completed")
 	// PurgeName is the name of the purge event.
 	PurgeName = Name("purge")
-	// DocSyncRequestName is the name of the document sync request event.
-	DocSyncRequestName = Name("doc-sync-request")
 )
 
 // PubSub is an event that is published when

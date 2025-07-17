@@ -14,7 +14,6 @@ package net
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"time"
 
@@ -102,43 +101,25 @@ func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply
 	return resp, nil
 }
 
-// handleDocSyncRequest handles document sync requests from the event bus.
-func (s *server) handleDocSyncRequest(
+// syncDocuments requests document synchronization from the network.
+func (s *server) syncDocuments(
 	collectionID string,
 	docIDs []string,
 	timeout time.Duration,
-) <-chan docSyncResponse {
+) ([]docSyncResult, error) {
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
-
-	responseChan := make(chan docSyncResponse, 1)
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
-		s.handleDocSyncError(responseChan, err)
-		return responseChan
+		return nil, err
 	}
 
 	pubSubRespChan, err := s.docSyncTopic.Publish(s.peer.ctx, data, rpc.WithMultiResponse(true))
 	if err != nil {
-		s.handleDocSyncError(responseChan, fmt.Errorf("failed to publish doc sync request: %w", err))
-		return responseChan
+		return nil, err
 	}
 
-	go s.processDocSyncResponses(collectionID, docIDs, timeout, responseChan, pubSubRespChan)
-	return responseChan
-}
-
-// handleDocSyncError sends an error response back to the requester.
-func (s *server) handleDocSyncError(responseChan chan<- docSyncResponse, err error) {
-	select {
-	case responseChan <- docSyncResponse{
-		Results: nil,
-		Sender:  s.peer.host.ID().String(),
-		Error:   err,
-	}:
-	default:
-		log.ErrorE("Failed to send document sync error response - channel closed", err)
-	}
+	return s.processDocSyncResponses(collectionID, docIDs, timeout, pubSubRespChan)
 }
 
 // processDocSyncResponses handles multiple responses from different peers.
@@ -146,9 +127,8 @@ func (s *server) processDocSyncResponses(
 	collectionID string,
 	docIDs []string,
 	timeout time.Duration,
-	responseChan chan<- docSyncResponse,
 	pubSubRespChan <-chan rpc.Response,
-) {
+) (results []docSyncResult, err error) {
 	if timeout == 0 {
 		timeout = 10 * time.Second
 	}
@@ -156,30 +136,27 @@ func (s *server) processDocSyncResponses(
 	ctx, cancel := context.WithTimeout(s.peer.ctx, timeout)
 	defer cancel()
 
-	response := docSyncResponse{
-		Sender: s.peer.host.ID().String(),
-	}
+	result := []docSyncResult{}
 
 loop:
 	for {
 		select {
 		case resp := <-pubSubRespChan:
-			s.processDocSyncResponse(ctx, resp, collectionID, &response)
+			s.processDocSyncResponse(ctx, resp, collectionID, &result)
 
-			if len(response.Results) >= len(docIDs) {
+			if len(result) >= len(docIDs) {
 				break loop
 			}
 
 		case <-ctx.Done():
-			if len(response.Results) == 0 {
-				response.Error = ErrTimeoutDocSync
+			if len(result) == 0 {
+				return nil, ErrTimeoutDocSync
 			}
 			break loop
 		}
 	}
 
-	responseChan <- response
-	close(responseChan)
+	return result, nil
 }
 
 // processDocSyncResponse processes a single response from a peer.
@@ -187,7 +164,7 @@ func (s *server) processDocSyncResponse(
 	ctx context.Context,
 	resp rpc.Response,
 	collectionID string,
-	response *docSyncResponse,
+	results *[]docSyncResult,
 ) {
 	if resp.Err != nil {
 		log.ErrorE("Received error response from peer", resp.Err)
@@ -207,7 +184,7 @@ func (s *server) processDocSyncResponse(
 	}
 
 	for _, item := range reply.Results {
-		s.handleDocSyncItem(ctx, item, sender, collectionID, response)
+		s.handleDocSyncItem(ctx, item, sender, collectionID, results)
 	}
 }
 
@@ -217,7 +194,7 @@ func (s *server) handleDocSyncItem(
 	item docSyncItem,
 	sender libpeer.ID,
 	collectionID string,
-	response *docSyncResponse,
+	results *[]docSyncResult,
 ) {
 	for _, headBytes := range item.Heads {
 		_, docCid, err := cid.CidFromBytes(headBytes)
@@ -227,20 +204,20 @@ func (s *server) handleDocSyncItem(
 			continue
 		}
 
-		docInd := slices.IndexFunc(response.Results, func(r docSyncResult) bool {
+		docInd := slices.IndexFunc(*results, func(r docSyncResult) bool {
 			return r.DocID == item.DocID
 		})
 
 		if docInd >= 0 {
-			if !slices.Contains(response.Results[docInd].Heads, docCid) {
-				response.Results[docInd].Heads = append(response.Results[docInd].Heads, docCid)
+			if !slices.Contains((*results)[docInd].Heads, docCid) {
+				(*results)[docInd].Heads = append((*results)[docInd].Heads, docCid)
 			} else {
 				// we've seen this head already, just skip
 				continue
 			}
 		} else {
 			result := docSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
-			response.Results = append(response.Results, result)
+			*results = append(*results, result)
 		}
 
 		err = s.syncDocumentAndMerge(ctx, sender, collectionID, item.DocID, docCid)
