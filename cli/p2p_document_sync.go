@@ -16,17 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeP2PSyncCommand() *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "sync",
-		Short: "P2P document synchronization commands",
-		Long:  "P2P document synchronization commands",
-	}
-
-	return cmd
-}
-
-func MakeP2PSyncDocumentsCommand() *cobra.Command {
+func MakeP2PDocumentSyncCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:     "docs [collection-id] [doc-id...]",
 		Short:   "Synchronize specific documents from the network",

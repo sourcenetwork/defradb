@@ -108,10 +108,7 @@ func (s *server) handleDocSyncRequest(
 	docIDs []string,
 	timeout time.Duration,
 ) <-chan docSyncResponse {
-	pubsubReq := &docSyncRequest{
-		CollectionID: collectionID,
-		DocIDs:       docIDs,
-	}
+	pubsubReq := &docSyncRequest{DocIDs: docIDs}
 
 	responseChan := make(chan docSyncResponse, 1)
 

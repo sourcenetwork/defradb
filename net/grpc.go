@@ -46,15 +46,13 @@ type getIdentityReply struct {
 
 // docSyncRequest represents a request to synchronize specific documents.
 type docSyncRequest struct {
-	CollectionID string   `json:"collectionID"`
-	DocIDs       []string `json:"docIDs"`
+	DocIDs []string `json:"docIDs"`
 }
 
 // docSyncReply represents the response to a document sync request.
 type docSyncReply struct {
 	Results      []docSyncItem `json:"results"`
 	Sender       string        `json:"sender"`
-	CollectionID string        `json:"collectionID"`
 }
 
 // docSyncItem represents the sync result for a single document.

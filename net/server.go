@@ -610,27 +610,24 @@ func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte
 	var results []docSyncItem
 
 	for _, docID := range req.DocIDs {
-		result, err := s.processDocSyncItem(req.CollectionID, docID)
+		result, err := s.processDocSyncItem(docID)
 		if err != nil {
-			log.ErrorE("Failed to process doc sync item", err,
-				corelog.String("DocID", docID),
-				corelog.String("CollectionID", req.CollectionID))
+			log.ErrorE("Failed to process doc sync item", err, corelog.String("DocID", docID))
 			continue // Skip failed items
 		}
 		results = append(results, result)
 	}
 
 	reply := &docSyncReply{
-		Sender:       s.peer.host.ID().String(),
-		CollectionID: req.CollectionID,
-		Results:      results,
+		Sender:  s.peer.host.ID().String(),
+		Results: results,
 	}
 
 	return cbor.Marshal(reply)
 }
 
 // processDocSyncItem processes a single document sync request and returns the result.
-func (s *server) processDocSyncItem(collectionID, docID string) (docSyncItem, error) {
+func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
 	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
 	if err != nil {
 		return docSyncItem{}, fmt.Errorf("failed to create transaction: %w", err)
