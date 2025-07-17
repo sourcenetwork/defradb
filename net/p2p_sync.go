@@ -12,17 +12,7 @@ package net
 
 import (
 	"context"
-
-	"github.com/ipfs/go-cid"
 )
-
-// docSyncResult represents the result of synchronizing a single document.
-type docSyncResult struct {
-	// DocID is the document ID.
-	DocID string
-	// Heads is the list of the CID heads for the document.
-	Heads []cid.Cid
-}
 
 func (p *Peer) SyncDocuments(ctx context.Context, collectionID string, docIDs []string) error {
 	_, err := p.server.syncDocuments(ctx, collectionID, docIDs)
