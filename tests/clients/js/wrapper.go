@@ -93,7 +93,6 @@ func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	opts ...client.DocSyncOption,
 ) error {
 	panic("not implemented")
 }

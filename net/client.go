@@ -106,7 +106,7 @@ func (s *server) syncDocuments(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-) ([]docSyncResult, error) {
+) (map[string][]cid.Cid, error) {
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
 
 	data, err := cbor.Marshal(pubsubReq)
@@ -128,14 +128,14 @@ func (s *server) processDocSyncResponses(
 	collectionID string,
 	docIDs []string,
 	pubSubRespChan <-chan rpc.Response,
-) (results []docSyncResult, err error) {
-	result := []docSyncResult{}
+) (results map[string][]cid.Cid, err error) {
+	result := make(map[string][]cid.Cid)
 
 loop:
 	for {
 		select {
 		case resp := <-pubSubRespChan:
-			s.processDocSyncResponse(ctx, resp, collectionID, &result)
+			s.processDocSyncResponse(ctx, resp, collectionID, result)
 
 			if len(result) >= len(docIDs) {
 				break loop
@@ -157,7 +157,7 @@ func (s *server) processDocSyncResponse(
 	ctx context.Context,
 	resp rpc.Response,
 	collectionID string,
-	results *[]docSyncResult,
+	results map[string][]cid.Cid,
 ) {
 	if resp.Err != nil {
 		log.ErrorE("Received error response from peer", resp.Err)
@@ -187,7 +187,7 @@ func (s *server) handleDocSyncItem(
 	item docSyncItem,
 	sender libpeer.ID,
 	collectionID string,
-	results *[]docSyncResult,
+	results map[string][]cid.Cid,
 ) {
 	for _, headBytes := range item.Heads {
 		_, docCid, err := cid.CidFromBytes(headBytes)
@@ -197,20 +197,15 @@ func (s *server) handleDocSyncItem(
 			continue
 		}
 
-		docInd := slices.IndexFunc(*results, func(r docSyncResult) bool {
-			return r.DocID == item.DocID
-		})
-
-		if docInd >= 0 {
-			if !slices.Contains((*results)[docInd].Heads, docCid) {
-				(*results)[docInd].Heads = append((*results)[docInd].Heads, docCid)
+		if heads, exists := results[item.DocID]; exists {
+			if !slices.Contains(heads, docCid) {
+				results[item.DocID] = append(heads, docCid)
 			} else {
 				// we've seen this head already, just skip
 				continue
 			}
 		} else {
-			result := docSyncResult{DocID: item.DocID, Heads: []cid.Cid{docCid}}
-			*results = append(*results, result)
+			results[item.DocID] = []cid.Cid{docCid}
 		}
 
 		err = s.syncDocumentAndMerge(ctx, sender, collectionID, item.DocID, docCid)
