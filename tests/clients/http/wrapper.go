@@ -103,9 +103,8 @@ func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	opts ...client.DocSyncOption,
 ) error {
-	return w.client.SyncDocuments(ctx, collectionID, docIDs, opts...)
+	return w.client.SyncDocuments(ctx, collectionID, docIDs)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

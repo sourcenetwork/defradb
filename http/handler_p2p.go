@@ -11,12 +11,11 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 type p2pHandler struct{}
@@ -213,17 +212,19 @@ func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var opts []client.DocSyncOption
+	ctx := req.Context()
 	if reqBody.Timeout != "" {
 		timeout, err := time.ParseDuration(reqBody.Timeout)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		opts = append(opts, client.DocSyncWithTimeout(timeout))
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
 	}
 
-	err := p2p.SyncDocuments(req.Context(), reqBody.CollectionID, reqBody.DocIDs, opts...)
+	err := p2p.SyncDocuments(ctx, reqBody.CollectionID, reqBody.DocIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

@@ -11,9 +11,9 @@
 package cli
 
 import (
-	"github.com/spf13/cobra"
+	"context"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/spf13/cobra"
 )
 
 func MakeP2PDocumentSyncCommand() *cobra.Command {
@@ -26,13 +26,15 @@ func MakeP2PDocumentSyncCommand() *cobra.Command {
 			collectionID := args[0]
 			docIDs := args[1:]
 
-			var opts []client.DocSyncOption
+			ctx := cmd.Context()
 			if timeout, _ := cmd.Flags().GetDuration("timeout"); timeout > 0 {
-				opts = append(opts, client.DocSyncWithTimeout(timeout))
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, timeout)
+				defer cancel()
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SyncDocuments(cmd.Context(), collectionID, docIDs, opts...)
+			return cliClient.SyncDocuments(ctx, collectionID, docIDs)
 		},
 	}
 

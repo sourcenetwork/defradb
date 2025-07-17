@@ -12,7 +12,6 @@ package client
 
 import (
 	"context"
-	"time"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -63,20 +62,6 @@ type P2P interface {
 	// SyncDocuments requests the latest versions of specified documents from the network
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe
 	// to the documents or their collection for future updates.
-	SyncDocuments(ctx context.Context, collectionID string, docIDs []string, opts ...DocSyncOption) error
-}
-
-// DocSyncOption configures the document sync operation.
-type DocSyncOption func(*DocSyncOptions)
-
-// DocSyncOptions contains options for document sync operations.
-type DocSyncOptions struct {
-	Timeout time.Duration
-}
-
-// DocSyncWithTimeout sets the timeout for the sync operation.
-func DocSyncWithTimeout(timeout time.Duration) DocSyncOption {
-	return func(opts *DocSyncOptions) {
-		opts.Timeout = timeout
-	}
+	// context.WithTimeout can be used to set a timeout for the operation.
+	SyncDocuments(ctx context.Context, collectionID string, docIDs []string) error
 }

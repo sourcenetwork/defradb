@@ -103,9 +103,9 @@ func (s *server) getIdentity(ctx context.Context, pid peer.ID) (getIdentityReply
 
 // syncDocuments requests document synchronization from the network.
 func (s *server) syncDocuments(
+	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	timeout time.Duration,
 ) ([]docSyncResult, error) {
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
 
@@ -114,28 +114,21 @@ func (s *server) syncDocuments(
 		return nil, err
 	}
 
-	pubSubRespChan, err := s.docSyncTopic.Publish(s.peer.ctx, data, rpc.WithMultiResponse(true))
+	pubSubRespChan, err := s.docSyncTopic.Publish(ctx, data, rpc.WithMultiResponse(true))
 	if err != nil {
 		return nil, err
 	}
 
-	return s.processDocSyncResponses(collectionID, docIDs, timeout, pubSubRespChan)
+	return s.processDocSyncResponses(ctx, collectionID, docIDs, pubSubRespChan)
 }
 
 // processDocSyncResponses handles multiple responses from different peers.
 func (s *server) processDocSyncResponses(
+	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	timeout time.Duration,
 	pubSubRespChan <-chan rpc.Response,
 ) (results []docSyncResult, err error) {
-	if timeout == 0 {
-		timeout = 10 * time.Second
-	}
-
-	ctx, cancel := context.WithTimeout(s.peer.ctx, timeout)
-	defer cancel()
-
 	result := []docSyncResult{}
 
 loop:

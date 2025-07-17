@@ -19,6 +19,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -184,17 +185,14 @@ func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	opts ...client.DocSyncOption,
 ) error {
 	args := []string{"client", "p2p", "sync", "docs", collectionID}
 	args = append(args, docIDs...)
 
-	options := &client.DocSyncOptions{}
-	for _, opt := range opts {
-		opt(options)
-	}
-	if options.Timeout > 0 {
-		args = append(args, "--timeout", options.Timeout.String())
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+
 	}
 
 	_, err := w.cmd.execute(ctx, args)

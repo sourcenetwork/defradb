@@ -14,8 +14,6 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 // docSyncResult represents the result of synchronizing a single document.
@@ -26,20 +24,7 @@ type docSyncResult struct {
 	Heads []cid.Cid
 }
 
-// SyncDocuments requests the latest versions of specified documents from the network
-// and synchronizes their DAGs locally. After successful sync, automatically subscribes
-// to the documents and their collection for future updates.
-func (p *Peer) SyncDocuments(
-	ctx context.Context,
-	collectionID string,
-	docIDs []string,
-	opts ...client.DocSyncOption,
-) error {
-	options := &client.DocSyncOptions{}
-	for _, opt := range opts {
-		opt(options)
-	}
-
-	_, err := p.server.syncDocuments(collectionID, docIDs, options.Timeout)
+func (p *Peer) SyncDocuments(ctx context.Context, collectionID string, docIDs []string) error {
+	_, err := p.server.syncDocuments(ctx, collectionID, docIDs)
 	return err
 }

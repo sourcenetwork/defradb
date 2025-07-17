@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -187,13 +188,7 @@ func (c *Client) SyncDocuments(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	opts ...client.DocSyncOption,
 ) error {
-	options := &client.DocSyncOptions{}
-	for _, opt := range opts {
-		opt(options)
-	}
-
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents", "sync")
 
 	req := map[string]any{
@@ -201,10 +196,11 @@ func (c *Client) SyncDocuments(
 		"docIDs":       docIDs,
 	}
 
-	if options.Timeout > 0 {
-		req["timeout"] = options.Timeout.String()
-	}
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		req["timeout"] = time.Until(deadline).String()
 
+	}
 	body, err := json.Marshal(req)
 	if err != nil {
 		return err
