@@ -1,15 +1,26 @@
-## defradb client p2p document docs
+## defradb client p2p document sync
 
 Synchronize specific documents from the network
 
+### Synopsis
+
+Synchronize specific documents from the network.
+
+This command allows you to sync documents from a specific collection across the network.
+It doesn't automatically subscribe to the collection or the documents.
+
+Example: sync single document
+  defradb client p2p document sync baf111 bae123,bae456
+  
+
 ```
-defradb client p2p document docs [collection-id] [doc-id...] [flags]
+defradb client p2p document sync [collection-id] [docID...] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help               help for docs
+  -h, --help               help for sync
       --timeout duration   Timeout for sync operations
 ```
 
