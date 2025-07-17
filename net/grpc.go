@@ -51,8 +51,8 @@ type docSyncRequest struct {
 
 // docSyncReply represents the response to a document sync request.
 type docSyncReply struct {
-	Results      []docSyncItem `json:"results"`
-	Sender       string        `json:"sender"`
+	Results []docSyncItem `json:"results"`
+	Sender  string        `json:"sender"`
 }
 
 // docSyncItem represents the sync result for a single document.

@@ -199,7 +199,6 @@ func (c *Client) SyncDocuments(
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
 		req["timeout"] = time.Until(deadline).String()
-
 	}
 	body, err := json.Marshal(req)
 	if err != nil {

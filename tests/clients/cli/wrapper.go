@@ -192,7 +192,6 @@ func (w *Wrapper) SyncDocuments(
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
 		args = append(args, "--timeout", time.Until(deadline).String())
-
 	}
 
 	_, err := w.cmd.execute(ctx, args)
