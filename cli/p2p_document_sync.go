@@ -18,10 +18,17 @@ import (
 
 func MakeP2PDocumentSyncCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:     "docs [collection-id] [doc-id...]",
-		Short:   "Synchronize specific documents from the network",
-		Aliases: []string{"documents"},
-		Args:    cobra.MinimumNArgs(2),
+		Use:   "sync [collection-id] [docID...]",
+		Short: "Synchronize specific documents from the network",
+		Long: `Synchronize specific documents from the network.
+
+This command allows you to sync documents from a specific collection across the network.
+It doesn't automatically subscribe to the collection or the documents.
+
+Example: sync single document
+  defradb client p2p document sync baf111 bae123,bae456
+  `,
+		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			collectionID := args[0]
 			docIDs := args[1:]

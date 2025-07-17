@@ -186,15 +186,17 @@ func (w *Wrapper) SyncDocuments(
 	collectionID string,
 	docIDs []string,
 ) error {
-	args := []string{"client", "p2p", "sync", "docs", collectionID}
-	args = append(args, docIDs...)
+	args := []string{"client", "p2p", "document", "sync"}
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
 		args = append(args, "--timeout", time.Until(deadline).String())
 	}
 
-	_, err := w.cmd.execute(ctx, args)
+	args = append(args, collectionID)
+	args = append(args, docIDs...)
+
+	_, err := w.cmd.execute(context.Background(), args)
 	return err
 }
 
