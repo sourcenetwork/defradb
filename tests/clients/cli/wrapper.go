@@ -19,6 +19,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -178,6 +179,25 @@ func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return docIDs, nil
+}
+
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionID string,
+	docIDs []string,
+) error {
+	args := []string{"client", "p2p", "document", "sync"}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	args = append(args, collectionID)
+	args = append(args, docIDs...)
+
+	_, err := w.cmd.execute(context.Background(), args)
+	return err
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

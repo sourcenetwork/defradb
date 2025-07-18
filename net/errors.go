@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	ErrPeerConnectionWaitTimout  = errors.New("waiting for peer connection timed out")
+	ErrPeerConnectionWaitTimeout = errors.New("waiting for peer connection timed out")
 	ErrPubSubWaitTimeout         = errors.New("waiting for pubsub timed out")
 	ErrPushLogWaitTimeout        = errors.New("waiting for pushlog timed out")
 	ErrNilDB                     = errors.New("database object can't be nil")
@@ -42,8 +42,7 @@ var (
 	ErrSelfTargetForReplicator   = errors.New("can't target ourselves as a replicator")
 	ErrReplicatorNotFound        = errors.New("replicator not found")
 	ErrContextDone               = errors.New("context done")
-	ErrFailedToRetryDoc          = errors.New("failed to retry doc")
-	ErrTimeoutDocRetry           = errors.New("timeout while retrying doc")
+	ErrTimeoutDocSync            = errors.New("timeout while syncing doc")
 	ErrReplicatorCollections     = errors.New(errReplicatorCollections)
 )
 

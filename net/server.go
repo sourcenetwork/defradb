@@ -17,13 +17,9 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime/linking"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
 	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
@@ -39,12 +35,17 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/se"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
+
+// DocSyncTopic is the fixed topic for document sync operations.
+const docSyncTopic = "doc-sync"
 
 // server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -59,6 +60,8 @@ type server struct {
 	// replicators is a map from collection CollectionID => peerId
 	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
+
+	docSyncTopic pubsubTopic
 
 	conns  map[libpeer.ID]*grpc.ClientConn
 	connMu sync.RWMutex
@@ -93,6 +96,13 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	}
 
 	s.opts = append(defaultOpts, opts...)
+
+	docSyncTopic, err := s.addPubSubTopic(docSyncTopic, true, s.docSyncMessageHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	s.docSyncTopic = docSyncTopic
 
 	return s, nil
 }
@@ -660,140 +670,65 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	return peerHasAccess, nil
 }
 
-func (s *server) handleDocUpdateRequest(req event.DocUpdateRequest) {
-	pubsubReq := &docUpdateRequest{
-		CollectionID: req.CollectionID,
-		DocID:        req.DocID,
-		RequestorID:  s.peer.PeerID().String(),
-	}
-
-	data, err := cbor.Marshal(pubsubReq)
-	if err != nil {
-		req.Response <- event.DocUpdateResponse{
-			Found: false,
-			Error: errors.Wrap("failed to marshal doc update request", err),
-		}
-		return
-	}
-
-	respChan, err := s.SendPubSubMessage(s.peer.ctx, onDemandDocUpdateTopic, data)
-	if err != nil {
-		req.Response <- event.DocUpdateResponse{
-			Found: false,
-			Error: errors.Wrap("failed to publish doc update request", err),
-		}
-		return
-	}
-
-	go func() {
-		ctx, cancel := context.WithTimeout(s.peer.ctx, 5*time.Second)
-		defer cancel()
-
-		select {
-		case resp := <-respChan:
-			if resp.Err != nil {
-				req.Response <- event.DocUpdateResponse{
-					Found: false,
-					Error: resp.Err,
-				}
-				return
-			}
-			if len(resp.Data) > 0 {
-				var docUpdateReply docUpdateReply
-				if err := cbor.Unmarshal(resp.Data, &docUpdateReply); err != nil {
-					log.ErrorContextE(ctx, "Failed to unmarshal doc update response", err)
-					return
-				}
-
-				blockStore := &bsrvadapter.Adapter{Wrapped: s.peer.blockService}
-
-				linkSys := cidlink.DefaultLinkSystem()
-				linkSys.SetReadStorage(blockStore)
-				linkSys.TrustedStorage = true
-
-				_, docCid, err := cid.CidFromBytes(docUpdateReply.CID)
-				if err != nil {
-					log.ErrorContextE(ctx, "Failed to convert CID from bytes", err)
-					return
-				}
-
-				nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
-				if err != nil {
-					log.ErrorContextE(ctx, "Failed to load document node", err)
-					return
-				}
-				linkBlock, err := coreblock.GetFromNode(nd)
-				if err != nil {
-					log.ErrorContextE(ctx, "Failed to get block from node", err)
-					return
-				}
-
-				err = syncDAG(ctx, s.peer.blockService, linkBlock)
-				if err != nil {
-					log.ErrorContextE(ctx, "Failed to sync DAG", err)
-					return
-				}
-
-				req.Response <- event.DocUpdateResponse{Found: true}
-			}
-		case <-ctx.Done():
-			req.Response <- event.DocUpdateResponse{
-				Found: false,
-				Error: err,
-			}
-		}
-	}()
-}
-
-// docUpdateMessageHandler handles incoming document update requests from the pubsub network.
-func (s *server) docUpdateMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
-	log.Info("Received doc update request",
-		corelog.String("PeerID", s.peer.PeerID().String()),
-		corelog.Any("SenderId", from),
-		corelog.String("Topic", topic))
-
-	req := &docUpdateRequest{}
+// docSyncMessageHandler handles incoming document sync requests from the pubsub network.
+func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	req := &docSyncRequest{}
 	if err := cbor.Unmarshal(msg, req); err != nil {
-		log.ErrorE("Failed to unmarshal doc update request", err)
 		return nil, err
 	}
 
-	if req.RequestorID == s.peer.PeerID().String() {
-		return []byte{}, nil
+	var results []docSyncItem
+
+	for _, docID := range req.DocIDs {
+		result, err := s.processDocSyncItem(docID)
+		if err != nil {
+			log.ErrorE("Failed to process doc sync item", err, corelog.String("DocID", docID))
+			continue // Skip failed items
+		}
+		results = append(results, result)
 	}
 
-	cols, err := s.peer.db.GetCollections(s.peer.ctx, client.CollectionFetchOptions{
-		CollectionID: immutable.Some(req.CollectionID),
-	})
-
-	if err != nil {
-		log.ErrorE("Failed to get collections", err)
-		return []byte{}, nil
-	}
-
-	if len(cols) == 0 {
-		return []byte{}, nil
-	}
-
-	col := cols[0]
-	docIDStr, err := client.NewDocIDFromString(req.DocID)
-	if err != nil {
-		log.ErrorE("Failed to parse DocID", err)
-		return []byte{}, nil
-	}
-
-	doc, err := col.Get(s.peer.ctx, docIDStr, false)
-	if err != nil {
-		log.ErrorE("Failed to get document", err)
-		return []byte{}, nil
-	}
-
-	reply := &docUpdateReply{
-		DocID:        docIDStr.String(),
-		CID:          doc.Head().Bytes(),
-		CollectionID: col.SchemaRoot(),
-		Sender:       s.peer.host.ID().String(),
+	reply := &docSyncReply{
+		Sender:  s.peer.host.ID().String(),
+		Results: results,
 	}
 
 	return cbor.Marshal(reply)
+}
+
+// processDocSyncItem processes a single document sync request and returns the result.
+func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
+	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to create transaction: %w", err)
+	}
+	defer txn.Discard(s.peer.ctx)
+
+	key := keys.HeadstoreDocKey{
+		DocID:   docID,
+		FieldID: core.COMPOSITE_NAMESPACE,
+	}
+
+	headstore := datastore.HeadstoreFrom(s.peer.db.Rootstore())
+	headset := coreblock.NewHeadSet(headstore, key)
+
+	cids, _, err := headset.List(s.peer.ctx)
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to get list of heads docID %s: %w", key.ToString(), err)
+	}
+
+	if len(cids) == 0 {
+		return docSyncItem{}, fmt.Errorf("heads not found for %s", key.ToString())
+	}
+
+	result := docSyncItem{
+		DocID: docID,
+		Heads: make([][]byte, len(cids)),
+	}
+
+	for _, cid := range cids {
+		result.Heads = append(result.Heads, cid.Bytes())
+	}
+
+	return result, nil
 }

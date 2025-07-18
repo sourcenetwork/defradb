@@ -81,18 +81,21 @@ type querySEArtifactsReply struct {
 	DocIDs []string
 }
 
-// docUpdateRequest - Request for a specific document update
-type docUpdateRequest struct {
-	CollectionID string
-	DocID        string
-	RequestorID  string
+// docSyncRequest represents a request to synchronize specific documents.
+type docSyncRequest struct {
+	DocIDs []string `json:"docIDs"`
 }
 
-type docUpdateReply struct {
-	DocID        string
-	CID          []byte
-	CollectionID string
-	Sender       string
+// docSyncReply represents the response to a document sync request.
+type docSyncReply struct {
+	Results []docSyncItem `json:"results"`
+	Sender  string        `json:"sender"`
+}
+
+// docSyncItem represents the sync result for a single document.
+type docSyncItem struct {
+	DocID string   `json:"docID"`
+	Heads [][]byte `json:"heads"`
 }
 
 type serviceServer interface {

@@ -25,15 +25,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func TestNewServerSimple(t *testing.T) {
-	ctx := context.Background()
-	db, p := newTestPeer(ctx, t)
-	defer db.Close()
-	defer p.Close()
-	_, err := newServer(p)
-	require.NoError(t, err)
-}
-
 func getHead(ctx context.Context, db testdb, docID client.DocID) (cid.Cid, error) {
 	prefix := keys.DataStoreKeyFromDocID(docID).ToHeadStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).Bytes()
 

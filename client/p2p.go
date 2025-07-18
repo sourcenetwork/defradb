@@ -58,4 +58,10 @@ type P2P interface {
 	// GetAllP2PDocuments returns the list of persisted docIDs that
 	// the P2P system subscribes to.
 	GetAllP2PDocuments(ctx context.Context) ([]string, error)
+
+	// SyncDocuments requests the latest versions of specified documents from the network
+	// and synchronizes their DAGs locally. It doesn't automatically subscribe
+	// to the documents or their collection for future updates.
+	// context.WithTimeout can be used to set a timeout for the operation.
+	SyncDocuments(ctx context.Context, collectionID string, docIDs []string) error
 }
