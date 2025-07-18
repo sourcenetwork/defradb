@@ -101,10 +101,10 @@ func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 
 func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
-	collectionID string,
+	collectionName string,
 	docIDs []string,
 ) error {
-	return w.client.SyncDocuments(ctx, collectionID, docIDs)
+	return w.client.SyncDocuments(ctx, collectionName, docIDs)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

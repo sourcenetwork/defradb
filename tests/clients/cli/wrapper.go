@@ -183,7 +183,7 @@ func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 
 func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
-	collectionID string,
+	collectionName string,
 	docIDs []string,
 ) error {
 	args := []string{"client", "p2p", "document", "sync"}
@@ -193,7 +193,7 @@ func (w *Wrapper) SyncDocuments(
 		args = append(args, "--timeout", time.Until(deadline).String())
 	}
 
-	args = append(args, collectionID)
+	args = append(args, collectionName)
 	args = append(args, docIDs...)
 
 	_, err := w.cmd.execute(context.Background(), args)

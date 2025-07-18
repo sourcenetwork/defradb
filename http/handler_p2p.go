@@ -202,9 +202,9 @@ func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var reqBody struct {
-		CollectionID string   `json:"collectionID"`
-		DocIDs       []string `json:"docIDs"`
-		Timeout      string   `json:"timeout"`
+		CollectionName string   `json:"collectionName"`
+		DocIDs         []string `json:"docIDs"`
+		Timeout        string   `json:"timeout"`
 	}
 
 	if err := requestJSON(req, &reqBody); err != nil {
@@ -224,7 +224,7 @@ func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 		defer cancel()
 	}
 
-	err := p2p.SyncDocuments(ctx, reqBody.CollectionID, reqBody.DocIDs)
+	err := p2p.SyncDocuments(ctx, reqBody.CollectionName, reqBody.DocIDs)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
@@ -380,7 +380,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	removePeerDocuments.Responses.Set("400", errorResponse)
 
 	syncDocumentsRequestSchema := openapi3.NewObjectSchema().
-		WithProperty("collectionID", openapi3.NewStringSchema()).
+		WithProperty("collectionName", openapi3.NewStringSchema()).
 		WithProperty("docIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 		WithProperty("timeout", openapi3.NewStringSchema())
 
