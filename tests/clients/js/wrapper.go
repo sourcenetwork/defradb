@@ -89,6 +89,14 @@ func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	panic("not implemented")
 }
 
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	panic("not implemented")
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }

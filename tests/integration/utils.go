@@ -430,6 +430,9 @@ func performAction(
 	case WaitForSync:
 		waitForSync(s, action)
 
+	case SyncDocs:
+		syncDocs(s, action)
+
 	case Wait:
 		<-time.After(action.Duration)
 

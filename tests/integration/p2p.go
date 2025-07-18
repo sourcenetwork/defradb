@@ -466,3 +466,38 @@ func RandomNetworkingConfig() ConfigureNode {
 		}
 	}
 }
+
+// syncDocs requests document sync from peers.
+func syncDocs(s *state, action SyncDocs) {
+	node := s.nodes[action.NodeID]
+
+	docIDStrings := make([]string, len(action.DocIDs))
+	for i, docIndex := range action.DocIDs {
+		docIDStrings[i] = s.docIDs[action.CollectionID][docIndex].String()
+	}
+
+	collectionName := s.nodes[action.NodeID].collections[action.CollectionID].Name()
+
+	err := withRetryOnNode(
+		node,
+		func() error {
+			return node.SyncDocuments(
+				s.ctx,
+				collectionName,
+				docIDStrings,
+			)
+		},
+	)
+
+	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		for i, docInd := range action.DocIDs {
+			nodeID := action.SourceNodes[i]
+			docID := s.docIDs[action.CollectionID][docInd].String()
+			node.p2p.expectedDAGHeads[docID] = s.nodes[nodeID].p2p.actualDAGHeads[docID].cid
+		}
+	}
+}

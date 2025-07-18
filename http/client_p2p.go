@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -181,4 +182,34 @@ func (c *Client) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return cols, nil
+}
+
+func (c *Client) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	methodURL := c.http.apiURL.JoinPath("p2p", "documents", "sync")
+
+	req := map[string]any{
+		"collectionName": collectionName,
+		"docIDs":         docIDs,
+	}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		req["timeout"] = time.Until(deadline).String()
+	}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(httpReq)
+	return err
 }

@@ -1,16 +1,30 @@
-## defradb client p2p document
+## defradb client p2p document sync
 
-Configure the P2P document system
+Synchronize specific documents from the network
 
 ### Synopsis
 
-Add, delete, or get the list of P2P documents.
-The selected documents synchronize their events on the pubsub network.
+Synchronize specific documents from the network.
+
+This command allows you to sync documents from a specific collection across the network.
+It doesn't automatically subscribe to the collection or the documents.
+
+Example: sync single document
+  defradb client p2p document sync Users bae123
+
+Example: sync multiple documents
+  defradb client p2p document sync Users bae123 bae456
+  
+
+```
+defradb client p2p document sync [collection-name] [docID...] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for document
+  -h, --help               help for sync
+      --timeout duration   Timeout for sync operations
 ```
 
 ### Options inherited from parent commands
@@ -37,9 +51,5 @@ The selected documents synchronize their events on the pubsub network.
 
 ### SEE ALSO
 
-* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client p2p document add](defradb_client_p2p_document_add.md)	 - Add P2P documents
-* [defradb client p2p document getall](defradb_client_p2p_document_getall.md)	 - Get all P2P documents
-* [defradb client p2p document remove](defradb_client_p2p_document_remove.md)	 - Remove P2P documents
-* [defradb client p2p document sync](defradb_client_p2p_document_sync.md)	 - Synchronize specific documents from the network
+* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 
