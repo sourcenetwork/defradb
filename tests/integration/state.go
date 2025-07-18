@@ -44,6 +44,11 @@ type p2pState struct {
 	// The map key is the node id of the subscriber.
 	peerCollections map[int]struct{}
 
+	// peerDocuments contains all active peer document subscriptions.
+	//
+	// The map key is the node id of the subscriber.
+	peerDocuments map[ColDocIndex]struct{}
+
 	// actualDAGHeads contains all DAG heads that exist on a node.
 	//
 	// The map key is the doc id. The map value is the doc head.
@@ -76,6 +81,7 @@ func newP2PState() *p2pState {
 		connections:      make(map[int]struct{}),
 		replicators:      make(map[int]struct{}),
 		peerCollections:  make(map[int]struct{}),
+		peerDocuments:    make(map[ColDocIndex]struct{}),
 		actualDAGHeads:   make(map[string]docHeadState),
 		expectedDAGHeads: make(map[string]cid.Cid),
 	}
@@ -91,9 +97,6 @@ type eventState struct {
 
 	// replicator is the `event.ReplicatorCompletedName` subscription
 	replicator event.Subscription
-
-	// p2pTopic is the `event.P2PTopicCompletedName` subscription
-	p2pTopic event.Subscription
 }
 
 // newEventState returns an eventState with all required subscriptions.
@@ -110,15 +113,10 @@ func newEventState(bus event.Bus) (*eventState, error) {
 	if err != nil {
 		return nil, err
 	}
-	p2pTopic, err := bus.Subscribe(event.P2PTopicCompletedName)
-	if err != nil {
-		return nil, err
-	}
 	return &eventState{
 		merge:      merge,
 		update:     update,
 		replicator: replicator,
-		p2pTopic:   p2pTopic,
 	}, nil
 }
 

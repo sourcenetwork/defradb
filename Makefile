@@ -423,6 +423,7 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
+	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
 fix:

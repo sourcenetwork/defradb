@@ -170,6 +170,13 @@ func NewErrCollectionNotFoundForSchema(schemaRoot string) error {
 	)
 }
 
+func NewErrCollectionNotFoundForName(name string) error {
+	return errors.New(
+		errCollectionNotFound,
+		errors.NewKV("Name", name),
+	)
+}
+
 func NewErrUnknownCRDT(cType CType) error {
 	return errors.New(
 		errUnknownCRDT,

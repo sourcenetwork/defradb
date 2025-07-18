@@ -42,6 +42,12 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,

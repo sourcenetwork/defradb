@@ -2052,7 +2052,7 @@
         "/p2p/collections": {
             "delete": {
                 "description": "Remove peer collections",
-                "operationId": "peer_collection_remove",
+                "operationId": "peer_collections_remove",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2083,7 +2083,7 @@
             },
             "get": {
                 "description": "List peer collections",
-                "operationId": "peer_collection_list",
+                "operationId": "peer_collections_list",
                 "responses": {
                     "200": {
                         "content": {
@@ -2111,7 +2111,99 @@
             },
             "post": {
                 "description": "Add peer collections",
-                "operationId": "peer_collection_add",
+                "operationId": "peer_collections_add",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/documents": {
+            "delete": {
+                "description": "Remove peer documents",
+                "operationId": "peer_documents_remove",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "get": {
+                "description": "List peer documents",
+                "operationId": "peer_documents_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Peer documents"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "post": {
+                "description": "Add peer documents",
+                "operationId": "peer_documents_add",
                 "requestBody": {
                     "content": {
                         "application/json": {

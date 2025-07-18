@@ -42,6 +42,12 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -93,6 +99,18 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
