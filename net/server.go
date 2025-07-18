@@ -630,7 +630,7 @@ func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte
 func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
 	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
 	if err != nil {
-		return docSyncItem{}, fmt.Errorf("failed to create transaction: %w", err)
+		return docSyncItem{}, NewErrFailedToCreateTransaction(err)
 	}
 	defer txn.Discard(s.peer.ctx)
 

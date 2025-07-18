@@ -17,16 +17,17 @@ import (
 )
 
 const (
-	errPushLog                  = "failed to push log"
-	errFailedToGetDocID         = "failed to get DocID from broadcast message"
-	errPublishingToDocIDTopic   = "can't publish log %s for docID %s"
-	errPublishingToSchemaTopic  = "can't publish log %s for schema %s"
-	errCheckingForExistingBlock = "failed to check for existing block"
-	errRequestingEncryptionKeys = "failed to request encryption keys with %v"
-	errTopicAlreadyExist        = "topic with name \"%s\" already exists"
-	errTopicDoesNotExist        = "topic with name \"%s\" does not exists"
-	errFailedToGetIdentity      = "failed to get identity"
-	errReplicatorCollections    = "failed to get collections for replicator"
+	errPushLog                   = "failed to push log"
+	errFailedToGetDocID          = "failed to get DocID from broadcast message"
+	errPublishingToDocIDTopic    = "can't publish log %s for docID %s"
+	errPublishingToSchemaTopic   = "can't publish log %s for schema %s"
+	errCheckingForExistingBlock  = "failed to check for existing block"
+	errRequestingEncryptionKeys  = "failed to request encryption keys with %v"
+	errTopicAlreadyExist         = "topic with name \"%s\" already exists"
+	errTopicDoesNotExist         = "topic with name \"%s\" does not exists"
+	errFailedToGetIdentity       = "failed to get identity"
+	errReplicatorCollections     = "failed to get collections for replicator"
+	errFailedToCreateTransaction = "failed to create transaction"
 )
 
 var (
@@ -74,4 +75,8 @@ func NewErrFailedToGetIdentity(inner error, kv ...errors.KV) error {
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
 	return errors.Wrap(errReplicatorCollections, inner, kv...)
+}
+
+func NewErrFailedToCreateTransaction(inner error, kv ...errors.KV) error {
+	return errors.Wrap(errFailedToCreateTransaction, inner, kv...)
 }
