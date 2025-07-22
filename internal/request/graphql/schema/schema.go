@@ -26,6 +26,8 @@ func defaultSchema() (gql.Schema, error) {
 	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 
+	encryptedSearchResult := types.EncryptedSearchResultObject()
+
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
 	return gql.NewSchema(gql.SchemaConfig{
@@ -37,6 +39,7 @@ func defaultSchema() (gql.Schema, error) {
 			crdtEnum,
 			explainEnum,
 			indexFieldInput,
+			encryptedSearchResult,
 		),
 		Query:        defaultQueryType(commitObject, commitsOrderArg),
 		Mutation:     defaultMutationType(),
@@ -136,6 +139,7 @@ func defaultTypes(
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	encryptedSearchResult *gql.Object,
 ) []gql.Type {
 	blobScalarType := types.BlobScalarType()
 	jsonScalarType := types.JSONScalarType()
@@ -216,5 +220,6 @@ func defaultTypes(
 		explainEnum,
 
 		indexFieldInput,
+		encryptedSearchResult,
 	}
 }

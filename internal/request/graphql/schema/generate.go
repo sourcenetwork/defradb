@@ -1161,10 +1161,13 @@ func (g *Generator) GenerateEncryptedQueryInputForGQLType(
 	filterInput := g.genEncryptedFilterArgInput(obj, collection.Version.EncryptedIndexes)
 	g.manager.schema.TypeMap()[filterName] = filterInput
 
+	// Use the shared EncryptedSearchResult type
+	encryptedResultType := g.manager.schema.TypeMap()["EncryptedSearchResult"]
+
 	field := &gql.Field{
 		Name:        obj.Name() + "_encrypted",
-		Description: "Query encrypted fields for " + obj.Name(),
-		Type:        gql.NewList(obj),
+		Description: "Search encrypted fields for " + obj.Name() + " and return matching document IDs",
+		Type:        encryptedResultType,
 		Args: gql.FieldConfigArgument{
 			"filter":             schemaTypes.NewArgConfig(filterInput, "Filter encrypted fields"),
 			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),

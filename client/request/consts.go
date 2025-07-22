@@ -91,6 +91,8 @@ const (
 	SignatureIdentityFieldName = "identity"
 	SignatureValueFieldName    = "value"
 
+	DocIDsFieldName = "docIDs"
+
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
 )

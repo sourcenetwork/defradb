@@ -11,16 +11,10 @@
 package planner
 
 import (
-	"context"
 	"fmt"
-	"time"
-
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -28,7 +22,7 @@ import (
 
 // seScanNode implements a plan node for searchable encryption queries.
 // It queries remote nodes for document IDs matching the search criteria
-// and then fetches the full documents from the regular P2P network.
+// and returns only the document IDs.
 type seScanNode struct {
 	documentIterator
 	docMapper
@@ -39,13 +33,9 @@ type seScanNode struct {
 	filter           *mapper.Filter
 	encryptedIndexes []client.EncryptedIndexDescription
 
-	// SE specific fields
 	fieldSearchTags map[string][]byte
 	remoteDocIDs    []string
-	currentIndex    int
-
-	// Inner scan node for fetching documents
-	innerScan *scanNode
+	hasReturned     bool
 }
 
 var _ planNode = (*seScanNode)(nil)
@@ -53,16 +43,6 @@ var _ planNode = (*seScanNode)(nil)
 func (n *seScanNode) Kind() string { return "seScanNode" }
 
 func (n *seScanNode) Init() error {
-	mapperSelect := &mapper.Select{
-		CollectionName:  n.collection.Name(),
-		DocumentMapping: n.documentMapping,
-	}
-
-	var err error
-	n.innerScan, err = n.p.Scan(mapperSelect)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -71,13 +51,8 @@ func (n *seScanNode) Start() error {
 		return err
 	}
 
-	docIDs, err := n.queryRemoteNodes()
-	if err != nil {
-		return err
-	}
-
-	n.remoteDocIDs = docIDs
-	n.currentIndex = 0
+	n.remoteDocIDs = nil
+	n.hasReturned = false
 
 	return nil
 }
@@ -170,96 +145,24 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 }
 
 func (n *seScanNode) Next() (bool, error) {
-	tries := 0
-	for n.currentIndex < len(n.remoteDocIDs) && tries < 3 {
-		fetched, err := n.fetchCurrentDocument()
+	if n.hasReturned {
+		return false, nil
+	}
+
+	if n.remoteDocIDs == nil {
+		docIDs, err := n.queryRemoteNodes()
 		if err != nil {
 			return false, err
 		}
-		if fetched {
-			n.currentIndex++
-			return true, nil
-		}
-		tries++
-	}
-	return false, nil
-}
-
-func (n *seScanNode) fetchCurrentDocument() (bool, error) {
-	docIDStr := n.remoteDocIDs[n.currentIndex]
-
-	doc, err := n.fetchDocumentLocallyByID(docIDStr)
-	if err != nil {
-		return false, err
+		n.remoteDocIDs = docIDs
 	}
 
-	if !doc.HasValue() {
-		found, err := n.requestDocumentFromNetwork(docIDStr)
-		if err != nil {
-			return false, err
-		}
+	doc := n.documentMapping.NewDoc()
+	n.documentMapping.SetFirstOfName(&doc, request.DocIDsFieldName, n.remoteDocIDs)
+	n.currentValue = doc
+	n.hasReturned = true
 
-		if !found {
-			return false, nil
-		}
-	}
-
-	n.currentValue = doc.Value()
 	return true, nil
-}
-
-func (n *seScanNode) requestDocumentFromNetwork(docIDStr string) (bool, error) {
-	responseChan := make(chan event.DocUpdateResponse, 1)
-	defer close(responseChan)
-
-	/*request := event.DocUpdateRequest{
-		CollectionID: n.collectionID,
-		DocID:        docIDStr,
-		Response:     responseChan,
-	}*/
-
-	// TODO: waiting for every single document is not efficient.
-	// We should consider ways of prefetching docs.
-	//n.p.db.Events().Publish(event.NewMessage(event.DocUpdateRequestName, request))
-
-	ctx, cancel := context.WithTimeout(n.p.ctx, 10*time.Second)
-	defer cancel()
-
-	select {
-	case response := <-responseChan:
-		if response.Error != nil {
-			return false, response.Error
-		}
-		return response.Found, nil
-	case <-ctx.Done():
-		return false, fmt.Errorf("timeout waiting for document %s", docIDStr)
-	}
-}
-
-func (n *seScanNode) fetchDocumentLocallyByID(docIDStr string) (immutable.Option[core.Doc], error) {
-	shortID, err := id.GetShortCollectionID(n.p.ctx, n.collection.Version().CollectionID)
-	if err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
-	dsKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             docIDStr,
-	}
-
-	prefixes := []keys.Walkable{dsKey}
-	n.innerScan.Prefixes(prefixes)
-
-	if err := n.innerScan.Init(); err != nil {
-		return immutable.None[core.Doc](), err
-	}
-
-	hasValue, err := n.innerScan.Next()
-	if err != nil || !hasValue {
-		return immutable.None[core.Doc](), err
-	}
-
-	return immutable.Some(n.innerScan.Value()), nil
 }
 
 func (n *seScanNode) Prefixes(prefixes []keys.Walkable) {}
@@ -267,8 +170,5 @@ func (n *seScanNode) Prefixes(prefixes []keys.Walkable) {}
 func (n *seScanNode) Source() planNode { return nil }
 
 func (n *seScanNode) Close() error {
-	if n.innerScan != nil {
-		return n.innerScan.Close()
-	}
 	return nil
 }
