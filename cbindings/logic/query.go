@@ -8,12 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package main
-
-/*
-#include "defra_structs.h"
-*/
-import "C"
+package cbindings
 
 import (
 	"context"
@@ -50,59 +45,53 @@ func removeSubscription(id string) {
 	subscriptionStore.Delete(id)
 }
 
-//export pollSubscription
-func pollSubscription(cID *C.char) *C.Result {
-	id := C.GoString(cID)
+func PollSubscription(id string) GoCResult {
 	res, ok := getSubscription(id)
 	if !ok {
-		return returnC(1, "Invalid subscription ID", "")
+		return returnGoC(1, cerrInvalidSubscriptionID, "")
 	}
 
 	select {
 	case msg, ok := <-res.Subscription:
 		if !ok {
 			removeSubscription(id)
-			return returnC(0, "", "") // closed
+			return returnGoC(0, "", "") // closed
 		}
-		return marshalJSONToCResult(msg)
+		return marshalJSONToGoCResult(msg)
 	case <-time.After(time.Second):
-		return returnC(1, "Timeout waiting for subscription event", "")
+		return returnGoC(1, cerrTimeoutSubscription, "")
 	}
 }
 
-//export closeSubscription
-func closeSubscription(cID *C.char) {
-	id := C.GoString(cID)
+func CloseSubscription(id string) GoCResult {
 	removeSubscription(id)
+	return returnGoC(0, "", "")
 }
 
-//export executeQuery
-func executeQuery(
-	cQuery *C.char,
-	cIdentity *C.char,
-	cTxnID C.ulonglong,
-	cOperationName *C.char,
-	cVariables *C.char,
-) *C.Result {
-	query := C.GoString(cQuery)
-	identityStr := C.GoString(cIdentity)
+func ExecuteQuery(
+	query string,
+	identity string,
+	txnID uint64,
+	operationName string,
+	variables string,
+) GoCResult {
 	ctx := context.Background()
-	opts, err := buildRequestOptions(cOperationName, cVariables)
+	opts, err := buildRequestOptions(operationName, variables)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 
 	// Attach the identity
-	newctx, err := contextWithIdentity(ctx, identityStr)
+	newctx, err := contextWithIdentity(ctx, identity)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
 	// Set the transaction
-	newctx, err = contextWithTransaction(ctx, cTxnID)
+	newctx, err = contextWithTransaction(ctx, txnID)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
@@ -117,21 +106,21 @@ func executeQuery(
 			sb.WriteString(err.Error())
 			sb.WriteString("\n")
 		}
-		return returnC(1, sb.String(), "")
+		return returnGoC(1, sb.String(), "")
 	}
 
 	if res.Subscription != nil {
 		id := storeSubscription(res)
-		return returnC(2, "", id)
+		return returnGoC(2, "", id)
 	}
 
 	// Try to marshall the JSON and return it
 	dataMap, ok := res.GQL.Data.(map[string]any)
 	if !ok || dataMap == nil {
-		return returnC(1, "GraphQL response data is nil or invalid.", "")
+		return returnGoC(1, "GraphQL response data is nil or invalid.", "")
 	}
 	wrapped := map[string]any{
 		"data": dataMap,
 	}
-	return marshalJSONToCResult(wrapped)
+	return marshalJSONToGoCResult(wrapped)
 }

@@ -8,14 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
+package cbindings
 
-package main
-
-/*
-#include "defra_structs.h"
-*/
 import "C"
 
 import (
@@ -30,17 +24,13 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-//export viewAdd
-func viewAdd(cQuery *C.char, cSDL *C.char, cTransform *C.char, cTxnID C.ulonglong) *C.Result {
+func ViewAdd(query string, sdl string, lensCfgJson string, txnID uint64) GoCResult {
 	ctx := context.Background()
-	query := C.GoString(cQuery)
-	sdl := C.GoString(cSDL)
-	lensCfgJson := C.GoString(cTransform)
 
 	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, cTxnID)
+	newctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
@@ -51,7 +41,7 @@ func viewAdd(cQuery *C.char, cSDL *C.char, cTransform *C.char, cTxnID C.ulonglon
 		decoder.DisallowUnknownFields()
 		var lensCfg model.Lens
 		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnC(1, fmt.Sprintf(cerrInvalidLensConfig, err), "")
+			return returnGoC(1, fmt.Sprintf(cerrInvalidLensConfig, err), "")
 		}
 		transform = immutable.Some(lensCfg)
 	}
@@ -59,30 +49,25 @@ func viewAdd(cQuery *C.char, cSDL *C.char, cTransform *C.char, cTxnID C.ulonglon
 	// Add the view
 	defs, err := globalNode.DB.AddView(ctx, query, sdl, transform)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 
-	return marshalJSONToCResult(defs)
+	return marshalJSONToGoCResult(defs)
 }
 
-//export viewRefresh
-func viewRefresh(
-	cViewName *C.char,
-	cCollectionID *C.char,
-	cVersionID *C.char,
-	cGetInactive C.int,
-	cTxnID C.ulonglong,
-) *C.Result {
+func ViewRefresh(
+	name string,
+	collectionID string,
+	versionID string,
+	getInactive bool,
+	txnID uint64,
+) GoCResult {
 	ctx := context.Background()
-	name := C.GoString(cViewName)
-	collectionID := C.GoString(cCollectionID)
-	versionID := C.GoString(cVersionID)
-	getInactive := cGetInactive != 0
 
 	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, cTxnID)
+	newctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
@@ -104,7 +89,7 @@ func viewRefresh(
 	// Refresh the views and return
 	err = globalNode.DB.RefreshViews(ctx, options)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
-	return returnC(0, "", "")
+	return returnGoC(0, "", "")
 }

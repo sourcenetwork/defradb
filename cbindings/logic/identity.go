@@ -8,15 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
-package main
-
-/*
-#include "defra_structs.h"
-*/
-import "C"
+package cbindings
 
 import (
 	"context"
@@ -25,10 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-//export identityNew
-func identityNew(cKeyType *C.char) *C.Result {
-	keyTypeStr := C.GoString(cKeyType)
-
+func IdentityNew(keyTypeStr string) GoCResult {
 	// Create a public key object of the specified type (Secp256k1 by default) and use it to create identity
 	keyType := crypto.KeyTypeSecp256k1
 	if keyTypeStr != "" {
@@ -36,21 +25,20 @@ func identityNew(cKeyType *C.char) *C.Result {
 	}
 	newIdentity, err := identity.Generate(crypto.KeyType(keyType))
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 
-	return marshalJSONToCResult(newIdentity.IntoRawIdentity())
+	return marshalJSONToGoCResult(newIdentity.IntoRawIdentity())
 }
 
-//export nodeIdentity
-func nodeIdentity() *C.Result {
+func NodeIdentity() GoCResult {
 	ctx := context.Background()
 	identity, err := globalNode.DB.GetNodeIdentity(ctx)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	if identity.HasValue() {
-		return marshalJSONToCResult(identity.Value())
+		return marshalJSONToGoCResult(identity.Value())
 	}
-	return returnC(0, "", "Node has no identity assigned to it.")
+	return returnGoC(0, "", "Node has no identity assigned to it.")
 }

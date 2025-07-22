@@ -8,15 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
-package main
-
-/*
-#include "defra_structs.h"
-*/
-import "C"
+package cbindings
 
 import (
 	"fmt"
@@ -29,10 +21,7 @@ const (
 	KeyTypeSecp256k1 = "secp256k1"
 )
 
-//export cryptoGenerateKey
-func cryptoGenerateKey(cKeyType *C.char) *C.Result {
-	keyTypeStr := C.GoString(cKeyType)
-
+func CryptoGenerateKey(keyTypeStr string) GoCResult {
 	var keyType crypto.KeyType
 	switch keyTypeStr {
 	case KeyTypeEd25519:
@@ -40,12 +29,11 @@ func cryptoGenerateKey(cKeyType *C.char) *C.Result {
 	case KeyTypeSecp256k1:
 		keyType = crypto.KeyTypeSecp256k1
 	default:
-		return returnC(1, fmt.Sprintf(cerrInvalidKeyType, keyTypeStr), "")
+		return returnGoC(1, fmt.Sprintf(cerrInvalidKeyType, keyTypeStr), "")
 	}
-
 	key, err := crypto.GenerateKey(keyType)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
-	return returnC(0, "", key.String())
+	return returnGoC(0, "", key.String())
 }

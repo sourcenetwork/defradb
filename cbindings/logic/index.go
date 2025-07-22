@@ -8,15 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
-package main
-
-/*
-#include "defra_structs.h"
-*/
-import "C"
+package cbindings
 
 import (
 	"context"
@@ -25,24 +17,20 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-//export indexCreate
-func indexCreate(
-	cCollectionName *C.char,
-	cIndexName *C.char,
-	cFields *C.char,
-	cIsUnique C.int,
-	cTxnID C.ulonglong,
-) *C.Result {
+func IndexCreate(
+	collectionName string,
+	indexName string,
+	fieldsStr string,
+	isUnique bool,
+	txnID uint64,
+) GoCResult {
 	ctx := context.Background()
-	collectionName := C.GoString(cCollectionName)
-	indexName := C.GoString(cIndexName)
-	isUnique := cIsUnique != 0
-	fieldsArg := splitCommaSeparatedCString(cFields)
+	fieldsArg := splitCommaSeparatedString(fieldsStr)
 
 	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, cTxnID)
+	newctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
@@ -59,10 +47,10 @@ func indexCreate(
 		if len(parts) == 2 {
 			order = strings.ToUpper(parts[1])
 			if order != asc && order != desc {
-				return returnC(1, cerrInvalidAscensionOrder, "")
+				return returnGoC(1, cerrInvalidAscensionOrder, "")
 			}
 		} else if len(parts) > 2 {
-			return returnC(1, cerrInvalidIndexFieldDescription, "")
+			return returnGoC(1, cerrInvalidIndexFieldDescription, "")
 		}
 		fields = append(fields, client.IndexedFieldDescription{
 			Name:       fieldName,
@@ -78,25 +66,23 @@ func indexCreate(
 	}
 	col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	descWithID, err := col.CreateIndex(ctx, desc)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 
-	return marshalJSONToCResult(descWithID)
+	return marshalJSONToGoCResult(descWithID)
 }
 
-//export indexList
-func indexList(cCollectionName *C.char, cTxnID C.ulonglong) *C.Result {
+func IndexList(collectionName string, txnID uint64) GoCResult {
 	ctx := context.Background()
-	collectionName := C.GoString(cCollectionName)
 
 	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, cTxnID)
+	newctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
@@ -105,44 +91,41 @@ func indexList(cCollectionName *C.char, cTxnID C.ulonglong) *C.Result {
 	case collectionName != "":
 		col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			return returnC(1, err.Error(), "")
+			return returnGoC(1, err.Error(), "")
 		}
 		indices, err := col.GetIndexes(ctx)
 		if err != nil {
-			return returnC(1, err.Error(), "")
+			return returnGoC(1, err.Error(), "")
 		}
-		return marshalJSONToCResult(indices)
+		return marshalJSONToGoCResult(indices)
 	// Get all of the indices, because no collection was specified
 	default:
 		indices, err := globalNode.DB.GetAllIndexes(ctx)
 		if err != nil {
-			return returnC(1, err.Error(), "")
+			return returnGoC(1, err.Error(), "")
 		}
-		return marshalJSONToCResult(indices)
+		return marshalJSONToGoCResult(indices)
 	}
 }
 
-//export indexDrop
-func indexDrop(cCollectionName *C.char, cIndexName *C.char, cTxnID C.ulonglong) *C.Result {
+func IndexDrop(collectionName string, indexName string, txnID uint64) GoCResult {
 	ctx := context.Background()
-	collectionName := C.GoString(cCollectionName)
-	indexName := C.GoString(cIndexName)
 
 	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, cTxnID)
+	newctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
 	// Get collection and return
 	col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	err = col.DropIndex(ctx, indexName)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
-	return returnC(0, "", "")
+	return returnGoC(0, "", "")
 }

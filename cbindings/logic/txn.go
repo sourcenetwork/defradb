@@ -8,14 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
+package cbindings
 
-package main
-
-/*
-#include "defra_structs.h"
-*/
 import "C"
 
 import (
@@ -30,10 +24,7 @@ import (
 
 var TxnStore sync.Map
 
-//export transactionCreate
-func transactionCreate(cIsConcurrent C.int, cIsReadOnly C.int) *C.Result {
-	concurrent := cIsConcurrent != 0
-	readOnly := cIsReadOnly != 0
+func TransactionCreate(concurrent bool, readOnly bool) GoCResult {
 	ctx := context.Background()
 	var tx client.Txn
 	var err error
@@ -45,50 +36,46 @@ func transactionCreate(cIsConcurrent C.int, cIsReadOnly C.int) *C.Result {
 		tx, err = globalNode.DB.NewTxn(ctx, readOnly)
 	}
 	if err != nil {
-		return returnC(1, fmt.Sprintf(cerrCreatingTxn, err), "")
+		return returnGoC(1, fmt.Sprintf(cerrCreatingTxn, err), "")
 	}
 	// Store the Txn in the store, and return the ID to the user
 	TxnStore.Store(tx.ID(), tx)
 	IDstring := strconv.FormatUint(tx.ID(), 10)
 	retVal := fmt.Sprintf(`{"id": %s}`, IDstring)
-	return returnC(0, "", retVal)
+	return returnGoC(0, "", retVal)
 }
 
-//export transactionCommit
-func transactionCommit(cTxnID C.ulonglong) *C.Result {
-	TxnIDu64 := uint64(cTxnID)
+func TransactionCommit(txnID uint64) GoCResult {
 	ctx := context.Background()
 
 	// Get the transaction with the associated ID from the store
-	tx, ok := TxnStore.Load(TxnIDu64)
+	tx, ok := TxnStore.Load(txnID)
 	if !ok {
-		return returnC(1, fmt.Sprintf(cerrTxnDoesNotExist, cTxnID), "")
+		return returnGoC(1, fmt.Sprintf(cerrTxnDoesNotExist, txnID), "")
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
 	// Commit the transaction, and if that doesn't error, remove it from the store
 	err := txn.Commit(ctx)
 	if err != nil {
-		return returnC(1, fmt.Sprintf(cerrTxnDoesNotExist, cTxnID), "")
+		return returnGoC(1, fmt.Sprintf(cerrTxnDoesNotExist, txnID), "")
 	}
-	TxnStore.Delete(TxnIDu64)
-	return returnC(0, "", "")
+	TxnStore.Delete(txnID)
+	return returnGoC(0, "", "")
 }
 
-//export transactionDiscard
-func transactionDiscard(cTxnID C.ulonglong) *C.Result {
-	TxnIDu64 := uint64(cTxnID)
+func TransactionDiscard(txnID uint64) GoCResult {
 	ctx := context.Background()
 
 	// Get the transaction with the associated ID from the store
-	tx, ok := TxnStore.Load(TxnIDu64)
+	tx, ok := TxnStore.Load(txnID)
 	if !ok {
-		return returnC(1, fmt.Sprintf(cerrTxnDoesNotExist, cTxnID), "")
+		return returnGoC(1, fmt.Sprintf(cerrTxnDoesNotExist, txnID), "")
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
 	// Discard it, which currently cannot error, and then delete it from the store
 	txn.Discard(ctx)
-	TxnStore.Delete(TxnIDu64)
-	return returnC(0, "", "")
+	TxnStore.Delete(txnID)
+	return returnGoC(0, "", "")
 }

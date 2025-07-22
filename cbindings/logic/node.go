@@ -8,15 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
-package main
-
-/*
-#include "defra_structs.h"
-*/
-import "C"
+package cbindings
 
 import (
 	"context"
@@ -33,18 +25,21 @@ import (
 
 var globalNode *node.Node
 
-//export nodeInit
-func nodeInit(cOptions C.NodeInitOptions) *C.Result {
+// GetGlobalNode is a function to accommodate integration test support
+func GetGlobalNode() *node.Node {
+	return globalNode
+}
+
+func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	var err error
 
-	dbPath := C.GoString(cOptions.dbPath)
-	inMemoryFlag := cOptions.inMemory != 0
-	listeningAddresses := splitCommaSeparatedCString(cOptions.listeningAddresses)
+	inMemoryFlag := cOptions.InMemory != 0
+	listeningAddresses := splitCommaSeparatedString(cOptions.ListeningAddresses)
 
 	// Load the identity if one is provided
-	nodeIdentity, err := loadIdentityFromString(cOptions.identityKeyType, cOptions.identityPrivateKey)
+	nodeIdentity, err := loadIdentityFromString(cOptions.IdentityKeyType, cOptions.IdentityPrivateKey)
 	if err != nil {
-		return returnC(1, err.Error(), "")
+		return returnGoC(1, err.Error(), "")
 	}
 
 	ctx := context.Background()
@@ -52,45 +47,45 @@ func nodeInit(cOptions C.NodeInitOptions) *C.Result {
 	if globalNode != nil {
 		err := globalNode.Close(ctx)
 		if err != nil {
-			return returnC(1, fmt.Sprintf(cerrClosingNode, err), "")
+			return returnGoC(1, fmt.Sprintf(cerrClosingNode, err), "")
 		}
 		globalNode = nil
 	}
 
 	// Create the directory if it doesn't exist, and inMemory flag is not set
 	if !inMemoryFlag {
-		if _, err = os.Stat(dbPath); os.IsNotExist(err) {
-			err := os.MkdirAll(dbPath, 0755)
+		if _, err = os.Stat(cOptions.DbPath); os.IsNotExist(err) {
+			err := os.MkdirAll(cOptions.DbPath, 0755)
 			if err != nil {
-				return returnC(1, fmt.Sprintf(cerrCreatingStoreDirectory, err), "")
+				return returnGoC(1, fmt.Sprintf(cerrCreatingStoreDirectory, err), "")
 			}
 		}
 	}
 
 	// Try to create the node options
 	opts := []node.Option{
-		node.WithStorePath(dbPath),
+		node.WithStorePath(cOptions.DbPath),
 		node.WithLensRuntime(node.Wazero),
 	}
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, netConfig.WithListenAddresses(listeningAddresses...))
 	}
-	maxTxnRetries := int(cOptions.maxTransactionRetries)
+	maxTxnRetries := int(cOptions.MaxTransactionRetries)
 	if maxTxnRetries > 0 {
 		opts = append(opts, db.WithMaxRetries(maxTxnRetries))
 	}
-	disableP2PFlag := cOptions.disableP2P != 0
+	disableP2PFlag := cOptions.DisableP2P != 0
 	if disableP2PFlag {
 		opts = append(opts, node.WithDisableP2P(true))
 	}
-	disableAPIFlag := cOptions.disableAPI != 0
+	disableAPIFlag := cOptions.DisableAPI != 0
 	if disableAPIFlag {
 		opts = append(opts, node.WithDisableAPI(true))
 	}
 	if inMemoryFlag {
 		opts = append(opts, node.WithBadgerInMemory(true))
 	}
-	peers := splitCommaSeparatedCString(cOptions.peers)
+	peers := splitCommaSeparatedString(cOptions.Peers)
 	if len(peers) > 0 {
 		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
 	}
@@ -99,15 +94,15 @@ func nodeInit(cOptions C.NodeInitOptions) *C.Result {
 	}
 
 	// Configure the replicator retry times. Go from string slice -> time.Duration slice
-	replicatorRetryTimes := splitCommaSeparatedCString(cOptions.replicatorRetryIntervals)
+	replicatorRetryTimes := splitCommaSeparatedString(cOptions.ReplicatorRetryIntervals)
 	var replicatorRetryIntervals []time.Duration
 	for _, s := range replicatorRetryTimes {
 		n, err := strconv.Atoi(s)
 		if err != nil {
-			return returnC(1, fmt.Sprintf(cerrParsingReplicatorTimes, err), "")
+			return returnGoC(1, fmt.Sprintf(cerrParsingReplicatorTimes, err), "")
 		}
 		if n <= 0 {
-			return returnC(1, cerrNegativeReplicatorTime, "")
+			return returnGoC(1, cerrNegativeReplicatorTime, "")
 		}
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
@@ -118,16 +113,15 @@ func nodeInit(cOptions C.NodeInitOptions) *C.Result {
 	// Try to create the node passing in the collected options, then return the result
 	globalNode, err = node.New(ctx, opts...)
 	if err != nil {
-		return returnC(1, fmt.Sprintf(cerrCreatingNode, err), "")
+		return returnGoC(1, fmt.Sprintf(cerrCreatingNode, err), "")
 	}
 
-	return returnC(0, "", "")
+	return returnGoC(0, "", "")
 }
 
-//export nodeStart
-func nodeStart() *C.Result {
+func NodeStart() GoCResult {
 	if globalNode == nil {
-		return returnC(1, cerrUninitializedNode, "")
+		return returnGoC(1, cerrUninitializedNode, "")
 	}
 	ctx := context.Background()
 
@@ -141,26 +135,25 @@ func nodeStart() *C.Result {
 	select {
 	case err := <-errCh:
 		if err != nil {
-			return returnC(1, err.Error(), "")
+			return returnGoC(1, err.Error(), "")
 		}
-		return returnC(0, "", "")
+		return returnGoC(0, "", "")
 	case <-time.After(5 * time.Second):
 		// Timeout occurred, node may still start later
-		return returnC(2, "Node is still starting (timeout waiting for readiness)", "")
+		return returnGoC(2, cerrUnreadyStart, "")
 	}
 }
 
-//export nodeStop
-func nodeStop() *C.Result {
+func NodeStop() GoCResult {
 	if globalNode == nil {
-		return returnC(1, cerrStoppedNode, "")
+		return returnGoC(1, cerrStoppedNode, "")
 	}
 	ctx := context.Background()
 	err := globalNode.Close(ctx)
 	if err != nil {
-		return returnC(1, fmt.Sprintf(cerrStoppingNode, err), "")
+		return returnGoC(1, fmt.Sprintf(cerrStoppingNode, err), "")
 	}
 	globalNode = nil
 
-	return returnC(0, "", "")
+	return returnGoC(0, "", "")
 }

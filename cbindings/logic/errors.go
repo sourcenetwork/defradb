@@ -8,10 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
-package main
+package cbindings
 
 const (
 	// Node
@@ -23,6 +20,7 @@ const (
 	cerrStoppingNode           string = "error stopping node: %v"
 	cerrParsingReplicatorTimes string = "error parsing replicator retry time intervals: %v"
 	cerrNegativeReplicatorTime string = "error: negative time intervals are not allowed for replicator retries"
+	cerrUnreadyStart           string = "Node is still starting (timeout waiting for readiness)"
 
 	// Schema
 	cerrAddingSchema    string = "error adding schema: %v"
@@ -40,6 +38,10 @@ const (
 	// Index
 	cerrInvalidAscensionOrder        string = "invalid ascension order: expected ASC or DESC"
 	cerrInvalidIndexFieldDescription string = "invalid or malformed field descriptiona"
+
+	// Subscription
+	cerrInvalidSubscriptionID string = "error: invalid subscription ID"
+	cerrTimeoutSubscription   string = "error: timeout waiting for subscription event"
 
 	// Txn
 	cerrCreatingTxn     string = "error creating transaction: %v"

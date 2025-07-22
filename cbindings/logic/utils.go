@@ -8,15 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build cgo
-// +build cgo
-
-package main
-
-/*
-#include "defra_structs.h"
-*/
-import "C"
+package cbindings
 
 import (
 	"context"
@@ -24,7 +16,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"unsafe"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
@@ -35,15 +26,41 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
+type GoCResult struct {
+	Status int
+	Error  string
+	Value  string
+}
+
+type GoCOptions struct {
+	TxID         uint64
+	Version      string
+	CollectionID string
+	Name         string
+	Identity     string
+	GetInactive  int
+}
+
+type GoNodeInitOptions struct {
+	DbPath                   string
+	ListeningAddresses       string
+	ReplicatorRetryIntervals string
+	Peers                    string
+	IdentityKeyType          string
+	IdentityPrivateKey       string
+	InMemory                 int
+	DisableP2P               int
+	DisableAPI               int
+	MaxTransactionRetries    int
+}
+
 // Helper function which builds a return struct from Go to C
-func returnC(status int, errortext string, valuetext string) *C.Result {
-	result := (*C.Result)(C.malloc(C.size_t(unsafe.Sizeof(C.Result{}))))
-
-	result.status = C.int(status)
-	result.error = C.CString(errortext)
-	result.value = C.CString(valuetext)
-
-	return result
+func returnGoC(status int, errortext string, valuetext string) GoCResult {
+	return GoCResult{
+		Status: status,
+		Error:  errortext,
+		Value:  valuetext,
+	}
 }
 
 // Helper function that attaches an identity to a context, returning the new context
@@ -66,8 +83,7 @@ func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Con
 }
 
 // Helper function that attaches a transaction to a context, returning a new context
-func contextWithTransaction(ctx context.Context, cTxnID C.ulonglong) (context.Context, error) {
-	TxnIDu64 := uint64(cTxnID)
+func contextWithTransaction(ctx context.Context, TxnIDu64 uint64) (context.Context, error) {
 	if TxnIDu64 == 0 {
 		return ctx, nil
 	}
@@ -82,17 +98,15 @@ func contextWithTransaction(ctx context.Context, cTxnID C.ulonglong) (context.Co
 
 // Helper function that seeks to marshall JSON into a CResult
 // The Result object will either contain the payload, if it works, or an error if it doesn't
-func marshalJSONToCResult(value any) *C.Result {
+func marshalJSONToGoCResult(value any) GoCResult {
 	dataJSON, err := json.Marshal(value)
 	if err != nil {
-		return returnC(1, fmt.Sprintf(cerrMarshallingJSON, err), "")
+		return returnGoC(1, fmt.Sprintf(cerrMarshallingJSON, err), "")
 	}
-	return returnC(0, "", string(dataJSON))
+	return returnGoC(0, "", string(dataJSON))
 }
 
-// Helper function that takes a comma separated const char * and returns an array of Go strings
-func splitCommaSeparatedCString(cStr *C.char) []string {
-	baseStr := C.GoString(cStr)
+func splitCommaSeparatedString(baseStr string) []string {
 	var retArr []string
 	if baseStr != "" {
 		retArr = strings.Split(baseStr, ",")
@@ -102,15 +116,15 @@ func splitCommaSeparatedCString(cStr *C.char) []string {
 	return retArr
 }
 
-// Helper function that tries to build a []client.RequestOption from C-string name and JSON variables
-func buildRequestOptions(cOpName *C.char, cVars *C.char) ([]client.RequestOption, error) {
+// Helper function that tries to build a []client.RequestOption from string name and JSON variables
+func buildRequestOptions(opName string, vars string) ([]client.RequestOption, error) {
 	var opts []client.RequestOption
-	if cOpName != nil && C.GoString(cOpName) != "" {
-		opts = append(opts, client.WithOperationName(C.GoString(cOpName)))
+	if opName != "" {
+		opts = append(opts, client.WithOperationName(opName))
 	}
-	if cVars != nil && C.GoString(cVars) != "" {
+	if vars != "" {
 		var variables map[string]any
-		if err := json.Unmarshal([]byte(C.GoString(cVars)), &variables); err != nil {
+		if err := json.Unmarshal([]byte(vars), &variables); err != nil {
 			return nil, fmt.Errorf("invalid JSON in variables: %w", err)
 		}
 		opts = append(opts, client.WithVariables(variables))
@@ -118,10 +132,7 @@ func buildRequestOptions(cOpName *C.char, cVars *C.char) ([]client.RequestOption
 	return opts, nil
 }
 
-func loadIdentityFromString(cKeyType *C.char, cPrivKey *C.char) (*identity.FullIdentity, error) {
-	goKeyType := C.GoString(cKeyType)
-	goPrivKeyStr := C.GoString(cPrivKey)
-
+func loadIdentityFromString(goKeyType string, goPrivKeyStr string) (*identity.FullIdentity, error) {
 	if goKeyType == "" || goPrivKeyStr == "" {
 		return nil, nil
 	}
