@@ -127,12 +127,7 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 		})
 	}
 
-	// Create and publish the query request
-	// This event will be handled by the network layer which will:
-	// 1. Query replicator nodes for matching SE artifacts
-	// 2. Aggregate results from multiple nodes
-	// 3. Send the response back via the channel
-	/*msg, responseChan := se.NewQuerySEArtifactsMessage(n.collectionID, queries)
+	msg, responseChan := se.NewQuerySEArtifactsMessage(n.collectionID, queries)
 	n.p.db.Events().Publish(msg)
 
 	response := <-responseChan
@@ -140,8 +135,7 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 		return nil, response.Error
 	}
 
-	return response.DocIDs, nil*/
-	return nil, nil
+	return response.DocIDs, nil
 }
 
 func (n *seScanNode) Next() (bool, error) {
