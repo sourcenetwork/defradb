@@ -183,6 +183,7 @@ loop:
 }
 
 // handleDocSyncResponse processes a single response from a peer.
+// It mutates the results map with the document IDs and their corresponding CIDs.
 func (s *server) handleDocSyncResponse(
 	ctx context.Context,
 	resp rpc.Response,
@@ -212,6 +213,7 @@ func (s *server) handleDocSyncResponse(
 }
 
 // handleDocSyncItem handles a single document sync item from a peer response.
+// It mutates the results map with the document IDs and their corresponding CIDs.
 func (s *server) handleDocSyncItem(
 	ctx context.Context,
 	item docSyncItem,

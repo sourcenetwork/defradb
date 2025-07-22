@@ -186,14 +186,14 @@ func (c *Client) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 
 func (c *Client) SyncDocuments(
 	ctx context.Context,
-	collectionID string,
+	collectionName string,
 	docIDs []string,
 ) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents", "sync")
 
 	req := map[string]any{
-		"collectionID": collectionID,
-		"docIDs":       docIDs,
+		"collectionName": collectionName,
+		"docIDs":         docIDs,
 	}
 
 	deadline, hasDeadline := ctx.Deadline()

@@ -2242,7 +2242,7 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "collectionID": {
+                                    "collectionName": {
                                         "type": "string"
                                     },
                                     "docIDs": {

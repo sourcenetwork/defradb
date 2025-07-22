@@ -12,9 +12,33 @@ package net
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
-func (p *Peer) SyncDocuments(ctx context.Context, collectionID string, docIDs []string) error {
-	_, err := p.server.syncDocuments(ctx, collectionID, docIDs)
+func (p *Peer) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+
+	cols, err := clientTxn.GetCollections(
+		ctx,
+		client.CollectionFetchOptions{
+			Name: immutable.Some(collectionName),
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if len(cols) == 0 {
+		return client.NewErrCollectionNotFoundForName(collectionName)
+	}
+
+	collectionID := cols[0].Version().CollectionID
+	_, err = p.server.syncDocuments(ctx, collectionID, docIDs)
 	return err
 }

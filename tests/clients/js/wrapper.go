@@ -91,7 +91,7 @@ func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 
 func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
-	collectionID string,
+	collectionName string,
 	docIDs []string,
 ) error {
 	panic("not implemented")

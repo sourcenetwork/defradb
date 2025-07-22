@@ -10,11 +10,14 @@ This command allows you to sync documents from a specific collection across the 
 It doesn't automatically subscribe to the collection or the documents.
 
 Example: sync single document
-  defradb client p2p document sync baf111 bae123,bae456
+  defradb client p2p document sync Users bae123
+
+Example: sync multiple documents
+  defradb client p2p document sync Users bae123 bae456
   
 
 ```
-defradb client p2p document sync [collection-id] [docID...] [flags]
+defradb client p2p document sync [collection-name] [docID...] [flags]
 ```
 
 ### Options

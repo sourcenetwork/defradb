@@ -698,12 +698,6 @@ func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
-	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
-	if err != nil {
-		return docSyncItem{}, fmt.Errorf("failed to create transaction: %w", err)
-	}
-	defer txn.Discard(s.peer.ctx)
-
 	key := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,

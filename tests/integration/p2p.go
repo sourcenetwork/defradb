@@ -479,14 +479,14 @@ func syncDocs(s *state, action SyncDocs) {
 		docIDStrings[i] = s.docIDs[action.CollectionID][docIndex].String()
 	}
 
-	collectionIDString := s.nodes[action.NodeID].collections[action.CollectionID].SchemaRoot()
+	collectionName := s.nodes[action.NodeID].collections[action.CollectionID].Name()
 
 	err := withRetryOnNode(
 		node,
 		func() error {
 			return node.SyncDocuments(
 				s.ctx,
-				collectionIDString,
+				collectionName,
 				docIDStrings,
 			)
 		},
