@@ -175,6 +175,18 @@ func generateIdentity(s *state, keyType crypto.KeyType) acpIdentity.Identity {
 	return identity
 }
 
+// getIdentity returns an identity for the request specific to the node.
+func getIdentityForRequestSpecificToNode(
+	s *state,
+	identity immutable.Option[Identity],
+	nodeIndex int,
+) immutable.Option[acpIdentity.Identity] {
+	if !identity.HasValue() {
+		return acpIdentity.None
+	}
+	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
+}
+
 // getContextWithIdentity returns a context with the identity for the given reference and node index.
 // If the identity does not exist, it will be generated.
 // The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
@@ -184,19 +196,7 @@ func getContextWithIdentity(
 	identity immutable.Option[Identity],
 	nodeIndex int,
 ) context.Context {
-	if !identity.HasValue() {
-		return ctx
-	}
-	return acpIdentity.WithContext(
-		ctx,
-		immutable.Some(
-			getIdentityForRequest(
-				s,
-				identity.Value(),
-				nodeIndex,
-			),
-		),
-	)
+	return acpIdentity.WithContext(ctx, getIdentityForRequestSpecificToNode(s, identity, nodeIndex))
 }
 
 func getIdentityDID(s *state, identity immutable.Option[Identity]) string {
@@ -207,4 +207,10 @@ func getIdentityDID(s *state, identity immutable.Option[Identity]) string {
 		return getIdentity(s, identity).DID()
 	}
 	return ""
+}
+
+// resetContextWithNoIdentity resets identity for the ctx to avoid, leaving it there and having the ctx
+// reuse the same identity for other requests that don't specify an identity.
+func resetStateContext(s *state) {
+	s.ctx = acpIdentity.WithContext(s.ctx, acpIdentity.None)
 }

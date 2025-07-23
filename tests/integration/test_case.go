@@ -124,6 +124,29 @@ type Start struct {
 	//
 	// If a value is not provided the start will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of the user starting the node.
+	//
+	// If this identity if used in combination with enabling admin acp, then this
+	// Identity becomes the admin acp owner for that node.
+	//
+	// To disable/purge/re-enable admin acp after a successful start, must use the
+	// respective client commands instead.
+	Identity immutable.Option[Identity]
+
+	// EnableAAC is true when the node is being started with an attempt to setup and enable
+	// the admin access control for that node.
+	//
+	// Must have a valid identity to enable (if enabling for the first time).
+	//
+	// False by default.
+	EnableAAC bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // SchemaUpdate is an action that will update the database schema.
