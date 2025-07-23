@@ -91,6 +91,10 @@ func (db *DB) GetSchemaByVersionID(ctx context.Context, versionID string) (clien
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaGetByVersionPerm); err != nil {
+		return client.SchemaDescription{}, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return client.SchemaDescription{}, err
@@ -108,6 +112,10 @@ func (db *DB) GetSchemas(
 ) ([]client.SchemaDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminSchemaGetPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {

@@ -274,6 +274,11 @@ type GetSchema struct {
 	// If a value is not provided the patch will be applied to all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If admin acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[Identity]
+
 	// The VersionID of the schema version to fetch.
 	//
 	// This option will be prioritized over all other options.

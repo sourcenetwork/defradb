@@ -1198,10 +1198,12 @@ func getSchema(
 	s *state,
 	action GetSchema,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		var results []client.SchemaDescription
 		var err error
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		switch {
 		case action.VersionID.HasValue():
 			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
@@ -1216,6 +1218,7 @@ func getSchema(
 				},
 			)
 		}
+		resetStateContext(s)
 
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
