@@ -16,25 +16,151 @@ package dac
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+	sysjs "syscall/js"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
+	"github.com/sourcenetwork/goji"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
-	"github.com/sourcenetwork/immutable"
 )
-
-// SourceHub is not supported in JS environments so these mocks are needed
-// to avoid undeclared errors while building when source_hub types are
-// missing due to go build ignoring the source_hub implementation.
 
 type SourceHubDocumentACP struct{}
 
+// NewSourceHubDocumentACP returns a new SourceHub ACP instance for JavaScript environments.
+func NewSourceHubDocumentACP() DocumentACP {
+	return &bridgeDocumentACP{
+		clientACP: &SourceHubDocumentACP{},
+	}
+}
+
+// callJSFunction calls JavaScript functions and handles async results
+func callJSFunction(funcName string, args ...interface{}) ([]sysjs.Value, error) {
+	funcObj := sysjs.Global().Get(funcName)
+	if !funcObj.Truthy() {
+		return nil, fmt.Errorf(
+			"JavaScript function %s not found",
+			funcName,
+		)
+	}
+	promise := funcObj.Invoke(args...)
+	if !promise.Truthy() {
+		return nil, fmt.Errorf(
+			"JavaScript function %s returned null or undefined",
+			funcName,
+		)
+	}
+	results, err := goji.Await(goji.PromiseValue(promise))
+	if err != nil {
+		return nil, fmt.Errorf("failed to await %s: %w", funcName, err)
+	}
+	return results, nil
+}
+
+// timestampToString converts a timestamp to a string
+func timestampToString(ts *protoTypes.Timestamp) string {
+	if ts == nil {
+		return ""
+	}
+	return fmt.Sprintf("%d", ts.Seconds)
+}
+
+// fromSourceHubPolicyJS converts a JavaScript policy object to acpTypes.Policy
+func fromSourceHubPolicyJS(jsPolicy map[string]interface{}) acpTypes.Policy {
+	resources := make(map[string]*acpTypes.Resource)
+	if resourcesData, ok := jsPolicy["resources"].([]interface{}); ok {
+		for _, resourceData := range resourcesData {
+			if resourceMap, ok := resourceData.(map[string]interface{}); ok {
+				if resourceName, ok := resourceMap["name"].(string); ok {
+					resource := fromSourceHubResourceJS(resourceName, resourceMap)
+					resources[resource.Name] = resource
+				}
+			}
+		}
+	} else if resourcesData, ok := jsPolicy["resources"].(map[string]interface{}); ok {
+		for resourceName, resourceData := range resourcesData {
+			if resourceMap, ok := resourceData.(map[string]interface{}); ok {
+				resource := fromSourceHubResourceJS(resourceName, resourceMap)
+				resources[resource.Name] = resource
+			}
+		}
+	}
+	return acpTypes.Policy{
+		ID:        jsPolicy["id"].(string),
+		Resources: resources,
+	}
+}
+
+// fromSourceHubResourceJS converts a JavaScript resource object to acpTypes.Resource
+func fromSourceHubResourceJS(resourceName string, resourceMap map[string]interface{}) *acpTypes.Resource {
+	perms := make(map[string]*acpTypes.Permission)
+	if permissionsData, ok := resourceMap["permissions"].([]interface{}); ok {
+		for _, permData := range permissionsData {
+			if permMap, ok := permData.(map[string]interface{}); ok {
+				if permName, ok := permMap["name"].(string); ok {
+					perm := fromSourceHubPermissionJS(permName, permMap)
+					perms[perm.Name] = perm
+				}
+			}
+		}
+	} else if permissionsData, ok := resourceMap["permissions"].(map[string]interface{}); ok {
+		for permName, permData := range permissionsData {
+			if permMap, ok := permData.(map[string]interface{}); ok {
+				perm := fromSourceHubPermissionJS(permName, permMap)
+				perms[perm.Name] = perm
+			}
+		}
+	}
+	return &acpTypes.Resource{
+		Name:        resourceName,
+		Permissions: perms,
+	}
+}
+
+// fromSourceHubPermissionJS converts a JavaScript permission object to acpTypes.Permission
+func fromSourceHubPermissionJS(permName string, permMap map[string]interface{}) *acpTypes.Permission {
+	expression := ""
+	if expr, ok := permMap["expr"].(string); ok {
+		expression = expr
+	} else if expr, ok := permMap["expression"].(string); ok {
+		expression = expr
+	}
+	expression = strings.TrimSpace(expression)
+	if strings.HasPrefix(expression, "(") && strings.HasSuffix(expression, ")") {
+		parenCount := 0
+		balanced := true
+		for i, char := range expression {
+			if char == '(' {
+				parenCount++
+			} else if char == ')' {
+				parenCount--
+				if parenCount == 0 && i < len(expression)-1 {
+					balanced = false
+					break
+				}
+			}
+		}
+		if balanced && parenCount == 0 {
+			expression = expression[1 : len(expression)-1]
+		}
+	}
+	return &acpTypes.Permission{
+		Name:       permName,
+		Expression: expression,
+	}
+}
+
 func (a *SourceHubDocumentACP) Init(ctx context.Context, path string) {
-	panic("warning js build does not support sourcehub")
+	// No-op: initialization happens during node creation
 }
 
 func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
-	panic("warning js build does not support sourcehub")
+	// No-op: client is initialized during node creation
+	return nil
 }
 
 func (a *SourceHubDocumentACP) AddPolicy(
@@ -44,25 +170,90 @@ func (a *SourceHubDocumentACP) AddPolicy(
 	policyMarshalType acpTypes.PolicyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	panic("warning js build does not support sourcehub")
+	results, err := callJSFunction("acp_AddPolicy", policy, int(policyMarshalType))
+	if err != nil {
+		return "", err
+	}
+	if len(results) == 0 {
+		return "", fmt.Errorf("AddPolicy returned no results")
+	}
+	if len(results) == 0 {
+		return "", fmt.Errorf("AddPolicy returned no results")
+	}
+	var policyID string
+	if results[0].Type() == sysjs.TypeObject {
+		firstElement := results[0].Index(0)
+		if firstElement.Truthy() {
+			policyID = firstElement.String()
+		} else {
+			return "", fmt.Errorf(
+				"AddPolicy returned object but first element is not truthy",
+			)
+		}
+	} else {
+		policyID = results[0].String()
+	}
+	if policyID == "" {
+		return "", fmt.Errorf("AddPolicy returned empty policy ID")
+	}
+	return policyID, nil
 }
 
 func (a *SourceHubDocumentACP) Policy(
 	ctx context.Context,
 	policyID string,
 ) (immutable.Option[acpTypes.Policy], error) {
-	panic("warning js build does not support sourcehub")
+	results, err := callJSFunction("acp_Policy", policyID)
+	if err != nil {
+		return immutable.None[acpTypes.Policy](), err
+	}
+	if len(results) == 0 || !results[0].Truthy() {
+		return immutable.None[acpTypes.Policy](), nil
+	}
+	var policyObj sysjs.Value
+	if results[0].Type() == sysjs.TypeObject && results[0].InstanceOf(sysjs.Global().Get("Array")) {
+		if results[0].Length() > 0 {
+			policyObj = results[0].Index(0)
+		} else {
+			return immutable.None[acpTypes.Policy](), nil
+		}
+	} else {
+		policyObj = results[0]
+	}
+	if !policyObj.Truthy() {
+		return immutable.None[acpTypes.Policy](), nil
+	}
+	var policyStr string
+	if policyObj.Type() == sysjs.TypeString {
+		policyStr = policyObj.String()
+	} else {
+		jsonStr := sysjs.Global().Get("JSON").Call("stringify", policyObj)
+		if !jsonStr.Truthy() {
+			return immutable.None[acpTypes.Policy](), nil
+		}
+		policyStr = jsonStr.String()
+	}
+	if policyStr == "" || policyStr == "null" {
+		return immutable.None[acpTypes.Policy](), nil
+	}
+	var jsPolicy map[string]interface{}
+	if err := json.Unmarshal([]byte(policyStr), &jsPolicy); err != nil {
+		return immutable.None[acpTypes.Policy](), err
+	}
+	policy := fromSourceHubPolicyJS(jsPolicy)
+	return immutable.Some(policy), nil
 }
 
 func (a *SourceHubDocumentACP) RegisterObject(
 	ctx context.Context,
-	identity identity.Identity,
+	id identity.Identity,
 	policyID string,
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
-	panic("warning js build does not support sourcehub")
+	_, err := callJSFunction("acp_RegisterObject", policyID, resourceName, objectID)
+	return err
 }
 
 func (a *SourceHubDocumentACP) ObjectOwner(
@@ -71,7 +262,14 @@ func (a *SourceHubDocumentACP) ObjectOwner(
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
-	panic("warning js build does not support sourcehub")
+	results, err := callJSFunction("acp_ObjectOwner", policyID, resourceName, objectID)
+	if err != nil {
+		return immutable.None[string](), err
+	}
+	if len(results) > 0 && results[0].Truthy() && results[0].String() != "" {
+		return immutable.Some(results[0].String()), nil
+	}
+	return immutable.None[string](), nil
 }
 
 func (a *SourceHubDocumentACP) VerifyAccessRequest(
@@ -82,15 +280,53 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	resourceName string,
 	objectID string,
 ) (bool, error) {
-	panic("warning js build does not support sourcehub")
+	permissionStr := fmt.Sprintf("%v", permission)
+	results, err := callJSFunction(
+		"acp_VerifyAccessRequest",
+		permissionStr,
+		actorID,
+		policyID,
+		resourceName,
+		objectID,
+	)
+	if err != nil {
+		return false, err
+	}
+	if len(results) == 0 {
+		return false, nil
+	}
+	result := results[0]
+	if !result.Truthy() {
+		return false, nil
+	}
+	switch result.Type() {
+	case sysjs.TypeBoolean:
+		return result.Bool(), nil
+	case sysjs.TypeObject:
+		if result.InstanceOf(sysjs.Global().Get("Array")) && result.Length() > 0 {
+			firstElement := result.Index(0)
+			if firstElement.Type() == sysjs.TypeBoolean {
+				return firstElement.Bool(), nil
+			}
+		}
+		if resultProp := result.Get("result"); !resultProp.IsUndefined() && resultProp.Type() == sysjs.TypeBoolean {
+			return resultProp.Bool(), nil
+		}
+		if successProp := result.Get("success"); !successProp.IsUndefined() && successProp.Type() == sysjs.TypeBoolean {
+			return successProp.Bool(), nil
+		}
+		return false, nil
+	default:
+		return false, nil
+	}
 }
 
 func (a *SourceHubDocumentACP) Close() error {
-	panic("warning js build does not support sourcehub")
+	return nil
 }
 
 func (a *SourceHubDocumentACP) ResetState(_ context.Context) error {
-	panic("warning js build does not support sourcehub")
+	return nil
 }
 
 func (a *SourceHubDocumentACP) AddActorRelationship(
@@ -103,7 +339,50 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	panic("warning js build does not support sourcehub")
+	results, err := callJSFunction(
+		"acp_AddActorRelationship",
+		policyID,
+		resourceName,
+		objectID,
+		relation,
+		targetActor,
+	)
+	if err != nil {
+		return false, err
+	}
+	if len(results) == 0 {
+		return false, fmt.Errorf("AddActorRelationship returned no results")
+	}
+	result := results[0]
+	if !result.Truthy() {
+		return false, nil
+	}
+	if result.Type() == sysjs.TypeObject && result.InstanceOf(sysjs.Global().Get("Array")) {
+		if result.Length() >= 2 {
+			errorVal := result.Index(1)
+			if errorVal.Truthy() && errorVal.Type() == sysjs.TypeObject {
+				errorStr := ""
+				if errorVal.Type() == sysjs.TypeString {
+					errorStr = errorVal.String()
+				} else {
+					if messageProp := errorVal.Get("message"); messageProp.Truthy() {
+						errorStr = messageProp.String()
+					} else {
+						errorStr = "Unknown error"
+					}
+				}
+				return false, fmt.Errorf("AddActorRelationship error: %s", errorStr)
+			}
+			boolVal := result.Index(0)
+			if boolVal.Type() == sysjs.TypeBoolean {
+				boolResult := boolVal.Bool()
+				return boolResult, nil
+			} else if boolVal.Type() == sysjs.TypeNull || !boolVal.Truthy() {
+				return false, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 func (a *SourceHubDocumentACP) DeleteActorRelationship(
@@ -116,5 +395,48 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	panic("warning js build does not support sourcehub")
+	results, err := callJSFunction(
+		"acp_DeleteActorRelationship",
+		policyID,
+		resourceName,
+		objectID,
+		relation,
+		targetActor,
+	)
+	if err != nil {
+		return false, err
+	}
+	if len(results) == 0 {
+		return false, fmt.Errorf("DeleteActorRelationship returned no results")
+	}
+	result := results[0]
+	if !result.Truthy() {
+		return false, nil
+	}
+	if result.Type() == sysjs.TypeObject && result.InstanceOf(sysjs.Global().Get("Array")) {
+		if result.Length() >= 2 {
+			errorVal := result.Index(1)
+			if errorVal.Truthy() && errorVal.Type() == sysjs.TypeObject {
+				errorStr := ""
+				if errorVal.Type() == sysjs.TypeString {
+					errorStr = errorVal.String()
+				} else {
+					if messageProp := errorVal.Get("message"); messageProp.Truthy() {
+						errorStr = messageProp.String()
+					} else {
+						errorStr = "Unknown error"
+					}
+				}
+				return false, fmt.Errorf("DeleteActorRelationship error: %s", errorStr)
+			}
+			boolVal := result.Index(0)
+			if boolVal.Type() == sysjs.TypeBoolean {
+				boolResult := boolVal.Bool()
+				return boolResult, nil
+			} else if boolVal.Type() == sysjs.TypeNull || !boolVal.Truthy() {
+				return false, nil
+			}
+		}
+	}
+	return false, nil
 }
