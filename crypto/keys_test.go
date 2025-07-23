@@ -11,8 +11,11 @@
 package crypto
 
 import (
+	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"testing"
 
@@ -539,4 +542,222 @@ func TestGenerateKey_InvalidKeyType(t *testing.T) {
 	assert.Nil(t, key)
 	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyType("invalid-key-type")))
 	assert.ErrorContains(t, err, "invalid-key-type")
+}
+
+func TestSecp256r1_KeyType(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+	assert.Equal(t, KeyTypeSecp256r1, wrappedPubKey.Type())
+}
+
+func TestSecp256r1_RawBytes(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+	pubBytes := wrappedPubKey.Raw()
+	assert.Equal(t, 33, len(pubBytes))
+	assert.True(t, pubBytes[0] == 0x02 || pubBytes[0] == 0x03)
+}
+
+func TestSecp256r1_Equals(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+	otherPrivKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	otherWrappedPubKey := NewPublicKey(&otherPrivKey.PublicKey)
+	assert.True(t, wrappedPubKey.Equal(wrappedPubKey))
+	assert.False(t, wrappedPubKey.Equal(otherWrappedPubKey))
+}
+
+func TestSecp256r1_Verify(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+	message := []byte("test message")
+	hash := sha256.Sum256(message)
+	sig, err := ecdsa.SignASN1(rand.Reader, privKey, hash[:])
+	require.NoError(t, err)
+
+	valid, err := wrappedPubKey.Verify(message, sig)
+	assert.Error(t, err)
+	assert.False(t, valid)
+	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+}
+
+func TestSecp256r1_DID(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+	did, err := wrappedPubKey.DID()
+	require.NoError(t, err)
+	assert.Contains(t, did, "did:key:")
+}
+
+func TestSecp256r1_Underlying(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+	underlying := wrappedPubKey.Underlying()
+	assert.NotNil(t, underlying)
+	assert.IsType(t, &ecdsa.PublicKey{}, underlying)
+}
+
+func TestPublicKeyFromString_ValidSecp256r1Key(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	pubKey := NewPublicKey(&privKey.PublicKey)
+	wrappedKey := pubKey
+	keyString := wrappedKey.String()
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+	assert.Equal(t, KeyTypeSecp256r1, parsedKey.Type())
+	assert.True(t, wrappedKey.Equal(parsedKey))
+
+	origBytes := wrappedKey.Raw()
+	parsedBytes := parsedKey.Raw()
+	assert.Equal(t, origBytes, parsedBytes)
+}
+
+func TestPublicKeyFromString_ValidSecp256r1UncompressedKey(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	uncompressedBytes := elliptic.Marshal(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+	keyString := hex.EncodeToString(uncompressedBytes)
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	assert.Equal(t, KeyTypeSecp256r1, parsedKey.Type())
+	assert.True(t, NewPublicKey(&privKey.PublicKey).Equal(parsedKey))
+}
+
+func TestPublicKeyFromString_InvalidSecp256r1KeyLength(t *testing.T) {
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, "0102030405")
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidECDSAPubKey, err)
+}
+
+func TestPublicKeyFromString_InvalidSecp256r1CompressedPrefix(t *testing.T) {
+	invalidKey := "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, invalidKey)
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidECDSAPubKey, err)
+}
+
+func TestPublicKeyFromString_InvalidSecp256r1UncompressedPrefix(t *testing.T) {
+	invalidKey := "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021" + "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f2021"
+	parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, invalidKey)
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.Equal(t, ErrInvalidECDSAPubKey, err)
+}
+
+func TestPrivateKeyFromBytes_Secp256r1NotSupported(t *testing.T) {
+	parsedKey, err := PrivateKeyFromBytes(KeyTypeSecp256r1, make([]byte, 32))
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+}
+
+func TestPrivateKeyFromString_Secp256r1NotSupported(t *testing.T) {
+	keyString := hex.EncodeToString(make([]byte, 32))
+	parsedKey, err := PrivateKeyFromString(KeyTypeSecp256r1, keyString)
+	assert.Error(t, err)
+	assert.Nil(t, parsedKey)
+	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+}
+
+func TestGenerateKey_Secp256r1NotSupported(t *testing.T) {
+	key, err := GenerateKey(KeyTypeSecp256r1)
+	assert.Error(t, err)
+	assert.Nil(t, key)
+	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+}
+
+func TestNewPrivateKey_Secp256r1NotSupported(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedKey := NewPrivateKey(privKey)
+	assert.Nil(t, wrappedKey, "secp256r1 private keys should not be supported")
+}
+
+func TestSecp256r1_DID_Comprehensive(t *testing.T) {
+	t.Run("DID from compressed key", func(t *testing.T) {
+		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		require.NoError(t, err)
+
+		wrappedPubKey := NewPublicKey(&privKey.PublicKey)
+		did, err := wrappedPubKey.DID()
+		require.NoError(t, err)
+		assert.Contains(t, did, "did:key:")
+		assert.True(t, len(did) > 20)
+	})
+
+	t.Run("DID from uncompressed key", func(t *testing.T) {
+		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		require.NoError(t, err)
+
+		uncompressedBytes := elliptic.Marshal(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+		keyString := hex.EncodeToString(uncompressedBytes)
+		parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
+		require.NoError(t, err)
+
+		did, err := parsedKey.DID()
+		require.NoError(t, err)
+		assert.Contains(t, did, "did:key:")
+	})
+
+	t.Run("DID from key with nil Y coordinate", func(t *testing.T) {
+		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		require.NoError(t, err)
+
+		compressedBytes := elliptic.MarshalCompressed(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+		compressedKey := &ecdsa.PublicKey{
+			Curve: elliptic.P256(),
+			X:     privKey.PublicKey.X,
+			Y:     nil,
+		}
+
+		wrappedKey := &secp256r1PublicKey{
+			key:             compressedKey,
+			compressedBytes: compressedBytes,
+		}
+
+		did, err := wrappedKey.DID()
+		require.NoError(t, err)
+		assert.Contains(t, did, "did:key:")
+	})
+
+	t.Run("DID consistency between compressed and uncompressed", func(t *testing.T) {
+		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		require.NoError(t, err)
+
+		compressedKey := NewPublicKey(&privKey.PublicKey)
+		compressedDID, err := compressedKey.DID()
+		require.NoError(t, err)
+
+		uncompressedBytes := elliptic.Marshal(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+		keyString := hex.EncodeToString(uncompressedBytes)
+		uncompressedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
+		require.NoError(t, err)
+
+		uncompressedDID, err := uncompressedKey.DID()
+		require.NoError(t, err)
+
+		assert.Equal(t, compressedDID, uncompressedDID)
+	})
 }
