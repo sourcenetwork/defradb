@@ -13,6 +13,7 @@ package description
 import (
 	"context"
 	"encoding/json"
+	"slices"
 
 	"github.com/sourcenetwork/corekv"
 
@@ -176,11 +177,8 @@ func GetSchemas(
 			return nil, err
 		}
 
-		for _, versionID := range versionIDs {
-			if desc.VersionID == versionID {
-				descriptions = append(descriptions, desc)
-				break
-			}
+		if slices.Contains(versionIDs, desc.VersionID) {
+			descriptions = append(descriptions, desc)
 		}
 	}
 
