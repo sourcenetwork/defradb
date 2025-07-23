@@ -67,50 +67,36 @@ type AdminInfo struct {
 
 	// AdminDesc contains the current admin acp specific state and other information.
 	AdminDesc AdminACPDesc
+
+	// EnabledInConfig is true if specified flag to start node access control for the first time.
+	//
+	// Note: If node access control is temporarily disabled or is already started, then this
+	// config value takes no effect, and is ignored.
+	EnabledInConfig bool
 }
 
 // NewCleanAdminInfo returns a newly contructed [AdminInfo] with a clean [AdminDesc] state.
-func NewCleanAdminInfo() AdminInfo {
-	adminACP := aac.NewAdminACP()
-	adminInfo := AdminInfo{
-		AdminACP:  &adminACP,
-		AdminDesc: NewCleanAdminACPDesc(),
-	}
-	return adminInfo
-}
-
-// NewAdminInfoWithAACDisabled returns an [AdminInfo] with admin acp system disabled in path.
-// Returns an error if initialization failed.
-//
-// Note: Caller is responsible for calling [AdminInfo.AdminACP.Close()] to free resources.
-func NewAdminInfoWithAACDisabled(ctx context.Context, path string) (AdminInfo, error) {
-	adminInfo := NewCleanAdminInfo()
-	adminInfo.AdminACP.Init(ctx, path)
-
-	// We keep AAC started to have access control ability even when admin acp is disabled
-	// temporarily as we want to only allow authorized user(s) to re-enable admin acp.
-	if err := adminInfo.AdminACP.Start(ctx); err != nil {
-		return AdminInfo{}, err
-	}
-
-	return adminInfo, nil
-}
-
-// NewAdminInfoWithAACEnabled returns an [AdminInfo] with admin acp system enabled in path.
-// Returns an error if initialization failed.
-//
-// Note: Caller is responsible for calling [AdminInfo.AdminACP.Close()] to free resources.
-func NewAdminInfoWithAACEnabled(ctx context.Context, path string) (AdminInfo, error) {
-	adminInfo, err := NewAdminInfoWithAACDisabled(ctx, path)
+func NewAdminInfo(ctx context.Context, path string, enabled bool) (AdminInfo, error) {
+	adminACP, err := aac.NewAdminACP(path)
 	if err != nil {
 		return AdminInfo{}, err
 	}
-	adminInfo.AdminDesc.IsEnabled = true
+	// We keep AAC started to have access control ability even when admin acp is disabled
+	// temporarily as we want to only allow authorized user(s) to re-enable admin acp.
+	if err := adminACP.Start(ctx); err != nil {
+		return AdminInfo{}, err
+	}
+
+	adminInfo := AdminInfo{
+		AdminACP:        &adminACP,
+		AdminDesc:       NewAdminACPDesc(),
+		EnabledInConfig: enabled,
+	}
 	return adminInfo, nil
 }
 
 func (db *DB) initializeAdminACP(ctx context.Context, txn datastore.Txn) error {
-	isAACEnabledInStartCmd := db.adminInfo.AdminDesc.IsEnabled
+	isAACEnabledInStartCmd := db.adminInfo.EnabledInConfig
 	wasSetupBefore, err := txn.Systemstore().Has(ctx, keys.NewAdminACPKey().Bytes())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err

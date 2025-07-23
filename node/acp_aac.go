@@ -51,30 +51,11 @@ func WithEnableAdminACP(enable bool) AdminACPOpt {
 	}
 }
 
-// adminACPConstructors is a map of [bool] to indicate admin acp implementations.
-var adminACPConstructors = map[bool]func(
-	context.Context,
-	*AdminACPOptions,
-) (db.AdminInfo, error){
-	// We keep AAC started (in both cases) to have access control ability even when admin acp
-	// is disabled temporarily, as we want to only allow authorized user to re-enable admin acp.
-	// Note: To free resources the caller must still call [adminInfo.AdminACP.Close()] when done.
-	false: func(ctx context.Context, options *AdminACPOptions) (db.AdminInfo, error) {
-		return db.NewAdminInfoWithAACDisabled(ctx, options.path)
-	},
-	true: func(ctx context.Context, options *AdminACPOptions) (db.AdminInfo, error) {
-		return db.NewAdminInfoWithAACEnabled(ctx, options.path)
-	},
-}
-
 func NewAdminACP(ctx context.Context, opts ...AdminACPOpt) (db.AdminInfo, error) {
 	options := DefaultAdminACPOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
-	acpConstructor, ok := adminACPConstructors[options.isEnabled]
-	if ok {
-		return acpConstructor(ctx, options)
-	}
-	return db.AdminInfo{}, ErrAdminACPTypeNotSupported
+
+	return db.NewAdminInfo(ctx, options.path, options.isEnabled)
 }

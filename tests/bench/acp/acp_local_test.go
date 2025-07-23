@@ -63,17 +63,17 @@ resources:
 // Additionally it will also start the document acp instance.
 // The caller is responsible to call `Close()` on the returned [dac.DocumentACP] instance.
 func newLocalDocumentACPSetup(b *testing.B, inMem bool) dac.DocumentACP {
-	ctx := context.Background()
-	localACP := dac.NewLocalDocumentACP()
-
+	var localACP dac.DocumentACP
+	var err error
 	if inMem {
-		localACP.Init(ctx, "")
+		localACP, err = dac.NewLocalDocumentACP("")
 	} else {
 		acpPath := b.TempDir()
-		localACP.Init(ctx, acpPath)
+		localACP, err = dac.NewLocalDocumentACP(acpPath)
 	}
+	require.Nil(b, err)
 
-	err := localACP.Start(ctx)
+	err = localACP.Start(context.Background())
 	require.Nil(b, err)
 
 	return localACP

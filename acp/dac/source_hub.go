@@ -82,10 +82,6 @@ func NewACPSourceHub(
 	}, nil
 }
 
-func (a *SourceHubDocumentACP) Init(ctx context.Context, path string) {
-	// no-op
-}
-
 func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
 	return nil
 }

@@ -52,8 +52,11 @@ func start(ctx context.Context) (*defraInstance, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	db, err := db.NewDB(ctx, rootstore, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewAdminInfo(ctx, "", false)
+	if err != nil {
+		return nil, errors.Wrap("failed to setup node access control info", err)
+	}
+	db, err := db.NewDB(ctx, rootstore, adminInfo, dac.NoDocumentACP, nil)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}

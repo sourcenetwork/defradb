@@ -57,13 +57,15 @@ var (
 
 	ErrResourceDoesNotExistOnTargetPolicy = errors.New(errResourceDoesNotExistOnTargetPolicy)
 
-	ErrPolicyDataMustNotBeEmpty    = errors.New("policy data can not be empty")
-	ErrPolicyCreatorMustNotBeEmpty = errors.New("policy creator can not be empty")
-	ErrACPResetState               = errors.New("acp could not be reset")
-	ErrNoPolicyArgs                = errors.New(errNoPolicyArgs)
-	ErrPolicyIDMustNotBeEmpty      = errors.New(errPolicyIDMustNotBeEmpty)
-	ErrResourceNameMustNotBeEmpty  = errors.New(errResourceNameMustNotBeEmpty)
-	ErrInvalidActorID              = errors.New(errInvalidActorID)
+	ErrPolicyDataMustNotBeEmpty                    = errors.New("policy data can not be empty")
+	ErrPolicyCreatorMustNotBeEmpty                 = errors.New("policy creator can not be empty")
+	ErrACPResetState                               = errors.New("acp could not be reset")
+	ErrLocalACPStoreNameEmptyWithPersistentStorage = errors.New("acp store name is empty with persistent storage")
+	ErrLocalACPAlreadyStarted                      = errors.New("trying to start local acp, when it is already started")
+	ErrNoPolicyArgs                                = errors.New(errNoPolicyArgs)
+	ErrPolicyIDMustNotBeEmpty                      = errors.New(errPolicyIDMustNotBeEmpty)
+	ErrResourceNameMustNotBeEmpty                  = errors.New(errResourceNameMustNotBeEmpty)
+	ErrInvalidActorID                              = errors.New(errInvalidActorID)
 )
 
 func NewErrInitializationOfACPFailed(

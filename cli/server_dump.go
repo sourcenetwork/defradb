@@ -25,22 +25,28 @@ func MakeServerDumpCmd() *cobra.Command {
 		Short: "Dumps the state of the entire database",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg := mustGetContextConfig(cmd)
-			log.InfoContext(cmd.Context(), "Dumping DB state...")
+			ctx := cmd.Context()
+			log.InfoContext(ctx, "Dumping DB state...")
 
 			if cfg.GetString("datastore.store") != configStoreBadger {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
+			badgerPath := cfg.GetString("datastore.badger.path")
 			storeOpts := []node.StoreOpt{
-				node.WithStorePath(cfg.GetString("datastore.badger.path")),
+				node.WithStorePath(badgerPath),
 			}
-			rootstore, err := node.NewStore(cmd.Context(), storeOpts...)
+			rootstore, err := node.NewStore(ctx, storeOpts...)
+			if err != nil {
+				return err
+			}
+			adminInfo, err := db.NewAdminInfo(ctx, badgerPath, false)
 			if err != nil {
 				return err
 			}
 			db, err := db.NewDB(
-				cmd.Context(),
+				ctx,
 				rootstore,
-				db.NewCleanAdminInfo(),
+				adminInfo,
 				dac.NoDocumentACP,
 				nil,
 			)
@@ -49,7 +55,7 @@ func MakeServerDumpCmd() *cobra.Command {
 			}
 			defer db.Close()
 
-			return db.PrintDump(cmd.Context())
+			return db.PrintDump(ctx)
 		},
 	}
 	return cmd

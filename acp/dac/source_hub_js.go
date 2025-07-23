@@ -29,10 +29,6 @@ import (
 
 type SourceHubDocumentACP struct{}
 
-func (a *SourceHubDocumentACP) Init(ctx context.Context, path string) {
-	panic("warning js build does not support sourcehub")
-}
-
 func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
 	panic("warning js build does not support sourcehub")
 }
