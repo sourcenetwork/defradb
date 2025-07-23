@@ -82,7 +82,7 @@ func (a *bridgeDocumentACP) ValidateResourceInterface(
 	var err error
 	switch a.clientACP.(type) {
 	case *LocalDocumentACP:
-		err = acp.ValidateResourceInterfaceAccordingToACPSystem(
+		err = acp.ValidateResourceInterface(
 			ctx,
 			policyID,
 			resourceName,
@@ -90,7 +90,7 @@ func (a *bridgeDocumentACP) ValidateResourceInterface(
 			a.clientACP,
 		)
 	case *SourceHubDocumentACP:
-		err = acp.ValidateResourceInterfaceAccordingToACPSystem(
+		err = acp.ValidateResourceInterface(
 			ctx,
 			policyID,
 			resourceName,

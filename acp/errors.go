@@ -22,6 +22,7 @@ const (
 	errFailedToRegisterDocWithACP                = "failed to register document with acp"
 	errFailedToCheckIfDocIsRegisteredWithACP     = "failed to check if doc is registered with acp"
 	errFailedToVerifyDocAccessWithACP            = "failed to verify doc access with acp"
+	errFailedToVerifyAdminAccessWithACP          = "failed to verify admin access with acp"
 	errFailedToAddDocActorRelationshipWithACP    = "failed to add document actor relationship with acp"
 	errFailedToDeleteDocActorRelationshipWithACP = "failed to delete document actor relationship with acp"
 	errMissingReqArgToAddDocActorRelationship    = "missing a required argument needed to add doc actor relationship"
@@ -124,6 +125,25 @@ func NewErrFailedToCheckIfDocIsRegisteredWithACP(
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
+	)
+}
+
+func NewErrFailedToVerifyNodeAccessWithACP(
+	inner error,
+	permission string,
+	policyID string,
+	actorID string,
+	resourceName string,
+	operation string,
+) error {
+	return errors.Wrap(
+		errFailedToVerifyAdminAccessWithACP,
+		inner,
+		errors.NewKV("Permission", permission),
+		errors.NewKV("PolicyID", policyID),
+		errors.NewKV("ActorID", actorID),
+		errors.NewKV("ResourceName", resourceName),
+		errors.NewKV("Operation", operation),
 	)
 }
 
