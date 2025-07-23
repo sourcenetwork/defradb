@@ -8,9 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub ACP JavaScript Bridge
-//
-// This file implements DefraDB's SourceHub ACP integration for JS/WASM environments.
+// SourceHub ACP implementation for JS/WASM environments.
 //
 // Client applications must include the acp-js library, which exposes the following
 // bridge functions that interface with SourceHub ACP:

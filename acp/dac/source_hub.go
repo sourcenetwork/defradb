@@ -8,7 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub is not supported in JS environments.
+// SourceHub ACP implementation for non-JS environments.
+// JS environments are handled by source_hub_js.go
 //
 //go:build !js
 
