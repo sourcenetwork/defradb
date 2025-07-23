@@ -29,6 +29,10 @@ import (
 // VerifySignature verifies the signatures of a block using a public key.
 // Returns an error if any signature verification fails.
 func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminVerifySignaturePerm); err != nil {
+		return err
+	}
+
 	parsedCid, err := cid.Parse(blockCid)
 	if err != nil {
 		return err

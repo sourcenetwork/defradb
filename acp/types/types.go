@@ -95,6 +95,7 @@ const (
 	AdminSchemaPatchPerm
 	AdminPatchCollectionPerm
 	AdminNodeGetIdentityPerm
+	AdminVerifySignaturePerm
 )
 
 // List of all valid resource interface permissions for admin access control, the order of
@@ -122,6 +123,7 @@ var RequiredResourcePermissionsForAdmin = []string{
 	"schema-patch",
 	"patch-collection",
 	"node-get-identity",
+	"verify-signature",
 }
 
 const NodeACPObject = "NodeObject"
@@ -179,6 +181,8 @@ resources:
       patch-collection:
         expr: owner + admin
       node-get-identity:
+        expr: owner + admin
+      verify-signature:
         expr: owner + admin
 
     relations:
