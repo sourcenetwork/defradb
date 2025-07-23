@@ -1153,8 +1153,9 @@ func patchSchema(
 	s *state,
 	action SchemaPatch,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		var setAsDefaultVersion bool
 		if action.SetAsDefaultVersion.HasValue() {
 			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
@@ -1162,7 +1163,9 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
+		resetStateContext(s)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
