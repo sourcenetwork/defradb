@@ -296,10 +296,9 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	resourceName string,
 	objectID string,
 ) (bool, error) {
-	permissionStr := fmt.Sprintf("%v", permission)
 	results, err := callJSFunction(
 		"acp_VerifyAccessRequest",
-		permissionStr,
+		permission.String(),
 		actorID,
 		policyID,
 		resourceName,
