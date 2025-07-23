@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -30,6 +31,10 @@ func (c *collection) Get(
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := c.db.checkAdminAccess(ctx, acpTypes.AdminDocReadPerm); err != nil {
+		return nil, err
+	}
 
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
