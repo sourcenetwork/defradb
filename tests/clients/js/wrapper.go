@@ -168,6 +168,60 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
+func (w *Wrapper) GetAACStatus(ctx context.Context) (client.StatusAACResult, error) {
+	res, err := execute(ctx, w.value, "getAACStatus")
+	if err != nil {
+		return client.StatusAACResult{}, err
+	}
+	var out client.StatusAACResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.StatusAACResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) ReEnableAAC(ctx context.Context) error {
+	_, err := execute(ctx, w.value, "reEnableAAC")
+	return err
+}
+
+func (w *Wrapper) DisableAAC(ctx context.Context) error {
+	_, err := execute(ctx, w.value, "disableAAC")
+	return err
+}
+
+func (w *Wrapper) AddAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "addAACActorRelationship", relation, targetActor)
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+	var out client.AddActorRelationshipResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) DeleteAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "deleteAACActorRelationship", relation, targetActor)
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+	var out client.DeleteActorRelationshipResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+	return out, nil
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,

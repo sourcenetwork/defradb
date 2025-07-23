@@ -92,6 +92,76 @@ func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.
 	return goji.MarshalJS(res)
 }
 
+func (c *Client) getAACStatus(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.GetAACStatus(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (c *Client) reEnableAAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.ReEnableAAC(ctx)
+	return js.Undefined(), err
+}
+
+func (c *Client) disableAAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.DisableAAC(ctx)
+	return js.Undefined(), err
+}
+
+func (c *Client) addAACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.AddAACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (c *Client) deleteAACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.DeleteAACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
 func (c *Client) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, c.txns)
 	if err != nil {

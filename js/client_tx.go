@@ -55,6 +55,11 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"addDACPolicy":               goji.Async(wrapper.addDACPolicy),
 		"addDACActorRelationship":    goji.Async(wrapper.addDACActorRelationship),
 		"deleteDACActorRelationship": goji.Async(wrapper.deleteDACActorRelationship),
+		"getAACStatus":               goji.Async(wrapper.getAACStatus),
+		"reEnableAAC":                goji.Async(wrapper.reEnableAAC),
+		"disableAAC":                 goji.Async(wrapper.disableAAC),
+		"addAACActorRelationship":    goji.Async(wrapper.addAACActorRelationship),
+		"deleteAACActorRelationship": goji.Async(wrapper.deleteAACActorRelationship),
 		"getNodeIdentity":            goji.Async(wrapper.getNodeIdentity),
 		"verifySignature":            goji.Async(wrapper.verifySignature),
 	})
@@ -371,6 +376,76 @@ func (t *transaction) deleteDACActorRelationship(this js.Value, args []js.Value)
 		return js.Undefined(), err
 	}
 	res, err := t.txn.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) getAACStatus(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.GetAACStatus(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) reEnableAAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = t.txn.ReEnableAAC(ctx)
+	return js.Undefined(), err
+}
+
+func (t *transaction) disableAAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = t.txn.DisableAAC(ctx)
+	return js.Undefined(), err
+}
+
+func (t *transaction) addAACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.AddAACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (t *transaction) deleteAACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := t.txn.DeleteAACActorRelationship(ctx, relation, targetActor)
 	if err != nil {
 		return js.Undefined(), err
 	}
