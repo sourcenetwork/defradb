@@ -133,6 +133,10 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminIndexListPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
