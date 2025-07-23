@@ -50,16 +50,12 @@ const (
 	UpdateName = Name("update")
 	// PubSubName is the name of the network pubsub event.
 	PubSubName = Name("pubsub")
-	// P2PTopicName is the name of the network p2p topic update event.
-	P2PTopicName = Name("p2p-topic")
 	// PeerInfoName is the name of the network peer info event.
 	PeerInfoName = Name("peer-info")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
 	// ReplicatorFailureName is the name of the replicator failure event.
 	ReplicatorFailureName = Name("replicator-failure")
-	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
-	P2PTopicCompletedName = Name("p2p-topic-completed")
 	// ReplicatorCompletedName is the name of the replicator completed event.
 	ReplicatorCompletedName = Name("replicator-completed")
 	// PurgeName is the name of the purge event.
@@ -134,12 +130,6 @@ type Message struct {
 // NewMessage returns a new message with the given name and optional data.
 func NewMessage(name Name, data any) Message {
 	return Message{name, data}
-}
-
-// P2PTopic is an event that is published when a peer has updated the topics it is subscribed to.
-type P2PTopic struct {
-	ToAdd    []string
-	ToRemove []string
 }
 
 // PeerInfo is an event that is published when the node has updated its peer info.

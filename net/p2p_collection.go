@@ -229,41 +229,5 @@ func (p *Peer) loadAndPublishP2PCollections(ctx context.Context) error {
 		}
 	}
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard(ctx)
-
-	// Get all DocIDs across all collections in the DB
-	cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{})
-	if err != nil {
-		return err
-	}
-
-	// Index the schema roots for faster lookup.
-	colMap := make(map[string]struct{})
-	for _, id := range collectionIDs {
-		colMap[id] = struct{}{}
-	}
-
-	// This is a node specific action which means the actor is the node itself.
-	for _, col := range cols {
-		// If we subscribed to the collection, we skip subscribing to the collection's docIDs.
-		if _, ok := colMap[col.SchemaRoot()]; ok {
-			continue
-		}
-		docIDChan, err := col.GetAllDocIDs(ctx)
-		if err != nil {
-			return err
-		}
-
-		for docID := range docIDChan {
-			_, err := p.server.addPubSubTopic(docID.ID.String(), true, nil)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }

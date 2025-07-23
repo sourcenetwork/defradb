@@ -58,6 +58,12 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					"Name": "Saadi"
 				}`,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []testUtils.ColDocIndex{
+					testUtils.NewColDocIndex(1, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,

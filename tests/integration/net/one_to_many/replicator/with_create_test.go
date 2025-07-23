@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2FullPReplicator tests document syncing between a node and a replicator.
+// TestP2POneToManyReplicator tests document syncing between a node and a replicator.
 func TestP2POneToManyReplicator(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

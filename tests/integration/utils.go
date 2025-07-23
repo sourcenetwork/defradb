@@ -340,6 +340,15 @@ func performAction(
 	case GetAllP2PCollections:
 		getAllP2PCollections(s, action)
 
+	case SubscribeToDocument:
+		subscribeToDocument(s, action)
+
+	case UnsubscribeToDocument:
+		unsubscribeToDocument(s, action)
+
+	case GetAllP2PDocuments:
+		getAllP2PDocuments(s, action)
+
 	case SchemaUpdate:
 		updateSchema(s, action)
 
@@ -423,6 +432,9 @@ func performAction(
 
 	case WaitForSync:
 		waitForSync(s, action)
+
+	case SyncDocs:
+		syncDocs(s, action)
 
 	case Wait:
 		<-time.After(action.Duration)
@@ -780,8 +792,6 @@ func startNodes(s *state, action Start) {
 		databaseDir = originalPath
 		node.p2p = s.nodes[nodeIndex].p2p
 		s.nodes[nodeIndex] = node
-
-		waitForNetworkSetupEvents(s, nodeIndex)
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
