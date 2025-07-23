@@ -632,7 +632,10 @@ func TestPublicKeyFromString_ValidSecp256r1UncompressedKey(t *testing.T) {
 	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
 
-	uncompressedBytes := elliptic.Marshal(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+	ecdhKey, err := privKey.PublicKey.ECDH()
+	require.NoError(t, err)
+
+	uncompressedBytes := ecdhKey.Bytes()
 	keyString := hex.EncodeToString(uncompressedBytes)
 	parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
 	require.NoError(t, err)
@@ -711,7 +714,10 @@ func TestSecp256r1_DID_Comprehensive(t *testing.T) {
 		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		require.NoError(t, err)
 
-		uncompressedBytes := elliptic.Marshal(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+		ecdhKey, err := privKey.PublicKey.ECDH()
+		require.NoError(t, err)
+
+		uncompressedBytes := ecdhKey.Bytes()
 		keyString := hex.EncodeToString(uncompressedBytes)
 		parsedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
 		require.NoError(t, err)
@@ -750,7 +756,10 @@ func TestSecp256r1_DID_Comprehensive(t *testing.T) {
 		compressedDID, err := compressedKey.DID()
 		require.NoError(t, err)
 
-		uncompressedBytes := elliptic.Marshal(elliptic.P256(), privKey.PublicKey.X, privKey.PublicKey.Y)
+		ecdhKey, err := privKey.PublicKey.ECDH()
+		require.NoError(t, err)
+
+		uncompressedBytes := ecdhKey.Bytes()
 		keyString := hex.EncodeToString(uncompressedBytes)
 		uncompressedKey, err := PublicKeyFromString(KeyTypeSecp256r1, keyString)
 		require.NoError(t, err)

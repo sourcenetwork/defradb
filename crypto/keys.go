@@ -12,6 +12,7 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -191,10 +192,15 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 			if keyBytes[0] != 0x04 {
 				return nil, ErrInvalidECDSAPubKey
 			}
-			x, y := elliptic.Unmarshal(elliptic.P256(), keyBytes)
-			if x == nil || y == nil {
+			_, err := ecdh.P256().NewPublicKey(keyBytes)
+			if err != nil {
 				return nil, ErrInvalidECDSAPubKey
 			}
+			if len(keyBytes) != 65 {
+				return nil, ErrInvalidECDSAPubKey
+			}
+			x := new(big.Int).SetBytes(keyBytes[1:33])
+			y := new(big.Int).SetBytes(keyBytes[33:65])
 			pubKey = &ecdsa.PublicKey{
 				Curve: elliptic.P256(),
 				X:     x,
