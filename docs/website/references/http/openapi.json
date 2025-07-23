@@ -27,6 +27,36 @@
             }
         },
         "schemas": {
+            "acp_aac_relationship_add_request": {
+                "properties": {
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_aac_relationship_delete_request": {
+                "properties": {
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_aac_status_result": {
+                "properties": {
+                    "Status": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "acp_dac_relationship_add_request": {
                 "properties": {
                     "CollectionName": {
@@ -751,6 +781,145 @@
     },
     "openapi": "3.0.3",
     "paths": {
+        "/acp/aac/disable": {
+            "post": {
+                "description": "Disable aac",
+                "operationId": "disable aac",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_aac_disable"
+                ]
+            }
+        },
+        "/acp/aac/re-enable": {
+            "post": {
+                "description": "Re-enable aac",
+                "operationId": "re-enable aac",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_aac_re-enable"
+                ]
+            }
+        },
+        "/acp/aac/relationship": {
+            "delete": {
+                "description": "Delete an actor relationship using admin acp system",
+                "operationId": "delete aac relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_aac_relationship_delete_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete admin acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_aac_relationship"
+                ]
+            },
+            "post": {
+                "description": "Add an actor relationship using admin acp system",
+                "operationId": "add aac relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_aac_relationship_add_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_add_result"
+                                }
+                            }
+                        },
+                        "description": "Add admin acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_aac_relationship"
+                ]
+            }
+        },
+        "/acp/aac/status": {
+            "get": {
+                "description": "Check status of admin acp system",
+                "operationId": "Check status of aac",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_aac_status_result"
+                                }
+                            }
+                        },
+                        "description": "Admin acp status result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_aac_status"
+                ]
+            }
+        },
         "/acp/dac/policy": {
             "post": {
                 "description": "Add a policy using document acp system",

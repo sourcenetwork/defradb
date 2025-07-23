@@ -1,19 +1,31 @@
-## defradb client acp dac
+## defradb client acp aac status
 
-Interact with the document access control system of a DefraDB node
+Check the admin access control status
 
 ### Synopsis
 
-Interact with the document access control system of a DefraDB node
+Check the admin access control status
+
+Example:
+  defradb client acp aac status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+Note:
+- If Admin ACP is in clean state (not configured) the status has [IsConfigured] == false.
+- If Admin ACP is temporarily disabled, then [IsConfigured] == true and [IsEnabled] == false.
+- If Admin ACP is enabled then [IsEnabled] == true.
 
 Learn more about the DefraDB [ACP System](/acp/README.md)
 
-		
+
+
+```
+defradb client acp aac status [-i --identity] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for dac
+  -h, --help   help for status
 ```
 
 ### Options inherited from parent commands
@@ -40,7 +52,5 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 
 ### SEE ALSO
 
-* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system(s) of a DefraDB node
-* [defradb client acp dac policy](defradb_client_acp_dac_policy.md)	 - Interact with the document acp policy features of DefraDB instance
-* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
+* [defradb client acp aac](defradb_client_acp_aac.md)	 - Interact with the admin access control system of a DefraDB node
 

@@ -1,10 +1,24 @@
-## defradb client acp dac
+## defradb client acp aac
 
-Interact with the document access control system of a DefraDB node
+Interact with the admin access control system of a DefraDB node
 
 ### Synopsis
 
-Interact with the document access control system of a DefraDB node
+Interact with the admin access control system of a DefraDB node
+Note:
+- Clean state means, if the access control was never configured, or the entire state was purged.
+- The check the admin acp status use the 'client acp aac status' command
+- To start admin acp for the first time, use the start command with '--acp-enable true'.
+- Specifying an identity is a MUST, when starting first time (from a clean state), this identity
+will become the node owner identity.
+- To temporarily disable admin acp, use the 'client acp aac disable' command.
+- To re-enable admin acp when it is temporarily disabled, use the 'client acp aac re-enable' command.
+- To give admin access to other users use the 'client acp aac relationship add' command.
+- To revoke admin access from other users use the 'client acp aac relationship delete' command.
+- To reset/purge acp state into a clean state, use the 'client acp aac purge' command.
+- Purge command(s) require the user to be in dev-mode (Warning: all state will be lost).
+
+For quick help: 'defradb client acp aac --help'
 
 Learn more about the DefraDB [ACP System](/acp/README.md)
 
@@ -13,7 +27,7 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 ### Options
 
 ```
-  -h, --help   help for dac
+  -h, --help   help for aac
 ```
 
 ### Options inherited from parent commands
@@ -41,6 +55,8 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 ### SEE ALSO
 
 * [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system(s) of a DefraDB node
-* [defradb client acp dac policy](defradb_client_acp_dac_policy.md)	 - Interact with the document acp policy features of DefraDB instance
-* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
+* [defradb client acp aac disable](defradb_client_acp_aac_disable.md)	 - Disable the admin access control
+* [defradb client acp aac re-enable](defradb_client_acp_aac_re-enable.md)	 - Re-enable the admin access control
+* [defradb client acp aac relationship](defradb_client_acp_aac_relationship.md)	 - Interact with the admin acp relationship features of DefraDB instance
+* [defradb client acp aac status](defradb_client_acp_aac_status.md)	 - Check the admin access control status
 

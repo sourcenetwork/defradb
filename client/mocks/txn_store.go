@@ -42,6 +42,62 @@ func (_m *TxnStore) EXPECT() *TxnStore_Expecter {
 	return &TxnStore_Expecter{mock: &_m.Mock}
 }
 
+// AddAACActorRelationship provides a mock function for the type TxnStore
+func (_mock *TxnStore) AddAACActorRelationship(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
+	ret := _mock.Called(ctx, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddAACActorRelationship")
+	}
+
+	var r0 client.AddActorRelationshipResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.AddActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.AddActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.AddActorRelationshipResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_AddAACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddAACActorRelationship'
+type TxnStore_AddAACActorRelationship_Call struct {
+	*mock.Call
+}
+
+// AddAACActorRelationship is a helper method to define mock.On call
+//   - ctx
+//   - relation
+//   - targetActor
+func (_e *TxnStore_Expecter) AddAACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *TxnStore_AddAACActorRelationship_Call {
+	return &TxnStore_AddAACActorRelationship_Call{Call: _e.mock.On("AddAACActorRelationship", ctx, relation, targetActor)}
+}
+
+func (_c *TxnStore_AddAACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *TxnStore_AddAACActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *TxnStore_AddAACActorRelationship_Call) Return(addActorRelationshipResult client.AddActorRelationshipResult, err error) *TxnStore_AddAACActorRelationship_Call {
+	_c.Call.Return(addActorRelationshipResult, err)
+	return _c
+}
+
+func (_c *TxnStore_AddAACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *TxnStore_AddAACActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddDACActorRelationship provides a mock function for the type TxnStore
 func (_mock *TxnStore) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
@@ -363,6 +419,62 @@ func (_c *TxnStore_BasicImport_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// DeleteAACActorRelationship provides a mock function for the type TxnStore
+func (_mock *TxnStore) DeleteAACActorRelationship(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
+	ret := _mock.Called(ctx, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAACActorRelationship")
+	}
+
+	var r0 client.DeleteActorRelationshipResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.DeleteActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.DeleteActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_DeleteAACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAACActorRelationship'
+type TxnStore_DeleteAACActorRelationship_Call struct {
+	*mock.Call
+}
+
+// DeleteAACActorRelationship is a helper method to define mock.On call
+//   - ctx
+//   - relation
+//   - targetActor
+func (_e *TxnStore_Expecter) DeleteAACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *TxnStore_DeleteAACActorRelationship_Call {
+	return &TxnStore_DeleteAACActorRelationship_Call{Call: _e.mock.On("DeleteAACActorRelationship", ctx, relation, targetActor)}
+}
+
+func (_c *TxnStore_DeleteAACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *TxnStore_DeleteAACActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *TxnStore_DeleteAACActorRelationship_Call) Return(deleteActorRelationshipResult client.DeleteActorRelationshipResult, err error) *TxnStore_DeleteAACActorRelationship_Call {
+	_c.Call.Return(deleteActorRelationshipResult, err)
+	return _c
+}
+
+func (_c *TxnStore_DeleteAACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *TxnStore_DeleteAACActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type TxnStore
 func (_mock *TxnStore) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
@@ -421,6 +533,51 @@ func (_c *TxnStore_DeleteDACActorRelationship_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// DisableAAC provides a mock function for the type TxnStore
+func (_mock *TxnStore) DisableAAC(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableAAC")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// TxnStore_DisableAAC_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableAAC'
+type TxnStore_DisableAAC_Call struct {
+	*mock.Call
+}
+
+// DisableAAC is a helper method to define mock.On call
+//   - ctx
+func (_e *TxnStore_Expecter) DisableAAC(ctx interface{}) *TxnStore_DisableAAC_Call {
+	return &TxnStore_DisableAAC_Call{Call: _e.mock.On("DisableAAC", ctx)}
+}
+
+func (_c *TxnStore_DisableAAC_Call) Run(run func(ctx context.Context)) *TxnStore_DisableAAC_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *TxnStore_DisableAAC_Call) Return(err error) *TxnStore_DisableAAC_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *TxnStore_DisableAAC_Call) RunAndReturn(run func(ctx context.Context) error) *TxnStore_DisableAAC_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ExecRequest provides a mock function for the type TxnStore
 func (_mock *TxnStore) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
 	var tmpRet mock.Arguments
@@ -474,6 +631,60 @@ func (_c *TxnStore_ExecRequest_Call) Return(requestResult *client.RequestResult)
 }
 
 func (_c *TxnStore_ExecRequest_Call) RunAndReturn(run func(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult) *TxnStore_ExecRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAACStatus provides a mock function for the type TxnStore
+func (_mock *TxnStore) GetAACStatus(ctx context.Context) (client.StatusAACResult, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAACStatus")
+	}
+
+	var r0 client.StatusAACResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (client.StatusAACResult, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) client.StatusAACResult); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(client.StatusAACResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_GetAACStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAACStatus'
+type TxnStore_GetAACStatus_Call struct {
+	*mock.Call
+}
+
+// GetAACStatus is a helper method to define mock.On call
+//   - ctx
+func (_e *TxnStore_Expecter) GetAACStatus(ctx interface{}) *TxnStore_GetAACStatus_Call {
+	return &TxnStore_GetAACStatus_Call{Call: _e.mock.On("GetAACStatus", ctx)}
+}
+
+func (_c *TxnStore_GetAACStatus_Call) Run(run func(ctx context.Context)) *TxnStore_GetAACStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *TxnStore_GetAACStatus_Call) Return(statusAACResult client.StatusAACResult, err error) *TxnStore_GetAACStatus_Call {
+	_c.Call.Return(statusAACResult, err)
+	return _c
+}
+
+func (_c *TxnStore_GetAACStatus_Call) RunAndReturn(run func(ctx context.Context) (client.StatusAACResult, error)) *TxnStore_GetAACStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1109,6 +1320,51 @@ func (_c *TxnStore_PrintDump_Call) Return(err error) *TxnStore_PrintDump_Call {
 }
 
 func (_c *TxnStore_PrintDump_Call) RunAndReturn(run func(ctx context.Context) error) *TxnStore_PrintDump_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReEnableAAC provides a mock function for the type TxnStore
+func (_mock *TxnStore) ReEnableAAC(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReEnableAAC")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// TxnStore_ReEnableAAC_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReEnableAAC'
+type TxnStore_ReEnableAAC_Call struct {
+	*mock.Call
+}
+
+// ReEnableAAC is a helper method to define mock.On call
+//   - ctx
+func (_e *TxnStore_Expecter) ReEnableAAC(ctx interface{}) *TxnStore_ReEnableAAC_Call {
+	return &TxnStore_ReEnableAAC_Call{Call: _e.mock.On("ReEnableAAC", ctx)}
+}
+
+func (_c *TxnStore_ReEnableAAC_Call) Run(run func(ctx context.Context)) *TxnStore_ReEnableAAC_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *TxnStore_ReEnableAAC_Call) Return(err error) *TxnStore_ReEnableAAC_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *TxnStore_ReEnableAAC_Call) RunAndReturn(run func(ctx context.Context) error) *TxnStore_ReEnableAAC_Call {
 	_c.Call.Return(run)
 	return _c
 }

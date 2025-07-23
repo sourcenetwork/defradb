@@ -1,19 +1,38 @@
-## defradb client acp dac
+## defradb client acp aac relationship add
 
-Interact with the document access control system of a DefraDB node
+Add new relationship
 
 ### Synopsis
 
-Interact with the document access control system of a DefraDB node
+Add new relationship
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+To share admin access (or grant a more restricted access) with another actor, we must add the type of
+relationship for that actor. In order to make the relationship we require all of the following:
+1) Relation Name: The type of relation (name must be defined within the admin policy).
+2) Target Identity: The identity of the actor the relationship is being made with.
+3) Requesting Identity: The identity of the actor that is making the request.
 
-		
+Notes:
+  - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
+  - Currently the only relation supported is the 'admin' relation.
+
+Example: Make another actor an admin:
+  defradb client acp aac relationship add \
+	--relation admin \
+	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+
+
+```
+defradb client acp aac relationship add [-r --relation] [-a --actor] [-i --identity] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for dac
+  -a, --actor string      Actor to add relationship with
+  -h, --help              help for add
+  -r, --relation string   Relation that needs to be set for the relationship
 ```
 
 ### Options inherited from parent commands
@@ -40,7 +59,5 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 
 ### SEE ALSO
 
-* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system(s) of a DefraDB node
-* [defradb client acp dac policy](defradb_client_acp_dac_policy.md)	 - Interact with the document acp policy features of DefraDB instance
-* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
+* [defradb client acp aac relationship](defradb_client_acp_aac_relationship.md)	 - Interact with the admin acp relationship features of DefraDB instance
 
