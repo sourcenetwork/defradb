@@ -16,7 +16,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"unsafe"
 
 	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 
@@ -92,30 +91,14 @@ func identityFromContext(ctx context.Context) string {
 	if !idf.HasValue() {
 		return ""
 	}
-	return C.CString(idf.Value().PrivateKey().String())
+	return idf.Value().PrivateKey().String()
 }
 
 // Helper function
-// Unpacks a C Result into either a payload/error pair, freeing memory afterwards
-func (w *CWrapper) callResult(r C.Result) (json.RawMessage, error) {
-	defer C.free(unsafe.Pointer(r.value))
-	defer C.free(unsafe.Pointer(r.error))
-
-	if r.status != 0 {
-		msg := C.GoString(r.error)
-		return nil, errors.New(msg)
-	}
-
-	data := C.GoString(r.value)
-	return json.RawMessage(data), nil
-}
-
-// Helper function
-// Unmarshals the value of a JSON C-string into any desired type
-func unmarshalResult[T any](value *C.char) (T, error) {
+// Unmarshals the value of a string into any desired type
+func unmarshalResult[T any](value string) (T, error) {
 	var result T
-	payload := C.GoString(value)
-	err := json.Unmarshal([]byte(payload), &result)
+	err := json.Unmarshal([]byte(value), &result)
 	if err != nil {
 		var zero T
 		return zero, fmt.Errorf("failed to unmarshal JSON into %T: %w", result, err)
@@ -140,8 +123,7 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 // Helper function
 // Pulls out the Operation Name and Variables as strings from a []client.RequestOption.
 // The strings may or may not be blank.
-// After calling this, you are responsible for freeing the memory
-func extractCStringsFromRequestOptions(opts []client.RequestOption) (opNameC, varsC *C.char) {
+func extractCStringsFromRequestOptions(opts []client.RequestOption) (string, string) {
 	// Create a structure, and modify it with the config options
 	config := &client.GQLOptions{}
 	for _, opt := range opts {
@@ -153,7 +135,6 @@ func extractCStringsFromRequestOptions(opts []client.RequestOption) (opNameC, va
 	if config.OperationName != "" {
 		opName = config.OperationName
 	}
-	opNameC = C.CString(opName)
 
 	// Extract Variables (marshal to JSON), leaving the JSON blank if no variables exist
 	varsJSON := ""
@@ -161,16 +142,14 @@ func extractCStringsFromRequestOptions(opts []client.RequestOption) (opNameC, va
 		data, _ := json.Marshal(config.Variables)
 		varsJSON = string(data)
 	}
-	varsC = C.CString(varsJSON)
-	return opNameC, varsC
+	return opName, varsJSON
 }
 
 // Helper function
-// Creates a C-string from a client.CollectionDefinition
-// After calling this, you are responsible for freeing the memory
-func cStringFromCollectionDefinition(def client.CollectionDefinition) *C.char {
+// Creates a string from a client.CollectionDefinition
+func stringFromCollectionDefinition(def client.CollectionDefinition) string {
 	jsonBytes, _ := json.Marshal(def)
-	return C.CString(string(jsonBytes))
+	return string(jsonBytes)
 }
 
 // Helper function
@@ -226,12 +205,12 @@ func getTxnFromHandle(txnID uint64) any {
 	return val
 }
 
-func convertCResultToGQLResult(res *C.Result) (client.GQLResult, error) {
+func convertGoCResultToGQLResult(res cbindings.GoCResult) (client.GQLResult, error) {
 	var gql client.GQLResult
-	if res.status != 0 {
-		return gql, errors.New(C.GoString(res.value))
+	if res.Status != 0 {
+		return gql, errors.New(res.Value)
 	}
-	err := json.Unmarshal([]byte(C.GoString(res.value)), &gql)
+	err := json.Unmarshal([]byte(res.Value), &gql)
 	return gql, err
 }
 
@@ -239,19 +218,12 @@ func WrapSubscriptionAsChannel(subID string) <-chan client.GQLResult {
 	ch := make(chan client.GQLResult)
 	go func() {
 		defer close(ch)
-		cID := C.CString(subID)
-		defer C.free(unsafe.Pointer(cID))
 		for {
-			res := PollSubscription(cID)
-			if res == nil {
-				return
-			}
-			goRes, err := convertCResultToGQLResult(res)
-			freeCResult(res)
+			res := cbindings.PollSubscription(subID)
+			goRes, err := convertGoCResultToGQLResult(res)
 			if err != nil {
 				goRes.Errors = append(goRes.Errors, err)
 			}
-
 			ch <- goRes
 		}
 	}()
