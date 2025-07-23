@@ -44,6 +44,9 @@ const (
 	errEmptyModelForEmbedding             string = "embedding Model cannot be empty"
 	errUnknownEmbeddingProvider           string = "unknown embedding provider"
 	errEmbeddingFieldEmbedding            string = "embedding fields cannot refer to self or another embedding field"
+	errInvalidResourcePermissionType      string = "invalid resource permission type"
+	errCanNotStartAACWithoutIdentity      string = "can not start aac without identity"
+	errCanNotDoThisAACOpWithAACIsDisabled string = "can not do this aac operation when aac is disabled"
 )
 
 var (
@@ -61,6 +64,7 @@ var (
 	ErrFieldNotObject                       = errors.New("trying to access field on a non object type")
 	ErrValueTypeMismatch                    = errors.New("value does not match indicated type")
 	ErrDocumentNotFoundOrNotAuthorized      = errors.New("document not found or not authorized to access")
+	ErrNotAuthorizedToPerformOperation      = errors.New("not authorized to perform operation")
 	ErrACPOperationButACPNotAvailable       = errors.New("operation requires ACP, but ACP not available")
 	ErrACPOperationButCollectionHasNoPolicy = errors.New("operation requires ACP, but collection has no policy")
 	ErrInvalidUpdateTarget                  = errors.New("the target document to update is of invalid type")
@@ -84,6 +88,9 @@ var (
 	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
 	ErrEmbeddingFieldEmbedding              = errors.New(errEmbeddingFieldEmbedding)
 	ErrNotFound                             = errors.New(errNotFound)
+	ErrInvalidResourcePermissionType        = errors.New(errInvalidResourcePermissionType)
+	ErrCanNotStartAACWithoutIdentity        = errors.New(errCanNotStartAACWithoutIdentity)
+	ErrCanNotDoThisAACOpWithAACIsDisabled   = errors.New(errCanNotDoThisAACOpWithAACIsDisabled)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

@@ -11,6 +11,7 @@
 package keys
 
 const (
+	ADMIN_ACP                 = "aac"
 	COLLECTION                = "collection"
 	COLLECTION_SHORT_ID       = "/collection/shortID"
 	COLLECTION_NAME           = "/collection/name"

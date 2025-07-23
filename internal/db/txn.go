@@ -144,6 +144,39 @@ func (txn *Txn) DeleteDACActorRelationship(
 	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
+func (txn *Txn) AddAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddAACActorRelationship(ctx, relation, targetActor)
+}
+
+func (txn *Txn) DeleteAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DeleteAACActorRelationship(ctx, relation, targetActor)
+}
+
+func (txn *Txn) ReEnableAAC(ctx context.Context) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.ReEnableAAC(ctx)
+}
+
+func (txn *Txn) DisableAAC(ctx context.Context) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DisableAAC(ctx)
+}
+
+func (txn *Txn) GetAACStatus(ctx context.Context) (client.StatusAACResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetAACStatus(ctx)
+}
+
 func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetNodeIdentity(ctx)

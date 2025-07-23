@@ -90,7 +90,11 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, filterOptions[db.Option](n.options)...)
+	adminACP, err := NewAdminACP(ctx, filterOptions[AdminACPOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	n.DB, err = db.NewDB(ctx, rootstore, adminACP, documentACP, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}

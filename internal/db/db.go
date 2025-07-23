@@ -77,6 +77,9 @@ type DB struct {
 	// The identity of the current node
 	nodeIdentity immutable.Option[identity.Identity]
 
+	// Admin ACP system along with it's current state information.
+	adminInfo AdminInfo
+
 	// Contains document ACP if it exists
 	documentACP immutable.Option[dac.DocumentACP]
 
@@ -95,16 +98,18 @@ var _ client.TxnStore = (*DB)(nil)
 func NewDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
+	adminACP AdminInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, documentACP, lens, options...)
+	return newDB(ctx, rootstore, adminACP, documentACP, lens, options...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
+	adminACP AdminInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
@@ -123,6 +128,7 @@ func newDB(
 
 	db := &DB{
 		rootstore:    rootstore,
+		adminInfo:    adminACP,
 		documentACP:  documentACP,
 		lensRegistry: lens,
 		parser:       parser,
@@ -387,6 +393,10 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
+	if err := db.initializeAdminACP(ctx, txn); err != nil {
+		return err
+	}
+
 	// Start document acp if enabled, this will recover previous state if there is any.
 	if db.documentACP.HasValue() {
 		// db is responsible to call db.documentACP.Close() to free acp resources while closing.
@@ -461,6 +471,12 @@ func (db *DB) Close() {
 	err := db.rootstore.Close()
 	if err != nil {
 		log.ErrorE("Failure closing running process", err)
+	}
+
+	if db.adminInfo.AdminACP != nil {
+		if err := db.adminInfo.AdminACP.Close(); err != nil {
+			log.ErrorE("Failure closing admin acp", err)
+		}
 	}
 
 	if db.documentACP.HasValue() {

@@ -158,6 +158,42 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	)
 }
 
+func (w *Wrapper) AddAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	return w.client.AddAACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) DeleteAACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	return w.client.DeleteAACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) ReEnableAAC(ctx context.Context) error {
+	return w.client.ReEnableAAC(ctx)
+}
+
+func (w *Wrapper) DisableAAC(ctx context.Context) error {
+	return w.client.DisableAAC(ctx)
+}
+
+func (w *Wrapper) GetAACStatus(ctx context.Context) (client.StatusAACResult, error) {
+	return w.client.GetAACStatus(ctx)
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,

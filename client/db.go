@@ -94,6 +94,63 @@ type Store interface {
 		targetActor string,
 	) (DeleteActorRelationshipResult, error)
 
+	// AddAACActorRelationship creates a relationship to grant node access to the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship already existed (no-op), and false if a new relationship was made.
+	//
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
+	AddAACActorRelationship(
+		ctx context.Context,
+		relation string,
+		targetActor string,
+	) (AddActorRelationshipResult, error)
+
+	// DeleteAACActorRelationship deletes a relationship to revoke node access from target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
+	//   removed, however this does not revoke access from actors that had explicit relationships.
+	DeleteAACActorRelationship(
+		ctx context.Context,
+		relation string,
+		targetActor string,
+	) (DeleteActorRelationshipResult, error)
+
+	// ReEnableAAC will re-enable admin acp that was temporarily disabled (and configured). This will
+	// recover previously saved aac state with all the relationships formed.
+	//
+	// If admin acp is already enabled, then returns an error reflecting that it is already enabled.
+	//
+	// If admin acp is not already configured or the previous state was purged then this will return an error,
+	// as the user must use the node's start command to configure/enable the admin acp the first time.
+	//
+	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+	// authorized to perform this operation.
+	ReEnableAAC(ctx context.Context) error
+
+	// DisableAAC will disable admin acp for the users temporarily. This will keep the current admin acp
+	// state saved so that if it is re-enabled in the future, then we can recover all the relationships formed.
+	//
+	// If admin acp is already disabled, then returns an error reflecting that it is already disabled.
+	//
+	// If admin acp is not already configured or the previous state was purged then this will return an error.
+	//
+	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+	// authorized to perform this operation.
+	DisableAAC(ctx context.Context) error
+
+	// GetAACStatus returns the admin acp status that tells us if admin access was ever configured,
+	// or if admin acp is currently enabled or temporarily disabled.
+	GetAACStatus(ctx context.Context) (StatusAACResult, error)
+
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 

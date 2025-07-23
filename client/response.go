@@ -8,16 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package permission
+package client
 
-import (
-	"github.com/sourcenetwork/defradb/errors"
-)
-
-const (
-	errInvalidResourcePermissionType string = "invalid resource permission type"
-)
-
-var (
-	ErrInvalidResourcePermissionType = errors.New(errInvalidResourcePermissionType)
-)
+// SuccessResponse defines the structure for a success response.
+type SuccessResponse struct {
+	Success bool `json:"success"`
+}

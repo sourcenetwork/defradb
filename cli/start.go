@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -51,6 +52,7 @@ const developmentDescription = `Enables a set of features that make development 
  - generates temporary node identity if keyring is disabled`
 
 func MakeStartCommand() *cobra.Command {
+	var identity string
 	var cmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start a DefraDB node",
@@ -64,7 +66,13 @@ func MakeStartCommand() *cobra.Command {
 			if err := createConfig(rootdir, cmd.Flags()); err != nil {
 				return err
 			}
-			return setContextConfig(cmd)
+			if err := setContextConfig(cmd); err != nil {
+				return err
+			}
+			if err := setContextIdentity(cmd, identity); err != nil {
+				return err
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
@@ -80,6 +88,7 @@ func MakeStartCommand() *cobra.Command {
 
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
+				node.WithEnableAdminACP(cfg.GetBool("acp.aac.enable")),
 				node.WithSourceHubChainID(cfg.GetString("acp.dac.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.dac.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.dac.sourceHub.CometRPCAddress")),
@@ -110,6 +119,11 @@ func MakeStartCommand() *cobra.Command {
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
 				opts = append(opts, node.WithDocumentACPPath(rootDir))
+				opts = append(opts, node.WithAdminACPPath(rootDir))
+			}
+
+			if cfg.GetBool("acp.aac.enable") && identity == "" {
+				return client.ErrCanNotStartAACWithoutIdentity
 			}
 
 			documentACPType := cfg.GetString("acp.dac.type")
@@ -303,6 +317,12 @@ func MakeStartCommand() *cobra.Command {
 		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
+	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
+		"Hex formatted private key used to authenticate with ACP")
+	cmd.PersistentFlags().String(
+		"aac-enable",
+		cfg.GetString(configFlags["acp.aac.enable"]),
+		"Enable the admin access control system. Defaults to `false`.")
 	cmd.PersistentFlags().String(
 		"dac-type",
 		cfg.GetString(configFlags["acp.dac.type"]),
