@@ -88,6 +88,7 @@ const (
 	AdminAACStatusPerm
 	AdminAACRelationAddPerm
 	AdminAACRelationDeletePerm
+	AdminSchemaAddPerm
 )
 
 // List of all valid resource interface permissions for admin access control, the order of
@@ -108,6 +109,7 @@ var RequiredResourcePermissionsForAdmin = []string{
 	"aac-status",
 	"aac-relation-add",
 	"aac-relation-delete",
+	"schema-add",
 }
 
 const NodeACPObject = "NodeObject"
@@ -151,6 +153,8 @@ resources:
       aac-relation-add:
         expr: owner + admin
       aac-relation-delete:
+        expr: owner + admin
+      schema-add:
         expr: owner + admin
 
     relations:

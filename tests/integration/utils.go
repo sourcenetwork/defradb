@@ -1110,9 +1110,9 @@ func updateSchema(
 		// This schema might be modified if the caller needs some substitution magic done.
 		var modifiedSchema = action.Schema
 
+		nodeID := nodeIDs[index]
 		// We need to substitute the policyIDs into the `%policyID% place holders.
 		if len(action.Replace) > 0 {
-			nodeID := nodeIDs[index]
 			nodesPolicyIDs := s.policyIDs[nodeID]
 			templateData := map[string]string{}
 			// Build template with the replacing values.
@@ -1133,7 +1133,9 @@ func updateSchema(
 			modifiedSchema = renderedSchema.String()
 		}
 
+		s.ctx = getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		results, err := node.AddSchema(s.ctx, modifiedSchema)
+		resetStateContext(s)
 		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
