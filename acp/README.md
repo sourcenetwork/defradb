@@ -172,7 +172,7 @@ defradb client ... --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b
 
 ### Adding a Policy:
 
-We have in `examples/dpi_policy/user_dpi_policy.yml`:
+We have in `examples/policy/dac_policy.yml`:
 ```yaml
 name: An Example Policy
 
@@ -208,7 +208,7 @@ resources:
 
 CLI Command:
 ```sh
-defradb client acp policy add -f examples/dpi_policy/user_dpi_policy.yml --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client acp dac policy add -f examples/policy/dac_policy.yml --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -440,7 +440,7 @@ Error:
 ### Sharing Private Documents With Others
 
 To share a document (or grant a more restricted access) with another actor, we must add a relationship between the
-actor and the document. Inorder to make the relationship we require all of the following:
+actor and the document. In order to make the relationship we require all of the following:
 
 1) **Target DocID**: The `docID` of the document we want to make a relationship for.
 2) **Collection Name**: The name of the collection that has the `Target DocID`.
@@ -457,7 +457,7 @@ Note:
   and a relationship is formed, the subject/actor will still not be able to access (read or update or delete) the resource.
   - If the relationship already exists, then it will just be a no-op.
 
-Consider the following policy that we have under `examples/dpi_policy/user_dpi_policy_with_manages.yml`:
+Consider the following policy that we have under `examples/policy/dac_policy_with_manages.yml`:
 
 ```yaml
 name: An Example Policy
@@ -516,7 +516,7 @@ resources:
 
 Add the policy:
 ```sh
-defradb client acp policy add -f examples/dpi_policy/user_dpi_policy_with_manages.yml \
+defradb client acp dac policy add -f examples/policy/dac_policy_with_manages.yml \
 --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
@@ -611,7 +611,7 @@ defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d994
 
 Now let's make the other actor a reader of the document by adding a relationship:
 ```sh
-defradb client acp relationship add \
+defradb client acp dac relationship add \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -656,7 +656,7 @@ Sometimes we might want to give a specific access (i.e. form a relationship) not
 any identity (includes even requests with no-identity).
 In that case we can specify "*" instead of specifying an explicit `actor`:
 ```sh
-defradb client acp relationship add \
+defradb client acp dac relationship add \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -676,7 +676,7 @@ Result:
 ### Revoking Access To Private Documents
 
 To revoke access to a document for an actor, we must delete the relationship between the
-actor and the document. Inorder to delete the relationship we require all of the following:
+actor and the document. In order to delete the relationship we require all of the following:
 
 1) Target DocID: The docID of the document we want to delete a relationship for.
 2) Collection Name: The name of the collection that has the Target DocID.
@@ -695,7 +695,7 @@ how to share the document with other actors.
 
 We made the document accessible to an actor by adding a relationship:
 ```sh
-defradb client acp relationship add \
+defradb client acp dac relationship add \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -710,9 +710,9 @@ Result:
 }
 ```
 
-Similarly, inorder to revoke access to a document we have the following command to delete the relationship:
+Similarly, in order to revoke access to a document we have the following command to delete the relationship:
 ```sh
-defradb client acp relationship delete \
+defradb client acp dac relationship delete \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -740,7 +740,7 @@ defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d994
 We can also revoke the previously granted implicit relationship which gave all actors access using the "*" actor.
 Similarly we can just specify "*" to revoke all access given to actors implicitly through this relationship:
 ```sh
-defradb client acp relationship delete \
+defradb client acp dac relationship delete \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -780,8 +780,55 @@ The signed token must be set on the `Authorization` header of the HTTP request w
 
 If authentication fails for any reason a `403` forbidden response will be returned.
 
-## _AAC DPI Rules (coming soon)_
-## _AAC Usage: (coming soon)_
+## Admin ACP (AAC)
+In addition to document access control (DAC) we have another type of access control to gate a node's operations.
+
+## AAC Usage:
+
+### Starting AAC:
+In order, to start admin acp the user needs to specify an "owner" identity at node startup and indicate they
+want to enable admin acp for the node.
+
+This can be done like this:
+```sh
+defradb start --no-keyring --aac-enable true \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Note: The owner will by default have access to all the permissions.
+
+### Temporarily Disable AAC:
+While we do have an option to purge the entire admin acp state to delete all relationships and reset the owner,
+sometimes you want to preserve the entire state of the admin acp while temporarily disabling it. This can be
+done using the `disable` command like so:
+
+This can be done like this:
+```sh
+defradb client acp aac disable \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Note: The identity *MUST* have the permission to be able to disable admin acp.
+
+### Re-enable AAC:
+To re-enable admin acp when it is temporarily disabled, use the `re-enable` command like so:
+```sh
+defradb client acp aac re-enable \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Note: The identity *MUST* have the permission to be able to re-enable admin acp.
+
+### Check AAC Status 
+Admin ACP could be in various states, for example it could be `enabled`, `temporarily disabled`,
+or never configured (`clean` state).
+To check the status of admin acp, we have a utility `status` command:
+
+This can be done like this:
+```sh
+defradb client acp aac status
+```
+
 
 ## _FAC DPI Rules (coming soon)_
 ## _FAC Usage: (coming soon)_
