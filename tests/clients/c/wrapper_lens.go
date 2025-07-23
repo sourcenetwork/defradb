@@ -8,23 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !cshared
-// +build !cshared
-
 package cwrap
-
-/*
-#include <stdlib.h>
-#include "defra_structs.h"
-*/
-import "C"
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"unsafe"
 
+	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/lens-vm/lens/host-go/config/model"
@@ -38,33 +29,28 @@ type LensRegistry struct{}
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
+	txnID := txnIDFromContext(ctx)
 	cfgBytes, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
+	lens := string(cfgBytes)
 
-	cCollectionID := C.CString(collectionID)
-	cLens := C.CString(string(cfgBytes))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cLens))
+	result := cbindings.LensSetRegistry(collectionID, lens, txnID)
 
-	txnID := cTxnIDFromContext(ctx)
-	result := LensSetRegistry(cCollectionID, cLens, C.ulonglong(txnID))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
-	txnID := cTxnIDFromContext(ctx)
-	result := LensReload(C.ulonglong(txnID))
-	defer freeCResult(result)
+	txnID := txnIDFromContext(ctx)
 
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	result := cbindings.LensReload(txnID)
+
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
@@ -74,31 +60,25 @@ func (w *LensRegistry) MigrateUp(
 	src enumerable.Enumerable[map[string]any],
 	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
+	txnID := txnIDFromContext(ctx)
 	docs, err := collectEnumerable(src)
 	if err != nil {
 		return nil, err
 	}
-
 	docBytes, err := json.Marshal(docs)
 	if err != nil {
 		return nil, err
 	}
+	docStr := string(docBytes)
 
-	cCollectionID := C.CString(collectionID)
-	cDocs := C.CString(string(docBytes))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cDocs))
+	result := cbindings.LensUp(collectionID, docStr, txnID)
 
-	txnID := cTxnIDFromContext(ctx)
-	result := LensUp(cCollectionID, cDocs, C.ulonglong(txnID))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	var out []map[string]any
-	if err := json.Unmarshal([]byte(C.GoString(result.value)), &out); err != nil {
+	if err := json.Unmarshal([]byte(result.Value), &out); err != nil {
 		return nil, err
 	}
 	return enumerable.New(out), nil
@@ -109,6 +89,7 @@ func (w *LensRegistry) MigrateDown(
 	src enumerable.Enumerable[map[string]any],
 	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
+	txnID := txnIDFromContext(ctx)
 	docs, err := collectEnumerable(src)
 	if err != nil {
 		return nil, err
@@ -119,21 +100,16 @@ func (w *LensRegistry) MigrateDown(
 		return nil, err
 	}
 
-	cCollectionID := C.CString(collectionID)
-	cDocs := C.CString(string(docBytes))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cDocs))
+	docStr := string(docBytes)
 
-	txnID := cTxnIDFromContext(ctx)
-	result := LensDown(cCollectionID, cDocs, C.ulonglong(txnID))
-	defer freeCResult(result)
+	result := cbindings.LensDown(collectionID, docStr, txnID)
 
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	var out []map[string]any
-	if err := json.Unmarshal([]byte(C.GoString(result.value)), &out); err != nil {
+	if err := json.Unmarshal([]byte(result.Value), &out); err != nil {
 		return nil, err
 	}
 	return enumerable.New(out), nil

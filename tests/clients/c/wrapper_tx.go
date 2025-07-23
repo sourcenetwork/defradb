@@ -10,17 +10,12 @@
 
 package cwrap
 
-/*
-#include <stdlib.h>
-#include "defra_structs.h"
-*/
-import "C"
-
 import (
 	"context"
 	"errors"
 
 	"github.com/lens-vm/lens/host-go/config/model"
+	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -41,19 +36,15 @@ func (txn *Transaction) ID() uint64 {
 }
 
 func (txn *Transaction) Commit(ctx context.Context) error {
-	var cTxnID C.ulonglong = C.ulonglong(txn.tx.ID())
-	result := TransactionCommit(cTxnID)
-	defer freeCResult(result)
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	result := cbindings.TransactionCommit(txn.tx.ID())
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (txn *Transaction) Discard(ctx context.Context) {
-	var cTxnID C.ulonglong = C.ulonglong(txn.tx.ID())
-	result := TransactionDiscard(cTxnID)
-	defer freeCResult(result)
+	cbindings.TransactionDiscard(txn.tx.ID())
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {

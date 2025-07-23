@@ -10,22 +10,16 @@
 
 package cwrap
 
-/*
-#include <stdlib.h>
-#include "defra_structs.h"
-*/
-import "C"
-
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"unsafe"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
+
 	"github.com/lens-vm/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
@@ -33,201 +27,70 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
-
-// Helper function which builds a return struct from Go to C
-func returnC(status int, errortext string, valuetext string) *C.Result {
-	result := (*C.Result)(C.malloc(C.size_t(unsafe.Sizeof(C.Result{}))))
-
-	result.status = C.int(status)
-	result.error = C.CString(errortext)
-	result.value = C.CString(valuetext)
-
-	return result
-}
-
-// Helper function that attaches an identity to a context, returning the new context
-func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Context, error) {
-	if privateKeyHex == "" {
-		return ctx, nil
-	}
-	data, err := hex.DecodeString(privateKeyHex)
-	if err != nil {
-		return ctx, err
-	}
-	privKey := secp256k1.PrivKeyFromBytes(data)
-	newIdentity, err := identity.FromPrivateKey(crypto.NewPrivateKey(privKey))
-	if err != nil {
-		return ctx, err
-	}
-	immutableIdentity := immutable.Some[identity.Identity](newIdentity)
-	newctx := identity.WithContext(ctx, immutableIdentity)
-	return newctx, nil
-}
-
-// Helper function that attaches a transaction to a context, returning a new context
-func contextWithTransaction(ctx context.Context, cTxnID C.ulonglong) (context.Context, error) {
-	TxnIDu64 := uint64(cTxnID)
-	if TxnIDu64 == 0 {
-		return ctx, nil
-	}
-	tx, ok := TxnStore.Load(TxnIDu64)
-	if !ok {
-		return ctx, fmt.Errorf(cerrTxnDoesNotExist, TxnIDu64)
-	}
-	txn := tx.(datastore.Txn) //nolint:forcetypeassert
-	ctx2 := datastore.CtxSetTxn(ctx, txn)
-	return ctx2, nil
-}
-
-// Helper function that seeks to marshall JSON into a CResult
-// The Result object will either contain the payload, if it works, or an error if it doesn't
-func marshalJSONToCResult(value any) *C.Result {
-	dataJSON, err := json.Marshal(value)
-	if err != nil {
-		return returnC(1, fmt.Sprintf(cerrMarshallingJSON, err), "")
-	}
-	return returnC(0, "", string(dataJSON))
-}
-
-// Helper function that takes a comma separated const char * and returns an array of Go strings
-func splitCommaSeparatedCString(cStr *C.char) []string {
-	baseStr := C.GoString(cStr)
-	var retArr []string
-	if baseStr != "" {
-		retArr = strings.Split(baseStr, ",")
-	} else {
-		retArr = []string{}
-	}
-	return retArr
-}
-
-// Helper function that tries to build a []client.RequestOption from C-string name and JSON variables
-func buildRequestOptions(cOpName *C.char, cVars *C.char) ([]client.RequestOption, error) {
-	var opts []client.RequestOption
-	if cOpName != nil && C.GoString(cOpName) != "" {
-		opts = append(opts, client.WithOperationName(C.GoString(cOpName)))
-	}
-	if cVars != nil && C.GoString(cVars) != "" {
-		var variables map[string]any
-		if err := json.Unmarshal([]byte(C.GoString(cVars)), &variables); err != nil {
-			return nil, fmt.Errorf("invalid JSON in variables: %w", err)
-		}
-		opts = append(opts, client.WithVariables(variables))
-	}
-	return opts, nil
-}
-
-func loadIdentityFromString(cKeyType *C.char, cPrivKey *C.char) (*identity.FullIdentity, error) {
-	goKeyType := C.GoString(cKeyType)
-	goPrivKeyStr := C.GoString(cPrivKey)
-
-	if goKeyType == "" || goPrivKeyStr == "" {
-		return nil, nil
-	}
-
-	// Convert string key type to crypto.KeyType
-	var keyType crypto.KeyType
-	switch goKeyType {
-	case KeyTypeEd25519:
-		keyType = crypto.KeyTypeEd25519
-	case KeyTypeSecp256k1:
-		keyType = crypto.KeyTypeSecp256k1
-	default:
-		return nil, fmt.Errorf("invalid key type: %s", goKeyType)
-	}
-
-	privKey, err := crypto.PrivateKeyFromString(keyType, goPrivKeyStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to construct private key: %w", err)
-	}
-
-	id, err := identity.FromPrivateKey(privKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create identity from private key: %w", err)
-	}
-
-	return &id, nil
-}
 
 // Helper function
 // This initializes and starts the globalNode (in memory), so that other functionality works
 func setupTests() {
-	dbPath := C.CString("")
-	listeningAddresses := C.CString("")
-	replicatorRetryIntervals := C.CString("")
-	peers := C.CString("")
-	keyType := C.CString("")    // secp256k1
-	privateKey := C.CString("") // 545cd8289a64f0442224cff3ab8cc459a18ec7fbb9f6a58ae4c64cc8b4d59101
-	defer C.free(unsafe.Pointer(keyType))
-	defer C.free(unsafe.Pointer(privateKey))
-	defer C.free(unsafe.Pointer(dbPath))
-	defer C.free(unsafe.Pointer(listeningAddresses))
-	defer C.free(unsafe.Pointer(replicatorRetryIntervals))
-	defer C.free(unsafe.Pointer(peers))
+	dbPath := ""
+	listeningAddresses := ""
+	replicatorRetryIntervals := ""
+	peers := ""
+	keyType := ""
+	privateKey := ""
 
-	var nodeOpts C.NodeInitOptions
-	nodeOpts.dbPath = dbPath
-	nodeOpts.listeningAddresses = listeningAddresses
-	nodeOpts.replicatorRetryIntervals = replicatorRetryIntervals
-	nodeOpts.peers = peers
-	nodeOpts.maxTransactionRetries = 5
-	nodeOpts.disableP2P = 0
-	nodeOpts.disableAPI = 0
-	nodeOpts.inMemory = 1
-	nodeOpts.identityKeyType = keyType
-	nodeOpts.identityPrivateKey = privateKey
+	var nodeOpts cbindings.GoNodeInitOptions
+	nodeOpts.DbPath = dbPath
+	nodeOpts.ListeningAddresses = listeningAddresses
+	nodeOpts.ReplicatorRetryIntervals = replicatorRetryIntervals
+	nodeOpts.Peers = peers
+	nodeOpts.MaxTransactionRetries = 5
+	nodeOpts.DisableP2P = 0
+	nodeOpts.DisableAPI = 0
+	nodeOpts.InMemory = 1
+	nodeOpts.IdentityKeyType = keyType
+	nodeOpts.IdentityPrivateKey = privateKey
 
-	NodeInit(nodeOpts)
-	NodeStart()
+	cbindings.NodeInit(nodeOpts)
+	cbindings.NodeStart()
 }
 
 // Helper function
-// Get TxnID, as a C.ulonglong, from a context, returning 0 if not present
-func cTxnIDFromContext(ctx context.Context) C.ulonglong {
-	var cTxnID C.ulonglong = 0
-
+// Get TxnID, as a uint64, from a context, returning 0 if not present
+func txnIDFromContext(ctx context.Context) uint64 {
 	tx, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
-		cTxnID = C.ulonglong(tx.ID())
+		return tx.ID()
 	}
-	return cTxnID
+	return 0
 }
 
 // Helper function
-// Returns a C integer, representing a boolean value, for whether EncryptDoc flag is set
-func cIsEncryptedFromDocCreateOption(opts []client.DocCreateOption) C.int {
+// Returns a boolean value, for whether EncryptDoc flag is set
+func isEncryptedFromDocCreateOption(opts []client.DocCreateOption) bool {
 	createDocOpts := client.DocCreateOptions{}
 	createDocOpts.Apply(opts)
-	var retVal C.int = 0
-	if createDocOpts.EncryptDoc {
-		retVal = 1
-	}
-	return retVal
+	return createDocOpts.EncryptDoc
 }
 
 // Helper function
-// Get EncryptedFields as a comma separated C-String, returning "" if none exist
-// After calling this, you are responsible for freeing the memory
-func cEncryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) *C.char {
+// Get EncryptedFields as a comma separated string, returning "" if none exist
+func encryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) string {
 	createDocOpts := client.DocCreateOptions{}
 	createDocOpts.Apply(opts)
 	if len(createDocOpts.EncryptedFields) > 0 {
-		joined := strings.Join(createDocOpts.EncryptedFields, ",")
-		return C.CString(joined)
+		return strings.Join(createDocOpts.EncryptedFields, ",")
 	}
-	return C.CString("")
+	return ""
 }
 
 // Helper function
-// Get Identity, as a *C.char, from a context, returning "" if not present
-// After calling this, you are responsible for freeing the memory
-func cIdentityFromContext(ctx context.Context) *C.char {
+// Get a private key, or blank string, used to pass in identity, as a string
+func identityFromContext(ctx context.Context) string {
 	idf := identity.FullFromContext(ctx)
 	if !idf.HasValue() {
-		return C.CString("")
+		return ""
 	}
 	return C.CString(idf.Value().PrivateKey().String())
 }
@@ -261,18 +124,17 @@ func unmarshalResult[T any](value *C.char) (T, error) {
 }
 
 // Helper function
-// Marshals an Option[T] to a C-String.
-// After calling this, you are responsible for freeing the memory
-func optionToCString[T any](opt immutable.Option[T]) (*C.char, error) {
-	if opt.HasValue() {
-		return nil, nil
+// Marshals an Option[T] to a string.
+func optionToString[T any](opt immutable.Option[T]) (string, error) {
+	if !opt.HasValue() {
+		return "", nil
 	}
 	value := opt.Value()
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return C.CString(string(jsonBytes)), nil
+	return string(jsonBytes), nil
 }
 
 // Helper function
@@ -322,28 +184,26 @@ func collectionsFromDefinitions(defs []client.CollectionDefinition) ([]client.Co
 }
 
 // Helper function
-// Creates a C-string from an immutable.Option[string]
-// After calling this, you are responsible for freeing the memory
-func cStringFromImmutableOptionString(s immutable.Option[string]) *C.char {
+// Creates a string from an immutable.Option[string]
+func stringFromImmutableOptionString(s immutable.Option[string]) string {
 	if !s.HasValue() {
-		return C.CString("")
+		return ""
 	}
-	return C.CString(s.Value())
+	return s.Value()
 }
 
 // Helper function
-// Creates a C-string from an immutable.Option[model.Lens]
-// After calling this, you are responsible for freeing the memory
-func cStringFromLensOption(opt immutable.Option[model.Lens]) (*C.char, error) {
+// Creates a string from an immutable.Option[model.Lens]
+func stringFromLensOption(opt immutable.Option[model.Lens]) (string, error) {
 	if !opt.HasValue() {
-		return C.CString(""), nil
+		return "", nil
 	}
 	lens := opt.Value()
 	data, err := json.Marshal(lens)
 	if err != nil {
-		return C.CString(""), err
+		return "", err
 	}
-	return C.CString(string(data)), nil
+	return string(data), nil
 }
 
 // Helper function
@@ -357,25 +217,9 @@ func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]an
 }
 
 // Helper function
-// Frees a *C.Result and the C-Strings it contains
-func freeCResult(result *C.Result) {
-	if result != nil {
-		if result.value != nil {
-			C.free(unsafe.Pointer(result.value))
-		}
-		if result.error != nil {
-			C.free(unsafe.Pointer(result.error))
-		}
-		C.free(unsafe.Pointer(result))
-	}
-}
-
-// Helper function
-// Gets a client.Txn from a C.ulonglong representing it in the C-side TxnStore
-// This function is only necessary to allow for the test wrapper to function
-func GetTxnFromHandle(cTxnID C.ulonglong) any {
-	TxnIDu64 := uint64(cTxnID)
-	val, ok := TxnStore.Load(TxnIDu64)
+// Gets a client.Txn from a uint64 representing it in the C-side TxnStore
+func getTxnFromHandle(txnID uint64) any {
+	val, ok := cbindings.TxnStore.Load(txnID)
 	if !ok {
 		return 0
 	}

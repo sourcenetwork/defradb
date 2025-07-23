@@ -8,16 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !cshared
-// +build !cshared
-
 package cwrap
-
-/*
-#include <stdlib.h>
-#include "defra_structs.h"
-*/
-import "C"
 
 import (
 	"context"
@@ -25,8 +16,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"unsafe"
 
+	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -65,40 +56,28 @@ func (c *Collection) Create(
 	doc *client.Document,
 	opts ...client.DocCreateOption,
 ) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cIsEncrypted := cIsEncryptedFromDocCreateOption(opts)
-	cEncryptedFields := cEncryptedFieldsFromDocCreateOptions(opts)
-	cName := C.CString(c.def.GetName())
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
+
+	isEncrypted := isEncryptedFromDocCreateOption(opts)
+	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
+
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = c.def.GetName()
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
 	docJSONbytes, err := doc.MarshalJSON()
 	if err != nil {
 		return err
 	}
-	cJSON := C.CString(string(docJSONbytes))
+	cJSON := string(docJSONbytes)
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = 0
+	result := cbindings.CollectionCreate(cJSON, isEncrypted, encryptedFields, copts)
 
-	result := CollectionCreate(cJSON, cIsEncrypted, cEncryptedFields, copts)
-
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cJSON))
-	defer C.free(unsafe.Pointer(cEncryptedFields))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 
 	doc.Clean()
@@ -110,13 +89,16 @@ func (c *Collection) CreateMany(
 	docs []*client.Document,
 	opts ...client.DocCreateOption,
 ) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cIsEncrypted := cIsEncryptedFromDocCreateOption(opts)
-	cEncryptedFields := cEncryptedFieldsFromDocCreateOptions(opts)
-	cName := C.CString(c.Version().Name)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
+	isEncrypted := isEncryptedFromDocCreateOption(opts)
+	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
+
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = c.def.GetName()
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
 	var jsonDocs []json.RawMessage
 	for _, doc := range docs {
@@ -130,28 +112,12 @@ func (c *Collection) CreateMany(
 	if err != nil {
 		return err
 	}
-	cJSON := C.CString(string(docJSONbytes))
+	cJSON := string(docJSONbytes)
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = 0
+	result := cbindings.CollectionCreate(cJSON, isEncrypted, encryptedFields, copts)
 
-	result := CollectionCreate(cJSON, cIsEncrypted, cEncryptedFields, copts)
-
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cJSON))
-	defer C.free(unsafe.Pointer(cEncryptedFields))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 
 	for _, doc := range docs {
@@ -164,44 +130,27 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cDocID := C.CString(doc.ID().String())
-	cIdentity := cIdentityFromContext(ctx)
-	cVersion := C.CString("")
-	cCollectionID := C.CString(c.Schema().VersionID)
-	cName := C.CString("")
-	cFilter := C.CString("")
-	var cGetInactive C.int = 0
-
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cFilter))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-
+	docID := doc.ID().String()
+	filter := ""
 	document, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}
-	cUpdater := C.CString(string(document))
+	updater := string(document)
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = cGetInactive
-	result := CollectionUpdate(cDocID, cFilter, cUpdater, copts)
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = c.Schema().VersionID
+	copts.Name = ""
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
-	defer C.free(unsafe.Pointer(cUpdater))
-	defer freeCResult(result)
+	result := cbindings.CollectionUpdate(docID, filter, updater, copts)
 
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
-
 	doc.Clean()
 	return nil
 }
@@ -225,33 +174,21 @@ func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cVersion := C.CString("")
-	cDocID := C.CString(docID.String())
-	cFilter := C.CString("")
-	cIdentity := cIdentityFromContext(ctx)
-	cName := C.CString(c.def.GetName())
-	cCollectionID := C.CString("")
+	docIDStr := docID.String()
+	filter := ""
 
-	var opts C.CollectionOptions
-	opts.tx = cTxnID
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.identity = cIdentity
-	opts.getInactive = 0
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = c.def.GetName()
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
-	result := CollectionDelete(cDocID, cFilter, opts)
+	result := cbindings.CollectionDelete(docIDStr, filter, copts)
 
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return false, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return false, errors.New(result.Error)
 	}
 	return true, nil
 }
@@ -260,33 +197,21 @@ func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cDocID := C.CString(docID.String())
-	cIdentity := cIdentityFromContext(ctx)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString("")
-	var cShowDeleted C.int = 0
+	docIDStr := docID.String()
+	var cShowDeleted bool = false
 
-	var opts C.CollectionOptions
-	opts.tx = cTxnID
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.identity = cIdentity
-	opts.getInactive = 0
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = ""
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
-	result := CollectionGet(cDocID, cShowDeleted, opts)
+	result := cbindings.CollectionGet(docIDStr, cShowDeleted, copts)
 
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return false, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return false, errors.New(result.Error)
 	}
 	return true, nil
 }
@@ -296,47 +221,29 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cDocID := C.CString("")
-	cIdentity := cIdentityFromContext(ctx)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
-	cUpdater := C.CString(updater)
-	var cGetInactive C.int = 0
-
+	docID := ""
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
 		return nil, err
 	}
-	cFilter := C.CString(string(filterJSON))
+	filterStr := string(filterJSON)
 
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cUpdater))
-	defer C.free(unsafe.Pointer(cFilter))
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = c.def.GetName()
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = cGetInactive
+	result := cbindings.CollectionUpdate(docID, filterStr, updater, copts)
 
-	result := CollectionUpdate(cDocID, cFilter, cUpdater, copts)
-
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	var res client.UpdateResult
-	retString := []byte(C.GoString(result.value))
+	retString := []byte(result.Value)
 	if err := json.Unmarshal(retString, &res); err != nil {
 		return nil, err
 	}
@@ -347,46 +254,29 @@ func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cDocID := C.CString("")
-	cIdentity := cIdentityFromContext(ctx)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
-
-	var cGetInactive C.int = 0
-
+	docID := ""
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
 		return nil, err
 	}
-	cFilter := C.CString(string(filterJSON))
+	filterStr := string(filterJSON)
 
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cFilter))
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = c.def.GetName()
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = cGetInactive
+	result := cbindings.CollectionDelete(docID, filterStr, copts)
 
-	result := CollectionDelete(cDocID, cFilter, copts)
-
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	var res client.DeleteResult
-	retString := []byte(C.GoString(result.value))
+	retString := []byte(result.Value)
 	if err := json.Unmarshal(retString, &res); err != nil {
 		return nil, err
 	}
@@ -398,38 +288,23 @@ func (c *Collection) Get(
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cDocID := C.CString(docID.String())
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cIdentity := cIdentityFromContext(ctx)
-	cName := C.CString(c.Version().Name)
-	var cShowDeleted C.int = 0
-	if showDeleted {
-		cShowDeleted = 1
+	docIDStr := docID.String()
+
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = c.Version().Name
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
+
+	result := cbindings.CollectionGet(docIDStr, showDeleted, copts)
+
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = 0
-
-	result := CollectionGet(cDocID, cShowDeleted, copts)
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
-	}
-
-	jsonStr := C.GoString(result.value)
+	jsonStr := result.Value
 	doc, err := client.NewDocWithID(docID, c.Definition())
 	if err != nil {
 		return nil, err
@@ -445,35 +320,20 @@ func (c *Collection) Get(
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cIdentity := cIdentityFromContext(ctx)
-	cName := C.CString("")
 
-	var copts C.CollectionOptions
-	copts.tx = cTxnID
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.identity = cIdentity
-	copts.getInactive = 0
+	var copts cbindings.GoCOptions
+	copts.TxID = txnIDFromContext(ctx)
+	copts.Version = ""
+	copts.CollectionID = ""
+	copts.Name = ""
+	copts.Identity = identityFromContext(ctx)
+	copts.GetInactive = 0
 
-	result := CollectionListDocIDs(copts)
+	result := cbindings.CollectionListDocIDs(copts)
 
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
-
-	// We have to convert this now, because the memory for the C string will be freed
-	// when the function returns, even though the Go Routine is still working on the string
-	resultInGo := C.GoString(result.value)
 
 	docIDCh := make(chan client.DocIDResult)
 
@@ -486,7 +346,7 @@ func (c *Collection) GetAllDocIDs(
 			Error string `json:"error"`
 		}
 
-		if err := json.Unmarshal([]byte(resultInGo), &rawResults); err != nil {
+		if err := json.Unmarshal([]byte(result.Value), &rawResults); err != nil {
 			docIDCh <- client.DocIDResult{Err: fmt.Errorf("failed to parse docIDs: %w", err)}
 			return
 		}
@@ -514,13 +374,8 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cName := C.CString(c.def.GetName())
-	cIndexName := C.CString(indexDesc.Name)
-	var cIsUnique C.int = 0
-	if indexDesc.Unique {
-		cIsUnique = 1
-	}
+	txnID := txnIDFromContext(ctx)
+	name := c.def.GetName()
 
 	// Build the Fields string
 	orderedFields := make([]string, len(indexDesc.Fields))
@@ -531,21 +386,16 @@ func (c *Collection) CreateIndex(
 		}
 		orderedFields[i] = f.Name + ":" + order
 	}
-	cFields := C.CString(strings.Join(orderedFields, ","))
+	fields := strings.Join(orderedFields, ",")
 
-	result := IndexCreate(cName, cIndexName, cFields, cIsUnique, cTxnID)
+	result := cbindings.IndexCreate(name, indexDesc.Name, fields, indexDesc.Unique, txnID)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIndexName))
-	defer C.free(unsafe.Pointer(cFields))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return client.IndexDescription{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return client.IndexDescription{}, errors.New(result.Error)
 	}
 
 	// Unmarshall the output from JSON to client.IndexDescription
-	retRes, err := unmarshalResult[client.IndexDescription](result.value)
+	retRes, err := unmarshalResult[client.IndexDescription](result.Value)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -553,38 +403,29 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cName := C.CString(c.def.GetName())
-	cIndexName := C.CString(indexName)
+	txnID := txnIDFromContext(ctx)
+	name := c.def.GetName()
 
-	result := IndexDrop(cName, cIndexName, cTxnID)
+	result := cbindings.IndexDrop(name, indexName, txnID)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIndexName))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
-
 	return nil
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cName := C.CString(c.def.GetName())
+	txnID := txnIDFromContext(ctx)
+	name := c.def.GetName()
 
-	result := IndexList(cName, cTxnID)
+	result := cbindings.IndexList(name, txnID)
 
-	defer C.free(unsafe.Pointer(cName))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return []client.IndexDescription{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return []client.IndexDescription{}, errors.New(result.Error)
 	}
 
 	// Unmarshall the output from JSON to []client.IndexDescription
-	retRes, err := unmarshalResult[[]client.IndexDescription](result.value)
+	retRes, err := unmarshalResult[[]client.IndexDescription](result.Value)
 	if err != nil {
 		return []client.IndexDescription{}, err
 	}

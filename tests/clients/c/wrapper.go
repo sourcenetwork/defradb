@@ -8,16 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !cshared
-// +build !cshared
-
 package cwrap
-
-/*
-#include <stdlib.h>
-#include "defra_structs.h"
-*/
-import "C"
 
 import (
 	"context"
@@ -25,8 +16,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"unsafe"
 
+	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -49,12 +40,13 @@ func NewCWrapper() *CWrapper {
 }
 
 func (w *CWrapper) PeerInfo() peer.AddrInfo {
-	result := P2PInfo()
-	defer freeCResult(result)
-	if result.status != 0 {
+	result := cbindings.P2PInfo()
+
+	if result.Status != 0 {
 		return peer.AddrInfo{}
 	}
-	addrInfo, err := unmarshalResult[peer.AddrInfo](result.value)
+
+	addrInfo, err := unmarshalResult[peer.AddrInfo](result.Value)
 	if err != nil {
 		return peer.AddrInfo{}
 	}
@@ -62,52 +54,39 @@ func (w *CWrapper) PeerInfo() peer.AddrInfo {
 }
 
 func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
-	cTxnID := cTxnIDFromContext(ctx)
+	txnID := txnIDFromContext(ctx)
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
-	cPeerStr := C.CString(peerStr)
-	cColStr := C.CString(colStr)
 
-	result := P2PsetReplicator(cColStr, cPeerStr, cTxnID)
+	result := cbindings.P2PsetReplicator(colStr, peerStr, txnID)
 
-	defer C.free(unsafe.Pointer(cPeerStr))
-	defer C.free(unsafe.Pointer(cColStr))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (w *CWrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
-	cTxnID := cTxnIDFromContext(ctx)
+	txnID := txnIDFromContext(ctx)
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
-	cPeerStr := C.CString(peerStr)
-	cColStr := C.CString(colStr)
 
-	result := P2PdeleteReplicator(cColStr, cPeerStr, cTxnID)
+	result := cbindings.P2PdeleteReplicator(colStr, peerStr, txnID)
 
-	defer C.free(unsafe.Pointer(cPeerStr))
-	defer C.free(unsafe.Pointer(cColStr))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	result := P2PgetAllReplicators()
-	defer freeCResult(result)
+	result := cbindings.P2PgetAllReplicators()
 
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
-	replicators, err := unmarshalResult[[]client.Replicator](result.value)
+	replicators, err := unmarshalResult[[]client.Replicator](result.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -115,44 +94,38 @@ func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, 
 }
 
 func (w *CWrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
-	cTxnID := cTxnIDFromContext(ctx)
+	txnID := txnIDFromContext(ctx)
 	colStr := strings.Join(collectionIDs, ",")
-	cColStr := C.CString(colStr)
 
-	result := P2PcollectionAdd(cColStr, cTxnID)
-	defer C.free(unsafe.Pointer(cColStr))
-	defer freeCResult(result)
+	result := cbindings.P2PcollectionAdd(colStr, txnID)
 
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
-	cTxnID := cTxnIDFromContext(ctx)
+	txnID := txnIDFromContext(ctx)
 	colStr := strings.Join(collectionIDs, ",")
-	cColStr := C.CString(colStr)
 
-	result := P2PcollectionRemove(cColStr, cTxnID)
+	result := cbindings.P2PcollectionRemove(colStr, txnID)
 
-	defer C.free(unsafe.Pointer(cColStr))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (w *CWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	result := P2PcollectionGetAll(cTxnID)
-	defer freeCResult(result)
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	txnID := txnIDFromContext(ctx)
+	result := cbindings.P2PcollectionGetAll(txnID)
+
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
-	collections, err := unmarshalResult[[]string](result.value)
+
+	collections, err := unmarshalResult[[]string](result.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -168,15 +141,11 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 }
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cSchema := C.CString(schema)
-	result := AddSchema(cSchema, cTxnID)
+	txnID := txnIDFromContext(ctx)
+	result := cbindings.AddSchema(schema, txnID)
 
-	defer C.free(unsafe.Pointer(cSchema))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	collectionVersions, err := unmarshalResult[[]client.CollectionVersion](result.value)
@@ -190,22 +159,17 @@ func (w *CWrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cPolicy := C.CString(policy)
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
 
-	result := AcpAddPolicy(cIdentity, cPolicy, cTxnID)
+	result := cbindings.ACPAddPolicy(identity, policy, txnID)
 
-	defer C.free(unsafe.Pointer(cPolicy))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return client.AddPolicyResult{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return client.AddPolicyResult{}, errors.New(result.Error)
 	}
 
 	// Unmarshall the output from JSON to client.AddPolicyResult
-	addPolicyRes, err := unmarshalResult[client.AddPolicyResult](result.value)
+	addPolicyRes, err := unmarshalResult[client.AddPolicyResult](result.Value)
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}
@@ -219,28 +183,17 @@ func (w *CWrapper) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cCollection := C.CString(collectionName)
-	cDocID := C.CString(docID)
-	cRelation := C.CString(relation)
-	cActor := C.CString(targetActor)
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
 
-	result := AcpAddRelationship(cIdentity, cCollection, cDocID, cRelation, cActor, cTxnID)
+	result := cbindings.ACPAddRelationship(identity, collectionName, docID, relation, targetActor, txnID)
 
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cCollection))
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cRelation))
-	defer C.free(unsafe.Pointer(cActor))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return client.AddActorRelationshipResult{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return client.AddActorRelationshipResult{}, errors.New(result.Error)
 	}
 
 	// Unmarshall the output from JSON to client.AddActorRelationshipResult
-	addRelationshipRes, err := unmarshalResult[client.AddActorRelationshipResult](result.value)
+	addRelationshipRes, err := unmarshalResult[client.AddActorRelationshipResult](result.Value)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -254,28 +207,17 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cCollection := C.CString(collectionName)
-	cDocID := C.CString(docID)
-	cRelation := C.CString(relation)
-	cActor := C.CString(targetActor)
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
 
-	result := AcpDeleteRelationship(cIdentity, cCollection, cDocID, cRelation, cActor, cTxnID)
+	result := cbindings.ACPDeleteRelationship(identity, collectionName, docID, relation, targetActor, txnID)
 
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cCollection))
-	defer C.free(unsafe.Pointer(cDocID))
-	defer C.free(unsafe.Pointer(cRelation))
-	defer C.free(unsafe.Pointer(cActor))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return client.DeleteActorRelationshipResult{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return client.DeleteActorRelationshipResult{}, errors.New(result.Error)
 	}
 
 	// Unmarshall the output from JSON to client.DeleteActorRelationshipResult
-	deleteRelationshipRes, err := unmarshalResult[client.DeleteActorRelationshipResult](result.value)
+	deleteRelationshipRes, err := unmarshalResult[client.DeleteActorRelationshipResult](result.Value)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -288,27 +230,18 @@ func (w *CWrapper) PatchSchema(
 	migration immutable.Option[model.Lens],
 	setAsDefaultVersion bool,
 ) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cPatch := C.CString(patch)
-	cMigration, migrationErr := optionToCString(migration)
-	defer C.free(unsafe.Pointer(cPatch))
-	defer C.free(unsafe.Pointer(cMigration))
+	txnID := txnIDFromContext(ctx)
+	cMigration, migrationErr := optionToString(migration)
+
 	if migrationErr != nil {
 		return migrationErr
 	}
-	var cSetAsDefaultVersion C.int = 0
-	if setAsDefaultVersion {
-		cSetAsDefaultVersion = 1
+
+	result := cbindings.PatchSchema(patch, cMigration, setAsDefaultVersion, txnID)
+
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
-
-	result := PatchSchema(cPatch, cMigration, cSetAsDefaultVersion, cTxnID)
-
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
-	}
-
 	return nil
 }
 
@@ -316,45 +249,27 @@ func (w *CWrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 ) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cPatch := C.CString(patch)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString("")
+	var opts cbindings.GoCOptions
+	opts.TxID = txnIDFromContext(ctx)
+	opts.Identity = identityFromContext(ctx)
+	opts.Version = ""
+	opts.CollectionID = ""
+	opts.Name = ""
+	opts.GetInactive = 0
 
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cPatch))
+	result := cbindings.CollectionPatch(patch, opts)
 
-	var opts C.CollectionOptions
-	opts.tx = cTxnID
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.identity = cIdentity
-	opts.getInactive = 0
-
-	result := CollectionPatch(cPatch, opts)
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
-
 	return nil
 }
 
 func (w *CWrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cVersion := C.CString(schemaVersionID)
-	result := SetActiveSchema(cVersion, cTxnID)
-	defer C.free(unsafe.Pointer(cVersion))
-	defer freeCResult(result)
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	txnID := txnIDFromContext(ctx)
+	result := cbindings.SetActiveSchema(schemaVersionID, txnID)
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
@@ -365,28 +280,21 @@ func (w *CWrapper) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cQuery := C.CString(query)
-	cSDL := C.CString(sdl)
-	cTransform, err := cStringFromLensOption(transform)
-
-	defer C.free(unsafe.Pointer(cQuery))
-	defer C.free(unsafe.Pointer(cSDL))
-	defer C.free(unsafe.Pointer(cTransform))
+	txnID := txnIDFromContext(ctx)
+	cTransform, err := stringFromLensOption(transform)
 
 	if err != nil {
 		return []client.CollectionDefinition{}, err
 	}
 
-	result := ViewAdd(cQuery, cSDL, cTransform, cTxnID)
-	defer freeCResult(result)
+	result := cbindings.ViewAdd(query, sdl, cTransform, txnID)
 
-	if result.status != 0 {
-		return []client.CollectionDefinition{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return []client.CollectionDefinition{}, errors.New(result.Error)
 	}
 
 	// Unmarshall the output from JSON to []client.CollectionDefinition
-	colDefRes, err := unmarshalResult[[]client.CollectionDefinition](result.value)
+	colDefRes, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
 	if err != nil {
 		return []client.CollectionDefinition{}, err
 	}
@@ -394,50 +302,39 @@ func (w *CWrapper) AddView(
 }
 
 func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cVersionID := cStringFromImmutableOptionString(opts.VersionID)
-	cCollectionID := cStringFromImmutableOptionString(opts.CollectionID)
-	cName := cStringFromImmutableOptionString(opts.Name)
-	var cGetInactive C.int = 0
+	txnID := txnIDFromContext(ctx)
+	versionID := stringFromImmutableOptionString(opts.VersionID)
+	collectionID := stringFromImmutableOptionString(opts.CollectionID)
+	name := stringFromImmutableOptionString(opts.Name)
+	var cGetInactive bool = false
 	if opts.IncludeInactive.HasValue() {
 		if opts.IncludeInactive.Value() {
-			cGetInactive = 1
+			cGetInactive = true
 		}
 	}
 
-	result := ViewRefresh(cName, cCollectionID, cVersionID, cGetInactive, cTxnID)
+	result := cbindings.ViewRefresh(name, collectionID, versionID, cGetInactive, txnID)
 
-	defer C.free(unsafe.Pointer(cVersionID))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
 
 func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
-	cTxnID := cTxnIDFromContext(ctx)
-	cSrc := C.CString(config.SourceSchemaVersionID)
-	cDst := C.CString(config.DestinationSchemaVersionID)
+	txnID := txnIDFromContext(ctx)
+	src := config.SourceSchemaVersionID
+	dst := config.DestinationSchemaVersionID
 	lensConfig, err := json.Marshal(config.Lens)
-
-	defer C.free(unsafe.Pointer(cSrc))
-	defer C.free(unsafe.Pointer(cDst))
 	if err != nil {
 		return err
 	}
+	lens := string(lensConfig)
 
-	cLens := C.CString(string(lensConfig))
+	result := cbindings.LensSet(src, dst, lens, txnID)
 
-	result := LensSet(cSrc, cDst, cLens, cTxnID)
-	defer C.free(unsafe.Pointer(cLens))
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
@@ -464,58 +361,52 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
 
-	var cName *C.char
+	var name string
 	if options.Name.HasValue() {
-		cName = C.CString(options.Name.Value())
+		name = options.Name.Value()
 	} else {
-		cName = C.CString("")
+		name = ""
 	}
 
-	var cVersion *C.char
+	var version string
 	if options.VersionID.HasValue() {
-		cVersion = C.CString(options.VersionID.Value())
+		version = options.VersionID.Value()
 	} else {
-		cVersion = C.CString("")
+		version = ""
 	}
 
-	var cCollectionID *C.char
+	var collectionID string
 	if options.CollectionID.HasValue() {
-		cCollectionID = C.CString(options.CollectionID.Value())
+		collectionID = options.CollectionID.Value()
 	} else {
-		cCollectionID = C.CString("")
+		collectionID = ""
 	}
 
-	var cIncludeInactive C.int = 0
+	var includeInactive int = 0
 	if options.IncludeInactive.HasValue() {
 		if options.IncludeInactive.Value() {
-			cIncludeInactive = 1
+			includeInactive = 1
 		}
 	}
 
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
+	var opts cbindings.GoCOptions
+	opts.TxID = txnID
+	opts.Version = version
+	opts.CollectionID = collectionID
+	opts.Name = name
+	opts.Identity = identity
+	opts.GetInactive = includeInactive
 
-	var opts C.CollectionOptions
-	opts.tx = cTxnID
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.identity = cIdentity
-	opts.getInactive = cIncludeInactive
+	result := cbindings.CollectionDescribe(opts)
 
-	result := CollectionDescribe(opts)
-	defer freeCResult(result)
-
-	if result.status != 0 {
-		return []client.Collection{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return []client.Collection{}, errors.New(result.Error)
 	}
 
-	defs, err := unmarshalResult[[]client.CollectionDefinition](result.value)
+	defs, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -535,42 +426,36 @@ func (w *CWrapper) GetSchemas(
 	ctx context.Context,
 	options client.SchemaFetchOptions,
 ) ([]client.SchemaDescription, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cRoot := cStringFromImmutableOptionString(options.Root)
-	cVersion := cStringFromImmutableOptionString(options.ID)
-	cName := cStringFromImmutableOptionString(options.Name)
+	txnID := txnIDFromContext(ctx)
+	root := stringFromImmutableOptionString(options.Root)
+	version := stringFromImmutableOptionString(options.ID)
+	name := stringFromImmutableOptionString(options.Name)
 
-	result := DescribeSchema(cName, cRoot, cVersion, cTxnID)
-	defer C.free(unsafe.Pointer(cRoot))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cName))
-	defer freeCResult(result)
+	result := cbindings.DescribeSchema(name, root, version, txnID)
 
-	if result.status != 0 {
-		return []client.SchemaDescription{}, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return []client.SchemaDescription{}, errors.New(result.Error)
 	}
 
-	res, err := unmarshalResult[[]client.SchemaDescription](result.value)
+	res, err := unmarshalResult[[]client.SchemaDescription](result.Value)
 	if err != nil {
-		return []client.SchemaDescription{}, errors.New(C.GoString(result.error))
+		return []client.SchemaDescription{}, errors.New(result.Error)
 	}
 	return res, nil
 }
 
 func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	cTxnID := cTxnIDFromContext(ctx)
-	cColName := C.CString("")
-	result := IndexList(cColName, cTxnID)
-	defer C.free(unsafe.Pointer(cColName))
-	defer freeCResult(result)
+	txnID := txnIDFromContext(ctx)
+	colName := ""
+	result := cbindings.IndexList(colName, txnID)
 
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
-	res, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](result.value)
+	res, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](result.Value)
 	if err != nil {
-		return nil, errors.New(C.GoString(result.error))
+		return nil, errors.New(result.Error)
 	}
 
 	return res, nil
@@ -581,20 +466,13 @@ func (w *CWrapper) ExecRequest(
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	cTxnID := cTxnIDFromContext(ctx)
-	cIdentity := cIdentityFromContext(ctx)
-	cQuery := C.CString(query)
-	cOperation, cVariables := extractCStringsFromRequestOptions(opts)
-	result := ExecuteQuery(cQuery, cIdentity, cTxnID, cOperation, cVariables)
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
+	operation, variables := extractCStringsFromRequestOptions(opts)
+	result := cbindings.ExecuteQuery(query, identity, txnID, operation, variables)
 
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cQuery))
-	defer C.free(unsafe.Pointer(cOperation))
-	defer C.free(unsafe.Pointer(cVariables))
-	defer freeCResult(result)
-
-	if result.status == 2 {
-		id := C.GoString(result.value)
+	if result.Status == 2 {
+		id := result.Value
 		newchan := WrapSubscriptionAsChannel(id)
 		return &client.RequestResult{
 			Subscription: newchan,
@@ -602,87 +480,73 @@ func (w *CWrapper) ExecRequest(
 	}
 
 	// Unmarshal the result into a *client.RequestResult
-	raw := C.GoString(result.value)
-	rawError := C.GoString(result.error)
 	retval := &client.RequestResult{}
-	if result.status != 0 {
-		retval.GQL.Errors = append(retval.GQL.Errors, fmt.Errorf("%s", rawError))
+	if result.Status != 0 {
+		retval.GQL.Errors = append(retval.GQL.Errors, fmt.Errorf("%s", result.Error))
 		return retval
 	}
-	if err := json.Unmarshal([]byte(raw), &retval.GQL); err != nil {
+	if err := json.Unmarshal([]byte(result.Value), &retval.GQL); err != nil {
 		retval.GQL.Errors = append(retval.GQL.Errors, err)
 	}
 	return retval
 }
 
 func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	var cConcurrent C.int = 0
-	var cReadOnly C.int = 0
-	if readOnly {
-		cReadOnly = 1
-	}
+	var concurrent bool = false
 
-	result := TransactionCreate(cConcurrent, cReadOnly)
-	value := C.GoString(result.value)
-	defer freeCResult(result)
+	result := cbindings.TransactionCreate(concurrent, readOnly)
 
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	var data struct {
 		ID uint64 `json:"id"`
 	}
 
-	err := json.Unmarshal([]byte(value), &data)
+	err := json.Unmarshal([]byte(result.Value), &data)
 	if err != nil {
 		return nil, err
 	}
 
-	retTxn := GetTxnFromHandle(C.ulonglong(data.ID))
+	retTxn := getTxnFromHandle(data.ID)
 	retTxnCast := retTxn.(client.Txn) //nolint:forcetypeassert
 	return retTxnCast, nil
 }
 
 func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	var cConcurrent C.int = 1
-	var cReadOnly C.int = 0
-	if readOnly {
-		cReadOnly = 1
-	}
+	var concurrent bool = true
 
-	result := TransactionCreate(cConcurrent, cReadOnly)
-	value := C.GoString(result.value)
-	defer freeCResult(result)
+	result := cbindings.TransactionCreate(concurrent, readOnly)
 
-	if result.status != 0 {
-		return nil, errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
 	}
 
 	var data struct {
 		ID uint64 `json:"id"`
 	}
 
-	err := json.Unmarshal([]byte(value), &data)
+	err := json.Unmarshal([]byte(result.Value), &data)
 	if err != nil {
 		return nil, err
 	}
 
-	retTxn := GetTxnFromHandle(C.ulonglong(data.ID))
+	retTxn := getTxnFromHandle(data.ID)
 	retTxnCast := retTxn.(client.Txn) //nolint:forcetypeassert
 	return retTxnCast, nil
 }
 
 func (w *CWrapper) Close() {
-	NodeStop()
+	cbindings.NodeStop()
 }
 
 func (w *CWrapper) Events() event.Bus {
-	return GetGlobalNode().DB.Events()
+	return cbindings.GetGlobalNode().DB.Events()
 }
 
 func (w *CWrapper) MaxTxnRetries() int {
-	return GetGlobalNode().DB.MaxTxnRetries()
+	return cbindings.GetGlobalNode().DB.MaxTxnRetries()
 }
 
 func (w *CWrapper) PrintDump(ctx context.Context) error {
@@ -694,20 +558,18 @@ func (w *CWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
 }
 
 func (w *CWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	result := NodeIdentity()
-	defer freeCResult(result)
-	valueStr := C.GoString(result.value)
+	result := cbindings.NodeIdentity()
 
-	if result.status != 0 {
-		return immutable.None[identity.PublicRawIdentity](), errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return immutable.None[identity.PublicRawIdentity](), errors.New(result.Error)
 	}
 
-	if valueStr == "Node has no identity assigned to it." {
+	if result.Value == "Node has no identity assigned to it." {
 		return immutable.None[identity.PublicRawIdentity](), nil
 	}
 
 	var res identity.PublicRawIdentity
-	res, err := unmarshalResult[identity.PublicRawIdentity](result.value)
+	res, err := unmarshalResult[identity.PublicRawIdentity](result.Value)
 	if err != nil {
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
@@ -715,18 +577,13 @@ func (w *CWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identi
 }
 
 func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	cCID := C.CString(blockCid)
-	cPubKey := C.CString(pubKey.String())
-	cKeyType := C.CString(string(pubKey.Type()))
+	pubKeyStr := pubKey.String()
+	keyType := string(pubKey.Type())
 
-	result := BlockVerifySignature(cKeyType, cPubKey, cCID)
-	defer C.free(unsafe.Pointer(cCID))
-	defer C.free(unsafe.Pointer(cPubKey))
-	defer C.free(unsafe.Pointer(cKeyType))
-	defer freeCResult(result)
+	result := cbindings.BlockVerifySignature(keyType, pubKeyStr, blockCid)
 
-	if result.status != 0 {
-		return errors.New(C.GoString(result.error))
+	if result.Status != 0 {
+		return errors.New(result.Error)
 	}
 	return nil
 }
