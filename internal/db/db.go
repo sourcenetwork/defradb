@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -191,6 +192,10 @@ func (db *DB) AddDACPolicy(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminDACPolicyAddPerm); err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
 	if !db.documentACP.HasValue() {
 		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -274,6 +279,10 @@ func (db *DB) AddDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminDACRelationAddPerm); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
 	if !db.documentACP.HasValue() {
 		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
@@ -321,6 +330,10 @@ func (db *DB) DeleteDACActorRelationship(
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminDACRelationDeletePerm); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
 
 	if !db.documentACP.HasValue() {
 		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
