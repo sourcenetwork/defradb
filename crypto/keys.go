@@ -117,9 +117,7 @@ func NewPrivateKey[T *secp256k1.PrivateKey | *ecdsa.PrivateKey | ed25519.Private
 		}
 		return &secp256k1PrivateKey{key: k}
 	case *ecdsa.PrivateKey:
-		if k == nil {
-			return nil
-		}
+		// Private keys for secp256r1 are not supported
 		return nil
 	case ed25519.PrivateKey:
 		if k == nil || len(k) != ed25519.PrivateKeySize {
@@ -366,6 +364,7 @@ func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
 		return &secp256k1PrivateKey{key: privKey}, nil
 
 	case KeyTypeSecp256r1:
+		// Private keys for secp256r1 are not supported
 		return nil, NewErrUnsupportedKeyType(keyType)
 
 	case KeyTypeEd25519:
@@ -400,6 +399,7 @@ func GenerateKey(keyType KeyType) (PrivateKey, error) {
 		}
 		return NewPrivateKey(key), nil
 	case KeyTypeSecp256r1:
+		// Private keys for secp256r1 are not supported
 		return nil, NewErrUnsupportedKeyType(keyType)
 	case KeyTypeEd25519:
 		key, err := GenerateEd25519()
@@ -440,6 +440,7 @@ func (k *secp256r1PublicKey) Type() KeyType {
 }
 
 func (k *secp256r1PublicKey) Verify(data []byte, sig []byte) (bool, error) {
+	// secp256r1 public keys do not support verification
 	return false, NewErrUnsupportedKeyType(KeyTypeSecp256r1)
 }
 

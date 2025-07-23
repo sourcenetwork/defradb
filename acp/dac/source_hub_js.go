@@ -8,7 +8,33 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub is not supported in JS environments.
+// SourceHub ACP JavaScript Bridge
+//
+// This file implements DefraDB's SourceHub ACP integration for JS/WASM environments.
+//
+// Client applications must include the acp-js library, which exposes the following
+// bridge functions that interface with SourceHub ACP:
+//
+//   - acp_AddPolicy(policy: string, policyMarshalType: number) -> Promise<[string | null, Error | null]>
+//     Adds a new access control policy and returns its ID
+//
+//   - acp_Policy(policyId: string) -> Promise<[string | null, Error | null]>
+//     Retrieves a policy by ID, returning its JSON string representation
+//
+//   - acp_RegisterObject(policyId: string, resourceName: string, objectId: string) -> Promise<[any | null, Error | null]>
+//     Registers an object (document) with a policy resource for access control
+//
+//   - acp_ObjectOwner(policyId: string, resourceName: string, objectId: string) -> Promise<[string | null, Error | null]>
+//     Returns the owner identity of a registered object
+//
+//   - acp_VerifyAccessRequest(permission: string, actorId: string, policyId: string, resourceName: string, objectId: string) -> Promise<[boolean, Error | null]>
+//     Verifies if an actor has the specified permission on an object
+//
+//   - acp_AddActorRelationship(policyId: string, resourceName: string, objectId: string, relation: string, targetActor: string) -> Promise<[boolean | null, Error | null]>
+//     Adds a relationship between an actor and an object
+//
+//   - acp_DeleteActorRelationship(policyId: string, resourceName: string, objectId: string, relation: string, targetActor: string) -> Promise<[boolean | null, Error | null]>
+//     Removes a relationship between an actor and an object
 //
 //go:build js
 
@@ -59,14 +85,6 @@ func callJSFunction(funcName string, args ...interface{}) ([]sysjs.Value, error)
 		return nil, fmt.Errorf("failed to await %s: %w", funcName, err)
 	}
 	return results, nil
-}
-
-// timestampToString converts a timestamp to a string
-func timestampToString(ts *protoTypes.Timestamp) string {
-	if ts == nil {
-		return ""
-	}
-	return fmt.Sprintf("%d", ts.Seconds)
 }
 
 // fromSourceHubPolicyJS converts a JavaScript policy object to acpTypes.Policy
