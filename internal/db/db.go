@@ -366,7 +366,11 @@ func (db *DB) DeleteDACActorRelationship(
 	return client.DeleteActorRelationshipResult{RecordFound: recordFound}, nil
 }
 
-func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (db *DB) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	if err := db.checkAdminAccess(ctx, acpTypes.AdminNodeGetIdentityPerm); err != nil {
+		return immutable.None[identity.PublicRawIdentity](), err
+	}
+
 	if db.nodeIdentity.HasValue() {
 		return immutable.Some(db.nodeIdentity.Value().ToPublicRawIdentity()), nil
 	}
