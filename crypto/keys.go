@@ -446,35 +446,29 @@ func (k *secp256r1PublicKey) DID() (string, error) {
 		if len(k.compressedBytes) != 33 {
 			return "", NewErrUnsupportedKeyType(KeyTypeSecp256r1)
 		}
-
 		x, y := elliptic.UnmarshalCompressed(elliptic.P256(), k.compressedBytes)
 		if x == nil || y == nil {
 			return "", NewErrUnsupportedKeyType(KeyTypeSecp256r1)
 		}
-
 		decompressedKey := &ecdsa.PublicKey{
 			Curve: elliptic.P256(),
 			X:     x,
 			Y:     y,
 		}
-
 		ecdhPubKey, err := decompressedKey.ECDH()
 		if err != nil {
 			return "", NewErrFailedToCreateDIDKey(err)
 		}
-
 		did, err := createDIDKey(P256, ecdhPubKey.Bytes())
 		if err != nil {
 			return "", NewErrFailedToCreateDIDKey(err)
 		}
 		return did.String(), nil
 	}
-
 	ecdhPubKey, err := k.key.ECDH()
 	if err != nil {
 		return "", NewErrFailedToCreateDIDKey(err)
 	}
-
 	did, err := createDIDKey(P256, ecdhPubKey.Bytes())
 	if err != nil {
 		return "", NewErrFailedToCreateDIDKey(err)
