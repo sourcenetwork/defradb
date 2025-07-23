@@ -85,9 +85,11 @@ func (l *LocalDocumentACP) Start(ctx context.Context) error {
 
 func (l *LocalDocumentACP) Close() error {
 	if !l.closed {
-		err := l.manager.Terminate()
-		if err != nil {
-			return err
+		if l.manager != nil {
+			err := l.manager.Terminate()
+			if err != nil {
+				return err
+			}
 		}
 		l.closed = true
 	}
