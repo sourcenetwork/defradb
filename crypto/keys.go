@@ -12,13 +12,17 @@ package crypto
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"math/big"
+
+	"crypto/elliptic"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
+	secp256k1ecdsa "github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 )
 
 // KeyType represents the type of cryptographic key
@@ -27,6 +31,8 @@ type KeyType string
 const (
 	// KeyTypeSecp256k1 represents a secp256k1 key
 	KeyTypeSecp256k1 KeyType = "secp256k1"
+	// KeyTypeSecp256r1 represents a secp256r1 key
+	KeyTypeSecp256r1 KeyType = "secp256r1"
 	// KeyTypeEd25519 represents an Ed25519 key
 	KeyTypeEd25519 KeyType = "ed25519"
 )
@@ -95,14 +101,25 @@ type ed25519PublicKey struct {
 	key ed25519.PublicKey
 }
 
+// secp256r1PublicKey wraps ecdsa.PublicKey to implement PublicKey interface
+type secp256r1PublicKey struct {
+	key             *ecdsa.PublicKey
+	compressedBytes []byte
+}
+
 // NewPrivateKey creates a new private key of a specific type based on the input
-func NewPrivateKey[T *secp256k1.PrivateKey | ed25519.PrivateKey](key T) PrivateKey {
+func NewPrivateKey[T *secp256k1.PrivateKey | *ecdsa.PrivateKey | ed25519.PrivateKey](key T) PrivateKey {
 	switch k := any(key).(type) {
 	case *secp256k1.PrivateKey:
 		if k == nil {
 			return nil
 		}
 		return &secp256k1PrivateKey{key: k}
+	case *ecdsa.PrivateKey:
+		if k == nil {
+			return nil
+		}
+		return nil
 	case ed25519.PrivateKey:
 		if k == nil || len(k) != ed25519.PrivateKeySize {
 			return nil
@@ -114,13 +131,19 @@ func NewPrivateKey[T *secp256k1.PrivateKey | ed25519.PrivateKey](key T) PrivateK
 }
 
 // NewPublicKey creates a new public key of a specific type based on the input
-func NewPublicKey[T *secp256k1.PublicKey | ed25519.PublicKey](key T) PublicKey {
+func NewPublicKey[T *secp256k1.PublicKey | *ecdsa.PublicKey | ed25519.PublicKey](key T) PublicKey {
 	switch k := any(key).(type) {
 	case *secp256k1.PublicKey:
 		if k == nil {
 			return nil
 		}
 		return &secp256k1PublicKey{key: k}
+	case *ecdsa.PublicKey:
+		if k == nil {
+			return nil
+		}
+		compressedBytes := elliptic.MarshalCompressed(elliptic.P256(), k.X, k.Y)
+		return &secp256r1PublicKey{key: k, compressedBytes: compressedBytes}
 	case ed25519.PublicKey:
 		if k == nil || len(k) != ed25519.PublicKeySize {
 			return nil
@@ -133,6 +156,10 @@ func NewPublicKey[T *secp256k1.PublicKey | ed25519.PublicKey](key T) PublicKey {
 
 // PublicKeyFromString creates a public key from a hex-encoded string and key type.
 // This is useful for deserializing public keys.
+//
+// For secp256r1 keys:
+// - Only public keys are supported (private keys are managed by JS side)
+// - Supports both compressed (33 bytes) and uncompressed (65 bytes) formats
 func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 	keyBytes, err := hex.DecodeString(keyString)
 	if err != nil {
@@ -146,6 +173,38 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 			return nil, ErrInvalidECDSAPubKey
 		}
 		return &secp256k1PublicKey{key: pubKey}, nil
+
+	case KeyTypeSecp256r1:
+		var compressedBytes []byte
+		var pubKey *ecdsa.PublicKey
+		if len(keyBytes) == 33 {
+			if keyBytes[0] != 0x02 && keyBytes[0] != 0x03 {
+				return nil, ErrInvalidECDSAPubKey
+			}
+			compressedBytes = keyBytes
+			pubKey = &ecdsa.PublicKey{
+				Curve: elliptic.P256(),
+				X:     new(big.Int).SetBytes(keyBytes[1:33]),
+				Y:     nil,
+			}
+		} else if len(keyBytes) == 65 {
+			if keyBytes[0] != 0x04 {
+				return nil, ErrInvalidECDSAPubKey
+			}
+			x, y := elliptic.Unmarshal(elliptic.P256(), keyBytes)
+			if x == nil || y == nil {
+				return nil, ErrInvalidECDSAPubKey
+			}
+			pubKey = &ecdsa.PublicKey{
+				Curve: elliptic.P256(),
+				X:     x,
+				Y:     y,
+			}
+			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), x, y)
+		} else {
+			return nil, ErrInvalidECDSAPubKey
+		}
+		return &secp256r1PublicKey{key: pubKey, compressedBytes: compressedBytes}, nil
 
 	case KeyTypeEd25519:
 		if len(keyBytes) != ed25519.PublicKeySize {
@@ -201,7 +260,7 @@ func (k *secp256k1PublicKey) Type() KeyType {
 }
 
 func (k *secp256k1PublicKey) Verify(data []byte, sig []byte) (bool, error) {
-	parsedSig, err := ecdsa.ParseDERSignature(sig)
+	parsedSig, err := secp256k1ecdsa.ParseDERSignature(sig)
 	if err != nil {
 		return false, ErrInvalidECDSASignature
 	}
@@ -300,6 +359,9 @@ func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
 		privKey := secp256k1.PrivKeyFromBytes(keyBytes)
 		return &secp256k1PrivateKey{key: privKey}, nil
 
+	case KeyTypeSecp256r1:
+		return nil, NewErrUnsupportedKeyType(keyType)
+
 	case KeyTypeEd25519:
 		if len(keyBytes) != ed25519.PrivateKeySize {
 			return nil, ErrInvalidEd25519PrivKeyLength
@@ -331,6 +393,8 @@ func GenerateKey(keyType KeyType) (PrivateKey, error) {
 			return nil, err
 		}
 		return NewPrivateKey(key), nil
+	case KeyTypeSecp256r1:
+		return nil, NewErrUnsupportedKeyType(keyType)
 	case KeyTypeEd25519:
 		key, err := GenerateEd25519()
 		if err != nil {
@@ -351,4 +415,73 @@ func GenerateSecp256k1() (*secp256k1.PrivateKey, error) {
 func GenerateEd25519() (ed25519.PrivateKey, error) {
 	_, priv, err := ed25519.GenerateKey(rand.Reader)
 	return priv, err
+}
+
+// secp256r1PublicKey implementations
+func (k *secp256r1PublicKey) Equal(other Key) bool {
+	if other.Type() != KeyTypeSecp256r1 {
+		return false
+	}
+	return bytes.Equal(k.Raw(), other.Raw())
+}
+
+func (k *secp256r1PublicKey) Raw() []byte {
+	return k.compressedBytes
+}
+
+func (k *secp256r1PublicKey) Type() KeyType {
+	return KeyTypeSecp256r1
+}
+
+func (k *secp256r1PublicKey) Verify(data []byte, sig []byte) (bool, error) {
+	return false, NewErrUnsupportedKeyType(KeyTypeSecp256r1)
+}
+
+func (k *secp256r1PublicKey) String() string {
+	return hex.EncodeToString(k.compressedBytes)
+}
+
+func (k *secp256r1PublicKey) DID() (string, error) {
+	if k.key.Y == nil {
+		if len(k.compressedBytes) != 33 {
+			return "", NewErrUnsupportedKeyType(KeyTypeSecp256r1)
+		}
+
+		x, y := elliptic.UnmarshalCompressed(elliptic.P256(), k.compressedBytes)
+		if x == nil || y == nil {
+			return "", NewErrUnsupportedKeyType(KeyTypeSecp256r1)
+		}
+
+		decompressedKey := &ecdsa.PublicKey{
+			Curve: elliptic.P256(),
+			X:     x,
+			Y:     y,
+		}
+
+		ecdhPubKey, err := decompressedKey.ECDH()
+		if err != nil {
+			return "", NewErrFailedToCreateDIDKey(err)
+		}
+
+		did, err := createDIDKey(P256, ecdhPubKey.Bytes())
+		if err != nil {
+			return "", NewErrFailedToCreateDIDKey(err)
+		}
+		return did.String(), nil
+	}
+
+	ecdhPubKey, err := k.key.ECDH()
+	if err != nil {
+		return "", NewErrFailedToCreateDIDKey(err)
+	}
+
+	did, err := createDIDKey(P256, ecdhPubKey.Bytes())
+	if err != nil {
+		return "", NewErrFailedToCreateDIDKey(err)
+	}
+	return did.String(), nil
+}
+
+func (k *secp256r1PublicKey) Underlying() any {
+	return k.key
 }
