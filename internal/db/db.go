@@ -225,13 +225,6 @@ func (db *DB) PurgeDACState(ctx context.Context) error {
 			// implement the ResetState.
 			log.ErrorE("Failed to reset document ACP state", err)
 		}
-
-		// follow up close call on document ACP is required since the node.Start function starts
-		// document ACP again anyways so we need to gracefully close before starting again.
-		err = documentACP.Close()
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

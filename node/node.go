@@ -42,6 +42,7 @@ type DB interface {
 	Events() event.Bus
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	PurgeDACState(ctx context.Context) error
+	PurgeAACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	Close()
 }
@@ -126,21 +127,30 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if !n.config.enableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
-	err := n.Close(ctx)
+
+	// This will purge document acp state.
+	err := n.DB.PurgeDACState(ctx)
 	if err != nil {
 		return err
 	}
+
+	// This will purge admin acp state.
+	err = n.DB.PurgeAACState(ctx)
+	if err != nil {
+		return err
+	}
+
+	// This will close db and all acp instances along with it.
+	err = n.Close(ctx)
+	if err != nil {
+		return err
+	}
+
 	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	// This will purge document acp state.
-	// They will be restarted when node is started again.
-	err = n.DB.PurgeDACState(ctx)
-	if err != nil {
-		return err
-	}
-
+	// The node is being started again. This restarts the above closed acp states too.
 	return n.Start(ctx)
 }
