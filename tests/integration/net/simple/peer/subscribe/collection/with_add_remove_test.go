@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestP2PSubscribeAddAndRemoveSingle(t *testing.T) {
+func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -77,7 +77,7 @@ func TestP2PSubscribeAddAndRemoveSingle(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
+func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -153,7 +153,7 @@ func TestP2PSubscribeAddAndRemoveMultiple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
+func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -207,7 +207,7 @@ func TestP2PSubscribeAddSingleAndRemoveErroneous(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestP2PSubscribeAddSingleAndRemoveNone(t *testing.T) {
+func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

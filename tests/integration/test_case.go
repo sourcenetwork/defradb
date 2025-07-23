@@ -883,3 +883,26 @@ type VerifyBlockSignature struct {
 	// contains this string.
 	ExpectedError string
 }
+
+// SyncDocs will synchronize documents from the network via P2P.
+type SyncDocs struct {
+	// NodeID holds the ID (index) of a node to execute the sync on.
+	NodeID int
+
+	// The collection containing the documents to sync.
+	CollectionID int
+
+	// The indices of documents to sync (references to previously created documents).
+	// Uses the same DocIndex pattern as other test actions - these will be resolved
+	// to actual document IDs at runtime by the test framework.
+	DocIDs []int
+
+	// The source nodes to sync documents from.
+	// This is used by testing framework to determine from which nodes the expected doc heads can
+	// be looked up for WaitForSync action.
+	// There must an item for each document in DocIDs.
+	SourceNodes []int
+
+	// Any error expected from the action.
+	ExpectedError string
+}

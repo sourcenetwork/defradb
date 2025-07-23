@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/fxamacker/cbor/v2"
@@ -34,10 +35,15 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+// DocSyncTopic is the fixed topic for document sync operations.
+const docSyncTopic = "doc-sync"
 
 // server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -52,6 +58,8 @@ type server struct {
 	// replicators is a map from collection CollectionID => peerId
 	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
+
+	docSyncTopic pubsubTopic
 
 	conns  map[libpeer.ID]*grpc.ClientConn
 	connMu sync.RWMutex
@@ -86,6 +94,13 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	}
 
 	s.opts = append(defaultOpts, opts...)
+
+	docSyncTopic, err := s.addPubSubTopic(docSyncTopic, true, s.docSyncMessageHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	s.docSyncTopic = docSyncTopic
 
 	return s, nil
 }
@@ -151,15 +166,6 @@ func (s *server) processPushlog(
 	log.InfoContext(ctx, "DAG sync complete",
 		corelog.Any("PeerID", pid.String()),
 		corelog.Any("DocID", req.DocID))
-
-	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-	// subscribed to the collection.
-	if !s.hasPubSubTopicAndSubscribed(req.CollectionID) && req.DocID != "" {
-		_, err = s.addPubSubTopic(req.DocID, true, nil)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:        req.DocID,
@@ -238,14 +244,6 @@ func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) er
 	return err
 }
 
-// hasPubSubTopicAndSubscribed checks if we are subscribed to a topic.
-func (s *server) hasPubSubTopicAndSubscribed(topic string) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	t, ok := s.topics[topic]
-	return ok && t.subscribed
-}
-
 // removePubSubTopic unsubscribes to a topic
 func (s *server) removePubSubTopic(topic string) error {
 	if s.peer.ps == nil {
@@ -290,42 +288,50 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
-	s.mu.Lock()
-	t, ok := s.topics[topic]
-	s.mu.Unlock()
-	if !ok {
-		subscribe := topic != req.CollectionID && !s.hasPubSubTopicAndSubscribed(req.CollectionID)
-		_, err := s.addPubSubTopic(topic, subscribe, nil)
-		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
-		}
-		return s.publishLog(ctx, topic, req)
-	}
-
-	if topic == req.CollectionID && req.DocID == "" && !t.subscribed {
-		// If the push log request is scoped to the schema and not to a document, subscribe to the
-		// schema.
-		var err error
-		t, err = s.addPubSubTopic(topic, true, nil)
-		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
-		}
-	}
-
-	log.InfoContext(ctx, "Publish log",
-		corelog.String("PeerID", s.peer.PeerID().String()),
-		corelog.String("Topic", topic))
 
 	data, err := cbor.Marshal(req)
 	if err != nil {
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
-	if err != nil {
-		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
+	log.InfoContext(ctx, "Publish log",
+		corelog.String("PeerID", s.peer.PeerID().String()),
+		corelog.String("Topic", topic))
+
+	s.mu.Lock()
+	t, ok := s.topics[topic]
+	s.mu.Unlock()
+	if ok {
+		_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
+		if err != nil {
+			return NewErrPushLog(err, errors.NewKV("Topic", topic))
+		}
+		return nil
 	}
-	return nil
+
+	// If the topic hasn't been explicitly subscribed to, we temporarily join it
+	// to publish the log.
+	return s.publishDirectToTopic(ctx, topic, data, false)
+}
+
+// publishDirectToTopic temporarily joins a pubsub topic to publish data and immediately closes it.
+//
+// This is useful to publish messages without incurring the cost of a full pubsub rpc topic.
+func (s *server) publishDirectToTopic(ctx context.Context, topic string, data []byte, isRetry bool) error {
+	psTopic, err := s.peer.ps.Join(topic)
+	if err != nil {
+		if strings.Contains(err.Error(), "topic already exists") && !isRetry {
+			// Reaching this is really rare and probably only possible
+			// through from tests. We can handle this by simply trying again a single time.
+			return s.publishDirectToTopic(ctx, topic, data, true)
+		}
+		return NewErrPushLog(err, errors.NewKV("Topic", topic))
+	}
+	err = psTopic.Publish(ctx, data)
+	if err != nil {
+		return NewErrPushLog(err, errors.NewKV("Topic", topic))
+	}
+	return psTopic.Close()
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
@@ -383,23 +389,6 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 		return "", errors.Wrap("parsing stream PeerID", err)
 	}
 	return pid, nil
-}
-
-func (s *server) updatePubSubTopics(evt event.P2PTopic) {
-	for _, topic := range evt.ToAdd {
-		_, err := s.addPubSubTopic(topic, true, nil)
-		if err != nil {
-			log.ErrorE("Failed to add pubsub topic.", err)
-		}
-	}
-
-	for _, topic := range evt.ToRemove {
-		err := s.removePubSubTopic(topic)
-		if err != nil {
-			log.ErrorE("Failed to remove pubsub topic.", err)
-		}
-	}
-	s.peer.bus.Publish(event.NewMessage(event.P2PTopicCompletedName, nil))
 }
 
 func (s *server) updateReplicators(rep peer.AddrInfo, collectionIDs map[string]struct{}) {
@@ -609,4 +598,67 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	}
 
 	return peerHasAccess, nil
+}
+
+// docSyncMessageHandler handles incoming document sync requests from the pubsub network.
+func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	req := &docSyncRequest{}
+	if err := cbor.Unmarshal(msg, req); err != nil {
+		return nil, err
+	}
+
+	var results []docSyncItem
+
+	for _, docID := range req.DocIDs {
+		result, err := s.processDocSyncItem(docID)
+		if err != nil {
+			log.ErrorE("Failed to process doc sync item", err, corelog.String("DocID", docID))
+			continue // Skip failed items
+		}
+		results = append(results, result)
+	}
+
+	reply := &docSyncReply{
+		Sender:  s.peer.host.ID().String(),
+		Results: results,
+	}
+
+	return cbor.Marshal(reply)
+}
+
+// processDocSyncItem processes a single document sync request and returns the result.
+func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
+	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
+	if err != nil {
+		return docSyncItem{}, NewErrFailedToCreateTransaction(err)
+	}
+	defer txn.Discard(s.peer.ctx)
+
+	key := keys.HeadstoreDocKey{
+		DocID:   docID,
+		FieldID: core.COMPOSITE_NAMESPACE,
+	}
+
+	headstore := datastore.HeadstoreFrom(s.peer.db.Rootstore())
+	headset := coreblock.NewHeadSet(headstore, key)
+
+	cids, _, err := headset.List(s.peer.ctx)
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to get list of heads docID %s: %w", key.ToString(), err)
+	}
+
+	if len(cids) == 0 {
+		return docSyncItem{}, fmt.Errorf("heads not found for %s", key.ToString())
+	}
+
+	result := docSyncItem{
+		DocID: docID,
+		Heads: make([][]byte, len(cids)),
+	}
+
+	for _, cid := range cids {
+		result.Heads = append(result.Heads, cid.Bytes())
+	}
+
+	return result, nil
 }

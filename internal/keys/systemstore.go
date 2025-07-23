@@ -18,6 +18,7 @@ const (
 	COLLECTION_ID             = "/collection/id"
 	FIELD_SHORT_ID            = "/field/shortID"
 	P2P_COLLECTION            = "/p2p/collection"
+	P2P_DOCUMENT              = "/p2p/document"
 	SCHEMA_VERSION_ROOT       = "/schema/version/r"
 	SCHEMA_VERSION            = "/schema/version/v"
 	COLLECTION_SEQ            = "/seq/collection"

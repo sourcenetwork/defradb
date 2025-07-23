@@ -159,7 +159,7 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.ReplicatorName)
 		if err != nil {
 			return nil, err
 		}
@@ -218,14 +218,14 @@ func NewPeer(
 		return nil, err
 	}
 
-	go func() {
-		// This can be a long running operation so running it in a goroutine
-		// ensures calling `NewPeer` won't block.
-		err := p.loadAndPublishP2PCollections(ctx)
-		if err != nil {
-			log.ErrorE("Error loading P2P collections", err)
-		}
-	}()
+	err = p.loadAndPublishP2PCollections(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = p.loadAndPublishP2PDocuments(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return p, nil
 }
@@ -299,9 +299,6 @@ func (p *Peer) handleMessageLoop() {
 			if err != nil {
 				log.ErrorE("Error while handling broadcast log", err)
 			}
-
-		case event.P2PTopic:
-			p.server.updatePubSubTopics(evt)
 
 		default:
 			// ignore other events

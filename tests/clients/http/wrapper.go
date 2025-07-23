@@ -87,6 +87,26 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return w.client.GetAllP2PCollections(ctx)
 }
 
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.AddP2PDocuments(ctx, collectionIDs...)
+}
+
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.RemoveP2PDocuments(ctx, collectionIDs...)
+}
+
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	return w.client.GetAllP2PDocuments(ctx)
+}
+
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	return w.client.SyncDocuments(ctx, collectionName, docIDs)
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return w.client.BasicImport(ctx, filepath)
 }
