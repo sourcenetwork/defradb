@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -28,80 +27,80 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
-// p2pState contains all p2p related testing state.
-type p2pState struct {
-	// connections contains all connected nodes.
+// P2pState contains all p2p related testing state.
+type P2pState struct {
+	// Connections contains all connected nodes.
 	//
 	// The map key is the connected node id.
-	connections map[int]struct{}
+	Connections map[int]struct{}
 
-	// replicators is a mapping of replicator targets.
+	// Replicators is a mapping of replicator targets.
 	//
 	// The map key is the source node id.
-	replicators map[int]struct{}
+	Replicators map[int]struct{}
 
-	// peerCollections contains all active peer collection subscriptions.
+	// PeerCollections contains all active peer collection subscriptions.
 	//
 	// The map key is the node id of the subscriber.
-	peerCollections map[int]struct{}
+	PeerCollections map[int]struct{}
 
-	// peerDocuments contains all active peer document subscriptions.
+	// PeerDocuments contains all active peer document subscriptions.
 	//
 	// The map key is the node id of the subscriber.
-	peerDocuments map[ColDocIndex]struct{}
+	PeerDocuments map[ColDocIndex]struct{}
 
-	// actualDAGHeads contains all DAG heads that exist on a node.
+	// ActualDAGHeads contains all DAG heads that exist on a node.
 	//
 	// The map key is the doc id. The map value is the doc head.
 	//
 	// This tracks composite commits for documents, and collection commits for
 	// branchable collections
-	actualDAGHeads map[string]docHeadState
+	ActualDAGHeads map[string]DocHeadState
 
-	// expectedDAGHeads contains all DAG heads that are expected to exist on a node.
+	// ExpectedDAGHeads contains all DAG heads that are expected to exist on a node.
 	//
 	// The map key is the doc id. The map value is the DAG head.
 	//
 	// This tracks composite commits for documents, and collection commits for
 	// branchable collections
-	expectedDAGHeads map[string]cid.Cid
+	ExpectedDAGHeads map[string]cid.Cid
 }
 
-// docHeadState contains the state of a document head.
+// DocHeadState contains the state of a document head.
 // It is used to track if a document at a certain head has been decrypted.
-type docHeadState struct {
+type DocHeadState struct {
 	// The actual document head.
-	cid cid.Cid
-	// Indicates if the document at the given head has been decrypted.
-	decrypted bool
+	Cid cid.Cid
+	// Indicates if the document at the given head has been Decrypted.
+	Decrypted bool
 }
 
-// newP2PState returns a new empty p2p state.
-func newP2PState() *p2pState {
-	return &p2pState{
-		connections:      make(map[int]struct{}),
-		replicators:      make(map[int]struct{}),
-		peerCollections:  make(map[int]struct{}),
-		peerDocuments:    make(map[ColDocIndex]struct{}),
-		actualDAGHeads:   make(map[string]docHeadState),
-		expectedDAGHeads: make(map[string]cid.Cid),
+// NewP2PState returns a new empty p2p state.
+func NewP2PState() *P2pState {
+	return &P2pState{
+		Connections:      make(map[int]struct{}),
+		Replicators:      make(map[int]struct{}),
+		PeerCollections:  make(map[int]struct{}),
+		PeerDocuments:    make(map[ColDocIndex]struct{}),
+		ActualDAGHeads:   make(map[string]DocHeadState),
+		ExpectedDAGHeads: make(map[string]cid.Cid),
 	}
 }
 
-// eventState contains all event related testing state for a node.
-type eventState struct {
-	// merge is the `event.MergeCompleteName` subscription
-	merge event.Subscription
+// EventState contains all event related testing state for a node.
+type EventState struct {
+	// Merge is the `event.MergeCompleteName` subscription
+	Merge event.Subscription
 
-	// update is the `event.UpdateName` subscription
-	update event.Subscription
+	// Update is the `event.UpdateName` subscription
+	Update event.Subscription
 
-	// replicator is the `event.ReplicatorCompletedName` subscription
-	replicator event.Subscription
+	// Replicator is the `event.ReplicatorCompletedName` subscription
+	Replicator event.Subscription
 }
 
-// newEventState returns an eventState with all required subscriptions.
-func newEventState(bus event.Bus) (*eventState, error) {
+// NewEventState returns an eventState with all required subscriptions.
+func NewEventState(bus event.Bus) (*EventState, error) {
 	merge, err := bus.Subscribe(event.MergeCompleteName)
 	if err != nil {
 		return nil, err
@@ -114,139 +113,137 @@ func newEventState(bus event.Bus) (*eventState, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &eventState{
-		merge:      merge,
-		update:     update,
-		replicator: replicator,
+	return &EventState{
+		Merge:      merge,
+		Update:     update,
+		Replicator: replicator,
 	}, nil
 }
 
-// nodeState contains all testing state for a node.
-type nodeState struct {
+// NodeState contains all testing state for a node.
+type NodeState struct {
 	// The node's client active in this test.
 	clients.Client
-	// event contains all event node subscriptions.
-	event *eventState
-	// p2p contains p2p states for the node.
-	p2p *p2pState
+	// Event contains all Event node subscriptions.
+	Event *EventState
+	// P2p contains P2p states for the node.
+	P2p *P2pState
 	// The network configurations for the nodes
-	netOpts []netConfig.NodeOpt
+	NetOpts []netConfig.NodeOpt
 	// The path to any file-based databases active in this test.
-	dbPath string
+	DbPath string
 	// Collections by index present in the test.
 	// Indexes matches that of collectionNames.
-	collections []client.Collection
-	// indicates if the node is closed.
-	closed bool
-	// peerInfo contains the peer information for the node.
-	peerInfo peer.AddrInfo
+	Collections []client.Collection
+	// indicates if the node is Closed.
+	Closed bool
 }
 
-// state contains all testing state.
-type state struct {
+// State contains all testing State.
+type State struct {
 	// The test context.
-	ctx context.Context
+	Ctx context.Context
 
 	// The Go Test test state
-	t testing.TB
+	T testing.TB
 
 	// The type of KMS currently being tested.
-	kms KMSType
+	Kms KMSType
 
 	// The type of database currently being tested.
-	dbt DatabaseType
+	Dbt DatabaseType
 
 	// The type of client currently being tested.
-	clientType ClientType
+	ClientType ClientType
 
 	// Any explicit transactions active in this test.
 	//
 	// This is order dependent and the property is accessed by index.
-	txns []client.Txn
+	Txns []client.Txn
 
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[Identity]crypto.KeyType
 
-	// identities contains all identities created in this test.
-	// The map key is the identity reference that uniquely identifies identities of different
+	// Identities contains all Identities created in this test.
+	// The map key is the identity reference that uniquely identifies Identities of different
 	// types. See [identRef].
 	// The map value is the identity holder that contains the identity itself and token
 	// generated for different target nodes. See [identityHolder].
-	identities map[Identity]*identityHolder
+	Identities map[Identity]*IdentityHolder
 
 	// The seed for the next identity generation. We want identities to be deterministic.
-	nextIdentityGenSeed int
+	NextIdentityGenSeed int
 
 	// Policy IDs, by node index, by policyID index (in the order they were added).
 	//
-	// Note: In case acp type is sourcehub, all nodes will have the same state of policyIDs.
-	policyIDs [][]string
+	// Note: In case acp type is sourcehub, all nodes will have the same state of PolicyIDs.
+	PolicyIDs [][]string
 
 	// Will receive an item once all actions have finished processing.
-	allActionsDone chan struct{}
+	AllActionsDone chan struct{}
 
 	// These channels will receive a function which asserts results of any subscription requests.
-	subscriptionResultsChans []chan func()
+	SubscriptionResultsChans []chan func()
 
-	// The nodes active in this test.
-	nodes []*nodeState
+	// The Nodes active in this test.
+	Nodes []*NodeState
 
 	// The ACP options to share between each node.
-	documentACPOptions []node.DocumentACPOpt
+	DocumentACPOptions []node.DocumentACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
-	collectionNames []string
+	CollectionNames []string
 
 	// A map of the collection indexes by their CollectionID, this allows easier
 	// identification of collections in a natural, human readable, order
 	// even when they are renamed.
-	collectionIndexesByCollectionID map[string]int
+	CollectionIndexesByCollectionID map[string]int
 
 	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
-	docIDs [][]client.DocID
+	DocIDs [][]client.DocID
 
-	// isBench indicates wether the test is currently being benchmarked.
-	isBench bool
+	// IsBench indicates wether the test is currently being benchmarked.
+	IsBench bool
 
 	// The SourceHub address used to pay for SourceHub transactions.
-	sourcehubAddress string
+	SourcehubAddress string
 
-	// isNetworkEnabled indicates whether the network is enabled.
-	isNetworkEnabled bool
+	// IsNetworkEnabled indicates whether the network is enabled.
+	IsNetworkEnabled bool
 
-	// statefulMatchers contains all stateful matchers that have been executed during a single
-	// test run. After a single test run, the statefulMatchers are reset.
-	statefulMatchers []StatefulMatcher
+	// StatefulMatchers contains all stateful matchers that have been executed during a single
+	// test run. After a single test run, the StatefulMatchers are reset.
+	StatefulMatchers []StatefulMatcher
 
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
 	// called with a value that it didn't see before, but the value should be the same for different
 	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
 	// should have the same Cid.
-	currentNodeID int
+	CurrentNodeID int
 }
 
-func (s *state) GetClientType() ClientType {
-	return s.clientType
+func (s *State) GetClientType() ClientType {
+	return s.ClientType
 }
 
-func (s *state) GetCurrentNodeID() int {
-	return s.currentNodeID
+func (s *State) GetCurrentNodeID() int {
+	return s.CurrentNodeID
 }
 
-func (s *state) GetIdentity(ident Identity) acpIdentity.Identity {
-	return getIdentity(s, immutable.Some(ident))
+func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
+	return GetIdentity(s, immutable.Some(ident))
 }
 
-var _ TestState = &state{}
+var _ TestState = &State{}
 
-// newState returns a new fresh state for the given testCase.
-func newState(
+// NewState returns a new fresh state for the given testCase.
+func NewState(
 	ctx context.Context,
 	t testing.TB,
 	testCase TestCase,
@@ -254,26 +251,26 @@ func newState(
 	dbt DatabaseType,
 	clientType ClientType,
 	collectionNames []string,
-) *state {
-	s := &state{
-		ctx:                             ctx,
-		t:                               t,
-		kms:                             kms,
-		dbt:                             dbt,
-		clientType:                      clientType,
-		txns:                            []client.Txn{},
+) *State {
+	s := &State{
+		Ctx:                             ctx,
+		T:                               t,
+		Kms:                             kms,
+		Dbt:                             dbt,
+		ClientType:                      clientType,
+		Txns:                            []client.Txn{},
 		IdentityTypes:                   testCase.IdentityTypes,
-		identities:                      map[Identity]*identityHolder{},
-		nextIdentityGenSeed:             0,
-		allActionsDone:                  make(chan struct{}),
-		subscriptionResultsChans:        []chan func(){},
-		nodes:                           []*nodeState{},
-		documentACPOptions:              []node.DocumentACPOpt{},
-		collectionNames:                 collectionNames,
-		collectionIndexesByCollectionID: map[string]int{},
-		docIDs:                          [][]client.DocID{},
-		policyIDs:                       [][]string{},
-		isBench:                         false,
+		Identities:                      map[Identity]*IdentityHolder{},
+		NextIdentityGenSeed:             0,
+		AllActionsDone:                  make(chan struct{}),
+		SubscriptionResultsChans:        []chan func(){},
+		Nodes:                           []*NodeState{},
+		DocumentACPOptions:              []node.DocumentACPOpt{},
+		CollectionNames:                 collectionNames,
+		CollectionIndexesByCollectionID: map[string]int{},
+		DocIDs:                          [][]client.DocID{},
+		PolicyIDs:                       [][]string{},
+		IsBench:                         false,
 	}
 	return s
 }

@@ -263,7 +263,7 @@ func executeTestCase(
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := newState(ctx, t, testCase, kms, dbt, clientType, collectionNames)
+	s := NewState(ctx, t, testCase, kms, dbt, clientType, collectionNames)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -286,9 +286,9 @@ func executeTestCase(
 	resetMatchers(s)
 
 	// Notify any active subscriptions that all requests have been sent.
-	close(s.allActionsDone)
+	close(s.AllActionsDone)
 
-	for _, resultsChan := range s.subscriptionResultsChans {
+	for _, resultsChan := range s.SubscriptionResultsChans {
 		select {
 		case subscriptionAssert := <-resultsChan:
 			// We want to assert back in the main thread so failures get recorded properly
@@ -302,7 +302,7 @@ func executeTestCase(
 }
 
 func performAction(
-	s *state,
+	s *State,
 	testCase TestCase,
 	actionIndex int,
 	act any,
@@ -456,28 +456,28 @@ func performAction(
 		// no-op, just continue.
 
 	default:
-		s.t.Fatalf("Unknown action type %T", action)
+		s.T.Fatalf("Unknown action type %T", action)
 	}
 }
 
-func createGenerateDocs(s *state, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
+func createGenerateDocs(s *State, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
 	nameToInd := make(map[string]int)
-	for i, name := range s.collectionNames {
+	for i, name := range s.CollectionNames {
 		nameToInd[name] = i
 	}
 	for _, doc := range docs {
 		docJSON, err := doc.Doc.String()
 		if err != nil {
-			s.t.Fatalf("Failed to generate docs %s", err)
+			s.T.Fatalf("Failed to generate docs %s", err)
 		}
 		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Version.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
-func generateDocs(s *state, action GenerateDocs) {
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+func generateDocs(s *State, action GenerateDocs) {
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
-	collections := s.nodes[firstNodesID].collections
+	collections := s.Nodes[firstNodesID].Collections
 	defs := make([]client.CollectionDefinition, 0, len(collections))
 	for _, collection := range collections {
 		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
@@ -486,40 +486,40 @@ func generateDocs(s *state, action GenerateDocs) {
 	}
 	docs, err := gen.AutoGenerate(defs, action.Options...)
 	if err != nil {
-		s.t.Fatalf("Failed to generate docs %s", err)
+		s.T.Fatalf("Failed to generate docs %s", err)
 	}
 	createGenerateDocs(s, docs, action.NodeID)
 }
 
-func generatePredefinedDocs(s *state, action CreatePredefinedDocs) {
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+func generatePredefinedDocs(s *State, action CreatePredefinedDocs) {
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
-	collections := s.nodes[firstNodesID].collections
+	collections := s.Nodes[firstNodesID].Collections
 	defs := make([]client.CollectionDefinition, 0, len(collections))
 	for _, col := range collections {
 		defs = append(defs, col.Definition())
 	}
 	docs, err := predefined.Create(defs, action.Docs)
 	if err != nil {
-		s.t.Fatalf("Failed to generate docs %s", err)
+		s.T.Fatalf("Failed to generate docs %s", err)
 	}
 	createGenerateDocs(s, docs, action.NodeID)
 }
 
 func benchmarkAction(
-	s *state,
+	s *State,
 	testCase TestCase,
 	actionIndex int,
 	bench Benchmark,
 ) {
-	if s.dbt == DefraIMType {
+	if s.Dbt == DefraIMType {
 		// Benchmarking makes no sense for test in-memory storage
 		return
 	}
 	if len(bench.FocusClients) > 0 {
 		isFound := false
 		for _, clientType := range bench.FocusClients {
-			if s.clientType == clientType {
+			if s.ClientType == clientType {
 				isFound = true
 				break
 			}
@@ -537,14 +537,14 @@ func benchmarkAction(
 		return time.Since(startTime)
 	}
 
-	s.isBench = true
-	defer func() { s.isBench = false }()
+	s.IsBench = true
+	defer func() { s.IsBench = false }()
 
 	baseElapsedTime := runBench(bench.BaseCase)
 	optimizedElapsedTime := runBench(bench.OptimizedCase)
 
 	factoredBaseTime := int64(float64(baseElapsedTime) / bench.Factor)
-	assert.Greater(s.t, factoredBaseTime, optimizedElapsedTime,
+	assert.Greater(s.T, factoredBaseTime, optimizedElapsedTime,
 		"Optimized case should be faster at least by factor of %.2f than the base case. Base: %d, Optimized: %d (μs)",
 		bench.Factor, optimizedElapsedTime.Microseconds(), baseElapsedTime.Microseconds())
 }
@@ -618,13 +618,13 @@ func getCollectionNamesFromSchema(result map[string]int, schema string, nextInde
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
 func closeNodes(
-	s *state,
+	s *State,
 	action Close,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		node.Close()
-		node.closed = true
+		node.Closed = true
 	}
 }
 
@@ -638,7 +638,7 @@ func closeNodes(
 // greater than 0. For example if requesting a node with nodeID=2 then the resulting output will contain only
 // one element (at index 0) caller might accidentally assume that this node belongs to node 0. Therefore, the
 // caller should always use the returned IDs, instead of guessing the IDs based on node indexes.
-func getNodesWithIDs(nodeID immutable.Option[int], nodes []*nodeState) ([]int, []*nodeState) {
+func getNodesWithIDs(nodeID immutable.Option[int], nodes []*NodeState) ([]int, []*NodeState) {
 	if !nodeID.HasValue() {
 		indexes := make([]int, len(nodes))
 		for i := range nodes {
@@ -647,7 +647,7 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*nodeState) ([]int, [
 		return indexes, nodes
 	}
 
-	return []int{nodeID.Value()}, []*nodeState{nodes[nodeID.Value()]}
+	return []int{nodeID.Value()}, []*NodeState{nodes[nodeID.Value()]}
 }
 
 func calculateLenForFlattenedActions(testCase *TestCase) int {
@@ -753,45 +753,45 @@ ActionLoop:
 // If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
 // nodes will be added.
 func setStartingNodes(
-	s *state,
+	s *State,
 	testCase TestCase,
 ) {
 	for _, action := range testCase.Actions {
 		switch action.(type) {
 		case ConfigureNode:
-			s.isNetworkEnabled = true
+			s.IsNetworkEnabled = true
 		}
 	}
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
-	if !s.isNetworkEnabled {
-		st, err := setupNode(s, testCase, db.WithNodeIdentity(getIdentity(s, NodeIdentity(0))))
-		require.Nil(s.t, err)
-		s.nodes = append(s.nodes, st)
+	if !s.IsNetworkEnabled {
+		st, err := setupNode(s, testCase, db.WithNodeIdentity(GetIdentity(s, NodeIdentity(0))))
+		require.Nil(s.T, err)
+		s.Nodes = append(s.Nodes, st)
 	}
 }
 
-func startNodes(s *state, testCase TestCase, action Start) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+func startNodes(s *State, testCase TestCase, action Start) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(nodes) - 1; i >= 0; i-- {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
-		databaseDir = s.nodes[nodeIndex].dbPath
-		opts := []node.Option{db.WithNodeIdentity(getIdentity(s, NodeIdentity(nodeIndex)))}
-		for _, opt := range s.nodes[nodeIndex].netOpts {
+		databaseDir = s.Nodes[nodeIndex].DbPath
+		opts := []node.Option{db.WithNodeIdentity(GetIdentity(s, NodeIdentity(nodeIndex)))}
+		for _, opt := range s.Nodes[nodeIndex].NetOpts {
 			opts = append(opts, opt)
 		}
 		var addresses []string
-		for _, addr := range s.nodes[nodeIndex].peerInfo.Addrs {
+		for _, addr := range s.Nodes[nodeIndex].PeerInfo().Addrs {
 			addresses = append(addresses, addr.String())
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
 		node, err := setupNode(s, testCase, opts...)
-		require.NoError(s.t, err)
+		require.NoError(s.T, err)
 		databaseDir = originalPath
-		node.p2p = s.nodes[nodeIndex].p2p
-		s.nodes[nodeIndex] = node
+		node.P2p = s.Nodes[nodeIndex].P2p
+		s.Nodes[nodeIndex] = node
 	}
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
@@ -800,10 +800,10 @@ func startNodes(s *state, testCase TestCase, action Start) {
 }
 
 func restartNodes(
-	s *state,
+	s *State,
 	testCase TestCase,
 ) {
-	if s.dbt == BadgerIMType || s.dbt == DefraIMType {
+	if s.Dbt == BadgerIMType || s.Dbt == DefraIMType {
 		return
 	}
 	closeNodes(s, Close{})
@@ -816,22 +816,22 @@ func restartNodes(
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
 func refreshCollections(
-	s *state,
+	s *State,
 ) {
-	for _, node := range s.nodes {
-		node.collections = make([]client.Collection, len(s.collectionNames))
-		allCollections, err := node.GetCollections(s.ctx, client.CollectionFetchOptions{})
-		require.Nil(s.t, err)
+	for _, node := range s.Nodes {
+		node.Collections = make([]client.Collection, len(s.CollectionNames))
+		allCollections, err := node.GetCollections(s.Ctx, client.CollectionFetchOptions{})
+		require.Nil(s.T, err)
 
-		for i, collectionName := range s.collectionNames {
+		for i, collectionName := range s.CollectionNames {
 			for _, collection := range allCollections {
 				if collection.Name() == collectionName {
-					if _, ok := s.collectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
+					if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
 						// If the root is not found here this is likely the first refreshCollections
 						// call of the test, we map it by root in case the collection is renamed -
 						// we still wish to preserve the original index so test maintainers can reference
 						// them in a convenient manner.
-						s.collectionIndexesByCollectionID[collection.Version().CollectionID] = i
+						s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
 					}
 					break
 				}
@@ -839,8 +839,8 @@ func refreshCollections(
 		}
 
 		for _, collection := range allCollections {
-			if index, ok := s.collectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
-				node.collections[index] = collection
+			if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
+				node.Collections[index] = collection
 			}
 		}
 	}
@@ -851,18 +851,18 @@ func refreshCollections(
 // It returns the new node, and its peer address. Any errors generated during configuration
 // will result in a test failure.
 func configureNode(
-	s *state,
+	s *State,
 	testCase TestCase,
 	action ConfigureNode,
 ) {
 	if changeDetector.Enabled {
 		// We do not yet support the change detector for tests running across multiple nodes.
-		s.t.SkipNow()
+		s.T.SkipNow()
 		return
 	}
 
 	privateKey, err := crypto.GenerateEd25519()
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
@@ -871,20 +871,20 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(getIdentity(s, NodeIdentity(len(s.nodes)))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
 	node, err := setupNode(s, testCase, nodeOpts...) //disable change detector, or allow it?
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 
-	s.nodes = append(s.nodes, node)
+	s.Nodes = append(s.Nodes, node)
 }
 
 func refreshDocuments(
-	s *state,
+	s *State,
 	testCase TestCase,
 	startActionIndex int,
 ) {
-	if len(s.nodes) == 0 {
+	if len(s.Nodes) == 0 {
 		// This should only be possible at the moment for P2P testing, for which the
 		// change detector is currently disabled.  We'll likely need some fancier logic
 		// here if/when we wish to enable it.
@@ -894,10 +894,10 @@ func refreshDocuments(
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
-	s.docIDs = make([][]client.DocID, len(s.nodes[0].collections))
+	s.DocIDs = make([][]client.DocID, len(s.Nodes[0].Collections))
 
-	for i := range s.nodes[0].collections {
-		s.docIDs[i] = []client.DocID{}
+	for i := range s.Nodes[0].Collections {
+		s.DocIDs[i] = []client.DocID{}
 	}
 
 	for i := 0; i < startActionIndex; i++ {
@@ -905,11 +905,11 @@ func refreshDocuments(
 		// otherwise they cannot be referenced correctly by other actions.
 		switch action := testCase.Actions[i].(type) {
 		case CreateDoc:
-			nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+			nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
 			firstNodesID := nodeIDs[0]
-			collection := s.nodes[firstNodesID].collections[action.CollectionID]
+			collection := s.Nodes[firstNodesID].Collections[action.CollectionID]
 
 			if action.DocMap != nil {
 				substituteRelations(s, action)
@@ -922,44 +922,44 @@ func refreshDocuments(
 			}
 
 			for _, doc := range docs {
-				s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], doc.ID())
+				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
 			}
 		}
 	}
 }
 
 func getIndexes(
-	s *state,
+	s *State,
 	action GetIndexes,
 ) {
-	if len(s.nodes) == 0 {
+	if len(s.Nodes) == 0 {
 		return
 	}
 
 	var expectedErrorRaised bool
 
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
-		collections := s.nodes[nodeID].collections
+		collections := s.Nodes[nodeID].Collections
 		err := withRetryOnNode(
-			s.nodes[nodeID],
+			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].GetIndexes(s.ctx)
+				actualIndexes, err := collections[action.CollectionID].GetIndexes(s.Ctx)
 				if err != nil {
 					return err
 				}
 
 				assertIndexesListsEqual(action.ExpectedIndexes,
-					actualIndexes, s.t)
+					actualIndexes, s.T)
 
 				return nil
 			},
 		)
 		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.t, err, action.ExpectedError)
+			AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 func assertIndexesListsEqual(
@@ -1023,27 +1023,27 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t te
 
 // updateSchema updates the schema using the given details.
 func updateSchema(
-	s *state,
+	s *State,
 	action SchemaUpdate,
 ) {
 	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
 	if len(action.Replace) > 0 {
 		for substituteLabel := range action.Replace {
 			if substituteLabel == "" {
-				require.Fail(s.t, "Empty substitution label.")
+				require.Fail(s.T, "Empty substitution label.")
 			}
 
 			howManyLabelsToSub := strings.Count(action.Schema, substituteLabel)
 			if howManyLabelsToSub == 0 {
 				require.Fail(
-					s.t,
+					s.T,
 					"Can't do substitution because no label: "+substituteLabel,
 				)
 			}
 		}
 	}
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		// This schema might be modified if the caller needs some substitution magic done.
 		var modifiedSchema = action.Schema
@@ -1051,12 +1051,12 @@ func updateSchema(
 		// We need to substitute the policyIDs into the `%policyID% place holders.
 		if len(action.Replace) > 0 {
 			nodeID := nodeIDs[index]
-			nodesPolicyIDs := s.policyIDs[nodeID]
+			nodesPolicyIDs := s.PolicyIDs[nodeID]
 			templateData := map[string]string{}
 			// Build template with the replacing values.
 			for substituteLabel, replaceWith := range action.Replace {
 				replacer, err := replaceWith.Replacer(nodesPolicyIDs)
-				require.NoError(s.t, err)
+				require.NoError(s.T, err)
 				templateData[substituteLabel] = replacer
 			}
 
@@ -1065,16 +1065,16 @@ func updateSchema(
 			var renderedSchema bytes.Buffer
 			err := tmpl.Execute(&renderedSchema, templateData)
 			if err != nil {
-				require.Fail(s.t, "Template execution for schema update failed.")
+				require.Fail(s.T, "Template execution for schema update failed.")
 			}
 
 			modifiedSchema = renderedSchema.String()
 		}
 
-		results, err := node.AddSchema(s.ctx, modifiedSchema)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		results, err := node.AddSchema(s.Ctx, modifiedSchema)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 		if action.ExpectedResults != nil {
 			assertCollectionVersions(s, action.ExpectedResults, results)
@@ -1086,10 +1086,10 @@ func updateSchema(
 }
 
 func patchSchema(
-	s *state,
+	s *State,
 	action SchemaPatch,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		var setAsDefaultVersion bool
 		if action.SetAsDefaultVersion.HasValue() {
@@ -1098,10 +1098,10 @@ func patchSchema(
 			setAsDefaultVersion = true
 		}
 
-		err := node.PatchSchema(s.ctx, action.Patch, action.Lens, setAsDefaultVersion)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		err := node.PatchSchema(s.Ctx, action.Patch, action.Lens, setAsDefaultVersion)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
@@ -1109,15 +1109,15 @@ func patchSchema(
 }
 
 func patchCollection(
-	s *state,
+	s *State,
 	action PatchCollection,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.PatchCollection(s.ctx, action.Patch)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		err := node.PatchCollection(s.Ctx, action.Patch)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
 	// If the schema was updated we need to refresh the collection definitions.
@@ -1125,21 +1125,21 @@ func patchCollection(
 }
 
 func getSchema(
-	s *state,
+	s *State,
 	action GetSchema,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		var results []client.SchemaDescription
 		var err error
 		switch {
 		case action.VersionID.HasValue():
-			result, e := node.GetSchemaByVersionID(s.ctx, action.VersionID.Value())
+			result, e := node.GetSchemaByVersionID(s.Ctx, action.VersionID.Value())
 			err = e
 			results = []client.SchemaDescription{result}
 		default:
 			results, err = node.GetSchemas(
-				s.ctx,
+				s.Ctx,
 				client.SchemaFetchOptions{
 					Root: action.Root,
 					Name: action.Name,
@@ -1147,31 +1147,31 @@ func getSchema(
 			)
 		}
 
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			require.Equal(s.t, action.ExpectedResults, results)
+			require.Equal(s.T, action.ExpectedResults, results)
 		}
 	}
 }
 
 func getCollections(
-	s *state,
+	s *State,
 	action GetCollections,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		txn := getTransaction(s, node, action.TransactionID, "")
-		ctx := db.InitContext(s.ctx, txn)
+		ctx := db.InitContext(s.Ctx, txn)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
 			resultDescriptions[i] = col.Version()
 		}
 
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
 			assertCollectionVersions(s, action.ExpectedResults, resultDescriptions)
@@ -1180,22 +1180,22 @@ func getCollections(
 }
 
 func setActiveSchemaVersion(
-	s *state,
+	s *State,
 	action SetActiveSchemaVersion,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.SetActiveSchemaVersion(s.ctx, action.SchemaVersionID)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		err := node.SetActiveSchemaVersion(s.Ctx, action.SchemaVersionID)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
 	refreshCollections(s)
 }
 
 func createView(
-	s *state,
+	s *State,
 	action CreateView,
 ) {
 	if viewType == MaterializedViewType {
@@ -1211,38 +1211,38 @@ func createView(
 		}, "")
 	}
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		_, err := node.AddView(s.ctx, action.Query, action.SDL, action.Transform)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		_, err := node.AddView(s.Ctx, action.Query, action.SDL, action.Transform)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 }
 
 func refreshViews(
-	s *state,
+	s *State,
 	action RefreshViews,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.RefreshViews(s.ctx, action.FilterOptions)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		err := node.RefreshViews(s.Ctx, action.FilterOptions)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 }
 
 // createDoc creates a document using the chosen [mutationType] and caches it in the
 // test state object.
 func createDoc(
-	s *state,
+	s *State,
 	action CreateDoc,
 ) {
 	if action.DocMap != nil {
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*state, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
+	var mutation func(*State, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = createDocViaColSave
@@ -1251,16 +1251,16 @@ func createDoc(
 	case GQLRequestMutationType:
 		mutation = createDocViaGQL
 	default:
-		s.t.Fatalf("invalid mutationType: %v", mutationType)
+		s.T.Fatalf("invalid mutationType: %v", mutationType)
 	}
 
 	var expectedErrorRaised bool
 	var docIDs []client.DocID
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.nodes[nodeID].collections[action.CollectionID]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1275,16 +1275,16 @@ func createDoc(
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	if action.CollectionID >= len(s.docIDs) {
+	if action.CollectionID >= len(s.DocIDs) {
 		// Expand the slice if required, so that the document can be accessed by collection index
-		s.docIDs = append(s.docIDs, make([][]client.DocID, action.CollectionID-len(s.docIDs)+1)...)
+		s.DocIDs = append(s.DocIDs, make([][]client.DocID, action.CollectionID-len(s.DocIDs)+1)...)
 	}
-	s.docIDs[action.CollectionID] = append(s.docIDs[action.CollectionID], docIDs...)
+	s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], docIDs...)
 
 	docIDMap := make(map[string]struct{})
 	for _, docID := range docIDs {
@@ -1297,7 +1297,7 @@ func createDoc(
 }
 
 func createDocViaColSave(
-	s *state,
+	s *State,
 	action CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1309,7 +1309,7 @@ func createDocViaColSave(
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.ctx, txn), nodeIndex, &action)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
 
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
@@ -1322,7 +1322,7 @@ func createDocViaColSave(
 	return docIDs, nil
 }
 
-func makeContextForDocCreate(s *state, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
+func makeContextForDocCreate(s *State, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
 	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
 	return ctx
 }
@@ -1335,7 +1335,7 @@ func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
 }
 
 func createDocViaColCreate(
-	s *state,
+	s *State,
 	action CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1347,7 +1347,7 @@ func createDocViaColCreate(
 	}
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.ctx, txn), nodeIndex, &action)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
 
 	switch {
 	case len(docs) > 1:
@@ -1371,7 +1371,7 @@ func createDocViaColCreate(
 }
 
 func createDocViaGQL(
-	s *state,
+	s *State,
 	action CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1387,12 +1387,12 @@ func createDocViaGQL(
 	} else if client.IsJSONArray([]byte(action.Doc)) {
 		var docMaps []map[string]any
 		err = json.Unmarshal([]byte(action.Doc), &docMaps)
-		require.NoError(s.t, err)
+		require.NoError(s.T, err)
 		input, err = arrayToGQL(docMaps)
 	} else {
 		input, err = jsonToGQL(action.Doc)
 	}
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 
 	params := paramName + ": " + input
 
@@ -1408,7 +1408,7 @@ func createDocViaGQL(
 	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
 
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {
@@ -1416,13 +1416,13 @@ func createDocViaGQL(
 	}
 
 	resultData := result.GQL.Data.(map[string]any)
-	resultDocs := ConvertToArrayOfMaps(s.t, resultData[key])
+	resultDocs := ConvertToArrayOfMaps(s.T, resultData[key])
 
 	docIDs := make([]client.DocID, len(resultDocs))
 	for i, docMap := range resultDocs {
 		docIDString := docMap[request.DocIDFieldName].(string)
 		docID, err := client.NewDocIDFromString(docIDString)
-		require.NoError(s.t, err)
+		require.NoError(s.T, err)
 		docIDs[i] = docID
 	}
 
@@ -1434,7 +1434,7 @@ func createDocViaGQL(
 //
 // If a document at that index is not found it will panic.
 func substituteRelations(
-	s *state,
+	s *State,
 	action CreateDoc,
 ) {
 	for k, v := range action.DocMap {
@@ -1443,7 +1443,7 @@ func substituteRelations(
 			continue
 		}
 
-		docID := s.docIDs[index.CollectionIndex][index.Index]
+		docID := s.DocIDs[index.CollectionIndex][index.Index]
 		action.DocMap[k] = docID.String()
 	}
 }
@@ -1451,18 +1451,18 @@ func substituteRelations(
 // deleteDoc deletes a document using the collection api and caches it in the
 // given documents slice.
 func deleteDoc(
-	s *state,
+	s *State,
 	action DeleteDoc,
 ) {
-	docID := s.docIDs[action.CollectionID][action.DocID]
+	docID := s.DocIDs[action.CollectionID][action.DocID]
 
 	var expectedErrorRaised bool
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.nodes[nodeID].collections[action.CollectionID]
-		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1470,10 +1470,10 @@ func deleteDoc(
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" {
 		expect := map[string]struct{}{
@@ -1486,10 +1486,10 @@ func deleteDoc(
 
 // updateDoc updates a document using the chosen [mutationType].
 func updateDoc(
-	s *state,
+	s *State,
 	action UpdateDoc,
 ) {
-	var mutation func(*state, UpdateDoc, client.TxnStore, int, client.Collection) error
+	var mutation func(*State, UpdateDoc, client.TxnStore, int, client.Collection) error
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1498,15 +1498,15 @@ func updateDoc(
 	case GQLRequestMutationType:
 		mutation = updateDocViaGQL
 	default:
-		s.t.Fatalf("invalid mutationType: %v", mutationType)
+		s.T.Fatalf("invalid mutationType: %v", mutationType)
 	}
 
 	var expectedErrorRaised bool
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.nodes[nodeID].collections[action.CollectionID]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1519,10 +1519,10 @@ func updateDoc(
 				)
 			},
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
 		waitForUpdateEvents(
@@ -1536,15 +1536,15 @@ func updateDoc(
 }
 
 func updateDocViaColSave(
-	s *state,
+	s *State,
 	action UpdateDoc,
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
+	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
 		return err
 	}
@@ -1556,15 +1556,15 @@ func updateDocViaColSave(
 }
 
 func updateDocViaColUpdate(
-	s *state,
+	s *State,
 	action UpdateDoc,
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.docIDs[action.CollectionID][action.DocID], true)
+	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
 	if err != nil {
 		return err
 	}
@@ -1576,16 +1576,16 @@ func updateDocViaColUpdate(
 }
 
 func updateDocViaGQL(
-	s *state,
+	s *State,
 	action UpdateDoc,
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	docID := s.docIDs[action.CollectionID][action.DocID]
+	docID := s.DocIDs[action.CollectionID][action.DocID]
 
 	input, err := jsonToGQL(action.Doc)
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 
 	request := fmt.Sprintf(
 		`mutation {
@@ -1598,7 +1598,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeIndex)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
 	result := node.ExecRequest(ctx, request)
 	if len(result.GQL.Errors) > 0 {
@@ -1608,15 +1608,15 @@ func updateDocViaGQL(
 }
 
 // updateWithFilter updates the set of matched documents.
-func updateWithFilter(s *state, action UpdateWithFilter) {
+func updateWithFilter(s *State, action UpdateWithFilter) {
 	var res *client.UpdateResult
 	var expectedErrorRaised bool
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.nodes[nodeID].collections[action.CollectionID]
-		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
@@ -1625,10 +1625,10 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
 		waitForUpdateEvents(
@@ -1643,13 +1643,13 @@ func updateWithFilter(s *state, action UpdateWithFilter) {
 
 // createIndex creates a secondary index using the collection api.
 func createIndex(
-	s *state,
+	s *State,
 	action CreateIndex,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.nodes[nodeID].collections[action.CollectionID]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 		indexDesc := client.IndexCreateRequest{
 			Name: action.IndexName,
 		}
@@ -1672,76 +1672,76 @@ func createIndex(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.CreateIndex(s.ctx, indexDesc)
+				_, err := collection.CreateIndex(s.Ctx, indexDesc)
 				return err
 			},
 		)
-		if AssertError(s.t, err, action.ExpectedError) {
+		if AssertError(s.T, err, action.ExpectedError) {
 			return
 		}
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
 // dropIndex drops the secondary index using the collection api.
 func dropIndex(
-	s *state,
+	s *State,
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := s.nodes[nodeID].collections[action.CollectionID]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DropIndex(s.ctx, action.IndexName)
+				return collection.DropIndex(s.Ctx, action.IndexName)
 			},
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 // backupExport generates a backup using the db api.
 func backupExport(
-	s *state,
+	s *State,
 	action BackupExport,
 ) {
 	if action.Config.Filepath == "" {
-		action.Config.Filepath = s.t.TempDir() + testJSONFile
+		action.Config.Filepath = s.T.TempDir() + testJSONFile
 	}
 
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		err := withRetryOnNode(
 			node,
-			func() error { return node.BasicExport(s.ctx, &action.Config) },
+			func() error { return node.BasicExport(s.Ctx, &action.Config) },
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 
 		if !expectedErrorRaised {
-			assertBackupContent(s.t, action.ExpectedContent, action.Config.Filepath)
+			assertBackupContent(s.T, action.ExpectedContent, action.Config.Filepath)
 		}
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 // backupImport imports data from a backup using the db api.
 func backupImport(
-	s *state,
+	s *State,
 	action BackupImport,
 ) {
 	if action.Filepath == "" {
-		action.Filepath = s.t.TempDir() + testJSONFile
+		action.Filepath = s.T.TempDir() + testJSONFile
 	}
 
 	// we can avoid checking the error here as this would mean the filepath is invalid
@@ -1750,16 +1750,16 @@ func backupImport(
 
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		err := withRetryOnNode(
 			node,
-			func() error { return node.BasicImport(s.ctx, action.Filepath) },
+			func() error { return node.BasicImport(s.Ctx, action.Filepath) },
 		)
-		expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 // withRetryOnNode attempts to perform the given action, retrying up to a DB-defined
@@ -1785,7 +1785,7 @@ func withRetryOnNode(
 }
 
 func getTransaction(
-	s *state,
+	s *State,
 	db client.TxnStore,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
@@ -1796,23 +1796,23 @@ func getTransaction(
 
 	transactionID := transactionSpecifier.Value()
 
-	if transactionID >= len(s.txns) {
+	if transactionID >= len(s.Txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		s.txns = append(s.txns, make([]client.Txn, transactionID-len(s.txns)+1)...)
+		s.Txns = append(s.Txns, make([]client.Txn, transactionID-len(s.Txns)+1)...)
 	}
 
-	if s.txns[transactionID] == nil {
+	if s.Txns[transactionID] == nil {
 		// Create a new transaction if one does not already exist.
-		txn, err := db.NewTxn(s.ctx, false)
-		if AssertError(s.t, err, expectedError) {
-			txn.Discard(s.ctx)
+		txn, err := db.NewTxn(s.Ctx, false)
+		if AssertError(s.T, err, expectedError) {
+			txn.Discard(s.Ctx)
 			return nil
 		}
 
-		s.txns[transactionID] = txn
+		s.Txns[transactionID] = txn
 	}
 
-	return s.txns[transactionID]
+	return s.Txns[transactionID]
 }
 
 // commitTransaction commits the given transaction.
@@ -1820,31 +1820,31 @@ func getTransaction(
 // Will panic if the given transaction does not exist. Discards the transaction if
 // an error is returned on commit.
 func commitTransaction(
-	s *state,
+	s *State,
 	action TransactionCommit,
 ) {
-	err := s.txns[action.TransactionID].Commit(s.ctx)
+	err := s.Txns[action.TransactionID].Commit(s.Ctx)
 	if err != nil {
-		s.txns[action.TransactionID].Discard(s.ctx)
+		s.Txns[action.TransactionID].Discard(s.Ctx)
 	}
 
-	expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeRequest executes the given request.
 func executeRequest(
-	s *state,
+	s *State,
 	action Request,
 ) {
 	var expectedErrorRaised bool
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		ctx := getContextWithIdentity(db.InitContext(s.ctx, txn), s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeID)
 
 		var options []client.RequestOption
 		if action.OperationName.HasValue() {
@@ -1855,17 +1855,17 @@ nodeLoop:
 		}
 
 		if !expectedErrorRaised && viewType == MaterializedViewType {
-			for _, colName := range s.collectionNames {
+			for _, colName := range s.CollectionNames {
 				// Refresh the views in the order in which they were declared, this way
 				// any views of views should be based off of refreshed data, assuming they were declared in
 				// an intuitive order.
 				err := node.RefreshViews(
-					s.ctx,
+					s.Ctx,
 					client.CollectionFetchOptions{
 						Name: immutable.Some(colName),
 					},
 				)
-				expectedErrorRaised = AssertError(s.t, err, action.ExpectedError)
+				expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 				if expectedErrorRaised {
 					continue nodeLoop
 				}
@@ -1884,7 +1884,7 @@ nodeLoop:
 		)
 	}
 
-	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 // executeSubscriptionRequest executes the given subscription request, returning
@@ -1896,15 +1896,15 @@ nodeLoop:
 // failures are recorded properly. It will only yield once, once
 // the subscription has terminated.
 func executeSubscriptionRequest(
-	s *state,
+	s *State,
 	action SubscriptionRequest,
 ) {
 	subscriptionAssert := make(chan func())
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		result := node.ExecRequest(s.ctx, action.Request)
-		if AssertErrors(s.t, result.GQL.Errors, action.ExpectedError) {
+		result := node.ExecRequest(s.Ctx, action.Request)
+		if AssertErrors(s.T, result.GQL.Errors, action.ExpectedError) {
 			return
 		}
 
@@ -1918,7 +1918,7 @@ func executeSubscriptionRequest(
 				case <-time.After(100 * time.Millisecond):
 				}
 				select {
-				case <-s.allActionsDone:
+				case <-s.AllActionsDone:
 					allActionsAreDone = true
 				case <-time.After(100 * time.Millisecond):
 				}
@@ -1937,13 +1937,13 @@ func executeSubscriptionRequest(
 						0,
 					)
 
-					assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+					assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 				}
 			}
 		}()
 	}
 
-	s.subscriptionResultsChans = append(s.subscriptionResultsChans, subscriptionAssert)
+	s.SubscriptionResultsChans = append(s.SubscriptionResultsChans, subscriptionAssert)
 }
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
@@ -1991,16 +1991,16 @@ func AssertErrors(
 }
 
 func assertRequestResults(
-	s *state,
+	s *State,
 	result *client.GQLResult,
 	expectedResults map[string]any,
 	expectedError string,
 	asserter ResultAsserter,
 	nodeID int,
 ) bool {
-	s.currentNodeID = nodeID
+	s.CurrentNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
-	if AssertErrors(s.t, result.Errors, expectedError) || s.isBench {
+	if AssertErrors(s.T, result.Errors, expectedError) || s.IsBench {
 		return true
 	}
 
@@ -2010,10 +2010,10 @@ func assertRequestResults(
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
 	resultantData := result.Data.(map[string]any)
-	log.InfoContext(s.ctx, "", corelog.Any("RequestResults", result.Data))
+	log.InfoContext(s.Ctx, "", corelog.Any("RequestResults", result.Data))
 
 	if asserter != nil {
-		asserter.Assert(s.t, resultantData)
+		asserter.Assert(s.T, resultantData)
 		return true
 	}
 
@@ -2030,14 +2030,14 @@ func assertRequestResults(
 	for key := range keys {
 		stack.pushMap(key)
 		expect, ok := expectedResults[key]
-		require.True(s.t, ok, "expected key not found: %s", key)
+		require.True(s.T, ok, "expected key not found: %s", key)
 
 		actual, ok := resultantData[key]
-		require.True(s.t, ok, "result key not found: %s", key)
+		require.True(s.T, ok, "result key not found: %s", key)
 
 		switch exp := expect.(type) {
 		case []map[string]any:
-			actualDocs := ConvertToArrayOfMaps(s.t, actual)
+			actualDocs := ConvertToArrayOfMaps(s.T, actual)
 			assertRequestResultDocs(
 				s,
 				nodeID,
@@ -2051,8 +2051,8 @@ func assertRequestResults(
 
 		default:
 			assertResultsEqual(
-				s.t,
-				s.clientType,
+				s.T,
+				s.ClientType,
 				expect,
 				actual,
 				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
@@ -2065,21 +2065,21 @@ func assertRequestResults(
 }
 
 func assertRequestResultDocs(
-	s *state,
+	s *State,
 	nodeID int,
 	expectedResults []map[string]any,
 	actualResults []map[string]any,
 	stack *assertStack,
 ) bool {
 	// compare results
-	require.Equal(s.t, len(expectedResults), len(actualResults), "number of results don't match for %s", stack)
+	require.Equal(s.T, len(expectedResults), len(actualResults), "number of results don't match for %s", stack)
 
 	for actualDocIndex, actualDoc := range actualResults {
 		stack.pushArray(actualDocIndex)
 		expectedDoc := expectedResults[actualDocIndex]
 
 		require.Equal(
-			s.t,
+			s.T,
 			len(expectedDoc),
 			len(actualDoc),
 			fmt.Sprintf(
@@ -2097,7 +2097,7 @@ func assertRequestResultDocs(
 }
 
 func assertRequestResultDoc(
-	s *state,
+	s *State,
 	nodeID int,
 	actualDoc map[string]any,
 	expectedDoc map[string]any,
@@ -2111,16 +2111,16 @@ func assertRequestResultDoc(
 			execGomegaMatcher(expectedValue, s, actualValue, stack)
 
 		case DocIndex:
-			expectedDocID := s.docIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
+			expectedDocID := s.DocIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
 			assertResultsEqual(
-				s.t,
-				s.clientType,
+				s.T,
+				s.ClientType,
 				expectedDocID,
 				actualValue,
 				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 			)
 		case []map[string]any:
-			actualValueMap := ConvertToArrayOfMaps(s.t, actualValue)
+			actualValueMap := ConvertToArrayOfMaps(s.T, actualValue)
 
 			assertRequestResultDocs(
 				s,
@@ -2132,13 +2132,13 @@ func assertRequestResultDoc(
 
 		case map[string]any:
 			actualMap, ok := actualValue.(map[string]any)
-			require.True(s.t, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			require.True(s.T, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
 			assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack)
 
 		default:
 			assertResultsEqual(
-				s.t,
-				s.clientType,
+				s.T,
+				s.ClientType,
 				expectedValue,
 				actualValue,
 				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
@@ -2171,29 +2171,29 @@ func assertExpectedErrorRaised(t testing.TB, expectedError string, wasRaised boo
 }
 
 func assertIntrospectionResults(
-	s *state,
+	s *State,
 	action IntrospectionRequest,
 ) bool {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.Ctx, action.Request)
 
-		if AssertErrors(s.t, result.GQL.Errors, action.ExpectedError) {
+		if AssertErrors(s.T, result.GQL.Errors, action.ExpectedError) {
 			return true
 		}
 		resultantData := result.GQL.Data.(map[string]any)
 
 		if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
-			require.Equal(s.t, action.ExpectedData, resultantData)
+			require.Equal(s.T, action.ExpectedData, resultantData)
 		}
 
 		if len(action.ExpectedData) == 0 && len(action.ContainsData) > 0 {
-			assertContains(s.t, action.ContainsData, resultantData)
+			assertContains(s.T, action.ContainsData, resultantData)
 		} else {
-			require.Equal(s.t, len(action.ExpectedData), len(resultantData))
+			require.Equal(s.T, len(action.ExpectedData), len(resultantData))
 
 			for k, result := range resultantData {
-				assert.Equal(s.t, action.ExpectedData[k], result)
+				assert.Equal(s.T, action.ExpectedData[k], result)
 			}
 		}
 	}
@@ -2203,14 +2203,14 @@ func assertIntrospectionResults(
 
 // Asserts that the client introspection results conform to our expectations.
 func assertClientIntrospectionResults(
-	s *state,
+	s *State,
 	action ClientIntrospectionRequest,
 ) bool {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		result := node.ExecRequest(s.ctx, action.Request)
+		result := node.ExecRequest(s.Ctx, action.Request)
 
-		if AssertErrors(s.t, result.GQL.Errors, action.ExpectedError) {
+		if AssertErrors(s.T, result.GQL.Errors, action.ExpectedError) {
 			return true
 		}
 		resultantData := result.GQL.Data.(map[string]any)
@@ -2234,12 +2234,12 @@ func assertClientIntrospectionResults(
 			case "OBJECT":
 				fields := typeDef["fields"]
 				if fields == nil {
-					s.t.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
+					s.T.Errorf("Fields are missing for OBJECT type %v", typeDef["name"])
 				}
 			case "INPUT_OBJECT":
 				inputFields := typeDef["inputFields"]
 				if inputFields == nil {
-					s.t.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
+					s.T.Errorf("InputFields are missing for INPUT_OBJECT type %v", typeDef["name"])
 				}
 			default:
 				// t.Errorf("Unknown type kind: %v", kind)
@@ -2483,43 +2483,43 @@ func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.
 	}
 }
 
-func performGetNodeIdentityAction(s *state, action GetNodeIdentity) {
-	if action.NodeID >= len(s.nodes) {
-		s.t.Fatalf("invalid nodeID: %v", action.NodeID)
+func performGetNodeIdentityAction(s *State, action GetNodeIdentity) {
+	if action.NodeID >= len(s.Nodes) {
+		s.T.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
 
-	actualIdent, err := s.nodes[action.NodeID].GetNodeIdentity(s.ctx)
-	require.NoError(s.t, err)
+	actualIdent, err := s.Nodes[action.NodeID].GetNodeIdentity(s.Ctx)
+	require.NoError(s.T, err)
 
-	expectedIdent := getIdentity(s, action.ExpectedIdentity)
+	expectedIdent := GetIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := expectedIdent.ToPublicRawIdentity()
 	expectedRawIdentOpt := immutable.Some(expectedRawIdent)
-	require.Equal(s.t, expectedRawIdentOpt, actualIdent, "raw identity at %d mismatch", action.NodeID)
+	require.Equal(s.T, expectedRawIdentOpt, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
 
 // execGomegaMatcher executes the given gomega matcher and asserts the result.
-func execGomegaMatcher(exp gomega.OmegaMatcher, s *state, actual any, stack *assertStack) {
+func execGomegaMatcher(exp gomega.OmegaMatcher, s *State, actual any, stack *assertStack) {
 	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
 
 	success, err := exp.Match(actual)
 	if err != nil {
-		assert.Fail(s.t, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
+		assert.Fail(s.T, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
 	}
 
 	if !success {
-		assert.Fail(s.t, exp.FailureMessage(actual), "Path: %s", stack)
+		assert.Fail(s.T, exp.FailureMessage(actual), "Path: %s", stack)
 	}
 
 	traverseGomegaMatchers(exp, s, func(m StatefulMatcher) {
-		if !slices.Contains(s.statefulMatchers, m) {
-			s.statefulMatchers = append(s.statefulMatchers, m)
+		if !slices.Contains(s.StatefulMatchers, m) {
+			s.StatefulMatchers = append(s.StatefulMatchers, m)
 		}
 	})
 }
 
 // traverseGomegaMatchers traverses the given gomega matcher and calls the given function
 // for each matcher found with the type T.
-func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *state, f func(T)) {
+func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *State, f func(T)) {
 	if m, ok := exp.(T); ok {
 		f(m)
 		return
@@ -2540,24 +2540,24 @@ func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *s
 }
 
 // resetMatchers resets the state of all stateful matchers.
-func resetMatchers(s *state) {
-	for _, matcher := range s.statefulMatchers {
+func resetMatchers(s *State) {
+	for _, matcher := range s.StatefulMatchers {
 		matcher.ResetMatcherState()
 	}
 }
 
-func performVerifySignatureAction(s *state, action VerifyBlockSignature) {
-	_, nodes := getNodesWithIDs(immutable.None[int](), s.nodes)
+func performVerifySignatureAction(s *State, action VerifyBlockSignature) {
+	_, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for i, node := range nodes {
-		ctx := getContextWithIdentity(s.ctx, s, action.Identity, i)
-		signerIdentity := getIdentity(s, immutable.Some(action.SignerIdentity))
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, i)
+		signerIdentity := GetIdentity(s, immutable.Some(action.SignerIdentity))
 		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey())
 
 		if action.ExpectedError != "" {
-			require.Error(s.t, err)
-			require.Contains(s.t, err.Error(), action.ExpectedError)
+			require.Error(s.T, err)
+			require.Contains(s.T, err.Error(), action.ExpectedError)
 		} else {
-			require.NoError(s.t, err)
+			require.NoError(s.T, err)
 		}
 	}
 }

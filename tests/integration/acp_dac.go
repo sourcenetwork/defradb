@@ -90,42 +90,42 @@ type AddDACPolicy struct {
 
 // addDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
 func addDACPolicy(
-	s *state,
+	s *State,
 	action AddDACPolicy,
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
 	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
-		require.Fail(s.t, "Expected error should not have an expected policyID with it.")
+		require.Fail(s.T, "Expected error should not have an expected policyID with it.")
 	}
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	maxNodeID := slices.Max(nodeIDs)
 	// Expand the policyIDs slice once, so we can minimize how many times we need to expaind it.
 	// We use the maximum nodeID provided to make sure policyIDs slice can accomodate upto that nodeID.
-	if len(s.policyIDs) <= maxNodeID {
+	if len(s.PolicyIDs) <= maxNodeID {
 		// Expand the slice if required, so that the policyID can be accessed by node index
 		policyIDs := make([][]string, maxNodeID+1)
-		copy(policyIDs, s.policyIDs)
-		s.policyIDs = policyIDs
+		copy(policyIDs, s.PolicyIDs)
+		s.PolicyIDs = policyIDs
 	}
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		policyResult, err := node.AddDACPolicy(ctx, action.Policy)
 
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			require.Equal(s.t, action.ExpectedError, "")
+			require.Equal(s.T, action.ExpectedError, "")
 			if action.ExpectedPolicyID.HasValue() {
-				require.Equal(s.t, action.ExpectedPolicyID.Value(), policyResult.PolicyID)
+				require.Equal(s.T, action.ExpectedPolicyID.Value(), policyResult.PolicyID)
 			} else {
-				require.NotEqual(s.t, policyResult.PolicyID, "")
+				require.NotEqual(s.T, policyResult.PolicyID, "")
 			}
 
-			s.policyIDs[nodeID] = append(s.policyIDs[nodeID], policyResult.PolicyID)
+			s.PolicyIDs[nodeID] = append(s.PolicyIDs[nodeID], policyResult.PolicyID)
 		}
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
@@ -135,7 +135,7 @@ func addDACPolicy(
 			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
 			// on all the nodes, so we don't have to handle all the edge cases later in actions.
 			for otherIndexes := index + 1; otherIndexes < len(nodes); otherIndexes++ {
-				s.policyIDs[nodeIDs[otherIndexes]] = s.policyIDs[nodeID]
+				s.PolicyIDs[nodeIDs[otherIndexes]] = s.PolicyIDs[nodeID]
 			}
 			break
 		}
@@ -189,12 +189,12 @@ type AddDACActorRelationship struct {
 }
 
 func addDACActorRelationship(
-	s *state,
+	s *State,
 	action AddDACActorRelationship,
 ) {
 	var docID string
 	actionNodeID := action.NodeID
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
@@ -202,19 +202,19 @@ func addDACActorRelationship(
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		exists, err := node.AddDACActorRelationship(
-			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
+			getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
 			action.Relation,
 			getIdentityDID(s, action.TargetIdentity),
 		)
 
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			require.Equal(s.t, action.ExpectedError, "")
-			require.Equal(s.t, action.ExpectedExistence, exists.ExistedAlready)
+			require.Equal(s.T, action.ExpectedError, "")
+			require.Equal(s.T, action.ExpectedExistence, exists.ExistedAlready)
 		}
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
@@ -282,29 +282,29 @@ type DeleteDACActorRelationship struct {
 }
 
 func deleteDACActorRelationship(
-	s *state,
+	s *State,
 	action DeleteDACActorRelationship,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
-			getContextWithIdentity(s.ctx, s, action.RequestorIdentity, nodeID),
+			getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID),
 			collectionName,
 			docID,
 			action.Relation,
 			getIdentityDID(s, action.TargetIdentity),
 		)
 
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
-			require.Equal(s.t, action.ExpectedError, "")
-			require.Equal(s.t, action.ExpectedRecordFound, deleteActorRelationshipResult.RecordFound)
+			require.Equal(s.T, action.ExpectedError, "")
+			require.Equal(s.T, action.ExpectedRecordFound, deleteActorRelationshipResult.RecordFound)
 		}
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
@@ -315,18 +315,18 @@ func deleteDACActorRelationship(
 	}
 }
 
-func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string, string) {
+func getCollectionAndDocInfo(s *State, collectionID, docInd, nodeID int) (string, string) {
 	collectionName := ""
 	docID := ""
 	if collectionID != -1 {
-		collection := s.nodes[nodeID].collections[collectionID]
+		collection := s.Nodes[nodeID].Collections[collectionID]
 		if collection.Version().Name == "" {
-			require.Fail(s.t, "Expected non-empty collection name, but it was empty.")
+			require.Fail(s.T, "Expected non-empty collection name, but it was empty.")
 		}
 		collectionName = collection.Version().Name
 
 		if docInd != -1 {
-			docID = s.docIDs[collectionID][docInd].String()
+			docID = s.DocIDs[collectionID][docInd].String()
 		}
 	}
 	return collectionName, docID

@@ -110,12 +110,12 @@ type ExplainRequest struct {
 }
 
 func executeExplainRequest(
-	s *state,
+	s *State,
 	action ExplainRequest,
 ) {
 	// Must have a non-empty request.
 	if action.Request == "" {
-		require.Fail(s.t, "Explain test must have a non-empty request.")
+		require.Fail(s.T, "Explain test must have a non-empty request.")
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
@@ -123,7 +123,7 @@ func executeExplainRequest(
 		action.ExpectedPatterns == nil &&
 		action.ExpectedTargets == nil &&
 		action.ExpectedFullGraph == nil {
-		require.Fail(s.t, "Atleast one expected explain parameter must be provided.")
+		require.Fail(s.T, "Atleast one expected explain parameter must be provided.")
 	}
 
 	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
@@ -131,13 +131,13 @@ func executeExplainRequest(
 		(action.ExpectedFullGraph != nil ||
 			action.ExpectedPatterns != nil ||
 			action.ExpectedTargets != nil) {
-		require.Fail(s.t, "Expected error should not have other expected results with it.")
+		require.Fail(s.T, "Expected error should not have other expected results with it.")
 	}
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		result := node.ExecRequest(
-			s.ctx,
+			s.Ctx,
 			action.Request,
 		)
 		assertExplainRequestResults(s, &result.GQL, action)
@@ -145,31 +145,31 @@ func executeExplainRequest(
 }
 
 func assertExplainRequestResults(
-	s *state,
+	s *State,
 	actualResult *client.GQLResult,
 	action ExplainRequest,
 ) {
 	// Check expected error matches actual error. If it does we are done.
 	if AssertErrors(
-		s.t,
+		s.T,
 		actualResult.Errors,
 		action.ExpectedError,
 	) {
 		return
 	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
-		assert.Fail(s.t, "Expected an error however none was raised.")
+		assert.Fail(s.T, "Expected an error however none was raised.")
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
 	resultantData := actualResult.Data.(map[string]any)
-	log.InfoContext(s.ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
+	log.InfoContext(s.Ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
 	if action.ExpectedFullGraph != nil {
 		assertResultsEqual(
-			s.t,
-			s.clientType,
+			s.T,
+			s.ClientType,
 			action.ExpectedFullGraph,
 			resultantData,
 		)
@@ -179,10 +179,10 @@ func assertExplainRequestResults(
 	// explain graph nodes are in the correct expected ordering.
 	if action.ExpectedPatterns != nil {
 		// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-		actualResultWithoutAttributes := trimExplainAttributes(s.t, resultantData)
+		actualResultWithoutAttributes := trimExplainAttributes(s.T, resultantData)
 		assertResultsEqual(
-			s.t,
-			s.clientType,
+			s.T,
+			s.ClientType,
 			action.ExpectedPatterns,
 			actualResultWithoutAttributes,
 		)
@@ -198,7 +198,7 @@ func assertExplainRequestResults(
 }
 
 func assertExplainTargetCase(
-	s *state,
+	s *State,
 	targetCase PlanNodeTargetCase,
 	actualResults map[string]any,
 ) {
@@ -212,14 +212,14 @@ func assertExplainTargetCase(
 
 		if !isFound {
 			assert.Fail(
-				s.t,
+				s.T,
 				"Expected target ["+targetCase.TargetNodeName+"], was not found in the explain graph.",
 			)
 		}
 
 		assertResultsEqual(
-			s.t,
-			s.clientType,
+			s.T,
+			s.ClientType,
 			targetCase.ExpectedAttributes,
 			foundActualTarget,
 		)

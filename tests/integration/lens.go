@@ -54,16 +54,16 @@ type ConfigureMigration struct {
 }
 
 func configureMigration(
-	s *state,
+	s *State,
 	action ConfigureMigration,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
-		ctx := db.InitContext(s.ctx, txn)
+		ctx := db.InitContext(s.Ctx, txn)
 		err := node.SetMigration(ctx, action.LensConfig)
-		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 }

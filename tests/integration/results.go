@@ -365,44 +365,44 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 }
 
 func assertCollectionVersions(
-	s *state,
+	s *State,
 	expected []client.CollectionVersion,
 	actual []client.CollectionVersion,
 ) {
-	require.Equal(s.t, len(expected), len(actual))
+	require.Equal(s.T, len(expected), len(actual))
 
 	for i, expected := range expected {
 		actual := actual[i]
 		if expected.VersionID != "" {
-			require.Equal(s.t, expected.VersionID, actual.VersionID)
+			require.Equal(s.T, expected.VersionID, actual.VersionID)
 		}
 		if expected.CollectionID != "" {
-			require.Equal(s.t, expected.CollectionID, actual.CollectionID)
+			require.Equal(s.T, expected.CollectionID, actual.CollectionID)
 		}
 
-		require.Equal(s.t, expected.Name, actual.Name)
-		require.Equal(s.t, expected.IsMaterialized, actual.IsMaterialized)
-		require.Equal(s.t, expected.IsBranchable, actual.IsBranchable)
-		require.Equal(s.t, expected.IsActive, actual.IsActive)
+		require.Equal(s.T, expected.Name, actual.Name)
+		require.Equal(s.T, expected.IsMaterialized, actual.IsMaterialized)
+		require.Equal(s.T, expected.IsBranchable, actual.IsBranchable)
+		require.Equal(s.T, expected.IsActive, actual.IsActive)
 
 		if expected.Indexes != nil || len(actual.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			require.Equal(s.t, expected.Indexes, actual.Indexes)
+			require.Equal(s.T, expected.Indexes, actual.Indexes)
 		}
 
 		if expected.Sources != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no sources)
-			require.Equal(s.t, expected.Sources, actual.Sources)
+			require.Equal(s.T, expected.Sources, actual.Sources)
 		}
 
 		if expected.Fields != nil {
-			require.Equal(s.t, expected.Fields, actual.Fields)
+			require.Equal(s.T, expected.Fields, actual.Fields)
 		}
 
 		if expected.VectorEmbeddings != nil {
-			require.Equal(s.t, expected.VectorEmbeddings, actual.VectorEmbeddings)
+			require.Equal(s.T, expected.VectorEmbeddings, actual.VectorEmbeddings)
 		}
 	}
 }

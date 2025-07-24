@@ -40,7 +40,7 @@ func createBadgerEncryptionKey() error {
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, error) {
+func setupNode(s *State, testCase TestCase, opts ...node.Option) (*NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
 
@@ -57,13 +57,13 @@ func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, er
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
 	case SourceHubDocumentACPType:
-		if len(s.documentACPOptions) == 0 {
-			s.documentACPOptions, err = setupSourceHub(s, testCase)
-			require.NoError(s.t, err)
+		if len(s.DocumentACPOptions) == 0 {
+			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
+			require.NoError(s.T, err)
 		}
 
 		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
-		for _, opt := range s.documentACPOptions {
+		for _, opt := range s.DocumentACPOptions {
 			opts = append(opts, opt)
 		}
 
@@ -72,7 +72,7 @@ func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, er
 	}
 
 	var path string
-	switch s.dbt {
+	switch s.Dbt {
 	case BadgerIMType:
 		opts = append(opts, node.WithBadgerInMemory(true))
 
@@ -84,11 +84,11 @@ func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, er
 
 		case changeDetector.Enabled:
 			// change detector
-			path = changeDetector.DatabaseDir(s.t)
+			path = changeDetector.DatabaseDir(s.T)
 
 		default:
 			// default test case
-			path = s.t.TempDir()
+			path = s.T.TempDir()
 		}
 
 		opts = append(opts, node.WithStorePath(path), node.WithDocumentACPPath(path))
@@ -97,10 +97,10 @@ func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, er
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:
-		return nil, fmt.Errorf("invalid database type: %v", s.dbt)
+		return nil, fmt.Errorf("invalid database type: %v", s.Dbt)
 	}
 
-	if s.kms == PubSubKMSType {
+	if s.Kms == PubSubKMSType {
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
@@ -111,36 +111,32 @@ func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, er
 		}
 	}
 
-	if s.isNetworkEnabled {
+	if s.IsNetworkEnabled {
 		opts = append(opts, node.WithDisableP2P(false))
 	}
 
-	node, err := node.New(s.ctx, opts...)
+	node, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	err = node.Start(s.ctx)
+	err = node.Start(s.Ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	c, err := setupClient(s, node)
-	require.Nil(s.t, err)
+	require.Nil(s.T, err)
 
-	eventState, err := newEventState(c.Events())
-	require.NoError(s.t, err)
+	eventState, err := NewEventState(c.Events())
+	require.NoError(s.T, err)
 
-	st := &nodeState{
+	st := &NodeState{
 		Client:  c,
-		event:   eventState,
-		p2p:     newP2PState(),
-		dbPath:  path,
-		netOpts: netOpts,
-	}
-
-	if node.Peer != nil {
-		st.peerInfo = node.Peer.PeerInfo()
+		Event:   eventState,
+		P2p:     NewP2PState(),
+		DbPath:  path,
+		NetOpts: netOpts,
 	}
 
 	return st, nil
