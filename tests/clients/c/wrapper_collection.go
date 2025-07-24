@@ -56,7 +56,6 @@ func (c *Collection) Create(
 	doc *client.Document,
 	opts ...client.DocCreateOption,
 ) error {
-
 	isEncrypted := isEncryptedFromDocCreateOption(opts)
 	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
 
@@ -320,7 +319,6 @@ func (c *Collection) Get(
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-
 	var copts cbindings.GoCOptions
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
