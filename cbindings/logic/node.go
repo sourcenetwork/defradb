@@ -57,7 +57,7 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 		if _, err = os.Stat(cOptions.DbPath); os.IsNotExist(err) {
 			err := os.MkdirAll(cOptions.DbPath, 0755)
 			if err != nil {
-				return returnGoC(1, fmt.Sprintf(cerrCreatingStoreDirectory, err), "")
+				return returnGoC(1, fmt.Sprintf(errCreatingStoreDirectory, err), "")
 			}
 		}
 	}
