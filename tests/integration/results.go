@@ -25,8 +25,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
+
+// TestState is read-only interface for test state. It allows passing the state to custom matchers
+// without allowing them to modify the state.
+type TestState interface {
+	// GetClientType returns the client type of the test.
+	GetClientType() ClientType
+	// GetCurrentNodeID returns the node id that is currently being asserted.
+	GetCurrentNodeID() int
+	// GetIdentity returns the identity for the given node index.
+	GetIdentity(Identity) acpIdentity.Identity
+}
 
 type testStateMatcher struct {
 	s TestState

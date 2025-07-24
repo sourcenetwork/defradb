@@ -243,17 +243,6 @@ func (s *state) GetIdentity(ident Identity) acpIdentity.Identity {
 	return getIdentity(s, immutable.Some(ident))
 }
 
-// TestState is read-only interface for test state. It allows passing the state to custom matchers
-// without allowing them to modify the state.
-type TestState interface {
-	// GetClientType returns the client type of the test.
-	GetClientType() ClientType
-	// GetCurrentNodeID returns the node id that is currently being asserted.
-	GetCurrentNodeID() int
-	// GetIdentity returns the identity for the given node index.
-	GetIdentity(Identity) acpIdentity.Identity
-}
-
 var _ TestState = &state{}
 
 // newState returns a new fresh state for the given testCase.
