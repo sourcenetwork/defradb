@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // eventTimeout is the amount of time to wait
@@ -30,7 +31,7 @@ const eventTimeout = 1 * time.Second
 // replicator completed event on the local event bus.
 //
 // Expected document heads will be updated for the targeted node.
-func waitForReplicatorConfigureEvent(s *State, cfg ConfigureReplicator) {
+func waitForReplicatorConfigureEvent(s *state.State, cfg ConfigureReplicator) {
 	select {
 	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {
@@ -54,7 +55,7 @@ func waitForReplicatorConfigureEvent(s *State, cfg ConfigureReplicator) {
 
 // waitForReplicatorDeleteEvent waits for a node to publish a
 // replicator completed event on the local event bus.
-func waitForReplicatorDeleteEvent(s *State, cfg DeleteReplicator) {
+func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
 	select {
 	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {
@@ -74,7 +75,7 @@ func waitForReplicatorDeleteEvent(s *State, cfg DeleteReplicator) {
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToCollectionEvent(s *State, action SubscribeToCollection) {
+func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollection) {
 	// update peer collections of target node
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
@@ -86,7 +87,7 @@ func waitForSubscribeToCollectionEvent(s *State, action SubscribeToCollection) {
 
 // waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToCollectionEvent(s *State, action UnsubscribeToCollection) {
+func waitForUnsubscribeToCollectionEvent(s *state.State, action UnsubscribeToCollection) {
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
@@ -99,7 +100,7 @@ func waitForUnsubscribeToCollectionEvent(s *State, action UnsubscribeToCollectio
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToDocumentEvent(s *State, action SubscribeToDocument) {
+func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument) {
 	// update peer documents of target node
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
@@ -111,7 +112,7 @@ func waitForSubscribeToDocumentEvent(s *State, action SubscribeToDocument) {
 
 // waitForUnsubscribeToDocumentEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToDocumentEvent(s *State, action UnsubscribeToDocument) {
+func waitForUnsubscribeToDocumentEvent(s *state.State, action UnsubscribeToDocument) {
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
 			continue // don't track non existent documents
@@ -125,11 +126,11 @@ func waitForUnsubscribeToDocumentEvent(s *State, action UnsubscribeToDocument) {
 //
 // Expected document heads will be updated for any connected nodes.
 func waitForUpdateEvents(
-	s *State,
+	s *state.State,
 	nodeID immutable.Option[int],
 	collectionIndex int,
 	docIDs map[string]struct{},
-	ident immutable.Option[Identity],
+	ident immutable.Option[state.Identity],
 ) {
 	for i := 0; i < len(s.Nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
@@ -182,7 +183,7 @@ func waitForUpdateEvents(
 //
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
-func waitForMergeEvents(s *State, action WaitForSync) {
+func waitForMergeEvents(s *state.State, action WaitForSync) {
 	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
 		node := s.Nodes[nodeID]
 		if node.Closed {
@@ -239,14 +240,14 @@ func waitForMergeEvents(s *State, action WaitForSync) {
 			if ok && head.String() == evt.Merge.Cid.String() {
 				delete(expect, getMergeEventKey(evt.Merge))
 			}
-			node.P2p.ActualDAGHeads[getMergeEventKey(evt.Merge)] = DocHeadState{Cid: evt.Merge.Cid, Decrypted: evt.Decrypted}
+			node.P2p.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{Cid: evt.Merge.Cid, Decrypted: evt.Decrypted}
 		}
 	}
 }
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *State, nodeID int, evt event.Update, ident immutable.Option[Identity]) {
+func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
 	for i, c := range s.Nodes[nodeID].Collections {
@@ -267,7 +268,7 @@ func updateNetworkState(s *State, nodeID int, evt event.Update, ident immutable.
 
 	// update the actual document head on the node that updated it
 	// as the node created the document, it is already decrypted
-	node.P2p.ActualDAGHeads[getUpdateEventKey(evt)] = DocHeadState{Cid: evt.Cid, Decrypted: true}
+	node.P2p.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{Cid: evt.Cid, Decrypted: true}
 
 	// update the expected document heads of replicator targets
 	for id := range node.P2p.Replicators {
@@ -289,7 +290,7 @@ func updateNetworkState(s *State, nodeID int, evt event.Update, ident immutable.
 			s.Nodes[id].P2p.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 		// peer document subscribers receive updates from any other subscriber node
-		if _, ok := s.Nodes[id].P2p.PeerDocuments[NewColDocIndex(collectionID, docIndex)]; ok {
+		if _, ok := s.Nodes[id].P2p.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
 			s.Nodes[id].P2p.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}
@@ -297,7 +298,7 @@ func updateNetworkState(s *State, nodeID int, evt event.Update, ident immutable.
 
 // getEventsForUpdateDoc returns a map of docIDs that should be
 // published to the local event bus after an UpdateDoc action.
-func getEventsForUpdateDoc(s *State, action UpdateDoc) map[string]struct{} {
+func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 
 	docMap := make(map[string]any)
@@ -309,14 +310,14 @@ func getEventsForUpdateDoc(s *State, action UpdateDoc) map[string]struct{} {
 	}
 }
 
-func waitForSync(s *State, action WaitForSync) {
+func waitForSync(s *state.State, action WaitForSync) {
 	waitForMergeEvents(s, action)
 }
 
 // getEventsForUpdateWithFilter returns a map of docIDs that should be
 // published to the local event bus after a UpdateWithFilter action.
 func getEventsForUpdateWithFilter(
-	s *State,
+	s *state.State,
 	action UpdateWithFilter,
 	result *client.UpdateResult,
 ) map[string]struct{} {

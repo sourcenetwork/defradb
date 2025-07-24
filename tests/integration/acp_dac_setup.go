@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
@@ -37,7 +38,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getNodeAudience(s *State, nodeIndex int) immutable.Option[string] {
+func getNodeAudience(s *state.State, nodeIndex int) immutable.Option[string] {
 	if nodeIndex >= len(s.Nodes) {
 		return immutable.None[string]()
 	}
@@ -51,7 +52,7 @@ func getNodeAudience(s *State, nodeIndex int) immutable.Option[string] {
 	return immutable.None[string]()
 }
 
-func setupSourceHub(s *State, testCase TestCase) ([]node.DocumentACPOpt, error) {
+func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
 	var isDocumentACPTest bool
 	for _, a := range testCase.Actions {
 		switch a.(type) {

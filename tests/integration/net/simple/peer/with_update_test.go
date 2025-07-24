@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -46,8 +47,8 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -106,8 +107,8 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 0,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -165,14 +166,14 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 0,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -238,8 +239,8 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -417,14 +418,14 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 0,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{

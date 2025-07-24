@@ -17,6 +17,8 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 type DocumentACPType string
@@ -39,18 +41,15 @@ var (
 	documentACPType DocumentACPType
 )
 
-// KMSType is the type of KMS to use.
-type KMSType string
-
 const (
 	// NoneKMSType is the none KMS type. It is used to indicate that no KMS should be used.
-	NoneKMSType KMSType = "none"
+	NoneKMSType state.KMSType = "none"
 	// PubSubKMSType is the PubSub KMS type.
-	PubSubKMSType KMSType = "pubsub"
+	PubSubKMSType state.KMSType = "pubsub"
 )
 
-func getKMSTypes() []KMSType {
-	return []KMSType{PubSubKMSType}
+func getKMSTypes() []state.KMSType {
+	return []state.KMSType{PubSubKMSType}
 }
 
 func init() {
@@ -72,7 +71,7 @@ type AddDACPolicy struct {
 	Policy string
 
 	// The policy creator identity, i.e. actor creating the policy.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// The expected policyID generated based on the Policy loaded in to the ACP system.
 	//
@@ -90,7 +89,7 @@ type AddDACPolicy struct {
 
 // addDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
 func addDACPolicy(
-	s *State,
+	s *state.State,
 	action AddDACPolicy,
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
@@ -170,13 +169,13 @@ type AddDACActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor to tie the document's relation with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[Identity]
+	TargetIdentity immutable.Option[state.Identity]
 
 	// The requestor identity, i.e. identity of the actor creating the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[Identity]
+	RequestorIdentity immutable.Option[state.Identity]
 
 	// Result returns true if it was a no-op due to existing before, and false if a new relationship was made.
 	ExpectedExistence bool
@@ -189,7 +188,7 @@ type AddDACActorRelationship struct {
 }
 
 func addDACActorRelationship(
-	s *State,
+	s *state.State,
 	action AddDACActorRelationship,
 ) {
 	var docID string
@@ -262,13 +261,13 @@ type DeleteDACActorRelationship struct {
 	// The target public identity, i.e. the identity of the actor with whom the relationship is with.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	TargetIdentity immutable.Option[Identity]
+	TargetIdentity immutable.Option[state.Identity]
 
 	// The requestor identity, i.e. identity of the actor deleting the relationship.
 	// Note: This identity must either own or have managing access defined in the policy.
 	//
 	// This is a required field. To test the invalid usage of not having this arg, use NoIdentity() or leave default.
-	RequestorIdentity immutable.Option[Identity]
+	RequestorIdentity immutable.Option[state.Identity]
 
 	// Result returns true if the relationship record was expected to be found and deleted,
 	// and returns false if no matching relationship record was found (no-op).
@@ -282,7 +281,7 @@ type DeleteDACActorRelationship struct {
 }
 
 func deleteDACActorRelationship(
-	s *State,
+	s *state.State,
 	action DeleteDACActorRelationship,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -315,7 +314,7 @@ func deleteDACActorRelationship(
 	}
 }
 
-func getCollectionAndDocInfo(s *State, collectionID, docInd, nodeID int) (string, string) {
+func getCollectionAndDocInfo(s *state.State, collectionID, docInd, nodeID int) (string, string) {
 	collectionName := ""
 	docID := ""
 	if collectionID != -1 {

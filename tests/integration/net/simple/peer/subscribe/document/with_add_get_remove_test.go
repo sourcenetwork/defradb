@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
@@ -39,19 +40,19 @@ func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UnsubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.GetAllP2PDocuments{
 				NodeID:         1,
-				ExpectedDocIDs: []testUtils.ColDocIndex{},
+				ExpectedDocIDs: []state.ColDocIndex{},
 			},
 		},
 	}
@@ -87,21 +88,21 @@ func TestP2PDocumentAddRemoveGetMultiple(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
-					testUtils.NewColDocIndex(0, 1),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+					state.NewColDocIndex(0, 1),
 				},
 			},
 			testUtils.UnsubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.GetAllP2PDocuments{
 				NodeID: 1,
-				ExpectedDocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 1),
+				ExpectedDocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 1),
 				},
 			},
 		},

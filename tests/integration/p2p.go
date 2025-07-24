@@ -14,6 +14,7 @@ import (
 	"time"
 
 	netConfig "github.com/sourcenetwork/defradb/net/config"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
@@ -132,15 +133,6 @@ type GetAllP2PCollections struct {
 	ExpectedCollectionIDs []int
 }
 
-type ColDocIndex struct {
-	Col int
-	Doc int
-}
-
-func NewColDocIndex(col, doc int) ColDocIndex {
-	return ColDocIndex{col, doc}
-}
-
 // SubscribeToDocument sets up a subscription on the given node to the given document.
 //
 // Changes made to subscribed documents in peers connected to this node will be synced from
@@ -155,7 +147,7 @@ type SubscribeToDocument struct {
 	// DocIDs are the docIDs (indexes) of the documents to subscribe to.
 	//
 	// A [NonExistentDocID] may be provided to test non-existent  docIDs.
-	DocIDs []ColDocIndex
+	DocIDs []state.ColDocIndex
 
 	// Any error expected from the action. Optional.
 	//
@@ -173,7 +165,7 @@ type UnsubscribeToDocument struct {
 	// DocIDs are the docIDs (indexes) of the documents to unsubscribe from.
 	//
 	// A [NonExistentDocID] may be provided to test non-existent docIDs.
-	DocIDs []ColDocIndex
+	DocIDs []state.ColDocIndex
 
 	// Any error expected from the action. Optional.
 	//
@@ -189,7 +181,7 @@ type GetAllP2PDocuments struct {
 	NodeID int
 
 	// ExpectedDocIDs are the docIDs (indexes) of the documents expected.
-	ExpectedDocIDs []ColDocIndex
+	ExpectedDocIDs []state.ColDocIndex
 }
 
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
@@ -207,7 +199,7 @@ type WaitForSync struct {
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func connectPeers(
-	s *State,
+	s *state.State,
 	cfg ConnectPeers,
 ) {
 	sourceNode := s.Nodes[cfg.SourceNodeID]
@@ -235,7 +227,7 @@ func connectPeers(
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func configureReplicator(
-	s *State,
+	s *state.State,
 	cfg ConfigureReplicator,
 ) {
 	sourceNode := s.Nodes[cfg.SourceNodeID]
@@ -252,7 +244,7 @@ func configureReplicator(
 }
 
 func deleteReplicator(
-	s *State,
+	s *state.State,
 	cfg DeleteReplicator,
 ) {
 	sourceNode := s.Nodes[cfg.SourceNodeID]
@@ -267,7 +259,7 @@ func deleteReplicator(
 //
 // Any errors generated during this process will result in a test failure.
 func subscribeToCollection(
-	s *State,
+	s *state.State,
 	action SubscribeToCollection,
 ) {
 	n := s.Nodes[action.NodeID]
@@ -301,7 +293,7 @@ func subscribeToCollection(
 //
 // Any errors generated during this process will result in a test failure.
 func unsubscribeToCollection(
-	s *State,
+	s *state.State,
 	action UnsubscribeToCollection,
 ) {
 	n := s.Nodes[action.NodeID]
@@ -336,7 +328,7 @@ func unsubscribeToCollection(
 //
 // Any errors generated during this process will result in a test failure.
 func getAllP2PCollections(
-	s *State,
+	s *state.State,
 	action GetAllP2PCollections,
 ) {
 	expectedCollections := []string{}
@@ -356,7 +348,7 @@ func getAllP2PCollections(
 //
 // Any errors generated during this process will result in a test failure.
 func subscribeToDocument(
-	s *State,
+	s *state.State,
 	action SubscribeToDocument,
 ) {
 	n := s.Nodes[action.NodeID]
@@ -390,7 +382,7 @@ func subscribeToDocument(
 //
 // Any errors generated during this process will result in a test failure.
 func unsubscribeToDocument(
-	s *State,
+	s *state.State,
 	action UnsubscribeToDocument,
 ) {
 	n := s.Nodes[action.NodeID]
@@ -425,7 +417,7 @@ func unsubscribeToDocument(
 //
 // Any errors generated during this process will result in a test failure.
 func getAllP2PDocuments(
-	s *State,
+	s *state.State,
 	action GetAllP2PDocuments,
 ) {
 	expectedDocuments := []string{}
@@ -442,7 +434,7 @@ func getAllP2PDocuments(
 }
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
-func reconnectPeers(s *State) {
+func reconnectPeers(s *state.State) {
 	for i, n := range s.Nodes {
 		for j := range n.P2p.Connections {
 			sourceNode := s.Nodes[i]
@@ -468,7 +460,7 @@ func RandomNetworkingConfig() ConfigureNode {
 }
 
 // syncDocs requests document sync from peers.
-func syncDocs(s *State, action SyncDocs) {
+func syncDocs(s *state.State, action SyncDocs) {
 	node := s.Nodes[action.NodeID]
 
 	docIDStrings := make([]string, len(action.DocIDs))

@@ -27,17 +27,18 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
 // without allowing them to modify the state.
 type TestState interface {
 	// GetClientType returns the client type of the test.
-	GetClientType() ClientType
+	GetClientType() state.ClientType
 	// GetCurrentNodeID returns the node id that is currently being asserted.
 	GetCurrentNodeID() int
 	// GetIdentity returns the identity for the given node index.
-	GetIdentity(Identity) acpIdentity.Identity
+	GetIdentity(state.Identity) acpIdentity.Identity
 }
 
 type testStateMatcher struct {
@@ -205,7 +206,7 @@ func (matcher *SameValue) NegatedFailureMessage(actual any) string {
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.
-func assertResultsEqual(t testing.TB, client ClientType, expected any, actual any, msgAndArgs ...any) {
+func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
 	case HTTPClientType, CLIClientType, JSClientType:
 		if !areResultsEqual(expected, actual) {
@@ -365,7 +366,7 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 }
 
 func assertCollectionVersions(
-	s *State,
+	s *state.State,
 	expected []client.CollectionVersion,
 	actual []client.CollectionVersion,
 ) {

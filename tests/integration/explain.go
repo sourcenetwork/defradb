@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 var (
@@ -110,7 +111,7 @@ type ExplainRequest struct {
 }
 
 func executeExplainRequest(
-	s *State,
+	s *state.State,
 	action ExplainRequest,
 ) {
 	// Must have a non-empty request.
@@ -145,7 +146,7 @@ func executeExplainRequest(
 }
 
 func assertExplainRequestResults(
-	s *State,
+	s *state.State,
 	actualResult *client.GQLResult,
 	action ExplainRequest,
 ) {
@@ -198,7 +199,7 @@ func assertExplainRequestResults(
 }
 
 func assertExplainTargetCase(
-	s *State,
+	s *state.State,
 	targetCase PlanNodeTargetCase,
 	actualResults map[string]any,
 ) {

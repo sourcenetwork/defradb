@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
@@ -54,7 +55,7 @@ type ConfigureMigration struct {
 }
 
 func configureMigration(
-	s *State,
+	s *state.State,
 	action ConfigureMigration,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)

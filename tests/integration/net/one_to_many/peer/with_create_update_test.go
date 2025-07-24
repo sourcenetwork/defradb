@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // This test asserts that relational documents do not fail to sync if their related
@@ -60,8 +61,8 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(1, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(1, 0),
 				},
 			},
 			testUtils.UpdateDoc{

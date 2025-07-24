@@ -21,6 +21,7 @@ import (
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/stretchr/testify/require"
 )
@@ -40,7 +41,7 @@ func createBadgerEncryptionKey() error {
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *State, testCase TestCase, opts ...node.Option) (*NodeState, error) {
+func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
 
@@ -128,13 +129,13 @@ func setupNode(s *State, testCase TestCase, opts ...node.Option) (*NodeState, er
 	c, err := setupClient(s, node)
 	require.Nil(s.T, err)
 
-	eventState, err := NewEventState(c.Events())
+	eventState, err := state.NewEventState(c.Events())
 	require.NoError(s.T, err)
 
-	st := &NodeState{
+	st := &state.NodeState{
 		Client:  c,
 		Event:   eventState,
-		P2p:     NewP2PState(),
+		P2p:     state.NewP2PState(),
 		DbPath:  path,
 		NetOpts: netOpts,
 	}

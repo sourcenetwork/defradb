@@ -46,6 +46,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
@@ -178,7 +179,7 @@ func ExecuteTestCase(
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
-	var clients []ClientType
+	var clients []state.ClientType
 	if httpClient {
 		clients = append(clients, HTTPClientType)
 	}
@@ -192,7 +193,7 @@ func ExecuteTestCase(
 		clients = append(clients, JSClientType)
 	}
 
-	var databases []DatabaseType
+	var databases []state.DatabaseType
 	if badgerInMemory {
 		databases = append(databases, BadgerIMType)
 	}
@@ -203,15 +204,15 @@ func ExecuteTestCase(
 		databases = append(databases, DefraIMType)
 	}
 
-	var kmsList []KMSType
+	var kmsList []state.KMSType
 	if testCase.KMS.Activated {
 		kmsList = getKMSTypes()
 		for _, excluded := range testCase.KMS.ExcludedTypes {
-			kmsList = slices.DeleteFunc(kmsList, func(t KMSType) bool { return t == excluded })
+			kmsList = slices.DeleteFunc(kmsList, func(t state.KMSType) bool { return t == excluded })
 		}
 	}
 	if len(kmsList) == 0 {
-		kmsList = []KMSType{NoneKMSType}
+		kmsList = []state.KMSType{NoneKMSType}
 	}
 
 	// Assert that these are not empty to protect against accidental mis-configurations,
@@ -237,9 +238,9 @@ func executeTestCase(
 	t testing.TB,
 	collectionNames []string,
 	testCase TestCase,
-	kms KMSType,
-	dbt DatabaseType,
-	clientType ClientType,
+	kms state.KMSType,
+	dbt state.DatabaseType,
+	clientType state.ClientType,
 ) {
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
@@ -263,7 +264,7 @@ func executeTestCase(
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := NewState(ctx, t, testCase, kms, dbt, clientType, collectionNames)
+	s := state.NewState(ctx, t, testCase.IdentityTypes, kms, dbt, clientType, collectionNames)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -302,7 +303,7 @@ func executeTestCase(
 }
 
 func performAction(
-	s *State,
+	s *state.State,
 	testCase TestCase,
 	actionIndex int,
 	act any,
@@ -460,7 +461,7 @@ func performAction(
 	}
 }
 
-func createGenerateDocs(s *State, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
+func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.Option[int]) {
 	nameToInd := make(map[string]int)
 	for i, name := range s.CollectionNames {
 		nameToInd[name] = i
@@ -474,7 +475,7 @@ func createGenerateDocs(s *State, docs []gen.GeneratedDoc, nodeID immutable.Opti
 	}
 }
 
-func generateDocs(s *State, action GenerateDocs) {
+func generateDocs(s *state.State, action GenerateDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
@@ -491,7 +492,7 @@ func generateDocs(s *State, action GenerateDocs) {
 	createGenerateDocs(s, docs, action.NodeID)
 }
 
-func generatePredefinedDocs(s *State, action CreatePredefinedDocs) {
+func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
@@ -507,7 +508,7 @@ func generatePredefinedDocs(s *State, action CreatePredefinedDocs) {
 }
 
 func benchmarkAction(
-	s *State,
+	s *state.State,
 	testCase TestCase,
 	actionIndex int,
 	bench Benchmark,
@@ -618,7 +619,7 @@ func getCollectionNamesFromSchema(result map[string]int, schema string, nextInde
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
 func closeNodes(
-	s *State,
+	s *state.State,
 	action Close,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -638,7 +639,7 @@ func closeNodes(
 // greater than 0. For example if requesting a node with nodeID=2 then the resulting output will contain only
 // one element (at index 0) caller might accidentally assume that this node belongs to node 0. Therefore, the
 // caller should always use the returned IDs, instead of guessing the IDs based on node indexes.
-func getNodesWithIDs(nodeID immutable.Option[int], nodes []*NodeState) ([]int, []*NodeState) {
+func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]int, []*state.NodeState) {
 	if !nodeID.HasValue() {
 		indexes := make([]int, len(nodes))
 		for i := range nodes {
@@ -647,7 +648,7 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*NodeState) ([]int, [
 		return indexes, nodes
 	}
 
-	return []int{nodeID.Value()}, []*NodeState{nodes[nodeID.Value()]}
+	return []int{nodeID.Value()}, []*state.NodeState{nodes[nodeID.Value()]}
 }
 
 func calculateLenForFlattenedActions(testCase *TestCase) int {
@@ -753,7 +754,7 @@ ActionLoop:
 // If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
 // nodes will be added.
 func setStartingNodes(
-	s *State,
+	s *state.State,
 	testCase TestCase,
 ) {
 	for _, action := range testCase.Actions {
@@ -765,20 +766,20 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
-		st, err := setupNode(s, testCase, db.WithNodeIdentity(GetIdentity(s, NodeIdentity(0))))
+		st, err := setupNode(s, testCase, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))))
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
 	}
 }
 
-func startNodes(s *State, testCase TestCase, action Start) {
+func startNodes(s *state.State, testCase TestCase, action Start) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(nodes) - 1; i >= 0; i-- {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.Nodes[nodeIndex].DbPath
-		opts := []node.Option{db.WithNodeIdentity(GetIdentity(s, NodeIdentity(nodeIndex)))}
+		opts := []node.Option{db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex)))}
 		for _, opt := range s.Nodes[nodeIndex].NetOpts {
 			opts = append(opts, opt)
 		}
@@ -800,7 +801,7 @@ func startNodes(s *State, testCase TestCase, action Start) {
 }
 
 func restartNodes(
-	s *State,
+	s *state.State,
 	testCase TestCase,
 ) {
 	if s.Dbt == BadgerIMType || s.Dbt == DefraIMType {
@@ -816,7 +817,7 @@ func restartNodes(
 // If a given collection is not present in the database the value at the corresponding
 // result-index will be nil.
 func refreshCollections(
-	s *State,
+	s *state.State,
 ) {
 	for _, node := range s.Nodes {
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
@@ -851,7 +852,7 @@ func refreshCollections(
 // It returns the new node, and its peer address. Any errors generated during configuration
 // will result in a test failure.
 func configureNode(
-	s *State,
+	s *state.State,
 	testCase TestCase,
 	action ConfigureNode,
 ) {
@@ -871,7 +872,7 @@ func configureNode(
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(GetIdentity(s, NodeIdentity(len(s.Nodes)))))
+	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
 	node, err := setupNode(s, testCase, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)
@@ -880,7 +881,7 @@ func configureNode(
 }
 
 func refreshDocuments(
-	s *State,
+	s *state.State,
 	testCase TestCase,
 	startActionIndex int,
 ) {
@@ -929,7 +930,7 @@ func refreshDocuments(
 }
 
 func getIndexes(
-	s *State,
+	s *state.State,
 	action GetIndexes,
 ) {
 	if len(s.Nodes) == 0 {
@@ -1023,7 +1024,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t te
 
 // updateSchema updates the schema using the given details.
 func updateSchema(
-	s *State,
+	s *state.State,
 	action SchemaUpdate,
 ) {
 	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
@@ -1086,7 +1087,7 @@ func updateSchema(
 }
 
 func patchSchema(
-	s *State,
+	s *state.State,
 	action SchemaPatch,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1109,7 +1110,7 @@ func patchSchema(
 }
 
 func patchCollection(
-	s *State,
+	s *state.State,
 	action PatchCollection,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1125,7 +1126,7 @@ func patchCollection(
 }
 
 func getSchema(
-	s *State,
+	s *state.State,
 	action GetSchema,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1157,7 +1158,7 @@ func getSchema(
 }
 
 func getCollections(
-	s *State,
+	s *state.State,
 	action GetCollections,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1180,7 +1181,7 @@ func getCollections(
 }
 
 func setActiveSchemaVersion(
-	s *State,
+	s *state.State,
 	action SetActiveSchemaVersion,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1195,7 +1196,7 @@ func setActiveSchemaVersion(
 }
 
 func createView(
-	s *State,
+	s *state.State,
 	action CreateView,
 ) {
 	if viewType == MaterializedViewType {
@@ -1221,7 +1222,7 @@ func createView(
 }
 
 func refreshViews(
-	s *State,
+	s *state.State,
 	action RefreshViews,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1235,14 +1236,14 @@ func refreshViews(
 // createDoc creates a document using the chosen [mutationType] and caches it in the
 // test state object.
 func createDoc(
-	s *State,
+	s *state.State,
 	action CreateDoc,
 ) {
 	if action.DocMap != nil {
 		substituteRelations(s, action)
 	}
 
-	var mutation func(*State, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
+	var mutation func(*state.State, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = createDocViaColSave
@@ -1297,7 +1298,7 @@ func createDoc(
 }
 
 func createDocViaColSave(
-	s *State,
+	s *state.State,
 	action CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1322,7 +1323,7 @@ func createDocViaColSave(
 	return docIDs, nil
 }
 
-func makeContextForDocCreate(s *State, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
+func makeContextForDocCreate(s *state.State, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
 	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
 	return ctx
 }
@@ -1335,7 +1336,7 @@ func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
 }
 
 func createDocViaColCreate(
-	s *State,
+	s *state.State,
 	action CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1371,7 +1372,7 @@ func createDocViaColCreate(
 }
 
 func createDocViaGQL(
-	s *State,
+	s *state.State,
 	action CreateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1434,7 +1435,7 @@ func createDocViaGQL(
 //
 // If a document at that index is not found it will panic.
 func substituteRelations(
-	s *State,
+	s *state.State,
 	action CreateDoc,
 ) {
 	for k, v := range action.DocMap {
@@ -1451,7 +1452,7 @@ func substituteRelations(
 // deleteDoc deletes a document using the collection api and caches it in the
 // given documents slice.
 func deleteDoc(
-	s *State,
+	s *state.State,
 	action DeleteDoc,
 ) {
 	docID := s.DocIDs[action.CollectionID][action.DocID]
@@ -1480,16 +1481,16 @@ func deleteDoc(
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[Identity]())
+		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity]())
 	}
 }
 
 // updateDoc updates a document using the chosen [mutationType].
 func updateDoc(
-	s *State,
+	s *state.State,
 	action UpdateDoc,
 ) {
-	var mutation func(*State, UpdateDoc, client.TxnStore, int, client.Collection) error
+	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection) error
 	switch mutationType {
 	case CollectionSaveMutationType:
 		mutation = updateDocViaColSave
@@ -1530,13 +1531,13 @@ func updateDoc(
 			action.NodeID,
 			action.CollectionID,
 			getEventsForUpdateDoc(s, action),
-			immutable.None[Identity](),
+			immutable.None[state.Identity](),
 		)
 	}
 }
 
 func updateDocViaColSave(
-	s *State,
+	s *state.State,
 	action UpdateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1556,7 +1557,7 @@ func updateDocViaColSave(
 }
 
 func updateDocViaColUpdate(
-	s *State,
+	s *state.State,
 	action UpdateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1576,7 +1577,7 @@ func updateDocViaColUpdate(
 }
 
 func updateDocViaGQL(
-	s *State,
+	s *state.State,
 	action UpdateDoc,
 	node client.TxnStore,
 	nodeIndex int,
@@ -1608,7 +1609,7 @@ func updateDocViaGQL(
 }
 
 // updateWithFilter updates the set of matched documents.
-func updateWithFilter(s *State, action UpdateWithFilter) {
+func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	var res *client.UpdateResult
 	var expectedErrorRaised bool
 
@@ -1636,14 +1637,14 @@ func updateWithFilter(s *State, action UpdateWithFilter) {
 			action.NodeID,
 			action.CollectionID,
 			getEventsForUpdateWithFilter(s, action, res),
-			immutable.None[Identity](),
+			immutable.None[state.Identity](),
 		)
 	}
 }
 
 // createIndex creates a secondary index using the collection api.
 func createIndex(
-	s *State,
+	s *state.State,
 	action CreateIndex,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -1686,7 +1687,7 @@ func createIndex(
 
 // dropIndex drops the secondary index using the collection api.
 func dropIndex(
-	s *State,
+	s *state.State,
 	action DropIndex,
 ) {
 	var expectedErrorRaised bool
@@ -1710,7 +1711,7 @@ func dropIndex(
 
 // backupExport generates a backup using the db api.
 func backupExport(
-	s *State,
+	s *state.State,
 	action BackupExport,
 ) {
 	if action.Config.Filepath == "" {
@@ -1737,7 +1738,7 @@ func backupExport(
 
 // backupImport imports data from a backup using the db api.
 func backupImport(
-	s *State,
+	s *state.State,
 	action BackupImport,
 ) {
 	if action.Filepath == "" {
@@ -1785,7 +1786,7 @@ func withRetryOnNode(
 }
 
 func getTransaction(
-	s *State,
+	s *state.State,
 	db client.TxnStore,
 	transactionSpecifier immutable.Option[int],
 	expectedError string,
@@ -1820,7 +1821,7 @@ func getTransaction(
 // Will panic if the given transaction does not exist. Discards the transaction if
 // an error is returned on commit.
 func commitTransaction(
-	s *State,
+	s *state.State,
 	action TransactionCommit,
 ) {
 	err := s.Txns[action.TransactionID].Commit(s.Ctx)
@@ -1835,7 +1836,7 @@ func commitTransaction(
 
 // executeRequest executes the given request.
 func executeRequest(
-	s *State,
+	s *state.State,
 	action Request,
 ) {
 	var expectedErrorRaised bool
@@ -1896,7 +1897,7 @@ nodeLoop:
 // failures are recorded properly. It will only yield once, once
 // the subscription has terminated.
 func executeSubscriptionRequest(
-	s *State,
+	s *state.State,
 	action SubscriptionRequest,
 ) {
 	subscriptionAssert := make(chan func())
@@ -1991,7 +1992,7 @@ func AssertErrors(
 }
 
 func assertRequestResults(
-	s *State,
+	s *state.State,
 	result *client.GQLResult,
 	expectedResults map[string]any,
 	expectedError string,
@@ -2065,7 +2066,7 @@ func assertRequestResults(
 }
 
 func assertRequestResultDocs(
-	s *State,
+	s *state.State,
 	nodeID int,
 	expectedResults []map[string]any,
 	actualResults []map[string]any,
@@ -2097,7 +2098,7 @@ func assertRequestResultDocs(
 }
 
 func assertRequestResultDoc(
-	s *State,
+	s *state.State,
 	nodeID int,
 	actualDoc map[string]any,
 	expectedDoc map[string]any,
@@ -2171,7 +2172,7 @@ func assertExpectedErrorRaised(t testing.TB, expectedError string, wasRaised boo
 }
 
 func assertIntrospectionResults(
-	s *State,
+	s *state.State,
 	action IntrospectionRequest,
 ) bool {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -2203,7 +2204,7 @@ func assertIntrospectionResults(
 
 // Asserts that the client introspection results conform to our expectations.
 func assertClientIntrospectionResults(
-	s *State,
+	s *state.State,
 	action ClientIntrospectionRequest,
 ) bool {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
@@ -2333,14 +2334,14 @@ func skipIfViewCacheTypeUnsupported(t testing.TB, supportedViewTypes immutable.O
 // If the resultant filtered set is empty the test will be skipped.
 func skipIfClientTypeUnsupported(
 	t testing.TB,
-	clients []ClientType,
-	supportedClientTypes immutable.Option[[]ClientType],
-) []ClientType {
+	clients []state.ClientType,
+	supportedClientTypes immutable.Option[[]state.ClientType],
+) []state.ClientType {
 	if !supportedClientTypes.HasValue() {
 		return clients
 	}
 
-	filteredClients := []ClientType{}
+	filteredClients := []state.ClientType{}
 	for _, supportedMutationType := range supportedClientTypes.Value() {
 		for _, client := range clients {
 			if supportedMutationType == client {
@@ -2375,13 +2376,13 @@ func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.
 
 func skipIfDatabaseTypeUnsupported(
 	t testing.TB,
-	databases []DatabaseType,
-	supportedDatabaseTypes immutable.Option[[]DatabaseType],
-) []DatabaseType {
+	databases []state.DatabaseType,
+	supportedDatabaseTypes immutable.Option[[]state.DatabaseType],
+) []state.DatabaseType {
 	if !supportedDatabaseTypes.HasValue() {
 		return databases
 	}
-	filteredDatabases := []DatabaseType{}
+	filteredDatabases := []state.DatabaseType{}
 	for _, supportedType := range supportedDatabaseTypes.Value() {
 		for _, database := range databases {
 			if supportedType == database {
@@ -2483,7 +2484,7 @@ func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.
 	}
 }
 
-func performGetNodeIdentityAction(s *State, action GetNodeIdentity) {
+func performGetNodeIdentityAction(s *state.State, action GetNodeIdentity) {
 	if action.NodeID >= len(s.Nodes) {
 		s.T.Fatalf("invalid nodeID: %v", action.NodeID)
 	}
@@ -2491,14 +2492,14 @@ func performGetNodeIdentityAction(s *State, action GetNodeIdentity) {
 	actualIdent, err := s.Nodes[action.NodeID].GetNodeIdentity(s.Ctx)
 	require.NoError(s.T, err)
 
-	expectedIdent := GetIdentity(s, action.ExpectedIdentity)
+	expectedIdent := state.GetIdentity(s, action.ExpectedIdentity)
 	expectedRawIdent := expectedIdent.ToPublicRawIdentity()
 	expectedRawIdentOpt := immutable.Some(expectedRawIdent)
 	require.Equal(s.T, expectedRawIdentOpt, actualIdent, "raw identity at %d mismatch", action.NodeID)
 }
 
 // execGomegaMatcher executes the given gomega matcher and asserts the result.
-func execGomegaMatcher(exp gomega.OmegaMatcher, s *State, actual any, stack *assertStack) {
+func execGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any, stack *assertStack) {
 	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
 
 	success, err := exp.Match(actual)
@@ -2510,7 +2511,7 @@ func execGomegaMatcher(exp gomega.OmegaMatcher, s *State, actual any, stack *ass
 		assert.Fail(s.T, exp.FailureMessage(actual), "Path: %s", stack)
 	}
 
-	traverseGomegaMatchers(exp, s, func(m StatefulMatcher) {
+	traverseGomegaMatchers(exp, s, func(m state.StatefulMatcher) {
 		if !slices.Contains(s.StatefulMatchers, m) {
 			s.StatefulMatchers = append(s.StatefulMatchers, m)
 		}
@@ -2519,7 +2520,7 @@ func execGomegaMatcher(exp gomega.OmegaMatcher, s *State, actual any, stack *ass
 
 // traverseGomegaMatchers traverses the given gomega matcher and calls the given function
 // for each matcher found with the type T.
-func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *State, f func(T)) {
+func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *state.State, f func(T)) {
 	if m, ok := exp.(T); ok {
 		f(m)
 		return
@@ -2540,17 +2541,17 @@ func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *S
 }
 
 // resetMatchers resets the state of all stateful matchers.
-func resetMatchers(s *State) {
+func resetMatchers(s *state.State) {
 	for _, matcher := range s.StatefulMatchers {
 		matcher.ResetMatcherState()
 	}
 }
 
-func performVerifySignatureAction(s *State, action VerifyBlockSignature) {
+func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for i, node := range nodes {
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, i)
-		signerIdentity := GetIdentity(s, immutable.Some(action.SignerIdentity))
+		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
 		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey())
 
 		if action.ExpectedError != "" {

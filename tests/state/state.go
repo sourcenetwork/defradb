@@ -8,13 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package tests
+package state
 
 import (
 	"context"
 	"testing"
 
 	"github.com/ipfs/go-cid"
+	"github.com/onsi/gomega/types"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -26,6 +27,29 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
+
+// StatefulMatcher is a matcher that requires state to be reset between tests.
+type StatefulMatcher interface {
+	types.GomegaMatcher
+	// ResetMatcherState resets the state of the matcher.
+	ResetMatcherState()
+}
+
+type DatabaseType string
+
+// KMSType is the type of KMS to use.
+type KMSType string
+
+type ClientType string
+
+type ColDocIndex struct {
+	Col int
+	Doc int
+}
+
+func NewColDocIndex(col, doc int) ColDocIndex {
+	return ColDocIndex{col, doc}
+}
 
 // P2pState contains all p2p related testing state.
 type P2pState struct {
@@ -240,13 +264,11 @@ func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
 	return GetIdentity(s, immutable.Some(ident))
 }
 
-var _ TestState = &State{}
-
 // NewState returns a new fresh state for the given testCase.
 func NewState(
 	ctx context.Context,
 	t testing.TB,
-	testCase TestCase,
+	identityTypes map[Identity]crypto.KeyType,
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
@@ -259,7 +281,7 @@ func NewState(
 		Dbt:                             dbt,
 		ClientType:                      clientType,
 		Txns:                            []client.Txn{},
-		IdentityTypes:                   testCase.IdentityTypes,
+		IdentityTypes:                   identityTypes,
 		Identities:                      map[Identity]*IdentityHolder{},
 		NextIdentityGenSeed:             0,
 		AllActionsDone:                  make(chan struct{}),
