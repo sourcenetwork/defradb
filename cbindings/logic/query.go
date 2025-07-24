@@ -48,7 +48,7 @@ func removeSubscription(id string) {
 func PollSubscription(id string) GoCResult {
 	res, ok := getSubscription(id)
 	if !ok {
-		return returnGoC(1, cerrInvalidSubscriptionID, "")
+		return returnGoC(1, errInvalidSubscriptionID, "")
 	}
 
 	select {
@@ -59,7 +59,7 @@ func PollSubscription(id string) GoCResult {
 		}
 		return marshalJSONToGoCResult(msg)
 	case <-time.After(time.Second):
-		return returnGoC(1, cerrTimeoutSubscription, "")
+		return returnGoC(1, errTimeoutSubscription, "")
 	}
 }
 
