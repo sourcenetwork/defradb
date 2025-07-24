@@ -240,7 +240,10 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			if ok && head.String() == evt.Merge.Cid.String() {
 				delete(expect, getMergeEventKey(evt.Merge))
 			}
-			node.P2p.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{Cid: evt.Merge.Cid, Decrypted: evt.Decrypted}
+			node.P2p.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
+				Cid:       evt.Merge.Cid,
+				Decrypted: evt.Decrypted,
+			}
 		}
 	}
 }
