@@ -146,13 +146,6 @@ func extractCStringsFromRequestOptions(opts []client.RequestOption) (string, str
 }
 
 // Helper function
-// Creates a string from a client.CollectionDefinition
-func stringFromCollectionDefinition(def client.CollectionDefinition) string {
-	jsonBytes, _ := json.Marshal(def)
-	return string(jsonBytes)
-}
-
-// Helper function
 // Builds a collection from a definition
 func collectionsFromDefinitions(defs []client.CollectionDefinition) ([]client.Collection, error) {
 	cols := make([]client.Collection, len(defs))

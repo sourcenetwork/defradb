@@ -15,13 +15,13 @@ import (
 	"errors"
 
 	"github.com/lens-vm/lens/host-go/config/model"
-	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/immutable"
 )
 
 var _ client.Txn = (*Transaction)(nil)
