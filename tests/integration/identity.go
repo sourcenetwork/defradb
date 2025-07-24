@@ -103,7 +103,7 @@ func getIdentity(s *state, identity immutable.Option[Identity]) acpIdentity.Iden
 	// stored identities, if "*" string needs to be signaled to the acp module then it should be handled
 	// a call before this function.
 	if identity.Value().selector == "*" {
-		require.Fail(s.t, "Used the \"*\" selector for identity incorrectly.", s.testCase.Description)
+		require.Fail(s.t, "Used the \"*\" selector for identity incorrectly.")
 	}
 	return getIdentityHolder(s, identity.Value()).Identity
 }
@@ -117,7 +117,7 @@ func getIdentityHolder(s *state, identity Identity) *identityHolder {
 	}
 
 	keyType := crypto.KeyTypeSecp256k1
-	if k, ok := s.testCase.IdentityTypes[identity]; ok {
+	if k, ok := s.IdentityTypes[identity]; ok {
 		keyType = k
 	}
 
@@ -164,7 +164,7 @@ func generateIdentity(s *state, keyType crypto.KeyType) acpIdentity.Identity {
 		require.NoError(s.t, err)
 		privateKey = crypto.NewPrivateKey(privKey)
 	} else {
-		require.Fail(s.t, "Unsupported signing algorithm", s.testCase.Description)
+		require.Fail(s.t, "Unsupported signing algorithm")
 	}
 
 	s.nextIdentityGenSeed++

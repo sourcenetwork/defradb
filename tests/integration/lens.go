@@ -62,8 +62,8 @@ func configureMigration(
 		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
 		ctx := db.InitContext(s.ctx, txn)
 		err := node.SetMigration(ctx, action.LensConfig)
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
 
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 	}
 }

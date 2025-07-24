@@ -95,7 +95,7 @@ func addDACPolicy(
 ) {
 	// If we expect an error, then ExpectedPolicyID should never be provided.
 	if action.ExpectedError != "" && action.ExpectedPolicyID.HasValue() {
-		require.Fail(s.t, "Expected error should not have an expected policyID with it.", s.testCase.Description)
+		require.Fail(s.t, "Expected error should not have an expected policyID with it.")
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
@@ -114,8 +114,8 @@ func addDACPolicy(
 		ctx := getContextWithIdentity(s.ctx, s, action.Identity, nodeID)
 		policyResult, err := node.AddDACPolicy(ctx, action.Policy)
 
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
@@ -209,8 +209,8 @@ func addDACActorRelationship(
 			getIdentityDID(s, action.TargetIdentity),
 		)
 
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
@@ -299,8 +299,8 @@ func deleteDACActorRelationship(
 			getIdentityDID(s, action.TargetIdentity),
 		)
 
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 		if !expectedErrorRaised {
 			require.Equal(s.t, action.ExpectedError, "")
@@ -321,7 +321,7 @@ func getCollectionAndDocInfo(s *state, collectionID, docInd, nodeID int) (string
 	if collectionID != -1 {
 		collection := s.nodes[nodeID].collections[collectionID]
 		if collection.Version().Name == "" {
-			require.Fail(s.t, "Expected non-empty collection name, but it was empty.", s.testCase.Description)
+			require.Fail(s.t, "Expected non-empty collection name, but it was empty.")
 		}
 		collectionName = collection.Version().Name
 

@@ -51,9 +51,9 @@ func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
 	return immutable.None[string]()
 }
 
-func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
+func setupSourceHub(s *state, testCase TestCase) ([]node.DocumentACPOpt, error) {
 	var isDocumentACPTest bool
-	for _, a := range s.testCase.Actions {
+	for _, a := range testCase.Actions {
 		switch a.(type) {
 		case
 			AddDACPolicy,

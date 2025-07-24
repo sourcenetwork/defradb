@@ -115,7 +115,7 @@ func executeExplainRequest(
 ) {
 	// Must have a non-empty request.
 	if action.Request == "" {
-		require.Fail(s.t, "Explain test must have a non-empty request.", s.testCase.Description)
+		require.Fail(s.t, "Explain test must have a non-empty request.")
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
@@ -123,7 +123,7 @@ func executeExplainRequest(
 		action.ExpectedPatterns == nil &&
 		action.ExpectedTargets == nil &&
 		action.ExpectedFullGraph == nil {
-		require.Fail(s.t, "Atleast one expected explain parameter must be provided.", s.testCase.Description)
+		require.Fail(s.t, "Atleast one expected explain parameter must be provided.")
 	}
 
 	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
@@ -131,7 +131,7 @@ func executeExplainRequest(
 		(action.ExpectedFullGraph != nil ||
 			action.ExpectedPatterns != nil ||
 			action.ExpectedTargets != nil) {
-		require.Fail(s.t, "Expected error should not have other expected results with it.", s.testCase.Description)
+		require.Fail(s.t, "Expected error should not have other expected results with it.")
 	}
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
@@ -152,13 +152,12 @@ func assertExplainRequestResults(
 	// Check expected error matches actual error. If it does we are done.
 	if AssertErrors(
 		s.t,
-		s.testCase.Description,
 		actualResult.Errors,
 		action.ExpectedError,
 	) {
 		return
 	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
-		assert.Fail(s.t, "Expected an error however none was raised.", s.testCase.Description)
+		assert.Fail(s.t, "Expected an error however none was raised.")
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
@@ -173,7 +172,6 @@ func assertExplainRequestResults(
 			s.clientType,
 			action.ExpectedFullGraph,
 			resultantData,
-			s.testCase.Description,
 		)
 	}
 
@@ -181,13 +179,12 @@ func assertExplainRequestResults(
 	// explain graph nodes are in the correct expected ordering.
 	if action.ExpectedPatterns != nil {
 		// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-		actualResultWithoutAttributes := trimExplainAttributes(s.t, s.testCase.Description, resultantData)
+		actualResultWithoutAttributes := trimExplainAttributes(s.t, resultantData)
 		assertResultsEqual(
 			s.t,
 			s.clientType,
 			action.ExpectedPatterns,
 			actualResultWithoutAttributes,
-			s.testCase.Description,
 		)
 	}
 
@@ -217,7 +214,6 @@ func assertExplainTargetCase(
 			assert.Fail(
 				s.t,
 				"Expected target ["+targetCase.TargetNodeName+"], was not found in the explain graph.",
-				s.testCase.Description,
 			)
 		}
 
@@ -226,7 +222,6 @@ func assertExplainTargetCase(
 			s.clientType,
 			targetCase.ExpectedAttributes,
 			foundActualTarget,
-			s.testCase.Description,
 		)
 	}
 }
@@ -373,7 +368,6 @@ func trimSubNodes(graph any) any {
 // trimExplainAttributes trims away all keys that aren't plan nodes within the explain graph.
 func trimExplainAttributes(
 	t testing.TB,
-	description string,
 	actualResult any,
 ) map[string]any {
 	trimmedMap := copyMap(actualResult.(map[string]any))
@@ -386,19 +380,18 @@ func trimExplainAttributes(
 
 		switch v := value.(type) {
 		case map[string]any:
-			trimmedMap[key] = trimExplainAttributes(t, description, v)
+			trimmedMap[key] = trimExplainAttributes(t, v)
 
 		case []map[string]any:
-			trimmedMap[key] = trimExplainAttributesArray(t, description, v)
+			trimmedMap[key] = trimExplainAttributesArray(t, v)
 
 		case []any:
-			trimmedMap[key] = trimExplainAttributesArray(t, description, v)
+			trimmedMap[key] = trimExplainAttributesArray(t, v)
 
 		default:
 			assert.Fail(
 				t,
 				"Unsupported explain graph key-value type encountered: "+reflect.TypeOf(v).String(),
-				description,
 			)
 		}
 	}
@@ -409,14 +402,13 @@ func trimExplainAttributes(
 // trimExplainAttributesArray is a helper that runs trimExplainAttributes for each item in an array.
 func trimExplainAttributesArray[T any](
 	t testing.TB,
-	description string,
 	actualResult []T,
 ) []map[string]any {
 	trimmedArrayElements := []map[string]any{}
 	for _, valueItem := range actualResult {
 		trimmedArrayElements = append(
 			trimmedArrayElements,
-			trimExplainAttributes(t, description, valueItem),
+			trimExplainAttributes(t, valueItem),
 		)
 	}
 	return trimmedArrayElements

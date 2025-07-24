@@ -243,8 +243,8 @@ func configureReplicator(
 
 	err := sourceNode.SetReplicator(s.ctx, targetNode.PeerInfo())
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.t, cfg.ExpectedError, expectedErrorRaised)
 
 	if err == nil {
 		waitForReplicatorConfigureEvent(s, cfg)
@@ -288,8 +288,8 @@ func subscribeToCollection(
 		waitForSubscribeToCollectionEvent(s, action)
 	}
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -322,8 +322,8 @@ func unsubscribeToCollection(
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -377,8 +377,8 @@ func subscribeToDocument(
 		waitForSubscribeToDocumentEvent(s, action)
 	}
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PDocuments(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -411,8 +411,8 @@ func unsubscribeToDocument(
 		waitForUnsubscribeToDocumentEvent(s, action)
 	}
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.RemoveP2PDocuments(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -489,9 +489,9 @@ func syncDocs(s *state, action SyncDocs) {
 		},
 	)
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
+	expectedErrorRaised := AssertError(s.t, err, action.ExpectedError)
 
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.t, action.ExpectedError, expectedErrorRaised)
 
 	if !expectedErrorRaised {
 		for i, docInd := range action.DocIDs {

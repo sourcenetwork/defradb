@@ -40,9 +40,9 @@ func createBadgerEncryptionKey() error {
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
+func setupNode(s *state, testCase TestCase, opts ...node.Option) (*nodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
+	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
 
 	err := createBadgerEncryptionKey()
 	if err != nil {
@@ -58,7 +58,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 
 	case SourceHubDocumentACPType:
 		if len(s.documentACPOptions) == 0 {
-			s.documentACPOptions, err = setupSourceHub(s)
+			s.documentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.t, err)
 		}
 

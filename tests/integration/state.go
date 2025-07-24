@@ -21,6 +21,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
@@ -149,9 +150,6 @@ type state struct {
 	// The Go Test test state
 	t testing.TB
 
-	// The TestCase currently being executed.
-	testCase TestCase
-
 	// The type of KMS currently being tested.
 	kms KMSType
 
@@ -165,6 +163,10 @@ type state struct {
 	//
 	// This is order dependent and the property is accessed by index.
 	txns []client.Txn
+
+	// IdentityTypes is a map of identity to key type.
+	// Use it to customize the key type that is used for identity and signing.
+	IdentityTypes map[Identity]crypto.KeyType
 
 	// identities contains all identities created in this test.
 	// The map key is the identity reference that uniquely identifies identities of different
@@ -267,11 +269,11 @@ func newState(
 	s := &state{
 		ctx:                             ctx,
 		t:                               t,
-		testCase:                        testCase,
 		kms:                             kms,
 		dbt:                             dbt,
 		clientType:                      clientType,
 		txns:                            []client.Txn{},
+		IdentityTypes:                   testCase.IdentityTypes,
 		identities:                      map[Identity]*identityHolder{},
 		nextIdentityGenSeed:             0,
 		allActionsDone:                  make(chan struct{}),
