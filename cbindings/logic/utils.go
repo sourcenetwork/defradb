@@ -89,7 +89,7 @@ func contextWithTransaction(ctx context.Context, TxnIDu64 uint64) (context.Conte
 	}
 	tx, ok := TxnStore.Load(TxnIDu64)
 	if !ok {
-		return ctx, fmt.Errorf(cerrTxnDoesNotExist, TxnIDu64)
+		return ctx, fmt.Errorf(errTxnDoesNotExist, TxnIDu64)
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 	ctx2 := datastore.CtxSetTxn(ctx, txn)
@@ -101,7 +101,7 @@ func contextWithTransaction(ctx context.Context, TxnIDu64 uint64) (context.Conte
 func marshalJSONToGoCResult(value any) GoCResult {
 	dataJSON, err := json.Marshal(value)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrMarshallingJSON, err), "")
+		return returnGoC(1, fmt.Sprintf(errMarshallingJSON, err), "")
 	}
 	return returnGoC(0, "", string(dataJSON))
 }
