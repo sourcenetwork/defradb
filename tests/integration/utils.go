@@ -783,8 +783,9 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		for _, opt := range s.Nodes[nodeIndex].NetOpts {
 			opts = append(opts, opt)
 		}
+
 		var addresses []string
-		for _, addr := range s.Nodes[nodeIndex].PeerInfo().Addrs {
+		for _, addr := range s.Nodes[nodeIndex].AddrInfo.Addrs {
 			addresses = append(addresses, addr.String())
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))

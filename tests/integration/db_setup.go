@@ -140,5 +140,9 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 		NetOpts: netOpts,
 	}
 
+	if node.Peer != nil {
+		st.AddrInfo = node.Peer.PeerInfo()
+	}
+
 	return st, nil
 }
