@@ -30,19 +30,17 @@ func LensSet(
 ) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	// Parse the lens config string into a client.LensConfig
 	decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 	decoder.DisallowUnknownFields()
 	var lensCfg model.Lens
 	if err := decoder.Decode(&lensCfg); err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrInvalidLensConfig, err), "")
+		return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
 	}
 	migrationCfg := client.LensConfig{
 		SourceSchemaVersionID:      srcSchemaVersionID,
@@ -60,26 +58,21 @@ func LensDown(collectionID string, documents string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	srcData := []byte(documents)
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Decode the input documents
 	var src []map[string]any
 	if err := json.Unmarshal(srcData, &src); err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Call the lens down migration
 	out, err := globalNode.DB.LensRegistry().MigrateDown(ctx, enumerable.New(src), collectionID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Each reversed document will be appended to a value array
 	var value []map[string]any
 	err = enumerable.ForEach(out, func(item map[string]any) {
 		value = append(value, item)
@@ -95,26 +88,21 @@ func LensUp(collectionID string, documents string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	srcData := []byte(documents)
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Decode the input documents
 	var src []map[string]any
 	if err := json.Unmarshal(srcData, &src); err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Call the lens down migration
 	out, err := globalNode.DB.LensRegistry().MigrateUp(ctx, enumerable.New(src), collectionID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Each reversed document will be appended to a value array
 	var value []map[string]any
 	err = enumerable.ForEach(out, func(item map[string]any) {
 		value = append(value, item)
@@ -129,14 +117,11 @@ func LensUp(collectionID string, documents string, txnID uint64) GoCResult {
 func LensReload(txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Reload the lenses and return
 	err = globalNode.DB.LensRegistry().ReloadLenses(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
@@ -147,22 +132,18 @@ func LensReload(txnID uint64) GoCResult {
 func LensSetRegistry(collectionID string, lensCfgJSON string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Create a model.Lens from the lens configuration
 	decoder := json.NewDecoder(strings.NewReader(lensCfgJSON))
 	decoder.DisallowUnknownFields()
 	var lensCfg model.Lens
 	if err := decoder.Decode(&lensCfg); err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrInvalidLensConfig, err), "")
+		return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
 	}
 
-	// Set migration and return
 	err = globalNode.DB.LensRegistry().SetMigration(ctx, collectionID, lensCfg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")

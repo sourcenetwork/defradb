@@ -26,6 +26,7 @@ import (
 var globalNode *node.Node
 
 // GetGlobalNode is a function to accommodate integration test support
+// It is not made available as an exported C function
 func GetGlobalNode() *node.Node {
 	return globalNode
 }
@@ -36,7 +37,6 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	inMemoryFlag := cOptions.InMemory != 0
 	listeningAddresses := splitCommaSeparatedString(cOptions.ListeningAddresses)
 
-	// Load the identity if one is provided
 	nodeIdentity, err := loadIdentityFromString(cOptions.IdentityKeyType, cOptions.IdentityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
@@ -47,7 +47,7 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	if globalNode != nil {
 		err := globalNode.Close(ctx)
 		if err != nil {
-			return returnGoC(1, fmt.Sprintf(cerrClosingNode, err), "")
+			return returnGoC(1, fmt.Sprintf(errClosingNode, err), "")
 		}
 		globalNode = nil
 	}
@@ -62,7 +62,6 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 		}
 	}
 
-	// Try to create the node options
 	opts := []node.Option{
 		node.WithStorePath(cOptions.DbPath),
 		node.WithLensRuntime(node.Wazero),
@@ -99,10 +98,10 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	for _, s := range replicatorRetryTimes {
 		n, err := strconv.Atoi(s)
 		if err != nil {
-			return returnGoC(1, fmt.Sprintf(cerrParsingReplicatorTimes, err), "")
+			return returnGoC(1, fmt.Sprintf(errParsingReplicatorTimes, err), "")
 		}
 		if n <= 0 {
-			return returnGoC(1, cerrNegativeReplicatorTime, "")
+			return returnGoC(1, errNegativeReplicatorTime, "")
 		}
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
@@ -113,7 +112,7 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	// Try to create the node passing in the collected options, then return the result
 	globalNode, err = node.New(ctx, opts...)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrCreatingNode, err), "")
+		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")
 	}
 
 	return returnGoC(0, "", "")
@@ -121,7 +120,7 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 
 func NodeStart() GoCResult {
 	if globalNode == nil {
-		return returnGoC(1, cerrUninitializedNode, "")
+		return returnGoC(1, errUninitializedNode, "")
 	}
 	ctx := context.Background()
 
@@ -140,18 +139,18 @@ func NodeStart() GoCResult {
 		return returnGoC(0, "", "")
 	case <-time.After(5 * time.Second):
 		// Timeout occurred, node may still start later
-		return returnGoC(2, cerrUnreadyStart, "")
+		return returnGoC(2, errUnreadyStart, "")
 	}
 }
 
 func NodeStop() GoCResult {
 	if globalNode == nil {
-		return returnGoC(1, cerrStoppedNode, "")
+		return returnGoC(1, errStoppedNode, "")
 	}
 	ctx := context.Background()
 	err := globalNode.Close(ctx)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrStoppingNode, err), "")
+		return returnGoC(1, fmt.Sprintf(errStoppingNode, err), "")
 	}
 	globalNode = nil
 

@@ -81,19 +81,15 @@ func ExecuteQuery(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Attach the identity
-	newctx, err := contextWithIdentity(ctx, identity)
+	ctx, err = contextWithIdentity(ctx, identity)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Set the transaction
-	newctx, err = contextWithTransaction(ctx, txnID)
+	ctx, err = contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	res := globalNode.DB.ExecRequest(ctx, query, opts...)
 

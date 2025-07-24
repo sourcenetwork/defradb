@@ -17,21 +17,16 @@ import (
 func ACPAddPolicy(identityStr string, policy string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Attach the identity to the context
-	newctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityStr)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Set the transaction
-	newctx, err = contextWithTransaction(ctx, TxnID)
+	ctx, err = contextWithTransaction(ctx, TxnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Try to add the policy
 	policyResult, err := globalNode.DB.AddDACPolicy(ctx, policy)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
@@ -49,21 +44,16 @@ func ACPAddRelationship(identityStr string,
 ) GoCResult {
 	ctx := context.Background()
 
-	// Attach the identity to the context
-	newctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityStr)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Set the transaction
-	newctx, err = contextWithTransaction(ctx, TxnID)
+	ctx, err = contextWithTransaction(ctx, TxnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Add the relationship
 	result, err := globalNode.DB.AddDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
@@ -82,21 +72,16 @@ func ACPDeleteRelationship(
 ) GoCResult {
 	ctx := context.Background()
 
-	// Attach the identity to the context
-	newctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityStr)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Set the transaction
-	newctx, err = contextWithTransaction(ctx, TxnID)
+	ctx, err = contextWithTransaction(ctx, TxnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Delete the relationship
 	result, err := globalNode.DB.DeleteDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")

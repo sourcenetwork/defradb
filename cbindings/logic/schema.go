@@ -25,16 +25,14 @@ import (
 func AddSchema(newSchema string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	collectionVersions, err := globalNode.DB.AddSchema(ctx, newSchema)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrAddingSchema, err), "")
+		return returnGoC(1, fmt.Sprintf(errAddingSchema, err), "")
 	}
 	return marshalJSONToGoCResult(collectionVersions)
 }
@@ -43,12 +41,10 @@ func DescribeSchema(name string, root string, version string, txnID uint64) GoCR
 	ctx := context.Background()
 	options := client.SchemaFetchOptions{}
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	// Set the configuration options from the passed in parameters
 	if version != "" {
@@ -64,7 +60,7 @@ func DescribeSchema(name string, root string, version string, txnID uint64) GoCR
 	// Get the schema, and try to convert it to JSON for return
 	schemas, err := globalNode.DB.GetSchemas(ctx, options)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrGettingSchema, err), "")
+		return returnGoC(1, fmt.Sprintf(errGettingSchema, err), "")
 	}
 	return marshalJSONToGoCResult(schemas)
 }
@@ -72,15 +68,13 @@ func DescribeSchema(name string, root string, version string, txnID uint64) GoCR
 func PatchSchema(patchString string, lensString string, setActive bool, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	if patchString == "" {
-		return returnGoC(1, cerrEmptyPatch, "")
+		return returnGoC(1, errEmptyPatch, "")
 	}
 
 	var migration immutable.Option[model.Lens] = immutable.None[model.Lens]()
@@ -89,10 +83,10 @@ func PatchSchema(patchString string, lensString string, setActive bool, txnID ui
 		decoder := json.NewDecoder(strings.NewReader(lensString))
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnGoC(1, fmt.Sprintf(cerrInvalidLensConfig, err), "")
+			return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
 		}
 
-		// Only assign Some if Lense length is greater than 0 (and therefore it is not nil)
+		// Length being greater than 0 also means it is not nil, so no need to check
 		if len(lensCfg.Lenses) > 0 {
 			migration = immutable.Some(lensCfg)
 		}
@@ -100,7 +94,7 @@ func PatchSchema(patchString string, lensString string, setActive bool, txnID ui
 
 	err = globalNode.DB.PatchSchema(ctx, patchString, migration, setActive)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrPatchingSchema, err), "")
+		return returnGoC(1, fmt.Sprintf(errPatchingSchema, err), "")
 	}
 	return returnGoC(0, "", "")
 }
@@ -108,16 +102,14 @@ func PatchSchema(patchString string, lensString string, setActive bool, txnID ui
 func SetActiveSchema(version string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	err = globalNode.DB.SetActiveSchemaVersion(ctx, version)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrSetActiveSchema, err), "")
+		return returnGoC(1, fmt.Sprintf(errSetActiveSchema, err), "")
 	}
 	return returnGoC(0, "", "")
 }

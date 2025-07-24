@@ -27,12 +27,10 @@ func IndexCreate(
 	ctx := context.Background()
 	fieldsArg := splitCommaSeparatedString(fieldsStr)
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	// Parse the fields into an object, considering whether they are each ascending or descending
 	var fields []client.IndexedFieldDescription
@@ -47,10 +45,10 @@ func IndexCreate(
 		if len(parts) == 2 {
 			order = strings.ToUpper(parts[1])
 			if order != asc && order != desc {
-				return returnGoC(1, cerrInvalidAscensionOrder, "")
+				return returnGoC(1, errInvalidAscensionOrder, "")
 			}
 		} else if len(parts) > 2 {
-			return returnGoC(1, cerrInvalidIndexFieldDescription, "")
+			return returnGoC(1, errInvalidIndexFieldDescription, "")
 		}
 		fields = append(fields, client.IndexedFieldDescription{
 			Name:       fieldName,
@@ -79,12 +77,10 @@ func IndexCreate(
 func IndexList(collectionName string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
 	switch {
 	// Get the indices associated with a given collection
@@ -111,14 +107,11 @@ func IndexList(collectionName string, txnID uint64) GoCResult {
 func IndexDrop(collectionName string, indexName string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Get collection and return
 	col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")

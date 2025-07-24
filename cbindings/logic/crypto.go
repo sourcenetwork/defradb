@@ -29,7 +29,7 @@ func CryptoGenerateKey(keyTypeStr string) GoCResult {
 	case KeyTypeSecp256k1:
 		keyType = crypto.KeyTypeSecp256k1
 	default:
-		return returnGoC(1, fmt.Sprintf(cerrInvalidKeyType, keyTypeStr), "")
+		return returnGoC(1, fmt.Sprintf(errInvalidKeyType, keyTypeStr), "")
 	}
 	key, err := crypto.GenerateKey(keyType)
 	if err != nil {

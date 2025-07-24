@@ -18,7 +18,7 @@ import (
 )
 
 func IdentityNew(keyTypeStr string) GoCResult {
-	// Create a public key object of the specified type (Secp256k1 by default) and use it to create identity
+	// Default key type, if left blank, is Secp256k1
 	keyType := crypto.KeyTypeSecp256k1
 	if keyTypeStr != "" {
 		keyType = crypto.KeyType(keyTypeStr)

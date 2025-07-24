@@ -19,7 +19,6 @@ import (
 func BlockVerifySignature(keyTypeStr string, pubKeyStr string, CIDStr string) GoCResult {
 	ctx := context.Background()
 
-	// Create a public key object of the specified type (Secp256k1 by default)
 	keyType := crypto.KeyTypeSecp256k1
 	if keyTypeStr != "" {
 		keyType = crypto.KeyType(keyTypeStr)
@@ -29,7 +28,6 @@ func BlockVerifySignature(keyTypeStr string, pubKeyStr string, CIDStr string) Go
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Verify the signature, and either return success status, or an error
 	err = globalNode.DB.VerifySignature(ctx, CIDStr, pubKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")

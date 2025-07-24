@@ -29,14 +29,13 @@ func TransactionCreate(concurrent bool, readOnly bool) GoCResult {
 	var tx client.Txn
 	var err error
 
-	// Create a Txn object based on parameters passed in
 	if concurrent {
 		tx, err = globalNode.DB.NewConcurrentTxn(ctx, readOnly)
 	} else {
 		tx, err = globalNode.DB.NewTxn(ctx, readOnly)
 	}
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrCreatingTxn, err), "")
+		return returnGoC(1, fmt.Sprintf(errCreatingTxn, err), "")
 	}
 	// Store the Txn in the store, and return the ID to the user
 	TxnStore.Store(tx.ID(), tx)
@@ -48,17 +47,16 @@ func TransactionCreate(concurrent bool, readOnly bool) GoCResult {
 func TransactionCommit(txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Get the transaction with the associated ID from the store
 	tx, ok := TxnStore.Load(txnID)
 	if !ok {
-		return returnGoC(1, fmt.Sprintf(cerrTxnDoesNotExist, txnID), "")
+		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
 	// Commit the transaction, and if that doesn't error, remove it from the store
 	err := txn.Commit(ctx)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(cerrTxnDoesNotExist, txnID), "")
+		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
 	TxnStore.Delete(txnID)
 	return returnGoC(0, "", "")
@@ -70,7 +68,7 @@ func TransactionDiscard(txnID uint64) GoCResult {
 	// Get the transaction with the associated ID from the store
 	tx, ok := TxnStore.Load(txnID)
 	if !ok {
-		return returnGoC(1, fmt.Sprintf(cerrTxnDoesNotExist, txnID), "")
+		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 

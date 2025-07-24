@@ -64,14 +64,11 @@ func ViewRefresh(
 ) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Parse the input parameters into a CollectionFetchOptions object
 	options := client.CollectionFetchOptions{}
 	if versionID != "" {
 		options.VersionID = immutable.Some(versionID)
@@ -86,7 +83,6 @@ func ViewRefresh(
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	// Refresh the views and return
 	err = globalNode.DB.RefreshViews(ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
