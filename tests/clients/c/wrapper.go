@@ -148,7 +148,7 @@ func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.Colle
 		return nil, errors.New(result.Error)
 	}
 
-	collectionVersions, err := unmarshalResult[[]client.CollectionVersion](result.value)
+	collectionVersions, err := unmarshalResult[[]client.CollectionVersion](result.Value)
 	if err != nil {
 		return nil, err
 	}

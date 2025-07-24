@@ -421,4 +421,28 @@ func ExecuteQuery(
 	return returnC(gcr)
 }
 
+//export P2PdocumentAdd
+func P2PdocumentAdd(cCollections *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.P2PdocumentAdd(C.GoString(cCollections), uint64(cTxnID))
+	return returnC(gcr)
+}
+
+//export P2PdocumentRemove
+func P2PdocumentRemove(cCollections *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.P2PdocumentRemove(C.GoString(cCollections), uint64(cTxnID))
+	return returnC(gcr)
+}
+
+//export P2PdocumentGetAll
+func P2PdocumentGetAll(cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.P2PdocumentGetAll(uint64(cTxnID))
+	return returnC(gcr)
+}
+
+//export P2PdocumentSync
+func P2PdocumentSync(cCollection *C.char, cDocIDs *C.char, cTxnID C.ulonglong, cTimeout *C.char) *C.Result {
+	gcr := cbindings.P2PdocumentSync(C.GoString(cCollection), C.GoString(cDocIDs), uint64(cTxnID), C.GoString(cTimeout))
+	return returnC(gcr)
+}
+
 func main() {}

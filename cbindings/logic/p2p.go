@@ -13,6 +13,7 @@ package cbindings
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -120,17 +121,96 @@ func P2PcollectionRemove(collections string, txnID uint64) GoCResult {
 func P2PcollectionGetAll(txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
 	newctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	ctx = newctx
 
-	// Try to get the collections, then return
 	cols, err := globalNode.Peer.GetAllP2PCollections(ctx)
+
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return marshalJSONToGoCResult(cols)
+}
+
+func P2PdocumentAdd(collections string, txnID uint64) GoCResult {
+	ctx := context.Background()
+	colArgs := splitCommaSeparatedString(collections)
+
+	ctx, err := contextWithTransaction(ctx, txnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	// Try to add the documents, then return the result
+	err = globalNode.Peer.AddP2PDocuments(ctx, colArgs...)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+	return returnGoC(0, "", "")
+}
+
+func P2PdocumentRemove(collections string, txnID uint64) GoCResult {
+	ctx := context.Background()
+	colArgs := splitCommaSeparatedString(collections)
+
+	ctx, err := contextWithTransaction(ctx, txnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	// Try to remove the documents, then return the result
+	err = globalNode.Peer.RemoveP2PDocuments(ctx, colArgs...)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+	return returnGoC(0, "", "")
+}
+
+func P2PdocumentGetAll(txnID uint64) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithTransaction(ctx, txnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	cols, err := globalNode.Peer.GetAllP2PDocuments(ctx)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+	return marshalJSONToGoCResult(cols)
+}
+
+func P2PdocumentSync(collection string, docIDs string, txnID uint64, timeout string) GoCResult {
+	ctx := context.Background()
+	docArgs := splitCommaSeparatedString(docIDs)
+	timeoutDuration := time.Duration(0)
+
+	if timeout != "" {
+		timeoutDurationParsed, err := time.ParseDuration(timeout)
+		if err != nil {
+			return returnGoC(1, err.Error(), "")
+		}
+		timeoutDuration = timeoutDurationParsed
+	}
+
+	ctx, err := contextWithTransaction(ctx, txnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	if timeoutDuration > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeoutDuration)
+		defer cancel()
+	}
+
+	err = globalNode.Peer.SyncDocuments(ctx, collection, docArgs)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+	return returnGoC(0, "", "")
 }
