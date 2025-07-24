@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
@@ -130,6 +131,64 @@ func (w *CWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return collections, nil
+}
+
+func (w *CWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+	txnID := txnIDFromContext(ctx)
+	docStr := strings.Join(docIDs, ",")
+
+	result := cbindings.P2PdocumentAdd(docStr, txnID)
+
+	if result.Status != 0 {
+		return errors.New(result.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+	txnID := txnIDFromContext(ctx)
+	docStr := strings.Join(docIDs, ",")
+
+	result := cbindings.P2PdocumentRemove(docStr, txnID)
+
+	if result.Status != 0 {
+		return errors.New(result.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	txnID := txnIDFromContext(ctx)
+	result := cbindings.P2PdocumentGetAll(txnID)
+
+	if result.Status != 0 {
+		return nil, errors.New(result.Error)
+	}
+
+	docs, err := unmarshalResult[[]string](result.Value)
+	if err != nil {
+		return nil, err
+	}
+	return docs, nil
+}
+
+func (w *CWrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	txnID := txnIDFromContext(ctx)
+	docs := strings.Join(docIDs, ",")
+	deadline, hasDeadline := ctx.Deadline()
+	timerStr := ""
+	if hasDeadline {
+		timerStr = time.Until(deadline).String()
+	}
+	result := cbindings.P2PdocumentSync(collectionName, docs, txnID, timerStr)
+	if result.Status != 0 {
+		return errors.New(result.Error)
+	}
+	return nil
 }
 
 func (w *CWrapper) BasicImport(ctx context.Context, filepath string) error {
