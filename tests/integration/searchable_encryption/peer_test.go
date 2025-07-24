@@ -12,6 +12,7 @@ package searchable_encryption
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -47,51 +48,38 @@ func updateUserCollectionSchema() testUtils.SchemaUpdate {
 
 func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 	test := testUtils.TestCase{
-		KMS: testUtils.KMS{Activated: true},
+		KMS:                        testUtils.KMS{Activated: true},
+		EnableSearchableEncryption: true,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			//testUtils.RandomNetworkingConfig(),
 			updateUserCollectionSchema(),
-			/*testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},*/
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 				SEEnabled:    true,
 			},
-			testUtils.SubscribeToCollection{
-				NodeID:        1,
-				CollectionIDs: []int{0},
-			},
-			// TODO: Make CreateEncryptedIndex generate gql schema. The same on drop
-			/*testUtils.CreateEncryptedIndex{
-				NodeID:    immutable.Some(0),
-				FieldName: "age",
-			},*/
 			testUtils.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.WaitForSync{},
+			testUtils.Wait{
+				Duration: time.Millisecond * 500,
+			},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
 						Users_encrypted(filter: {age: {_eq: 21}}) {
-							_docID
-							age
+							docIDs
 						}
 					}
 				`,
 				Results: map[string]any{
 					"Users_encrypted": []map[string]any{
 						{
-							"_docID": john21DocID,
-							"age":    21,
+							"docIDs": []string{john21DocID},
 						},
 					},
 				},

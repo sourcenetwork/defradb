@@ -123,7 +123,8 @@ func (rc *ReplicationCoordinator) processFailureEvents() {
 
 		if evt, ok := msg.Data.(ReplicationFailureEvent); ok {
 			if err := rc.handleReplicationFailure(context.Background(), evt); err != nil {
-				log.ErrorE("Failed to handle SE replication failure", err)
+				log.ErrorE("Failed to handle SE replication failure", err,
+					corelog.String("DocID", evt.DocID))
 			}
 		}
 	}
@@ -139,7 +140,8 @@ func (rc *ReplicationCoordinator) processUpdateEvents() {
 
 		if evt, ok := msg.Data.(event.Update); ok {
 			if err := rc.handleUpdateEvent(context.Background(), evt); err != nil {
-				log.ErrorE("Failed to handle SE update event", err)
+				log.ErrorE("Failed to handle SE update event", err,
+					corelog.String("DocID", evt.DocID))
 			}
 		}
 	}
@@ -290,17 +292,13 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
 func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
-	log.InfoContext(ctx, "Retrying SE artifact replication",
-		corelog.String("PeerID", peerID),
-		corelog.String("DocID", retryInfo.DocID),
-		corelog.String("CollectionID", retryInfo.CollectionID))
-
 	successChan := make(chan bool)
 	defer close(successChan)
 
 	artifacts, err := rc.generateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
 	if err != nil {
-		log.ErrorContextE(ctx, "Failed to regenerate SE artifacts for retry", err)
+		log.ErrorContextE(ctx, "Failed to regenerate SE artifacts for retry", err,
+			corelog.String("DocID", retryInfo.DocID))
 		rc.updateRetryStatus(ctx, peerID, retryInfo, false)
 		return
 	}

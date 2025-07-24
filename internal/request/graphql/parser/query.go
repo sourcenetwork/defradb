@@ -92,11 +92,8 @@ func parseSelect(
 	parent *gql.Object,
 	field *ast.Field,
 ) (*request.Select, error) {
-	isEncrypted := strings.HasSuffix(field.Name.Value, "_encrypted")
+	isEncrypted := strings.HasSuffix(field.Name.Value, request.EncryptedCollectionSuffix)
 	fieldName := field.Name.Value
-	if isEncrypted {
-		fieldName = strings.TrimSuffix(fieldName, "_encrypted")
-	}
 
 	slct := &request.Select{
 		Field: request.Field{

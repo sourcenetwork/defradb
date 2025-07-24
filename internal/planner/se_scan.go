@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -60,13 +58,7 @@ func (n *seScanNode) Start() error {
 func (n *seScanNode) generateSearchTags() error {
 	n.fieldSearchTags = make(map[string][]byte)
 
-	for filterKey, condition := range n.filter.Conditions {
-		objProp, ok := filterKey.(*mapper.ObjectProperty)
-		if !ok {
-			continue
-		}
-
-		fieldName := objProp.Name
+	for fieldName, condition := range n.filter.ExternalConditions {
 
 		var encIdx *client.EncryptedIndexDescription
 		for _, idx := range n.encryptedIndexes {
@@ -82,17 +74,17 @@ func (n *seScanNode) generateSearchTags() error {
 
 		condMap, ok := condition.(map[string]any)
 		if !ok {
-			return fmt.Errorf("invalid condition for encrypted field %s", fieldName)
+			return NewErrInvalidEncryptedFieldCondition(fieldName)
 		}
 
 		value, hasEq := condMap["_eq"]
 		if !hasEq {
-			return fmt.Errorf("only _eq operator supported for encrypted field %s", fieldName)
+			return NewErrUnsupportedEncryptedOperator(fieldName)
 		}
 
 		normalValue, err := client.NewNormalValue(value)
 		if err != nil {
-			return fmt.Errorf("failed to create normal value for field %s: %w", fieldName, err)
+			return NewErrFailedToCreateNormalValue(fieldName, err)
 		}
 
 		artifact, err := se.GenerateFieldArtifact(
@@ -104,7 +96,7 @@ func (n *seScanNode) generateSearchTags() error {
 			n.p.db.GetSearchableEncryptionKey(),
 		)
 		if err != nil {
-			return fmt.Errorf("failed to generate search tag for field %s: %w", fieldName, err)
+			return NewErrFailedToGenerateSearchTag(fieldName, err)
 		}
 
 		n.fieldSearchTags[fieldName] = artifact.SearchTag

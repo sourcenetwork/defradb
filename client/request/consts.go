@@ -29,8 +29,10 @@ const (
 	CompositeFieldName = "_C"
 	ShowDeleted        = "showDeleted"
 
-	EncryptDocArgName    = "encrypt"
-	EncryptFieldsArgName = "encryptFields"
+	EncryptDocArgName         = "encrypt"
+	EncryptFieldsArgName      = "encryptFields"
+	EncryptedCollectionSuffix = "_encrypted"
+	EncryptedSearchResultName = "EncryptedSearchResult"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"

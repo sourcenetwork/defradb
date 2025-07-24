@@ -28,7 +28,7 @@ const (
 //	}
 func EncryptedSearchResultObject() *gql.Object {
 	return gql.NewObject(gql.ObjectConfig{
-		Name:        "EncryptedSearchResult",
+		Name:        request.EncryptedSearchResultName,
 		Description: encryptedSearchResultDescription,
 		Fields: gql.Fields{
 			request.DocIDsFieldName: &gql.Field{

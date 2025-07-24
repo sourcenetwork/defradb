@@ -198,16 +198,10 @@ func (s *server) getIdentityHandler(
 
 // pushSEArtifactsHandler receives SE artifacts from peers
 func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifactsRequest) (*pushSEArtifactsReply, error) {
-	pid, err := peerIDFromContext(ctx)
+	_, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	log.InfoContext(ctx, "Received SE artifacts",
-		corelog.Any("PeerID", pid.String()),
-		corelog.Any("Creator", req.Creator),
-		corelog.Any("CollectionID", req.CollectionID),
-		corelog.Any("ArtifactCount", len(req.Artifacts)))
 
 	artifacts := make([]secore.Artifact, len(req.Artifacts))
 	for i, netArtifact := range req.Artifacts {
@@ -221,7 +215,6 @@ func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifact
 
 	// Store artifacts directly in the datastore
 	if err := se.StoreArtifacts(ctx, datastore.DatastoreFrom(s.peer.db.Rootstore()), artifacts); err != nil {
-		log.ErrorContextE(ctx, "Failed to store SE artifacts", err)
 		return nil, err
 	}
 
@@ -230,15 +223,10 @@ func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifact
 
 // querySEArtifactsHandler handles SE queries from peers
 func (s *server) querySEArtifactsHandler(ctx context.Context, req *querySEArtifactsRequest) (*querySEArtifactsReply, error) {
-	pid, err := peerIDFromContext(ctx)
+	_, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	log.InfoContext(ctx, "Received SE query",
-		corelog.Any("PeerID", pid.String()),
-		corelog.Any("CollectionID", req.CollectionID),
-		corelog.Any("QueryCount", len(req.Queries)))
 
 	matchingDocIDs, err := s.querySEArtifactsFromDatastore(ctx, req)
 	if err != nil {
