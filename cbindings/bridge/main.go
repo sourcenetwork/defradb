@@ -127,12 +127,6 @@ func CollectionUpdate(cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOption
 	return returnC(gcr)
 }
 
-//export CryptoGenerateKey
-func CryptoGenerateKey(cKeyType *C.char) *C.Result {
-	gcr := cbindings.CryptoGenerateKey(C.GoString(cKeyType))
-	return returnC(gcr)
-}
-
 //export IdentityNew
 func IdentityNew(cKeyType *C.char) *C.Result {
 	gcr := cbindings.IdentityNew(C.GoString(cKeyType))

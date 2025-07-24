@@ -26,6 +26,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
+const (
+	KeyTypeEd25519   = "ed25519"
+	KeyTypeSecp256k1 = "secp256k1"
+)
+
 type GoCResult struct {
 	Status int
 	Error  string
@@ -137,7 +142,6 @@ func loadIdentityFromString(goKeyType string, goPrivKeyStr string) (*identity.Fu
 		return nil, nil
 	}
 
-	// Convert string key type to crypto.KeyType
 	var keyType crypto.KeyType
 	switch goKeyType {
 	case KeyTypeEd25519:
