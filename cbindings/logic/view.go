@@ -27,26 +27,22 @@ import (
 func ViewAdd(query string, sdl string, lensCfgJson string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Set the transaction
-	newctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	ctx = newctx
 
-	// Decode the lens configuration into a lens
 	var transform immutable.Option[model.Lens]
 	if lensCfgJson != "" {
 		decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 		decoder.DisallowUnknownFields()
 		var lensCfg model.Lens
 		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnGoC(1, fmt.Sprintf(cerrInvalidLensConfig, err), "")
+			return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
 		}
 		transform = immutable.Some(lensCfg)
 	}
 
-	// Add the view
 	defs, err := globalNode.DB.AddView(ctx, query, sdl, transform)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
