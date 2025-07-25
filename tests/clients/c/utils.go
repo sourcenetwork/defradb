@@ -29,34 +29,25 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// Helper function
-// This initializes and starts the globalNode (in memory), so that other functionality works
+// setupTests is a function that initializes and starts the globalNode (in memory), for the tests
 func setupTests() {
-	dbPath := ""
-	listeningAddresses := ""
-	replicatorRetryIntervals := ""
-	peers := ""
-	keyType := ""
-	privateKey := ""
-
 	var nodeOpts cbindings.GoNodeInitOptions
-	nodeOpts.DbPath = dbPath
-	nodeOpts.ListeningAddresses = listeningAddresses
-	nodeOpts.ReplicatorRetryIntervals = replicatorRetryIntervals
-	nodeOpts.Peers = peers
+	nodeOpts.DbPath = ""
+	nodeOpts.ListeningAddresses = ""
+	nodeOpts.ReplicatorRetryIntervals = ""
+	nodeOpts.Peers = ""
 	nodeOpts.MaxTransactionRetries = 5
 	nodeOpts.DisableP2P = 0
 	nodeOpts.DisableAPI = 0
 	nodeOpts.InMemory = 1
-	nodeOpts.IdentityKeyType = keyType
-	nodeOpts.IdentityPrivateKey = privateKey
+	nodeOpts.IdentityKeyType = ""
+	nodeOpts.IdentityPrivateKey = ""
 
 	cbindings.NodeInit(nodeOpts)
 	cbindings.NodeStart()
 }
 
-// Helper function
-// Get TxnID, as a uint64, from a context, returning 0 if not present
+// txnIDFromContext is a helper function that extracts a transaction ID from a context
 func txnIDFromContext(ctx context.Context) uint64 {
 	tx, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
@@ -65,16 +56,15 @@ func txnIDFromContext(ctx context.Context) uint64 {
 	return 0
 }
 
-// Helper function
-// Returns a boolean value, for whether EncryptDoc flag is set
+// isEncryptedFromDocCreateOption is a helper function that extracts a boolean
 func isEncryptedFromDocCreateOption(opts []client.DocCreateOption) bool {
 	createDocOpts := client.DocCreateOptions{}
 	createDocOpts.Apply(opts)
 	return createDocOpts.EncryptDoc
 }
 
-// Helper function
-// Get EncryptedFields as a comma separated string, returning "" if none exist
+// encryptedFieldsFromDocCreateOptions is a helper function that returns a comma separated string,
+// or a blank string, representing the fields that should be encrypted
 func encryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) string {
 	createDocOpts := client.DocCreateOptions{}
 	createDocOpts.Apply(opts)
@@ -84,8 +74,7 @@ func encryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) string {
 	return ""
 }
 
-// Helper function
-// Get a private key, or blank string, used to pass in identity, as a string
+// identityFromContext is a helper function that extracts identity (or blank string) from a context
 func identityFromContext(ctx context.Context) string {
 	idf := identity.FullFromContext(ctx)
 	if !idf.HasValue() {
@@ -94,8 +83,7 @@ func identityFromContext(ctx context.Context) string {
 	return idf.Value().PrivateKey().String()
 }
 
-// Helper function
-// Unmarshals the value of a string into any desired type
+// unmarshalResult is a helper function that unmarshals JSON string into another type
 func unmarshalResult[T any](value string) (T, error) {
 	var result T
 	err := json.Unmarshal([]byte(value), &result)
@@ -106,8 +94,7 @@ func unmarshalResult[T any](value string) (T, error) {
 	return result, nil
 }
 
-// Helper function
-// Marshals an Option[T] to a string.
+// optionToString is a helper function that extracts a string from an immutable.Option
 func optionToString[T any](opt immutable.Option[T]) (string, error) {
 	if !opt.HasValue() {
 		return "", nil
@@ -120,23 +107,19 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 	return string(jsonBytes), nil
 }
 
-// Helper function
-// Pulls out the Operation Name and Variables as strings from a []client.RequestOption.
-// The strings may or may not be blank.
-func extractCStringsFromRequestOptions(opts []client.RequestOption) (string, string) {
-	// Create a structure, and modify it with the config options
+// extractStringsFromRequestOptions is a helper function that extracts operation name and variables
+// as strings from the request option object. They will be blank strings if not present.
+func extractStringsFromRequestOptions(opts []client.RequestOption) (string, string) {
 	config := &client.GQLOptions{}
 	for _, opt := range opts {
 		opt(config)
 	}
 
-	// Extract OperationName, leaving it blank if one does not exist
 	opName := ""
 	if config.OperationName != "" {
 		opName = config.OperationName
 	}
 
-	// Extract Variables (marshal to JSON), leaving the JSON blank if no variables exist
 	varsJSON := ""
 	if config.Variables != nil {
 		data, _ := json.Marshal(config.Variables)
@@ -145,18 +128,7 @@ func extractCStringsFromRequestOptions(opts []client.RequestOption) (string, str
 	return opName, varsJSON
 }
 
-// Helper function
-// Builds a collection from a definition
-func collectionsFromDefinitions(defs []client.CollectionDefinition) ([]client.Collection, error) {
-	cols := make([]client.Collection, len(defs))
-	for i, def := range defs {
-		cols[i] = &Collection{def: def}
-	}
-	return cols, nil
-}
-
-// Helper function
-// Creates a string from an immutable.Option[string]
+// stringFromImmutableOptionString is a helper function to extract a simple string
 func stringFromImmutableOptionString(s immutable.Option[string]) string {
 	if !s.HasValue() {
 		return ""
@@ -164,8 +136,7 @@ func stringFromImmutableOptionString(s immutable.Option[string]) string {
 	return s.Value()
 }
 
-// Helper function
-// Creates a string from an immutable.Option[model.Lens]
+// stringFromLensOption is a helper function to extract a simple string
 func stringFromLensOption(opt immutable.Option[model.Lens]) (string, error) {
 	if !opt.HasValue() {
 		return "", nil
@@ -178,8 +149,8 @@ func stringFromLensOption(opt immutable.Option[model.Lens]) (string, error) {
 	return string(data), nil
 }
 
-// Helper function
-// Wrangle data from enumerable.Enumerable[map[string]any] into []map[string]any
+// collectEnumerable is a helper function for wrangling data from an Enumerable:
+// enumerable.Enumerable[map[string]any] -> []map[string]any
 func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]any, error) {
 	var result []map[string]any
 	err := enumerable.ForEach(e, func(item map[string]any) {
@@ -188,8 +159,7 @@ func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]an
 	return result, err
 }
 
-// Helper function
-// Gets a client.Txn from a uint64 representing it in the C-side TxnStore
+// getTxnFromHandle is a helper function that gets a transaction from the C-side TxnStore
 func getTxnFromHandle(txnID uint64) any {
 	val, ok := cbindings.TxnStore.Load(txnID)
 	if !ok {
@@ -198,6 +168,7 @@ func getTxnFromHandle(txnID uint64) any {
 	return val
 }
 
+// convertGoCResultToGQLResult is a helper function that make a GQLResult from a GoCResult
 func convertGoCResultToGQLResult(res cbindings.GoCResult) (client.GQLResult, error) {
 	var gql client.GQLResult
 	if res.Status != 0 {
@@ -207,7 +178,9 @@ func convertGoCResultToGQLResult(res cbindings.GoCResult) (client.GQLResult, err
 	return gql, err
 }
 
-func WrapSubscriptionAsChannel(subID string) <-chan client.GQLResult {
+// wrapSubscriptionAsChannel is a function that takes a subscription ID and returns a GQLResult
+// channel that is populated by polling the subscription in a loop
+func wrapSubscriptionAsChannel(subID string) <-chan client.GQLResult {
 	ch := make(chan client.GQLResult)
 	go func() {
 		defer close(ch)

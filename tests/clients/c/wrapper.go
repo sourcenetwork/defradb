@@ -227,7 +227,6 @@ func (w *CWrapper) AddDACPolicy(
 		return client.AddPolicyResult{}, errors.New(result.Error)
 	}
 
-	// Unmarshall the output from JSON to client.AddPolicyResult
 	addPolicyRes, err := unmarshalResult[client.AddPolicyResult](result.Value)
 	if err != nil {
 		return client.AddPolicyResult{}, err
@@ -275,7 +274,6 @@ func (w *CWrapper) DeleteDACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, errors.New(result.Error)
 	}
 
-	// Unmarshall the output from JSON to client.DeleteActorRelationshipResult
 	deleteRelationshipRes, err := unmarshalResult[client.DeleteActorRelationshipResult](result.Value)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
@@ -352,7 +350,6 @@ func (w *CWrapper) AddView(
 		return []client.CollectionDefinition{}, errors.New(result.Error)
 	}
 
-	// Unmarshall the output from JSON to []client.CollectionDefinition
 	colDefRes, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
 	if err != nil {
 		return []client.CollectionDefinition{}, err
@@ -470,7 +467,11 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
-	return collectionsFromDefinitions(defs)
+	cols := make([]client.Collection, len(defs))
+	for i, def := range defs {
+		cols[i] = &Collection{def: def}
+	}
+	return cols, nil
 }
 
 func (w *CWrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
@@ -527,18 +528,17 @@ func (w *CWrapper) ExecRequest(
 ) *client.RequestResult {
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
-	operation, variables := extractCStringsFromRequestOptions(opts)
+	operation, variables := extractStringsFromRequestOptions(opts)
 	result := cbindings.ExecuteQuery(query, identity, txnID, operation, variables)
 
 	if result.Status == 2 {
 		id := result.Value
-		newchan := WrapSubscriptionAsChannel(id)
+		newchan := wrapSubscriptionAsChannel(ctx, id)
 		return &client.RequestResult{
 			Subscription: newchan,
 		}
 	}
 
-	// Unmarshal the result into a *client.RequestResult
 	retval := &client.RequestResult{}
 	if result.Status != 0 {
 		retval.GQL.Errors = append(retval.GQL.Errors, fmt.Errorf("%s", result.Error))

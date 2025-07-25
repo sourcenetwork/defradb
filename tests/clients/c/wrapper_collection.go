@@ -338,7 +338,6 @@ func (c *Collection) GetAllDocIDs(
 	go func() {
 		defer close(docIDCh)
 
-		// Extract and decode JSON from C-Result
 		var rawResults []struct {
 			DocID string `json:"docID"`
 			Error string `json:"error"`
@@ -349,7 +348,6 @@ func (c *Collection) GetAllDocIDs(
 			return
 		}
 
-		// Send each result to the channel
 		for _, r := range rawResults {
 			docID, err := client.NewDocIDFromString(r.DocID)
 			res := client.DocIDResult{
@@ -375,7 +373,6 @@ func (c *Collection) CreateIndex(
 	txnID := txnIDFromContext(ctx)
 	name := c.def.GetName()
 
-	// Build the Fields string
 	orderedFields := make([]string, len(indexDesc.Fields))
 	for i, f := range indexDesc.Fields {
 		order := "ASC"
@@ -392,7 +389,6 @@ func (c *Collection) CreateIndex(
 		return client.IndexDescription{}, errors.New(result.Error)
 	}
 
-	// Unmarshall the output from JSON to client.IndexDescription
 	retRes, err := unmarshalResult[client.IndexDescription](result.Value)
 	if err != nil {
 		return client.IndexDescription{}, err
@@ -422,7 +418,6 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		return []client.IndexDescription{}, errors.New(result.Error)
 	}
 
-	// Unmarshall the output from JSON to []client.IndexDescription
 	retRes, err := unmarshalResult[[]client.IndexDescription](result.Value)
 	if err != nil {
 		return []client.IndexDescription{}, err
