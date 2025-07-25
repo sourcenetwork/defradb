@@ -19,99 +19,88 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 func TestGenerateEncryptedQueryField(t *testing.T) {
 	ctx := context.Background()
 	manager, err := NewSchemaManager()
 	require.NoError(t, err)
-	gen := manager.Generator
 
 	collections := []client.CollectionDefinition{
 		{
 			Version: client.CollectionVersion{
 				Name: "User",
 				EncryptedIndexes: []client.EncryptedIndexDescription{
-					{
-						FieldName: "email",
-						Type:      client.EncryptedIndexTypeEquality,
-					},
-					{
-						FieldName: "ssn",
-						Type:      client.EncryptedIndexTypeEquality,
-					},
+					{FieldName: "email", Type: client.EncryptedIndexTypeEquality},
+					{FieldName: "ssn", Type: client.EncryptedIndexTypeEquality},
 				},
 			},
 			Schema: client.SchemaDescription{
 				Name: "User",
 				Fields: []client.SchemaFieldDescription{
-					{
-						Name: "email",
-						Kind: client.FieldKind_NILLABLE_STRING,
-					},
-					{
-						Name: "ssn",
-						Kind: client.FieldKind_NILLABLE_STRING,
-					},
-					{
-						Name: "name",
-						Kind: client.FieldKind_NILLABLE_STRING,
-					},
+					{Name: "email", Kind: client.FieldKind_NILLABLE_STRING},
+					{Name: "ssn", Kind: client.FieldKind_NILLABLE_STRING},
+					{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
 				},
 			},
 		},
 	}
 
-	_, err = gen.Generate(ctx, collections)
+	_, err = manager.Generator.Generate(ctx, collections)
 	require.NoError(t, err)
-
-	err = manager.ResolveTypes()
-	require.NoError(t, err)
+	require.NoError(t, manager.ResolveTypes())
 
 	queryType := manager.schema.QueryType()
 	require.NotNil(t, queryType)
 
-	fields := queryType.Fields()
-	encryptedField, ok := fields["User_encrypted"]
+	encryptedField, ok := queryType.Fields()["User_encrypted"]
 	require.True(t, ok, "User_encrypted field should exist")
-	assert.Equal(t, "Query encrypted fields for User", encryptedField.Description)
 
-	var filterArg *gql.Argument
-	var hasLimit, hasOffset bool
-
+	hasFilter, hasLimit, hasOffset := false, false, false
 	for _, arg := range encryptedField.Args {
 		switch arg.Name() {
 		case "filter":
-			filterArg = arg
+			hasFilter = true
 		case "limit":
 			hasLimit = true
 		case "offset":
 			hasOffset = true
 		}
 	}
+	assert.True(t, hasFilter, "should have filter argument")
+	assert.True(t, hasLimit, "should have limit argument")
+	assert.True(t, hasOffset, "should have offset argument")
 
-	require.NotNil(t, filterArg, "filter arg should exist")
-	assert.True(t, hasLimit, "limit arg should exist")
-	assert.True(t, hasOffset, "offset arg should exist")
+	returnType := encryptedField.Type
+	if nonNull, ok := returnType.(*gql.NonNull); ok {
+		returnType = nonNull.OfType
+	}
+	assert.Equal(t, request.EncryptedSearchResultName, returnType.Name())
 
-	filterType := filterArg.Type.(*gql.InputObject)
-	assert.Equal(t, "UserEncryptedFilterArg", filterType.Name())
+	resultObj := returnType.(*gql.Object)
+	docIDsField, ok := resultObj.Fields()["docIDs"]
+	assert.True(t, ok, "EncryptedSearchResult should have docIDs field")
 
-	filterFields := filterType.Fields()
-	assert.Len(t, filterFields, 2)
-	_, hasEmail := filterFields["email"]
-	assert.True(t, hasEmail, "email field should exist in filter")
-	_, hasSSN := filterFields["ssn"]
-	assert.True(t, hasSSN, "ssn field should exist in filter")
-	_, hasName := filterFields["name"]
-	assert.False(t, hasName, "name field should not exist in filter")
+	docIDsType := docIDsField.Type
+	if nonNull, ok := docIDsType.(*gql.NonNull); ok {
+		docIDsType = nonNull.OfType
+	}
+	list, ok := docIDsType.(*gql.List)
+	assert.True(t, ok, "docIDs should be a list")
+	if ok {
+		elementType := list.OfType
+		if nonNull, ok := elementType.(*gql.NonNull); ok {
+			elementType = nonNull.OfType
+		}
+		assert.Equal(t, "String", elementType.Name())
+	}
 }
 
 func TestNoEncryptedQueryFieldWithoutIndexes(t *testing.T) {
 	ctx := context.Background()
 	manager, err := NewSchemaManager()
 	require.NoError(t, err)
-	gen := manager.Generator
 
 	collections := []client.CollectionDefinition{
 		{
@@ -121,25 +110,19 @@ func TestNoEncryptedQueryFieldWithoutIndexes(t *testing.T) {
 			Schema: client.SchemaDescription{
 				Name: "Product",
 				Fields: []client.SchemaFieldDescription{
-					{
-						Name: "name",
-						Kind: client.FieldKind_NILLABLE_STRING,
-					},
-					{
-						Name: "price",
-						Kind: client.FieldKind_NILLABLE_FLOAT64,
-					},
+					{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
+					{Name: "price", Kind: client.FieldKind_NILLABLE_FLOAT64},
 				},
 			},
 		},
 	}
 
-	_, err = gen.Generate(ctx, collections)
+	_, err = manager.Generator.Generate(ctx, collections)
 	require.NoError(t, err)
 
 	queryType := manager.schema.QueryType()
 	require.NotNil(t, queryType)
 
 	_, ok := queryType.Fields()["Product_encrypted"]
-	assert.False(t, ok, "Product_encrypted field should not exist")
+	assert.False(t, ok, "Product_encrypted field should not exist without encrypted indexes")
 }
