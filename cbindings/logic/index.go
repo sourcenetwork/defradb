@@ -56,7 +56,6 @@ func IndexCreate(
 		})
 	}
 
-	// Create a request object, and try to create the index
 	desc := client.IndexCreateRequest{
 		Name:   indexName,
 		Fields: fields,

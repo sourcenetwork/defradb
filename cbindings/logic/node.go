@@ -37,7 +37,7 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	inMemoryFlag := cOptions.InMemory != 0
 	listeningAddresses := splitCommaSeparatedString(cOptions.ListeningAddresses)
 
-	nodeIdentity, err := loadIdentityFromString(cOptions.IdentityKeyType, cOptions.IdentityPrivateKey)
+	nodeIdentity, err := identityFromKey(cOptions.IdentityKeyType, cOptions.IdentityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

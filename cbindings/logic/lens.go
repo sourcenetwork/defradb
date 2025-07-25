@@ -35,7 +35,6 @@ func LensSet(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Parse the lens config string into a client.LensConfig
 	decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 	decoder.DisallowUnknownFields()
 	var lensCfg model.Lens

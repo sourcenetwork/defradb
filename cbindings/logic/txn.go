@@ -53,7 +53,6 @@ func TransactionCommit(txnID uint64) GoCResult {
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
-	// Commit the transaction, and if that doesn't error, remove it from the store
 	err := txn.Commit(ctx)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
@@ -65,14 +64,12 @@ func TransactionCommit(txnID uint64) GoCResult {
 func TransactionDiscard(txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	// Get the transaction with the associated ID from the store
 	tx, ok := TxnStore.Load(txnID)
 	if !ok {
 		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
-	// Discard it, which currently cannot error, and then delete it from the store
 	txn.Discard(ctx)
 	TxnStore.Delete(txnID)
 	return returnGoC(0, "", "")

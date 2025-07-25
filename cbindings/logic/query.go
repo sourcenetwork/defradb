@@ -21,16 +21,19 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+// We cannot return a channel to/from C, so instead we have a map of subscription IDs to
+// RequestResults. Three functions, storeSubscription, getSubscription, and removeSubscription are
+// helpers which manage this store behind the scenes, while PollSubscription and CloseSubscription
+// are made available to the user for interacting with the subscriptions.
+
 var subscriptionStore sync.Map // map[string]*client.RequestResult
 
-// Helper function
 func storeSubscription(res *client.RequestResult) string {
 	id := uuid.NewString()
 	subscriptionStore.Store(id, res)
 	return id
 }
 
-// Helper function
 func getSubscription(id string) (*client.RequestResult, bool) {
 	val, ok := subscriptionStore.Load(id)
 	if !ok {
@@ -40,7 +43,6 @@ func getSubscription(id string) (*client.RequestResult, bool) {
 	return val.(*client.RequestResult), true
 }
 
-// Helper function
 func removeSubscription(id string) {
 	subscriptionStore.Delete(id)
 }
@@ -110,7 +112,6 @@ func ExecuteQuery(
 		return returnGoC(2, "", id)
 	}
 
-	// Try to marshall the JSON and return it
 	dataMap, ok := res.GQL.Data.(map[string]any)
 	if !ok || dataMap == nil {
 		return returnGoC(1, "GraphQL response data is nil or invalid.", "")

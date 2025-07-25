@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// Helper struct
 type docIDResult struct {
 	DocID string `json:"docID"`
 	Error string `json:"error"`
@@ -53,8 +52,8 @@ func parseCollectionOptions(gocOptions GoCOptions) client.CollectionFetchOptions
 	return options
 }
 
-// Helper function
-// Set the transaction associated with a given context from the value inside a C.CollectionOptions struct
+// setTransactionOfCollectionCommand is a helper function that takes a context, and returns a new
+// one with a transaction attached
 func setTransactionOfCollectionCommand(ctx context.Context, goCOptions GoCOptions) (context.Context, error) {
 	ctx2, err := contextWithTransaction(ctx, goCOptions.TxID)
 	if err != nil {
@@ -63,9 +62,8 @@ func setTransactionOfCollectionCommand(ctx context.Context, goCOptions GoCOption
 	return ctx2, nil
 }
 
-// Helper function
-// Set the identity associated with a given context from the value inside a C.CollectionOptions struct
-// If the identity string is blank, return the original context, unchanged
+// setIdentityOfCollectionCommand is a helper function that takes a context, and returns a new one
+// with an identity attached (or an unmodified context, if the identity is blank)
 func setIdentityOfCollectionCommand(ctx context.Context, goCOptions GoCOptions) (context.Context, error) {
 	if goCOptions.Identity != "" {
 		newctx, err := contextWithIdentity(ctx, goCOptions.Identity)
@@ -77,18 +75,18 @@ func setIdentityOfCollectionCommand(ctx context.Context, goCOptions GoCOptions) 
 	return ctx, nil
 }
 
-// Helper function
+// getCollectionForCollectionCommand is a helper function wrapping DB.GetCollections, and ensuring
+// that only one collection matches the criteria
 func getCollectionForCollectionCommand(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) (client.Collection, error) {
-	// Get the collections that match the options criteria
 	cols, err := globalNode.DB.GetCollections(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf(errGettingCollection, err)
 	}
 
-	// Make sure only one collection matches the criteria, and select it
+	// Only one collection should match the criteria
 	if len(cols) == 0 {
 		return nil, errors.New(errNoMatchingCollection)
 	}
@@ -118,11 +116,10 @@ func CollectionCreate(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	foundcol, err := getCollectionForCollectionCommand(ctx, options)
+	col, err := getCollectionForCollectionCommand(ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-	col := foundcol
 
 	var encryptFields []string
 	if encryptFieldsStr != "" {
