@@ -59,7 +59,7 @@ type GoNodeInitOptions struct {
 	MaxTransactionRetries    int
 }
 
-// Helper function which builds a return struct from Go to C
+// returnGoC is a helper function that wraps a status, error, and value into a return object
 func returnGoC(status int, errortext string, valuetext string) GoCResult {
 	return GoCResult{
 		Status: status,
@@ -68,7 +68,16 @@ func returnGoC(status int, errortext string, valuetext string) GoCResult {
 	}
 }
 
-// Helper function that attaches an identity to a context, returning the new context
+// marshalJSONToGoCResult is a helper function that marshals an interface into a return object
+func marshalJSONToGoCResult(value any) GoCResult {
+	dataJSON, err := json.Marshal(value)
+	if err != nil {
+		return returnGoC(1, fmt.Sprintf(errMarshallingJSON, err), "")
+	}
+	return returnGoC(0, "", string(dataJSON))
+}
+
+// contextWithIdentity is a helper function that attaches identity to a context
 func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Context, error) {
 	if privateKeyHex == "" {
 		return ctx, nil
@@ -87,7 +96,7 @@ func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Con
 	return newctx, nil
 }
 
-// Helper function that attaches a transaction to a context, returning a new context
+// contextWithTransaction is a helper function that attaches transaction to a context
 func contextWithTransaction(ctx context.Context, TxnIDu64 uint64) (context.Context, error) {
 	if TxnIDu64 == 0 {
 		return ctx, nil
@@ -101,16 +110,7 @@ func contextWithTransaction(ctx context.Context, TxnIDu64 uint64) (context.Conte
 	return ctx2, nil
 }
 
-// Helper function that seeks to marshall JSON into a CResult
-// The Result object will either contain the payload, if it works, or an error if it doesn't
-func marshalJSONToGoCResult(value any) GoCResult {
-	dataJSON, err := json.Marshal(value)
-	if err != nil {
-		return returnGoC(1, fmt.Sprintf(errMarshallingJSON, err), "")
-	}
-	return returnGoC(0, "", string(dataJSON))
-}
-
+// splitCommaSeparatedString is a helper function that turns a single string into an array
 func splitCommaSeparatedString(baseStr string) []string {
 	var retArr []string
 	if baseStr != "" {
@@ -121,7 +121,8 @@ func splitCommaSeparatedString(baseStr string) []string {
 	return retArr
 }
 
-// Helper function that tries to build a []client.RequestOption from string name and JSON variables
+// buildRequestOptions is a helper function that builds the RequestOption from an operation name,
+// and a set of variables (as strings)
 func buildRequestOptions(opName string, vars string) ([]client.RequestOption, error) {
 	var opts []client.RequestOption
 	if opName != "" {
@@ -137,7 +138,8 @@ func buildRequestOptions(opName string, vars string) ([]client.RequestOption, er
 	return opts, nil
 }
 
-func loadIdentityFromString(goKeyType string, goPrivKeyStr string) (*identity.FullIdentity, error) {
+// identityFromKey is a helper function that takes a key type/private key pair, and returns Identity
+func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdentity, error) {
 	if goKeyType == "" || goPrivKeyStr == "" {
 		return nil, nil
 	}
