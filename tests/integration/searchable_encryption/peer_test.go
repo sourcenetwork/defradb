@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -36,8 +37,6 @@ const (
 		"name":	"Islam",
 		"age":	33
 	}`
-	john21DocID  = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"
-	islam33DocID = "bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6"
 )
 
 func updateUserCollectionSchema() testUtils.SchemaUpdate {
@@ -65,7 +64,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				IsDocEncrypted: true,
 			},
 			testUtils.Wait{
-				Duration: time.Millisecond * 500,
+				Duration: time.Millisecond * 100,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
@@ -79,7 +78,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				Results: map[string]any{
 					"Users_encrypted": []map[string]any{
 						{
-							"docIDs": []string{john21DocID},
+							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
 					},
 				},
