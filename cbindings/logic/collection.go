@@ -265,7 +265,8 @@ func CollectionListDocIDs(gocOptions GoCOptions) GoCResult {
 			DocID: doc.ID.String(),
 		}
 		if doc.Err != nil {
-			result.Error = doc.Err.Error()
+			// Return immediately upon error
+			return returnGoC(1, doc.Err.Error(), "")
 		}
 		results = append(results, result)
 	}
