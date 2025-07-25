@@ -2596,17 +2596,44 @@ func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *s
 		return
 	}
 
+	var elements []any
+	var matchersList []gomega.OmegaMatcher
+
 	switch exp := exp.(type) {
 	case *matchers.AndMatcher:
-		for _, m := range exp.Matchers {
-			traverseGomegaMatchers(m, s, f)
-		}
+		matchersList = exp.Matchers
 	case *matchers.OrMatcher:
-		for _, m := range exp.Matchers {
+		matchersList = exp.Matchers
+	case *matchers.NotMatcher:
+		matchersList = []gomega.OmegaMatcher{exp.Matcher}
+	case *matchers.ConsistOfMatcher:
+		elements = exp.Elements
+	case *matchers.ContainElementMatcher:
+		elements = []any{exp.Element}
+	case *matchers.BeElementOfMatcher:
+		elements = exp.Elements
+	case *matchers.HaveExactElementsMatcher:
+		elements = exp.Elements
+	case *matchers.ContainElementsMatcher:
+		elements = exp.Elements
+	case *matchers.HaveEachMatcher:
+		elements = []any{exp.Element}
+	case *matchers.WithTransformMatcher:
+		matchersList = []gomega.OmegaMatcher{exp.Matcher}
+	}
+
+	if len(matchersList) > 0 {
+		for _, m := range matchersList {
 			traverseGomegaMatchers(m, s, f)
 		}
-	case *matchers.NotMatcher:
-		traverseGomegaMatchers(exp.Matcher, s, f)
+	}
+
+	if len(elements) > 0 {
+		for _, el := range elements {
+			if m, ok := el.(gomega.OmegaMatcher); ok {
+				traverseGomegaMatchers(m, s, f)
+			}
+		}
 	}
 }
 

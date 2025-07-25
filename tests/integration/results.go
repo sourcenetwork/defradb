@@ -190,6 +190,44 @@ func (matcher *SameValue) NegatedFailureMessage(actual any) string {
 		matcher.value, actual)
 }
 
+// DocIDAt returns a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+func DocIDAt(collectionIndex, docIndex int) *docIDAt {
+	return &docIDAt{
+		collectionIndex: collectionIndex,
+		docIndex:        docIndex,
+	}
+}
+
+// docIDAt is a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+type docIDAt struct {
+	testStateMatcher
+	collectionIndex int
+	docIndex        int
+}
+
+var _ TestStateMatcher = (*docIDAt)(nil)
+
+func (matcher *docIDAt) Match(actual any) (bool, error) {
+	actualDocID, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a document ID string, got %T", actual)
+	}
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return actualDocID == expectedDocID, nil
+}
+
+func (matcher *docIDAt) FailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nto be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a doID: %s", actual, expectedDocID)
+}
+
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.

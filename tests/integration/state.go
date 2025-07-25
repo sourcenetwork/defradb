@@ -241,6 +241,10 @@ func (s *state) GetIdentity(ident Identity) acpIdentity.Identity {
 	return getIdentity(s, immutable.Some(ident))
 }
 
+func (s *state) GetDocID(collectionIndex, docIndex int) client.DocID {
+	return s.docIDs[collectionIndex][docIndex]
+}
+
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
 // without allowing them to modify the state.
 type TestState interface {
@@ -250,6 +254,8 @@ type TestState interface {
 	GetCurrentNodeID() int
 	// GetIdentity returns the identity for the given node index.
 	GetIdentity(Identity) acpIdentity.Identity
+	// GetDocID returns the document ID for the given collection index and document index.
+	GetDocID(collectionIndex, docIndex int) client.DocID
 }
 
 var _ TestState = &state{}
