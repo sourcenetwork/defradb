@@ -179,18 +179,28 @@ func convertGoCResultToGQLResult(res cbindings.GoCResult) (client.GQLResult, err
 }
 
 // wrapSubscriptionAsChannel is a function that takes a subscription ID and returns a GQLResult
-// channel that is populated by polling the subscription in a loop
-func wrapSubscriptionAsChannel(subID string) <-chan client.GQLResult {
+// channel that is populated by polling the subscription in a loop. It takes in a context as
+// well, so that it will terminate when the context is done
+func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.GQLResult {
 	ch := make(chan client.GQLResult)
 	go func() {
 		defer close(ch)
 		for {
-			res := cbindings.PollSubscription(subID)
-			goRes, err := convertGoCResultToGQLResult(res)
-			if err != nil {
-				goRes.Errors = append(goRes.Errors, err)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				res := cbindings.PollSubscription(subID)
+				goRes, err := convertGoCResultToGQLResult(res)
+				if err != nil {
+					goRes.Errors = append(goRes.Errors, err)
+				}
+				select {
+				case ch <- goRes:
+				case <-ctx.Done():
+					return
+				}
 			}
-			ch <- goRes
 		}
 	}()
 	return ch
