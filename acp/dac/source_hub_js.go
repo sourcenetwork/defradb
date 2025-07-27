@@ -193,9 +193,6 @@ func (a *SourceHubDocumentACP) AddPolicy(
 	if len(results) == 0 {
 		return "", fmt.Errorf("AddPolicy returned no results")
 	}
-	if len(results) == 0 {
-		return "", fmt.Errorf("AddPolicy returned no results")
-	}
 	var policyID string
 	if results[0].Type() == sysjs.TypeObject {
 		firstElement := results[0].Index(0)
