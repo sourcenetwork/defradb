@@ -37,7 +37,6 @@ func TransactionCreate(concurrent bool, readOnly bool) GoCResult {
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errCreatingTxn, err), "")
 	}
-	// Store the Txn in the store, and return the ID to the user
 	TxnStore.Store(tx.ID(), tx)
 	IDstring := strconv.FormatUint(tx.ID(), 10)
 	retVal := fmt.Sprintf(`{"id": %s}`, IDstring)
