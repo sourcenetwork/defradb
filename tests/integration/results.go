@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
 
 	"github.com/sourcenetwork/immutable"
@@ -27,6 +28,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 )
+
+func init() {
+	format.RegisterCustomFormatter(func(value any) (string, bool) {
+		if matcher, ok := value.(*docIDAt); ok {
+			return matcher.String(), true
+		}
+		return "", false
+	})
+}
 
 type testStateMatcher struct {
 	s TestState
@@ -226,6 +236,11 @@ func (matcher *docIDAt) FailureMessage(actual any) string {
 func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
 	return fmt.Sprintf("Expected\n\t%v\nnot to be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) String() string {
+	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
+		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
 // assertResultsEqual asserts that actual result is equal to the expected result.
