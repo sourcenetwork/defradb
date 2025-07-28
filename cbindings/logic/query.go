@@ -12,7 +12,6 @@ package cbindings
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
 
@@ -95,29 +94,12 @@ func ExecuteQuery(
 
 	res := globalNode.DB.ExecRequest(ctx, query, opts...)
 
-	// Check for errors in the GQL response, wrangling them into a single string
-	if len(res.GQL.Errors) > 0 {
-		var sb strings.Builder
-		sb.WriteString("Error executing query:\n")
-		for _, err := range res.GQL.Errors {
-			sb.WriteString("Error: ")
-			sb.WriteString(err.Error())
-			sb.WriteString("\n")
-		}
-		return returnGoC(1, sb.String(), "")
-	}
-
+	// The return is either a subscription ID, or a GQL result. The status indicates
+	// which: 0 for GQL, 2 for subscription. 1 is not used because this cannot error; the
+	// error is part of the GQL result, to be GQL-compliant.
 	if res.Subscription != nil {
 		id := storeSubscription(res)
 		return returnGoC(2, "", id)
 	}
-
-	dataMap, ok := res.GQL.Data.(map[string]any)
-	if !ok || dataMap == nil {
-		return returnGoC(1, "GraphQL response data is nil or invalid.", "")
-	}
-	wrapped := map[string]any{
-		"data": dataMap,
-	}
-	return marshalJSONToGoCResult(wrapped)
+	return marshalJSONToGoCResult(res.GQL)
 }
