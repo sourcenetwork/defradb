@@ -16,6 +16,7 @@ import (
 	"context"
 	"syscall/js"
 
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/goji"
 )
@@ -29,19 +30,33 @@ func SetGlobal() {
 }
 
 // open creates a new DB client and returns it wrapped in a JS object.
+// acpType is optional and can be:
+// - "sourcehub" to use SourceHub ACP
+// - anything else (including undefined/null) to use Local ACP
 func open(this js.Value, args []js.Value) (js.Value, error) {
+	var acpType string
+	if len(args) > 0 && args[0].Type() == js.TypeString {
+		acpType = args[0].String()
+	}
+	ident, err := initKeypairAndGetIdentity()
+	if err != nil {
+		return js.Undefined(), err
+	}
 	opts := []node.Option{
 		node.WithStoreType(node.BadgerStore),
 		node.WithBadgerInMemory(true),
 		node.WithDisableP2P(true),
 		node.WithDisableAPI(true),
+		db.WithNodeIdentity(ident),
+	}
+	if acpType == "sourcehub" {
+		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
 	}
 	n, err := node.New(context.Background(), opts...)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = n.Start(context.Background())
-	if err != nil {
+	if err := n.Start(context.Background()); err != nil {
 		return js.Undefined(), err
 	}
 	return NewClient(n).JSValue(), nil

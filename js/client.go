@@ -54,6 +54,7 @@ func (c *Client) JSValue() js.Value {
 		"getAllIndexes":              goji.Async(c.getAllIndexes),
 		"execRequest":                goji.Async(c.execRequest),
 		"addDACPolicy":               goji.Async(c.addDACPolicy),
+		"verifyDACAccess":            goji.Async(c.verifyDACAccess),
 		"addDACActorRelationship":    goji.Async(c.addDACActorRelationship),
 		"deleteDACActorRelationship": goji.Async(c.deleteDACActorRelationship),
 		"getNodeIdentity":            goji.Async(c.getNodeIdentity),

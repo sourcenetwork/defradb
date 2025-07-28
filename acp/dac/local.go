@@ -295,7 +295,7 @@ func (l *LocalDocumentACP) AddActorRelationship(
 		return false, err
 	}
 
-	return setRelationshipResponse.RecordExisted, nil
+	return setRelationshipResponse.GetRecordExisted(), nil
 }
 
 func (l *LocalDocumentACP) DeleteActorRelationship(
@@ -341,5 +341,5 @@ func (l *LocalDocumentACP) DeleteActorRelationship(
 		return false, err
 	}
 
-	return deleteRelationshipResponse.RecordFound, nil
+	return deleteRelationshipResponse.GetRecordFound(), nil
 }

@@ -14,8 +14,10 @@ package js
 
 import (
 	"context"
+	"fmt"
 	"syscall/js"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/goji"
 )
@@ -90,6 +92,54 @@ func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.
 		return js.Undefined(), err
 	}
 	return goji.MarshalJS(res)
+}
+
+func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, error) {
+	permission, err := stringArg(args, 0, "permission")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	actorID, err := stringArg(args, 1, "actorID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	policyID, err := stringArg(args, 2, "policyID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	resourceName, err := stringArg(args, 3, "resourceName")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	docID, err := stringArg(args, 4, "docID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 5, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	if !c.node.DB.DocumentACP().HasValue() {
+		return js.Undefined(), fmt.Errorf("ACP system not available")
+	}
+	var docPermission acpTypes.DocumentResourcePermission
+	switch permission {
+	case "read":
+		docPermission = acpTypes.DocumentReadPerm
+	case "update":
+		docPermission = acpTypes.DocumentUpdatePerm
+	case "delete":
+		docPermission = acpTypes.DocumentDeletePerm
+	default:
+		return js.Undefined(), fmt.Errorf("invalid permission: %s", permission)
+	}
+	hasAccess, err := c.node.DB.DocumentACP().Value().CheckDocAccess(ctx, docPermission, actorID, policyID, resourceName, docID)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(map[string]interface{}{
+		"hasAccess": hasAccess,
+	})
 }
 
 func (c *Client) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
