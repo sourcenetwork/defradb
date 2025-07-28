@@ -50,7 +50,7 @@ func open(this js.Value, args []js.Value) (js.Value, error) {
 		db.WithNodeIdentity(ident),
 	}
 	if acpType == "sourcehub" {
-		opts = append(opts, node.WithDocumentACPType(node.SourceHubJsDocumentACPType))
+		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
 	}
 	n, err := node.New(context.Background(), opts...)
 	if err != nil {

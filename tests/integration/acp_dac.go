@@ -26,9 +26,8 @@ const (
 )
 
 const (
-	SourceHubDocumentACPType   DocumentACPType = "source-hub"
-	SourceHubJsDocumentACPType DocumentACPType = "source-hub-js"
-	LocalDocumentACPType       DocumentACPType = "local"
+	SourceHubDocumentACPType DocumentACPType = "source-hub"
+	LocalDocumentACPType     DocumentACPType = "local"
 )
 
 const (
@@ -131,7 +130,7 @@ func addDACPolicy(
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if documentACPType == SourceHubDocumentACPType || documentACPType == SourceHubJsDocumentACPType {
+		if documentACPType == SourceHubDocumentACPType {
 			// Note: If we break here the state will only preserve the policyIDs result on the
 			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
 			// on all the nodes, so we don't have to handle all the edge cases later in actions.
@@ -220,7 +219,7 @@ func addDACActorRelationship(
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if documentACPType == SourceHubDocumentACPType || documentACPType == SourceHubJsDocumentACPType {
+		if documentACPType == SourceHubDocumentACPType {
 			actionNodeID = immutable.Some(0)
 			break
 		}
@@ -310,7 +309,7 @@ func deleteDACActorRelationship(
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if documentACPType == SourceHubDocumentACPType || documentACPType == SourceHubJsDocumentACPType {
+		if documentACPType == SourceHubDocumentACPType {
 			break
 		}
 	}

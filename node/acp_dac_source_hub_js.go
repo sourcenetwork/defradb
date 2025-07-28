@@ -20,10 +20,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-const SourceHubJsDocumentACPType DocumentACPType = "source-hub-js"
+const SourceHubDocumentACPType DocumentACPType = "source-hub"
 
 func init() {
-	documentACPConstructors[SourceHubJsDocumentACPType] = func(
+	documentACPConstructors[SourceHubDocumentACPType] = func(
 		ctx context.Context,
 		options *DocumentACPOptions,
 	) (immutable.Option[dac.DocumentACP], error) {
