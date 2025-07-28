@@ -18,6 +18,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -135,6 +136,11 @@ func (s *server) pushSEArtifacts(evt se.ReplicateEvent, pid peer.ID) (err error)
 			SearchTag: artifact.SearchTag,
 		}
 	}
+
+	log.InfoContext(ctx, "Handle push SE artifacts",
+		corelog.String("DocID", evt.DocID),
+		corelog.String("CollectionID", evt.CollectionID),
+		corelog.String("PeerID", pid.String()))
 
 	req := pushSEArtifactsRequest{
 		CollectionID: evt.CollectionID,

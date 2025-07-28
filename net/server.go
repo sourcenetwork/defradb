@@ -198,6 +198,15 @@ func (s *server) getIdentityHandler(
 
 // pushSEArtifactsHandler receives SE artifacts from peers
 func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifactsRequest) (*pushSEArtifactsReply, error) {
+	sb := strings.Builder{}
+	for i, netArtifact := range req.Artifacts {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(netArtifact.DocID)
+	}
+	log.InfoContext(ctx, "Handle push SE artifacts", corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.Creator))
+
 	_, err := peerIDFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -223,15 +232,20 @@ func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifact
 
 // querySEArtifactsHandler handles SE queries from peers
 func (s *server) querySEArtifactsHandler(ctx context.Context, req *querySEArtifactsRequest) (*querySEArtifactsReply, error) {
-	_, err := peerIDFromContext(ctx)
+	peerID, err := peerIDFromContext(ctx)
 	if err != nil {
+		log.ErrorContextE(ctx, "Failed to get peer ID from context", err)
 		return nil, err
 	}
 
 	matchingDocIDs, err := s.querySEArtifactsFromDatastore(ctx, req)
 	if err != nil {
+		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
 		return nil, err
 	}
+
+	log.InfoContext(ctx, "Handle SE artifacts query", corelog.String("DocIDs", strings.Join(matchingDocIDs, ", ")),
+		corelog.String("Sender", peerID.String()))
 
 	return &querySEArtifactsReply{
 		DocIDs: matchingDocIDs,
