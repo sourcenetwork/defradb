@@ -13,6 +13,7 @@ package tests
 import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/stretchr/testify/require"
 )
 
 // setupNode returns the database implementation for the current
@@ -23,6 +24,26 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
 	opts = append(opts, node.WithBadgerInMemory(true))
 	opts = append(opts, node.WithLensRuntime(node.JSLensRuntime))
+
+	switch documentACPType {
+	case LocalDocumentACPType:
+		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
+
+	case SourceHubDocumentACPType:
+		if len(s.documentACPOptions) == 0 {
+			var err error
+			s.documentACPOptions, err = setupSourceHub(s)
+			require.NoError(s.t, err)
+		}
+
+		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
+		for _, opt := range s.documentACPOptions {
+			opts = append(opts, opt)
+		}
+
+	default:
+		// no-op, use the `node` package default
+	}
 
 	node, err := node.New(s.ctx, opts...)
 	if err != nil {

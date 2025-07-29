@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -97,18 +98,54 @@ func contextTransactionArg(value js.Value, txns *sync.Map) (client.Txn, error) {
 }
 
 func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity], error) {
-	id := value.Get("identity")
-	if id.Type() != js.TypeString {
+	full_ident := value.Get("full_identity")
+	if full_ident.Type() == js.TypeString {
+		data, err := hex.DecodeString(full_ident.String())
+		if err != nil {
+			return immutable.None[acpIdentity.Identity](), err
+		}
+		privKey := secp256k1.PrivKeyFromBytes(data)
+		identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
+		if err != nil {
+			return immutable.None[acpIdentity.Identity](), err
+		}
+		return immutable.Some[acpIdentity.Identity](identity), nil
+	}
+	ident := value.Get("identity")
+	if ident.Type() != js.TypeString {
 		return immutable.None[acpIdentity.Identity](), nil
 	}
-	data, err := hex.DecodeString(id.String())
+	publicKey, err := crypto.PublicKeyFromString(crypto.KeyTypeSecp256r1, ident.String())
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}
-	privKey := secp256k1.PrivKeyFromBytes(data)
-	identity, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
+	identity, err := acpIdentity.FromPublicKey(publicKey)
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}
 	return immutable.Some[acpIdentity.Identity](identity), nil
+}
+
+// initKeypairAndGetIdentity initializes the keypair and gets an identity.
+func initKeypairAndGetIdentity() (identity.Identity, error) {
+	createKeyPairFunc := js.Global().Get("initKeypair")
+	if !createKeyPairFunc.Truthy() {
+		return nil, fmt.Errorf("initKeypair function not found")
+	}
+	results, err := goji.Await(goji.PromiseValue(createKeyPairFunc.Invoke()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to await initKeypair: %w", err)
+	}
+	if len(results) == 0 || results[0].String() == "" {
+		return nil, fmt.Errorf("initKeypair returned no valid public key")
+	}
+	publicKey, err := crypto.PublicKeyFromString(crypto.KeyTypeSecp256r1, results[0].String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create public key from hex: %w", err)
+	}
+	ident, err := identity.FromPublicKey(publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create identity from public key: %w", err)
+	}
+	return ident, nil
 }

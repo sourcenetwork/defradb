@@ -653,7 +653,7 @@ func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
 
 	result := docSyncItem{
 		DocID: docID,
-		Heads: make([][]byte, len(cids)),
+		Heads: make([][]byte, 0, len(cids)),
 	}
 
 	for _, cid := range cids {
