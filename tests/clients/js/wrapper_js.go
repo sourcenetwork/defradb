@@ -28,10 +28,10 @@ func execute(ctx context.Context, value js.Value, method string, args ...any) ([
 	if ok {
 		contextValues["transaction"] = tx.ID()
 	}
-	id := identity.FromContext(ctx)
-	if id.HasValue() {
-		if full, ok := id.Value().(identity.FullIdentity); ok && full.PrivateKey() != nil {
-			contextValues["identity"] = full.PrivateKey().String()
+	ident := identity.FromContext(ctx)
+	if ident.HasValue() {
+		if full, ok := ident.Value().(identity.FullIdentity); ok && full.PrivateKey() != nil {
+			contextValues["full_identity"] = full.PrivateKey().String()
 		}
 	}
 	args = append(args, contextValues)

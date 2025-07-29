@@ -28,7 +28,7 @@ const (
 	errInvalidECDSAPrivKeyBytes        string = "invalid ECDSA private key bytes"
 	errNilKey                          string = "received nil key"
 	errInvalidECDSASignature           string = "invalid ECDSA signature"
-	errInvalidECDSAPubKey              string = "invalid secp256k1 public key"
+	errInvalidECDSAPubKey              string = "invalid ECDSA public key"
 	errInvalidEd25519PrivKeyLength     string = "invalid Ed25519 private key length"
 	errInvalidEd25519PubKeyLength      string = "invalid Ed25519 public key length"
 	errInvalidEd25519PubKey            string = "invalid Ed25519 public key"
