@@ -73,22 +73,22 @@ func BlockVerifySignature(cKeyType *C.char, cPublicKey *C.char, cCID *C.char) *C
 	return returnC(gcr)
 }
 
-//export CollectionCreate
-func CollectionCreate(
+//export DocumentCreate
+func DocumentCreate(
 	cJSON *C.char,
 	cIsEncrypted C.int,
 	cEncryptedFields *C.char,
 	cOptions C.CollectionOptions,
 ) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.CollectionCreate(C.GoString(cJSON), cIsEncrypted != 0, C.GoString(cEncryptedFields), gocOptions)
+	gcr := cbindings.DocumentCreate(C.GoString(cJSON), cIsEncrypted != 0, C.GoString(cEncryptedFields), gocOptions)
 	return returnC(gcr)
 }
 
-//export CollectionDelete
-func CollectionDelete(cDocID *C.char, cFilter *C.char, cOptions C.CollectionOptions) *C.Result {
+//export DocumentDelete
+func DocumentDelete(cDocID *C.char, cFilter *C.char, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.CollectionDelete(C.GoString(cDocID), C.GoString(cFilter), gocOptions)
+	gcr := cbindings.DocumentDelete(C.GoString(cDocID), C.GoString(cFilter), gocOptions)
 	return returnC(gcr)
 }
 
@@ -106,10 +106,10 @@ func CollectionListDocIDs(cOptions C.CollectionOptions) *C.Result {
 	return returnC(gcr)
 }
 
-//export CollectionGet
-func CollectionGet(cDocID *C.char, cShowDeleted C.int, cOptions C.CollectionOptions) *C.Result {
+//export DocumentGet
+func DocumentGet(cDocID *C.char, cShowDeleted C.int, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.CollectionGet(C.GoString(cDocID), cShowDeleted != 0, gocOptions)
+	gcr := cbindings.DocumentGet(C.GoString(cDocID), cShowDeleted != 0, gocOptions)
 	return returnC(gcr)
 }
 
@@ -120,10 +120,10 @@ func CollectionPatch(cPatch *C.char, cOptions C.CollectionOptions) *C.Result {
 	return returnC(gcr)
 }
 
-//export CollectionUpdate
-func CollectionUpdate(cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOptions C.CollectionOptions) *C.Result {
+//export DocumentUpdate
+func DocumentUpdate(cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.CollectionUpdate(C.GoString(cDocID), C.GoString(cFilter), C.GoString(cUpdater), gocOptions)
+	gcr := cbindings.DocumentUpdate(C.GoString(cDocID), C.GoString(cFilter), C.GoString(cUpdater), gocOptions)
 	return returnC(gcr)
 }
 

@@ -96,7 +96,7 @@ func getCollectionForCollectionCommand(
 	return cols[0], nil
 }
 
-func CollectionCreate(
+func DocumentCreate(
 	jsonString string,
 	isEncrypted bool,
 	encryptFieldsStr string,
@@ -157,7 +157,7 @@ func CollectionCreate(
 	return returnGoC(0, "", "")
 }
 
-func CollectionDelete(docID string, filter string, gocOptions GoCOptions) GoCResult {
+func DocumentDelete(docID string, filter string, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -278,7 +278,7 @@ func CollectionListDocIDs(gocOptions GoCOptions) GoCResult {
 	return returnGoC(0, "", string(data))
 }
 
-func CollectionGet(docIDinput string, showDeleted bool, gocOptions GoCOptions) GoCResult {
+func DocumentGet(docIDinput string, showDeleted bool, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -333,7 +333,7 @@ func CollectionPatch(patch string, gocOptions GoCOptions) GoCResult {
 	return returnGoC(0, "", "")
 }
 
-func CollectionUpdate(docID string, filter string, updater string, gocOptions GoCOptions) GoCResult {
+func DocumentUpdate(docID string, filter string, updater string, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 

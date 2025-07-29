@@ -73,7 +73,7 @@ func (c *Collection) Create(
 	}
 	cJSON := string(docJSONbytes)
 
-	result := cbindings.CollectionCreate(cJSON, isEncrypted, encryptedFields, copts)
+	result := cbindings.DocumentCreate(cJSON, isEncrypted, encryptedFields, copts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -113,7 +113,7 @@ func (c *Collection) CreateMany(
 	}
 	cJSON := string(docJSONbytes)
 
-	result := cbindings.CollectionCreate(cJSON, isEncrypted, encryptedFields, copts)
+	result := cbindings.DocumentCreate(cJSON, isEncrypted, encryptedFields, copts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -145,7 +145,7 @@ func (c *Collection) Update(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionUpdate(docID, filter, updater, copts)
+	result := cbindings.DocumentUpdate(docID, filter, updater, copts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -184,7 +184,7 @@ func (c *Collection) Delete(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionDelete(docIDStr, filter, copts)
+	result := cbindings.DocumentDelete(docIDStr, filter, copts)
 
 	if result.Status != 0 {
 		return false, errors.New(result.Error)
@@ -207,7 +207,7 @@ func (c *Collection) Exists(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionGet(docIDStr, cShowDeleted, copts)
+	result := cbindings.DocumentGet(docIDStr, cShowDeleted, copts)
 
 	if result.Status != 0 {
 		return false, errors.New(result.Error)
@@ -235,7 +235,7 @@ func (c *Collection) UpdateWithFilter(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionUpdate(docID, filterStr, updater, copts)
+	result := cbindings.DocumentUpdate(docID, filterStr, updater, copts)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -268,7 +268,7 @@ func (c *Collection) DeleteWithFilter(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionDelete(docID, filterStr, copts)
+	result := cbindings.DocumentDelete(docID, filterStr, copts)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -297,7 +297,7 @@ func (c *Collection) Get(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionGet(docIDStr, showDeleted, copts)
+	result := cbindings.DocumentGet(docIDStr, showDeleted, copts)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
