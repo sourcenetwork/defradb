@@ -76,13 +76,17 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
-				testUtils.SourceHubDocumentACPType,
+				testUtils.LocalDocumentACPType,
 			},
 		),
 		EnableSearchableEncryption: true,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   policy,
+			},
 			testUtils.SchemaUpdate{
 				Schema: `
 					type Users @policy(
@@ -90,7 +94,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 						resource: "users"
 					) {
 						name: String
-						age: Int
+						age: Int @encryptedIndex
 					}
 				`,
 
@@ -104,8 +108,12 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				SEEnabled:    true,
 			},
 			testUtils.CreateDoc{
-				NodeID:         immutable.Some(0),
-				Doc:            john21Doc,
+				Identity: testUtils.ClientIdentity(1),
+				NodeID:   immutable.Some(0),
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
 				IsDocEncrypted: true,
 			},
 			testUtils.Wait{
@@ -139,12 +147,23 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": gomega.Not(gomega.Equal("John")),
-							"age":  gomega.Not(gomega.Equal(21)),
-						},
-					},
+					"Users": []map[string]any{},
+				},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `
+					query {
+						commits {
+							delta
+						}
+					}
+				`,
+				// this replicator doesn't have access to the document, so it can't even
+				// store heads. Once we introduce a dedicated permission for replication,
+				// this should be updated to return the commits with encrypted deltas.
+				Results: map[string]any{
+					"commits": []map[string]any{},
 				},
 			},
 		},

@@ -13,6 +13,8 @@ package event
 import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/immutable"
 )
 
 // Bus handles routing and publishing of messages to subscribers.
@@ -91,6 +93,9 @@ type Update struct {
 
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
+
+	// Identity is the identity of the peer that created this update.
+	Identity immutable.Option[acpIdentity.Identity]
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.

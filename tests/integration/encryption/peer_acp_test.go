@@ -226,6 +226,23 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 					"Users": []map[string]any{},
 				},
 			},
+			// If the node doesn't have rights to the doc, it can't do merge
+			// and therefore has no heads. So commits should be empty.
+			testUtils.Request{
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
+				Request: `
+					query {
+						commits {
+							delta
+							docID
+						}
+					}
+				`,
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
+			},
 		},
 	}
 

@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -191,6 +192,10 @@ func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt eve
 		if link.Name != "" && link.Name != "_head" {
 			updatedFields = append(updatedFields, link.Name)
 		}
+	}
+
+	if evt.Identity.HasValue() {
+		ctx = acpIdentity.WithContext(ctx, evt.Identity)
 	}
 
 	artifacts, err := rc.generateSEArtifacts(ctx, evt.DocID, evt.CollectionID, updatedFields)

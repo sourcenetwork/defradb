@@ -808,6 +808,7 @@ func (c *collection) save(
 	updateEvent := event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          link.Cid,
+		Identity:     ident,
 		CollectionID: c.Version().CollectionID,
 		Block:        headNode,
 	}
@@ -843,6 +844,7 @@ func (c *collection) save(
 			Cid:          link.Cid,
 			CollectionID: c.Version().CollectionID,
 			Block:        headNode,
+			Identity:     ident,
 		}
 
 		txn.OnSuccess(func() {
