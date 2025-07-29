@@ -316,14 +316,33 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
+      - name: Start background memory monitor
+        run: |
+          ( while true; do
+              echo "==== Memory usage at $(date) ===="
+              free -h
+              ps -eo pid,comm,%mem,%cpu --sort=-%mem | head -n 10
+              echo "==============================="
+              sleep 30
+            done ) &
+          echo $! > memmon.pid
+
       - name: Run C bindings test coverage
         run: make test:coverage-c
+
+      - name: Stop memory monitor
+        if: always()
+        run: |
+          if [ -f memmon.pid ]; then
+            kill "$(cat memmon.pid)" || true
+          fi
 
       - name: Save coverage report in an artifact
         uses: ./.github/composites/upload-coverage-artifact
         with:
           coverage-artifact-name: "coverage_c"
           coverage-path: coverage.txt
+
 
 
   ## This job gathers all the coverage reports and uploads them to code-cov

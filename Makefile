@@ -366,7 +366,7 @@ test\:coverage-js:
 test\:coverage-c:
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
-	DEFRA_CLIENT_C=true gotestsum --format testname -- -p=1 ./tests/integration/... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	DEFRA_CLIENT_C=true gotestsum --format testname -- ./tests/integration/... $(TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:changes
