@@ -1,5 +1,18 @@
-import React from 'react';
+/* Copyright 2025 Democratized Data Foundation
+ *
+ * Use of this software is governed by the Business Source License
+ * included in the file licenses/BSL.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with
+ * the Business Source License, use of this software will be governed
+ * by the Apache License, Version 2.0, included in the file
+ * licenses/APL.txt.
+ */
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
+import styles from './PluginStyles.module.css';
+import { SchemaIcon } from '../icons';
 
 export const DEFAULT_SCHEMA = `type Users @policy(
   id: "policy_id",
@@ -8,6 +21,13 @@ export const DEFAULT_SCHEMA = `type Users @policy(
   name: String
   age: Int
 }`;
+
+type ResultType = 'success' | 'error' | 'info';
+
+interface SchemaResult {
+  message: string;
+  type: ResultType;
+}
 
 interface SchemaPluginProps {
   schemaRef: React.RefObject<string>;
@@ -18,163 +38,123 @@ interface SchemaPluginProps {
 
 export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => ({
   title: 'Add Schema',
-  icon: () => <span>📋</span>,
+  icon: SchemaIcon,
   content: () => {
-    const currentSchema = props.defaultSchema.replace('policy_id', props.policyIdRef.current);
+    const [schemaText, setSchemaText] = useState(() => 
+      props.defaultSchema.replace('policy_id', props.policyIdRef.current || 'policy_id')
+    );
+    const [isLoading, setIsLoading] = useState(false);
+    const [result, setResult] = useState<SchemaResult | null>(null);
 
-    React.useEffect(() => {
-      const textarea = document.getElementById('schema-input') as HTMLTextAreaElement;
-      if (textarea) {
+    useEffect(() => {
+      if (props.policyIdRef.current) {
         const updatedSchema = props.defaultSchema.replace('policy_id', props.policyIdRef.current);
-        textarea.value = updatedSchema;
+        setSchemaText(updatedSchema);
         props.schemaRef.current = updatedSchema;
       }
-    });
+    }, [props.policyIdRef.current, props.defaultSchema]);
+
+    const handleSchemaChange = useCallback((value: string) => {
+      setSchemaText(value);
+      props.schemaRef.current = value;
+    }, [props]);
+
+    const handleAddSchema = useCallback(async () => {
+      if (!props.clientRef.current) {
+        setResult({
+          message: 'Error: Client not initialized',
+          type: 'error'
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      setResult({
+        message: 'Adding schema...',
+        type: 'info'
+      });
+
+      try {
+        const response = await props.clientRef.current.addSchema(schemaText);
+        const successMessage = `Schema added successfully: ${JSON.stringify(response, null, 2)}`;
+
+        setResult({
+          message: successMessage,
+          type: 'success'
+        });
+      } catch (error) {
+        const errorMessage = `Error adding schema: ${error instanceof Error ? error.message : String(error)}`;
+        setResult({
+          message: errorMessage,
+          type: 'error'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }, [schemaText, props.clientRef]);
 
     return (
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#202a3b',
-        color: '#eaf1fb',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-        fontSize: '14px',
-        lineHeight: '1.5',
-        height: '100%',
-        overflowY: 'auto'
-      }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#eaf1fb' }}>
-          Add Schema
-        </h3>
-        <p style={{ margin: '0 0 20px 0', color: '#bfc7d5', fontSize: '14px' }}>
-          Edit your schema below and click "Add Schema". The policy ID will be automatically populated if a policy was previously created.
-        </p>
-        <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="schema-input" style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#eaf1fb',
-            fontSize: '14px'
-          }}>
-            Schema GraphQL
-          </label>
-          <textarea
-            id="schema-input"
-            defaultValue={currentSchema}
-            onChange={(e) => {
-              props.schemaRef.current = e.target.value;
-            }}
-            style={{
-              width: '100%',
-              minHeight: '200px',
-              fontFamily: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
-              fontSize: '13px',
-              padding: '16px',
-              border: '1px solid #eaf1fb',
-              borderRadius: '4px',
-              resize: 'vertical',
-              backgroundColor: '#2b3546',
-              color: '#eaf1fb',
-              lineHeight: '1.4',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-            placeholder="Enter schema GraphQL..."
-          />
-        </div>
-        <button
-          id="add-schema-button"
-          onClick={() => {
-            const textarea = document.getElementById('schema-input') as HTMLTextAreaElement;
-            const button = document.getElementById('add-schema-button') as HTMLButtonElement;
-            const resultDiv = document.getElementById('schema-result');
-
-            if (textarea && button) {
-              props.schemaRef.current = textarea.value;
-
-              button.disabled = true;
-              button.textContent = 'Adding Schema...';
-              button.style.backgroundColor = '#2b3546';
-              button.style.cursor = 'not-allowed';
-
-              if (resultDiv) {
-                resultDiv.innerHTML = '<pre style="margin: 0; color: #bfc7d5; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">Adding schema...</pre>';
-                resultDiv.style.display = 'block';
-              }
-
-              const handleAddSchemaDirect = async () => {
-                if (!props.clientRef.current) {
-                  if (resultDiv) {
-                    resultDiv.innerHTML = '<pre style="margin: 0; color: #ffb3b3; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">Error: Client not initialized</pre>';
-                  }
-                  return;
-                }
-
-                try {
-                  const result = await props.clientRef.current.addSchema(props.schemaRef.current);
-                  const successMessage = `Schema added successfully: ${JSON.stringify(result, null, 2)}`;
-
-                  if (resultDiv) {
-                    resultDiv.innerHTML = `<pre style="margin: 0; color: #b3ffb3; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">${successMessage}</pre>`;
-                  }
-                } catch (error) {
-                  const errorMessage = `Error adding schema: ${error instanceof Error ? error.message : String(error)}`;
-                  if (resultDiv) {
-                    resultDiv.innerHTML = `<pre style="margin: 0; color: #ffb3b3; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">${errorMessage}</pre>`;
-                  }
-                } finally {
-                  button.disabled = false;
-                  button.textContent = 'Add Schema';
-                  button.style.backgroundColor = '#ff5ca7';
-                  button.style.cursor = 'pointer';
-                }
-              };
-              handleAddSchemaDirect();
+      <main className={styles.pluginContainer}>
+        <header>
+          <h3 className={styles.pluginTitle}>Add Schema</h3>
+          <p id="schema-description" className={styles.pluginDescription}>
+            Edit your schema below and click "Add Schema". The policy ID will be automatically populated if a policy was previously created.
+          </p>
+        </header>
+        
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!isLoading && schemaText.trim()) {
+              handleAddSchema();
             }
           }}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#ff5ca7',
-            color: '#eaf1fb',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            marginBottom: '20px',
-            width: '100%',
-            transition: 'background-color 0.2s ease'
-          }}
+          noValidate
         >
-          Add Schema
-        </button>
+          <fieldset className={styles.formGroup}>
+            <label htmlFor="schema-input" className={styles.formLabel}>
+              Schema GraphQL
+            </label>
+            <textarea
+              id="schema-input"
+              name="schema"
+              value={schemaText}
+              onChange={(e) => handleSchemaChange(e.target.value)}
+              className={styles.textarea}
+              placeholder="Enter schema GraphQL..."
+              aria-describedby="schema-description"
+              required
+              minLength={5}
+              rows={12}
+              spellCheck={false}
+            />
+          </fieldset>
+          
+          <button
+            type="submit"
+            disabled={isLoading || !schemaText.trim()}
+            className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
+            aria-describedby={result ? 'schema-result' : undefined}
+            aria-busy={isLoading}
+          >
+            {isLoading ? 'Adding Schema...' : 'Add Schema'}
+          </button>
+        </form>
 
-        <div
-          id="schema-result"
-          style={{
-            padding: '16px',
-            backgroundColor: '#222d26',
-            border: '1px solid #c3e6cb',
-            borderRadius: '4px',
-            marginTop: '10px',
-            display: 'none'
-          }}
-        >
-          <pre style={{
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            fontSize: '12px',
-            fontFamily: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
-            color: '#b3ffb3',
-            lineHeight: '1.4',
-            maxWidth: '100%',
-            overflowWrap: 'break-word',
-            wordWrap: 'break-word'
-          }}>
-          </pre>
-        </div>
-      </div>
+        {result && (
+          <section
+            id="schema-result"
+            className={`${styles.resultContainer} ${styles[result.type]}`}
+            role={result.type === 'error' ? 'alert' : 'status'}
+            aria-live={result.type === 'error' ? 'assertive' : 'polite'}
+            aria-label={`Schema operation result: ${result.type}`}
+          >
+            <pre className={`${styles.resultText} ${styles[result.type]}`}>
+              {result.message}
+            </pre>
+          </section>
+        )}
+      </main>
     );
   },
 }); 

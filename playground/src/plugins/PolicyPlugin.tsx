@@ -1,5 +1,18 @@
-import React from 'react';
+/* Copyright 2025 Democratized Data Foundation
+ *
+ * Use of this software is governed by the Business Source License
+ * included in the file licenses/BSL.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with
+ * the Business Source License, use of this software will be governed
+ * by the Apache License, Version 2.0, included in the file
+ * licenses/APL.txt.
+ */
+
+import React, { useState, useCallback } from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
+import styles from './PluginStyles.module.css';
+import { PolicyIcon } from '../icons';
 
 export const DEFAULT_POLICY = `name: Test Policy
 description: A test policy for playground
@@ -25,6 +38,13 @@ resources:
         types:
           - actor`;
 
+type ResultType = 'success' | 'error' | 'info';
+
+interface PolicyResult {
+  message: string;
+  type: ResultType;
+}
+
 interface PolicyPluginProps {
   policyRef: React.RefObject<string>;
   clientRef: React.RefObject<any>;
@@ -35,166 +55,126 @@ interface PolicyPluginProps {
 
 export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => ({
   title: 'Add Policy',
-  icon: () => <span>🔐</span>,
+  icon: PolicyIcon,
   content: () => {
+    const [policyText, setPolicyText] = useState(props.defaultPolicy);
+    const [isLoading, setIsLoading] = useState(false);
+    const [result, setResult] = useState<PolicyResult | null>(null);
+
+    const handlePolicyChange = useCallback((value: string) => {
+      setPolicyText(value);
+      props.policyRef.current = value;
+    }, [props]);
+
+    const handleAddPolicy = useCallback(async () => {
+      if (!props.clientRef.current) {
+        setResult({
+          message: 'Error: Client not initialized',
+          type: 'error'
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      setResult({
+        message: 'Adding policy...',
+        type: 'info'
+      });
+
+      try {
+        const nodeIdentity = await props.clientRef.current.getNodeIdentity();
+        const context = {
+          identity: nodeIdentity.PublicKey
+        };
+
+        const response = await props.clientRef.current.addDACPolicy(policyText, context);
+        const successMessage = `Policy created successfully: ${JSON.stringify(response, null, 2)}`;
+
+        setResult({
+          message: successMessage,
+          type: 'success'
+        });
+        props.resultRef.current = successMessage;
+
+        if (response && response.PolicyID) {
+          props.policyIdRef.current = response.PolicyID;
+        } else {
+          console.error("No PolicyID found in result:", response);
+        }
+      } catch (error) {
+        const errorMessage = `Error adding policy: ${error instanceof Error ? error.message : String(error)}`;
+        setResult({
+          message: errorMessage,
+          type: 'error'
+        });
+        props.resultRef.current = errorMessage;
+      } finally {
+        setIsLoading(false);
+      }
+    }, [policyText, props]);
+
     return (
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#202a3b',
-        color: '#eaf1fb',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-        fontSize: '14px',
-        lineHeight: '1.5',
-        height: '100%',
-        overflowY: 'auto'
-      }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#eaf1fb' }}>
-          Add Policy
-        </h3>
-        <p style={{ margin: '0 0 20px 0', color: '#bfc7d5', fontSize: '14px' }}>
-          Paste your policy YAML below and click "Add Policy".
-        </p>
-        <div style={{ marginBottom: '20px' }}>
-          <label htmlFor="policy-input" style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#eaf1fb',
-            fontSize: '14px'
-          }}>
-            Policy YAML
-          </label>
-          <textarea
-            id="policy-input"
-            defaultValue={props.defaultPolicy}
-            onChange={(e) => {
-              props.policyRef.current = e.target.value;
-            }}
-            style={{
-              width: '100%',
-              minHeight: '400px',
-              fontFamily: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
-              fontSize: '13px',
-              padding: '16px',
-              border: '1px solid #eaf1fb',
-              borderRadius: '4px',
-              resize: 'vertical',
-              backgroundColor: '#2b3546',
-              color: '#eaf1fb',
-              lineHeight: '1.4',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-            placeholder="Enter policy YAML..."
-          />
-        </div>
-        <button
-          id="add-policy-button"
-          onClick={() => {
-            const textarea = document.getElementById('policy-input') as HTMLTextAreaElement;
-            const button = document.getElementById('add-policy-button') as HTMLButtonElement;
-            const resultDiv = document.getElementById('policy-result');
-
-            if (textarea && button) {
-              props.policyRef.current = textarea.value;
-
-              button.disabled = true;
-              button.textContent = 'Adding Policy...';
-              button.style.backgroundColor = '#2b3546';
-              button.style.cursor = 'not-allowed';
-
-              if (resultDiv) {
-                resultDiv.innerHTML = '<pre style="margin: 0; color: #bfc7d5; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">Adding policy...</pre>';
-                resultDiv.style.display = 'block';
-              }
-
-              const handleAddPolicyDirect = async () => {
-                if (!props.clientRef.current) {
-                  if (resultDiv) {
-                    resultDiv.innerHTML = '<pre style="margin: 0; color: #ffb3b3; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">Error: Client not initialized</pre>';
-                  }
-                  return;
-                }
-
-                try {
-                  const nodeIdentity = await props.clientRef.current.getNodeIdentity();
-
-                  const context = {
-                    identity: nodeIdentity.PublicKey
-                  };
-
-                  const result = await props.clientRef.current.addDACPolicy(props.policyRef.current, context);
-                  const successMessage = `Policy created successfully: ${JSON.stringify(result, null, 2)}`;
-
-                  if (resultDiv) {
-                    resultDiv.innerHTML = `<pre style="margin: 0; color: #b3ffb3; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">${successMessage}</pre>`;
-                  }
-
-                  // Extract policy ID from the result and update state
-                  if (result && result.PolicyID) {
-                    props.policyIdRef.current = result.PolicyID;
-                  } else {
-                    console.error("No PolicyID found in result:", result);
-                  }
-                } catch (error) {
-                  const errorMessage = `Error adding policy: ${error instanceof Error ? error.message : String(error)}`;
-                  if (resultDiv) {
-                    resultDiv.innerHTML = `<pre style="margin: 0; color: #ffb3b3; white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-wrap: break-word; word-wrap: break-word;">${errorMessage}</pre>`;
-                  }
-                } finally {
-                  button.disabled = false;
-                  button.textContent = 'Add Policy';
-                  button.style.backgroundColor = '#ff5ca7';
-                  button.style.cursor = 'pointer';
-                }
-              };
-              handleAddPolicyDirect();
+      <main className={styles.pluginContainer}>
+        <header>
+          <h3 className={styles.pluginTitle}>Add Policy</h3>
+          <p id="policy-description" className={styles.pluginDescription}>
+            Paste your policy YAML below and click "Add Policy".
+          </p>
+        </header>
+        
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!isLoading && policyText.trim()) {
+              handleAddPolicy();
             }
           }}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#ff5ca7',
-            color: '#eaf1fb',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500',
-            marginBottom: '20px',
-            width: '100%',
-            transition: 'background-color 0.2s ease'
-          }}
+          noValidate
         >
-          Add Policy
-        </button>
+          <fieldset className={styles.formGroup}>
+            <label htmlFor="policy-input" className={styles.formLabel}>
+              Policy YAML
+            </label>
+            <textarea
+              id="policy-input"
+              name="policy"
+              value={policyText}
+              onChange={(e) => handlePolicyChange(e.target.value)}
+              className={`${styles.textarea} ${styles.large}`}
+              placeholder="Enter policy YAML..."
+              aria-describedby="policy-description"
+              required
+              minLength={10}
+              rows={20}
+              spellCheck={false}
+            />
+          </fieldset>
+          
+          <button
+            type="submit"
+            disabled={isLoading || !policyText.trim()}
+            className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
+            aria-describedby={result ? 'policy-result' : undefined}
+            aria-busy={isLoading}
+          >
+            {isLoading ? 'Adding Policy...' : 'Add Policy'}
+          </button>
+        </form>
 
-        <div
-          id="policy-result"
-          style={{
-            padding: '16px',
-            backgroundColor: props.resultRef?.current?.includes('Error') ? '#2d2227' : '#222d26',
-            border: `1px solid ${props.resultRef.current.includes('Error') ? '#f5c6cb' : '#c3e6cb'}`,
-            borderRadius: '4px',
-            marginTop: '10px',
-            display: props.resultRef.current ? 'block' : 'none'
-          }}
-        >
-          <pre style={{
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            fontSize: '12px',
-            fontFamily: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
-            color: props.resultRef.current.includes('Error') ? '#ffb3b3' : '#b3ffb3',
-            lineHeight: '1.4',
-            maxWidth: '100%',
-            overflowWrap: 'break-word',
-            wordWrap: 'break-word'
-          }}>
-            {props.resultRef.current}
-          </pre>
-        </div>
-      </div>
+        {result && (
+          <section
+            id="policy-result"
+            className={`${styles.resultContainer} ${styles[result.type]}`}
+            role={result.type === 'error' ? 'alert' : 'status'}
+            aria-live={result.type === 'error' ? 'assertive' : 'polite'}
+            aria-label={`Policy operation result: ${result.type}`}
+          >
+            <pre className={`${styles.resultText} ${styles[result.type]}`}>
+              {result.message}
+            </pre>
+          </section>
+        )}
+      </main>
     );
   },
 }); 

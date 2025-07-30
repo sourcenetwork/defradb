@@ -1,4 +1,17 @@
+/* Copyright 2025 Democratized Data Foundation
+ *
+ * Use of this software is governed by the Business Source License
+ * included in the file licenses/BSL.txt.
+ *
+ * As of the Change Date specified in that file, in accordance with
+ * the Business Source License, use of this software will be governed
+ * by the Apache License, Version 2.0, included in the file
+ * licenses/APL.txt.
+ */
+
 import React from 'react';
+import styles from './PluginStyles.module.css';
+import { RelationshipIcon } from '../icons';
 
 export const DEFAULT_RELATIONSHIP = {
   collectionName: 'Users',
@@ -6,6 +19,13 @@ export const DEFAULT_RELATIONSHIP = {
   relation: 'collaborator',
   targetActor: 'did:key:alice'
 };
+
+type ResultType = 'success' | 'error' | 'info';
+
+interface RelationshipResult {
+  message: string;
+  type: ResultType;
+}
 
 export interface RelationshipPluginProps {
   clientRef: React.RefObject<any>;
@@ -21,12 +41,12 @@ export const createRelationshipPlugin = ({
   resultRef,
 }: RelationshipPluginProps) => ({
   title: 'Actor Relationships',
-  icon: () => <span>👥</span>,
+  icon: RelationshipIcon,
   content: () => {
     const [isVerifyLoading, setIsVerifyLoading] = React.useState(false);
     const [isAddLoading, setIsAddLoading] = React.useState(false);
     const [isDeleteLoading, setIsDeleteLoading] = React.useState(false);
-
+    const [result, setResult] = React.useState<RelationshipResult | null>(null);
     const [relationship, setRelationship] = React.useState(DEFAULT_RELATIONSHIP);
 
     React.useEffect(() => {
@@ -35,21 +55,26 @@ export const createRelationshipPlugin = ({
 
     const handleAddRelationship = async () => {
       if (!clientRef.current) {
-        resultRef.current = 'Error: Client not initialized';
+        setResult({
+          message: 'Error: Client not initialized',
+          type: 'error'
+        });
         return;
       }
 
       setIsAddLoading(true);
-      resultRef.current = 'Adding relationship...';
+      setResult({
+        message: 'Adding relationship...',
+        type: 'info'
+      });
 
       try {
         const nodeIdentity = await clientRef.current.getNodeIdentity();
-
         const context = {
           identity: nodeIdentity.PublicKey
         };
 
-        const result = await clientRef.current.addDACActorRelationship(
+        const response = await clientRef.current.addDACActorRelationship(
           relationship.collectionName,
           relationship.docID,
           relationship.relation,
@@ -57,9 +82,19 @@ export const createRelationshipPlugin = ({
           context
         );
 
-        resultRef.current = `Relationship added successfully: ${JSON.stringify(result, null, 2)}`;
+        const successMessage = `Relationship added successfully: ${JSON.stringify(response, null, 2)}`;
+        setResult({
+          message: successMessage,
+          type: 'success'
+        });
+        resultRef.current = successMessage;
       } catch (error) {
-        resultRef.current = `Error adding relationship: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = `Error adding relationship: ${error instanceof Error ? error.message : String(error)}`;
+        setResult({
+          message: errorMessage,
+          type: 'error'
+        });
+        resultRef.current = errorMessage;
       } finally {
         setIsAddLoading(false);
       }
@@ -67,21 +102,26 @@ export const createRelationshipPlugin = ({
 
     const handleDeleteRelationship = async () => {
       if (!clientRef.current) {
-        resultRef.current = 'Error: Client not initialized';
+        setResult({
+          message: 'Error: Client not initialized',
+          type: 'error'
+        });
         return;
       }
 
       setIsDeleteLoading(true);
-      resultRef.current = 'Deleting relationship...';
+      setResult({
+        message: 'Deleting relationship...',
+        type: 'info'
+      });
 
       try {
         const nodeIdentity = await clientRef.current.getNodeIdentity();
-
         const context = {
           identity: nodeIdentity.PublicKey
         };
 
-        const result = await clientRef.current.deleteDACActorRelationship(
+        const response = await clientRef.current.deleteDACActorRelationship(
           relationship.collectionName,
           relationship.docID,
           relationship.relation,
@@ -89,9 +129,19 @@ export const createRelationshipPlugin = ({
           context
         );
 
-        resultRef.current = `Relationship deleted successfully: ${JSON.stringify(result, null, 2)}`;
+        const successMessage = `Relationship deleted successfully: ${JSON.stringify(response, null, 2)}`;
+        setResult({
+          message: successMessage,
+          type: 'success'
+        });
+        resultRef.current = successMessage;
       } catch (error) {
-        resultRef.current = `Error deleting relationship: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = `Error deleting relationship: ${error instanceof Error ? error.message : String(error)}`;
+        setResult({
+          message: errorMessage,
+          type: 'error'
+        });
+        resultRef.current = errorMessage;
       } finally {
         setIsDeleteLoading(false);
       }
@@ -99,26 +149,36 @@ export const createRelationshipPlugin = ({
 
     const handleVerifyAccess = async () => {
       if (!clientRef.current) {
-        resultRef.current = 'Error: Client not initialized';
+        setResult({
+          message: 'Error: Client not initialized',
+          type: 'error'
+        });
         return;
       }
 
       setIsVerifyLoading(true);
-      resultRef.current = 'Verifying access...';
+      setResult({
+        message: 'Verifying access...',
+        type: 'info'
+      });
 
       try {
         const nodeIdentity = await clientRef.current.getNodeIdentity();
-
         const context = {
           identity: nodeIdentity.PublicKey
         };
 
         if (!policyIdRef.current) {
-          resultRef.current = 'Error: Policy ID not available. Please add a policy first.';
+          const errorMessage = 'Error: Policy ID not available. Please add a policy first.';
+          setResult({
+            message: errorMessage,
+            type: 'error'
+          });
+          resultRef.current = errorMessage;
           return;
         }
 
-        const result = await clientRef.current.verifyDACAccess(
+        const response = await clientRef.current.verifyDACAccess(
           "read",
           relationship.targetActor,
           policyIdRef.current,
@@ -127,234 +187,156 @@ export const createRelationshipPlugin = ({
           context
         );
 
-        resultRef.current = `Access verification result: ${JSON.stringify(result, null, 2)}`;
+        const successMessage = `Access verification result: ${JSON.stringify(response, null, 2)}`;
+        setResult({
+          message: successMessage,
+          type: 'success'
+        });
+        resultRef.current = successMessage;
       } catch (error) {
-        resultRef.current = `Error verifying access: ${error instanceof Error ? error.message : String(error)}`;
+        const errorMessage = `Error verifying access: ${error instanceof Error ? error.message : String(error)}`;
+        setResult({
+          message: errorMessage,
+          type: 'error'
+        });
+        resultRef.current = errorMessage;
       } finally {
         setIsVerifyLoading(false);
       }
     };
 
     return (
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#202a3b',
-        color: '#eaf1fb',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-        fontSize: '14px',
-        lineHeight: '1.5',
-        height: '100%',
-        overflowY: 'auto'
-      }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#eaf1fb' }}>
-          Actor Relationships
-        </h3>
-        <p style={{ margin: '0 0 20px 0', color: '#bfc7d5', fontSize: '14px' }}>
-          Add or delete actor relationships for testing ACP functionality.
-        </p>
+      <main className={styles.pluginContainer}>
+        <header>
+          <h3 className={styles.pluginTitle}>Actor Relationships</h3>
+          <p id="relationship-description" className={styles.pluginDescription}>
+            Add or delete actor relationships for testing ACP functionality.
+          </p>
+        </header>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#eaf1fb',
-            fontSize: '14px'
-          }}>
-            Collection Name
-          </label>
-          <input
-            type="text"
-            value={relationship.collectionName}
-            onChange={(e) => setRelationship(prev => ({ ...prev, collectionName: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #eaf1fb',
-              borderRadius: '4px',
-              backgroundColor: '#2b3546',
-              color: '#eaf1fb',
-              fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-            placeholder="e.g. Users"
-          />
-        </div>
+        <form noValidate>
+          <fieldset>
+            <legend className="sr-only">Relationship Configuration</legend>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="collection-name" className={styles.formLabel}>
+                Collection Name
+              </label>
+              <input
+                id="collection-name"
+                name="collectionName"
+                type="text"
+                value={relationship.collectionName}
+                onChange={(e) => setRelationship(prev => ({ ...prev, collectionName: e.target.value }))}
+                className={styles.input}
+                placeholder="e.g. Users"
+                required
+                minLength={1}
+                aria-describedby="relationship-description"
+              />
+            </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#eaf1fb',
-            fontSize: '14px'
-          }}>
-            Document ID
-          </label>
-          <input
-            type="text"
-            value={relationship.docID}
-            onChange={(e) => setRelationship(prev => ({ ...prev, docID: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #eaf1fb',
-              borderRadius: '4px',
-              backgroundColor: '#2b3546',
-              color: '#eaf1fb',
-              fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-            placeholder="e.g. bae-12345678-1234-1234-1234-123456789abc"
-          />
-        </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="document-id" className={styles.formLabel}>
+                Document ID
+              </label>
+              <input
+                id="document-id"
+                name="docID"
+                type="text"
+                value={relationship.docID}
+                onChange={(e) => setRelationship(prev => ({ ...prev, docID: e.target.value }))}
+                className={styles.input}
+                placeholder="e.g. bae-12345678-1234-1234-1234-123456789abc"
+                required
+                pattern="^[a-zA-Z0-9\-_]+$"
+                title="Document ID should contain only alphanumeric characters, hyphens, and underscores"
+              />
+            </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#eaf1fb',
-            fontSize: '14px'
-          }}>
-            Relation
-          </label>
-          <input
-            type="text"
-            value={relationship.relation}
-            onChange={(e) => setRelationship(prev => ({ ...prev, relation: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #eaf1fb',
-              borderRadius: '4px',
-              backgroundColor: '#2b3546',
-              color: '#eaf1fb',
-              fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-            placeholder="e.g. collaborator | reader | editor"
-          />
-        </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="relation" className={styles.formLabel}>
+                Relation
+              </label>
+              <input
+                id="relation"
+                name="relation"
+                type="text"
+                value={relationship.relation}
+                onChange={(e) => setRelationship(prev => ({ ...prev, relation: e.target.value }))}
+                className={styles.input}
+                placeholder="e.g. owner | reader | collaborator"
+                required
+                minLength={1}
+              />
+            </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{
-            display: 'block',
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#eaf1fb',
-            fontSize: '14px'
-          }}>
-            Target Actor (DID)
-          </label>
-          <input
-            type="text"
-            value={relationship.targetActor}
-            onChange={(e) => setRelationship(prev => ({ ...prev, targetActor: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: '1px solid #eaf1fb',
-              borderRadius: '4px',
-              backgroundColor: '#2b3546',
-              color: '#eaf1fb',
-              fontSize: '14px',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-            placeholder="e.g. did:key:alice or * for all actors"
-          />
-        </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="target-actor" className={styles.formLabel}>
+                Target Actor (DID)
+              </label>
+              <input
+                id="target-actor"
+                name="targetActor"
+                type="text"
+                value={relationship.targetActor}
+                onChange={(e) => setRelationship(prev => ({ ...prev, targetActor: e.target.value }))}
+                className={styles.input}
+                placeholder="e.g. did:key:alice or * for all actors"
+                required
+                minLength={1}
+              />
+            </div>
+          </fieldset>
 
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <button
-            onClick={handleAddRelationship}
-            disabled={isAddLoading}
-            style={{
-              flex: 1,
-              padding: '10px 20px',
-              backgroundColor: isAddLoading ? '#2b3546' : '#4CAF50',
-              color: '#eaf1fb',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isAddLoading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'background-color 0.2s ease'
-            }}
+          <section className={styles.buttonGroup} role="group" aria-label="Relationship actions">
+            <button
+              type="button"
+              onClick={handleAddRelationship}
+              disabled={isAddLoading}
+              className={`${styles.button} ${styles.success}`}
+              aria-busy={isAddLoading}
+            >
+              {isAddLoading ? 'Adding...' : 'Add Relationship'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDeleteRelationship}
+              disabled={isDeleteLoading}
+              className={`${styles.button} ${styles.danger}`}
+              aria-busy={isDeleteLoading}
+            >
+              {isDeleteLoading ? 'Deleting...' : 'Delete Relationship'}
+            </button>
+          </section>
+
+          <section className={styles.formGroup}>
+            <button
+              type="button"
+              onClick={handleVerifyAccess}
+              disabled={isVerifyLoading}
+              className={`${styles.button} ${styles.info} ${styles.fullWidth}`}
+              aria-busy={isVerifyLoading}
+            >
+              {isVerifyLoading ? 'Verifying...' : 'Verify Access'}
+            </button>
+          </section>
+        </form>
+
+        {result && (
+          <section
+            className={`${styles.resultContainer} ${styles[result.type]}`}
+            role={result.type === 'error' ? 'alert' : 'status'}
+            aria-live={result.type === 'error' ? 'assertive' : 'polite'}
+            aria-label={`Relationship operation result: ${result.type}`}
           >
-            {isAddLoading ? 'Adding...' : 'Add Relationship'}
-          </button>
-
-          <button
-            onClick={handleDeleteRelationship}
-            disabled={isDeleteLoading}
-            style={{
-              flex: 1,
-              padding: '10px 20px',
-              backgroundColor: isDeleteLoading ? '#2b3546' : '#f44336',
-              color: '#eaf1fb',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isDeleteLoading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'background-color 0.2s ease'
-            }}
-          >
-            {isDeleteLoading ? 'Deleting...' : 'Delete Relationship'}
-          </button>
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <button
-            onClick={handleVerifyAccess}
-            disabled={isVerifyLoading}
-            style={{
-              width: '100%',
-              padding: '10px 20px',
-              backgroundColor: isVerifyLoading ? '#2b3546' : '#2196F3',
-              color: '#eaf1fb',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isVerifyLoading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'background-color 0.2s ease'
-            }}
-          >
-            {isVerifyLoading ? 'Verifying...' : 'Verify Access'}
-          </button>
-        </div>
-
-        {resultRef.current && (
-          <div style={{
-            padding: '16px',
-            backgroundColor: resultRef.current.includes('Error') ? '#2d2227' : '#222d26',
-            border: `1px solid ${resultRef.current.includes('Error') ? '#f5c6cb' : '#c3e6cb'}`,
-            borderRadius: '4px',
-            marginTop: '10px'
-          }}>
-            <pre style={{
-              margin: 0,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              fontSize: '12px',
-              fontFamily: 'Consolas, "Liberation Mono", Menlo, Courier, monospace',
-              color: resultRef.current.includes('Error') ? '#ffb3b3' : '#b3ffb3',
-              lineHeight: '1.4',
-              maxWidth: '100%',
-              overflowWrap: 'break-word',
-              wordWrap: 'break-word'
-            }}>
-              {resultRef.current}
+            <pre className={`${styles.resultText} ${styles[result.type]}`}>
+              {result.message}
             </pre>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     );
   },
 }); 
