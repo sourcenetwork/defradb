@@ -8,14 +8,14 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GraphiQL } from 'graphiql';
 import { createGraphiQLFetcher, Fetcher } from '@graphiql/toolkit';
 import { GraphiQLPlugin } from '@graphiql/react';
-import { createPolicyPlugin } from './plugins/PolicyPlugin';
-import { createSchemaPlugin } from './plugins/SchemaPlugin';
-import { createRelationshipPlugin } from './plugins/RelationshipPlugin';
-import { createKeypairResetPlugin } from './plugins/KeypairResetPlugin';
+import { policyPlugin } from './plugins/PolicyPlugin';
+import { schemaPlugin } from './plugins/SchemaPlugin';
+import { relationshipPlugin } from './plugins/RelationshipPlugin';
+import { keypairResetPlugin } from './plugins/KeypairResetPlugin';
 import 'swagger-ui-react/swagger-ui.css';
 import 'graphiql/graphiql.css';
 
@@ -33,11 +33,9 @@ const mode = import.meta.env.VITE_PLAYGROUND_MODE;
 const acpClient = import.meta.env.VITE_ACP_CLIENT;
 
 function App() {
-  const policyIdRef = useRef('policy_id');
   const initRef = useRef(false);
-  const resultRef = useRef('');
   const clientRef = useRef<any>(null);
-  
+
   const [isClientReady, setIsClientReady] = useState(false);
   const [isSourceHubAvailable, setIsSourceHubAvailable] = useState(false);
 
@@ -112,31 +110,6 @@ function App() {
     }
   }, []);
 
-  const keypairResetPlugin: GraphiQLPlugin = useMemo(() =>
-    createKeypairResetPlugin({
-      clientRef,
-    }), []);
-
-  const policyTogglePlugin: GraphiQLPlugin = useMemo(() =>
-    createPolicyPlugin({
-      clientRef,
-      resultRef,
-      policyIdRef,
-    }), []);
-
-  const schemaTogglePlugin: GraphiQLPlugin = useMemo(() =>
-    createSchemaPlugin({
-      clientRef,
-      policyIdRef,
-    }), []);
-
-  const relationshipTogglePlugin: GraphiQLPlugin = useMemo(() =>
-    createRelationshipPlugin({
-      clientRef,
-      policyIdRef,
-      resultRef,
-    }), []);
-
   if (mode === 'wasm') {
     if (!isClientReady) {
       return null;
@@ -148,9 +121,9 @@ function App() {
           fetcher={wasmFetcher}
           plugins={[
             ...(isSourceHubAvailable ? [keypairResetPlugin] : []),
-            policyTogglePlugin,
-            schemaTogglePlugin,
-            relationshipTogglePlugin,
+            policyPlugin,
+            schemaPlugin,
+            relationshipPlugin,
           ]}
         />
       </div>

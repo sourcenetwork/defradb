@@ -9,115 +9,59 @@
  * licenses/APL.txt.
  */
 
-import React from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
 import { KeyRound } from 'lucide-react';
+import { useAppStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
-type ResultType = 'success' | 'error' | 'info';
-
-interface KeypairResult {
-  message: string;
-  type: ResultType;
-}
-
-interface KeypairResetPluginProps {
-  clientRef: React.RefObject<any>;
-}
-
-export const createKeypairResetPlugin = (props: KeypairResetPluginProps): GraphiQLPlugin => ({
+export const keypairResetPlugin: GraphiQLPlugin = {
   title: 'Keypair Reset',
   icon: () => <KeyRound size={16} />,
-  content: () => {
-    const [isResetting, setIsResetting] = React.useState(false);
-    const [result, setResult] = React.useState<KeypairResult | null>(null);
+  content: () => <KeypairResetComponent />,
+};
 
-    const handleResetKeypair = async () => {
-      if (!props.clientRef.current) {
-        setResult({
-          message: 'Error: Client not initialized',
-          type: 'error',
-        });
-        return;
-      }
+const KeypairResetComponent = () => {
+  const {
+    keypair: { isLoading: isResetting, result },
+    resetKeypair,
+  } = useAppStore();
 
-      setIsResetting(true);
-      setResult({
-        message: 'Deleting keypair...',
-        type: 'info',
-      });
+  return (
+    <main className={styles.pluginContainer}>
+      <header>
+        <h3 className={styles.pluginTitle}>Keypair Reset</h3>
+        <p id="keypair-description" className={styles.pluginDescription}>
+          Optionally, reset the keypair used for SourceHub ACP operations and reload the page.
+          This is useful to get a fresh keypair after resetting the SourceHub state.
+        </p>
+      </header>
 
-      try {
-        const acpDeleteKeypair = (window as any).acp_DeleteKeypair;
-        if (acpDeleteKeypair) {
-          const error = await acpDeleteKeypair();
-          if (error) {
-            setResult({
-              message: `Error deleting keypair: ${error.message ?? error}`,
-              type: 'error',
-            });
-          } else {
-            setResult({
-              message: 'Keypair reset successfully! Reloading the page...',
-              type: 'success',
-            });
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          }
-        } else {
-          setResult({
-            message: 'Error: acp_DeleteKeypair function not found',
-            type: 'error',
-          });
-        }
-      } catch (error) {
-        setResult({
-          message: `Error deleting keypair: ${error instanceof Error ? error.message : String(error)}`,
-          type: 'error',
-        });
-      } finally {
-        setIsResetting(false);
-      }
-    };
+      <section>
+        <button
+          type="button"
+          onClick={resetKeypair}
+          disabled={isResetting}
+          className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
+          aria-describedby={result ? 'keypair-result keypair-description' : 'keypair-description'}
+          aria-busy={isResetting}
+        >
+          {isResetting ? 'Resetting Keypair...' : 'Reset Keypair'}
+        </button>
+      </section>
 
-    return (
-      <main className={styles.pluginContainer}>
-        <header>
-          <h3 className={styles.pluginTitle}>Keypair Reset</h3>
-          <p id="keypair-description" className={styles.pluginDescription}>
-            Optionally, reset the keypair used for SourceHub ACP operations and reload the page.
-            This is useful to get a fresh keypair after resetting the SourceHub state.
-          </p>
-        </header>
-
-        <section>
-          <button
-            type="button"
-            onClick={handleResetKeypair}
-            disabled={isResetting}
-            className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
-            aria-describedby={result ? 'keypair-result keypair-description' : 'keypair-description'}
-            aria-busy={isResetting}
-          >
-            {isResetting ? 'Resetting Keypair...' : 'Reset Keypair'}
-          </button>
+      {result && (
+        <section
+          id="keypair-result"
+          className={`${styles.resultContainer} ${styles[result.type]}`}
+          role={result.type === 'error' ? 'alert' : 'status'}
+          aria-live={result.type === 'error' ? 'assertive' : 'polite'}
+          aria-label={`Keypair reset result: ${result.type}`}
+        >
+          <pre className={`${styles.resultText} ${styles[result.type]}`}>
+            {result.message}
+          </pre>
         </section>
-
-        {result && (
-          <section
-            id="keypair-result"
-            className={`${styles.resultContainer} ${styles[result.type]}`}
-            role={result.type === 'error' ? 'alert' : 'status'}
-            aria-live={result.type === 'error' ? 'assertive' : 'polite'}
-            aria-label={`Keypair reset result: ${result.type}`}
-          >
-            <pre className={`${styles.resultText} ${styles[result.type]}`}>
-              {result.message}
-            </pre>
-          </section>
-        )}
-      </main>
-    );
-  },
-});
+      )}
+    </main>
+  );
+};

@@ -9,141 +9,89 @@
  * licenses/APL.txt.
  */
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
 import { Database } from 'lucide-react';
+import { useAppStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
-export const DEFAULT_SCHEMA = `type Users @policy(
-  id: "policy_id",
-  resource: "users"
-) {
-  name: String
-  age: Int
-}`;
-
-type ResultType = 'success' | 'error' | 'info';
-
-interface SchemaResult {
-  message: string;
-  type: ResultType;
-}
-
-interface SchemaPluginProps {
-  clientRef: React.RefObject<any>;
-  policyIdRef: React.RefObject<string>;
-}
-
-export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => ({
+export const schemaPlugin: GraphiQLPlugin = {
   title: 'Add Schema',
   icon: () => <Database size={16} />,
-  content: () => {
-    const [schemaText, setSchemaText] = useState(() =>
-      DEFAULT_SCHEMA.replace('policy_id', props.policyIdRef.current ?? 'policy_id'),
-    );
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<SchemaResult | null>(null);
+  content: () => <SchemaComponent />,
+};
 
-    const handleSchemaChange = useCallback((value: string) => {
-      setSchemaText(value);
-    }, []);
+const SchemaComponent = () => {
+  const {
+    schema: { text: schemaText, isLoading, result },
+    setSchemaText,
+    addSchema,
+  } = useAppStore();
 
-    const handleAddSchema = useCallback(async () => {
-      if (!props.clientRef.current) {
-        setResult({
-          message: 'Error: Client not initialized',
-          type: 'error',
-        });
-        return;
-      }
+  const handleSchemaChange = (value: string) => {
+    setSchemaText(value);
+  };
 
-      setIsLoading(true);
-      setResult({
-        message: 'Adding schema...',
-        type: 'info',
-      });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoading && schemaText.trim()) {
+      addSchema();
+    }
+  };
 
-      try {
-        const response = await props.clientRef.current.addSchema(schemaText);
-        const successMessage = `Schema added successfully: ${JSON.stringify(response, null, 2)}`;
+  return (
+    <main className={styles.pluginContainer}>
+      <header>
+        <h3 className={styles.pluginTitle}>Add Schema</h3>
+        <p id="schema-description" className={styles.pluginDescription}>
+          Edit your schema below and click "Add Schema". The policy ID will be automatically populated if a policy was previously created.
+        </p>
+      </header>
 
-        setResult({
-          message: successMessage,
-          type: 'success',
-        });
-      } catch (error) {
-        const errorMessage = `Error adding schema: ${error instanceof Error ? error.message : String(error)}`;
-        setResult({
-          message: errorMessage,
-          type: 'error',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }, [schemaText, props.clientRef]);
+      <form onSubmit={handleSubmit} noValidate>
+        <fieldset className={styles.formGroup}>
+          <label htmlFor="schema-input" className={styles.formLabel}>
+            Schema GraphQL
+          </label>
+          <textarea
+            id="schema-input"
+            name="schema"
+            value={schemaText}
+            onChange={(e) => handleSchemaChange(e.target.value)}
+            className={styles.textarea}
+            placeholder="Enter schema GraphQL..."
+            aria-describedby="schema-description"
+            required
+            minLength={5}
+            rows={12}
+            spellCheck={false}
+          />
+        </fieldset>
 
-    return (
-      <main className={styles.pluginContainer}>
-        <header>
-          <h3 className={styles.pluginTitle}>Add Schema</h3>
-          <p id="schema-description" className={styles.pluginDescription}>
-            Edit your schema below and click "Add Schema". The policy ID will be automatically populated if a policy was previously created.
-          </p>
-        </header>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!isLoading && schemaText.trim()) {
-              handleAddSchema();
-            }
-          }}
-          noValidate
+        <button
+          type="submit"
+          disabled={isLoading || !schemaText.trim()}
+          className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
+          aria-describedby={result ? 'schema-result' : undefined}
+          aria-busy={isLoading}
         >
-          <fieldset className={styles.formGroup}>
-            <label htmlFor="schema-input" className={styles.formLabel}>
-              Schema GraphQL
-            </label>
-            <textarea
-              id="schema-input"
-              name="schema"
-              value={schemaText}
-              onChange={(e) => handleSchemaChange(e.target.value)}
-              className={styles.textarea}
-              placeholder="Enter schema GraphQL..."
-              aria-describedby="schema-description"
-              required
-              minLength={5}
-              rows={12}
-              spellCheck={false}
-            />
-          </fieldset>
+          {isLoading ? 'Adding Schema...' : 'Add Schema'}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={isLoading || !schemaText.trim()}
-            className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
-            aria-describedby={result ? 'schema-result' : undefined}
-            aria-busy={isLoading}
-          >
-            {isLoading ? 'Adding Schema...' : 'Add Schema'}
-          </button>
-        </form>
-
-        {result && (
-          <section
-            id="schema-result"
-            className={`${styles.resultContainer} ${styles[result.type]}`}
-            role={result.type === 'error' ? 'alert' : 'status'}
-            aria-live={result.type === 'error' ? 'assertive' : 'polite'}
-            aria-label={`Schema operation result: ${result.type}`}
-          >
-            <pre className={`${styles.resultText} ${styles[result.type]}`}>
-              {result.message}
-            </pre>
-          </section>
-        )}
-      </main>
-    );
-  },
-}); 
+      {result && (
+        <section
+          id="schema-result"
+          className={`${styles.resultContainer} ${styles[result.type]}`}
+          role={result.type === 'error' ? 'alert' : 'status'}
+          aria-live={result.type === 'error' ? 'assertive' : 'polite'}
+          aria-label={`Schema operation result: ${result.type}`}
+        >
+          <pre className={`${styles.resultText} ${styles[result.type]}`}>
+            {result.message}
+          </pre>
+        </section>
+      )}
+    </main>
+  );
+}; 

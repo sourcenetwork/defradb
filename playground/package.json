@@ -19,7 +19,8 @@
     "lucide-react": "^0.534.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "swagger-ui-react": "^5.26.2"
+    "swagger-ui-react": "^5.26.2",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",

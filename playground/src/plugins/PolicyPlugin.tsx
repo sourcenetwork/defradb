@@ -9,169 +9,89 @@
  * licenses/APL.txt.
  */
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
 import { FileText } from 'lucide-react';
+import { useAppStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
-export const DEFAULT_POLICY = `name: Test Policy
-description: A test policy for playground
-
-actor:
-  name: actor
-
-resources:
-  users:
-    permissions:
-      read:
-        expr: owner + collaborator
-      update:
-        expr: owner + collaborator
-      delete:
-        expr: owner + collaborator
-
-    relations:
-      owner:
-        types:
-          - actor
-      collaborator:
-        types:
-          - actor`;
-
-type ResultType = 'success' | 'error' | 'info';
-
-interface PolicyResult {
-  message: string;
-  type: ResultType;
-}
-
-interface PolicyPluginProps {
-  clientRef: React.RefObject<any>;
-  resultRef: React.RefObject<string>;
-  policyIdRef: React.RefObject<string>;
-}
-
-export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => ({
+export const policyPlugin: GraphiQLPlugin = {
   title: 'Add Policy',
   icon: () => <FileText size={16} />,
-  content: () => {
-    const [policyText, setPolicyText] = useState(DEFAULT_POLICY);
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<PolicyResult | null>(null);
+  content: () => <PolicyComponent />,
+};
 
-    const handlePolicyChange = useCallback((value: string) => {
-      setPolicyText(value);
-    }, []);
+const PolicyComponent = () => {
+  const {
+    policy: { text: policyText, isLoading, result },
+    setPolicyText,
+    addPolicy,
+  } = useAppStore();
 
-    const handleAddPolicy = useCallback(async () => {
-      if (!props.clientRef.current) {
-        setResult({
-          message: 'Error: Client not initialized',
-          type: 'error',
-        });
-        return;
-      }
+  const handlePolicyChange = (value: string) => {
+    setPolicyText(value);
+  };
 
-      setIsLoading(true);
-      setResult({
-        message: 'Adding policy...',
-        type: 'info',
-      });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoading && policyText.trim()) {
+      addPolicy();
+    }
+  };
 
-      try {
-        const nodeIdentity = await props.clientRef.current.getNodeIdentity();
-        const context = {
-          identity: nodeIdentity.PublicKey,
-        };
+  return (
+    <main className={styles.pluginContainer}>
+      <header>
+        <h3 className={styles.pluginTitle}>Add Policy</h3>
+        <p id="policy-description" className={styles.pluginDescription}>
+          Paste your policy YAML below and click "Add Policy".
+        </p>
+      </header>
 
-        const response = await props.clientRef.current.addDACPolicy(policyText, context);
-        const successMessage = `Policy created successfully: ${JSON.stringify(response, null, 2)}`;
+      <form onSubmit={handleSubmit} noValidate>
+        <fieldset className={styles.formGroup}>
+          <label htmlFor="policy-input" className={styles.formLabel}>
+            Policy YAML
+          </label>
+          <textarea
+            id="policy-input"
+            name="policy"
+            value={policyText}
+            onChange={(e) => handlePolicyChange(e.target.value)}
+            className={`${styles.textarea} ${styles.large}`}
+            placeholder="Enter policy YAML..."
+            aria-describedby="policy-description"
+            required
+            minLength={10}
+            rows={20}
+            spellCheck={false}
+          />
+        </fieldset>
 
-        setResult({
-          message: successMessage,
-          type: 'success',
-        });
-        props.resultRef.current = successMessage;
-
-        if (response?.PolicyID) {
-          props.policyIdRef.current = response.PolicyID;
-        } else {
-          console.error('No PolicyID found in result:', response);
-        }
-      } catch (error) {
-        const errorMessage = `Error adding policy: ${error instanceof Error ? error.message : String(error)}`;
-        setResult({
-          message: errorMessage,
-          type: 'error',
-        });
-        props.resultRef.current = errorMessage;
-      } finally {
-        setIsLoading(false);
-      }
-    }, [policyText, props]);
-
-    return (
-      <main className={styles.pluginContainer}>
-        <header>
-          <h3 className={styles.pluginTitle}>Add Policy</h3>
-          <p id="policy-description" className={styles.pluginDescription}>
-            Paste your policy YAML below and click "Add Policy".
-          </p>
-        </header>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!isLoading && policyText.trim()) {
-              handleAddPolicy();
-            }
-          }}
-          noValidate
+        <button
+          type="submit"
+          disabled={isLoading || !policyText.trim()}
+          className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
+          aria-describedby={result ? 'policy-result' : undefined}
+          aria-busy={isLoading}
         >
-          <fieldset className={styles.formGroup}>
-            <label htmlFor="policy-input" className={styles.formLabel}>
-              Policy YAML
-            </label>
-            <textarea
-              id="policy-input"
-              name="policy"
-              value={policyText}
-              onChange={(e) => handlePolicyChange(e.target.value)}
-              className={`${styles.textarea} ${styles.large}`}
-              placeholder="Enter policy YAML..."
-              aria-describedby="policy-description"
-              required
-              minLength={10}
-              rows={20}
-              spellCheck={false}
-            />
-          </fieldset>
+          {isLoading ? 'Adding Policy...' : 'Add Policy'}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={isLoading || !policyText.trim()}
-            className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
-            aria-describedby={result ? 'policy-result' : undefined}
-            aria-busy={isLoading}
-          >
-            {isLoading ? 'Adding Policy...' : 'Add Policy'}
-          </button>
-        </form>
-
-        {result && (
-          <section
-            id="policy-result"
-            className={`${styles.resultContainer} ${styles[result.type]}`}
-            role={result.type === 'error' ? 'alert' : 'status'}
-            aria-live={result.type === 'error' ? 'assertive' : 'polite'}
-            aria-label={`Policy operation result: ${result.type}`}
-          >
-            <pre className={`${styles.resultText} ${styles[result.type]}`}>
-              {result.message}
-            </pre>
-          </section>
-        )}
-      </main>
-    );
-  },
-}); 
+      {result && (
+        <section
+          id="policy-result"
+          className={`${styles.resultContainer} ${styles[result.type]}`}
+          role={result.type === 'error' ? 'alert' : 'status'}
+          aria-live={result.type === 'error' ? 'assertive' : 'polite'}
+          aria-label={`Policy operation result: ${result.type}`}
+        >
+          <pre className={`${styles.resultText} ${styles[result.type]}`}>
+            {result.message}
+          </pre>
+        </section>
+      )}
+    </main>
+  );
+}; 
