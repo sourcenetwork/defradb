@@ -577,9 +577,13 @@ func substituteRelationFieldKinds(
 					continue
 				}
 
-				relativeIndex, isSelfRef := setIndexesByName[kind.Name]
+				relativeIndex, referencesHostSet := setIndexesByName[kind.Name]
 
-				if isSelfRef {
+				if referencesHostSet {
+					// The CollectionID will not exist until the field and collection blocks have been saved for the entire set
+					// due to a circular relation(s), so any fields that reference collections within this set must use the
+					// `SelfKind` kind instead of a normal `CollectionKind`.
+
 					// SelfKind fields do not care about primary/secondary in this context as they do not reference by VersionID
 					// so we might as well handle the secondary side conversion here too.
 
