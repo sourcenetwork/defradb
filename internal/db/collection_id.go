@@ -162,12 +162,7 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 			}
 
 			if deleteI {
-				old := collection.relations
-				collection.relations = make([]string, len(collection.relations)-1)
-				if i > 0 {
-					copy(collection.relations, old[:i-1])
-				}
-				copy(collection.relations[i:], old[i+1:])
+				collection.relations = append(collection.relations[:i], collection.relations[i+1:]...)
 				collectionsWithRelations[collection.name] = collection
 			}
 
