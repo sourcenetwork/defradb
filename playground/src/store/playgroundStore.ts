@@ -685,7 +685,17 @@ export const usePlaygroundStore = create<AppState>()(
       }));
       try {
         if (!window.defradb) {
-          setTimeout(() => get().initializeClient(), 100);
+          set((state) => ({
+            client: {
+              ...state.client,
+              status: 'error',
+              isInitializing: false,
+              result: {
+                message: 'DefraDB WASM module not available',
+                type: 'error',
+              },
+            },
+          }));
           return;
         }
         const acpClient = import.meta.env.VITE_ACP_CLIENT;
