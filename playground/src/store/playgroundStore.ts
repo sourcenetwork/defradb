@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-// Types
 export interface PolicyResult {
   message: string;
   type: 'success' | 'error' | 'info';
@@ -22,6 +21,11 @@ export interface KeypairResult {
   type: 'success' | 'error' | 'info';
 }
 
+export interface ClientResult {
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
 interface RelationshipData {
   collectionName: string;
   docID: string;
@@ -29,7 +33,17 @@ interface RelationshipData {
   targetActor: string;
 }
 
+type ClientStatus = 'initializing' | 'ready' | 'error' | 'not_available';
+
 interface AppState {
+  client: {
+    status: ClientStatus;
+    isInitialized: boolean;
+    isInitializing: boolean;
+    isSourceHubAvailable: boolean;
+    result: ClientResult | null;
+  };
+
   policyId: string;
 
   policy: {
@@ -80,6 +94,14 @@ interface AppState {
   setKeypairLoading: (loading: boolean) => void;
   setKeypairResult: (result: KeypairResult | null) => void;
   resetKeypair: () => Promise<void>;
+
+  setClientStatus: (status: ClientStatus) => void;
+  setClientInitialized: (initialized: boolean) => void;
+  setClientInitializing: (initializing: boolean) => void;
+  setSourceHubAvailable: (available: boolean) => void;
+  setClientResult: (result: ClientResult | null) => void;
+  initializeClient: () => Promise<void>;
+  checkSourceHubAvailability: () => Promise<boolean>;
 }
 
 const DEFAULT_POLICY = `name: Test Policy
@@ -121,8 +143,16 @@ const DEFAULT_RELATIONSHIP: RelationshipData = {
   targetActor: 'did:key:alice',
 };
 
-export const useAppStore = create<AppState>()(
+export const usePlaygroundStore = create<AppState>()(
   subscribeWithSelector((set, get) => ({
+    client: {
+      status: 'not_available' as ClientStatus,
+      isInitialized: false,
+      isInitializing: false,
+      isSourceHubAvailable: false,
+      result: null,
+    },
+
     policyId: 'policy_id',
 
     policy: {
@@ -593,6 +623,105 @@ export const useAppStore = create<AppState>()(
             ...state.keypair,
             result: errorResult,
             isLoading: false,
+          },
+        }));
+      }
+    },
+
+    setClientStatus: (status: ClientStatus) =>
+      set((state) => ({
+        client: { ...state.client, status },
+      })),
+
+    setClientInitialized: (initialized: boolean) =>
+      set((state) => ({
+        client: { ...state.client, isInitialized: initialized },
+      })),
+
+    setClientInitializing: (initializing: boolean) =>
+      set((state) => ({
+        client: { ...state.client, isInitializing: initializing },
+      })),
+
+    setSourceHubAvailable: (available: boolean) =>
+      set((state) => ({
+        client: { ...state.client, isSourceHubAvailable: available },
+      })),
+
+    setClientResult: (result: ClientResult | null) =>
+      set((state) => ({
+        client: { ...state.client, result },
+      })),
+
+    checkSourceHubAvailability: async (): Promise<boolean> => {
+      try {
+        const response = await fetch('/api/cosmos/base/tendermint/v1beta1/node_info');
+        const isAvailable = response.ok;
+        set((state) => ({
+          client: { ...state.client, isSourceHubAvailable: isAvailable },
+        }));
+        return isAvailable;
+      } catch (error) {
+        console.log('SourceHub not available:', error);
+        set((state) => ({
+          client: { ...state.client, isSourceHubAvailable: false },
+        }));
+        return false;
+      }
+    },
+
+    initializeClient: async () => {
+      const { client } = get();
+      if (client.isInitialized || client.isInitializing) {
+        return;
+      }
+      set((state) => ({
+        client: {
+          ...state.client,
+          isInitializing: true,
+          status: 'initializing',
+          result: { message: 'Initializing DefraDB client...', type: 'info' },
+        },
+      }));
+      try {
+        if (!window.defradb) {
+          setTimeout(() => get().initializeClient(), 100);
+          return;
+        }
+        const acpClient = import.meta.env.VITE_ACP_CLIENT;
+        let useSourceHub = false;
+        if (acpClient === 'sourcehub') {
+          useSourceHub = await get().checkSourceHubAvailability();
+        }
+        const db = useSourceHub
+          ? await window.defradb.open('sourcehub')
+          : await window.defradb.open();
+        window.defradbClient = db;
+        set((state) => ({
+          client: {
+            ...state.client,
+            status: 'ready',
+            isInitialized: true,
+            isInitializing: false,
+            isSourceHubAvailable: useSourceHub,
+            result: {
+              message: `DefraDB client initialized with ${useSourceHub ? 'SourceHub ACP' : 'Local ACP'}`,
+              type: 'success',
+            },
+          },
+        }));
+        console.log('DefraDB client initialized with', useSourceHub ? 'SourceHub ACP' : 'Local ACP');
+      } catch (error) {
+        console.error('Failed to initialize DefraDB client:', error);
+        set((state) => ({
+          client: {
+            ...state.client,
+            status: 'error',
+            isInitializing: false,
+            result: {
+              message: `Failed to initialize DefraDB client: ${error instanceof Error ? error.message : String(error)}`,
+              type: 'error',
+            },
           },
         }));
       }

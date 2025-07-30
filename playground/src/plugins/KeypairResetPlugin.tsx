@@ -11,7 +11,7 @@
 
 import { GraphiQLPlugin } from '@graphiql/react';
 import { KeyRound } from 'lucide-react';
-import { useAppStore } from '../store/playgroundStore';
+import { usePlaygroundStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
 export const keypairResetPlugin: GraphiQLPlugin = {
@@ -21,10 +21,9 @@ export const keypairResetPlugin: GraphiQLPlugin = {
 };
 
 const KeypairResetComponent = () => {
-  const {
-    keypair: { isLoading: isResetting, result },
-    resetKeypair,
-  } = useAppStore();
+  const isResetting = usePlaygroundStore((state) => state.keypair.isLoading);
+  const result = usePlaygroundStore((state) => state.keypair.result);
+  const resetKeypair = usePlaygroundStore((state) => state.resetKeypair);
 
   return (
     <main className={styles.pluginContainer}>

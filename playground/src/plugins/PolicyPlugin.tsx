@@ -12,7 +12,7 @@
 import React from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
 import { FileText } from 'lucide-react';
-import { useAppStore } from '../store/playgroundStore';
+import { usePlaygroundStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
 export const policyPlugin: GraphiQLPlugin = {
@@ -22,11 +22,11 @@ export const policyPlugin: GraphiQLPlugin = {
 };
 
 const PolicyComponent = () => {
-  const {
-    policy: { text: policyText, isLoading, result },
-    setPolicyText,
-    addPolicy,
-  } = useAppStore();
+  const policyText = usePlaygroundStore((state) => state.policy.text);
+  const isLoading = usePlaygroundStore((state) => state.policy.isLoading);
+  const result = usePlaygroundStore((state) => state.policy.result);
+  const setPolicyText = usePlaygroundStore((state) => state.setPolicyText);
+  const addPolicy = usePlaygroundStore((state) => state.addPolicy);
 
   const handlePolicyChange = (value: string) => {
     setPolicyText(value);

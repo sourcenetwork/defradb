@@ -12,7 +12,7 @@
 import React from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
 import { Database } from 'lucide-react';
-import { useAppStore } from '../store/playgroundStore';
+import { usePlaygroundStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
 export const schemaPlugin: GraphiQLPlugin = {
@@ -22,11 +22,11 @@ export const schemaPlugin: GraphiQLPlugin = {
 };
 
 const SchemaComponent = () => {
-  const {
-    schema: { text: schemaText, isLoading, result },
-    setSchemaText,
-    addSchema,
-  } = useAppStore();
+  const schemaText = usePlaygroundStore((state) => state.schema.text);
+  const isLoading = usePlaygroundStore((state) => state.schema.isLoading);
+  const result = usePlaygroundStore((state) => state.schema.result);
+  const setSchemaText = usePlaygroundStore((state) => state.setSchemaText);
+  const addSchema = usePlaygroundStore((state) => state.addSchema);
 
   const handleSchemaChange = (value: string) => {
     setSchemaText(value);

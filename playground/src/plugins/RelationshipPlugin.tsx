@@ -11,7 +11,7 @@
 
 import { GraphiQLPlugin } from '@graphiql/react';
 import { Users } from 'lucide-react';
-import { useAppStore } from '../store/playgroundStore';
+import { usePlaygroundStore } from '../store/playgroundStore';
 import styles from './PluginStyles.module.css';
 
 export const relationshipPlugin: GraphiQLPlugin = {
@@ -21,13 +21,13 @@ export const relationshipPlugin: GraphiQLPlugin = {
 };
 
 const RelationshipComponent = () => {
-  const {
-    relationship: { data: relationship, isLoading, result },
-    setRelationshipData,
-    addRelationship,
-    deleteRelationship,
-    verifyAccess,
-  } = useAppStore();
+  const relationship = usePlaygroundStore((state) => state.relationship.data);
+  const isLoading = usePlaygroundStore((state) => state.relationship.isLoading);
+  const result = usePlaygroundStore((state) => state.relationship.result);
+  const setRelationshipData = usePlaygroundStore((state) => state.setRelationshipData);
+  const addRelationship = usePlaygroundStore((state) => state.addRelationship);
+  const deleteRelationship = usePlaygroundStore((state) => state.deleteRelationship);
+  const verifyAccess = usePlaygroundStore((state) => state.verifyAccess);
 
   const handleInputChange = (field: keyof typeof relationship, value: string) => {
     setRelationshipData({ [field]: value });
