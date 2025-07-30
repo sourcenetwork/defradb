@@ -90,8 +90,8 @@ func (m *FieldDefinition) Delta(
 	old client.CollectionFieldDescription,
 ) (*FieldDefinitionDelta, bool, error) {
 	if new.FieldID != "" {
-		// This function is currently taking advantage of us not yet having implemented field-mutations
-		// parts of this code will need to change.
+		// This function is currently taking advantage of us not yet having implemented field-mutations,
+		// parts of this code will need to change when fields can be mutated.
 		return nil, false, nil
 	}
 
