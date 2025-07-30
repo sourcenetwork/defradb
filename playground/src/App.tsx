@@ -164,15 +164,7 @@ function App() {
   if (mode === 'wasm') {
     if (!isClientReady) {
       return (
-        <div style={{
-          height: '100vh',
-          backgroundColor: '#202a3b',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#eaf1fb',
-          fontSize: '18px'
-        }} />
+        <></>
       );
     }
 
