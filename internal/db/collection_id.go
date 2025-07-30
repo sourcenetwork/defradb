@@ -111,7 +111,7 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 					// We only need to worry about bi-directional relationships here, single sided relationships cannot be
 					// circular.
 					if _, ok := otherCol.GetFieldByRelation(field.RelationName.Value(), collection.Name, field.Name); ok {
-						// We only need to worry about use provided `NamedKind` relations in this scope.
+						// We only need to worry about user provided `NamedKind` relations in this scope.
 						// Other relation kinds can either not be circular, or are relative to the host.
 						relations = append(relations, kind.Name)
 					}
