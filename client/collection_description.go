@@ -39,7 +39,7 @@ type CollectionVersion struct {
 	// The immutable ID of this collection, consistent across all versions.
 	CollectionID string
 
-	// CollectionSetDescription contains the information required to identify a collection as part of
+	// CollectionSet contains the information required to identify a collection as part of
 	// a larger set.
 	//
 	// These are global, deterministic properties that, like CollectionID and VersionID, are common across all
