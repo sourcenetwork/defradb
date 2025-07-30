@@ -73,22 +73,22 @@ func BlockVerifySignature(cKeyType *C.char, cPublicKey *C.char, cCID *C.char) *C
 	return returnC(gcr)
 }
 
-//export DocumentCreate
-func DocumentCreate(
+//export CollectionCreate
+func CollectionCreate(
 	cJSON *C.char,
 	cIsEncrypted C.int,
 	cEncryptedFields *C.char,
 	cOptions C.CollectionOptions,
 ) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.DocumentCreate(C.GoString(cJSON), cIsEncrypted != 0, C.GoString(cEncryptedFields), gocOptions)
+	gcr := cbindings.CollectionCreate(C.GoString(cJSON), cIsEncrypted != 0, C.GoString(cEncryptedFields), gocOptions)
 	return returnC(gcr)
 }
 
-//export DocumentDelete
-func DocumentDelete(cDocID *C.char, cFilter *C.char, cOptions C.CollectionOptions) *C.Result {
+//export CollectionDelete
+func CollectionDelete(cDocID *C.char, cFilter *C.char, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.DocumentDelete(C.GoString(cDocID), C.GoString(cFilter), gocOptions)
+	gcr := cbindings.CollectionDelete(C.GoString(cDocID), C.GoString(cFilter), gocOptions)
 	return returnC(gcr)
 }
 
@@ -120,10 +120,10 @@ func CollectionPatch(cPatch *C.char, cOptions C.CollectionOptions) *C.Result {
 	return returnC(gcr)
 }
 
-//export DocumentUpdate
-func DocumentUpdate(cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOptions C.CollectionOptions) *C.Result {
+//export CollectionUpdate
+func CollectionUpdate(cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.DocumentUpdate(C.GoString(cDocID), C.GoString(cFilter), C.GoString(cUpdater), gocOptions)
+	gcr := cbindings.CollectionUpdate(C.GoString(cDocID), C.GoString(cFilter), C.GoString(cUpdater), gocOptions)
 	return returnC(gcr)
 }
 
