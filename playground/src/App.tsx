@@ -12,9 +12,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { GraphiQL } from 'graphiql';
 import { createGraphiQLFetcher, Fetcher } from '@graphiql/toolkit';
 import { GraphiQLPlugin } from '@graphiql/react';
-import { createPolicyPlugin, DEFAULT_POLICY } from './plugins/PolicyPlugin';
-import { createSchemaPlugin, DEFAULT_SCHEMA } from './plugins/SchemaPlugin';
-import { createRelationshipPlugin, DEFAULT_RELATIONSHIP } from './plugins/RelationshipPlugin';
+import { createPolicyPlugin } from './plugins/PolicyPlugin';
+import { createSchemaPlugin } from './plugins/SchemaPlugin';
+import { createRelationshipPlugin } from './plugins/RelationshipPlugin';
 import { createKeypairResetPlugin } from './plugins/KeypairResetPlugin';
 import 'swagger-ui-react/swagger-ui.css';
 import 'graphiql/graphiql.css';
@@ -35,13 +35,21 @@ const acpClient = import.meta.env.VITE_ACP_CLIENT;
 function App() {
   const policyIdRef = useRef('policy_id');
   const initRef = useRef(false);
-  const policyRef = useRef(DEFAULT_POLICY);
-  const schemaRef = useRef(DEFAULT_SCHEMA);
-  const relationshipRef = useRef(DEFAULT_RELATIONSHIP);
   const resultRef = useRef('');
   const clientRef = useRef<any>(null);
+  
   const [isClientReady, setIsClientReady] = useState(false);
   const [isSourceHubAvailable, setIsSourceHubAvailable] = useState(false);
+
+  const checkSourceHubAvailability = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/cosmos/base/tendermint/v1beta1/node_info');
+      return response.ok;
+    } catch (error) {
+      console.log('SourceHub not available:', error);
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     // Only initialize client if in WASM mode
@@ -57,44 +65,28 @@ function App() {
         }
         if (!window.defradb) {
           setTimeout(initClient, 100);
-        } else {
-          // Set ref before async call to prevent race condition
-          initRef.current = true;
-
-          let useSourceHub = false;
-          if (acpClient === 'sourcehub') {
-            useSourceHub = await checkSourceHubAvailability();
-          }
-
-          setIsSourceHubAvailable(useSourceHub);
-
-          const db = useSourceHub
-            ? await window.defradb.open('sourcehub')
-            : await window.defradb.open();
-
-          window.defradbClient = db;
-          clientRef.current = db;
-          setIsClientReady(true);
-          console.log('DefraDB Wasm client initialized with', useSourceHub ? 'SourceHub ACP' : 'Local ACP');
+          return;
         }
+        // Set ref before async call to prevent race condition
+        initRef.current = true;
+        let useSourceHub = false;
+        if (acpClient === 'sourcehub') {
+          useSourceHub = await checkSourceHubAvailability();
+        }
+        setIsSourceHubAvailable(useSourceHub);
+        const db = useSourceHub
+          ? await window.defradb.open('sourcehub')
+          : await window.defradb.open();
+        window.defradbClient = db;
+        clientRef.current = db;
+        setIsClientReady(true);
+        console.log('DefraDB Wasm client initialized with', useSourceHub ? 'SourceHub ACP' : 'Local ACP');
       } catch (error) {
         console.error('Failed to initialize DefraDB Wasm client:', error);
       }
     };
     initClient();
-  }, []);
-
-  useEffect(() => {
-    policyRef.current = DEFAULT_POLICY;
-  }, [DEFAULT_POLICY]);
-
-  useEffect(() => {
-    schemaRef.current = DEFAULT_SCHEMA;
-  }, [DEFAULT_SCHEMA]);
-
-  useEffect(() => {
-    relationshipRef.current = DEFAULT_RELATIONSHIP;
-  }, [DEFAULT_RELATIONSHIP]);
+  }, [checkSourceHubAvailability]);
 
   const wasmFetcher: Fetcher = useCallback(async (graphQLParams: any) => {
     try {
@@ -105,30 +97,20 @@ function App() {
         operationName,
         variables,
       };
-      const nodeIdentity = await clientRef.current.getNodeIdentity();
+      const nodeIdentity = await clientRef.current?.getNodeIdentity();
       // Create context with identity
       const context = {
-        identity: nodeIdentity.PublicKey,
+        identity: nodeIdentity?.PublicKey,
       };
       // All operations go through execRequest
-      const result = await clientRef.current.execRequest(query, args, context);
-      return result.gql;
+      const result = await clientRef.current?.execRequest(query, args, context);
+      return result?.gql;
     } catch (error) {
       console.error('Error executing Wasm request:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return { errors: [{ message: errorMessage }] };
     }
   }, []);
-
-  const checkSourceHubAvailability = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/cosmos/base/tendermint/v1beta1/node_info');
-      return response.ok;
-    } catch (error) {
-      console.log('SourceHub not available:', error);
-      return false;
-    }
-  };
 
   const keypairResetPlugin: GraphiQLPlugin = useMemo(() =>
     createKeypairResetPlugin({
@@ -137,51 +119,41 @@ function App() {
 
   const policyTogglePlugin: GraphiQLPlugin = useMemo(() =>
     createPolicyPlugin({
-      policyRef,
       clientRef,
       resultRef,
       policyIdRef,
-      defaultPolicy: DEFAULT_POLICY,
     }), []);
 
   const schemaTogglePlugin: GraphiQLPlugin = useMemo(() =>
     createSchemaPlugin({
-      schemaRef,
       clientRef,
       policyIdRef,
-      defaultSchema: DEFAULT_SCHEMA,
     }), []);
 
   const relationshipTogglePlugin: GraphiQLPlugin = useMemo(() =>
     createRelationshipPlugin({
       clientRef,
       policyIdRef,
-      relationshipRef,
       resultRef,
     }), []);
 
-
   if (mode === 'wasm') {
     if (!isClientReady) {
-      return (
-        <></>
-      );
+      return null;
     }
 
     return (
-      <>
-        <div style={{ height: '100vh', backgroundColor: '#202a3b' }}>
-          <GraphiQL
-            fetcher={wasmFetcher}
-            plugins={[
-              ...(isSourceHubAvailable ? [keypairResetPlugin] : []),
-              policyTogglePlugin,
-              schemaTogglePlugin,
-              relationshipTogglePlugin,
-            ]}
-          />
-        </div>
-      </>
+      <div className="defradb-playground">
+        <GraphiQL
+          fetcher={wasmFetcher}
+          plugins={[
+            ...(isSourceHubAvailable ? [keypairResetPlugin] : []),
+            policyTogglePlugin,
+            schemaTogglePlugin,
+            relationshipTogglePlugin,
+          ]}
+        />
+      </div>
     );
   } else {
     const baseUrl = import.meta.env.DEV ? 'http://localhost:9181' : '';

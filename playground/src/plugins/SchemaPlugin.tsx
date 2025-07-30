@@ -9,7 +9,7 @@
  * licenses/APL.txt.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
 import { Database } from 'lucide-react';
 import styles from './PluginStyles.module.css';
@@ -30,34 +30,23 @@ interface SchemaResult {
 }
 
 interface SchemaPluginProps {
-  schemaRef: React.RefObject<string>;
   clientRef: React.RefObject<any>;
   policyIdRef: React.RefObject<string>;
-  defaultSchema: string;
 }
 
 export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => ({
   title: 'Add Schema',
   icon: () => <Database size={16} />,
   content: () => {
-    const [schemaText, setSchemaText] = useState(() => 
-      props.defaultSchema.replace('policy_id', props.policyIdRef.current ?? 'policy_id'),
+    const [schemaText, setSchemaText] = useState(() =>
+      DEFAULT_SCHEMA.replace('policy_id', props.policyIdRef.current ?? 'policy_id'),
     );
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<SchemaResult | null>(null);
 
-    useEffect(() => {
-      if (props.policyIdRef.current) {
-        const updatedSchema = props.defaultSchema.replace('policy_id', props.policyIdRef.current);
-        setSchemaText(updatedSchema);
-        props.schemaRef.current = updatedSchema;
-      }
-    }, [props.policyIdRef.current, props.defaultSchema]);
-
     const handleSchemaChange = useCallback((value: string) => {
       setSchemaText(value);
-      props.schemaRef.current = value;
-    }, [props]);
+    }, []);
 
     const handleAddSchema = useCallback(async () => {
       if (!props.clientRef.current) {
@@ -101,8 +90,8 @@ export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => 
             Edit your schema below and click "Add Schema". The policy ID will be automatically populated if a policy was previously created.
           </p>
         </header>
-        
-        <form 
+
+        <form
           onSubmit={(e) => {
             e.preventDefault();
             if (!isLoading && schemaText.trim()) {
@@ -129,7 +118,7 @@ export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => 
               spellCheck={false}
             />
           </fieldset>
-          
+
           <button
             type="submit"
             disabled={isLoading || !schemaText.trim()}

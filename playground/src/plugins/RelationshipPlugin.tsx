@@ -30,14 +30,12 @@ interface RelationshipResult {
 export interface RelationshipPluginProps {
   clientRef: React.RefObject<any>;
   policyIdRef: React.RefObject<string>;
-  relationshipRef: React.RefObject<typeof DEFAULT_RELATIONSHIP>;
   resultRef: React.RefObject<string>;
 }
 
 export const createRelationshipPlugin = ({
   clientRef,
   policyIdRef,
-  relationshipRef,
   resultRef,
 }: RelationshipPluginProps) => ({
   title: 'Actor Relationships',
@@ -48,10 +46,6 @@ export const createRelationshipPlugin = ({
     const [isDeleteLoading, setIsDeleteLoading] = React.useState(false);
     const [result, setResult] = React.useState<RelationshipResult | null>(null);
     const [relationship, setRelationship] = React.useState(DEFAULT_RELATIONSHIP);
-
-    React.useEffect(() => {
-      relationshipRef.current = relationship;
-    }, [relationship, relationshipRef]);
 
     const handleAddRelationship = async () => {
       if (!clientRef.current) {

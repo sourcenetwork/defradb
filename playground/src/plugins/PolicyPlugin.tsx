@@ -46,25 +46,22 @@ interface PolicyResult {
 }
 
 interface PolicyPluginProps {
-  policyRef: React.RefObject<string>;
   clientRef: React.RefObject<any>;
   resultRef: React.RefObject<string>;
   policyIdRef: React.RefObject<string>;
-  defaultPolicy: string;
 }
 
 export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => ({
   title: 'Add Policy',
   icon: () => <FileText size={16} />,
   content: () => {
-    const [policyText, setPolicyText] = useState(props.defaultPolicy);
+    const [policyText, setPolicyText] = useState(DEFAULT_POLICY);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<PolicyResult | null>(null);
 
     const handlePolicyChange = useCallback((value: string) => {
       setPolicyText(value);
-      props.policyRef.current = value;
-    }, [props]);
+    }, []);
 
     const handleAddPolicy = useCallback(async () => {
       if (!props.clientRef.current) {
@@ -121,8 +118,8 @@ export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => 
             Paste your policy YAML below and click "Add Policy".
           </p>
         </header>
-        
-        <form 
+
+        <form
           onSubmit={(e) => {
             e.preventDefault();
             if (!isLoading && policyText.trim()) {
@@ -149,7 +146,7 @@ export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => 
               spellCheck={false}
             />
           </fieldset>
-          
+
           <button
             type="submit"
             disabled={isLoading || !policyText.trim()}

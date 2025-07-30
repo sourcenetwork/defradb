@@ -86,11 +86,11 @@ export const createKeypairResetPlugin = (props: KeypairResetPluginProps): Graphi
         <header>
           <h3 className={styles.pluginTitle}>Keypair Reset</h3>
           <p id="keypair-description" className={styles.pluginDescription}>
-            Optionally, reset the keypair used for SourceHub ACP operations and reload the page. 
+            Optionally, reset the keypair used for SourceHub ACP operations and reload the page.
             This is useful to get a fresh keypair after resetting the SourceHub state.
           </p>
         </header>
-        
+
         <section>
           <button
             type="button"
