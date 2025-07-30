@@ -107,10 +107,6 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 
 			switch kind := field.Kind.(type) {
 			case *client.NamedKind:
-				if kind.Array {
-					continue
-				}
-
 				if otherCol, ok := collectionsByName[kind.Name]; ok {
 					// We only need to worry about bi-directional relationships here, single sided relationships cannot be
 					// circular.
