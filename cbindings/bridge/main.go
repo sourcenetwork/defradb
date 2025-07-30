@@ -106,10 +106,10 @@ func CollectionListDocIDs(cOptions C.CollectionOptions) *C.Result {
 	return returnC(gcr)
 }
 
-//export DocumentGet
-func DocumentGet(cDocID *C.char, cShowDeleted C.int, cOptions C.CollectionOptions) *C.Result {
+//export CollectionGet
+func CollectionGet(cDocID *C.char, cShowDeleted C.int, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.DocumentGet(C.GoString(cDocID), cShowDeleted != 0, gocOptions)
+	gcr := cbindings.CollectionGet(C.GoString(cDocID), cShowDeleted != 0, gocOptions)
 	return returnC(gcr)
 }
 
