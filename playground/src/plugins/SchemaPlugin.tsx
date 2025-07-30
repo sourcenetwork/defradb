@@ -11,8 +11,8 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
+import { Database } from 'lucide-react';
 import styles from './PluginStyles.module.css';
-import { SchemaIcon } from '../icons';
 
 export const DEFAULT_SCHEMA = `type Users @policy(
   id: "policy_id",
@@ -38,7 +38,7 @@ interface SchemaPluginProps {
 
 export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => ({
   title: 'Add Schema',
-  icon: SchemaIcon,
+  icon: () => <Database size={16} />,
   content: () => {
     const [schemaText, setSchemaText] = useState(() => 
       props.defaultSchema.replace('policy_id', props.policyIdRef.current ?? 'policy_id'),

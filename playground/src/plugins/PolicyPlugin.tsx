@@ -11,8 +11,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
+import { FileText } from 'lucide-react';
 import styles from './PluginStyles.module.css';
-import { PolicyIcon } from '../icons';
 
 export const DEFAULT_POLICY = `name: Test Policy
 description: A test policy for playground
@@ -55,7 +55,7 @@ interface PolicyPluginProps {
 
 export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => ({
   title: 'Add Policy',
-  icon: PolicyIcon,
+  icon: () => <FileText size={16} />,
   content: () => {
     const [policyText, setPolicyText] = useState(props.defaultPolicy);
     const [isLoading, setIsLoading] = useState(false);

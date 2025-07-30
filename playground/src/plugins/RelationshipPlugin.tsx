@@ -10,8 +10,8 @@
  */
 
 import React from 'react';
+import { Users } from 'lucide-react';
 import styles from './PluginStyles.module.css';
-import { RelationshipIcon } from '../icons';
 
 export const DEFAULT_RELATIONSHIP = {
   collectionName: 'Users',
@@ -41,7 +41,7 @@ export const createRelationshipPlugin = ({
   resultRef,
 }: RelationshipPluginProps) => ({
   title: 'Actor Relationships',
-  icon: RelationshipIcon,
+  icon: () => <Users size={16} />,
   content: () => {
     const [isVerifyLoading, setIsVerifyLoading] = React.useState(false);
     const [isAddLoading, setIsAddLoading] = React.useState(false);

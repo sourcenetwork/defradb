@@ -11,8 +11,8 @@
 
 import React from 'react';
 import { GraphiQLPlugin } from '@graphiql/react';
+import { KeyRound } from 'lucide-react';
 import styles from './PluginStyles.module.css';
-import { KeypairIcon } from '../icons';
 
 type ResultType = 'success' | 'error' | 'info';
 
@@ -27,7 +27,7 @@ interface KeypairResetPluginProps {
 
 export const createKeypairResetPlugin = (props: KeypairResetPluginProps): GraphiQLPlugin => ({
   title: 'Keypair Reset',
-  icon: KeypairIcon,
+  icon: () => <KeyRound size={16} />,
   content: () => {
     const [isResetting, setIsResetting] = React.useState(false);
     const [result, setResult] = React.useState<KeypairResult | null>(null);
