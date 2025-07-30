@@ -17,7 +17,7 @@ export const DEFAULT_RELATIONSHIP = {
   collectionName: 'Users',
   docID: 'document_id',
   relation: 'collaborator',
-  targetActor: 'did:key:alice'
+  targetActor: 'did:key:alice',
 };
 
 type ResultType = 'success' | 'error' | 'info';
@@ -57,7 +57,7 @@ export const createRelationshipPlugin = ({
       if (!clientRef.current) {
         setResult({
           message: 'Error: Client not initialized',
-          type: 'error'
+          type: 'error',
         });
         return;
       }
@@ -65,13 +65,13 @@ export const createRelationshipPlugin = ({
       setIsAddLoading(true);
       setResult({
         message: 'Adding relationship...',
-        type: 'info'
+        type: 'info',
       });
 
       try {
         const nodeIdentity = await clientRef.current.getNodeIdentity();
         const context = {
-          identity: nodeIdentity.PublicKey
+          identity: nodeIdentity.PublicKey,
         };
 
         const response = await clientRef.current.addDACActorRelationship(
@@ -79,20 +79,20 @@ export const createRelationshipPlugin = ({
           relationship.docID,
           relationship.relation,
           relationship.targetActor,
-          context
+          context,
         );
 
         const successMessage = `Relationship added successfully: ${JSON.stringify(response, null, 2)}`;
         setResult({
           message: successMessage,
-          type: 'success'
+          type: 'success',
         });
         resultRef.current = successMessage;
       } catch (error) {
         const errorMessage = `Error adding relationship: ${error instanceof Error ? error.message : String(error)}`;
         setResult({
           message: errorMessage,
-          type: 'error'
+          type: 'error',
         });
         resultRef.current = errorMessage;
       } finally {
@@ -104,7 +104,7 @@ export const createRelationshipPlugin = ({
       if (!clientRef.current) {
         setResult({
           message: 'Error: Client not initialized',
-          type: 'error'
+          type: 'error',
         });
         return;
       }
@@ -112,13 +112,13 @@ export const createRelationshipPlugin = ({
       setIsDeleteLoading(true);
       setResult({
         message: 'Deleting relationship...',
-        type: 'info'
+        type: 'info',
       });
 
       try {
         const nodeIdentity = await clientRef.current.getNodeIdentity();
         const context = {
-          identity: nodeIdentity.PublicKey
+          identity: nodeIdentity.PublicKey,
         };
 
         const response = await clientRef.current.deleteDACActorRelationship(
@@ -126,20 +126,20 @@ export const createRelationshipPlugin = ({
           relationship.docID,
           relationship.relation,
           relationship.targetActor,
-          context
+          context,
         );
 
         const successMessage = `Relationship deleted successfully: ${JSON.stringify(response, null, 2)}`;
         setResult({
           message: successMessage,
-          type: 'success'
+          type: 'success',
         });
         resultRef.current = successMessage;
       } catch (error) {
         const errorMessage = `Error deleting relationship: ${error instanceof Error ? error.message : String(error)}`;
         setResult({
           message: errorMessage,
-          type: 'error'
+          type: 'error',
         });
         resultRef.current = errorMessage;
       } finally {
@@ -151,7 +151,7 @@ export const createRelationshipPlugin = ({
       if (!clientRef.current) {
         setResult({
           message: 'Error: Client not initialized',
-          type: 'error'
+          type: 'error',
         });
         return;
       }
@@ -159,45 +159,45 @@ export const createRelationshipPlugin = ({
       setIsVerifyLoading(true);
       setResult({
         message: 'Verifying access...',
-        type: 'info'
+        type: 'info',
       });
 
       try {
         const nodeIdentity = await clientRef.current.getNodeIdentity();
         const context = {
-          identity: nodeIdentity.PublicKey
+          identity: nodeIdentity.PublicKey,
         };
 
         if (!policyIdRef.current) {
           const errorMessage = 'Error: Policy ID not available. Please add a policy first.';
           setResult({
             message: errorMessage,
-            type: 'error'
+            type: 'error',
           });
           resultRef.current = errorMessage;
           return;
         }
 
         const response = await clientRef.current.verifyDACAccess(
-          "read",
+          'read',
           relationship.targetActor,
           policyIdRef.current,
           relationship.collectionName.toLowerCase(),
           relationship.docID,
-          context
+          context,
         );
 
         const successMessage = `Access verification result: ${JSON.stringify(response, null, 2)}`;
         setResult({
           message: successMessage,
-          type: 'success'
+          type: 'success',
         });
         resultRef.current = successMessage;
       } catch (error) {
         const errorMessage = `Error verifying access: ${error instanceof Error ? error.message : String(error)}`;
         setResult({
           message: errorMessage,
-          type: 'error'
+          type: 'error',
         });
         resultRef.current = errorMessage;
       } finally {

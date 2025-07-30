@@ -70,7 +70,7 @@ export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => 
       if (!props.clientRef.current) {
         setResult({
           message: 'Error: Client not initialized',
-          type: 'error'
+          type: 'error',
         });
         return;
       }
@@ -78,13 +78,13 @@ export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => 
       setIsLoading(true);
       setResult({
         message: 'Adding policy...',
-        type: 'info'
+        type: 'info',
       });
 
       try {
         const nodeIdentity = await props.clientRef.current.getNodeIdentity();
         const context = {
-          identity: nodeIdentity.PublicKey
+          identity: nodeIdentity.PublicKey,
         };
 
         const response = await props.clientRef.current.addDACPolicy(policyText, context);
@@ -92,20 +92,20 @@ export const createPolicyPlugin = (props: PolicyPluginProps): GraphiQLPlugin => 
 
         setResult({
           message: successMessage,
-          type: 'success'
+          type: 'success',
         });
         props.resultRef.current = successMessage;
 
-        if (response && response.PolicyID) {
+        if (response?.PolicyID) {
           props.policyIdRef.current = response.PolicyID;
         } else {
-          console.error("No PolicyID found in result:", response);
+          console.error('No PolicyID found in result:', response);
         }
       } catch (error) {
         const errorMessage = `Error adding policy: ${error instanceof Error ? error.message : String(error)}`;
         setResult({
           message: errorMessage,
-          type: 'error'
+          type: 'error',
         });
         props.resultRef.current = errorMessage;
       } finally {

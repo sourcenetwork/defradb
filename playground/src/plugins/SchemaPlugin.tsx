@@ -41,7 +41,7 @@ export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => 
   icon: SchemaIcon,
   content: () => {
     const [schemaText, setSchemaText] = useState(() => 
-      props.defaultSchema.replace('policy_id', props.policyIdRef.current || 'policy_id')
+      props.defaultSchema.replace('policy_id', props.policyIdRef.current ?? 'policy_id'),
     );
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<SchemaResult | null>(null);
@@ -63,7 +63,7 @@ export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => 
       if (!props.clientRef.current) {
         setResult({
           message: 'Error: Client not initialized',
-          type: 'error'
+          type: 'error',
         });
         return;
       }
@@ -71,7 +71,7 @@ export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => 
       setIsLoading(true);
       setResult({
         message: 'Adding schema...',
-        type: 'info'
+        type: 'info',
       });
 
       try {
@@ -80,13 +80,13 @@ export const createSchemaPlugin = (props: SchemaPluginProps): GraphiQLPlugin => 
 
         setResult({
           message: successMessage,
-          type: 'success'
+          type: 'success',
         });
       } catch (error) {
         const errorMessage = `Error adding schema: ${error instanceof Error ? error.message : String(error)}`;
         setResult({
           message: errorMessage,
-          type: 'error'
+          type: 'error',
         });
       } finally {
         setIsLoading(false);

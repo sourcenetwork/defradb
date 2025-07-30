@@ -19,7 +19,7 @@ interface IconProps {
 export const KeypairIcon: React.FC<IconProps> = ({ 
   width = 16, 
   height = 16, 
-  className 
+  className, 
 }) => (
   <svg 
     width={width} 

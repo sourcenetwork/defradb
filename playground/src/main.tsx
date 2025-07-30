@@ -18,11 +18,11 @@ const mode = import.meta.env.VITE_PLAYGROUND_MODE;
 
 if (mode === 'wasm') {
   (window as any).globalACPConfig = {
-    apiUrl: `${window.location.origin}${import.meta.env.VITE_ACP_API_URL || '/api'}`,
-    rpcUrl: `${window.location.origin}${import.meta.env.VITE_ACP_RPC_URL || '/rpc'}`,
-    grpcUrl: `${window.location.origin}${import.meta.env.VITE_ACP_GRPC_URL || '/api'}`,
-    chainId: import.meta.env.VITE_ACP_CHAIN_ID || "sourcehub-dev",
-    denom: import.meta.env.VITE_ACP_DENOM || "uopen",
+    apiUrl: `${window.location.origin}${import.meta.env.VITE_ACP_API_URL ?? '/api'}`,
+    rpcUrl: `${window.location.origin}${import.meta.env.VITE_ACP_RPC_URL ?? '/rpc'}`,
+    grpcUrl: `${window.location.origin}${import.meta.env.VITE_ACP_GRPC_URL ?? '/api'}`,
+    chainId: import.meta.env.VITE_ACP_CHAIN_ID ?? 'sourcehub-dev',
+    denom: import.meta.env.VITE_ACP_DENOM ?? 'uopen',
     useZeroFees: import.meta.env.VITE_ACP_ALLOW_ZERO_FEES === 'true' || false,
   };
   

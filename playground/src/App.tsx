@@ -23,7 +23,7 @@ import 'graphiql/graphiql.css';
 declare global {
   interface Window {
     defradb: {
-      open(acpType?: string): Promise<any>;
+      open(_acpType?: string): Promise<any>;
     };
     defradbClient: any;
   }
@@ -38,7 +38,7 @@ function App() {
   const policyRef = useRef(DEFAULT_POLICY);
   const schemaRef = useRef(DEFAULT_SCHEMA);
   const relationshipRef = useRef(DEFAULT_RELATIONSHIP);
-  const resultRef = useRef("");
+  const resultRef = useRef('');
   const clientRef = useRef<any>(null);
   const [isClientReady, setIsClientReady] = useState(false);
   const [isSourceHubAvailable, setIsSourceHubAvailable] = useState(false);
@@ -62,14 +62,14 @@ function App() {
           initRef.current = true;
 
           let useSourceHub = false;
-          if (acpClient === "sourcehub") {
+          if (acpClient === 'sourcehub') {
             useSourceHub = await checkSourceHubAvailability();
           }
 
           setIsSourceHubAvailable(useSourceHub);
 
           const db = useSourceHub
-            ? await window.defradb.open("sourcehub")
+            ? await window.defradb.open('sourcehub')
             : await window.defradb.open();
 
           window.defradbClient = db;
@@ -98,9 +98,9 @@ function App() {
 
   const wasmFetcher: Fetcher = useCallback(async (graphQLParams: any) => {
     try {
-      const query = graphQLParams.query || '';
-      const variables = graphQLParams.variables || {};
-      const operationName = graphQLParams.operationName || {};
+      const query = graphQLParams.query ?? '';
+      const variables = graphQLParams.variables ?? {};
+      const operationName = graphQLParams.operationName ?? {};
       const args = {
         operationName,
         variables,
@@ -108,7 +108,7 @@ function App() {
       const nodeIdentity = await clientRef.current.getNodeIdentity();
       // Create context with identity
       const context = {
-        identity: nodeIdentity.PublicKey
+        identity: nodeIdentity.PublicKey,
       };
       // All operations go through execRequest
       const result = await clientRef.current.execRequest(query, args, context);
@@ -141,7 +141,7 @@ function App() {
       clientRef,
       resultRef,
       policyIdRef,
-      defaultPolicy: DEFAULT_POLICY
+      defaultPolicy: DEFAULT_POLICY,
     }), []);
 
   const schemaTogglePlugin: GraphiQLPlugin = useMemo(() =>
@@ -149,7 +149,7 @@ function App() {
       schemaRef,
       clientRef,
       policyIdRef,
-      defaultSchema: DEFAULT_SCHEMA
+      defaultSchema: DEFAULT_SCHEMA,
     }), []);
 
   const relationshipTogglePlugin: GraphiQLPlugin = useMemo(() =>

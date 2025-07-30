@@ -36,7 +36,7 @@ export const createKeypairResetPlugin = (props: KeypairResetPluginProps): Graphi
       if (!props.clientRef.current) {
         setResult({
           message: 'Error: Client not initialized',
-          type: 'error'
+          type: 'error',
         });
         return;
       }
@@ -44,7 +44,7 @@ export const createKeypairResetPlugin = (props: KeypairResetPluginProps): Graphi
       setIsResetting(true);
       setResult({
         message: 'Deleting keypair...',
-        type: 'info'
+        type: 'info',
       });
 
       try {
@@ -53,13 +53,13 @@ export const createKeypairResetPlugin = (props: KeypairResetPluginProps): Graphi
           const error = await acpDeleteKeypair();
           if (error) {
             setResult({
-              message: `Error deleting keypair: ${error.message || error}`,
-              type: 'error'
+              message: `Error deleting keypair: ${error.message ?? error}`,
+              type: 'error',
             });
           } else {
             setResult({
               message: 'Keypair reset successfully! Reloading the page...',
-              type: 'success'
+              type: 'success',
             });
             setTimeout(() => {
               window.location.reload();
@@ -68,13 +68,13 @@ export const createKeypairResetPlugin = (props: KeypairResetPluginProps): Graphi
         } else {
           setResult({
             message: 'Error: acp_DeleteKeypair function not found',
-            type: 'error'
+            type: 'error',
           });
         }
       } catch (error) {
         setResult({
           message: `Error deleting keypair: ${error instanceof Error ? error.message : String(error)}`,
-          type: 'error'
+          type: 'error',
         });
       } finally {
         setIsResetting(false);
