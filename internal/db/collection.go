@@ -213,7 +213,7 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
-// getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
+// getAllActiveDefinitions returns all queryable collection/views.
 func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
 	cols, err := description.GetActiveCollections(ctx)
 	if err != nil {
