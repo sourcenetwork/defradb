@@ -4,8 +4,8 @@ Set the active collection version
 
 ### Synopsis
 
-Activates all collection versions with the given schema version, and deactivates all
-those without it (if they share the same schema root).
+Activates all collection versions with the given version id, and deactivates all
+other versions of that collection.
 
 ```
 defradb client collection set-active [versionID] [flags]
