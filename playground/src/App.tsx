@@ -15,7 +15,7 @@ import { GraphiQLPlugin } from '@graphiql/react';
 import { createPolicyPlugin, DEFAULT_POLICY } from './plugins/PolicyPlugin';
 import { createSchemaPlugin, DEFAULT_SCHEMA } from './plugins/SchemaPlugin';
 import { createRelationshipPlugin, DEFAULT_RELATIONSHIP } from './plugins/RelationshipPlugin';
-import { createKeypairPlugin } from './plugins/KeypairPlugin';
+import { createKeypairResetPlugin } from './plugins/KeypairResetPlugin';
 import 'swagger-ui-react/swagger-ui.css';
 import 'graphiql/graphiql.css';
 
@@ -130,8 +130,8 @@ function App() {
     }
   };
 
-  const keypairPlugin: GraphiQLPlugin = useMemo(() =>
-    createKeypairPlugin({
+  const keypairResetPlugin: GraphiQLPlugin = useMemo(() =>
+    createKeypairResetPlugin({
       clientRef,
     }), []);
 
@@ -182,7 +182,7 @@ function App() {
           <GraphiQL
             fetcher={wasmFetcher}
             plugins={[
-              ...(isSourceHubAvailable ? [keypairPlugin] : []),
+              ...(isSourceHubAvailable ? [keypairResetPlugin] : []),
               policyTogglePlugin,
               schemaTogglePlugin,
               relationshipTogglePlugin,

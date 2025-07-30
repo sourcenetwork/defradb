@@ -21,11 +21,11 @@ interface KeypairResult {
   type: ResultType;
 }
 
-interface KeypairPluginProps {
+interface KeypairResetPluginProps {
   clientRef: React.RefObject<any>;
 }
 
-export const createKeypairPlugin = (props: KeypairPluginProps): GraphiQLPlugin => ({
+export const createKeypairResetPlugin = (props: KeypairResetPluginProps): GraphiQLPlugin => ({
   title: 'Keypair Reset',
   icon: KeypairIcon,
   content: () => {
@@ -120,4 +120,4 @@ export const createKeypairPlugin = (props: KeypairPluginProps): GraphiQLPlugin =
       </main>
     );
   },
-}); 
+});
