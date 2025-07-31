@@ -29,5 +29,5 @@ if (mode === 'wasm') {
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <App />
+  <App />,
 );

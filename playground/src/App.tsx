@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { GraphiQL } from 'graphiql';
 import { usePlaygroundStore } from './store/playgroundStore';
 import { useGraphiQLConfig } from './hooks/useGraphiQLConfig';
+import { DefraDBLogo } from './assets/icons/DefraDBLogo';
 import 'swagger-ui-react/swagger-ui.css';
 import 'graphiql/graphiql.css';
 
@@ -48,7 +49,12 @@ function App() {
       <GraphiQL
         fetcher={config.fetcher}
         plugins={config.plugins}
-      />
+      >
+        <GraphiQL.Logo>
+          <DefraDBLogo />
+          DefraDB Playground
+        </GraphiQL.Logo>
+      </GraphiQL>
     </div>
   );
 }
