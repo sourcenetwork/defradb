@@ -153,16 +153,7 @@ const context = {
   identity: "pub_key"
 };
 
-const acpConfig = {
-  apiUrl: "/api",
-  rpcUrl: "/rpc",
-  grpcUrl: "/api",
-  chainId: "sourcehub-dev",
-  denom: "uopen",
-  allowZeroFees: true,
-};
-
-window.defradbClient.addDACPolicy(policy, context, acpConfig);
+window.defradbClient.addDACPolicy(policy, context);
 ```
 
 ## Building
