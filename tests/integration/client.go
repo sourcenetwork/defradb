@@ -36,10 +36,10 @@ const (
 	CLIClientType state.ClientType = "cli"
 	// JSClientType enables running the test suite using
 	// the JS implementation of the client.TxnStore interface.
-	JSClientType ClientType = "js"
+	JSClientType state.ClientType = "js"
 	// CClientType enables running the test suite using
 	// the C implementation of the client.TxnStore interface.
-	CClientType ClientType = "c"
+	CClientType state.ClientType = "c"
 )
 
 var (
