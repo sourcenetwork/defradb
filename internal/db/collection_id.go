@@ -344,7 +344,9 @@ func sortCollectionSets(collectionSets [][]*client.CollectionVersion) [][]*clien
 
 // sortCollectionSetsFrom sorts collection sets from the given index onwards.
 func sortCollectionSetsFrom(index int, collectionSets [][]*client.CollectionVersion) [][]*client.CollectionVersion {
-	skippedSets := make([][]*client.CollectionVersion, 0, len(collectionSets))
+	// This function is recursive, each call will add the collection sets that it can (no relations, or relations
+	// to sets already sorted), the rest get added to deferredSets so that they can be sorted in later passes.
+	deferredSets := make([][]*client.CollectionVersion, 0, len(collectionSets))
 	result := make([][]*client.CollectionVersion, 0, len(collectionSets))
 
 	allColNames := make(map[string]struct{}, len(collectionSets))
@@ -395,7 +397,7 @@ setLoop:
 						//   and will be fully formed by the time this set is finalized.
 						// - Unknown then there is nothing that this code can do to help it, and we must avoid it and
 						//   let the validation code return a human readable error to the user.
-						skippedSets = append(skippedSets, collectionSet)
+						deferredSets = append(deferredSets, collectionSet)
 						continue setLoop
 					}
 				}
@@ -405,8 +407,8 @@ setLoop:
 		result = append(result, collectionSet)
 	}
 
-	if len(skippedSets) > 0 {
-		return sortCollectionSetsFrom(len(result), append(result, skippedSets...))
+	if len(deferredSets) > 0 {
+		return sortCollectionSetsFrom(len(result), append(result, deferredSets...))
 	}
 
 	return result
