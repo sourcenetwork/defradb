@@ -27,11 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-const (
-	KeyTypeEd25519   = "ed25519"
-	KeyTypeSecp256k1 = "secp256k1"
-)
-
 type GoCResult struct {
 	Status int
 	Error  string
@@ -147,9 +142,9 @@ func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdent
 
 	var keyType crypto.KeyType
 	switch goKeyType {
-	case KeyTypeEd25519:
+	case string(crypto.KeyTypeEd25519):
 		keyType = crypto.KeyTypeEd25519
-	case KeyTypeSecp256k1:
+	case string(crypto.KeyTypeSecp256k1):
 		keyType = crypto.KeyTypeSecp256k1
 	default:
 		return nil, fmt.Errorf("invalid key type: %s", goKeyType)
@@ -169,15 +164,9 @@ func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdent
 }
 
 // GetNode is a thread-safe getter for a global node
+// It is exported so that it can be used for integration testing
 func GetNode(n int) *node.Node {
 	globalNodesMu.RLock()
 	defer globalNodesMu.RUnlock()
 	return GlobalNodes[n]
-}
-
-// SetNode is a thread-safe setter for a global node
-func SetNode(n int, node *node.Node) {
-	globalNodesMu.Lock()
-	defer globalNodesMu.Unlock()
-	GlobalNodes[n] = node
 }
