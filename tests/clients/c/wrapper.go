@@ -611,7 +611,7 @@ func (w *CWrapper) Events() event.Bus {
 }
 
 func (w *CWrapper) MaxTxnRetries() int {
-	return cbindings.GlobalNode(w.nodeNum).DB.MaxTxnRetries()
+	return cbindings.GetNode(w.nodeNum).DB.MaxTxnRetries()
 }
 
 func (w *CWrapper) PrintDump(ctx context.Context) error {
