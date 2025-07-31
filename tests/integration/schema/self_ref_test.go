@@ -333,6 +333,100 @@ func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSchemaSelfReferenceTwoTypes_SchemaHasComplexSchemaID_SingleSidedRelations(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SchemaUpdate{
+				// The two primary relations form a circular two-collection self reference
+				Schema: `
+					type User {
+						hosts: Dog @primary @relation(name:"hosts")
+					}
+					type Dog {
+						walker: User @primary @relation(name:"walkies")
+					}
+				`,
+			},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name: "User",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreigqhogwrfyvqw33ujggwass2wgzbhqc2ttw2eny4doe42e2p4qyue",
+							RelativeID:      1,
+						}),
+						// Note how Dog and User share the same base ID, but with a different index suffixed on
+						// the end.
+						CollectionID:   "bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4",
+						VersionID:      "bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Typ:  client.NONE_CRDT,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "hosts",
+								// Because Dog and User form a circular dependency tree, the relation is declared
+								// as a SelfKind, with the index identifier of User being held in the relation kind.
+								Kind:         client.NewSelfKind("0", false),
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "hosts_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("hosts"),
+								IsPrimary:    true,
+							},
+						},
+					},
+					{
+						Name: "Dog",
+						CollectionSet: immutable.Some(client.CollectionSetDescription{
+							CollectionSetID: "bafyreigqhogwrfyvqw33ujggwass2wgzbhqc2ttw2eny4doe42e2p4qyue",
+							RelativeID:      0,
+						}),
+						// Note how Dog and User share the same base ID, but with a different index suffixed on
+						// the end.
+						CollectionID:   "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						VersionID:      "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Typ:  client.NONE_CRDT,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "walker",
+								// Because Dog and User form a circular dependency tree, the relation is declared
+								// as a SelfKind, with the index identifier of User being held in the relation kind.
+								Kind:         client.NewSelfKind("1", false),
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "walker_id",
+								Typ:          client.LWW_REGISTER,
+								Kind:         client.FieldKind_DocID,
+								RelationName: immutable.Some("walkies"),
+								IsPrimary:    true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchemaID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

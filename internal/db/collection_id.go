@@ -92,11 +92,6 @@ type collectionRelations struct {
 // For example if User contains a relation *to* Dog, and Dog contains a relationship *to*
 // User, they will be grouped into the same set.
 func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.CollectionVersion {
-	collectionsByName := make(map[string]client.CollectionVersion, len(newCollections))
-	for _, col := range newCollections {
-		collectionsByName[col.Name] = *col
-	}
-
 	collectionsWithRelations := map[string]collectionRelations{}
 	for _, collection := range newCollections {
 		relations := []string{}
@@ -107,15 +102,7 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 
 			switch kind := field.Kind.(type) {
 			case *client.NamedKind:
-				if otherCol, ok := collectionsByName[kind.Name]; ok {
-					// We only need to worry about bi-directional relationships here, single sided relationships cannot be
-					// circular.
-					if _, ok := otherCol.GetFieldByRelation(field.RelationName.Value(), collection.Name, field.Name); ok {
-						// We only need to worry about user provided `NamedKind` relations in this scope.
-						// Other relation kinds can either not be circular, or are relative to the host.
-						relations = append(relations, kind.Name)
-					}
-				}
+				relations = append(relations, kind.Name)
 
 			default:
 				// no-op
