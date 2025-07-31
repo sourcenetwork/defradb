@@ -17,12 +17,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with multiple embedding fields",
-		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with mutations are currently only compatible with the Go client.
 			// The docID is updated by collection. Create after vector embedding generation and
 			// the HTTP and CLI clients don't receive that updated docID. This causes the waitForUpdateEvents

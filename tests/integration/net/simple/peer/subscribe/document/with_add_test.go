@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
@@ -48,8 +49,8 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -124,7 +125,7 @@ func TestP2PDocument_AddSingleErroneousDocID_ShouldNotSync(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID:        1,
-				DocIDs:        []testUtils.ColDocIndex{testUtils.NewColDocIndex(0, testUtils.NonExistentDocID)},
+				DocIDs:        []state.ColDocIndex{state.NewColDocIndex(0, testUtils.NonExistentDocID)},
 				ExpectedError: "malformed document ID, missing either version or cid",
 			},
 			testUtils.UpdateDoc{

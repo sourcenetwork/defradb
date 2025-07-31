@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -101,7 +102,7 @@ func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JavaScript does not support 64 bit int
 			testUtils.GoClientType,
 			testUtils.CLIClientType,

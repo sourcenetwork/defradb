@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
@@ -62,7 +63,7 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
