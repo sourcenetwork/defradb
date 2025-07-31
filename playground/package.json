@@ -13,7 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@sourcenetwork/acp-js": "1.0.0",
+    "@sourcenetwork/acp-js": "1.0.1",
     "graphiql": "^4.1.2",
     "graphql": "^16.10.0",
     "lucide-react": "^0.534.0",
