@@ -155,7 +155,8 @@ func (db *DB) getCollections(
 	// Multi-collection self-referencing relations are the only time the collection set id option
 	// will be provided by internal code - it is expected that very few user collections will result
 	// in this being called, and so for now we tolerate a full scan plus filter instead of maintaining
-	// and index.
+	// and index. The commented out case below, highlights its omission - if we want to index it in the
+	// future it should be uncommented and handled.
 	// case options.CollectionSetID.HasValue():
 
 	default:
