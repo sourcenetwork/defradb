@@ -74,6 +74,9 @@ type NamedKind struct {
 // This is because schema IDs are content IDs and cannot be generated for a
 // single element within a circular dependency tree.
 type SelfKind struct {
+	// todo: RelativeID should be made into an Option[int], see the following
+	// ticket for more info: https://github.com/sourcenetwork/defradb/issues/3880
+
 	// The relative ID to the related type.  If this points at its host this
 	// will be empty.
 	RelativeID string
