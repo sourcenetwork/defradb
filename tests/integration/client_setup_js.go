@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/js"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func init() {
@@ -31,6 +32,6 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(_ *state, node *node.Node) (impl clients.Client, err error) {
+func setupClient(_ *state.State, node *node.Node) (impl clients.Client, err error) {
 	return js.NewWrapper(node)
 }

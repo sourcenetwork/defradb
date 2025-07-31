@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 type signatureMatcher struct {
@@ -115,7 +116,7 @@ func (matcher *signatureMatcher) NegatedFailureMessage(actual any) string {
 // The identity is represented as a byte slice, which is the string representation of the public key of the identity.
 type identityMatcher struct {
 	s        testUtils.TestState
-	identity testUtils.Identity
+	identity state.Identity
 }
 
 // newIdentityMatcher creates a new identity matcher.
@@ -123,7 +124,7 @@ type identityMatcher struct {
 // This is used to match the identity of a node or a client.
 //
 // The identity is represented as a byte slice, which is the string representation of the public key of the identity.
-func newIdentityMatcher(ident testUtils.Identity) *identityMatcher {
+func newIdentityMatcher(ident state.Identity) *identityMatcher {
 	return &identityMatcher{
 		identity: ident,
 	}

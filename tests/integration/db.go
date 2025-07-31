@@ -18,9 +18,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
-
-type DatabaseType string
 
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
@@ -31,9 +30,9 @@ const (
 )
 
 const (
-	BadgerIMType   DatabaseType = "badger-in-memory"
-	DefraIMType    DatabaseType = "defra-memory-datastore"
-	BadgerFileType DatabaseType = "badger-file-system"
+	BadgerIMType   state.DatabaseType = "badger-in-memory"
+	DefraIMType    state.DatabaseType = "defra-memory-datastore"
+	BadgerFileType state.DatabaseType = "badger-file-system"
 )
 
 var (

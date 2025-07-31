@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
@@ -41,14 +42,14 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UnsubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -110,15 +111,15 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
-					testUtils.NewColDocIndex(0, 1),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+					state.NewColDocIndex(0, 1),
 				},
 			},
 			testUtils.UnsubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -202,14 +203,14 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UnsubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, testUtils.NonExistentDocID),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, testUtils.NonExistentDocID),
 				},
 				ExpectedError: "malformed document ID, missing either version or cid",
 			},
@@ -268,13 +269,13 @@ func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UnsubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{},
+				DocIDs: []state.ColDocIndex{},
 			},
 			testUtils.UpdateDoc{
 				NodeID:       immutable.Some(0),
