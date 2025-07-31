@@ -18,13 +18,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
 				testUtils.GoClientType,
@@ -70,14 +71,14 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 0,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{
@@ -132,7 +133,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
 				testUtils.GoClientType,
@@ -178,14 +179,14 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 0,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.UpdateDoc{

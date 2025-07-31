@@ -13,6 +13,8 @@ package tests
 import (
 	"os"
 	"strconv"
+
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
@@ -21,21 +23,19 @@ const (
 	clientCliEnvName  = "DEFRA_CLIENT_CLI"
 )
 
-type ClientType string
-
 const (
 	// goClientType enables running the test suite using
 	// the go implementation of the client.TxnStore interface.
-	GoClientType ClientType = "go"
+	GoClientType state.ClientType = "go"
 	// httpClientType enables running the test suite using
 	// the http implementation of the client.TxnStore interface.
-	HTTPClientType ClientType = "http"
+	HTTPClientType state.ClientType = "http"
 	// cliClientType enables running the test suite using
 	// the cli implementation of the client.TxnStore interface.
-	CLIClientType ClientType = "cli"
+	CLIClientType state.ClientType = "cli"
 	// JSClientType enables running the test suite using
 	// the JS implementation of the client.TxnStore interface.
-	JSClientType ClientType = "js"
+	JSClientType state.ClientType = "js"
 )
 
 var (

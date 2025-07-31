@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // TestP2POneToOneReplicator tests document syncing between a node and a replicator.
@@ -589,7 +590,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDatabaseTypes: immutable.Some(
-			[]testUtils.DatabaseType{
+			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
 				// stop and start a node without losing data.
 				testUtils.BadgerFileType,

@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
@@ -37,11 +38,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
-	if nodeIndex >= len(s.nodes) {
+func getNodeAudience(s *state.State, nodeIndex int) immutable.Option[string] {
+	if nodeIndex >= len(s.Nodes) {
 		return immutable.None[string]()
 	}
-	switch client := s.nodes[nodeIndex].Client.(type) {
+	switch client := s.Nodes[nodeIndex].Client.(type) {
 	case *http.Wrapper:
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	case *cli.Wrapper:
@@ -51,9 +52,9 @@ func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
 	return immutable.None[string]()
 }
 
-func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
+func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
 	var isDocumentACPTest bool
-	for _, a := range s.testCase.Actions {
+	for _, a := range testCase.Actions {
 		switch a.(type) {
 		case
 			AddDACPolicy,
@@ -66,14 +67,14 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 	if !isDocumentACPTest {
 		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
 		// runtime of the test suite when SourceHub ACP is selected.
-		s.t.Skipf("test has no document ACP elements when testing with SourceHub ACP")
+		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
 	}
 
 	const moniker string = "foo"
 	const chainID string = "sourcehub-test"
 	const validatorName string = "test-validator"
 	const keyringBackend string = "test"
-	directory := s.t.TempDir()
+	directory := s.T.TempDir()
 
 	kr, err := keyring.OpenFileKeyring(
 		directory,
@@ -90,7 +91,7 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 	r := rand.New(source)
 
 	acpKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 	acpKeyHex := hex.EncodeToString(acpKey.Serialize())
 
 	err = kr.Set(validatorName, acpKey.Serialize())
@@ -99,9 +100,9 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 	}
 
 	args := []string{"init", moniker, "--chain-id", chainID, "--home", directory}
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	out, err := exec.Command("sourcehubd", args...).CombinedOutput()
-	s.t.Log(string(out))
+	s.T.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -139,9 +140,9 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 		"--home", directory,
 	}
 
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.t.Log(string(out))
+	s.T.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -152,24 +153,24 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
 	}
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.t.Log(string(out))
+	s.T.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
 
 	// The result is suffixed with a newline char so we must trim the whitespace
 	validatorAddress := strings.TrimSpace(string(out))
-	s.sourcehubAddress = validatorAddress
+	s.SourcehubAddress = validatorAddress
 
 	args = []string{"genesis", "add-genesis-account", validatorAddress, "1000000000uopen",
 		"--keyring-backend", keyringBackend,
 		"--home", directory,
 	}
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.t.Log(string(out))
+	s.T.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -178,17 +179,17 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 		"--chain-id", chainID,
 		"--keyring-backend", keyringBackend,
 		"--home", directory}
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.t.Log(string(out))
+	s.T.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
 
 	args = []string{"genesis", "collect-gentxs", "--home", directory}
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.t.Log(string(out))
+	s.T.Log(string(out))
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +247,7 @@ func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
 		"--p2p.laddr", p2pAddress,
 		"--rpc.pprof_laddr", pprofAddress,
 	}
-	s.t.Log("$ sourcehubd " + strings.Join(args, " "))
+	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	sourceHubCmd := exec.Command("sourcehubd", args...)
 	var bf testBuffer
 	bf.Lines = make(chan string, 100)
@@ -283,10 +284,10 @@ cmdReaderLoop:
 	// Void the buffer so that it doesn't fill up and block the process under test
 	bf.Void()
 
-	s.t.Cleanup(
+	s.T.Cleanup(
 		func() {
 			err := sourceHubCmd.Process.Kill()
-			require.NoError(s.t, err)
+			require.NoError(s.T, err)
 		},
 	)
 
