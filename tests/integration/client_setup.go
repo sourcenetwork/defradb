@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func init() {
@@ -31,19 +32,19 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state, node *node.Node) (clients.Client, error) {
-	switch s.clientType {
+func setupClient(s *state.State, node *node.Node) (clients.Client, error) {
+	switch s.ClientType {
 	case HTTPClientType:
 		return http.NewWrapper(node)
 
 	case CLIClientType:
-		return cli.NewWrapper(node, s.sourcehubAddress)
+		return cli.NewWrapper(node, s.SourcehubAddress)
 
 	case GoClientType:
 		return newGoClientWrapper(node), nil
 
 	default:
-		return nil, fmt.Errorf("invalid client type: %v", s.dbt)
+		return nil, fmt.Errorf("invalid client type: %v", s.DbType)
 	}
 }
 

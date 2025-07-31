@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PDocument_GetAllWithNoneConfigured_ShouldSucceed(t *testing.T) {
@@ -27,11 +28,11 @@ func TestP2PDocument_GetAllWithNoneConfigured_ShouldSucceed(t *testing.T) {
 			},
 			testUtils.GetAllP2PDocuments{
 				NodeID:         0,
-				ExpectedDocIDs: []testUtils.ColDocIndex{},
+				ExpectedDocIDs: []state.ColDocIndex{},
 			},
 			testUtils.GetAllP2PDocuments{
 				NodeID:         1,
-				ExpectedDocIDs: []testUtils.ColDocIndex{},
+				ExpectedDocIDs: []state.ColDocIndex{},
 			},
 		},
 	}

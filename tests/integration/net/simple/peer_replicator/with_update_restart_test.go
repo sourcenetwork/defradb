@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
@@ -44,8 +45,8 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 			},
 			testUtils.SubscribeToDocument{
 				NodeID: 1,
-				DocIDs: []testUtils.ColDocIndex{
-					testUtils.NewColDocIndex(0, 0),
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
 				},
 			},
 			testUtils.ConfigureReplicator{

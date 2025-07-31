@@ -21,6 +21,7 @@ import (
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/stretchr/testify/require"
 )
@@ -40,9 +41,9 @@ func createBadgerEncryptionKey() error {
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
+func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithEnabledSigning(s.testCase.EnableSigning))
+	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
 
 	err := createBadgerEncryptionKey()
 	if err != nil {
@@ -57,13 +58,13 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
 	case SourceHubDocumentACPType:
-		if len(s.documentACPOptions) == 0 {
-			s.documentACPOptions, err = setupSourceHub(s)
-			require.NoError(s.t, err)
+		if len(s.DocumentACPOptions) == 0 {
+			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
+			require.NoError(s.T, err)
 		}
 
 		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
-		for _, opt := range s.documentACPOptions {
+		for _, opt := range s.DocumentACPOptions {
 			opts = append(opts, opt)
 		}
 
@@ -72,7 +73,7 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 	}
 
 	var path string
-	switch s.dbt {
+	switch s.DbType {
 	case BadgerIMType:
 		opts = append(opts, node.WithBadgerInMemory(true))
 
@@ -84,11 +85,11 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 
 		case changeDetector.Enabled:
 			// change detector
-			path = changeDetector.DatabaseDir(s.t)
+			path = changeDetector.DatabaseDir(s.T)
 
 		default:
 			// default test case
-			path = s.t.TempDir()
+			path = s.T.TempDir()
 		}
 
 		opts = append(opts, node.WithStorePath(path), node.WithDocumentACPPath(path))
@@ -97,10 +98,10 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:
-		return nil, fmt.Errorf("invalid database type: %v", s.dbt)
+		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
 	}
 
-	if s.kms == PubSubKMSType {
+	if s.KMS == PubSubKMSType {
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
@@ -111,36 +112,36 @@ func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
 		}
 	}
 
-	if s.isNetworkEnabled {
+	if s.IsNetworkEnabled {
 		opts = append(opts, node.WithDisableP2P(false))
 	}
 
-	node, err := node.New(s.ctx, opts...)
+	node, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	err = node.Start(s.ctx)
+	err = node.Start(s.Ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	c, err := setupClient(s, node)
-	require.Nil(s.t, err)
+	require.Nil(s.T, err)
 
-	eventState, err := newEventState(c.Events())
-	require.NoError(s.t, err)
+	eventState, err := state.NewEventState(c.Events())
+	require.NoError(s.T, err)
 
-	st := &nodeState{
+	st := &state.NodeState{
 		Client:  c,
-		event:   eventState,
-		p2p:     newP2PState(),
-		dbPath:  path,
-		netOpts: netOpts,
+		Event:   eventState,
+		P2P:     state.NewP2PState(),
+		DbPath:  path,
+		NetOpts: netOpts,
 	}
 
 	if node.Peer != nil {
-		st.peerInfo = node.Peer.PeerInfo()
+		st.AddrInfo = node.Peer.PeerInfo()
 	}
 
 	return st, nil

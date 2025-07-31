@@ -12,14 +12,15 @@ package tests
 
 import (
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
-func setupSourceHub(s *state) ([]node.DocumentACPOpt, error) {
-	return s.documentACPOptions, nil
+func setupSourceHub(s *state.State) ([]node.DocumentACPOpt, error) {
+	return s.DocumentACPOptions, nil
 }
 
-func getNodeAudience(s *state, nodeIndex int) immutable.Option[string] {
+func getNodeAudience(s *state.State, nodeIndex int) immutable.Option[string] {
 	return immutable.None[string]()
 }
