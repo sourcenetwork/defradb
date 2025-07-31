@@ -54,8 +54,8 @@ func parseCollectionOptions(gocOptions GoCOptions) client.CollectionFetchOptions
 
 // setTransactionOfCollectionCommand is a helper function that takes a context, and returns a new
 // one with a transaction attached
-func setTransactionOfCollectionCommand(ctx context.Context, goCOptions GoCOptions) (context.Context, error) {
-	ctx2, err := contextWithTransaction(ctx, goCOptions.TxID)
+func setTransactionOfCollectionCommand(n int, ctx context.Context, goCOptions GoCOptions) (context.Context, error) {
+	ctx2, err := contextWithTransaction(n, ctx, goCOptions.TxID)
 	if err != nil {
 		return ctx, err
 	}
@@ -78,10 +78,11 @@ func setIdentityOfCollectionCommand(ctx context.Context, goCOptions GoCOptions) 
 // getCollectionForCollectionCommand is a helper function wrapping DB.GetCollections, and ensuring
 // that only one collection matches the criteria
 func getCollectionForCollectionCommand(
+	n int,
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) (client.Collection, error) {
-	cols, err := globalNode.DB.GetCollections(ctx, options)
+	cols, err := GlobalNodes[n].DB.GetCollections(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf(errGettingCollection, err)
 	}
@@ -97,6 +98,7 @@ func getCollectionForCollectionCommand(
 }
 
 func CollectionCreate(
+	n int,
 	jsonString string,
 	isEncrypted bool,
 	encryptFieldsStr string,
@@ -111,12 +113,12 @@ func CollectionCreate(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := getCollectionForCollectionCommand(ctx, options)
+	col, err := getCollectionForCollectionCommand(n, ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -157,7 +159,7 @@ func CollectionCreate(
 	return returnGoC(0, "", "")
 }
 
-func CollectionDelete(docID string, filter string, gocOptions GoCOptions) GoCResult {
+func CollectionDelete(n int, docID string, filter string, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -166,12 +168,12 @@ func CollectionDelete(docID string, filter string, gocOptions GoCOptions) GoCRes
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := getCollectionForCollectionCommand(ctx, options)
+	col, err := getCollectionForCollectionCommand(n, ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -206,7 +208,7 @@ func CollectionDelete(docID string, filter string, gocOptions GoCOptions) GoCRes
 	}
 }
 
-func CollectionDescribe(gocOptions GoCOptions) GoCResult {
+func CollectionDescribe(n int, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -215,12 +217,12 @@ func CollectionDescribe(gocOptions GoCOptions) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	cols, err := globalNode.DB.GetCollections(ctx, options)
+	cols, err := GlobalNodes[n].DB.GetCollections(ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -233,7 +235,7 @@ func CollectionDescribe(gocOptions GoCOptions) GoCResult {
 	return marshalJSONToGoCResult(colDesc)
 }
 
-func CollectionListDocIDs(gocOptions GoCOptions) GoCResult {
+func CollectionListDocIDs(n int, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -242,12 +244,12 @@ func CollectionListDocIDs(gocOptions GoCOptions) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := getCollectionForCollectionCommand(ctx, options)
+	col, err := getCollectionForCollectionCommand(n, ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -278,7 +280,7 @@ func CollectionListDocIDs(gocOptions GoCOptions) GoCResult {
 	return returnGoC(0, "", string(data))
 }
 
-func CollectionGet(docIDinput string, showDeleted bool, gocOptions GoCOptions) GoCResult {
+func CollectionGet(n int, docIDinput string, showDeleted bool, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -287,12 +289,12 @@ func CollectionGet(docIDinput string, showDeleted bool, gocOptions GoCOptions) G
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := getCollectionForCollectionCommand(ctx, options)
+	col, err := getCollectionForCollectionCommand(n, ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -313,7 +315,7 @@ func CollectionGet(docIDinput string, showDeleted bool, gocOptions GoCOptions) G
 	return marshalJSONToGoCResult(docMap)
 }
 
-func CollectionPatch(patch string, gocOptions GoCOptions) GoCResult {
+func CollectionPatch(n int, patch string, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 
 	ctx, err := setIdentityOfCollectionCommand(ctx, gocOptions)
@@ -321,19 +323,19 @@ func CollectionPatch(patch string, gocOptions GoCOptions) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.DB.PatchCollection(ctx, patch)
+	err = GlobalNodes[n].DB.PatchCollection(ctx, patch)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func CollectionUpdate(docID string, filter string, updater string, gocOptions GoCOptions) GoCResult {
+func CollectionUpdate(n int, docID string, filter string, updater string, gocOptions GoCOptions) GoCResult {
 	ctx := context.Background()
 	options := parseCollectionOptions(gocOptions)
 
@@ -342,12 +344,12 @@ func CollectionUpdate(docID string, filter string, updater string, gocOptions Go
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = setTransactionOfCollectionCommand(ctx, gocOptions)
+	ctx, err = setTransactionOfCollectionCommand(n, ctx, gocOptions)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := getCollectionForCollectionCommand(ctx, options)
+	col, err := getCollectionForCollectionCommand(n, ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

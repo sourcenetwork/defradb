@@ -17,13 +17,10 @@ import (
 )
 
 func VersionGet(flagFull bool, flagJSON bool) GoCResult {
-	// Call the version function
 	dv, err := version.NewDefraVersion()
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-
-	// Return either the JSON, the long string version, or the short string version
 	if flagJSON {
 		return marshalJSONToGoCResult(dv)
 	}

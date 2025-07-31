@@ -30,7 +30,7 @@ import (
 )
 
 // setupTests is a function that initializes and starts the globalNode (in memory), for the tests
-func setupTests() {
+func setupTests(n int) {
 	var nodeOpts cbindings.GoNodeInitOptions
 	nodeOpts.DbPath = ""
 	nodeOpts.ListeningAddresses = ""
@@ -43,8 +43,8 @@ func setupTests() {
 	nodeOpts.IdentityKeyType = ""
 	nodeOpts.IdentityPrivateKey = ""
 
-	cbindings.NodeInit(nodeOpts)
-	cbindings.NodeStart()
+	cbindings.NodeInit(n, nodeOpts)
+	cbindings.NodeStart(n)
 }
 
 // txnIDFromContext is a helper function that extracts a transaction ID from a context
@@ -160,8 +160,8 @@ func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]an
 }
 
 // getTxnFromHandle is a helper function that gets a transaction from the C-side TxnStore
-func getTxnFromHandle(txnID uint64) any {
-	val, ok := cbindings.TxnStore.Load(txnID)
+func getTxnFromHandle(n int, txnID uint64) any {
+	val, ok := cbindings.TxnStoreMap[n].Load(txnID)
 	if !ok {
 		return 0
 	}

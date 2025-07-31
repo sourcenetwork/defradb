@@ -14,7 +14,7 @@ import (
 	"context"
 )
 
-func ACPAddPolicy(identityStr string, policy string, TxnID uint64) GoCResult {
+func ACPAddPolicy(n int, identityStr string, policy string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityStr)
@@ -22,12 +22,12 @@ func ACPAddPolicy(identityStr string, policy string, TxnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = contextWithTransaction(ctx, TxnID)
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	policyResult, err := globalNode.DB.AddDACPolicy(ctx, policy)
+	policyResult, err := GlobalNodes[n].DB.AddDACPolicy(ctx, policy)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -35,7 +35,7 @@ func ACPAddPolicy(identityStr string, policy string, TxnID uint64) GoCResult {
 	return marshalJSONToGoCResult(policyResult)
 }
 
-func ACPAddRelationship(identityStr string,
+func ACPAddRelationship(n int, identityStr string,
 	collectionArg string,
 	docIDArg string,
 	relationArg string,
@@ -49,12 +49,12 @@ func ACPAddRelationship(identityStr string,
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = contextWithTransaction(ctx, TxnID)
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	result, err := globalNode.DB.AddDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
+	result, err := GlobalNodes[n].DB.AddDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -63,6 +63,7 @@ func ACPAddRelationship(identityStr string,
 }
 
 func ACPDeleteRelationship(
+	n int,
 	identityStr string,
 	collectionArg string,
 	docIDArg string,
@@ -77,12 +78,12 @@ func ACPDeleteRelationship(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = contextWithTransaction(ctx, TxnID)
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	result, err := globalNode.DB.DeleteDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
+	result, err := GlobalNodes[n].DB.DeleteDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

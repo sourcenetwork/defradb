@@ -24,10 +24,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func ViewAdd(query string, sdl string, lensCfgJson string, txnID uint64) GoCResult {
+func ViewAdd(n int, query string, sdl string, lensCfgJson string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -43,7 +43,7 @@ func ViewAdd(query string, sdl string, lensCfgJson string, txnID uint64) GoCResu
 		transform = immutable.Some(lensCfg)
 	}
 
-	defs, err := globalNode.DB.AddView(ctx, query, sdl, transform)
+	defs, err := GlobalNodes[n].DB.AddView(ctx, query, sdl, transform)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -52,6 +52,7 @@ func ViewAdd(query string, sdl string, lensCfgJson string, txnID uint64) GoCResu
 }
 
 func ViewRefresh(
+	n int,
 	name string,
 	collectionID string,
 	versionID string,
@@ -60,7 +61,7 @@ func ViewRefresh(
 ) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -79,7 +80,7 @@ func ViewRefresh(
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	err = globalNode.DB.RefreshViews(ctx, options)
+	err = GlobalNodes[n].DB.RefreshViews(ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

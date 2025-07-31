@@ -22,26 +22,26 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func AddSchema(newSchema string, txnID uint64) GoCResult {
+func AddSchema(n int, newSchema string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	collectionVersions, err := globalNode.DB.AddSchema(ctx, newSchema)
+	collectionVersions, err := GlobalNodes[n].DB.AddSchema(ctx, newSchema)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errAddingSchema, err), "")
 	}
 	return marshalJSONToGoCResult(collectionVersions)
 }
 
-func DescribeSchema(name string, root string, version string, txnID uint64) GoCResult {
+func DescribeSchema(n int, name string, root string, version string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	options := client.SchemaFetchOptions{}
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -58,17 +58,17 @@ func DescribeSchema(name string, root string, version string, txnID uint64) GoCR
 	}
 
 	// Get the schema, and try to convert it to JSON for return
-	schemas, err := globalNode.DB.GetSchemas(ctx, options)
+	schemas, err := GlobalNodes[n].DB.GetSchemas(ctx, options)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errGettingSchema, err), "")
 	}
 	return marshalJSONToGoCResult(schemas)
 }
 
-func PatchSchema(patchString string, lensString string, setActive bool, txnID uint64) GoCResult {
+func PatchSchema(n int, patchString string, lensString string, setActive bool, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -92,22 +92,22 @@ func PatchSchema(patchString string, lensString string, setActive bool, txnID ui
 		}
 	}
 
-	err = globalNode.DB.PatchSchema(ctx, patchString, migration, setActive)
+	err = GlobalNodes[n].DB.PatchSchema(ctx, patchString, migration, setActive)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errPatchingSchema, err), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func SetActiveSchema(version string, txnID uint64) GoCResult {
+func SetActiveSchema(n int, version string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.DB.SetActiveSchemaVersion(ctx, version)
+	err = GlobalNodes[n].DB.SetActiveSchemaVersion(ctx, version)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errSetActiveSchema, err), "")
 	}

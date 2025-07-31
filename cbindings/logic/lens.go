@@ -23,6 +23,7 @@ import (
 )
 
 func LensSet(
+	n int,
 	srcSchemaVersionID string,
 	dstSchemaVersionID string,
 	lensCfgJson string,
@@ -30,7 +31,7 @@ func LensSet(
 ) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -46,18 +47,18 @@ func LensSet(
 		DestinationSchemaVersionID: dstSchemaVersionID,
 		Lens:                       lensCfg,
 	}
-	err = globalNode.DB.SetMigration(ctx, migrationCfg)
+	err = GlobalNodes[n].DB.SetMigration(ctx, migrationCfg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func LensDown(collectionID string, documents string, txnID uint64) GoCResult {
+func LensDown(n int, collectionID string, documents string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	srcData := []byte(documents)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -67,7 +68,7 @@ func LensDown(collectionID string, documents string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	out, err := globalNode.DB.LensRegistry().MigrateDown(ctx, enumerable.New(src), collectionID)
+	out, err := GlobalNodes[n].DB.LensRegistry().MigrateDown(ctx, enumerable.New(src), collectionID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -83,11 +84,11 @@ func LensDown(collectionID string, documents string, txnID uint64) GoCResult {
 	return marshalJSONToGoCResult(value)
 }
 
-func LensUp(collectionID string, documents string, txnID uint64) GoCResult {
+func LensUp(n int, collectionID string, documents string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	srcData := []byte(documents)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -97,7 +98,7 @@ func LensUp(collectionID string, documents string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	out, err := globalNode.DB.LensRegistry().MigrateUp(ctx, enumerable.New(src), collectionID)
+	out, err := GlobalNodes[n].DB.LensRegistry().MigrateUp(ctx, enumerable.New(src), collectionID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -113,25 +114,25 @@ func LensUp(collectionID string, documents string, txnID uint64) GoCResult {
 	return marshalJSONToGoCResult(value)
 }
 
-func LensReload(txnID uint64) GoCResult {
+func LensReload(n int, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.DB.LensRegistry().ReloadLenses(ctx)
+	err = GlobalNodes[n].DB.LensRegistry().ReloadLenses(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func LensSetRegistry(collectionID string, lensCfgJSON string, txnID uint64) GoCResult {
+func LensSetRegistry(n int, collectionID string, lensCfgJSON string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -143,7 +144,7 @@ func LensSetRegistry(collectionID string, lensCfgJSON string, txnID uint64) GoCR
 		return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
 	}
 
-	err = globalNode.DB.LensRegistry().SetMigration(ctx, collectionID, lensCfg)
+	err = GlobalNodes[n].DB.LensRegistry().SetMigration(ctx, collectionID, lensCfg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

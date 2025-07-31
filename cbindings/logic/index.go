@@ -18,6 +18,7 @@ import (
 )
 
 func IndexCreate(
+	n int,
 	collectionName string,
 	indexName string,
 	fieldsStr string,
@@ -27,7 +28,7 @@ func IndexCreate(
 	ctx := context.Background()
 	fieldsArg := splitCommaSeparatedString(fieldsStr)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -61,7 +62,7 @@ func IndexCreate(
 		Fields: fields,
 		Unique: isUnique,
 	}
-	col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
+	col, err := GlobalNodes[n].DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -73,10 +74,10 @@ func IndexCreate(
 	return marshalJSONToGoCResult(descWithID)
 }
 
-func IndexList(collectionName string, txnID uint64) GoCResult {
+func IndexList(n int, collectionName string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -84,7 +85,7 @@ func IndexList(collectionName string, txnID uint64) GoCResult {
 	switch {
 	// Get the indices associated with a given collection
 	case collectionName != "":
-		col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
+		col, err := GlobalNodes[n].DB.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			return returnGoC(1, err.Error(), "")
 		}
@@ -95,7 +96,7 @@ func IndexList(collectionName string, txnID uint64) GoCResult {
 		return marshalJSONToGoCResult(indices)
 	// Get all of the indices, because no collection was specified
 	default:
-		indices, err := globalNode.DB.GetAllIndexes(ctx)
+		indices, err := GlobalNodes[n].DB.GetAllIndexes(ctx)
 		if err != nil {
 			return returnGoC(1, err.Error(), "")
 		}
@@ -103,15 +104,15 @@ func IndexList(collectionName string, txnID uint64) GoCResult {
 	}
 }
 
-func IndexDrop(collectionName string, indexName string, txnID uint64) GoCResult {
+func IndexDrop(n int, collectionName string, indexName string, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := globalNode.DB.GetCollectionByName(ctx, collectionName)
+	col, err := GlobalNodes[n].DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

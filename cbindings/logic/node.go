@@ -23,15 +23,9 @@ import (
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 )
 
-var globalNode *node.Node
+var GlobalNodes = make(map[int]*node.Node)
 
-// GetGlobalNode is a function to accommodate integration test support
-// It is not made available as an exported C function
-func GetGlobalNode() *node.Node {
-	return globalNode
-}
-
-func NodeInit(cOptions GoNodeInitOptions) GoCResult {
+func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	var err error
 
 	inMemoryFlag := cOptions.InMemory != 0
@@ -44,12 +38,12 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 
 	ctx := context.Background()
 
-	if globalNode != nil {
-		err := globalNode.Close(ctx)
+	if GlobalNodes[n] != nil {
+		err := GlobalNodes[n].Close(ctx)
 		if err != nil {
 			return returnGoC(1, fmt.Sprintf(errClosingNode, err), "")
 		}
-		globalNode = nil
+		GlobalNodes[n] = nil
 	}
 
 	// Create the directory if it doesn't exist, and inMemory flag is not set
@@ -110,7 +104,7 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	}
 
 	// Try to create the node passing in the collected options, then return the result
-	globalNode, err = node.New(ctx, opts...)
+	GlobalNodes[n], err = node.New(ctx, opts...)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")
 	}
@@ -118,8 +112,8 @@ func NodeInit(cOptions GoNodeInitOptions) GoCResult {
 	return returnGoC(0, "", "")
 }
 
-func NodeStart() GoCResult {
-	if globalNode == nil {
+func NodeStart(n int) GoCResult {
+	if GlobalNodes[n] == nil {
 		return returnGoC(1, errUninitializedNode, "")
 	}
 	ctx := context.Background()
@@ -127,7 +121,7 @@ func NodeStart() GoCResult {
 	errCh := make(chan error, 1)
 
 	go func() {
-		err := globalNode.Start(ctx)
+		err := GlobalNodes[n].Start(ctx)
 		errCh <- err
 	}()
 
@@ -143,16 +137,16 @@ func NodeStart() GoCResult {
 	}
 }
 
-func NodeStop() GoCResult {
-	if globalNode == nil {
+func NodeStop(n int) GoCResult {
+	if GlobalNodes[n] == nil {
 		return returnGoC(1, errStoppedNode, "")
 	}
 	ctx := context.Background()
-	err := globalNode.Close(ctx)
+	err := GlobalNodes[n].Close(ctx)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errStoppingNode, err), "")
 	}
-	globalNode = nil
+	GlobalNodes[n] = nil
 
 	return returnGoC(0, "", "")
 }

@@ -27,6 +27,7 @@ import (
 
 var subscriptionStore sync.Map // map[string]*client.RequestResult
 
+// Using UUID lets us avoid collisions, even if we use this across multiple nodes
 func storeSubscription(res *client.RequestResult) string {
 	id := uuid.NewString()
 	subscriptionStore.Store(id, res)
@@ -70,6 +71,7 @@ func CloseSubscription(id string) GoCResult {
 }
 
 func ExecuteQuery(
+	n int,
 	query string,
 	identity string,
 	txnID uint64,
@@ -87,12 +89,12 @@ func ExecuteQuery(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	ctx, err = contextWithTransaction(ctx, txnID)
+	ctx, err = contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	res := globalNode.DB.ExecRequest(ctx, query, opts...)
+	res := GlobalNodes[n].DB.ExecRequest(ctx, query, opts...)
 
 	// The return is either a subscription ID, or a GQL result. The status indicates
 	// which: 0 for GQL, 2 for subscription. 1 is not used because this cannot error; the

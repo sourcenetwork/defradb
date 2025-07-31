@@ -18,25 +18,25 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
-func P2PInfo() GoCResult {
-	info := globalNode.Peer.PeerInfo()
+func P2PInfo(n int) GoCResult {
+	info := GlobalNodes[n].Peer.PeerInfo()
 	return marshalJSONToGoCResult(info)
 }
 
-func P2PgetAllReplicators() GoCResult {
+func P2PgetAllReplicators(n int) GoCResult {
 	ctx := context.Background()
-	reps, err := globalNode.Peer.GetAllReplicators(ctx)
+	reps, err := GlobalNodes[n].Peer.GetAllReplicators(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return marshalJSONToGoCResult(reps)
 }
 
-func P2PsetReplicator(collections string, peerStr string, txnID uint64) GoCResult {
+func P2PsetReplicator(n int, collections string, peerStr string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(collections)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -46,18 +46,18 @@ func P2PsetReplicator(collections string, peerStr string, txnID uint64) GoCResul
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.Peer.SetReplicator(ctx, info, colArgs...)
+	err = GlobalNodes[n].Peer.SetReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func P2PdeleteReplicator(collections string, peerStr string, txnID uint64) GoCResult {
+func P2PdeleteReplicator(n int, collections string, peerStr string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(collections)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -67,54 +67,54 @@ func P2PdeleteReplicator(collections string, peerStr string, txnID uint64) GoCRe
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.Peer.DeleteReplicator(ctx, info, colArgs...)
+	err = GlobalNodes[n].Peer.DeleteReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func P2PcollectionAdd(collections string, txnID uint64) GoCResult {
+func P2PcollectionAdd(n int, collections string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(collections)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.Peer.AddP2PCollections(ctx, colArgs...)
+	err = GlobalNodes[n].Peer.AddP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func P2PcollectionRemove(collections string, txnID uint64) GoCResult {
+func P2PcollectionRemove(n int, collections string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(collections)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.Peer.RemoveP2PCollections(ctx, colArgs...)
+	err = GlobalNodes[n].Peer.RemoveP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func P2PcollectionGetAll(txnID uint64) GoCResult {
+func P2PcollectionGetAll(n int, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	cols, err := globalNode.Peer.GetAllP2PCollections(ctx)
+	cols, err := GlobalNodes[n].Peer.GetAllP2PCollections(ctx)
 
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
@@ -122,54 +122,54 @@ func P2PcollectionGetAll(txnID uint64) GoCResult {
 	return marshalJSONToGoCResult(cols)
 }
 
-func P2PdocumentAdd(collections string, txnID uint64) GoCResult {
+func P2PdocumentAdd(n int, collections string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(collections)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.Peer.AddP2PDocuments(ctx, colArgs...)
+	err = GlobalNodes[n].Peer.AddP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func P2PdocumentRemove(collections string, txnID uint64) GoCResult {
+func P2PdocumentRemove(n int, collections string, txnID uint64) GoCResult {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(collections)
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.Peer.RemoveP2PDocuments(ctx, colArgs...)
+	err = GlobalNodes[n].Peer.RemoveP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", "")
 }
 
-func P2PdocumentGetAll(txnID uint64) GoCResult {
+func P2PdocumentGetAll(n int, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	cols, err := globalNode.Peer.GetAllP2PDocuments(ctx)
+	cols, err := GlobalNodes[n].Peer.GetAllP2PDocuments(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
 	return marshalJSONToGoCResult(cols)
 }
 
-func P2PdocumentSync(collection string, docIDs string, txnID uint64, timeout string) GoCResult {
+func P2PdocumentSync(n int, collection string, docIDs string, txnID uint64, timeout string) GoCResult {
 	ctx := context.Background()
 	docArgs := splitCommaSeparatedString(docIDs)
 	timeoutDuration := time.Duration(0)
@@ -182,7 +182,7 @@ func P2PdocumentSync(collection string, docIDs string, txnID uint64, timeout str
 		timeoutDuration = timeoutDurationParsed
 	}
 
-	ctx, err := contextWithTransaction(ctx, txnID)
+	ctx, err := contextWithTransaction(n, ctx, txnID)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -193,7 +193,7 @@ func P2PdocumentSync(collection string, docIDs string, txnID uint64, timeout str
 		defer cancel()
 	}
 
-	err = globalNode.Peer.SyncDocuments(ctx, collection, docArgs)
+	err = GlobalNodes[n].Peer.SyncDocuments(ctx, collection, docArgs)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

@@ -24,7 +24,8 @@ import (
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
-	def client.CollectionDefinition
+	nodeNum int
+	def     client.CollectionDefinition
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -73,7 +74,7 @@ func (c *Collection) Create(
 	}
 	cJSON := string(docJSONbytes)
 
-	result := cbindings.CollectionCreate(cJSON, isEncrypted, encryptedFields, copts)
+	result := cbindings.CollectionCreate(c.nodeNum, cJSON, isEncrypted, encryptedFields, copts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -113,7 +114,7 @@ func (c *Collection) CreateMany(
 	}
 	cJSON := string(docJSONbytes)
 
-	result := cbindings.CollectionCreate(cJSON, isEncrypted, encryptedFields, copts)
+	result := cbindings.CollectionCreate(c.nodeNum, cJSON, isEncrypted, encryptedFields, copts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -145,7 +146,7 @@ func (c *Collection) Update(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionUpdate(docID, filter, updater, copts)
+	result := cbindings.CollectionUpdate(c.nodeNum, docID, filter, updater, copts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -184,7 +185,7 @@ func (c *Collection) Delete(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionDelete(docIDStr, filter, copts)
+	result := cbindings.CollectionDelete(c.nodeNum, docIDStr, filter, copts)
 
 	if result.Status != 0 {
 		return false, errors.New(result.Error)
@@ -207,7 +208,7 @@ func (c *Collection) Exists(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionGet(docIDStr, cShowDeleted, copts)
+	result := cbindings.CollectionGet(c.nodeNum, docIDStr, cShowDeleted, copts)
 
 	if result.Status != 0 {
 		return false, errors.New(result.Error)
@@ -235,7 +236,7 @@ func (c *Collection) UpdateWithFilter(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionUpdate(docID, filterStr, updater, copts)
+	result := cbindings.CollectionUpdate(c.nodeNum, docID, filterStr, updater, copts)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -268,7 +269,7 @@ func (c *Collection) DeleteWithFilter(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionDelete(docID, filterStr, copts)
+	result := cbindings.CollectionDelete(c.nodeNum, docID, filterStr, copts)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -296,9 +297,7 @@ func (c *Collection) Get(
 	copts.Name = c.Version().Name
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
-
-	result := cbindings.CollectionGet(docIDStr, showDeleted, copts)
-
+	result := cbindings.CollectionGet(c.nodeNum, docIDStr, showDeleted, copts)
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
 	}
@@ -327,7 +326,7 @@ func (c *Collection) GetAllDocIDs(
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
-	result := cbindings.CollectionListDocIDs(copts)
+	result := cbindings.CollectionListDocIDs(c.nodeNum, copts)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -383,7 +382,7 @@ func (c *Collection) CreateIndex(
 	}
 	fields := strings.Join(orderedFields, ",")
 
-	result := cbindings.IndexCreate(name, indexDesc.Name, fields, indexDesc.Unique, txnID)
+	result := cbindings.IndexCreate(c.nodeNum, name, indexDesc.Name, fields, indexDesc.Unique, txnID)
 
 	if result.Status != 0 {
 		return client.IndexDescription{}, errors.New(result.Error)
@@ -400,7 +399,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	txnID := txnIDFromContext(ctx)
 	name := c.def.GetName()
 
-	result := cbindings.IndexDrop(name, indexName, txnID)
+	result := cbindings.IndexDrop(c.nodeNum, name, indexName, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -412,7 +411,7 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	txnID := txnIDFromContext(ctx)
 	name := c.def.GetName()
 
-	result := cbindings.IndexList(name, txnID)
+	result := cbindings.IndexList(c.nodeNum, name, txnID)
 
 	if result.Status != 0 {
 		return []client.IndexDescription{}, errors.New(result.Error)

@@ -24,7 +24,9 @@ import (
 
 var _ client.LensRegistry = (*LensRegistry)(nil)
 
-type LensRegistry struct{}
+type LensRegistry struct {
+	*CWrapper
+}
 
 func (w *LensRegistry) Init(txnSource client.TxnSource) {}
 
@@ -36,7 +38,7 @@ func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, co
 	}
 	lens := string(cfgBytes)
 
-	result := cbindings.LensSetRegistry(collectionID, lens, txnID)
+	result := cbindings.LensSetRegistry(w.nodeNum, collectionID, lens, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -47,7 +49,7 @@ func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, co
 func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
 	txnID := txnIDFromContext(ctx)
 
-	result := cbindings.LensReload(txnID)
+	result := cbindings.LensReload(w.nodeNum, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -71,7 +73,7 @@ func (w *LensRegistry) MigrateUp(
 	}
 	docStr := string(docBytes)
 
-	result := cbindings.LensUp(collectionID, docStr, txnID)
+	result := cbindings.LensUp(w.nodeNum, collectionID, docStr, txnID)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -102,7 +104,7 @@ func (w *LensRegistry) MigrateDown(
 
 	docStr := string(docBytes)
 
-	result := cbindings.LensDown(collectionID, docStr, txnID)
+	result := cbindings.LensDown(w.nodeNum, collectionID, docStr, txnID)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)

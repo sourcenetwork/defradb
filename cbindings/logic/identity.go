@@ -31,9 +31,9 @@ func IdentityNew(keyTypeStr string) GoCResult {
 	return marshalJSONToGoCResult(newIdentity.IntoRawIdentity())
 }
 
-func NodeIdentity() GoCResult {
+func NodeIdentity(n int) GoCResult {
 	ctx := context.Background()
-	identity, err := globalNode.DB.GetNodeIdentity(ctx)
+	identity, err := GlobalNodes[n].DB.GetNodeIdentity(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

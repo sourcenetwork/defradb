@@ -97,11 +97,11 @@ func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Con
 }
 
 // contextWithTransaction is a helper function that attaches transaction to a context
-func contextWithTransaction(ctx context.Context, TxnIDu64 uint64) (context.Context, error) {
+func contextWithTransaction(n int, ctx context.Context, TxnIDu64 uint64) (context.Context, error) {
 	if TxnIDu64 == 0 {
 		return ctx, nil
 	}
-	tx, ok := TxnStore.Load(TxnIDu64)
+	tx, ok := TxnStoreMap[n].Load(TxnIDu64)
 	if !ok {
 		return ctx, fmt.Errorf(errTxnDoesNotExist, TxnIDu64)
 	}

@@ -22,54 +22,82 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-var TxnStore sync.Map
+var (
+	txnStoreMapMu sync.RWMutex
+	TxnStoreMap   = make(map[int]*sync.Map) // nodeID -> (txnID -> Txn)
+)
 
-func TransactionCreate(concurrent bool, readOnly bool) GoCResult {
+func TransactionCreate(n int, concurrent bool, readOnly bool) GoCResult {
 	ctx := context.Background()
 	var tx client.Txn
 	var err error
 
 	if concurrent {
-		tx, err = globalNode.DB.NewConcurrentTxn(ctx, readOnly)
+		tx, err = GlobalNodes[n].DB.NewConcurrentTxn(ctx, readOnly)
 	} else {
-		tx, err = globalNode.DB.NewTxn(ctx, readOnly)
+		tx, err = GlobalNodes[n].DB.NewTxn(ctx, readOnly)
 	}
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errCreatingTxn, err), "")
 	}
-	TxnStore.Store(tx.ID(), tx)
+
+	txnStoreMapMu.Lock()
+	if TxnStoreMap[n] == nil {
+		TxnStoreMap[n] = &sync.Map{}
+	}
+	txnStore := TxnStoreMap[n]
+	txnStoreMapMu.Unlock()
+
+	txnStore.Store(tx.ID(), tx)
+
 	IDstring := strconv.FormatUint(tx.ID(), 10)
 	retVal := fmt.Sprintf(`{"id": %s}`, IDstring)
 	return returnGoC(0, "", retVal)
 }
 
-func TransactionCommit(txnID uint64) GoCResult {
+func TransactionCommit(n int, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	tx, ok := TxnStore.Load(txnID)
+	txnStoreMapMu.RLock()
+	txnStore, ok := TxnStoreMap[n]
+	txnStoreMapMu.RUnlock()
 	if !ok {
 		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
-	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
+	tx, ok := txnStore.Load(txnID)
+	if !ok {
+		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
+	}
+
+	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 	err := txn.Commit(ctx)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
-	TxnStore.Delete(txnID)
+
+	txnStore.Delete(txnID)
 	return returnGoC(0, "", "")
 }
 
-func TransactionDiscard(txnID uint64) GoCResult {
+func TransactionDiscard(n int, txnID uint64) GoCResult {
 	ctx := context.Background()
 
-	tx, ok := TxnStore.Load(txnID)
+	txnStoreMapMu.RLock()
+	txnStore, ok := TxnStoreMap[n]
+	txnStoreMapMu.RUnlock()
 	if !ok {
 		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
 	}
-	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 
+	tx, ok := txnStore.Load(txnID)
+	if !ok {
+		return returnGoC(1, fmt.Sprintf(errTxnDoesNotExist, txnID), "")
+	}
+
+	txn := tx.(datastore.Txn) //nolint:forcetypeassert
 	txn.Discard(ctx)
-	TxnStore.Delete(txnID)
+
+	txnStore.Delete(txnID)
 	return returnGoC(0, "", "")
 }

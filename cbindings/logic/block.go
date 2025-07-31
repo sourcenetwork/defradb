@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func BlockVerifySignature(keyTypeStr string, pubKeyStr string, CIDStr string) GoCResult {
+func BlockVerifySignature(n int, keyTypeStr string, pubKeyStr string, CIDStr string) GoCResult {
 	ctx := context.Background()
 
 	keyType := crypto.KeyTypeSecp256k1
@@ -28,7 +28,7 @@ func BlockVerifySignature(keyTypeStr string, pubKeyStr string, CIDStr string) Go
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = globalNode.DB.VerifySignature(ctx, CIDStr, pubKey)
+	err = GlobalNodes[n].DB.VerifySignature(ctx, CIDStr, pubKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

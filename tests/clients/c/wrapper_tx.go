@@ -36,7 +36,7 @@ func (txn *Transaction) ID() uint64 {
 }
 
 func (txn *Transaction) Commit(ctx context.Context) error {
-	result := cbindings.TransactionCommit(txn.tx.ID())
+	result := cbindings.TransactionCommit(txn.nodeNum, txn.tx.ID())
 	if result.Status != 0 {
 		return errors.New(result.Error)
 	}
@@ -44,7 +44,7 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 }
 
 func (txn *Transaction) Discard(ctx context.Context) {
-	cbindings.TransactionDiscard(txn.tx.ID())
+	cbindings.TransactionDiscard(txn.nodeNum, txn.tx.ID())
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {

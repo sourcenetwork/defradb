@@ -30,18 +30,23 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+var wrapperCount int = 0
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
 
-type CWrapper struct{}
+type CWrapper struct {
+	nodeNum int
+}
 
 func NewCWrapper() *CWrapper {
-	setupTests()
-	return &CWrapper{}
+	nodeNum := wrapperCount
+	setupTests(nodeNum)
+	wrapperCount++
+	return &CWrapper{nodeNum: nodeNum}
 }
 
 func (w *CWrapper) PeerInfo() peer.AddrInfo {
-	result := cbindings.P2PInfo()
+	result := cbindings.P2PInfo(w.nodeNum)
 
 	if result.Status != 0 {
 		return peer.AddrInfo{}
@@ -59,7 +64,7 @@ func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collec
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
 
-	result := cbindings.P2PsetReplicator(colStr, peerStr, txnID)
+	result := cbindings.P2PsetReplicator(w.nodeNum, colStr, peerStr, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -72,7 +77,7 @@ func (w *CWrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, col
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
 
-	result := cbindings.P2PdeleteReplicator(colStr, peerStr, txnID)
+	result := cbindings.P2PdeleteReplicator(w.nodeNum, colStr, peerStr, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -81,7 +86,7 @@ func (w *CWrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, col
 }
 
 func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	result := cbindings.P2PgetAllReplicators()
+	result := cbindings.P2PgetAllReplicators(w.nodeNum)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -98,7 +103,7 @@ func (w *CWrapper) AddP2PCollections(ctx context.Context, collectionIDs ...strin
 	txnID := txnIDFromContext(ctx)
 	colStr := strings.Join(collectionIDs, ",")
 
-	result := cbindings.P2PcollectionAdd(colStr, txnID)
+	result := cbindings.P2PcollectionAdd(w.nodeNum, colStr, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -110,7 +115,7 @@ func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...st
 	txnID := txnIDFromContext(ctx)
 	colStr := strings.Join(collectionIDs, ",")
 
-	result := cbindings.P2PcollectionRemove(colStr, txnID)
+	result := cbindings.P2PcollectionRemove(w.nodeNum, colStr, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -120,7 +125,7 @@ func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...st
 
 func (w *CWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	txnID := txnIDFromContext(ctx)
-	result := cbindings.P2PcollectionGetAll(txnID)
+	result := cbindings.P2PcollectionGetAll(w.nodeNum, txnID)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -137,7 +142,7 @@ func (w *CWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error 
 	txnID := txnIDFromContext(ctx)
 	docStr := strings.Join(docIDs, ",")
 
-	result := cbindings.P2PdocumentAdd(docStr, txnID)
+	result := cbindings.P2PdocumentAdd(w.nodeNum, docStr, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -149,7 +154,7 @@ func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) err
 	txnID := txnIDFromContext(ctx)
 	docStr := strings.Join(docIDs, ",")
 
-	result := cbindings.P2PdocumentRemove(docStr, txnID)
+	result := cbindings.P2PdocumentRemove(w.nodeNum, docStr, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -159,7 +164,7 @@ func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) err
 
 func (w *CWrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	txnID := txnIDFromContext(ctx)
-	result := cbindings.P2PdocumentGetAll(txnID)
+	result := cbindings.P2PdocumentGetAll(w.nodeNum, txnID)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -184,7 +189,7 @@ func (w *CWrapper) SyncDocuments(
 	if hasDeadline {
 		timerStr = time.Until(deadline).String()
 	}
-	result := cbindings.P2PdocumentSync(collectionName, docs, txnID, timerStr)
+	result := cbindings.P2PdocumentSync(w.nodeNum, collectionName, docs, txnID, timerStr)
 	if result.Status != 0 {
 		return errors.New(result.Error)
 	}
@@ -201,7 +206,7 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	txnID := txnIDFromContext(ctx)
-	result := cbindings.AddSchema(schema, txnID)
+	result := cbindings.AddSchema(w.nodeNum, schema, txnID)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -221,7 +226,7 @@ func (w *CWrapper) AddDACPolicy(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPAddPolicy(identity, policy, txnID)
+	result := cbindings.ACPAddPolicy(w.nodeNum, identity, policy, txnID)
 
 	if result.Status != 0 {
 		return client.AddPolicyResult{}, errors.New(result.Error)
@@ -244,7 +249,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPAddRelationship(identity, collectionName, docID, relation, targetActor, txnID)
+	result := cbindings.ACPAddRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
 
 	if result.Status != 0 {
 		return client.AddActorRelationshipResult{}, errors.New(result.Error)
@@ -268,7 +273,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPDeleteRelationship(identity, collectionName, docID, relation, targetActor, txnID)
+	result := cbindings.ACPDeleteRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
 
 	if result.Status != 0 {
 		return client.DeleteActorRelationshipResult{}, errors.New(result.Error)
@@ -294,7 +299,7 @@ func (w *CWrapper) PatchSchema(
 		return migrationErr
 	}
 
-	result := cbindings.PatchSchema(patch, cMigration, setAsDefaultVersion, txnID)
+	result := cbindings.PatchSchema(w.nodeNum, patch, cMigration, setAsDefaultVersion, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -314,7 +319,7 @@ func (w *CWrapper) PatchCollection(
 	opts.Name = ""
 	opts.GetInactive = 0
 
-	result := cbindings.CollectionPatch(patch, opts)
+	result := cbindings.CollectionPatch(w.nodeNum, patch, opts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -324,7 +329,7 @@ func (w *CWrapper) PatchCollection(
 
 func (w *CWrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
 	txnID := txnIDFromContext(ctx)
-	result := cbindings.SetActiveSchema(schemaVersionID, txnID)
+	result := cbindings.SetActiveSchema(w.nodeNum, schemaVersionID, txnID)
 	if result.Status != 0 {
 		return errors.New(result.Error)
 	}
@@ -344,7 +349,7 @@ func (w *CWrapper) AddView(
 		return []client.CollectionDefinition{}, err
 	}
 
-	result := cbindings.ViewAdd(query, sdl, cTransform, txnID)
+	result := cbindings.ViewAdd(w.nodeNum, query, sdl, cTransform, txnID)
 
 	if result.Status != 0 {
 		return []client.CollectionDefinition{}, errors.New(result.Error)
@@ -369,7 +374,7 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 		}
 	}
 
-	result := cbindings.ViewRefresh(name, collectionID, versionID, cGetInactive, txnID)
+	result := cbindings.ViewRefresh(w.nodeNum, name, collectionID, versionID, cGetInactive, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -387,7 +392,7 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) e
 	}
 	lens := string(lensConfig)
 
-	result := cbindings.LensSet(src, dst, lens, txnID)
+	result := cbindings.LensSet(w.nodeNum, src, dst, lens, txnID)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -417,6 +422,7 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
+
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
@@ -456,7 +462,7 @@ func (w *CWrapper) GetCollections(
 	opts.Identity = identity
 	opts.GetInactive = includeInactive
 
-	result := cbindings.CollectionDescribe(opts)
+	result := cbindings.CollectionDescribe(w.nodeNum, opts)
 
 	if result.Status != 0 {
 		return []client.Collection{}, errors.New(result.Error)
@@ -469,7 +475,7 @@ func (w *CWrapper) GetCollections(
 
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
-		cols[i] = &Collection{def: def}
+		cols[i] = &Collection{def: def, nodeNum: w.nodeNum}
 	}
 	return cols, nil
 }
@@ -491,7 +497,7 @@ func (w *CWrapper) GetSchemas(
 	version := stringFromImmutableOptionString(options.ID)
 	name := stringFromImmutableOptionString(options.Name)
 
-	result := cbindings.DescribeSchema(name, root, version, txnID)
+	result := cbindings.DescribeSchema(w.nodeNum, name, root, version, txnID)
 
 	if result.Status != 0 {
 		return []client.SchemaDescription{}, errors.New(result.Error)
@@ -507,7 +513,7 @@ func (w *CWrapper) GetSchemas(
 func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	txnID := txnIDFromContext(ctx)
 	colName := ""
-	result := cbindings.IndexList(colName, txnID)
+	result := cbindings.IndexList(w.nodeNum, colName, txnID)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -529,7 +535,7 @@ func (w *CWrapper) ExecRequest(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 	operation, variables := extractStringsFromRequestOptions(opts)
-	result := cbindings.ExecuteQuery(query, identity, txnID, operation, variables)
+	result := cbindings.ExecuteQuery(w.nodeNum, query, identity, txnID, operation, variables)
 
 	if result.Status == 2 {
 		id := result.Value
@@ -553,7 +559,7 @@ func (w *CWrapper) ExecRequest(
 func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	var concurrent bool = false
 
-	result := cbindings.TransactionCreate(concurrent, readOnly)
+	result := cbindings.TransactionCreate(w.nodeNum, concurrent, readOnly)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -568,7 +574,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 		return nil, err
 	}
 
-	retTxn := getTxnFromHandle(data.ID)
+	retTxn := getTxnFromHandle(w.nodeNum, data.ID)
 	retTxnCast := retTxn.(client.Txn) //nolint:forcetypeassert
 	return retTxnCast, nil
 }
@@ -576,7 +582,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	var concurrent bool = true
 
-	result := cbindings.TransactionCreate(concurrent, readOnly)
+	result := cbindings.TransactionCreate(w.nodeNum, concurrent, readOnly)
 
 	if result.Status != 0 {
 		return nil, errors.New(result.Error)
@@ -591,21 +597,21 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 		return nil, err
 	}
 
-	retTxn := getTxnFromHandle(data.ID)
+	retTxn := getTxnFromHandle(w.nodeNum, data.ID)
 	retTxnCast := retTxn.(client.Txn) //nolint:forcetypeassert
 	return retTxnCast, nil
 }
 
 func (w *CWrapper) Close() {
-	cbindings.NodeStop()
+	cbindings.NodeStop(w.nodeNum)
 }
 
 func (w *CWrapper) Events() event.Bus {
-	return cbindings.GetGlobalNode().DB.Events()
+	return cbindings.GlobalNodes[w.nodeNum].DB.Events()
 }
 
 func (w *CWrapper) MaxTxnRetries() int {
-	return cbindings.GetGlobalNode().DB.MaxTxnRetries()
+	return cbindings.GlobalNodes[w.nodeNum].DB.MaxTxnRetries()
 }
 
 func (w *CWrapper) PrintDump(ctx context.Context) error {
@@ -617,7 +623,7 @@ func (w *CWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
 }
 
 func (w *CWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	result := cbindings.NodeIdentity()
+	result := cbindings.NodeIdentity(w.nodeNum)
 
 	if result.Status != 0 {
 		return immutable.None[identity.PublicRawIdentity](), errors.New(result.Error)
@@ -639,7 +645,7 @@ func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey 
 	pubKeyStr := pubKey.String()
 	keyType := string(pubKey.Type())
 
-	result := cbindings.BlockVerifySignature(keyType, pubKeyStr, blockCid)
+	result := cbindings.BlockVerifySignature(w.nodeNum, keyType, pubKeyStr, blockCid)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
