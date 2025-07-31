@@ -212,8 +212,8 @@ func connectPeers(
 	err := sourceNode.Connect(s.Ctx, targetNode.PeerInfo())
 	require.NoError(s.T, err)
 
-	s.Nodes[cfg.SourceNodeID].P2p.Connections[cfg.TargetNodeID] = struct{}{}
-	s.Nodes[cfg.TargetNodeID].P2p.Connections[cfg.SourceNodeID] = struct{}{}
+	s.Nodes[cfg.SourceNodeID].P2P.Connections[cfg.TargetNodeID] = struct{}{}
+	s.Nodes[cfg.TargetNodeID].P2P.Connections[cfg.SourceNodeID] = struct{}{}
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
@@ -436,7 +436,7 @@ func getAllP2PDocuments(
 // reconnectPeers makes sure that all peers are connected after a node restart action.
 func reconnectPeers(s *state.State) {
 	for i, n := range s.Nodes {
-		for j := range n.P2p.Connections {
+		for j := range n.P2P.Connections {
 			sourceNode := s.Nodes[i]
 			targetNode := s.Nodes[j]
 
@@ -489,7 +489,7 @@ func syncDocs(s *state.State, action SyncDocs) {
 		for i, docInd := range action.DocIDs {
 			nodeID := action.SourceNodes[i]
 			docID := s.DocIDs[action.CollectionID][docInd].String()
-			node.P2p.ExpectedDAGHeads[docID] = s.Nodes[nodeID].P2p.ActualDAGHeads[docID].Cid
+			node.P2P.ExpectedDAGHeads[docID] = s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID
 		}
 	}
 }

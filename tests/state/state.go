@@ -52,8 +52,8 @@ func NewColDocIndex(col, doc int) ColDocIndex {
 	return ColDocIndex{col, doc}
 }
 
-// P2pState contains all p2p related testing state.
-type P2pState struct {
+// P2PState contains all p2p related testing state.
+type P2PState struct {
 	// Connections contains all connected nodes.
 	//
 	// The map key is the connected node id.
@@ -95,14 +95,14 @@ type P2pState struct {
 // It is used to track if a document at a certain head has been decrypted.
 type DocHeadState struct {
 	// The actual document head.
-	Cid cid.Cid
+	CID cid.Cid
 	// Indicates if the document at the given head has been Decrypted.
 	Decrypted bool
 }
 
 // NewP2PState returns a new empty p2p state.
-func NewP2PState() *P2pState {
-	return &P2pState{
+func NewP2PState() *P2PState {
+	return &P2PState{
 		Connections:      make(map[int]struct{}),
 		Replicators:      make(map[int]struct{}),
 		PeerCollections:  make(map[int]struct{}),
@@ -151,8 +151,8 @@ type NodeState struct {
 	clients.Client
 	// Event contains all Event node subscriptions.
 	Event *EventState
-	// P2p contains P2p states for the node.
-	P2p *P2pState
+	// P2P contains P2P states for the node.
+	P2P *P2PState
 	// The network configurations for the nodes
 	NetOpts []netConfig.NodeOpt
 	// The path to any file-based databases active in this test.
@@ -175,10 +175,10 @@ type State struct {
 	T testing.TB
 
 	// The type of KMS currently being tested.
-	Kms KMSType
+	KMS KMSType
 
 	// The type of database currently being tested.
-	Dbt DatabaseType
+	DbType DatabaseType
 
 	// The type of client currently being tested.
 	ClientType ClientType
@@ -280,8 +280,8 @@ func NewState(
 	s := &State{
 		Ctx:                             ctx,
 		T:                               t,
-		Kms:                             kms,
-		Dbt:                             dbt,
+		KMS:                             kms,
+		DbType:                          dbt,
 		ClientType:                      clientType,
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,

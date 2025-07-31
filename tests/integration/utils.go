@@ -513,7 +513,7 @@ func benchmarkAction(
 	actionIndex int,
 	bench Benchmark,
 ) {
-	if s.Dbt == DefraIMType {
+	if s.DbType == DefraIMType {
 		// Benchmarking makes no sense for test in-memory storage
 		return
 	}
@@ -792,7 +792,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		node, err := setupNode(s, testCase, opts...)
 		require.NoError(s.T, err)
 		databaseDir = originalPath
-		node.P2p = s.Nodes[nodeIndex].P2p
+		node.P2P = s.Nodes[nodeIndex].P2P
 		s.Nodes[nodeIndex] = node
 	}
 
@@ -805,7 +805,7 @@ func restartNodes(
 	s *state.State,
 	testCase TestCase,
 ) {
-	if s.Dbt == BadgerIMType || s.Dbt == DefraIMType {
+	if s.DbType == BadgerIMType || s.DbType == DefraIMType {
 		return
 	}
 	closeNodes(s, Close{})

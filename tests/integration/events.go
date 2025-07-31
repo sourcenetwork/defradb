@@ -43,14 +43,14 @@ func waitForReplicatorConfigureEvent(s *state.State, cfg ConfigureReplicator) {
 	}
 
 	// all previous documents should be merged on the subscriber node
-	for key, val := range s.Nodes[cfg.SourceNodeID].P2p.ActualDAGHeads {
-		s.Nodes[cfg.TargetNodeID].P2p.ExpectedDAGHeads[key] = val.Cid
+	for key, val := range s.Nodes[cfg.SourceNodeID].P2P.ActualDAGHeads {
+		s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key] = val.CID
 	}
 
 	// update node connections and replicators
-	s.Nodes[cfg.TargetNodeID].P2p.Connections[cfg.SourceNodeID] = struct{}{}
-	s.Nodes[cfg.SourceNodeID].P2p.Connections[cfg.TargetNodeID] = struct{}{}
-	s.Nodes[cfg.SourceNodeID].P2p.Replicators[cfg.TargetNodeID] = struct{}{}
+	s.Nodes[cfg.TargetNodeID].P2P.Connections[cfg.SourceNodeID] = struct{}{}
+	s.Nodes[cfg.SourceNodeID].P2P.Connections[cfg.TargetNodeID] = struct{}{}
+	s.Nodes[cfg.SourceNodeID].P2P.Replicators[cfg.TargetNodeID] = struct{}{}
 }
 
 // waitForReplicatorDeleteEvent waits for a node to publish a
@@ -66,9 +66,9 @@ func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
 		require.Fail(s.T, "timeout waiting for replicator event")
 	}
 
-	delete(s.Nodes[cfg.TargetNodeID].P2p.Connections, cfg.SourceNodeID)
-	delete(s.Nodes[cfg.SourceNodeID].P2p.Connections, cfg.TargetNodeID)
-	delete(s.Nodes[cfg.SourceNodeID].P2p.Replicators, cfg.TargetNodeID)
+	delete(s.Nodes[cfg.TargetNodeID].P2P.Connections, cfg.SourceNodeID)
+	delete(s.Nodes[cfg.SourceNodeID].P2P.Connections, cfg.TargetNodeID)
+	delete(s.Nodes[cfg.SourceNodeID].P2P.Replicators, cfg.TargetNodeID)
 }
 
 // waitForSubscribeToCollectionEvent waits for a node to publish a
@@ -81,7 +81,7 @@ func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollect
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
 		}
-		s.Nodes[action.NodeID].P2p.PeerCollections[collectionIndex] = struct{}{}
+		s.Nodes[action.NodeID].P2P.PeerCollections[collectionIndex] = struct{}{}
 	}
 }
 
@@ -92,7 +92,7 @@ func waitForUnsubscribeToCollectionEvent(s *state.State, action UnsubscribeToCol
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
 		}
-		delete(s.Nodes[action.NodeID].P2p.PeerCollections, collectionIndex)
+		delete(s.Nodes[action.NodeID].P2P.PeerCollections, collectionIndex)
 	}
 }
 
@@ -106,7 +106,7 @@ func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument)
 		if colDocIndex.Doc == NonExistentDocID {
 			continue // don't track non existent documents
 		}
-		s.Nodes[action.NodeID].P2p.PeerDocuments[colDocIndex] = struct{}{}
+		s.Nodes[action.NodeID].P2P.PeerDocuments[colDocIndex] = struct{}{}
 	}
 }
 
@@ -117,7 +117,7 @@ func waitForUnsubscribeToDocumentEvent(s *state.State, action UnsubscribeToDocum
 		if colDocIndex.Doc == NonExistentDocID {
 			continue // don't track non existent documents
 		}
-		delete(s.Nodes[action.NodeID].P2p.PeerDocuments, colDocIndex)
+		delete(s.Nodes[action.NodeID].P2P.PeerDocuments, colDocIndex)
 	}
 }
 
@@ -190,12 +190,12 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue // node is closed
 		}
 
-		expect := node.P2p.ExpectedDAGHeads
+		expect := node.P2P.ExpectedDAGHeads
 
 		// remove any heads that are already merged
 		// up to the expected head
-		for key, val := range node.P2p.ActualDAGHeads {
-			if head, ok := expect[key]; ok && head.String() == val.Cid.String() {
+		for key, val := range node.P2P.ActualDAGHeads {
+			if head, ok := expect[key]; ok && head.String() == val.CID.String() {
 				delete(expect, key)
 			}
 		}
@@ -206,7 +206,7 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				require.Fail(s.T, "doc index %d out of range", docIndex)
 			}
 			docID := s.DocIDs[0][docIndex].String()
-			actual, hasActual := node.P2p.ActualDAGHeads[docID]
+			actual, hasActual := node.P2P.ActualDAGHeads[docID]
 			if !hasActual || !actual.Decrypted {
 				expectDecrypted[docID] = struct{}{}
 			}
@@ -240,8 +240,8 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			if ok && head.String() == evt.Merge.Cid.String() {
 				delete(expect, getMergeEventKey(evt.Merge))
 			}
-			node.P2p.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
-				Cid:       evt.Merge.Cid,
+			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
+				CID:       evt.Merge.Cid,
 				Decrypted: evt.Decrypted,
 			}
 		}
@@ -271,16 +271,16 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	// update the actual document head on the node that updated it
 	// as the node created the document, it is already decrypted
-	node.P2p.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{Cid: evt.Cid, Decrypted: true}
+	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid, Decrypted: true}
 
 	// update the expected document heads of replicator targets
-	for id := range node.P2p.Replicators {
+	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.Nodes[id].P2p.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 	}
 
 	// update the expected document heads of connected nodes
-	for id := range node.P2p.Connections {
+	for id := range node.P2P.Connections {
 		if ident.HasValue() && ident.Value().Selector != strconv.Itoa(id) {
 			// If the document is created by a specific identity, only the node with the
 			// same index as the identity can initially access it.
@@ -289,12 +289,12 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 			continue
 		}
 		// peer collection subscribers receive updates from any other subscriber node
-		if _, ok := s.Nodes[id].P2p.PeerCollections[collectionID]; ok {
-			s.Nodes[id].P2p.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 		// peer document subscribers receive updates from any other subscriber node
-		if _, ok := s.Nodes[id].P2p.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
-			s.Nodes[id].P2p.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}
 }

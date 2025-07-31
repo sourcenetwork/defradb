@@ -65,6 +65,6 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 	return &state.NodeState{
 		Client: c,
 		Event:  eventState,
-		P2p:    state.NewP2PState(),
+		P2P:    state.NewP2PState(),
 	}, nil
 }

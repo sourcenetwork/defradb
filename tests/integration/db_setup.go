@@ -73,7 +73,7 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 	}
 
 	var path string
-	switch s.Dbt {
+	switch s.DbType {
 	case BadgerIMType:
 		opts = append(opts, node.WithBadgerInMemory(true))
 
@@ -98,10 +98,10 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
 
 	default:
-		return nil, fmt.Errorf("invalid database type: %v", s.Dbt)
+		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
 	}
 
-	if s.Kms == PubSubKMSType {
+	if s.KMS == PubSubKMSType {
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
@@ -135,7 +135,7 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 	st := &state.NodeState{
 		Client:  c,
 		Event:   eventState,
-		P2p:     state.NewP2PState(),
+		P2P:     state.NewP2PState(),
 		DbPath:  path,
 		NetOpts: netOpts,
 	}
