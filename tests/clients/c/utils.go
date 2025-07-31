@@ -109,7 +109,7 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
 // as strings from the request option object. They will be blank strings if not present.
-func extractStringsFromRequestOptions(opts []client.RequestOption) (string, string) {
+func extractStringsFromRequestOptions(opts []client.RequestOption) (string, string, error) {
 	config := &client.GQLOptions{}
 	for _, opt := range opts {
 		opt(config)
@@ -122,10 +122,13 @@ func extractStringsFromRequestOptions(opts []client.RequestOption) (string, stri
 
 	varsJSON := ""
 	if config.Variables != nil {
-		data, _ := json.Marshal(config.Variables)
+		data, err := json.Marshal(config.Variables)
+		if err != nil {
+			return "", "", err
+		}
 		varsJSON = string(data)
 	}
-	return opName, varsJSON
+	return opName, varsJSON, nil
 }
 
 // stringFromImmutableOptionString is a helper function to extract a simple string

@@ -120,7 +120,6 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 }
 
 func NodeStart(n int) GoCResult {
-
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
 
@@ -149,7 +148,6 @@ func NodeStart(n int) GoCResult {
 }
 
 func NodeStop(n int) GoCResult {
-
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
 

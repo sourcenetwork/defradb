@@ -127,7 +127,13 @@ func CollectionPatch(n int, cPatch *C.char, cOptions C.CollectionOptions) *C.Res
 }
 
 //export CollectionUpdate
-func CollectionUpdate(n int, cDocID *C.char, cFilter *C.char, cUpdater *C.char, cOptions C.CollectionOptions) *C.Result {
+func CollectionUpdate(
+	n int,
+	cDocID *C.char,
+	cFilter *C.char,
+	cUpdater *C.char,
+	cOptions C.CollectionOptions,
+) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
 	gcr := cbindings.CollectionUpdate(n, C.GoString(cDocID), C.GoString(cFilter), C.GoString(cUpdater), gocOptions)
 	return returnC(gcr)
@@ -464,4 +470,5 @@ func P2PdocumentSync(n int, cCollection *C.char, cDocIDs *C.char, cTxnID C.ulong
 	return returnC(gcr)
 }
 
+// Intentionally left blank to allow CGO to build the library
 func main() {}

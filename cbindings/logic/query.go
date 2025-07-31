@@ -27,39 +27,50 @@ import (
 
 var subscriptionStore sync.Map // map[string]*client.RequestResult
 
+type Subscription struct {
+	ctxCancel  context.CancelFunc
+	resultChan <-chan client.GQLResult
+}
+
 // Using UUID lets us avoid collisions, even if we use this across multiple nodes
-func storeSubscription(res *client.RequestResult) string {
+func storeSubscription(s Subscription) string {
 	id := uuid.NewString()
-	subscriptionStore.Store(id, res)
+	subscriptionStore.Store(id, s)
 	return id
 }
 
-func getSubscription(id string) (*client.RequestResult, bool) {
+func getSubscription(id string) (*Subscription, bool) {
 	val, ok := subscriptionStore.Load(id)
 	if !ok {
 		return nil, false
 	}
 	//nolint:forcetypeassert
-	return val.(*client.RequestResult), true
+	return val.(*Subscription), true
 }
 
 func removeSubscription(id string) {
-	subscriptionStore.Delete(id)
+	val, ok := subscriptionStore.LoadAndDelete(id)
+	if ok {
+		//nolint:forcetypeassert
+		sub := val.(*Subscription)
+		sub.ctxCancel()
+	}
 }
 
 func PollSubscription(id string) GoCResult {
-	res, ok := getSubscription(id)
+	sub, ok := getSubscription(id)
 	if !ok {
 		return returnGoC(1, errInvalidSubscriptionID, "")
 	}
 
 	select {
-	case msg, ok := <-res.Subscription:
+	case msg, ok := <-sub.resultChan:
 		if !ok {
 			removeSubscription(id)
-			return returnGoC(0, "", "") // closed
+			return returnGoC(0, "", "")
 		}
 		return marshalJSONToGoCResult(msg)
+
 	case <-time.After(time.Second):
 		return returnGoC(1, errTimeoutSubscription, "")
 	}
@@ -94,13 +105,17 @@ func ExecuteQuery(
 		return returnGoC(1, err.Error(), "")
 	}
 
+	ctx, cancelFunc := context.WithCancel(ctx)
 	res := GetNode(n).DB.ExecRequest(ctx, query, opts...)
-
+	sub := &Subscription{
+		ctxCancel:  cancelFunc,
+		resultChan: res.Subscription,
+	}
 	// The return is either a subscription ID, or a GQL result. The status indicates
 	// which: 0 for GQL, 2 for subscription. 1 is not used because this cannot error; the
 	// error is part of the GQL result, to be GQL-compliant.
 	if res.Subscription != nil {
-		id := storeSubscription(res)
+		id := storeSubscription(*sub)
 		return returnGoC(2, "", id)
 	}
 	return marshalJSONToGoCResult(res.GQL)

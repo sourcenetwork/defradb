@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
@@ -30,7 +31,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-var wrapperCount int = 0
+var wrapperCount int32 = 0
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
 
@@ -39,10 +40,10 @@ type CWrapper struct {
 }
 
 func NewCWrapper() *CWrapper {
-	nodeNum := wrapperCount
-	setupTests(nodeNum)
+	nodeNum := atomic.AddInt32(&wrapperCount, 1) - 1
+	setupTests(int(nodeNum))
 	wrapperCount++
-	return &CWrapper{nodeNum: nodeNum}
+	return &CWrapper{nodeNum: int(nodeNum)}
 }
 
 func (w *CWrapper) PeerInfo() peer.AddrInfo {
@@ -422,7 +423,6 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
@@ -534,7 +534,14 @@ func (w *CWrapper) ExecRequest(
 ) *client.RequestResult {
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
-	operation, variables := extractStringsFromRequestOptions(opts)
+	operation, variables, err := extractStringsFromRequestOptions(opts)
+	if err != nil {
+		return &client.RequestResult{
+			GQL: client.GQLResult{
+				Errors: []error{err},
+			},
+		}
+	}
 	result := cbindings.ExecuteQuery(w.nodeNum, query, identity, txnID, operation, variables)
 
 	if result.Status == 2 {
