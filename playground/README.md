@@ -23,7 +23,7 @@ Connects to a running DefraDB node.
 **Steps:**
 - Start DefraDB with CORS allowed:
   ```bash
-  defradb start --allowed-origins="*"
+  DEFRA_KEYRING_SECRET=your_secret defradb start --allowed-origins="*"
   ```
 - Then run:
   ```bash
