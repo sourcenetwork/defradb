@@ -19,13 +19,13 @@ import (
 )
 
 func P2PInfo(n int) GoCResult {
-	info := GlobalNodes[n].Peer.PeerInfo()
+	info := GetNode(n).Peer.PeerInfo()
 	return marshalJSONToGoCResult(info)
 }
 
 func P2PgetAllReplicators(n int) GoCResult {
 	ctx := context.Background()
-	reps, err := GlobalNodes[n].Peer.GetAllReplicators(ctx)
+	reps, err := GetNode(n).Peer.GetAllReplicators(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -46,7 +46,7 @@ func P2PsetReplicator(n int, collections string, peerStr string, txnID uint64) G
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].Peer.SetReplicator(ctx, info, colArgs...)
+	err = GetNode(n).Peer.SetReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -67,7 +67,7 @@ func P2PdeleteReplicator(n int, collections string, peerStr string, txnID uint64
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].Peer.DeleteReplicator(ctx, info, colArgs...)
+	err = GetNode(n).Peer.DeleteReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -83,7 +83,7 @@ func P2PcollectionAdd(n int, collections string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].Peer.AddP2PCollections(ctx, colArgs...)
+	err = GetNode(n).Peer.AddP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -99,7 +99,7 @@ func P2PcollectionRemove(n int, collections string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].Peer.RemoveP2PCollections(ctx, colArgs...)
+	err = GetNode(n).Peer.RemoveP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -114,7 +114,7 @@ func P2PcollectionGetAll(n int, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	cols, err := GlobalNodes[n].Peer.GetAllP2PCollections(ctx)
+	cols, err := GetNode(n).Peer.GetAllP2PCollections(ctx)
 
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
@@ -131,7 +131,7 @@ func P2PdocumentAdd(n int, collections string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].Peer.AddP2PDocuments(ctx, colArgs...)
+	err = GetNode(n).Peer.AddP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -147,7 +147,7 @@ func P2PdocumentRemove(n int, collections string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].Peer.RemoveP2PDocuments(ctx, colArgs...)
+	err = GetNode(n).Peer.RemoveP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -162,7 +162,7 @@ func P2PdocumentGetAll(n int, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	cols, err := GlobalNodes[n].Peer.GetAllP2PDocuments(ctx)
+	cols, err := GetNode(n).Peer.GetAllP2PDocuments(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -193,7 +193,7 @@ func P2PdocumentSync(n int, collection string, docIDs string, txnID uint64, time
 		defer cancel()
 	}
 
-	err = GlobalNodes[n].Peer.SyncDocuments(ctx, collection, docArgs)
+	err = GetNode(n).Peer.SyncDocuments(ctx, collection, docArgs)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

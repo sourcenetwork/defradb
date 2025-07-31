@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -23,7 +24,10 @@ import (
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 )
 
-var GlobalNodes = make(map[int]*node.Node)
+var (
+	GlobalNodes   = make(map[int]*node.Node)
+	globalNodesMu sync.RWMutex
+)
 
 func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	var err error
@@ -37,6 +41,9 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	}
 
 	ctx := context.Background()
+
+	globalNodesMu.Lock()
+	defer globalNodesMu.Unlock()
 
 	if GlobalNodes[n] != nil {
 		err := GlobalNodes[n].Close(ctx)
@@ -113,6 +120,10 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 }
 
 func NodeStart(n int) GoCResult {
+
+	globalNodesMu.Lock()
+	defer globalNodesMu.Unlock()
+
 	if GlobalNodes[n] == nil {
 		return returnGoC(1, errUninitializedNode, "")
 	}
@@ -138,6 +149,10 @@ func NodeStart(n int) GoCResult {
 }
 
 func NodeStop(n int) GoCResult {
+
+	globalNodesMu.Lock()
+	defer globalNodesMu.Unlock()
+
 	if GlobalNodes[n] == nil {
 		return returnGoC(1, errStoppedNode, "")
 	}

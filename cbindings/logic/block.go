@@ -28,7 +28,7 @@ func BlockVerifySignature(n int, keyTypeStr string, pubKeyStr string, CIDStr str
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].DB.VerifySignature(ctx, CIDStr, pubKey)
+	err = GetNode(n).DB.VerifySignature(ctx, CIDStr, pubKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

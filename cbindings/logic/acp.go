@@ -27,7 +27,7 @@ func ACPAddPolicy(n int, identityStr string, policy string, TxnID uint64) GoCRes
 		return returnGoC(1, err.Error(), "")
 	}
 
-	policyResult, err := GlobalNodes[n].DB.AddDACPolicy(ctx, policy)
+	policyResult, err := GetNode(n).DB.AddDACPolicy(ctx, policy)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -54,7 +54,7 @@ func ACPAddRelationship(n int, identityStr string,
 		return returnGoC(1, err.Error(), "")
 	}
 
-	result, err := GlobalNodes[n].DB.AddDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
+	result, err := GetNode(n).DB.AddDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -83,7 +83,7 @@ func ACPDeleteRelationship(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	result, err := GlobalNodes[n].DB.DeleteDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
+	result, err := GetNode(n).DB.DeleteDACActorRelationship(ctx, collectionArg, docIDArg, relationArg, targetActorArg)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

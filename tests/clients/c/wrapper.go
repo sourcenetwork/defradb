@@ -607,11 +607,11 @@ func (w *CWrapper) Close() {
 }
 
 func (w *CWrapper) Events() event.Bus {
-	return cbindings.GlobalNodes[w.nodeNum].DB.Events()
+	return cbindings.GetNode(w.nodeNum).DB.Events()
 }
 
 func (w *CWrapper) MaxTxnRetries() int {
-	return cbindings.GlobalNodes[w.nodeNum].DB.MaxTxnRetries()
+	return cbindings.GlobalNode(w.nodeNum).DB.MaxTxnRetries()
 }
 
 func (w *CWrapper) PrintDump(ctx context.Context) error {

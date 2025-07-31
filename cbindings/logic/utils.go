@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 const (
@@ -165,4 +166,18 @@ func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdent
 	}
 
 	return &id, nil
+}
+
+// GetNode is a thread-safe getter for a global node
+func GetNode(n int) *node.Node {
+	globalNodesMu.RLock()
+	defer globalNodesMu.RUnlock()
+	return GlobalNodes[n]
+}
+
+// SetNode is a thread-safe setter for a global node
+func SetNode(n int, node *node.Node) {
+	globalNodesMu.Lock()
+	defer globalNodesMu.Unlock()
+	GlobalNodes[n] = node
 }

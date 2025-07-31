@@ -33,7 +33,7 @@ func IdentityNew(keyTypeStr string) GoCResult {
 
 func NodeIdentity(n int) GoCResult {
 	ctx := context.Background()
-	identity, err := GlobalNodes[n].DB.GetNodeIdentity(ctx)
+	identity, err := GetNode(n).DB.GetNodeIdentity(ctx)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

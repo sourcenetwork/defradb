@@ -94,7 +94,7 @@ func ExecuteQuery(
 		return returnGoC(1, err.Error(), "")
 	}
 
-	res := GlobalNodes[n].DB.ExecRequest(ctx, query, opts...)
+	res := GetNode(n).DB.ExecRequest(ctx, query, opts...)
 
 	// The return is either a subscription ID, or a GQL result. The status indicates
 	// which: 0 for GQL, 2 for subscription. 1 is not used because this cannot error; the

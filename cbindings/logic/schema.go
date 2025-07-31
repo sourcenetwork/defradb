@@ -30,7 +30,7 @@ func AddSchema(n int, newSchema string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	collectionVersions, err := GlobalNodes[n].DB.AddSchema(ctx, newSchema)
+	collectionVersions, err := GetNode(n).DB.AddSchema(ctx, newSchema)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errAddingSchema, err), "")
 	}
@@ -58,7 +58,7 @@ func DescribeSchema(n int, name string, root string, version string, txnID uint6
 	}
 
 	// Get the schema, and try to convert it to JSON for return
-	schemas, err := GlobalNodes[n].DB.GetSchemas(ctx, options)
+	schemas, err := GetNode(n).DB.GetSchemas(ctx, options)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errGettingSchema, err), "")
 	}
@@ -92,7 +92,7 @@ func PatchSchema(n int, patchString string, lensString string, setActive bool, t
 		}
 	}
 
-	err = GlobalNodes[n].DB.PatchSchema(ctx, patchString, migration, setActive)
+	err = GetNode(n).DB.PatchSchema(ctx, patchString, migration, setActive)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errPatchingSchema, err), "")
 	}
@@ -107,7 +107,7 @@ func SetActiveSchema(n int, version string, txnID uint64) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	err = GlobalNodes[n].DB.SetActiveSchemaVersion(ctx, version)
+	err = GetNode(n).DB.SetActiveSchemaVersion(ctx, version)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errSetActiveSchema, err), "")
 	}

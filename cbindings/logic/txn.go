@@ -33,9 +33,9 @@ func TransactionCreate(n int, concurrent bool, readOnly bool) GoCResult {
 	var err error
 
 	if concurrent {
-		tx, err = GlobalNodes[n].DB.NewConcurrentTxn(ctx, readOnly)
+		tx, err = GetNode(n).DB.NewConcurrentTxn(ctx, readOnly)
 	} else {
-		tx, err = GlobalNodes[n].DB.NewTxn(ctx, readOnly)
+		tx, err = GetNode(n).DB.NewTxn(ctx, readOnly)
 	}
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errCreatingTxn, err), "")

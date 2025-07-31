@@ -62,7 +62,7 @@ func IndexCreate(
 		Fields: fields,
 		Unique: isUnique,
 	}
-	col, err := GlobalNodes[n].DB.GetCollectionByName(ctx, collectionName)
+	col, err := GetNode(n).DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -85,7 +85,7 @@ func IndexList(n int, collectionName string, txnID uint64) GoCResult {
 	switch {
 	// Get the indices associated with a given collection
 	case collectionName != "":
-		col, err := GlobalNodes[n].DB.GetCollectionByName(ctx, collectionName)
+		col, err := GetNode(n).DB.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			return returnGoC(1, err.Error(), "")
 		}
@@ -96,7 +96,7 @@ func IndexList(n int, collectionName string, txnID uint64) GoCResult {
 		return marshalJSONToGoCResult(indices)
 	// Get all of the indices, because no collection was specified
 	default:
-		indices, err := GlobalNodes[n].DB.GetAllIndexes(ctx)
+		indices, err := GetNode(n).DB.GetAllIndexes(ctx)
 		if err != nil {
 			return returnGoC(1, err.Error(), "")
 		}
@@ -112,7 +112,7 @@ func IndexDrop(n int, collectionName string, indexName string, txnID uint64) GoC
 		return returnGoC(1, err.Error(), "")
 	}
 
-	col, err := GlobalNodes[n].DB.GetCollectionByName(ctx, collectionName)
+	col, err := GetNode(n).DB.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}

@@ -43,7 +43,7 @@ func ViewAdd(n int, query string, sdl string, lensCfgJson string, txnID uint64) 
 		transform = immutable.Some(lensCfg)
 	}
 
-	defs, err := GlobalNodes[n].DB.AddView(ctx, query, sdl, transform)
+	defs, err := GetNode(n).DB.AddView(ctx, query, sdl, transform)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -80,7 +80,7 @@ func ViewRefresh(
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	err = GlobalNodes[n].DB.RefreshViews(ctx, options)
+	err = GetNode(n).DB.RefreshViews(ctx, options)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
