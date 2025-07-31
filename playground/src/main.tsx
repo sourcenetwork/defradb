@@ -8,7 +8,6 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
@@ -25,12 +24,10 @@ if (mode === 'wasm') {
     denom: import.meta.env.VITE_ACP_DENOM ?? 'uopen',
     useZeroFees: import.meta.env.VITE_ACP_ALLOW_ZERO_FEES === 'true' || false,
   };
-  
+
   await instantiate('defradb.wasm');
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <App />
 );
