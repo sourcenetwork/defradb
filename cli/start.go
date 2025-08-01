@@ -88,10 +88,10 @@ func MakeStartCommand() *cobra.Command {
 
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithEnableAdminACP(cfg.GetBool("acp.node.enable")),
-				node.WithSourceHubChainID(cfg.GetString("acp.dac.sourceHub.ChainID")),
-				node.WithSourceHubGRPCAddress(cfg.GetString("acp.dac.sourceHub.GRPCAddress")),
-				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.dac.sourceHub.CometRPCAddress")),
+				node.WithEnableNodeACP(cfg.GetBool("acp.node.enable")),
+				node.WithSourceHubChainID(cfg.GetString("acp.document.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress")),
 				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 				node.WithEnableDevelopment(cfg.GetBool("development")),
 				// store options
@@ -126,7 +126,7 @@ func MakeStartCommand() *cobra.Command {
 				return client.ErrCanNotStartNACWithoutIdentity
 			}
 
-			documentACPType := cfg.GetString("acp.dac.type")
+			documentACPType := cfg.GetString("acp.document.type")
 			if documentACPType != "" {
 				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(documentACPType)))
 			}
@@ -154,7 +154,7 @@ func MakeStartCommand() *cobra.Command {
 				}
 
 				// setup the sourcehub transaction signer
-				sourceHubKeyName := cfg.GetString("acp.dac.sourceHub.KeyName")
+				sourceHubKeyName := cfg.GetString("acp.document.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
 					if err != nil {
@@ -324,8 +324,8 @@ func MakeStartCommand() *cobra.Command {
 		cfg.GetString(configFlags["acp.node.enable"]),
 		"Enable the node access control system. Defaults to `false`.")
 	cmd.PersistentFlags().String(
-		"dac-type",
-		cfg.GetString(configFlags["acp.dac.type"]),
+		"document-acp-type",
+		cfg.GetString(configFlags["acp.document.type"]),
 		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",

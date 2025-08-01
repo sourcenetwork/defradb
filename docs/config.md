@@ -133,7 +133,7 @@ Possible values:
 
 Enable the admin access control system. Defaults to `false`. Identity is Required when `acp.node.enable`:`true`.
 
-## `acp.dac.type`
+## `acp.document.type`
 
 The type of Document ACP to use.
 
@@ -142,24 +142,24 @@ Possible values:
 - `local` local-only Document ACP
 - `source-hub` source hub Document ACP: https://github.com/sourcenetwork/sourcehub
 
-## `acp.dac.sourceHub.ChainID`
+## `acp.document.sourceHub.ChainID`
 
-The ID of the SourceHub chain to store ACP data in. Required when using `acp.dac.type`:`source-hub`.
+The ID of the SourceHub chain to store ACP data in. Required when using `acp.document.type`:`source-hub`.
 
-## `acp.dac.sourceHub.GRPCAddress`
+## `acp.document.sourceHub.GRPCAddress`
 
-The address of the SourceHub GRPC server. Required when using `acp.dac.type`:`source-hub`.
+The address of the SourceHub GRPC server. Required when using `acp.document.type`:`source-hub`.
 
-## `acp.dac.sourceHub.CometRPCAddress`
+## `acp.document.sourceHub.CometRPCAddress`
 
-The address of the SourceHub Comet RPC server. Required when using `acp.dac.type`:`source-hub`.
+The address of the SourceHub Comet RPC server. Required when using `acp.document.type`:`source-hub`.
 
-## `acp.dac.sourceHub.KeyName`
+## `acp.document.sourceHub.KeyName`
 
 The name of the key in the keyring where the SourceHub credentials used to sign (and pay for) SourceHub
-transactions created by the node is stored. Required when using `acp.dac.type`:`source-hub`.
+transactions created by the node is stored. Required when using `acp.document.type`:`source-hub`.
 
-## `acp.dac.sourceHub.address`
+## `acp.document.sourceHub.address`
 
 The SourceHub address of the actor that client-side actions should permit to make SourceHub actions on
 their behalf.  This is a client-side only config param.  It is required if the client wishes to make

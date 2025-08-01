@@ -21,7 +21,7 @@ func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	args := []string{"client", "acp", "dac", "policy", "add"}
+	args := []string{"client", "acp", "document", "policy", "add"}
 	args = append(args, policy)
 
 	data, err := w.cmd.execute(ctx, args)
@@ -45,7 +45,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
-		"client", "acp", "dac", "relationship", "add",
+		"client", "acp", "document", "relationship", "add",
 		"--collection", collectionName,
 		"--docID", docID,
 		"--relation", relation,
@@ -73,7 +73,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
-		"client", "acp", "dac", "relationship", "delete",
+		"client", "acp", "document", "relationship", "delete",
 		"--collection", collectionName,
 		"--docID", docID,
 		"--relation", relation,

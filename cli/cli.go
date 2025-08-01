@@ -93,21 +93,21 @@ func NewDefraCommand() *cobra.Command {
 		MakeNodeACPStatusCommand(),
 	)
 
-	acp_dac_policy := MakeDocumentACPPolicyCommand()
-	acp_dac_policy.AddCommand(
+	acp_document_policy := MakeDocumentACPPolicyCommand()
+	acp_document_policy.AddCommand(
 		MakeDocumentACPPolicyAddCommand(),
 	)
 
-	acp_dac_relationship := MakeDocumentACPRelationshipCommand()
-	acp_dac_relationship.AddCommand(
+	acp_document_relationship := MakeDocumentACPRelationshipCommand()
+	acp_document_relationship.AddCommand(
 		MakeDocumentACPRelationshipAddCommand(),
 		MakeDocumentACPRelationshipDeleteCommand(),
 	)
 
 	dac := MakeDocumentACPCommand()
 	dac.AddCommand(
-		acp_dac_policy,
-		acp_dac_relationship,
+		acp_document_policy,
+		acp_document_relationship,
 	)
 
 	acp := MakeACPCommand()

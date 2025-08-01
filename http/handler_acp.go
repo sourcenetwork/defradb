@@ -194,10 +194,10 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	}
 
 	addRelationshipDACRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/acp_dac_relationship_add_request",
+		Ref: "#/components/schemas/acp_document_relationship_add_request",
 	}
 	deleteRelationshipDACRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/acp_dac_relationship_delete_request",
+		Ref: "#/components/schemas/acp_document_relationship_delete_request",
 	}
 
 	addRelationshipNACRequestSchema := &openapi3.SchemaRef{
@@ -216,7 +216,7 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	addPolicyDAC := openapi3.NewOperation()
 	addPolicyDAC.OperationID = "add dac policy"
 	addPolicyDAC.Description = "Add a policy using document acp system"
-	addPolicyDAC.Tags = []string{"acp_dac_policy"}
+	addPolicyDAC.Tags = []string{"acp_document_policy"}
 	addPolicyDAC.Responses = openapi3.NewResponses()
 	addPolicyDAC.AddResponse(200, addPolicyDACResult)
 	addPolicyDAC.Responses.Set("400", errorResponse)
@@ -233,7 +233,7 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	addActorRelationshipDAC := openapi3.NewOperation()
 	addActorRelationshipDAC.OperationID = "add dac relationship"
 	addActorRelationshipDAC.Description = "Add an actor relationship using document acp system"
-	addActorRelationshipDAC.Tags = []string{"acp_dac_relationship"}
+	addActorRelationshipDAC.Tags = []string{"acp_document_relationship"}
 	addActorRelationshipDAC.Responses = openapi3.NewResponses()
 	addActorRelationshipDAC.AddResponse(200, addActorRelationshipDACResult)
 	addActorRelationshipDAC.Responses.Set("400", errorResponse)
@@ -250,7 +250,7 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	deleteActorRelationshipDAC := openapi3.NewOperation()
 	deleteActorRelationshipDAC.OperationID = "delete dac relationship"
 	deleteActorRelationshipDAC.Description = "Delete an actor relationship using document acp system"
-	deleteActorRelationshipDAC.Tags = []string{"acp_dac_relationship"}
+	deleteActorRelationshipDAC.Tags = []string{"acp_document_relationship"}
 	deleteActorRelationshipDAC.Responses = openapi3.NewResponses()
 	deleteActorRelationshipDAC.AddResponse(200, deleteActorRelationshipDACResult)
 	deleteActorRelationshipDAC.Responses.Set("400", errorResponse)
@@ -319,15 +319,15 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	statusNAC.AddResponse(200, statusNACResult)
 	statusNAC.Responses.Set("400", errorResponse)
 
-	router.AddRoute("/acp/dac/policy", http.MethodPost, addPolicyDAC, h.AddDACPolicy)
+	router.AddRoute("/acp/document/policy", http.MethodPost, addPolicyDAC, h.AddDACPolicy)
 	router.AddRoute(
-		"/acp/dac/relationship",
+		"/acp/document/relationship",
 		http.MethodPost,
 		addActorRelationshipDAC,
 		h.AddDACActorRelationship,
 	)
 	router.AddRoute(
-		"/acp/dac/relationship",
+		"/acp/document/relationship",
 		http.MethodDelete,
 		deleteActorRelationshipDAC,
 		h.DeleteDACActorRelationship,
