@@ -14,9 +14,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/lens-vm/lens/host-go/config"
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/lens/host-go/config"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -404,6 +404,6 @@ func (p *lensPipe) Reset() {
 	p.input.Reset()
 	// WARNING: Currently the wasm module state is not reset by calling reset on the enumerable
 	// this means that state from one context may leak to the next useage.  There is a ticket here
-	// to fix this: https://github.com/lens-vm/lens/issues/46
+	// to fix this: https://github.com/sourcenetwork/lens/issues/46
 	p.enumerable.Reset()
 }
