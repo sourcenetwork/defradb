@@ -76,12 +76,15 @@ func newTestPeer(ctx context.Context, t *testing.T) (testdb, *Peer) {
 	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	require.NoError(t, err)
 
-	localDocumentACP := dac.NewLocalDocumentACP()
-	localDocumentACP.Init(context.Background(), "")
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+
+	localDocumentACP, err := dac.NewLocalDocumentACP("")
+	require.NoError(t, err)
 	db, err := db.NewDB(
 		ctx,
 		store,
-		db.NewCleanAdminInfo(),
+		adminInfo,
 		immutable.Some(localDocumentACP),
 		nil,
 	)
@@ -103,7 +106,9 @@ func newTestPeer(ctx context.Context, t *testing.T) (testdb, *Peer) {
 func TestNewPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 	p, err := NewPeer(ctx, db.Events(), immutable.None[dac.DocumentACP](), db)
@@ -120,12 +125,15 @@ func TestNewPeer_NoDB_NilDBError(t *testing.T) {
 func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db1, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db1, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db1.Close()
 
+	require.NoError(t, err)
 	store2 := memory.NewDatastore(ctx)
-	db2, err := db.NewDB(ctx, store2, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	db2, err := db.NewDB(ctx, store2, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db2.Close()
 
@@ -241,7 +249,9 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 
 func newTestDB(ctx context.Context, t *testing.T) *db.DB {
 	rootstore := memory.NewDatastore(ctx)
-	database, err := db.NewDB(ctx, rootstore, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	database, err := db.NewDB(ctx, rootstore, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	return database
 }
@@ -249,7 +259,9 @@ func newTestDB(ctx context.Context, t *testing.T) *db.DB {
 func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 	n, err := NewPeer(
@@ -266,7 +278,9 @@ func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {
 func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -285,7 +299,9 @@ func TestNewPeer_NoPubSub_NoError(t *testing.T) {
 func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -306,7 +322,9 @@ func TestNewPeer_WithEnablePubSub_NoError(t *testing.T) {
 func TestNodeClose_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 	n, err := NewPeer(
@@ -322,7 +340,9 @@ func TestNodeClose_NoError(t *testing.T) {
 func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -341,7 +361,9 @@ func TestListenAddrs_WithListenAddresses_NoError(t *testing.T) {
 func TestPeer_WithBootstrapPeers_NoError(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
-	db, err := db.NewDB(ctx, store, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 	defer db.Close()
 

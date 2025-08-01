@@ -34,10 +34,6 @@ type bridgeDocumentACP struct {
 	clientACP acp.ACPSystemClient
 }
 
-func (a *bridgeDocumentACP) Init(ctx context.Context, path string) {
-	a.clientACP.Init(ctx, path)
-}
-
 func (a *bridgeDocumentACP) Start(ctx context.Context) error {
 	return a.clientACP.Start(ctx)
 }
