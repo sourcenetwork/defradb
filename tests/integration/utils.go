@@ -809,7 +809,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
 		node, err := setupNode(
 			s,
-			getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex),
+			getIdentityOption(s, action.Identity),
 			action.EnableNAC,
 			testCase,
 			opts...,

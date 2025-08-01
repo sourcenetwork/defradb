@@ -56,6 +56,18 @@ func NodeIdentity(indexSelector int) immutable.Option[state.Identity] {
 	)
 }
 
+// getIdentityOption returns the identity similar to [getIdentity] but in immutable.Option.
+func getIdentityOption(
+	s *state.State,
+	identity immutable.Option[state.Identity],
+) immutable.Option[acpIdentity.Identity] {
+	ident := state.GetIdentity(s, identity)
+	if ident == nil {
+		return acpIdentity.None
+	}
+	return immutable.Some(ident)
+}
+
 // getIdentityForRequest returns the identity for the given reference and node index.
 // It prepares the identity for a request by generating a token if needed, i.e. it will
 // return an identity with [Identity.BearerToken] set.
