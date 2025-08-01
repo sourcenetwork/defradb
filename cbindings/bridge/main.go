@@ -72,6 +72,60 @@ func ACPDeleteRelationship(
 	return returnC(gcr)
 }
 
+//export ACPNodeDisable
+func ACPNodeDisable(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPNodeDisable(n, C.GoString(cIdentity), uint64(cTxnID))
+	return returnC(gcr)
+}
+
+//export ACPNodeReEnable
+func ACPNodeReEnable(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPNodeReEnable(n, C.GoString(cIdentity), uint64(cTxnID))
+	return returnC(gcr)
+}
+
+//export ACPNodeReRelationshipAdd
+func ACPNodeReRelationshipAdd(
+	n int,
+	cIdentity *C.char,
+	cRelation *C.char,
+	cActor *C.char,
+	cTxnID C.ulonglong,
+) *C.Result {
+	gcr := cbindings.ACPNodeReRelationshipAdd(
+		n,
+		C.GoString(cIdentity),
+		C.GoString(cRelation),
+		C.GoString(cActor),
+		uint64(cTxnID),
+	)
+	return returnC(gcr)
+}
+
+//export ACPNodeRelationshipDelete
+func ACPNodeRelationshipDelete(
+	n int,
+	cIdentity *C.char,
+	cRelation *C.char,
+	cActor *C.char,
+	cTxnID C.ulonglong,
+) *C.Result {
+	gcr := cbindings.ACPNodeRelationshipDelete(
+		n,
+		C.GoString(cIdentity),
+		C.GoString(cRelation),
+		C.GoString(cActor),
+		uint64(cTxnID),
+	)
+	return returnC(gcr)
+}
+
+//export ACPNodeStatus
+func ACPNodeStatus(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPNodeStatus(n, C.GoString(cIdentity), uint64(cTxnID))
+	return returnC(gcr)
+}
+
 //export BlockVerifySignature
 func BlockVerifySignature(n int, cKeyType *C.char, cPublicKey *C.char, cCID *C.char) *C.Result {
 	gcr := cbindings.BlockVerifySignature(n, C.GoString(cKeyType), C.GoString(cPublicKey), C.GoString(cCID))

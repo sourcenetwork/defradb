@@ -12,6 +12,8 @@ package cbindings
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func ACPAddPolicy(n int, identityStr string, policy string, TxnID uint64) GoCResult {
@@ -89,4 +91,119 @@ func ACPDeleteRelationship(
 	}
 
 	return marshalJSONToGoCResult(result)
+}
+
+func ACPNodeDisable(n int, identityStr string, TxnID uint64) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithIdentity(ctx, identityStr)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	if err := GetNode(n).DB.DisableNAC(ctx); err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	return marshalJSONToGoCResult(client.SuccessResponse{Success: true})
+}
+
+func ACPNodeReEnable(n int, identityStr string, TxnID uint64) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithIdentity(ctx, identityStr)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	if err := GetNode(n).DB.ReEnableNAC(ctx); err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	return marshalJSONToGoCResult(client.SuccessResponse{Success: true})
+}
+
+func ACPNodeReRelationshipAdd(
+	n int,
+	identityStr string,
+	relationArg string,
+	targetActorArg string,
+	TxnID uint64,
+) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithIdentity(ctx, identityStr)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	addNACActorRelationshipResult, err := GetNode(n).DB.AddNACActorRelationship(ctx, relationArg, targetActorArg)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	return marshalJSONToGoCResult(addNACActorRelationshipResult)
+}
+
+func ACPNodeRelationshipDelete(
+	n int,
+	identityStr string,
+	relationArg string,
+	targetActorArg string,
+	TxnID uint64,
+) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithIdentity(ctx, identityStr)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	deleteNACActorRelationshipResult, err := GetNode(n).DB.DeleteNACActorRelationship(ctx, relationArg, targetActorArg)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	return marshalJSONToGoCResult(deleteNACActorRelationshipResult)
+}
+
+func ACPNodeStatus(n int, identityStr string, TxnID uint64) GoCResult {
+	ctx := context.Background()
+
+	ctx, err := contextWithIdentity(ctx, identityStr)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	ctx, err = contextWithTransaction(n, ctx, TxnID)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	status, err := GetNode(n).DB.GetNACStatus(ctx)
+	if err != nil {
+		return returnGoC(1, err.Error(), "")
+	}
+
+	return marshalJSONToGoCResult(status)
 }
