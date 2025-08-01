@@ -430,3 +430,15 @@ func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.Encrypte
 	}
 	return indexes, nil
 }
+
+func (c *Collection) DropEncryptedIndex(ctx context.Context, fieldName string) error {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes", fieldName)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}

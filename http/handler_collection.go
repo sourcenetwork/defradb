@@ -329,6 +329,23 @@ func (s *collectionHandler) GetEncryptedIndexes(rw http.ResponseWriter, req *htt
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
+func (s *collectionHandler) DropEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	fieldName := chi.URLParam(req, "field")
+	if fieldName == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("field name is required")})
+		return
+	}
+
+	err := col.DropEncryptedIndex(req.Context(), fieldName)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *collectionHandler) bindRoutes(router *Router) {
 	errorResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/error",
@@ -558,6 +575,20 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	getEncryptedIndexes.AddResponse(200, getEncryptedIndexesResponse)
 	getEncryptedIndexes.Responses.Set("400", errorResponse)
 
+	fieldNamePathParam := openapi3.NewPathParameter("field").
+		WithRequired(true).
+		WithDescription("Field name of the encrypted index").
+		WithSchema(openapi3.NewStringSchema())
+
+	dropEncryptedIndex := openapi3.NewOperation()
+	dropEncryptedIndex.OperationID = "encrypted_index_drop"
+	dropEncryptedIndex.Description = "Drop an encrypted index"
+	dropEncryptedIndex.Tags = []string{"encrypted_index"}
+	dropEncryptedIndex.AddParameter(collectionNamePathParam)
+	dropEncryptedIndex.AddParameter(fieldNamePathParam)
+	dropEncryptedIndex.AddResponse(200, successResponse.Value)
+	dropEncryptedIndex.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
@@ -570,4 +601,5 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/{docID}", http.MethodDelete, collectionDelete, h.Delete)
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodPost, createEncryptedIndex, h.CreateEncryptedIndex)
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, getEncryptedIndexes, h.GetEncryptedIndexes)
+	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, dropEncryptedIndex, h.DropEncryptedIndex)
 }

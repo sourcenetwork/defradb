@@ -653,6 +653,27 @@ type GetEncryptedIndexes struct {
 	ExpectedError string
 }
 
+// DropEncryptedIndex will attempt to drop the given encrypted index for the given collection
+// using the collection api.
+type DropEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to drop the encrypted index on.
+	//
+	// If a value is not provided the index will be dropped on all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this index should be dropped.
+	CollectionID int
+
+	// The name of the field whose encrypted index should be dropped.
+	FieldName string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
 // ResultAsserter is an interface that can be implemented to provide custom result
 // assertions.
 type ResultAsserter interface {

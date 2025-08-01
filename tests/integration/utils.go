@@ -409,6 +409,9 @@ func performAction(
 	case GetEncryptedIndexes:
 		getEncryptedIndexes(s, action)
 
+	case DropEncryptedIndex:
+		dropEncryptedIndex(s, action)
+
 	case BackupExport:
 		backupExport(s, action)
 
@@ -1774,6 +1777,32 @@ func getEncryptedIndexes(
 	}
 
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+}
+
+func dropEncryptedIndex(
+	s *state,
+	action DropEncryptedIndex,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		collection := s.nodes[nodeID].collections[action.CollectionID]
+		if action.FieldName == "" {
+			s.t.Fatalf("fieldName is required for dropping encrypted index")
+		}
+
+		err := withRetryOnNode(
+			node,
+			func() error {
+				return collection.DropEncryptedIndex(s.ctx, action.FieldName)
+			},
+		)
+		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
+			return
+		}
+	}
+
+	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, false)
 }
 
 // backupExport generates a backup using the db api.

@@ -442,6 +442,57 @@ func (c *collection) GetEncryptedIndexes(ctx context.Context) ([]client.Encrypte
 	return c.Version().EncryptedIndexes, nil
 }
 
+// DropEncryptedIndex drops an encrypted index from the collection.
+//
+// The encrypted index will be removed from the system store.
+// All SE artifacts on remote nodes will become inaccessible for queries.
+func (c *collection) DropEncryptedIndex(ctx context.Context, fieldName string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+
+	err = c.dropEncryptedIndex(ctx, fieldName)
+	if err != nil {
+		return err
+	}
+	return txn.Commit(ctx)
+}
+
+func (c *collection) dropEncryptedIndex(ctx context.Context, fieldName string) error {
+	indexToRemove := -1
+	for i, encIdx := range c.Version().EncryptedIndexes {
+		if encIdx.FieldName == fieldName {
+			indexToRemove = i
+			break
+		}
+	}
+
+	if indexToRemove == -1 {
+		return NewErrEncryptedIndexDoesNotExist(fieldName)
+	}
+
+	oldEncryptedIndexes := make([]client.EncryptedIndexDescription, len(c.Version().EncryptedIndexes))
+	copy(oldEncryptedIndexes, c.Version().EncryptedIndexes)
+
+	c.def.Version.EncryptedIndexes = append(
+		c.def.Version.EncryptedIndexes[:indexToRemove],
+		c.def.Version.EncryptedIndexes[indexToRemove+1:]...,
+	)
+
+	err := description.SaveCollection(ctx, c.def.Version)
+	if err != nil {
+		c.def.Version.EncryptedIndexes = oldEncryptedIndexes
+		return err
+	}
+
+	return nil
+}
+
 // checkExistingFieldsAndAdjustRelFieldNames checks if the fields in the index description
 // exist in the collection schema.
 // If a field is a relation, it will be adjusted to relation id field name, a.k.a. `field_name + _id`.

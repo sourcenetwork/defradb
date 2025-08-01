@@ -119,6 +119,7 @@ const (
 	errUnsupportedTxnType                       string = "unsupported transaction type"
 	errEncryptedIndexUnknownField               string = "encryptedIndex on non-existent field"
 	errEncryptedIndexAlreadyExists              string = "encryptedIndex already exists on this field"
+	errEncryptedIndexDoesNotExist               string = "encryptedIndex does not exist on this field"
 )
 
 var (
@@ -754,6 +755,13 @@ func NewErrEncryptedIndexOnNonExistentField(fieldName string) error {
 func NewErrEncryptedIndexAlreadyExists(fieldName string) error {
 	return errors.New(
 		errEncryptedIndexAlreadyExists,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrEncryptedIndexDoesNotExist(fieldName string) error {
+	return errors.New(
+		errEncryptedIndexDoesNotExist,
 		errors.NewKV("Field", fieldName),
 	)
 }
