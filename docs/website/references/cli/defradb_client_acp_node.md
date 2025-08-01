@@ -1,10 +1,24 @@
-## defradb client acp
+## defradb client acp node
 
-Interact with the access control system(s) of a DefraDB node
+Interact with the node access control system of a DefraDB node
 
 ### Synopsis
 
-Interact with the access control system(s) of a DefraDB node
+Interact with the node access control system of a DefraDB node
+Note:
+- Clean state means, if the access control was never configured, or the entire state was purged.
+- The check the node acp status use the 'client acp node status' command
+- To start node acp for the first time, use the start command with '--acp-enable true'.
+- Specifying an identity is a MUST, when starting first time (from a clean state), this identity
+will become the node owner identity.
+- To temporarily disable node acp, use the 'client acp node disable' command.
+- To re-enable node acp when it is temporarily disabled, use the 'client acp node re-enable' command.
+- To give node access to other users use the 'client acp node relationship add' command.
+- To revoke node access from other users use the 'client acp node relationship delete' command.
+- To reset/purge acp state into a clean state, use the 'client acp node purge' command.
+- Purge command(s) require the user to be in dev-mode (Warning: all state will be lost).
+
+For quick help: 'defradb client acp node --help'
 
 Learn more about the DefraDB [ACP System](/acp/README.md)
 
@@ -13,7 +27,7 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 ### Options
 
 ```
-  -h, --help   help for acp
+  -h, --help   help for node
 ```
 
 ### Options inherited from parent commands
@@ -40,7 +54,9 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client acp document](defradb_client_acp_document.md)	 - Interact with the document access control system of a DefraDB node
-* [defradb client acp node](defradb_client_acp_node.md)	 - Interact with the node access control system of a DefraDB node
+* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system(s) of a DefraDB node
+* [defradb client acp node disable](defradb_client_acp_node_disable.md)	 - Disable the node access control
+* [defradb client acp node re-enable](defradb_client_acp_node_re-enable.md)	 - Re-enable the node access control
+* [defradb client acp node relationship](defradb_client_acp_node_relationship.md)	 - Interact with the node acp relationship features of DefraDB instance
+* [defradb client acp node status](defradb_client_acp_node_status.md)	 - Check the node access control status
 

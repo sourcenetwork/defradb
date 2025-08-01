@@ -1,15 +1,31 @@
-## defradb client acp dac relationship
+## defradb client acp node status
 
-Interact with the document acp relationship features of DefraDB instance
+Check the node access control status
 
 ### Synopsis
 
-Interact with the document acp relationship features of DefraDB instance
+Check the node access control status
+
+Example:
+  defradb client acp node status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+Note:
+- If Node ACP is in clean state (not configured) the status has [IsConfigured] == false.
+- If Node ACP is temporarily disabled, then [IsConfigured] == true and [IsEnabled] == false.
+- If Node ACP is enabled then [IsEnabled] == true.
+
+Learn more about the DefraDB [ACP System](/acp/README.md)
+
+
+
+```
+defradb client acp node status [-i --identity] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for relationship
+  -h, --help   help for status
 ```
 
 ### Options inherited from parent commands
@@ -36,7 +52,5 @@ Interact with the document acp relationship features of DefraDB instance
 
 ### SEE ALSO
 
-* [defradb client acp dac](defradb_client_acp_dac.md)	 - Interact with the document access control system of a DefraDB node
-* [defradb client acp dac relationship add](defradb_client_acp_dac_relationship_add.md)	 - Add new relationship
-* [defradb client acp dac relationship delete](defradb_client_acp_dac_relationship_delete.md)	 - Delete relationship
+* [defradb client acp node](defradb_client_acp_node.md)	 - Interact with the node access control system of a DefraDB node
 

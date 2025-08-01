@@ -1,10 +1,10 @@
-## defradb client acp
+## defradb client acp document
 
-Interact with the access control system(s) of a DefraDB node
+Interact with the document access control system of a DefraDB node
 
 ### Synopsis
 
-Interact with the access control system(s) of a DefraDB node
+Interact with the document access control system of a DefraDB node
 
 Learn more about the DefraDB [ACP System](/acp/README.md)
 
@@ -13,7 +13,7 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 ### Options
 
 ```
-  -h, --help   help for acp
+  -h, --help   help for document
 ```
 
 ### Options inherited from parent commands
@@ -40,7 +40,7 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client acp document](defradb_client_acp_document.md)	 - Interact with the document access control system of a DefraDB node
-* [defradb client acp node](defradb_client_acp_node.md)	 - Interact with the node access control system of a DefraDB node
+* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system(s) of a DefraDB node
+* [defradb client acp document policy](defradb_client_acp_document_policy.md)	 - Interact with the document acp policy features of DefraDB instance
+* [defradb client acp document relationship](defradb_client_acp_document_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
 

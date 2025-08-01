@@ -1,19 +1,31 @@
-## defradb client acp dac
+## defradb client acp node disable
 
-Interact with the document access control system of a DefraDB node
+Disable the node access control
 
 ### Synopsis
 
-Interact with the document access control system of a DefraDB node
+Disable the node access control
+
+Example:
+  defradb client acp node disable -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+Note:
+- This command will disable an node acp system that is currently enabled.
+- If node acp is already disabled, then it will return an error.
+- If node acp is in a clean/non-configured state, then it will return an error.
 
 Learn more about the DefraDB [ACP System](/acp/README.md)
 
-		
+
+
+```
+defradb client acp node disable [-i --identity] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for dac
+  -h, --help   help for disable
 ```
 
 ### Options inherited from parent commands
@@ -40,7 +52,5 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 
 ### SEE ALSO
 
-* [defradb client acp](defradb_client_acp.md)	 - Interact with the access control system of a DefraDB node
-* [defradb client acp dac policy](defradb_client_acp_dac_policy.md)	 - Interact with the document acp policy features of DefraDB instance
-* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
+* [defradb client acp node](defradb_client_acp_node.md)	 - Interact with the node access control system of a DefraDB node
 
