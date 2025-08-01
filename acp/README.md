@@ -74,17 +74,9 @@ In DefraDB's case we wanted to gate access control around the `Documents` that b
 ## Field Access Control (FAC) (coming soon)
 We also want the ability to do a more granular access control than just DAC. Therefore we have `Field` level access control for situations where some fields of a `Document` need to be private, while others do not. In this case the `Document` becomes the `Resource` and the `Fields` are the `Objects` being gated.
 
-
-## Admin Access Control (AAC) (coming soon)
-We also want to model access control around the `Admin Level Operations` that exist in `DefraDB`. In this case the entire `Database` would be the `Resource` and the `Admin Level Operations` are the `Objects` being gated.
-
-A non-exhastive list of some operations only admins should have access for:
-- Ability to turnoff ACP
-- Ability to interact with the P2P system
-
 ## SourceHub Policies Are Too Flexible
 SourceHub Policies are too flexible (atleast until the ability to define `Meta Policies` is implemented). This is because SourceHub leaves it up to the user to specify any type of `Permissions` and `Relations`. However for DefraDB, there are certain guarantees that **MUST** be maintained in order for the `Policy` to be effective. For example the user can input any name for a `Permission`, or `Relation` that DefraDB has no knowledge of. Another example is when a user might make a `Policy` that does not give any `Permission` to the `owner`. Which means in the case of DAC no one will have any access to the `Document` they created.
-Therefore There was a very clear need to define some rules while writing a `Resource` in a `Policy` which will be used with DefraDB's DAC, FAC, or AAC. These rules will guarantee that certain `Required Permissions` will always be there on a `Resource` and that `Owner` has the correct `Permissions`.
+Therefore There was a very clear need to define some rules while writing a `Resource` in a `Policy` which will be used with DefraDB's DAC, FAC, or NAC. These rules will guarantee that certain `Required Permissions` will always be there on a `Resource` and that `Owner` has the correct `Permissions`.
 
 We call these rules DPI A.K.A DefraDB Policy Interface.
 
@@ -172,7 +164,7 @@ defradb client ... --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b
 
 ### Adding a Policy:
 
-We have in `examples/dpi_policy/user_dpi_policy.yml`:
+We have in `examples/policy/dac_policy.yml`:
 ```yaml
 name: An Example Policy
 
@@ -208,7 +200,7 @@ resources:
 
 CLI Command:
 ```sh
-defradb client acp policy add -f examples/dpi_policy/user_dpi_policy.yml --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+defradb client acp document policy add -f examples/policy/dac_policy.yml --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
 Result:
@@ -440,7 +432,7 @@ Error:
 ### Sharing Private Documents With Others
 
 To share a document (or grant a more restricted access) with another actor, we must add a relationship between the
-actor and the document. Inorder to make the relationship we require all of the following:
+actor and the document. In order to make the relationship we require all of the following:
 
 1) **Target DocID**: The `docID` of the document we want to make a relationship for.
 2) **Collection Name**: The name of the collection that has the `Target DocID`.
@@ -457,7 +449,7 @@ Note:
   and a relationship is formed, the subject/actor will still not be able to access (read or update or delete) the resource.
   - If the relationship already exists, then it will just be a no-op.
 
-Consider the following policy that we have under `examples/dpi_policy/user_dpi_policy_with_manages.yml`:
+Consider the following policy that we have under `examples/policy/dac_policy_with_manages.yml`:
 
 ```yaml
 name: An Example Policy
@@ -516,7 +508,7 @@ resources:
 
 Add the policy:
 ```sh
-defradb client acp policy add -f examples/dpi_policy/user_dpi_policy_with_manages.yml \
+defradb client acp document policy add -f examples/policy/dac_policy_with_manages.yml \
 --identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 ```
 
@@ -611,7 +603,7 @@ defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d994
 
 Now let's make the other actor a reader of the document by adding a relationship:
 ```sh
-defradb client acp relationship add \
+defradb client acp document relationship add \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -656,7 +648,7 @@ Sometimes we might want to give a specific access (i.e. form a relationship) not
 any identity (includes even requests with no-identity).
 In that case we can specify "*" instead of specifying an explicit `actor`:
 ```sh
-defradb client acp relationship add \
+defradb client acp document relationship add \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -676,7 +668,7 @@ Result:
 ### Revoking Access To Private Documents
 
 To revoke access to a document for an actor, we must delete the relationship between the
-actor and the document. Inorder to delete the relationship we require all of the following:
+actor and the document. In order to delete the relationship we require all of the following:
 
 1) Target DocID: The docID of the document we want to delete a relationship for.
 2) Collection Name: The name of the collection that has the Target DocID.
@@ -695,7 +687,7 @@ how to share the document with other actors.
 
 We made the document accessible to an actor by adding a relationship:
 ```sh
-defradb client acp relationship add \
+defradb client acp document relationship add \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -710,9 +702,9 @@ Result:
 }
 ```
 
-Similarly, inorder to revoke access to a document we have the following command to delete the relationship:
+Similarly, in order to revoke access to a document we have the following command to delete the relationship:
 ```sh
-defradb client acp relationship delete \
+defradb client acp document relationship delete \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -740,7 +732,7 @@ defradb client collection docIDs --identity 4d092126012ebaf56161716018a71630d994
 We can also revoke the previously granted implicit relationship which gave all actors access using the "*" actor.
 Similarly we can just specify "*" to revoke all access given to actors implicitly through this relationship:
 ```sh
-defradb client acp relationship delete \
+defradb client acp document relationship delete \
 --collection Users \
 --docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 --relation reader \
@@ -780,8 +772,60 @@ The signed token must be set on the `Authorization` header of the HTTP request w
 
 If authentication fails for any reason a `403` forbidden response will be returned.
 
-## _AAC DPI Rules (coming soon)_
-## _AAC Usage: (coming soon)_
+## Node ACP (NAC)
+In addition to document access control (DAC) we have another type of access control called node access control (NAC).
+In this case the entire `Node` would be the `Resource Object` that we we will gate.
+
+## NAC Usage:
+
+### Starting NAC:
+In order, to start node acp the user needs to specify an "owner" identity at node startup and indicate they
+want to enable node acp for the node.
+
+This can be done like this:
+```sh
+defradb start --no-keyring --node-acp-enable true \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Note: The owner will by default have access to all the permissions.
+
+The state of node access control will be saved, such that on next startup the node will automatically recover
+the previous state the node acp was left in. So, the user doesn't need to specify the are enabling node acp
+on subsequent starts.
+
+### Temporarily Disable NAC:
+While we do have an option to purge the entire node acp state to delete all relationships and reset the owner,
+sometimes you want to preserve the entire state of the node acp while temporarily disabling it. This can be
+done using the `disable` command like so:
+
+This can be done like this:
+```sh
+defradb client acp node disable \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Note: The identity *MUST* have the permission to be able to disable node acp.
+
+### Re-enable NAC:
+To re-enable node acp when it is temporarily disabled, use the `re-enable` command like so:
+```sh
+defradb client acp node re-enable \
+--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+```
+
+Note: The identity *MUST* have the permission to be able to re-enable node acp.
+
+### Check NAC Status 
+Node ACP could be in various states, for example it could be `enabled`, `disabled temporarily`,
+or `not configured` (in a `clean` state).
+To check the status of node acp, we have a utility `status` command:
+
+This can be done like this:
+```sh
+defradb client acp node status
+```
+
 
 ## _FAC DPI Rules (coming soon)_
 ## _FAC Usage: (coming soon)_
