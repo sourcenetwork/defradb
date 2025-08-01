@@ -46,14 +46,17 @@ type Generator struct {
 	manager  *SchemaManager
 
 	expandedFields map[string]bool
+
+	isSearchableEncryptionEnabled bool
 }
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
-func (m *SchemaManager) NewGenerator() *Generator {
+func (m *SchemaManager) NewGenerator(isSearchableEncryptionEnabled bool) *Generator {
 	m.Generator = &Generator{
-		manager:        m,
-		expandedFields: make(map[string]bool),
+		manager:                       m,
+		expandedFields:                make(map[string]bool),
+		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
 	return m.Generator
 }
@@ -119,9 +122,12 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 		generatedQueryFields = append(generatedQueryFields, f)
 
-		encryptedField, err := g.GenerateEncryptedQueryInputForGQLType(ctx, t, collections)
-		if err != nil {
-			return nil, err
+		var encryptedField *gql.Field
+		if g.isSearchableEncryptionEnabled {
+			encryptedField, err = g.GenerateEncryptedQueryInputForGQLType(ctx, t, collections)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		var isEmbedded bool
@@ -177,10 +183,12 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		generatedFilterLeafArgs = append(generatedFilterLeafArgs, leafFilterArg)
 	}
 
-	// Generate encrypted filter input types for primitive types (equality only)
-	for _, defaultType := range inlineArrayTypes() {
-		encryptedLeafFilterArg := g.genEncryptedLeafFilterArgInput(defaultType)
-		generatedFilterLeafArgs = append(generatedFilterLeafArgs, encryptedLeafFilterArg)
+	if g.isSearchableEncryptionEnabled {
+		// Generate encrypted filter input types for primitive types (equality only)
+		for _, defaultType := range inlineArrayTypes() {
+			encryptedLeafFilterArg := g.genEncryptedLeafFilterArgInput(defaultType)
+			generatedFilterLeafArgs = append(generatedFilterLeafArgs, encryptedLeafFilterArg)
+		}
 	}
 
 	for _, t := range generatedFilterLeafArgs {

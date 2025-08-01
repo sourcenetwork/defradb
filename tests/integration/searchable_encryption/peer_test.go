@@ -264,3 +264,79 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		KMS:                        testUtils.KMS{Activated: true},
+		EnableSearchableEncryption: true,
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
+				IsDocEncrypted: true,
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `
+					query {
+						Users_encrypted(filter: {age: {_eq: 21}}) {
+							docIDs
+						}
+					}`,
+				ExpectedError: "Cannot query field \"Users_encrypted\" on type \"Query\".",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError2(t *testing.T) {
+	test := testUtils.TestCase{
+		KMS:                        testUtils.KMS{Activated: true},
+		EnableSearchableEncryption: true,
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.SchemaUpdate{
+				Schema: `
+					type Users {
+						name: String @encryptedIndex
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
+				IsDocEncrypted: true,
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `
+					query {
+						Users_encrypted(filter: {age: {_eq: 21}}) {
+							docIDs
+						}
+					}`,
+				ExpectedError: "Argument \"filter\" has invalid value",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

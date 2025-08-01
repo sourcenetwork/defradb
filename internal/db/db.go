@@ -116,14 +116,14 @@ func newDB(
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	parser, err := graphql.NewParser()
-	if err != nil {
-		return nil, err
-	}
-
 	opts := &dbOptions{}
 	for _, opt := range options {
 		opt(opts)
+	}
+
+	parser, err := graphql.NewParser(len(opts.searchableEncryptionKey) > 0)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, cancel := context.WithCancel(ctx)

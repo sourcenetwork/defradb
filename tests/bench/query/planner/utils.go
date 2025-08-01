@@ -105,7 +105,7 @@ func buildParser(
 		return nil, err
 	}
 
-	parser, err := graphql.NewParser()
+	parser, err := graphql.NewParser(false)
 	if err != nil {
 		return nil, err
 	}

@@ -301,6 +301,11 @@ func (p *Peer) handleMessageLoop() {
 			return
 		}
 
+		log.InfoContext(p.ctx, "Received message from internal broadcaster",
+			corelog.String("Event", string(msg.Name)),
+			corelog.Any("Data", msg.Data),
+		)
+
 		switch evt := msg.Data.(type) {
 		case event.Update:
 			err := p.handleLog(evt)

@@ -90,7 +90,13 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, filterOptions[db.Option](n.options)...)
+
+	dbOpts := filterOptions[db.Option](n.options)
+	if n.config.disableP2P {
+		dbOpts = append(dbOpts, db.WithSearchableEncryptionKey(nil))
+	}
+
+	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, dbOpts...)
 	if err != nil {
 		return err
 	}

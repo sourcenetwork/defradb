@@ -16,9 +16,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndex_IfDocCreated_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexCreate_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSearchableEncryption: true,
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
@@ -28,30 +27,14 @@ func TestEncryptedIndex_IfDocCreated_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `
-					{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
 			testUtils.Request{
 				Request: `
-					query  {
-						Users {
-							name
-							age
+					query {
+						Users_encrypted(filter: {age: {_eq: 21}}) {
+							docIDs
 						}
 					}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-							"age":  int64(21),
-						},
-					},
-				},
+				ExpectedError: "Cannot query field \"Users_encrypted\" on type \"Query\".",
 			},
 		},
 	}

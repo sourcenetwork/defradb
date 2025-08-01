@@ -24,7 +24,7 @@ import (
 
 func TestGenerateEncryptedQueryField(t *testing.T) {
 	ctx := context.Background()
-	manager, err := NewSchemaManager()
+	manager, err := NewSchemaManager(true)
 	require.NoError(t, err)
 
 	collections := []client.CollectionDefinition{
@@ -99,7 +99,7 @@ func TestGenerateEncryptedQueryField(t *testing.T) {
 
 func TestNoEncryptedQueryFieldWithoutIndexes(t *testing.T) {
 	ctx := context.Background()
-	manager, err := NewSchemaManager()
+	manager, err := NewSchemaManager(true)
 	require.NoError(t, err)
 
 	collections := []client.CollectionDefinition{
