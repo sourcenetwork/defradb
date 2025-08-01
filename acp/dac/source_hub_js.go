@@ -170,10 +170,6 @@ func fromSourceHubPermissionJS(permName string, permMap map[string]interface{}) 
 	}
 }
 
-func (a *SourceHubDocumentACP) Init(ctx context.Context, path string) {
-	// No-op: initialization happens during node creation
-}
-
 func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
 	// No-op: client is initialized during node creation
 	return nil

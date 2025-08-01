@@ -119,12 +119,39 @@ type Close struct {
 	NodeID immutable.Option[int]
 }
 
+// Todo: https://github.com/sourcenetwork/defradb/issues/3872
+// Start should be improved and a bit more smart to not restart a node (also won't require Close() in that case),
+// if the first action item is `Start` with flag config options. Likely should fix tests where [EnableNAC]
+// is true to start node with nac from the start once this is fixed.
 // Start is an action that will start a node that has been previously closed.
 type Start struct {
 	// NodeID may hold the ID (index) of a node to start.
 	//
 	// If a value is not provided the start will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of the user starting the node.
+	//
+	// If this identity if used in combination with enabling node acp, then this
+	// Identity becomes the node acp owner for that node.
+	//
+	// To disable/purge/re-enable node acp after a successful start, must use the
+	// respective client commands instead.
+	Identity immutable.Option[state.Identity]
+
+	// EnableNAC is true when the node is being started with an attempt to setup and enable
+	// the node access control for that node.
+	//
+	// Must have a valid identity to enable (if enabling for the first time).
+	//
+	// False by default.
+	EnableNAC bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // SchemaUpdate is an action that will update the database schema.

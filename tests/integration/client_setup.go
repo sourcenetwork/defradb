@@ -44,7 +44,7 @@ func setupClient(s *state.State, node *node.Node) (clients.Client, error) {
 		return newGoClientWrapper(node), nil
 
 	default:
-		return nil, fmt.Errorf("invalid client type: %v", s.DbType)
+		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
 	}
 }
 

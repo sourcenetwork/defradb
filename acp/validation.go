@@ -17,7 +17,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-func ValidateResourceInterfaceAccordingToACPSystem(
+func ValidateResourceInterface(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -57,6 +57,8 @@ func ValidateResourceInterfaceAccordingToACPSystem(
 	switch acpType {
 	case acpTypes.LocalDocumentACP, acpTypes.SourceHubDocumentACP:
 		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForDocument
+	case acpTypes.NodeACP:
+		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForNode
 	default:
 		return NewErrInvalidACPSystem(resourceName)
 	}

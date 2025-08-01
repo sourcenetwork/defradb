@@ -118,7 +118,7 @@ func CheckDocAccessWithIdentityFunc(
 
 	documentResourcePerm, ok := permission.(acpTypes.DocumentResourcePermission)
 	if !ok {
-		return false, ErrInvalidResourcePermissionType
+		return false, client.ErrInvalidResourcePermissionType
 	}
 
 	// Now actually check using the signature if this identity has access or not.
