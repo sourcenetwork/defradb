@@ -51,13 +51,11 @@ func createBadgerEncryptionKey() error {
 func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
-	isNACEnabled bool,
 	testCase TestCase,
 	opts ...node.Option,
 ) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
-	opts = append(opts, node.WithEnableNodeACP(isNACEnabled))
 
 	err := createBadgerEncryptionKey()
 	if err != nil {

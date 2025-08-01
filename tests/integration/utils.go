@@ -782,7 +782,12 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
-		st, err := setupNode(s, acpIdentity.None, false, testCase, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))))
+		st, err := setupNode(
+			s,
+			acpIdentity.None,
+			testCase,
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
+		)
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
 	}
@@ -807,10 +812,10 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			addresses = append(addresses, addr.String())
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
+		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
 			getIdentityOption(s, action.Identity),
-			action.EnableNAC,
 			testCase,
 			opts...,
 		)
@@ -939,7 +944,7 @@ func configureNode(
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
-	node, err := setupNode(s, acpIdentity.None, false, testCase, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)
