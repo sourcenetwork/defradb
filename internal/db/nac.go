@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -94,7 +93,7 @@ func NewNACInfo(ctx context.Context, path string, enabled bool) (NACInfo, error)
 func (db *DB) initializeNodeACP(ctx context.Context, txn datastore.Txn) error {
 	isNACEnabledInStartCmd := db.nodeACP.EnabledInConfig
 	wasSetupBefore, err := txn.Systemstore().Has(ctx, keys.NewNodeACPKey().Bytes())
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+	if err != nil {
 		return err
 	}
 

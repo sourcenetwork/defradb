@@ -399,7 +399,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 
 	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+	if err != nil {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
