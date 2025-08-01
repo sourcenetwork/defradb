@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,15 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeACPCommand() *cobra.Command {
+func MakeNodeACPRelationshipCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "acp",
-		Short: "Interact with the access control system(s) of a DefraDB node",
-		Long: `Interact with the access control system(s) of a DefraDB node
-
-Learn more about the DefraDB [ACP System](/acp/README.md)
-
-		`,
+		Use:   "relationship",
+		Short: "Interact with the node acp relationship features of DefraDB instance",
+		Long:  `Interact with the node acp relationship features of DefraDB instance`,
 	}
 
 	return cmd

@@ -92,3 +92,83 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 	return exists, err
 }
+
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+	args := []string{"client", "acp", "node", "status"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.StatusNACResult{}, err
+	}
+
+	var status client.StatusNACResult
+	if err := json.Unmarshal(data, &status); err != nil {
+		return client.StatusNACResult{}, err
+	}
+
+	return status, nil
+}
+
+func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+	args := []string{"client", "acp", "node", "re-enable"}
+	if _, err := w.cmd.execute(ctx, args); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *Wrapper) DisableNAC(ctx context.Context) error {
+	args := []string{"client", "acp", "node", "disable"}
+	if _, err := w.cmd.execute(ctx, args); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *Wrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	args := []string{
+		"client", "acp", "node", "relationship", "add",
+		"--relation", relation,
+		"--actor", targetActor,
+	}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	var exists client.AddActorRelationshipResult
+	if err := json.Unmarshal(data, &exists); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	return exists, err
+}
+
+func (w *Wrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	args := []string{
+		"client", "acp", "node", "relationship", "delete",
+		"--relation", relation,
+		"--actor", targetActor,
+	}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	var exists client.DeleteActorRelationshipResult
+	if err := json.Unmarshal(data, &exists); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	return exists, err
+}

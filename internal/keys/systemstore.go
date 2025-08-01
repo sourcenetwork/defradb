@@ -11,6 +11,7 @@
 package keys
 
 const (
+	NODE_ACP                  = "nac"
 	COLLECTION                = "collection"
 	COLLECTION_SHORT_ID       = "/collection/shortID"
 	COLLECTION_NAME           = "/collection/name"

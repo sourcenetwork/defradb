@@ -53,7 +53,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, err
 	}
 
-	db, err := db.NewDB(ctx, rootstore, dac.NoDocumentACP, nil)
+	db, err := db.NewDB(ctx, rootstore, db.NewCleanAdminInfo(), dac.NoDocumentACP, nil)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}
