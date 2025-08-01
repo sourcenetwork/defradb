@@ -224,9 +224,6 @@ func ExecuteTestCase(
 	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
 
-	// We do this because for now JSClient only supports badger in-memory database.
-	clients = skipJSClientIfUnsupportedDBType(t, clients, databases)
-
 	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
@@ -2421,42 +2418,6 @@ func skipIfClientTypeUnsupported(
 
 	if len(filteredClients) == 0 {
 		t.Skipf("test does not support any given client type. Supported Type: %v", supportedClientTypes.Value())
-	}
-
-	return filteredClients
-}
-
-// skipJSClientIfUnsupportedDBType returns a filtered set of client types, removing JS client type
-// if any database type is not compatible with the JS client type.
-//
-// If the resultant filtered set of clients types is empty the test will be skipped.
-func skipJSClientIfUnsupportedDBType(
-	t testing.TB,
-	clients []state.ClientType,
-	databases []state.DatabaseType,
-) []state.ClientType {
-	filteredClients := []state.ClientType{}
-	for _, client := range clients {
-		if client != JSClientType {
-			filteredClients = append(filteredClients, client)
-			continue
-		}
-
-		// If client is JS type then we need to make sure that all databases types are compatible.
-		keepJSClient := true
-		for _, databaseType := range databases {
-			if databaseType != BadgerIMType {
-				keepJSClient = false
-				break
-			}
-		}
-		if keepJSClient {
-			filteredClients = append(filteredClients, client)
-		}
-	}
-
-	if len(filteredClients) == 0 {
-		t.Skipf("test does not support any clients after JS client was filtered")
 	}
 
 	return filteredClients
