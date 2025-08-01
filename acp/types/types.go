@@ -10,7 +10,11 @@
 
 package acp_types
 
-import "github.com/sourcenetwork/acp_core/pkg/types"
+import (
+	"strings"
+
+	"github.com/sourcenetwork/acp_core/pkg/types"
+)
 
 // RequiredRegistererRelationName is the required relation name that any registerer will have,
 // as the registerer is guaranteed to be the owner.
@@ -22,9 +26,11 @@ type ACPSystemType int
 const (
 	LocalDocumentACP ACPSystemType = iota
 	SourceHubDocumentACP
+	NodeACP
 )
 
 var _ ResourceInterfacePermission = (*DocumentResourcePermission)(nil)
+var _ ResourceInterfacePermission = (*NodeResourcePermission)(nil)
 
 type ResourceInterfacePermission interface {
 	String() string
@@ -61,6 +67,113 @@ var ImplyDocumentReadPerm = []DocumentResourcePermission{
 	DocumentReadPerm,
 	DocumentUpdatePerm,
 	DocumentDeletePerm,
+}
+
+// NodeResourcePermission is a resource interface permission for node access control.
+type NodeResourcePermission int
+
+// Resource interface permission types for node access control.
+const (
+	NodeDACBypassPerm NodeResourcePermission = iota
+	NodeDACEnablePerm
+	NodeDACDisablePerm
+	NodeDACPurgePerm
+	NodeDACStatusPerm
+	NodeDACRelationAddPerm
+	NodeDACRelationDeletePerm
+	NodeDACPolicyAddPerm
+	NodeNACReEnablePerm
+	NodeNACDisablePerm
+	NodeNACPurgePerm
+	NodeNACStatusPerm
+	NodeNACRelationAddPerm
+	NodeNACRelationDeletePerm
+)
+
+// List of all valid resource interface permissions for node access control, the order of
+// permissions in this list must match the above defined ordering such that iota matches the
+// index position within the list.
+var RequiredResourcePermissionsForNode = []string{
+	"dac-bypass",
+	"dac-enable",
+	"dac-disable",
+	"dac-purge",
+	"dac-status",
+	"dac-relation-add",
+	"dac-relation-delete",
+	"dac-policy-add",
+	"nac-re-enable",
+	"nac-disable",
+	"nac-purge",
+	"nac-status",
+	"nac-relation-add",
+	"nac-relation-delete",
+}
+
+const NodeACPObject = "NodeObject"
+
+const NodeACPPolicyResourceName = "node"
+
+const NodeACPPolicy = `
+name: Node ACP Policy
+description: Node ACP Policy
+
+actor:
+  name: actor
+
+resources:
+  node:
+    permissions:
+      dac-bypass:
+        expr: owner + admin
+      dac-enable:
+        expr: owner + admin
+      dac-disable:
+        expr: owner + admin
+      dac-purge:
+        expr: owner + admin
+      dac-status:
+        expr: owner + admin
+      dac-relation-add:
+        expr: owner + admin
+      dac-relation-delete:
+        expr: owner + admin
+      dac-policy-add:
+        expr: owner + admin
+      nac-re-enable:
+        expr: owner + admin
+      nac-disable:
+        expr: owner + admin
+      nac-purge:
+        expr: owner + admin
+      nac-status:
+        expr: owner + admin
+      nac-relation-add:
+        expr: owner + admin
+      nac-relation-delete:
+        expr: owner + admin
+
+    relations:
+      owner:
+        types:
+          - actor
+      admin:
+        manages:
+          - admin
+        types:
+          - actor
+`
+
+func (resourcePermission NodeResourcePermission) String() string {
+	return RequiredResourcePermissionsForNode[resourcePermission]
+}
+
+func (resourcePermission NodeResourcePermission) IsForNACOperation() bool {
+	permission := resourcePermission.String()
+	if len(permission) >= 3 && strings.EqualFold(permission[:3], "nac") {
+		return true
+	}
+	return false
 }
 
 // RegistrationResult is an enum type which indicates the result of a RegisterObject call to SourceHub / ACP Core
