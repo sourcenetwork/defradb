@@ -18,9 +18,6 @@ import (
 )
 
 func MakeDocumentACPPolicyAddCommand() *cobra.Command {
-	const fileFlagLong string = "file"
-	const fileFlagShort string = "f"
-
 	var policyFile string
 
 	var cmd = &cobra.Command{
@@ -119,6 +116,6 @@ Example: add from stdin:
 			return writeJSON(cmd, policyResult)
 		},
 	}
-	cmd.Flags().StringVarP(&policyFile, fileFlagLong, fileFlagShort, "", "File to load a policy from")
+	cmd.Flags().StringVarP(&policyFile, "file", "f", "", "File to load a policy from")
 	return cmd
 }

@@ -15,14 +15,6 @@ import (
 )
 
 func MakeNodeACPRelationshipAddCommand() *cobra.Command {
-	const (
-		relationFlagLong  string = "relation"
-		relationFlagShort string = "r"
-
-		targetActorFlagLong  string = "actor"
-		targetActorFlagShort string = "a"
-	)
-
 	var (
 		relationArg    string
 		targetActorArg string
@@ -69,21 +61,21 @@ Example: Make another actor an admin user:
 
 	cmd.Flags().StringVarP(
 		&relationArg,
-		relationFlagLong,
-		relationFlagShort,
+		"relation",
+		"r",
 		"",
 		"Relation that needs to be set for the relationship",
 	)
-	_ = cmd.MarkFlagRequired(relationFlagLong)
+	_ = cmd.MarkFlagRequired("relation")
 
 	cmd.Flags().StringVarP(
 		&targetActorArg,
-		targetActorFlagLong,
-		targetActorFlagShort,
+		"actor",
+		"a",
 		"",
 		"Actor to add relationship with",
 	)
-	_ = cmd.MarkFlagRequired(targetActorFlagLong)
+	_ = cmd.MarkFlagRequired("actor")
 
 	return cmd
 }

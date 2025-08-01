@@ -15,14 +15,6 @@ import (
 )
 
 func MakeNodeACPRelationshipDeleteCommand() *cobra.Command {
-	const (
-		relationFlagLong  string = "relation"
-		relationFlagShort string = "r"
-
-		targetActorFlagLong  string = "actor"
-		targetActorFlagShort string = "a"
-	)
-
 	var (
 		relationArg    string
 		targetActorArg string
@@ -68,21 +60,21 @@ Example: Revoke node access from an admin user:
 
 	cmd.Flags().StringVarP(
 		&relationArg,
-		relationFlagLong,
-		relationFlagShort,
+		"relation",
+		"r",
 		"",
 		"Relation that needs to be deleted within the relationship",
 	)
-	_ = cmd.MarkFlagRequired(relationFlagLong)
+	_ = cmd.MarkFlagRequired("relation")
 
 	cmd.Flags().StringVarP(
 		&targetActorArg,
-		targetActorFlagLong,
-		targetActorFlagShort,
+		"actor",
+		"a",
 		"",
 		"Actor to delete relationship for",
 	)
-	_ = cmd.MarkFlagRequired(targetActorFlagLong)
+	_ = cmd.MarkFlagRequired("actor")
 
 	return cmd
 }
