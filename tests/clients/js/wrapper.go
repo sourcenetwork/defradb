@@ -168,6 +168,60 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+	res, err := execute(ctx, w.value, "getNACStatus")
+	if err != nil {
+		return client.StatusNACResult{}, err
+	}
+	var out client.StatusNACResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.StatusNACResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+	_, err := execute(ctx, w.value, "reEnableNAC")
+	return err
+}
+
+func (w *Wrapper) DisableNAC(ctx context.Context) error {
+	_, err := execute(ctx, w.value, "disableNAC")
+	return err
+}
+
+func (w *Wrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "addNACActorRelationship", relation, targetActor)
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+	var out client.AddActorRelationshipResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "deleteNACActorRelationship", relation, targetActor)
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+	var out client.DeleteActorRelationshipResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+	return out, nil
+}
+
 func (w *Wrapper) PatchSchema(
 	ctx context.Context,
 	patch string,
