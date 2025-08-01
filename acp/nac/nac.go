@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package aac
+package nac
 
 import (
 	"context"
@@ -18,25 +18,25 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-const localStoreName = "local_admin_acp"
+const localStoreName = "local_node_acp"
 
-var _ acp.ACPSystemClient = (*AdminACP)(nil)
+var _ acp.ACPSystemClient = (*NodeACP)(nil)
 
-// AdminACP represents a admin acp (local to the node) implementation that makes no remote calls.
-type AdminACP struct {
+// NodeACP represents a node acp (local to the node) implementation that makes no remote calls.
+type NodeACP struct {
 	*local.LocalACP
 }
 
-func NewAdminACP(pathToStore string) (AdminACP, error) {
+func NewNodeACP(pathToStore string) (NodeACP, error) {
 	localACP, err := local.NewLocalACP(pathToStore, localStoreName)
 	if err != nil {
-		return AdminACP{}, err
+		return NodeACP{}, err
 	}
 
-	return AdminACP{LocalACP: localACP}, nil
+	return NodeACP{LocalACP: localACP}, nil
 }
 
-func (a *AdminACP) ValidateResourceInterface(
+func (a *NodeACP) ValidateResourceInterface(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -45,7 +45,7 @@ func (a *AdminACP) ValidateResourceInterface(
 		ctx,
 		policyID,
 		resourceName,
-		acpTypes.AdminACP,
+		acpTypes.NodeACP,
 		a,
 	)
 }

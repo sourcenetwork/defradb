@@ -42,7 +42,7 @@ type DB interface {
 	Events() event.Bus
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	PurgeDACState(ctx context.Context) error
-	PurgeAACState(ctx context.Context) error
+	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	Close()
 }
@@ -135,7 +135,7 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	}
 
 	// This will purge node acp state.
-	err = n.DB.PurgeAACState(ctx)
+	err = n.DB.PurgeNACState(ctx)
 	if err != nil {
 		return err
 	}
