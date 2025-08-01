@@ -13,7 +13,7 @@ package node
 import (
 	"context"
 
-	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/lens/host-go/engine/module"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/lens"

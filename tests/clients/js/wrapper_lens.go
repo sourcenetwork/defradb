@@ -16,9 +16,9 @@ import (
 	"context"
 	sysjs "syscall/js"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable/enumerable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 )

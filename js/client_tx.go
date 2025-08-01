@@ -18,11 +18,11 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 type transaction struct {

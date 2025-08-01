@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"

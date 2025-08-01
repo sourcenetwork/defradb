@@ -26,7 +26,6 @@ require (
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/ipld/go-ipld-prime/storage/bsrvadapter v0.0.0-20240322071758-198d7dba8fb8
 	github.com/joho/godotenv v1.5.1
-	github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5
 	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/libp2p/go-libp2p v0.41.1
 	github.com/libp2p/go-libp2p-gostream v0.6.0
@@ -50,6 +49,7 @@ require (
 	github.com/sourcenetwork/goji v0.0.8
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a
 	github.com/sourcenetwork/immutable v0.3.0
+	github.com/sourcenetwork/lens/host-go v0.0.0-20250801172620-185c0b250e1a
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf
 	github.com/sourcenetwork/testo v0.1.0
 	github.com/spf13/cobra v1.9.1
@@ -116,7 +116,7 @@ require (
 	github.com/bgentry/speakeasy v0.2.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
-	github.com/bytecodealliance/wasmtime-go/v21 v21.0.0 // indirect
+	github.com/bytecodealliance/wasmtime-go/v35 v35.0.0 // indirect
 	github.com/bytedance/sonic v1.12.3 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
@@ -358,7 +358,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tendermint/tendermint v0.35.9 // indirect
-	github.com/tetratelabs/wazero v1.8.2 // indirect
+	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/textileio/go-log/v2 v2.1.3-gke-2 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

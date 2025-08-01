@@ -44,7 +44,7 @@ The set of fields on a `CollectionVersion` defines [local](#local-definitions) a
 
 Collections are not limited to representing writeable data.  Collections can also represent views of written data.
 
-Views are collections with a `QuerySource` source in the `Sources` set.  On query they will fetch data from the query defined on `QuerySource`, and then (optionally) apply a [Lens](https://github.com/lens-vm/lens) transform before yielding the results to the user.  The query may point to another view, allowing views of views of views.
+Views are collections with a `QuerySource` source in the `Sources` set.  On query they will fetch data from the query defined on `QuerySource`, and then (optionally) apply a [Lens](https://github.com/sourcenetwork/lens) transform before yielding the results to the user.  The query may point to another view, allowing views of views of views.
 
 Views may be defined using the `AddView` function.
 
