@@ -11,20 +11,31 @@
 package tests
 
 import (
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 )
 
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.NodeState, error) {
+func setupNode(
+	s *state.State,
+	identity immutable.Option[acpIdentity.Identity],
+	testCase TestCase,
+	opts ...node.Option,
+) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
-	opts = append(opts, node.WithBadgerInMemory(true))
 	opts = append(opts, node.WithLensRuntime(node.JSLensRuntime))
+	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
+	// handles some edge-cases by skipping js client testing when a db type is something else.
+	// If this hard-coding is changed in future, don't forget to tweak the following func:
+	// [skipJSClientIfUnsupportedDBType]
+	opts = append(opts, node.WithBadgerInMemory(true))
 
 	switch documentACPType {
 	case LocalDocumentACPType:
@@ -50,7 +61,9 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 	if err != nil {
 		return nil, err
 	}
+	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
 	err = node.Start(s.Ctx)
+	resetStateContext(s)
 	if err != nil {
 		return nil, err
 	}

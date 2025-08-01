@@ -23,14 +23,8 @@ import (
 
 // ACPSystemClient is an abstraction to allow multiple types of ACP systems to share DefraDB specific logic.
 type ACPSystemClient interface {
-	// Init initializes the acp, with an absolute path. The provided path indicates where the
-	// persistent data will be stored for that ACP system.
-	//
-	// If the path is empty then acp will run in memory.
-	Init(ctx context.Context, path string)
-
-	// Start starts the acp, using the initialized path. Will recover acp state
-	// from a previous run if under the same path.
+	// Start starts the acp, using the configured path. Will recover acp state
+	// from a previous run if under the same persistent path.
 	//
 	// If the path is empty then acp will run in memory.
 	Start(ctx context.Context) error
