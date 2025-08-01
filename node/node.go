@@ -41,7 +41,7 @@ type DB interface {
 	Rootstore() corekv.TxnStore
 	Events() event.Bus
 	DocumentACP() immutable.Option[dac.DocumentACP]
-	PurgeACPState(ctx context.Context) error
+	PurgeDACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	Close()
 }
@@ -131,9 +131,9 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		return err
 	}
 
-	// This will purge state.
+	// This will purge document acp state.
 	// They will be restarted when node is started again.
-	err = n.DB.PurgeACPState(ctx)
+	err = n.DB.PurgeDACState(ctx)
 	if err != nil {
 		return err
 	}

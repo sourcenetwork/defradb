@@ -201,12 +201,12 @@ func (db *DB) AddDACPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
-// PurgeACPState purges the ACP state(s), and calls [Close()] on the ACP system(s) before returning.
+// PurgeDACState purges all document ACP state, and calls [Close()] on the acp instance before returning.
 //
-// This will close the ACP system(s), purge it's state(s), then restart it/them, and finally close it/them.
+// This will close the acp system, reset it's state (purge then restart), and finally close it.
 //
-// Note: all ACP state(s) will be lost, and won't be recoverable.
-func (db *DB) PurgeACPState(ctx context.Context) error {
+// Note: all document ACP state will be lost, and won't be recoverable.
+func (db *DB) PurgeDACState(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
