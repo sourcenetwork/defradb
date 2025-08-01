@@ -42,7 +42,6 @@ type CWrapper struct {
 func NewCWrapper() *CWrapper {
 	nodeNum := atomic.AddInt32(&wrapperCount, 1) - 1
 	setupTests(int(nodeNum))
-	wrapperCount++
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 

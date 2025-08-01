@@ -41,7 +41,7 @@ const (
 
 	// Subscription
 	errInvalidSubscriptionID string = "error: invalid subscription ID"
-	errTimeoutSubscription   string = "error: timeout waiting for subscription event"
+	errGEttingSubscription   string = "error: could not retrieve subscription"
 
 	// Txn
 	errCreatingTxn     string = "error creating transaction: %v"

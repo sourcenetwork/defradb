@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	GlobalNodes   = make(map[int]*node.Node)
+	globalNodes   = make(map[int]*node.Node)
 	globalNodesMu sync.RWMutex
 )
 
@@ -45,12 +45,12 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
 
-	if GlobalNodes[n] != nil {
-		err := GlobalNodes[n].Close(ctx)
+	if globalNodes[n] != nil {
+		err := globalNodes[n].Close(ctx)
 		if err != nil {
 			return returnGoC(1, fmt.Sprintf(errClosingNode, err), "")
 		}
-		GlobalNodes[n] = nil
+		globalNodes[n] = nil
 	}
 
 	// Create the directory if it doesn't exist, and inMemory flag is not set
@@ -111,7 +111,7 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	}
 
 	// Try to create the node passing in the collected options, then return the result
-	GlobalNodes[n], err = node.New(ctx, opts...)
+	globalNodes[n], err = node.New(ctx, opts...)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")
 	}
@@ -123,7 +123,7 @@ func NodeStart(n int) GoCResult {
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
 
-	if GlobalNodes[n] == nil {
+	if globalNodes[n] == nil {
 		return returnGoC(1, errUninitializedNode, "")
 	}
 	ctx := context.Background()
@@ -131,7 +131,7 @@ func NodeStart(n int) GoCResult {
 	errCh := make(chan error, 1)
 
 	go func() {
-		err := GlobalNodes[n].Start(ctx)
+		err := globalNodes[n].Start(ctx)
 		errCh <- err
 	}()
 
@@ -151,15 +151,23 @@ func NodeStop(n int) GoCResult {
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
 
-	if GlobalNodes[n] == nil {
+	if globalNodes[n] == nil {
 		return returnGoC(1, errStoppedNode, "")
 	}
 	ctx := context.Background()
-	err := GlobalNodes[n].Close(ctx)
+	err := globalNodes[n].Close(ctx)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errStoppingNode, err), "")
 	}
-	GlobalNodes[n] = nil
+	globalNodes[n] = nil
 
 	return returnGoC(0, "", "")
+}
+
+// GetNode is a thread-safe getter for a global node
+// It is exported so that it can be used for integration testing
+func GetNode(n int) *node.Node {
+	globalNodesMu.RLock()
+	defer globalNodesMu.RUnlock()
+	return globalNodes[n]
 }

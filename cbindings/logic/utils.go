@@ -24,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 type GoCResult struct {
@@ -161,12 +160,4 @@ func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdent
 	}
 
 	return &id, nil
-}
-
-// GetNode is a thread-safe getter for a global node
-// It is exported so that it can be used for integration testing
-func GetNode(n int) *node.Node {
-	globalNodesMu.RLock()
-	defer globalNodesMu.RUnlock()
-	return GlobalNodes[n]
 }

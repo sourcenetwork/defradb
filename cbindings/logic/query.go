@@ -13,7 +13,6 @@ package cbindings
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -21,19 +20,24 @@ import (
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
-// RequestResults. Three functions, storeSubscription, getSubscription, and removeSubscription are
+// Subscription objects. Three functions, storeSubscription, getSubscription, and removeSubscription are
 // helpers which manage this store behind the scenes, while PollSubscription and CloseSubscription
 // are made available to the user for interacting with the subscriptions.
 
-var subscriptionStore sync.Map // map[string]*client.RequestResult
+var subscriptionStore sync.Map // map[string]*Subscription
 
+// The subscription object has two fields, ctxCancel and resultChan. The resultChan is the channel
+// containing the results of the subscription. When PollSubscription is called, it will look to see
+// if a message is in the channel. ctxCancel is a function that was injected into the context
+// when it was created. It will be called when the subscription is closed, to prevent a goroutine
+// leak.
 type Subscription struct {
 	ctxCancel  context.CancelFunc
 	resultChan <-chan client.GQLResult
 }
 
 // Using UUID lets us avoid collisions, even if we use this across multiple nodes
-func storeSubscription(s Subscription) string {
+func storeSubscription(s *Subscription) string {
 	id := uuid.NewString()
 	subscriptionStore.Store(id, s)
 	return id
@@ -57,22 +61,24 @@ func removeSubscription(id string) {
 	}
 }
 
+// PollSubscription will get the subscription object associcated with an ID, and if
+// it exists will see if there's a message in its result channel. If there isn't, it will
+// return with status 2, and a blank payload. If there is, it will return with status 0,
+// and the payload of the message. If an error occurs, status 1 is returned.
 func PollSubscription(id string) GoCResult {
 	sub, ok := getSubscription(id)
 	if !ok {
 		return returnGoC(1, errInvalidSubscriptionID, "")
 	}
-
 	select {
 	case msg, ok := <-sub.resultChan:
 		if !ok {
 			removeSubscription(id)
-			return returnGoC(0, "", "")
+			return returnGoC(1, errGEttingSubscription, "")
 		}
 		return marshalJSONToGoCResult(msg)
-
-	case <-time.After(time.Second):
-		return returnGoC(1, errTimeoutSubscription, "")
+	default:
+		return returnGoC(2, "", "")
 	}
 }
 
@@ -115,7 +121,7 @@ func ExecuteQuery(
 	// which: 0 for GQL, 2 for subscription. 1 is not used because this cannot error; the
 	// error is part of the GQL result, to be GQL-compliant.
 	if res.Subscription != nil {
-		id := storeSubscription(*sub)
+		id := storeSubscription(sub)
 		return returnGoC(2, "", id)
 	}
 	return marshalJSONToGoCResult(res.GQL)
