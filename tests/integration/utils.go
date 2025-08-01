@@ -34,6 +34,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -386,6 +387,21 @@ func performAction(
 
 	case DeleteDACActorRelationship:
 		deleteDACActorRelationship(s, action)
+
+	case ReEnableNAC:
+		reEnableNAC(s, action)
+
+	case DisableNAC:
+		disableNAC(s, action)
+
+	case AddNACActorRelationship:
+		addNACActorRelationship(s, action)
+
+	case DeleteNACActorRelationship:
+		deleteNACActorRelationship(s, action)
+
+	case GetNACStatus:
+		getNACStatus(s, action)
 
 	case CreateDoc:
 		createDoc(s, action)
@@ -769,7 +785,12 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
-		st, err := setupNode(s, testCase, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))))
+		st, err := setupNode(
+			s,
+			acpIdentity.None,
+			testCase,
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
+		)
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
 	}
@@ -782,7 +803,9 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.Nodes[nodeIndex].DbPath
-		opts := []node.Option{db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex)))}
+		opts := []node.Option{
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex))),
+		}
 		for _, opt := range s.Nodes[nodeIndex].NetOpts {
 			opts = append(opts, opt)
 		}
@@ -792,12 +815,32 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			addresses = append(addresses, addr.String())
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
-		node, err := setupNode(s, testCase, opts...)
-		require.NoError(s.T, err)
+		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
+		node, err := setupNode(
+			s,
+			getIdentityOption(s, action.Identity),
+			testCase,
+			opts...,
+		)
 		databaseDir = originalPath
+
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+		if expectedErrorRaised {
+			// If we are testing for failure on start of a node, there will be panics if we don't return
+			// when there are errors, so we exit here to assert errors on start.
+			return
+		}
+
+		require.Equal(s.T, action.ExpectedError, "")
+
 		node.P2P = s.Nodes[nodeIndex].P2P
 		s.Nodes[nodeIndex] = node
 	}
+
+	// If the db was restarted we need to refresh the existing tokens as the audiance value changed,
+	// If we don't do this, then any existing tokens will be using the old audiance value upon restart.
+	refreshTokens(s)
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
@@ -814,6 +857,32 @@ func restartNodes(
 	closeNodes(s, Close{})
 	startNodes(s, testCase, Start{})
 	reconnectPeers(s)
+}
+
+// refreshTokens refreshes all the existing tokens, preserving order.
+func refreshTokens(
+	s *state.State,
+) {
+	for identKey, identHolder := range s.Identities {
+		identityToUpdate := identHolder.Identity
+		if fullIdentityToUpdate, ok := identityToUpdate.(acpIdentity.FullIdentity); ok {
+			nodeTokensToUpdate := identHolder.NodeTokens
+			for nodeKey := range identHolder.NodeTokens {
+				if audience := getNodeAudience(s, nodeKey); audience.HasValue() {
+					err := fullIdentityToUpdate.UpdateToken(
+						authTokenExpiration,
+						audience,
+						immutable.Some(s.SourcehubAddress),
+					)
+					require.NoError(s.T, err)
+					nodeTokensToUpdate[nodeKey] = fullIdentityToUpdate.BearerToken()
+				}
+			}
+			identHolder.Identity = identityToUpdate
+			identHolder.NodeTokens = nodeTokensToUpdate
+			s.Identities[identKey] = identHolder
+		}
+	}
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
@@ -878,7 +947,7 @@ func configureNode(
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
-	node, err := setupNode(s, testCase, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)

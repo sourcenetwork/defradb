@@ -1,4 +1,4 @@
-## defradb client acp dac relationship add
+## defradb client acp document relationship add
 
 Add new relationship
 
@@ -48,7 +48,7 @@ Example: Creating a dummy relationship does nothing (from database perspective):
 
 
 ```
-defradb client acp dac relationship add [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
+defradb client acp document relationship add [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
 ```
 
 ### Options
@@ -85,5 +85,5 @@ defradb client acp dac relationship add [--docID] [-c --collection] [-r --relati
 
 ### SEE ALSO
 
-* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
+* [defradb client acp document relationship](defradb_client_acp_document_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
 

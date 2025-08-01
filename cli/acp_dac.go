@@ -16,7 +16,7 @@ import (
 
 func MakeDocumentACPCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "dac",
+		Use:   "document",
 		Short: "Interact with the document access control system of a DefraDB node",
 		Long: `Interact with the document access control system of a DefraDB node
 

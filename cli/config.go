@@ -67,8 +67,9 @@ var configFlags = map[string]string{
 	"keyring-backend":            "keyring.backend",
 	"keyring-path":               "keyring.path",
 	"no-keyring":                 "keyring.disabled",
-	"dac-type":                   "acp.dac.type",
-	"source-hub-address":         "acp.dac.sourceHub.address",
+	"node-acp-enable":            "acp.node.enable",
+	"document-acp-type":          "acp.document.type",
+	"source-hub-address":         "acp.document.sourceHub.address",
 	"development":                "development",
 	"secret-file":                "secretfile",
 	"no-telemetry":               "telemetry.disabled",
@@ -104,7 +105,8 @@ var configDefaults = map[string]any{
 	"telemetry.disabled":                false,
 	"datastore.nosigning":               false,
 	"datastore.defaultkeytype":          "secp256k1",
-	"acp.dac.type":                      "none",
+	"acp.node.enable":                   false,
+	"acp.document.type":                 "none",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 

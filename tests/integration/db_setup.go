@@ -15,6 +15,9 @@ package tests
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/immutable"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
@@ -41,7 +44,16 @@ func createBadgerEncryptionKey() error {
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
-func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.NodeState, error) {
+//
+// Note: If the signature of this function is updated, don't forget to
+// also update the function in [tests/integration/db_setup_js.go] otherwise
+// the js client build may fail (the failure might not be obvious to find).
+func setupNode(
+	s *state.State,
+	identity immutable.Option[acpIdentity.Identity],
+	testCase TestCase,
+	opts ...node.Option,
+) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
 
@@ -92,7 +104,12 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 			path = s.T.TempDir()
 		}
 
-		opts = append(opts, node.WithStorePath(path), node.WithDocumentACPPath(path))
+		opts = append(
+			opts,
+			node.WithStorePath(path),
+			node.WithDocumentACPPath(path),
+			node.WithNodeACPPath(path),
+		)
 
 	case DefraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
@@ -121,7 +138,10 @@ func setupNode(s *state.State, testCase TestCase, opts ...node.Option) (*state.N
 		return nil, err
 	}
 
+	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
 	err = node.Start(s.Ctx)
+	resetStateContext(s)
+
 	if err != nil {
 		return nil, err
 	}
