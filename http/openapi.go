@@ -47,7 +47,7 @@ var openApiSchemas = map[string]any{
 	"acp_policy_add_result":                    &client.AddPolicyResult{},
 	"acp_relationship_add_result":              &client.AddActorRelationshipResult{},
 	"acp_relationship_delete_result":           &client.DeleteActorRelationshipResult{},
-	"acp_node_status_result":                   &client.StatusNACResult{},
+	"acp_node_status_result":                   &client.NACStatusResult{},
 	"acp_node_relationship_add_request":        &addNACActorRelationshipRequest{},
 	"acp_node_relationship_delete_request":     &deleteNACActorRelationshipRequest{},
 	"acp_document_relationship_add_request":    &addDACActorRelationshipRequest{},

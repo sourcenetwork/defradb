@@ -168,14 +168,14 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	res, err := execute(ctx, w.value, "getNACStatus")
 	if err != nil {
-		return client.StatusNACResult{}, err
+		return client.NACStatusResult{}, err
 	}
-	var out client.StatusNACResult
+	var out client.NACStatusResult
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.StatusNACResult{}, err
+		return client.NACStatusResult{}, err
 	}
 	return out, nil
 }

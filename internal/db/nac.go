@@ -517,15 +517,15 @@ func CheckNodeOperationAccess(
 	return client.ErrNotAuthorizedToPerformOperation
 }
 
-func (db *DB) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+func (db *DB) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeNACStatusPerm); err != nil {
-		return client.StatusNACResult{}, err
+		return client.NACStatusResult{}, err
 	}
 
-	return client.StatusNACResult{
+	return client.NACStatusResult{
 		Status: db.nodeACP.NodeACPDesc.Status.String(),
 	}, nil
 }

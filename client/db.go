@@ -149,7 +149,7 @@ type Store interface {
 
 	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
 	// or if node acp is currently enabled or temporarily disabled.
-	GetNACStatus(ctx context.Context) (StatusNACResult, error)
+	GetNACStatus(ctx context.Context) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)

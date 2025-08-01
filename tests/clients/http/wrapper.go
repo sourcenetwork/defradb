@@ -190,7 +190,7 @@ func (w *Wrapper) DisableNAC(ctx context.Context) error {
 	return w.client.DisableNAC(ctx)
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	return w.client.GetNACStatus(ctx)
 }
 

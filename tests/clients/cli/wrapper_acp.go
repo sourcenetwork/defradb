@@ -93,17 +93,17 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return exists, err
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	args := []string{"client", "acp", "node", "status"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return client.StatusNACResult{}, err
+		return client.NACStatusResult{}, err
 	}
 
-	var status client.StatusNACResult
+	var status client.NACStatusResult
 	if err := json.Unmarshal(data, &status); err != nil {
-		return client.StatusNACResult{}, err
+		return client.NACStatusResult{}, err
 	}
 
 	return status, nil

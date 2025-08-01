@@ -70,7 +70,7 @@ func (status NACStatus) String() string {
 	return statuses[status]
 }
 
-// StatusNACResult wraps the result of current node acp status.
-type StatusNACResult struct {
+// NACStatusResult wraps the result of current node acp status.
+type NACStatusResult struct {
 	Status string
 }

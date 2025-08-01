@@ -172,7 +172,7 @@ func (txn *Txn) DisableNAC(ctx context.Context) error {
 	return txn.db.DisableNAC(ctx)
 }
 
-func (txn *Txn) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+func (txn *Txn) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetNACStatus(ctx)
 }

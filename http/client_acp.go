@@ -257,18 +257,18 @@ func (c *Client) DisableNAC(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) GetNACStatus(ctx context.Context) (client.StatusNACResult, error) {
+func (c *Client) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "status")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
-		return client.StatusNACResult{}, err
+		return client.NACStatusResult{}, err
 	}
 
-	var statusNACResult client.StatusNACResult
-	if err := c.http.requestJson(req, &statusNACResult); err != nil {
-		return client.StatusNACResult{}, err
+	var statusResult client.NACStatusResult
+	if err := c.http.requestJson(req, &statusResult); err != nil {
+		return client.NACStatusResult{}, err
 	}
 
-	return statusNACResult, nil
+	return statusResult, nil
 }
