@@ -62,12 +62,16 @@ const (
 )
 
 func (status NACStatus) String() string {
-	var statuses = []string{
-		"not configured",
-		"enabled",
-		"disabled temporarily",
+	switch status {
+	case NACNotConfigured:
+		return "not configured"
+	case NACEnabled:
+		return "enabled"
+	case NACDisabledTemporarily:
+		return "disabled temporarily"
+	default:
+		return "invalid state"
 	}
-	return statuses[status]
 }
 
 // NACStatusResult wraps the result of current node acp status.
