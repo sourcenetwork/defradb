@@ -366,6 +366,30 @@ func (db *DB) DisableNAC(ctx context.Context) error {
 	return db.saveAdminACPDesc(ctx)
 }
 
+// PurgeAACState will reset/purge the entire admin acp state. This means that all relationships that were
+// formed will be deleted and any user can then enable admin acp using their identity and become the admin.
+//
+// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+// authorized to perform this operation.
+//
+// Note:
+// - This will disable admin acp and leave it in a clean state.
+// - This operation also requires dev-mode to be enabled.
+func (db *DB) PurgeAACState(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	if db.adminInfo.AdminACP != nil {
+		err := db.resetAdminACP(ctx)
+		if err != nil {
+			log.ErrorE("Failed to reset admin ACP state", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
 // checkAdminAccess is a helper function that performs the admin acp validation check, if requesting
 // user has access then nil is returned, otherwise returns an error.
 //
