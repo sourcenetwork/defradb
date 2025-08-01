@@ -119,6 +119,10 @@ type Close struct {
 	NodeID immutable.Option[int]
 }
 
+// Todo: https://github.com/sourcenetwork/defradb/issues/3872
+// Start should be improved and a bit more smart to not restart a node (also won't require Close() in that case),
+// if the first action item is `Start` with flag config options. Likely should fix tests where [EnableNAC]
+// is true to start node with nac from the start once this is fixed.
 // Start is an action that will start a node that has been previously closed.
 type Start struct {
 	// NodeID may hold the ID (index) of a node to start.
