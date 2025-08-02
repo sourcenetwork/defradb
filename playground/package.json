@@ -16,7 +16,7 @@
     "@sourcenetwork/acp-js": "1.0.2",
     "graphiql": "^4.1.2",
     "graphql": "^16.10.0",
-    "lucide-react": "^0.534.0",
+    "lucide-react": "^0.536.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "swagger-ui-react": "^5.27.1",
