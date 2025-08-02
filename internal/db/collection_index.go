@@ -434,6 +434,11 @@ func (c *collection) createEncryptedIndex(
 		return client.EncryptedIndexDescription{}, err
 	}
 
+	err = c.db.loadSchema(ctx)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+
 	return c.def.Version.EncryptedIndexes[len(c.def.Version.EncryptedIndexes)-1], nil
 }
 
@@ -442,11 +447,11 @@ func (c *collection) GetEncryptedIndexes(ctx context.Context) ([]client.Encrypte
 	return c.Version().EncryptedIndexes, nil
 }
 
-// DropEncryptedIndex drops an encrypted index from the collection.
+// DeleteEncryptedIndex deletes an encrypted index from the collection.
 //
 // The encrypted index will be removed from the system store.
 // All SE artifacts on remote nodes will become inaccessible for queries.
-func (c *collection) DropEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -456,14 +461,14 @@ func (c *collection) DropEncryptedIndex(ctx context.Context, fieldName string) e
 	}
 	defer txn.Discard(ctx)
 
-	err = c.dropEncryptedIndex(ctx, fieldName)
+	err = c.deleteEncryptedIndex(ctx, fieldName)
 	if err != nil {
 		return err
 	}
 	return txn.Commit(ctx)
 }
 
-func (c *collection) dropEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string) error {
 	indexToRemove := -1
 	for i, encIdx := range c.Version().EncryptedIndexes {
 		if encIdx.FieldName == fieldName {
@@ -487,6 +492,11 @@ func (c *collection) dropEncryptedIndex(ctx context.Context, fieldName string) e
 	err := description.SaveCollection(ctx, c.def.Version)
 	if err != nil {
 		c.def.Version.EncryptedIndexes = oldEncryptedIndexes
+		return err
+	}
+
+	err = c.db.loadSchema(ctx)
+	if err != nil {
 		return err
 	}
 

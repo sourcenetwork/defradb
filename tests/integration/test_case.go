@@ -653,9 +653,9 @@ type GetEncryptedIndexes struct {
 	ExpectedError string
 }
 
-// DropEncryptedIndex will attempt to drop the given encrypted index for the given collection
+// DeleteEncryptedIndex will attempt to delete the given encrypted index for the given collection
 // using the collection api.
-type DropEncryptedIndex struct {
+type DeleteEncryptedIndex struct {
 	// NodeID may hold the ID (index) of a node to drop the encrypted index on.
 	//
 	// If a value is not provided the index will be dropped on all nodes.

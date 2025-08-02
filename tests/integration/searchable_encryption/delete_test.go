@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexDrop_WithExistingIndex_ShouldDropSuccessfully(t *testing.T) {
+func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -38,7 +38,7 @@ func TestEncryptedIndexDrop_WithExistingIndex_ShouldDropSuccessfully(t *testing.
 					},
 				},
 			},
-			testUtils.DropEncryptedIndex{
+			testUtils.DeleteEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.GetEncryptedIndexes{
@@ -51,7 +51,7 @@ func TestEncryptedIndexDrop_WithExistingIndex_ShouldDropSuccessfully(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
+func TestEncryptedIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -62,7 +62,7 @@ func TestEncryptedIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.DropEncryptedIndex{
+			testUtils.DeleteEncryptedIndex{
 				FieldName:     "age",
 				ExpectedError: db.NewErrEncryptedIndexDoesNotExist("age").Error(),
 			},
@@ -72,7 +72,7 @@ func TestEncryptedIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexDrop_AfterDrop_CanCreateNewIndex(t *testing.T) {
+func TestEncryptedIndexDelete_AfterDelete_CanCreateIndexAnew(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -83,7 +83,7 @@ func TestEncryptedIndexDrop_AfterDrop_CanCreateNewIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.DropEncryptedIndex{
+			testUtils.DeleteEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.GetEncryptedIndexes{
@@ -108,7 +108,7 @@ func TestEncryptedIndexDrop_AfterDrop_CanCreateNewIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexDrop_MultipleIndexes_ShouldOnlyDropSpecified(t *testing.T) {
+func TestEncryptedIndexDelete_MultipleIndexes_ShouldOnlyDeleteSpecified(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{
@@ -137,7 +137,7 @@ func TestEncryptedIndexDrop_MultipleIndexes_ShouldOnlyDropSpecified(t *testing.T
 					},
 				},
 			},
-			testUtils.DropEncryptedIndex{
+			testUtils.DeleteEncryptedIndex{
 				FieldName: "age",
 			},
 			testUtils.GetEncryptedIndexes{

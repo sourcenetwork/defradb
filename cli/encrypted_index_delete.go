@@ -14,16 +14,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeEncryptedIndexDropCommand() *cobra.Command {
+func MakeEncryptedIndexDeleteCommand() *cobra.Command {
 	var collectionArg string
 	var fieldArg string
 	var cmd = &cobra.Command{
-		Use:   "drop -c --collection <collection> --field <field>",
-		Short: "Drop an encrypted index from a collection's field",
-		Long: `Drop an encrypted index from a collection's field.
+		Use:   "delete -c --collection <collection> --field <field>",
+		Short: "Delete an encrypted index from a collection's field",
+		Long: `Delete an encrypted index from a collection's field.
 
-Example: drop an encrypted index for 'Users' collection on 'name' field:
-  defradb client encrypted-index drop --collection Users --field name
+Example: delete an encrypted index for 'Users' collection on 'name' field:
+  defradb client encrypted-index delete --collection Users --field name
 `,
 		ValidArgs: []string{"collection", "field"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -34,11 +34,11 @@ Example: drop an encrypted index for 'Users' collection on 'name' field:
 				return err
 			}
 			
-			return col.DropEncryptedIndex(cmd.Context(), fieldArg)
+			return col.DeleteEncryptedIndex(cmd.Context(), fieldArg)
 		},
 	}
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
-	cmd.Flags().StringVar(&fieldArg, "field", "", "Field name to drop encrypted index from")
+	cmd.Flags().StringVar(&fieldArg, "field", "", "Field name to delete encrypted index from")
 
 	return cmd
 }

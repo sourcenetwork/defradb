@@ -405,9 +405,9 @@ func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.Encrypte
 	return indexes, nil
 }
 
-// DropEncryptedIndex implements client.Collection.
-func (c *Collection) DropEncryptedIndex(ctx context.Context, fieldName string) error {
-	args := []string{"client", "encrypted-index", "drop"}
+// DeleteEncryptedIndex implements client.Collection.
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	args := []string{"client", "encrypted-index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", fieldName)
 

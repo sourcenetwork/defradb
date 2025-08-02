@@ -305,3 +305,8 @@ func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.Encrypte
 	// TODO: implement
 	return nil, nil
 }
+
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	// TODO: implement
+	return nil
+}

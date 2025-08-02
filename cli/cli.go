@@ -117,7 +117,7 @@ func NewDefraCommand() *cobra.Command {
 	encrypted_index := MakeEncryptedIndexCommand()
 	encrypted_index.AddCommand(
 		MakeEncryptedIndexCreateCommand(),
-		MakeEncryptedIndexDropCommand(),
+		MakeEncryptedIndexDeleteCommand(),
 		MakeEncryptedIndexListCommand(),
 	)
 

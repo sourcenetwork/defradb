@@ -155,8 +155,8 @@ type Collection interface {
 	// `EncryptedIndexCreateRequest` contains the description of the index to be created.
 	CreateEncryptedIndex(context.Context, EncryptedIndexCreateRequest) (EncryptedIndexDescription, error)
 
-	// DropEncryptedIndex drops an encrypted index from the collection.
-	DropEncryptedIndex(ctx context.Context, fieldName string) error
+	// DeleteEncryptedIndex deletes an encrypted index from the collection.
+	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
 
 	// GetEncryptedIndexes returns all the encrypted indexes that exist on the collection.
 	GetEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)

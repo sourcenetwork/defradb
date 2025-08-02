@@ -59,7 +59,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQueryingAndShouldGenerateGQL(t *testing.T) {
+func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SchemaUpdate{

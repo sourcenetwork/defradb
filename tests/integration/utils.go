@@ -409,8 +409,8 @@ func performAction(
 	case GetEncryptedIndexes:
 		getEncryptedIndexes(s, action)
 
-	case DropEncryptedIndex:
-		dropEncryptedIndex(s, action)
+	case DeleteEncryptedIndex:
+		deleteEncryptedIndex(s, action)
 
 	case BackupExport:
 		backupExport(s, action)
@@ -1779,22 +1779,22 @@ func getEncryptedIndexes(
 	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
 }
 
-func dropEncryptedIndex(
+func deleteEncryptedIndex(
 	s *state,
-	action DropEncryptedIndex,
+	action DeleteEncryptedIndex,
 ) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.nodes[nodeID].collections[action.CollectionID]
 		if action.FieldName == "" {
-			s.t.Fatalf("fieldName is required for dropping encrypted index")
+			s.t.Fatalf("fieldName is required for deleting encrypted index")
 		}
 
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DropEncryptedIndex(s.ctx, action.FieldName)
+				return collection.DeleteEncryptedIndex(s.ctx, action.FieldName)
 			},
 		)
 		if AssertError(s.t, s.testCase.Description, err, action.ExpectedError) {
