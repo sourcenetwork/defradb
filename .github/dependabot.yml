@@ -16,3 +16,5 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "bot"
+    ignore:
+      - dependency-name: "graphiql"
