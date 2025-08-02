@@ -14,7 +14,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/spf13/cobra"
 )
 

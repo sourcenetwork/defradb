@@ -142,6 +142,76 @@ func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, erro
 	})
 }
 
+func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.GetNACStatus(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (c *Client) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.ReEnableNAC(ctx)
+	return js.Undefined(), err
+}
+
+func (c *Client) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.DisableNAC(ctx)
+	return js.Undefined(), err
+}
+
+func (c *Client) addNACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.AddNACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.DeleteNACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
 func (c *Client) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, c.txns)
 	if err != nil {

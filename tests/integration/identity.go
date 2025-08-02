@@ -56,6 +56,18 @@ func NodeIdentity(indexSelector int) immutable.Option[state.Identity] {
 	)
 }
 
+// getIdentityOption returns the identity similar to [getIdentity] but in immutable.Option.
+func getIdentityOption(
+	s *state.State,
+	identity immutable.Option[state.Identity],
+) immutable.Option[acpIdentity.Identity] {
+	ident := state.GetIdentity(s, identity)
+	if ident == nil {
+		return acpIdentity.None
+	}
+	return immutable.Some(ident)
+}
+
 // getIdentityForRequest returns the identity for the given reference and node index.
 // It prepares the identity for a request by generating a token if needed, i.e. it will
 // return an identity with [Identity.BearerToken] set.
@@ -79,6 +91,18 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 	return ident
 }
 
+// getIdentity returns an identity for the request specific to the node.
+func getIdentityForRequestSpecificToNode(
+	s *state.State,
+	identity immutable.Option[state.Identity],
+	nodeIndex int,
+) immutable.Option[acpIdentity.Identity] {
+	if !identity.HasValue() {
+		return acpIdentity.None
+	}
+	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
+}
+
 // getContextWithIdentity returns a context with the identity for the given reference and node index.
 // If the identity does not exist, it will be generated.
 // The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
@@ -88,19 +112,7 @@ func getContextWithIdentity(
 	identity immutable.Option[state.Identity],
 	nodeIndex int,
 ) context.Context {
-	if !identity.HasValue() {
-		return ctx
-	}
-	return acpIdentity.WithContext(
-		ctx,
-		immutable.Some(
-			getIdentityForRequest(
-				s,
-				identity.Value(),
-				nodeIndex,
-			),
-		),
-	)
+	return acpIdentity.WithContext(ctx, getIdentityForRequestSpecificToNode(s, identity, nodeIndex))
 }
 
 func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) string {
@@ -111,4 +123,10 @@ func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) s
 		return state.GetIdentity(s, identity).DID()
 	}
 	return ""
+}
+
+// resetContextWithNoIdentity resets identity for the ctx to avoid, leaving it there and having the ctx
+// reuse the same identity for other requests that don't specify an identity.
+func resetStateContext(s *state.State) {
+	s.Ctx = acpIdentity.WithContext(s.Ctx, acpIdentity.None)
 }

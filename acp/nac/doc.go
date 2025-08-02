@@ -8,16 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package permission
-
-import (
-	"github.com/sourcenetwork/defradb/errors"
-)
-
-const (
-	errInvalidResourcePermissionType string = "invalid resource permission type"
-)
-
-var (
-	ErrInvalidResourcePermissionType = errors.New(errInvalidResourcePermissionType)
-)
+/*
+This package implements admin access control system(s).
+*/
+package nac

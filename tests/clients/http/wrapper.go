@@ -14,8 +14,8 @@ import (
 	"context"
 	"net/http/httptest"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -156,6 +156,42 @@ func (w *Wrapper) DeleteDACActorRelationship(
 		relation,
 		targetActor,
 	)
+}
+
+func (w *Wrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	return w.client.AddNACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	return w.client.DeleteNACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+	return w.client.ReEnableNAC(ctx)
+}
+
+func (w *Wrapper) DisableNAC(ctx context.Context) error {
+	return w.client.DisableNAC(ctx)
+}
+
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	return w.client.GetNACStatus(ctx)
 }
 
 func (w *Wrapper) PatchSchema(

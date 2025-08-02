@@ -117,6 +117,12 @@ const (
 	errMissingPermission                        string = "missing permission"
 	errCollectionNameMutated                    string = "collection name cannot be mutated"
 	errUnsupportedTxnType                       string = "unsupported transaction type"
+	errNACIsAlreadyDisabled                     string = "node acp is already disabled"
+	errNACIsAlreadyEnabled                      string = "node acp is already enabled"
+	errNACIsNotConfigured                       string = "node acp is not configured"
+	errNACIsEnabledButIsMissingPolicyInfo       string = "node acp is enabled, but is missing policy info"
+	errNACNodeObjectToGateIsNotRegistered       string = "node acp is enabled, but object to gate must be registered"
+	errNACIsEnabledButInstanceIsNotAvailable    string = "node acp is enabled, but the acp instance is not available"
 )
 
 var (
@@ -169,6 +175,13 @@ var (
 	ErrNoIdentityInContext                      = errors.New(errNoIdentityInContext)
 	ErrCollectionNameMutated                    = errors.New(errCollectionNameMutated)
 	ErrUnsupportedTxnType                       = errors.New(errUnsupportedTxnType)
+	ErrNACIsAlreadyDisabled                     = errors.New(errNACIsAlreadyDisabled)
+	ErrNACIsAlreadyEnabled                      = errors.New(errNACIsAlreadyEnabled)
+	ErrNACIsNotConfigured                       = errors.New(errNACIsNotConfigured)
+	ErrNACIsEnabledButIsMissingPolicyInfo       = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
+	ErrNACNodeObjectToGateIsNotRegistered       = errors.New(errNACNodeObjectToGateIsNotRegistered)
+	ErrNACIsEnabledButInstanceIsNotAvailable    = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
+	ErrNACRelationshipOperationRequiresIdentity = errors.New("node acp relationship operation requires identity")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

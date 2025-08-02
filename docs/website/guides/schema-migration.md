@@ -223,7 +223,7 @@ fn try_inverse() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
 
 More fully coded example modules, including an AssemblyScript example can be found in our integration tests here: https://github.com/sourcenetwork/defradb/tree/develop/tests/lenses
 
-and here: https://github.com/lens-vm/lens/tree/main/tests/modules
+and here: https://github.com/sourcenetwork/lens/tree/main/tests/modules
 
 We should then compile it to wasm, and copy the resultant `.wasm` file to a location that the Defra node has access to.  Make sure that the file is safe there, at the moment Defra will not copy it and will refer back to that location on database restart.
 

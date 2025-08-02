@@ -17,8 +17,8 @@ import (
 func MakeACPCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "acp",
-		Short: "Interact with the access control system of a DefraDB node",
-		Long: `Interact with the access control system of a DefraDB node
+		Short: "Interact with the access control system(s) of a DefraDB node",
+		Long: `Interact with the access control system(s) of a DefraDB node
 
 Learn more about the DefraDB [ACP System](/acp/README.md)
 
