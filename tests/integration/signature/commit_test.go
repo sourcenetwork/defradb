@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
@@ -278,7 +279,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
@@ -349,7 +350,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 	t.Skip("Skipping test because signing with client identity is not supported yet")
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.ClientIdentity(0).Value(): crypto.KeyTypeEd25519,
 			testUtils.NodeIdentity(0).Value():   crypto.KeyTypeSecp256k1,
 		},

@@ -13,8 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -142,6 +142,39 @@ func (txn *Txn) DeleteDACActorRelationship(
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+}
+
+func (txn *Txn) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddNACActorRelationship(ctx, relation, targetActor)
+}
+
+func (txn *Txn) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor)
+}
+
+func (txn *Txn) ReEnableNAC(ctx context.Context) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.ReEnableNAC(ctx)
+}
+
+func (txn *Txn) DisableNAC(ctx context.Context) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DisableNAC(ctx)
+}
+
+func (txn *Txn) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetNACStatus(ctx)
 }
 
 func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {

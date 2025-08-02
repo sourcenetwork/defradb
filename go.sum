@@ -408,8 +408,8 @@ github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23/go.mod h1:bbYlZJ7
 github.com/butuzov/ireturn v0.1.1/go.mod h1:Wh6Zl3IMtTpaIKbmwzqi6olnM9ptYQxxVacMsOEFPoc=
 github.com/bxcodec/faker v2.0.1+incompatible h1:P0KUpUw5w6WJXwrPfv35oc91i4d8nf40Nwln+M/+faA=
 github.com/bxcodec/faker v2.0.1+incompatible/go.mod h1:BNzfpVdTwnFJ6GtfYTcQu6l6rHShT+veBxNCnjCx5XM=
-github.com/bytecodealliance/wasmtime-go/v21 v21.0.0 h1:d2m3R7TpNpOGuIi2PTC9w2nUY/A2IJinHOZTL76jyhg=
-github.com/bytecodealliance/wasmtime-go/v21 v21.0.0/go.mod h1:o/HNPe7TdXkqbrkmU9YgHBFXU9OIF1FVPlqhZwC1tyk=
+github.com/bytecodealliance/wasmtime-go/v35 v35.0.0 h1:FWG9laIbe0Iz+S91zIfqTYgF51sWvkF6z29fYSDfEeI=
+github.com/bytecodealliance/wasmtime-go/v35 v35.0.0/go.mod h1:NGaP17Y+TBO8ct8f84tau8h+MBcv8StsD28/9KYGKDY=
 github.com/bytedance/sonic v1.12.3 h1:W2MGa7RCU1QTeYRTPE3+88mVC0yXmsRQRChiyVocVjU=
 github.com/bytedance/sonic v1.12.3/go.mod h1:B8Gt/XvtZ3Fqj+iSKMypzymZxw/FVwgIGKzMzT9r/rk=
 github.com/bytedance/sonic/loader v0.1.1/go.mod h1:ncP89zfokxS5LZrJxl5z0UJcsk4M4yY2JpfqGeCtNLU=
@@ -1275,8 +1275,6 @@ github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+
 github.com/kyoh86/exportloopref v0.1.8/go.mod h1:1tUcJeiioIs7VWe5gcOObrux3lb66+sBqGZrRkMwPgg=
 github.com/ldez/gomoddirectives v0.2.3/go.mod h1:cpgBogWITnCfRq2qGoDkKMEVSaarhdBr6g8G04uz6d0=
 github.com/ldez/tagliatelle v0.3.1/go.mod h1:8s6WJQwEYHbKZDsp/LjArytKOG8qaMrKQQ3mFukHs88=
-github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5 h1:pP850r5kNYqBnTCEp1iQvJgH3j+0GfSRP6/7jxnUNVo=
-github.com/lens-vm/lens/host-go v0.0.0-20240605170614-979fa9eb14d5/go.mod h1:/KALHpn4yHMQ9vx/8KzG7XnE/Z4Yb14T6sBcyNhqhHA=
 github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgxpxOKII=
 github.com/leodido/go-urn v1.2.4 h1:XlAE/cm/ms7TE/VMVoduSpNBoyc2dOxHs5MZSwAN63Q=
 github.com/leodido/go-urn v1.2.4/go.mod h1:7ZrI8mTSeBSHl/UaRyKQW1qZeMgak41ANeCNaVckg+4=
@@ -1865,6 +1863,8 @@ github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a h1:wF7
 github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
+github.com/sourcenetwork/lens/host-go v0.0.0-20250801172620-185c0b250e1a h1:YvuNTWccM+SzsxzCjdnvEx7Dyzu7F6Yj8NH8fCcQXdw=
+github.com/sourcenetwork/lens/host-go v0.0.0-20250801172620-185c0b250e1a/go.mod h1:Cb8sBwTtTlU92EF8I2PyfQRFMyEQcHZp/4qMpguKnoQ=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 h1:d0jNogSYqMt+dC05tnd+x7lmzEcBHpKoIU5woZSSHFM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
 github.com/sourcenetwork/raccoondb/v2 v2.0.0 h1:Gb0SjsZUbrbkHCEg7PyyNs0+2IzPxjE/BkEQnlu1nfA=
@@ -1962,8 +1962,8 @@ github.com/tendermint/tm-db v0.6.6/go.mod h1:wP8d49A85B7/erz/r4YbKssKw6ylsO/hKtF
 github.com/tenntenn/modver v1.0.1/go.mod h1:bePIyQPb7UeioSRkw3Q0XeMhYZSMx9B8ePqg6SAMGH0=
 github.com/tenntenn/text/transform v0.0.0-20200319021203-7eef512accb3/go.mod h1:ON8b8w4BN/kE1EOhwT0o+d62W65a6aPw1nouo9LMgyY=
 github.com/tetafro/godot v1.4.11/go.mod h1:LR3CJpxDVGlYOWn3ZZg1PgNZdTUvzsZWu8xaEohUpn8=
-github.com/tetratelabs/wazero v1.8.2 h1:yIgLR/b2bN31bjxwXHD8a3d+BogigR952csSDdLYEv4=
-github.com/tetratelabs/wazero v1.8.2/go.mod h1:yAI0XTsMBhREkM/YDAK/zNou3GoiAce1P6+rp/wQhjs=
+github.com/tetratelabs/wazero v1.9.0 h1:IcZ56OuxrtaEz8UYNRHBrUa9bYeX9oVY93KspZZBf/I=
+github.com/tetratelabs/wazero v1.9.0/go.mod h1:TSbcXCfFP0L2FGkRPxHphadXPjo1T6W+CseNNY7EkjM=
 github.com/textileio/go-datastore-extensions v1.0.1 h1:qIJGqJaigQ1wD4TdwS/hf73u0HChhXvvUSJuxBEKS+c=
 github.com/textileio/go-datastore-extensions v1.0.1/go.mod h1:Pzj9FDRkb55910dr/FX8M7WywvnS26gBgEDez1ZBuLE=
 github.com/textileio/go-ds-badger3 v0.1.0 h1:q0kBuBmAcRUR3ClMSYlyw0224XeuzjjGinU53Qz1uXI=

@@ -14,18 +14,20 @@ defradb start [flags]
 
 ```
       --allowed-origins stringArray       List of origins to allow for CORS requests
-      --dac-type string                   Specify the document acp engine to use (supported: none (default), local, source-hub)
       --default-key-type string           Default key type to generate new node identity if one doesn't exist in the keyring. Valid values are 'secp256k1' and 'ed25519'. If not specified, the default key type will be 'secp256k1'. (default "secp256k1")
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data 
                                            - generates temporary node identity if keyring is disabled
+      --document-acp-type string          Specify the document acp engine to use (supported: none (default), local, source-hub)
   -h, --help                              help for start
+  -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
       --no-encryption                     Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
       --no-p2p                            Disable the peer-to-peer network synchronization system
       --no-searchable-encryption          Skip generating a searchable encryption key. Searchable encryption will be disabled.
       --no-signing                        Disable signing of commits.
       --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
+      --node-acp-enable false             Enable the node access control system. Defaults to false.
       --p2paddr strings                   Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls

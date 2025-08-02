@@ -8,30 +8,26 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import './wasm_exec.js';
+import { instantiate } from '@sourcenetwork/acp-js';
 
 const mode = import.meta.env.VITE_PLAYGROUND_MODE;
 
 if (mode === 'wasm') {
-  // @ts-expect-error - Go is a global object from wasm_exec.js
-  const go = new Go();
+  (window as any).globalACPConfig = {
+    apiUrl: `${window.location.origin}${import.meta.env.VITE_ACP_API_URL ?? '/api'}`,
+    rpcUrl: `${window.location.origin}${import.meta.env.VITE_ACP_RPC_URL ?? '/rpc'}`,
+    grpcUrl: `${window.location.origin}${import.meta.env.VITE_ACP_GRPC_URL ?? '/api'}`,
+    chainId: import.meta.env.VITE_ACP_CHAIN_ID ?? 'sourcehub-dev',
+    denom: import.meta.env.VITE_ACP_DENOM ?? 'uopen',
+    useZeroFees: import.meta.env.VITE_ACP_ALLOW_ZERO_FEES === 'true' || false,
+  };
 
-  WebAssembly.instantiateStreaming(fetch("defradb.wasm"), go.importObject).then(
-    (result) => {
-      console.log("defradb.wasm loaded.");
-      go.run(result.instance);
-    },
-  ).catch(err => {
-    console.error("Error loading Wasm module:", err);
-  })
+  await instantiate('defradb.wasm');
 }
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  <App />,
 );

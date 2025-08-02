@@ -1,68 +1,31 @@
-## defradb client acp dac policy add
+## defradb client acp node re-enable
 
-Add new policy
+Re-enable the node access control
 
 ### Synopsis
 
-Add new policy
+Re-enable the node access control
 
-Notes:
-  - Can not add a policy without specifying an identity.
-  - ACP must be available (i.e. ACP can not be disabled).
-  - A non-DRI policy will be accepted (will be registered with acp system).
-  - But only a valid DRI policyID & resource can be specified on a schema.
-  - DRI validation happens when attempting to add a schema with '@policy'.
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
+Example:
+  defradb client acp node re-enable -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
-Example: add from an argument string:
-  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
-'
-description: A Valid DefraDB Policy Interface
+Note:
+- This command will re-enable an already configured node acp system that is temporarily disabled.
+- If node acp is already enabled, then it will return an error.
+- If node acp is in a clean/non-configured state, then it will return an error.
 
-actor:
-  name: actor
-
-resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-'
-
-Example: add from file:
-  defradb client acp policy add -f policy.yml \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: add from file, verbose flags:
-  defradb client acp policy add --file policy.yml \
-  	--identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: add from stdin:
-  cat policy.yml | defradb client acp policy add -
+Learn more about the DefraDB [ACP System](/acp/README.md)
 
 
 
 ```
-defradb client acp dac policy add [-i --identity] [policy] [flags]
+defradb client acp node re-enable [-i --identity] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   File to load a policy from
-  -h, --help          help for add
+  -h, --help   help for re-enable
 ```
 
 ### Options inherited from parent commands
@@ -89,5 +52,5 @@ defradb client acp dac policy add [-i --identity] [policy] [flags]
 
 ### SEE ALSO
 
-* [defradb client acp dac policy](defradb_client_acp_dac_policy.md)	 - Interact with the document acp policy features of DefraDB instance
+* [defradb client acp node](defradb_client_acp_node.md)	 - Interact with the node access control system of a DefraDB node
 

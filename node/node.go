@@ -41,7 +41,8 @@ type DB interface {
 	Rootstore() corekv.TxnStore
 	Events() event.Bus
 	DocumentACP() immutable.Option[dac.DocumentACP]
-	PurgeACPState(ctx context.Context) error
+	PurgeDACState(ctx context.Context) error
+	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	Close()
 }
@@ -96,7 +97,11 @@ func (n *Node) Start(ctx context.Context) error {
 		dbOpts = append(dbOpts, db.WithSearchableEncryptionKey(nil))
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, documentACP, lens, dbOpts...)
+	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, lens, dbOpts...)
 	if err != nil {
 		return err
 	}
@@ -128,21 +133,30 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if !n.config.enableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
-	err := n.Close(ctx)
+
+	// This will purge document acp state.
+	err := n.DB.PurgeDACState(ctx)
 	if err != nil {
 		return err
 	}
+
+	// This will purge node acp state.
+	err = n.DB.PurgeNACState(ctx)
+	if err != nil {
+		return err
+	}
+
+	// This will close db and all acp instances along with it.
+	err = n.Close(ctx)
+	if err != nil {
+		return err
+	}
+
 	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	// This will purge state.
-	// They will be restarted when node is started again.
-	err = n.DB.PurgeACPState(ctx)
-	if err != nil {
-		return err
-	}
-
+	// The node is being started again. This restarts the above closed acp states too.
 	return n.Start(ctx)
 }

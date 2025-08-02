@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 

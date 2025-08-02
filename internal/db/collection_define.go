@@ -16,8 +16,8 @@ import (
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"slices"
 

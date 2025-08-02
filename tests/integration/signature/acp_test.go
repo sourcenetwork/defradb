@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/internal/db"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const policy = `
@@ -53,7 +54,7 @@ const policy = `
 func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
 			// requires a private key which we do not pass over HTTP.
 			testUtils.GoClientType,
@@ -99,7 +100,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]testUtils.ClientType{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
 			// requires a private key which we do not pass over HTTP.
 			testUtils.GoClientType,

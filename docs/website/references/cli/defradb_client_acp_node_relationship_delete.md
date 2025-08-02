@@ -1,4 +1,4 @@
-## defradb client acp dac relationship delete
+## defradb client acp node relationship delete
 
 Delete relationship
 
@@ -6,43 +6,34 @@ Delete relationship
 
 Delete relationship
 
-To revoke access to a document for an actor, we must delete the relationship between the
-actor and the document. In order to delete the relationship we require all of the following:
-
-1) Target DocID: The docID of the document we want to delete a relationship for.
-2) Collection Name: The name of the collection that has the Target DocID.
-3) Relation Name: The type of relation (name must be defined within the linked policy on collection).
-4) Target Identity: The identity of the actor the relationship is being deleted for.
-5) Requesting Identity: The identity of the actor that is making the request.
+To revoke node access from a user, we must delete the node relationship for the target user.
+In order to delete the relationship we require all of the following:
+1) Relation Name: The type of relation (name must be defined within the nac policy).
+2) Target Identity: The identity of the actor the relationship is being deleted with.
+3) Requesting Identity: The identity of the actor that is making the request.
 
 Notes:
-  - ACP must be available (i.e. ACP can not be disabled).
-  - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
-  - If the relationship record was not found, then it will be a no-op.
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
+  - The Target Identity format is a public key format.
+  - The Requesting Identity is a secp256k1 private key in hex format.
 
-Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5) read a private document:
-  defradb client acp relationship delete \
-	--collection Users \
-	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
-	--relation reader \
+Example: Revoke node access from an admin user:
+  defradb client acp node relationship delete \
+	--relation admin \
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 
 
 ```
-defradb client acp dac relationship delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
+defradb client acp node relationship delete [-r --relation] [-a --actor] [-i --identity] [flags]
 ```
 
 ### Options
 
 ```
-  -a, --actor string        Actor to delete relationship for
-  -c, --collection string   Collection that has the resource and policy for object
-      --docID string        Document Identifier (ObjectID) to delete relationship for
-  -h, --help                help for delete
-  -r, --relation string     Relation that needs to be deleted within the relationship
+  -a, --actor string      Actor to delete relationship for
+  -h, --help              help for delete
+  -r, --relation string   Relation that needs to be deleted within the relationship
 ```
 
 ### Options inherited from parent commands
@@ -69,5 +60,5 @@ defradb client acp dac relationship delete [--docID] [-c --collection] [-r --rel
 
 ### SEE ALSO
 
-* [defradb client acp dac relationship](defradb_client_acp_dac_relationship.md)	 - Interact with the document acp relationship features of DefraDB instance
+* [defradb client acp node relationship](defradb_client_acp_node_relationship.md)	 - Interact with the node acp relationship features of DefraDB instance
 

@@ -24,7 +24,7 @@ func (c *Client) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "dac", "policy")
+	methodURL := c.http.apiURL.JoinPath("acp", "document", "policy")
 
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -59,7 +59,7 @@ func (c *Client) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
+	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
 	body, err := json.Marshal(
 		addDACActorRelationshipRequest{
@@ -107,7 +107,7 @@ func (c *Client) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	methodURL := c.http.apiURL.JoinPath("acp", "dac", "relationship")
+	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
 	body, err := json.Marshal(
 		deleteDACActorRelationshipRequest{
@@ -139,4 +139,136 @@ func (c *Client) DeleteDACActorRelationship(
 	}
 
 	return deleteDocActorRelResult, nil
+}
+
+type addNACActorRelationshipRequest struct {
+	Relation    string
+	TargetActor string
+}
+
+func (c *Client) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
+
+	body, err := json.Marshal(
+		addNACActorRelationshipRequest{
+			Relation:    relation,
+			TargetActor: targetActor,
+		},
+	)
+
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		methodURL.String(),
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	var addDocActorRelResult client.AddActorRelationshipResult
+	if err := c.http.requestJson(req, &addDocActorRelResult); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+
+	return addDocActorRelResult, nil
+}
+
+type deleteNACActorRelationshipRequest struct {
+	Relation    string
+	TargetActor string
+}
+
+func (c *Client) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
+
+	body, err := json.Marshal(
+		deleteNACActorRelationshipRequest{
+			Relation:    relation,
+			TargetActor: targetActor,
+		},
+	)
+
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodDelete,
+		methodURL.String(),
+		bytes.NewBuffer(body),
+	)
+
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	var deleteDocActorRelResult client.DeleteActorRelationshipResult
+	if err := c.http.requestJson(req, &deleteDocActorRelResult); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+
+	return deleteDocActorRelResult, nil
+}
+
+func (c *Client) ReEnableNAC(ctx context.Context) error {
+	methodURL := c.http.apiURL.JoinPath("acp", "node", "re-enable")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) DisableNAC(ctx context.Context) error {
+	methodURL := c.http.apiURL.JoinPath("acp", "node", "disable")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	methodURL := c.http.apiURL.JoinPath("acp", "node", "status")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return client.NACStatusResult{}, err
+	}
+
+	var statusResult client.NACStatusResult
+	if err := c.http.requestJson(req, &statusResult); err != nil {
+		return client.NACStatusResult{}, err
+	}
+
+	return statusResult, nil
 }

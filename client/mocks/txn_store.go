@@ -7,11 +7,11 @@ package mocks
 import (
 	"context"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -151,6 +151,62 @@ func (_c *TxnStore_AddDACPolicy_Call) Return(addPolicyResult client.AddPolicyRes
 }
 
 func (_c *TxnStore_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, policy string) (client.AddPolicyResult, error)) *TxnStore_AddDACPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddNACActorRelationship provides a mock function for the type TxnStore
+func (_mock *TxnStore) AddNACActorRelationship(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
+	ret := _mock.Called(ctx, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddNACActorRelationship")
+	}
+
+	var r0 client.AddActorRelationshipResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.AddActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.AddActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.AddActorRelationshipResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_AddNACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddNACActorRelationship'
+type TxnStore_AddNACActorRelationship_Call struct {
+	*mock.Call
+}
+
+// AddNACActorRelationship is a helper method to define mock.On call
+//   - ctx
+//   - relation
+//   - targetActor
+func (_e *TxnStore_Expecter) AddNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *TxnStore_AddNACActorRelationship_Call {
+	return &TxnStore_AddNACActorRelationship_Call{Call: _e.mock.On("AddNACActorRelationship", ctx, relation, targetActor)}
+}
+
+func (_c *TxnStore_AddNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *TxnStore_AddNACActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *TxnStore_AddNACActorRelationship_Call) Return(addActorRelationshipResult client.AddActorRelationshipResult, err error) *TxnStore_AddNACActorRelationship_Call {
+	_c.Call.Return(addActorRelationshipResult, err)
+	return _c
+}
+
+func (_c *TxnStore_AddNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *TxnStore_AddNACActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -421,6 +477,107 @@ func (_c *TxnStore_DeleteDACActorRelationship_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// DeleteNACActorRelationship provides a mock function for the type TxnStore
+func (_mock *TxnStore) DeleteNACActorRelationship(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
+	ret := _mock.Called(ctx, relation, targetActor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteNACActorRelationship")
+	}
+
+	var r0 client.DeleteActorRelationshipResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.DeleteActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.DeleteActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_DeleteNACActorRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteNACActorRelationship'
+type TxnStore_DeleteNACActorRelationship_Call struct {
+	*mock.Call
+}
+
+// DeleteNACActorRelationship is a helper method to define mock.On call
+//   - ctx
+//   - relation
+//   - targetActor
+func (_e *TxnStore_Expecter) DeleteNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *TxnStore_DeleteNACActorRelationship_Call {
+	return &TxnStore_DeleteNACActorRelationship_Call{Call: _e.mock.On("DeleteNACActorRelationship", ctx, relation, targetActor)}
+}
+
+func (_c *TxnStore_DeleteNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *TxnStore_DeleteNACActorRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *TxnStore_DeleteNACActorRelationship_Call) Return(deleteActorRelationshipResult client.DeleteActorRelationshipResult, err error) *TxnStore_DeleteNACActorRelationship_Call {
+	_c.Call.Return(deleteActorRelationshipResult, err)
+	return _c
+}
+
+func (_c *TxnStore_DeleteNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *TxnStore_DeleteNACActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DisableNAC provides a mock function for the type TxnStore
+func (_mock *TxnStore) DisableNAC(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableNAC")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// TxnStore_DisableNAC_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableNAC'
+type TxnStore_DisableNAC_Call struct {
+	*mock.Call
+}
+
+// DisableNAC is a helper method to define mock.On call
+//   - ctx
+func (_e *TxnStore_Expecter) DisableNAC(ctx interface{}) *TxnStore_DisableNAC_Call {
+	return &TxnStore_DisableNAC_Call{Call: _e.mock.On("DisableNAC", ctx)}
+}
+
+func (_c *TxnStore_DisableNAC_Call) Run(run func(ctx context.Context)) *TxnStore_DisableNAC_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *TxnStore_DisableNAC_Call) Return(err error) *TxnStore_DisableNAC_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *TxnStore_DisableNAC_Call) RunAndReturn(run func(ctx context.Context) error) *TxnStore_DisableNAC_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ExecRequest provides a mock function for the type TxnStore
 func (_mock *TxnStore) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
 	var tmpRet mock.Arguments
@@ -644,6 +801,60 @@ func (_c *TxnStore_GetCollections_Call) Return(collections []client.Collection, 
 }
 
 func (_c *TxnStore_GetCollections_Call) RunAndReturn(run func(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)) *TxnStore_GetCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetNACStatus provides a mock function for the type TxnStore
+func (_mock *TxnStore) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNACStatus")
+	}
+
+	var r0 client.NACStatusResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (client.NACStatusResult, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) client.NACStatusResult); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(client.NACStatusResult)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_GetNACStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNACStatus'
+type TxnStore_GetNACStatus_Call struct {
+	*mock.Call
+}
+
+// GetNACStatus is a helper method to define mock.On call
+//   - ctx
+func (_e *TxnStore_Expecter) GetNACStatus(ctx interface{}) *TxnStore_GetNACStatus_Call {
+	return &TxnStore_GetNACStatus_Call{Call: _e.mock.On("GetNACStatus", ctx)}
+}
+
+func (_c *TxnStore_GetNACStatus_Call) Run(run func(ctx context.Context)) *TxnStore_GetNACStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *TxnStore_GetNACStatus_Call) Return(nACStatusResult client.NACStatusResult, err error) *TxnStore_GetNACStatus_Call {
+	_c.Call.Return(nACStatusResult, err)
+	return _c
+}
+
+func (_c *TxnStore_GetNACStatus_Call) RunAndReturn(run func(ctx context.Context) (client.NACStatusResult, error)) *TxnStore_GetNACStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1109,6 +1320,51 @@ func (_c *TxnStore_PrintDump_Call) Return(err error) *TxnStore_PrintDump_Call {
 }
 
 func (_c *TxnStore_PrintDump_Call) RunAndReturn(run func(ctx context.Context) error) *TxnStore_PrintDump_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReEnableNAC provides a mock function for the type TxnStore
+func (_mock *TxnStore) ReEnableNAC(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReEnableNAC")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// TxnStore_ReEnableNAC_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReEnableNAC'
+type TxnStore_ReEnableNAC_Call struct {
+	*mock.Call
+}
+
+// ReEnableNAC is a helper method to define mock.On call
+//   - ctx
+func (_e *TxnStore_Expecter) ReEnableNAC(ctx interface{}) *TxnStore_ReEnableNAC_Call {
+	return &TxnStore_ReEnableNAC_Call{Call: _e.mock.On("ReEnableNAC", ctx)}
+}
+
+func (_c *TxnStore_ReEnableNAC_Call) Run(run func(ctx context.Context)) *TxnStore_ReEnableNAC_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *TxnStore_ReEnableNAC_Call) Return(err error) *TxnStore_ReEnableNAC_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *TxnStore_ReEnableNAC_Call) RunAndReturn(run func(ctx context.Context) error) *TxnStore_ReEnableNAC_Call {
 	_c.Call.Return(run)
 	return _c
 }

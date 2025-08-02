@@ -15,8 +15,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/stretchr/testify/require"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"

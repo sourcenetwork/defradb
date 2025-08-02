@@ -15,8 +15,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -93,6 +93,63 @@ type Store interface {
 		relation string,
 		targetActor string,
 	) (DeleteActorRelationshipResult, error)
+
+	// AddNACActorRelationship creates a relationship to grant node access to the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship already existed (no-op), and false if a new relationship was made.
+	//
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
+	AddNACActorRelationship(
+		ctx context.Context,
+		relation string,
+		targetActor string,
+	) (AddActorRelationshipResult, error)
+
+	// DeleteNACActorRelationship deletes a relationship to revoke node access from target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
+	//   removed, however this does not revoke access from actors that had explicit relationships.
+	DeleteNACActorRelationship(
+		ctx context.Context,
+		relation string,
+		targetActor string,
+	) (DeleteActorRelationshipResult, error)
+
+	// ReEnableNAC will re-enable node acp that was temporarily disabled (and configured). This will
+	// recover previously saved nac state with all the relationships formed.
+	//
+	// If node acp is already enabled, then returns an error reflecting that it is already enabled.
+	//
+	// If node acp is not already configured or the previous state was purged then this will return an error,
+	// as the user must use the node's start command to configure/enable the node acp the first time.
+	//
+	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+	// authorized to perform this operation.
+	ReEnableNAC(ctx context.Context) error
+
+	// DisableNAC will disable node acp for the users temporarily. This will keep the current node acp
+	// state saved so that if it is re-enabled in the future, then we can recover all the relationships formed.
+	//
+	// If node acp is already disabled, then returns an error reflecting that it is already disabled.
+	//
+	// If node acp is not already configured or the previous state was purged then this will return an error.
+	//
+	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+	// authorized to perform this operation.
+	DisableNAC(ctx context.Context) error
+
+	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
+	// or if node acp is currently enabled or temporarily disabled.
+	GetNACStatus(ctx context.Context) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)

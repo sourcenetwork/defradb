@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/gen"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestQueryPerformance_Simple(t *testing.T) {
@@ -68,7 +69,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						}
 					}`,
 				},
-				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
+				FocusClients: []state.ClientType{testUtils.GoClientType},
 				Factor:       2,
 			},
 		},
@@ -128,7 +129,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 						}
 					}`,
 				},
-				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
+				FocusClients: []state.ClientType{testUtils.GoClientType},
 				Factor:       2,
 			},
 		},

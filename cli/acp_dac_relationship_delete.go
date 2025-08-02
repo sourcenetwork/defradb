@@ -15,19 +15,6 @@ import (
 )
 
 func MakeDocumentACPRelationshipDeleteCommand() *cobra.Command {
-	const (
-		collectionFlagLong  string = "collection"
-		collectionFlagShort string = "c"
-
-		relationFlagLong  string = "relation"
-		relationFlagShort string = "r"
-
-		targetActorFlagLong  string = "actor"
-		targetActorFlagShort string = "a"
-
-		docIDFlag string = "docID"
-	)
-
 	var (
 		collectionArg  string
 		relationArg    string
@@ -84,38 +71,38 @@ Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502
 
 	cmd.Flags().StringVarP(
 		&collectionArg,
-		collectionFlagLong,
-		collectionFlagShort,
+		"collection",
+		"c",
 		"",
 		"Collection that has the resource and policy for object",
 	)
-	_ = cmd.MarkFlagRequired(collectionFlagLong)
+	_ = cmd.MarkFlagRequired("collection")
 
 	cmd.Flags().StringVarP(
 		&relationArg,
-		relationFlagLong,
-		relationFlagShort,
+		"relation",
+		"r",
 		"",
 		"Relation that needs to be deleted within the relationship",
 	)
-	_ = cmd.MarkFlagRequired(relationFlagLong)
+	_ = cmd.MarkFlagRequired("relation")
 
 	cmd.Flags().StringVarP(
 		&targetActorArg,
-		targetActorFlagLong,
-		targetActorFlagShort,
+		"actor",
+		"a",
 		"",
 		"Actor to delete relationship for",
 	)
-	_ = cmd.MarkFlagRequired(targetActorFlagLong)
+	_ = cmd.MarkFlagRequired("actor")
 
 	cmd.Flags().StringVar(
 		&docIDArg,
-		docIDFlag,
+		"docID",
 		"",
 		"Document Identifier (ObjectID) to delete relationship for",
 	)
-	_ = cmd.MarkFlagRequired(docIDFlag)
+	_ = cmd.MarkFlagRequired("docID")
 
 	return cmd
 }

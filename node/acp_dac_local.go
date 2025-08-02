@@ -22,8 +22,11 @@ const LocalDocumentACPType DocumentACPType = "local"
 
 func init() {
 	constructor := func(ctx context.Context, options *DocumentACPOptions) (immutable.Option[dac.DocumentACP], error) {
-		localDocumentACP := dac.NewLocalDocumentACP()
-		localDocumentACP.Init(ctx, options.path)
+		localDocumentACP, err := dac.NewLocalDocumentACP(options.path)
+		if err != nil {
+			return dac.NoDocumentACP, err
+		}
+
 		return immutable.Some(localDocumentACP), nil
 	}
 	documentACPConstructors[LocalDocumentACPType] = constructor

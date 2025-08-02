@@ -17,15 +17,16 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // mockTestState is a simple mock implementation of TestState interface for testing
 type mockTestState struct {
-	clientType    ClientType
+	clientType    state.ClientType
 	currentNodeID int
 }
 
-func (m *mockTestState) GetClientType() ClientType {
+func (m *mockTestState) GetClientType() state.ClientType {
 	return m.clientType
 }
 
@@ -33,7 +34,7 @@ func (m *mockTestState) GetCurrentNodeID() int {
 	return m.currentNodeID
 }
 
-func (m *mockTestState) GetIdentity(_ Identity) acpIdentity.Identity {
+func (m *mockTestState) GetIdentity(_ state.Identity) acpIdentity.Identity {
 	return nil
 }
 
@@ -44,7 +45,7 @@ func (m *mockTestState) GetDocID(_ int, _ int) client.DocID {
 func TestAnyOfMatcher(t *testing.T) {
 	tests := []struct {
 		name       string
-		clientType ClientType
+		clientType state.ClientType
 		values     []any
 		actual     any
 		want       bool

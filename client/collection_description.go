@@ -13,8 +13,8 @@ package client
 import (
 	"encoding/json"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )

@@ -14,14 +14,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // TestCase contains the details of the test case to execute.
@@ -46,7 +47,7 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between client types, or we need to temporarily document a bug.
-	SupportedClientTypes immutable.Option[[]ClientType]
+	SupportedClientTypes immutable.Option[[]state.ClientType]
 
 	// If provided a value, SupportedDocumentACPTypes will cause this test to be skipped
 	// if the active acp type is not within the given set.
@@ -67,7 +68,7 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between database types, or we need to temporarily document a bug.
-	SupportedDatabaseTypes immutable.Option[[]DatabaseType]
+	SupportedDatabaseTypes immutable.Option[[]state.DatabaseType]
 
 	// Configuration for KMS to be used in the test
 	KMS KMS
@@ -82,7 +83,7 @@ type TestCase struct {
 
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
-	IdentityTypes map[Identity]crypto.KeyType
+	IdentityTypes map[state.Identity]crypto.KeyType
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -91,7 +92,7 @@ type KMS struct {
 	Activated bool
 	// ExcludedTypes specifies the KMS types that should be excluded from the test.
 	// If none are specified all types will be used.
-	ExcludedTypes []KMSType
+	ExcludedTypes []state.KMSType
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
@@ -122,12 +123,39 @@ type Close struct {
 	NodeID immutable.Option[int]
 }
 
+// Todo: https://github.com/sourcenetwork/defradb/issues/3872
+// Start should be improved and a bit more smart to not restart a node (also won't require Close() in that case),
+// if the first action item is `Start` with flag config options. Likely should fix tests where [EnableNAC]
+// is true to start node with nac from the start once this is fixed.
 // Start is an action that will start a node that has been previously closed.
 type Start struct {
 	// NodeID may hold the ID (index) of a node to start.
 	//
 	// If a value is not provided the start will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of the user starting the node.
+	//
+	// If this identity if used in combination with enabling node acp, then this
+	// Identity becomes the node acp owner for that node.
+	//
+	// To disable/purge/re-enable node acp after a successful start, must use the
+	// respective client commands instead.
+	Identity immutable.Option[state.Identity]
+
+	// EnableNAC is true when the node is being started with an attempt to setup and enable
+	// the node access control for that node.
+	//
+	// Must have a valid identity to enable (if enabling for the first time).
+	//
+	// False by default.
+	EnableNAC bool
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // SchemaUpdate is an action that will update the database schema.
@@ -355,7 +383,7 @@ type CreateDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// Specifies whether the document should be encrypted.
 	IsDocEncrypted bool
@@ -427,7 +455,7 @@ type DeleteDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -460,7 +488,7 @@ type UpdateDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -503,7 +531,7 @@ type UpdateWithFilter struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -699,7 +727,7 @@ type Benchmark struct {
 	// Reps is the number of times to run the benchmark.
 	Reps int
 	// FocusClients is the list of clients to run the benchmark on.
-	FocusClients []ClientType
+	FocusClients []state.ClientType
 	// Factor is the factor by which the optimized case should be better than the base case.
 	Factor float64
 }
@@ -721,7 +749,7 @@ type Request struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
@@ -924,7 +952,7 @@ type GetNodeIdentity struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity immutable.Option[Identity]
+	ExpectedIdentity immutable.Option[state.Identity]
 }
 
 // Wait is an action that will wait for the given duration.
@@ -942,10 +970,10 @@ type VerifyBlockSignature struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[Identity]
+	Identity immutable.Option[state.Identity]
 
 	// The identity of the author of the block to verify the signature of.
-	SignerIdentity Identity
+	SignerIdentity state.Identity
 
 	// Any error expected from the action. Optional.
 	//
