@@ -29,7 +29,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 						age: Int @encryptedIndex
 						verified: Boolean
@@ -55,12 +55,12 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 21}}) {
+						User_encrypted(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -82,7 +82,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *te
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String @encryptedIndex
 						age: Int @encryptedIndex
 						city: String @encryptedIndex
@@ -111,12 +111,12 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *te
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {name: {_eq: "John"}}) {
+						User_encrypted(filter: {name: {_eq: "John"}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -127,12 +127,12 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *te
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 25}}) {
+						User_encrypted(filter: {age: {_eq: 25}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -143,12 +143,12 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *te
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {city: {_eq: "New York"}}) {
+						User_encrypted(filter: {city: {_eq: "New York"}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -170,7 +170,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 						age: Int @encryptedIndex
 						verified: Boolean
@@ -212,12 +212,12 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 21}}) {
+						User_encrypted(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -228,12 +228,12 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 30}}) {
+						User_encrypted(filter: {age: {_eq: 30}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(
 								testUtils.DocIDAt(0, 1),
@@ -247,12 +247,12 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 33}}) {
+						User_encrypted(filter: {age: {_eq: 33}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": []string{},
 						},
@@ -274,7 +274,7 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) 
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String
 						age: Int 
 					}`,
@@ -291,11 +291,11 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 21}}) {
+						User_encrypted(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
-				ExpectedError: "Cannot query field \"Users_encrypted\" on type \"Query\".",
+				ExpectedError: "Cannot query field \"User_encrypted\" on type \"Query\".",
 			},
 		},
 	}
@@ -312,7 +312,7 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError2(t *testing.T)
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String @encryptedIndex
 						age: Int 
 					}`,
@@ -329,7 +329,7 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError2(t *testing.T)
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 21}}) {
+						User_encrypted(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,

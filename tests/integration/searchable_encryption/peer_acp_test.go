@@ -89,7 +89,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 			},
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users @policy(
+					type User @policy(
 						id: "{{.Policy0}}",
 						resource: "users"
 					) {
@@ -123,13 +123,13 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 21}}) {
+						User_encrypted(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}
 				`,
 				Results: map[string]any{
-					"Users_encrypted": []map[string]any{
+					"User_encrypted": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -140,14 +140,14 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				NodeID: immutable.Some(1),
 				Request: `
 					query {
-						Users {
+						User {
 							name
 							age
 						}
 					}
 				`,
 				Results: map[string]any{
-					"Users": []map[string]any{},
+					"User": []map[string]any{},
 				},
 			},
 			testUtils.Request{

@@ -27,7 +27,7 @@ func TestEncryptedIndexCreatePeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *
 			testUtils.RandomNetworkingConfig(),
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String 
 						age: Int @encryptedIndex
 					}
@@ -37,12 +37,12 @@ func TestEncryptedIndexCreatePeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 33}}) {
+						User_encrypted(filter: {age: {_eq: 33}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"Users_encrypted": gomega.Not(gomega.BeEmpty()),
+					"User_encrypted": gomega.Not(gomega.BeEmpty()),
 				},
 			},
 		},

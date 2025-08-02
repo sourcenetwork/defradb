@@ -22,7 +22,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String 
 						age: Int @encryptedIndex
 					}
@@ -39,13 +39,13 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 			testUtils.Request{
 				Request: `
 					query  {
-						Users {
+						User {
 							name
 							age
 						}
 					}`,
 				Results: map[string]any{
-					"Users": []map[string]any{
+					"User": []map[string]any{
 						{
 							"name": "John",
 							"age":  int64(21),

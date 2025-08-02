@@ -21,7 +21,7 @@ func TestEncryptedIndexCreate_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 		Actions: []any{
 			testUtils.SchemaUpdate{
 				Schema: `
-					type Users {
+					type User {
 						name: String 
 						age: Int @encryptedIndex
 					}
@@ -30,11 +30,11 @@ func TestEncryptedIndexCreate_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						Users_encrypted(filter: {age: {_eq: 21}}) {
+						User_encrypted(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
-				ExpectedError: "Cannot query field \"Users_encrypted\" on type \"Query\".",
+				ExpectedError: "Cannot query field \"User_encrypted\" on type \"Query\".",
 			},
 		},
 	}
