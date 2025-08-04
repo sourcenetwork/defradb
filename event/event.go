@@ -62,8 +62,6 @@ const (
 	ReplicatorCompletedName = Name("replicator-completed")
 	// PurgeName is the name of the purge event.
 	PurgeName = Name("purge")
-	// DocUpdateRequestName is the name of the document update request event.
-	DocUpdateRequestName = Name("doc-update-request")
 )
 
 // PubSub is an event that is published when
@@ -161,23 +159,4 @@ type ReplicatorFailure struct {
 	PeerID peer.ID
 	// DocID is the unique immutable identifier of the document that failed to replicate.
 	DocID string
-}
-
-// DocUpdateRequest is an event that is published when a node needs to request
-// a specific document from the network.
-type DocUpdateRequest struct {
-	// CollectionID is the collection identifier.
-	CollectionID string
-	// DocID is the document identifier to request.
-	DocID string
-	// Response is a channel to receive the response.
-	Response chan DocUpdateResponse
-}
-
-// DocUpdateResponse is the response to a DocUpdateRequest.
-type DocUpdateResponse struct {
-	// Found indicates if the document was found on any peer.
-	Found bool
-	// Error contains any error that occurred during the request.
-	Error error
 }
