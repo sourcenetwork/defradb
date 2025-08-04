@@ -122,7 +122,6 @@ func toSelect(
 		rootSelectType = CommitSelection
 	}
 
-	// Check if this is an encrypted search query
 	if selectRequest.IsEncrypted {
 		rootSelectType = EncryptedSearchSelection
 	}
