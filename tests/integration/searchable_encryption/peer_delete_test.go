@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestDocEncryptionPeer_AfterDeletingIndex_ShouldReturnError(t *testing.T) {
+func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
