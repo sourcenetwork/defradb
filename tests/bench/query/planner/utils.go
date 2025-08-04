@@ -22,9 +22,18 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/node"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
+
+type dbWrapper struct {
+	node.DB
+}
+
+func (w *dbWrapper) GetSearchableEncryptionKey() []byte {
+	return nil
+}
 
 func runQueryParserBench(
 	b *testing.B,
@@ -62,6 +71,8 @@ func runMakePlanBench(
 	}
 	defer d.Close()
 
+	wrapper := dbWrapper{d}
+
 	parser, err := buildParser(ctx, fixture)
 	if err != nil {
 		return err
@@ -80,7 +91,7 @@ func runMakePlanBench(
 			ctx,
 			acpIdentity.None,
 			dac.NoDocumentACP,
-			d,
+			&wrapper,
 		)
 		plan, err := planner.MakePlan(q)
 		if err != nil {
