@@ -330,7 +330,3 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
 	return w.client.VerifySignature(ctx, cid, pubKey)
 }
-
-func (w *Wrapper) GetSearchableEncryptionKey() []byte {
-	return w.client.GetSearchableEncryptionKey()
-}

@@ -538,7 +538,3 @@ func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.
 	_, err = c.http.request(req)
 	return err
 }
-
-func (c *Client) GetSearchableEncryptionKey() []byte {
-	panic("client side database")
-}

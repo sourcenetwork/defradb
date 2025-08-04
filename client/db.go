@@ -158,9 +158,6 @@ type Store interface {
 	// Returns an error if any signature verification fails.
 	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
 
-	// GetSearchableEncryptionKey returns the key used for searchable encryption.
-	GetSearchableEncryptionKey() []byte
-
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//

@@ -489,10 +489,6 @@ func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey c
 	return err
 }
 
-func (w *Wrapper) GetSearchableEncryptionKey() []byte {
-	return w.node.DB.GetSearchableEncryptionKey()
-}
-
 func (w *Wrapper) GetAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {

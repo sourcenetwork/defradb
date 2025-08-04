@@ -88,6 +88,8 @@ type PlanContext struct {
 type DB interface {
 	client.TxnStore
 	Events() event.Bus
+	// GetSearchableEncryptionKey returns the key used for searchable encryption.
+	GetSearchableEncryptionKey() []byte
 }
 
 // Planner combines session state and database state to
