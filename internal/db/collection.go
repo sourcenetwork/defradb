@@ -37,7 +37,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
-	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -45,10 +44,9 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db      *DB
-	def     client.CollectionDefinition
-	indexes []CollectionIndex
-	//encryptedIndexes []EncryptedCollectionIndex
+	db             *DB
+	def            client.CollectionDefinition
+	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
 }
 
@@ -679,13 +677,6 @@ func (c *collection) save(
 	isCreate bool,
 ) error {
 	if err := c.validateEncryptedFields(ctx); err != nil {
-		return err
-	}
-
-	// Prepare SE context if configured
-	var err error
-	ctx, err = se.PrepareContextIfConfigured(ctx, c, doc, c.db.searchableEncryptionKey, c.db.events)
-	if err != nil {
 		return err
 	}
 

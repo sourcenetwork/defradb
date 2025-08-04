@@ -11,7 +11,6 @@
 package se
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -25,34 +24,6 @@ type BlockData struct {
 	IsCollection bool
 	FieldName    string
 	Data         []byte
-}
-
-// ProcessBlock handles SE for a block
-func ProcessBlock(
-	ctx context.Context,
-	block *coreblock.Block,
-) error {
-	seCtx, ok := ctx.Value(contextKey{}).(*Context)
-	if !ok {
-		return nil
-	}
-
-	artifact, err := GenerateArtifactFromBlock(
-		block,
-		seCtx.config.CollectionID,
-		seCtx.doc.ID().String(),
-		seCtx.config.EncryptedFields,
-		seCtx.config.Key,
-	)
-	if err != nil {
-		return err
-	}
-
-	if artifact != nil {
-		seCtx.artifacts = append(seCtx.artifacts, *artifact)
-	}
-
-	return nil
 }
 
 // GenerateArtifactFromBlock generates an SE artifact from a block if it contains an encrypted field.
