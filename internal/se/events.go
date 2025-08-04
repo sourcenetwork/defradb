@@ -12,6 +12,9 @@ package se
 
 import (
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/immutable"
+	
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/event"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -30,6 +33,7 @@ type ReplicateEvent struct {
 	Artifacts    []secore.Artifact
 	IsRetry      bool
 	Success      chan bool // Used for synchronous retry feedback
+	Identity     immutable.Option[acpIdentity.Identity]
 }
 
 // ReplicationFailureEvent - Published when artifact replication fails
@@ -38,6 +42,7 @@ type ReplicationFailureEvent struct {
 	CollectionID string
 	PeerID       peer.ID
 	FieldNames   []string
+	Identity     immutable.Option[acpIdentity.Identity]
 }
 
 // QuerySEArtifactsRequest - Request to query SE artifacts from replicators

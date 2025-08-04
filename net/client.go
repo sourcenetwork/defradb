@@ -113,6 +113,7 @@ func (s *server) pushSEArtifacts(evt se.ReplicateEvent, pid peer.ID) (err error)
 				CollectionID: evt.CollectionID,
 				PeerID:       pid,
 				FieldNames:   fieldNames,
+				Identity:     evt.Identity,
 			}))
 		}
 		if evt.Success != nil {

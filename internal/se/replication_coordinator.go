@@ -12,6 +12,7 @@ package se
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -68,6 +70,8 @@ type SERetryInfo struct {
 	NextRetry    time.Time
 	NumRetries   int
 	Retrying     bool
+	PublicKey    string // Hex-encoded public key for identity reconstruction
+	KeyType      string // Key type (secp256k1, ed25519, etc.)
 }
 
 // NewReplicationCoordinator creates a new coordinator
@@ -102,6 +106,25 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 func (rc *ReplicationCoordinator) Close() {
 	rc.eventBus.Unsubscribe(rc.failureSub)
 	rc.eventBus.Unsubscribe(rc.updateSub)
+}
+
+// reconstructIdentity reconstructs an Identity from stored public key information
+func (rc *ReplicationCoordinator) reconstructIdentity(publicKey, keyType string) (immutable.Option[acpIdentity.Identity], error) {
+	if publicKey == "" || keyType == "" {
+		return immutable.None[acpIdentity.Identity](), nil
+	}
+
+	pubKey, err := crypto.PublicKeyFromString(crypto.KeyType(keyType), publicKey)
+	if err != nil {
+		return immutable.None[acpIdentity.Identity](), err
+	}
+
+	identity, err := acpIdentity.FromPublicKey(pubKey)
+	if err != nil {
+		return immutable.None[acpIdentity.Identity](), err
+	}
+
+	return immutable.Some(identity), nil
 }
 
 // defaultRetryIntervals generates retry intervals based on max retries
@@ -154,12 +177,24 @@ func (rc *ReplicationCoordinator) handleReplicationFailure(ctx context.Context, 
 
 	// TODO: think if such scenario is possible: "age" field is updated but failed to replicate and while being retried
 	// another "name" field is updated. In this case we should not overwrite the retry info.
+	var publicKey string
+	var keyType string
+	if evt.Identity.HasValue() {
+		identity := evt.Identity.Value()
+		if pubKey := identity.PublicKey(); pubKey != nil {
+			publicKey = hex.EncodeToString(pubKey.Raw())
+			keyType = string(pubKey.Type())
+		}
+	}
+
 	retryInfo := SERetryInfo{
 		DocID:        evt.DocID,
 		CollectionID: evt.CollectionID,
 		FieldNames:   evt.FieldNames,
 		NextRetry:    time.Now().Add(rc.retryIntervals[0]),
 		NumRetries:   0,
+		PublicKey:    publicKey,
+		KeyType:      keyType,
 	}
 
 	b, err := cbor.Marshal(retryInfo)
@@ -208,6 +243,7 @@ func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt eve
 			DocID:        evt.DocID,
 			CollectionID: evt.CollectionID,
 			Artifacts:    artifacts,
+			Identity:     evt.Identity,
 		}))
 	}
 
@@ -302,6 +338,14 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 	successChan := make(chan bool)
 	defer close(successChan)
 
+	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to reconstruct identity from stored data", err,
+			corelog.String("DocID", retryInfo.DocID))
+	} else if identity.HasValue() {
+		ctx = acpIdentity.WithContext(ctx, identity)
+	}
+
 	artifacts, err := rc.generateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to regenerate SE artifacts for retry", err,
@@ -316,6 +360,7 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 		Artifacts:    artifacts,
 		IsRetry:      true,
 		Success:      successChan,
+		Identity:     identity,
 	}))
 
 	select {

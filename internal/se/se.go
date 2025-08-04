@@ -18,7 +18,6 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encoding"
@@ -168,14 +167,10 @@ func GenerateFieldArtifact(
 		)
 
 		if err != nil {
-			log.ErrorContextE(ctx, "Failed to generate search tag", err,
-				corelog.String("FieldName", encIdx.FieldName))
 			return secore.Artifact{}, err
 		}
 
 	default:
-		log.ErrorContext(ctx, "Unsupported encrypted index type",
-			corelog.String("Type", string(encIdx.Type)))
 		return secore.Artifact{}, NewErrUnsupportedIndexType(string(encIdx.Type))
 	}
 
