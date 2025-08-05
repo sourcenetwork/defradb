@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
@@ -40,6 +41,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/net/protocol"
 )
+
+const networkRequestTimeout = 10 * time.Second
 
 // DocSyncTopic is the fixed topic for document sync operations.
 const docSyncTopic = "doc-sync"
@@ -442,7 +445,9 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		ident, ok := s.peerIdentities[p]
 		s.piMux.RUnlock()
 		if !ok {
-			resp, err := s.GetIdentity(s.peer.ctx, p)
+			ctx, cancel := context.WithTimeout(s.peer.ctx, networkRequestTimeout)
+			defer cancel()
+			resp, err := s.GetIdentity(ctx, p)
 			if err != nil {
 				log.ErrorE("Failed to get identity", err)
 				return immutable.None[identity.Identity]()

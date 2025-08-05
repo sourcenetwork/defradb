@@ -37,8 +37,7 @@ import (
 const (
 	// retryLoopInterval is the interval at which the retry handler checks for
 	// replicators that are due for a retry.
-	retryLoopInterval       = 2 * time.Second
-	pushToReplicatorTimeout = 10 * time.Second
+	retryLoopInterval = 2 * time.Second
 )
 
 func (p *Peer) SetReplicator(ctx context.Context, repInfo peer.AddrInfo, collectionNames ...string) error {
@@ -193,7 +192,7 @@ func (p *Peer) pushHeadsForDoc(ctx context.Context, docID, collectionID string, 
 			CollectionID: collectionID,
 			Block:        rawblock,
 		}
-		ctx, cancel := context.WithTimeout(ctx, pushToReplicatorTimeout)
+		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		if _, err := p.server.PushToReplicator(ctx, update, peerID); err != nil {
 			log.ErrorE(
@@ -757,7 +756,7 @@ func (p *Peer) retryDoc(ctx context.Context, peerIDString string, docID string) 
 		if err != nil {
 			return err
 		}
-		ctx, cancel := context.WithTimeout(ctx, pushToReplicatorTimeout)
+		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		if _, err := p.server.PushToReplicator(ctx, updateEvent, peerID); err != nil {
 			return err
