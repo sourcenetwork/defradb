@@ -98,6 +98,7 @@ func (proto *IdentityProtocol) onRequest(s network.Stream) {
 		return
 	}
 	resp := IdentityResponse{IdentityToken: token}
+	resp.SetMessageID(req.MessageID)
 	_, err = message.Send(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse, false)
 }
 
