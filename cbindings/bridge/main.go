@@ -301,8 +301,8 @@ func NodeInit(n int, cOptions C.NodeInitOptions) *C.Result {
 }
 
 //export NodeStart
-func NodeStart(n int) *C.Result {
-	gcr := cbindings.NodeStart(n)
+func NodeStart(n int, cIdentity *C.char) *C.Result {
+	gcr := cbindings.NodeStart(n, C.GoString(cIdentity))
 	return returnC(gcr)
 }
 

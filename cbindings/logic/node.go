@@ -35,12 +35,16 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	inMemoryFlag := cOptions.InMemory != 0
 	listeningAddresses := splitCommaSeparatedString(cOptions.ListeningAddresses)
 
-	nodeIdentity, err := identityFromKey(cOptions.IdentityKeyType, cOptions.IdentityPrivateKey)
+	identityString := cOptions.IdentityPrivateKey
+	identityKeyType := cOptions.IdentityKeyType
+
+	nodeIdentity, err := identityFromKey(identityKeyType, identityString)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
-
 	ctx := context.Background()
+
+	fmt.Println("Node Init identityString", identityString)
 
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
@@ -89,7 +93,7 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	if len(peers) > 0 {
 		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
 	}
-	if nodeIdentity != nil {
+	if cOptions.IdentityPrivateKey != "" {
 		opts = append(opts, db.WithNodeIdentity(nodeIdentity))
 	}
 	if cOptions.EnableNodeACP != 0 {
@@ -120,17 +124,24 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")
 	}
 
-	return returnGoC(0, "", "")
+	return NodeStart(n, identityString)
 }
 
-func NodeStart(n int) GoCResult {
-	globalNodesMu.Lock()
-	defer globalNodesMu.Unlock()
+func NodeStart(n int, identityString string) GoCResult {
+	fmt.Println("Node Start identityString", identityString)
 
 	if globalNodes[n] == nil {
 		return returnGoC(1, errUninitializedNode, "")
 	}
 	ctx := context.Background()
+
+	var err error
+	if identityString != "" {
+		ctx, err = contextWithIdentity(ctx, identityString)
+		if err != nil {
+			return returnGoC(1, err.Error(), "")
+		}
+	}
 
 	errCh := make(chan error, 1)
 

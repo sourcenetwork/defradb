@@ -57,6 +57,6 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) cbind
 		DisableP2P:               int(cOptions.disableP2P),
 		DisableAPI:               int(cOptions.disableAPI),
 		MaxTransactionRetries:    int(cOptions.maxTransactionRetries),
-		EnableNodeACP:            int(cOptions.enableodeACP),
+		EnableNodeACP:            int(cOptions.enableNodeACP),
 	}
 }

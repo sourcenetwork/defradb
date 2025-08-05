@@ -39,10 +39,10 @@ type CWrapper struct {
 	nodeNum int
 }
 
-func NewCWrapper(ctx context.Context) *CWrapper {
+func NewCWrapper(ctx context.Context, enableNAC bool) *CWrapper {
 	identityString := identityFromContext(ctx)
 	nodeNum := atomic.AddInt32(&wrapperCount, 1) - 1
-	setupTests(int(nodeNum), identityString)
+	setupTests(int(nodeNum), identityString, enableNAC)
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 
