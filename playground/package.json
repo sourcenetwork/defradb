@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "dev:wasm": "VITE_PLAYGROUND_MODE=wasm vite",
@@ -13,7 +16,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@sourcenetwork/acp-js": "1.0.3",
+    "@sourcenetwork/acp-js": "1.0.4",
     "graphiql": "^4.1.2",
     "graphql": "^16.10.0",
     "lucide-react": "^0.536.0",

@@ -5,19 +5,24 @@ A web based playground for DefraDB.
 ## Table of Contents
 
 <!--ts-->
+   * [Prerequisites](#prerequisites)
    * [Getting Started](#getting-started)
-   * [Remote mode](#remote-mode)
-   * [Wasm mode](#wasm-mode)
-      * [Local ACP (default)](#local-acp-default)
-      * [SourceHub ACP (requires running SourceHub)](#sourcehub-acp-requires-running-sourcehub)
+      * [Remote mode](#remote-mode)
+      * [Wasm mode](#wasm-mode)
+         * [Local ACP (default)](#local-acp-default)
+         * [SourceHub ACP (requires running SourceHub)](#sourcehub-acp-requires-running-sourcehub)
    * [Building](#building)
 <!--te-->
+
+## Prerequisites
+- Go `v1.23` or later
+- Node.js `^20.19.0 || >=22.12.0`
 
 ## Getting Started
 
 The playground supports two modes, selectable via npm scripts.
 
-## Remote mode
+### Remote mode
 Connects to a running DefraDB node.
 
 **Steps:**
@@ -32,7 +37,7 @@ Connects to a running DefraDB node.
   npm run dev:remote
   ```
 
-## Wasm mode
+### Wasm mode
 Runs DefraDB wasm in the browser.
 
 **Steps:**
@@ -42,14 +47,14 @@ Runs DefraDB wasm in the browser.
   ```
 - Then run one of the following commands:
 
-### Local ACP (default)
+#### Local ACP (default)
 ```bash
 cd playground
 npm install
 npm run dev:wasm
 ```
 
-### SourceHub ACP (requires running SourceHub)
+#### SourceHub ACP (requires running SourceHub)
 ```bash
 cd playground
 cp .env.example .env
