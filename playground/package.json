@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "dev:wasm": "VITE_PLAYGROUND_MODE=wasm vite",
@@ -13,13 +16,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@sourcenetwork/acp-js": "1.0.2",
+    "@sourcenetwork/acp-js": "1.0.4",
     "graphiql": "^4.1.2",
     "graphql": "^16.10.0",
-    "lucide-react": "^0.534.0",
+    "lucide-react": "^0.536.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "swagger-ui-react": "^5.26.2",
+    "swagger-ui-react": "^5.27.1",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
@@ -33,7 +36,7 @@
     "eslint": "^9.31.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
-    "typescript": "^5.8.3",
+    "typescript": "^5.9.2",
     "vite": "^7.0.4"
   }
 }

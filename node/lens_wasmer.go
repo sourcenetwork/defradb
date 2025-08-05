@@ -13,8 +13,8 @@
 package node
 
 import (
-	"github.com/lens-vm/lens/host-go/engine/module"
-	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
+	"github.com/sourcenetwork/lens/host-go/engine/module"
+	"github.com/sourcenetwork/lens/host-go/runtimes/wasmer"
 )
 
 const Wasmer LensRuntimeType = "wasmer"

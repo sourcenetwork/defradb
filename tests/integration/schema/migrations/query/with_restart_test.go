@@ -13,7 +13,7 @@ package query
 import (
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"

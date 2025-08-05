@@ -18,9 +18,9 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 func (c *Client) addSchema(this js.Value, args []js.Value) (js.Value, error) {
