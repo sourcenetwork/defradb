@@ -15,8 +15,8 @@ A web based playground for DefraDB.
 <!--te-->
 
 ## Prerequisites
-- Go v1.23 or later
-- Node.js v20 or later
+- Go `v1.23` or later
+- Node.js `^20.19.0 || >=22.12.0`
 
 ## Getting Started
 
