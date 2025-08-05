@@ -18,8 +18,8 @@ import (
 	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable/enumerable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 var _ client.LensRegistry = (*LensRegistry)(nil)
