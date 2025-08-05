@@ -28,21 +28,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/net/config"
 )
-
-func emptyBlock() []byte {
-	block := coreblock.Block{
-		Delta: crdt.CRDT{
-			DocCompositeDelta: &crdt.DocCompositeDelta{},
-		},
-	}
-	b, _ := block.Marshal()
-	return b
-}
 
 func createCID(doc *client.Document) (cid.Cid, error) {
 	pref := cid.V1Builder{
@@ -245,15 +233,6 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 		CollectionID: col.Version().CollectionID,
 	})
 	require.ErrorContains(t, err, "topic already exists")
-}
-
-func newTestDB(ctx context.Context, t *testing.T) *db.DB {
-	rootstore := memory.NewDatastore(ctx)
-	adminInfo, err := db.NewNACInfo(ctx, "", false)
-	require.NoError(t, err)
-	database, err := db.NewDB(ctx, rootstore, adminInfo, dac.NoDocumentACP, nil)
-	require.NoError(t, err)
-	return database
 }
 
 func TestNewPeer_WithEnableRelay_NoError(t *testing.T) {

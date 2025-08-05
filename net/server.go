@@ -20,15 +20,13 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
 	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	grpcpeer "google.golang.org/grpc/peer"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -40,6 +38,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/net/protocol"
 )
 
 // DocSyncTopic is the fixed topic for document sync operations.
@@ -51,8 +50,9 @@ const docSyncTopic = "doc-sync"
 // Specifically, server handles the push/get request/response aspects of the RPC service
 // but not the API calls.
 type server struct {
+	*protocol.IdentityProtocol
+	*protocol.ReplicatorProtocol
 	peer *Peer
-	opts []grpc.DialOption
 
 	topics map[string]pubsubTopic
 	// replicators is a map from collection CollectionID => peerId
@@ -61,7 +61,7 @@ type server struct {
 
 	docSyncTopic pubsubTopic
 
-	conns  map[libpeer.ID]*grpc.ClientConn
+	conns  map[libpeer.ID]network.Stream
 	connMu sync.RWMutex
 
 	peerIdentities map[libpeer.ID]identity.Identity
@@ -77,24 +77,16 @@ type pubsubTopic struct {
 
 // newServer creates a new network server that handle/directs RPC requests to the
 // underlying DB instance.
-func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
+func newServer(p *Peer) (*server, error) {
 	s := &server{
-		peer:           p,
-		conns:          make(map[libpeer.ID]*grpc.ClientConn),
-		topics:         make(map[string]pubsubTopic),
-		replicators:    make(map[string]map[libpeer.ID]struct{}),
-		peerIdentities: make(map[libpeer.ID]identity.Identity),
+		peer:             p,
+		conns:            make(map[libpeer.ID]network.Stream),
+		topics:           make(map[string]pubsubTopic),
+		replicators:      make(map[string]map[libpeer.ID]struct{}),
+		peerIdentities:   make(map[libpeer.ID]identity.Identity),
+		IdentityProtocol: protocol.NewIdentityProtocol(p.host, p.db.GetNodeIdentityToken),
 	}
-
-	cred := insecure.NewCredentials()
-	defaultOpts := []grpc.DialOption{
-		s.getLibp2pDialer(),
-		grpc.WithTransportCredentials(cred),
-		grpc.WithDefaultCallOptions(grpc.CallContentSubtype(cborCodecName)),
-	}
-
-	s.opts = append(defaultOpts, opts...)
-
+	s.ReplicatorProtocol = protocol.NewReplicatorProtocol(p.host, s.processPushlog, p.handleReplicatorFailure)
 	docSyncTopic, err := s.addPubSubTopic(docSyncTopic, true, s.docSyncMessageHandler)
 	if err != nil {
 		return nil, err
@@ -105,20 +97,15 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	return s, nil
 }
 
-// pushLogHandler receives a push log request from the grpc server (replicator)
-func (s *server) pushLogHandler(ctx context.Context, req *pushLogRequest) (*pushLogReply, error) {
-	return s.processPushlog(ctx, req, true)
-}
-
 // processPushlog processes a push log request
 func (s *server) processPushlog(
 	ctx context.Context,
-	req *pushLogRequest,
+	req *protocol.PushLogRequest,
 	isReplicator bool,
-) (*pushLogReply, error) {
-	pid, err := peerIDFromContext(ctx)
+) (*protocol.PushLogReply, error) {
+	pid, err := libpeer.Decode(req.PeerID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap("parsing stream PeerID", err)
 	}
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
@@ -149,23 +136,14 @@ func (s *server) processPushlog(
 		}
 		if !mightHaveAccess {
 			// If we know we don't have access, we can skip the rest of the processing.
-			return &pushLogReply{}, nil
+			return &protocol.PushLogReply{}, nil
 		}
 	}
-
-	log.InfoContext(ctx, "Received pushlog",
-		corelog.Any("PeerID", pid.String()),
-		corelog.Any("Creator", byPeer.String()),
-		corelog.Any("DocID", req.DocID))
 
 	err = syncDAG(ctx, s.peer.blockService, block)
 	if err != nil {
 		return nil, err
 	}
-
-	log.InfoContext(ctx, "DAG sync complete",
-		corelog.Any("PeerID", pid.String()),
-		corelog.Any("DocID", req.DocID))
 
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:        req.DocID,
@@ -175,23 +153,7 @@ func (s *server) processPushlog(
 		CollectionID: req.CollectionID,
 	}))
 
-	return &pushLogReply{}, nil
-}
-
-// getIdentityHandler receives a get identity request and returns the identity token
-// with the requesting peer as the audience.
-func (s *server) getIdentityHandler(
-	ctx context.Context,
-	req *getIdentityRequest,
-) (*getIdentityReply, error) {
-	if !s.peer.documentACP.HasValue() {
-		return &getIdentityReply{}, nil
-	}
-	token, err := s.peer.db.GetNodeIdentityToken(ctx, immutable.Some(req.PeerID))
-	if err != nil {
-		return nil, err
-	}
-	return &getIdentityReply{IdentityToken: token}, nil
+	return &protocol.PushLogReply{}, nil
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network
@@ -284,7 +246,7 @@ func (s *server) removeAllPubsubTopics() error {
 
 // publishLog publishes the given PushLogRequest object on the PubSub network via the
 // corresponding topic
-func (s *server) publishLog(ctx context.Context, topic string, req *pushLogRequest) error {
+func (s *server) publishLog(ctx context.Context, topic string, req *protocol.PushLogRequest) error {
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
@@ -341,15 +303,13 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		corelog.Any("SenderId", from),
 		corelog.String("Topic", topic))
 
-	req := &pushLogRequest{}
+	req := &protocol.PushLogRequest{}
 	if err := cbor.Unmarshal(msg, req); err != nil {
 		log.ErrorE("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
-	ctx := grpcpeer.NewContext(s.peer.ctx, &grpcpeer.Peer{
-		Addr: addr{from},
-	})
-	if _, err := s.processPushlog(ctx, req, false); err != nil {
+	req.PeerID = from.String()
+	if _, err := s.processPushlog(s.peer.ctx, req, false); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}
 	return nil, nil
@@ -367,28 +327,6 @@ func (s *server) pubSubEventHandler(from libpeer.ID, topic string, msg []byte) {
 		Peer: from,
 	})
 	s.peer.bus.Publish(evt)
-}
-
-// addr implements net.Addr and holds a libp2p peer ID.
-type addr struct{ id libpeer.ID }
-
-// Network returns the name of the network that this address belongs to (libp2p).
-func (a addr) Network() string { return "libp2p" }
-
-// String returns the peer ID of this address in string form (B58-encoded).
-func (a addr) String() string { return a.id.String() }
-
-// peerIDFromContext returns peer ID from the GRPC context
-func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
-	ctxPeer, ok := grpcpeer.FromContext(ctx)
-	if !ok {
-		return "", errors.New("unable to identify stream peer")
-	}
-	pid, err := libpeer.Decode(ctxPeer.Addr.String())
-	if err != nil {
-		return "", errors.Wrap("parsing stream PeerID", err)
-	}
-	return pid, nil
 }
 
 func (s *server) updateReplicators(rep peer.AddrInfo, collectionIDs map[string]struct{}) {
@@ -504,7 +442,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		ident, ok := s.peerIdentities[p]
 		s.piMux.RUnlock()
 		if !ok {
-			resp, err := s.getIdentity(s.peer.ctx, p)
+			resp, err := s.GetIdentity(s.peer.ctx, p)
 			if err != nil {
 				log.ErrorE("Failed to get identity", err)
 				return immutable.None[identity.Identity]()
