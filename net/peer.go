@@ -324,7 +324,7 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	if exists {
 		for pid := range reps {
 			go func(peerID peer.ID) {
-				ctx, cancel := context.WithTimeout(context.Background(), pushToReplicatorTimeout)
+				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
 				if _, err := p.server.PushToReplicator(ctx, lg, peerID); err != nil {
 					log.ErrorE(
