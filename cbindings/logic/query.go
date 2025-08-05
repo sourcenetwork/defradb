@@ -26,11 +26,8 @@ import (
 
 var subscriptionStore sync.Map // map[string]*Subscription
 
-// The subscription object has two fields, ctxCancel and resultChan. The resultChan is the channel
-// containing the results of the subscription. When PollSubscription is called, it will look to see
-// if a message is in the channel. ctxCancel is a function that was injected into the context
-// when it was created. It will be called when the subscription is closed, to prevent a goroutine
-// leak.
+// The subscriptionStore holds objects of this type. The structure bundles the result channel, which
+// we will be polling, with a function that can cancel the context when the subscription is closed.
 type Subscription struct {
 	ctxCancel  context.CancelFunc
 	resultChan <-chan client.GQLResult

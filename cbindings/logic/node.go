@@ -90,8 +90,13 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
 	}
 	if nodeIdentity != nil {
-		opts = append(opts, db.WithNodeIdentity(*nodeIdentity))
+		opts = append(opts, db.WithNodeIdentity(nodeIdentity))
 	}
+	if cOptions.EnableNodeACP != 0 {
+		opts = append(opts, node.WithEnableNodeACP(true))
+	}
+	opts = append(opts, node.WithDocumentACPPath(""))
+	opts = append(opts, node.WithNodeACPPath(""))
 
 	// Configure the replicator retry times. Go from string slice -> time.Duration slice
 	replicatorRetryTimes := splitCommaSeparatedString(cOptions.ReplicatorRetryIntervals)
@@ -110,7 +115,6 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 		opts = append(opts, netConfig.WithRetryInterval(replicatorRetryIntervals))
 	}
 
-	// Try to create the node passing in the collected options, then return the result
 	globalNodes[n], err = node.New(ctx, opts...)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")

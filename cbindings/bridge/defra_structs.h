@@ -27,6 +27,7 @@ typedef struct {
     int inMemory;
     int disableP2P;
     int disableAPI;
+    int enableNodeACP;
     int maxTransactionRetries;
 } NodeInitOptions;
 

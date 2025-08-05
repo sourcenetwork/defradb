@@ -21,6 +21,7 @@ const (
 	errParsingReplicatorTimes string = "error parsing replicator retry time intervals: %v"
 	errNegativeReplicatorTime string = "error: negative time intervals are not allowed for replicator retries"
 	errUnreadyStart           string = "Node is still starting (timeout waiting for readiness)"
+	errNACWithoutIdentity     string = "can not start nac without identity"
 
 	// Schema
 	errAddingSchema    string = "error adding schema: %v"

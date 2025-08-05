@@ -133,7 +133,7 @@ func ACPNodeReEnable(n int, identityStr string, TxnID uint64) GoCResult {
 	return marshalJSONToGoCResult(client.SuccessResponse{Success: true})
 }
 
-func ACPNodeReRelationshipAdd(
+func ACPNodeRelationshipAdd(
 	n int,
 	identityStr string,
 	relationArg string,

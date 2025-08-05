@@ -30,7 +30,7 @@ import (
 )
 
 // setupTests is a function that initializes and starts the globalNode (in memory), for the tests
-func setupTests(n int) {
+func setupTests(n int, identityString string) {
 	var nodeOpts cbindings.GoNodeInitOptions
 	nodeOpts.DbPath = ""
 	nodeOpts.ListeningAddresses = ""
@@ -41,7 +41,8 @@ func setupTests(n int) {
 	nodeOpts.DisableAPI = 0
 	nodeOpts.InMemory = 1
 	nodeOpts.IdentityKeyType = ""
-	nodeOpts.IdentityPrivateKey = ""
+	nodeOpts.IdentityPrivateKey = identityString
+	nodeOpts.EnableNodeACP = 1
 
 	cbindings.NodeInit(n, nodeOpts)
 	cbindings.NodeStart(n)

@@ -46,7 +46,6 @@ func DescribeSchema(n int, name string, root string, version string, txnID uint6
 		return returnGoC(1, err.Error(), "")
 	}
 
-	// Set the configuration options from the passed in parameters
 	if version != "" {
 		options.ID = immutable.Some(version)
 	}
@@ -57,7 +56,6 @@ func DescribeSchema(n int, name string, root string, version string, txnID uint6
 		options.Name = immutable.Some(name)
 	}
 
-	// Get the schema, and try to convert it to JSON for return
 	schemas, err := GetNode(n).DB.GetSchemas(ctx, options)
 	if err != nil {
 		return returnGoC(1, fmt.Sprintf(errGettingSchema, err), "")

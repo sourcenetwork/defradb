@@ -49,7 +49,7 @@ func setupClient(s *state.State, node *node.Node) (clients.Client, error) {
 		return newGoClientWrapper(node), nil
 
 	case CClientType:
-		return cwrap.NewCWrapper(), nil
+		return cwrap.NewCWrapper(s.Ctx), nil
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)

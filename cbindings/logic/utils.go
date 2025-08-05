@@ -52,6 +52,7 @@ type GoNodeInitOptions struct {
 	DisableP2P               int
 	DisableAPI               int
 	MaxTransactionRetries    int
+	EnableNodeACP            int
 }
 
 // returnGoC is a helper function that wraps a status, error, and value into a return object
@@ -134,7 +135,7 @@ func buildRequestOptions(opName string, vars string) ([]client.RequestOption, er
 }
 
 // identityFromKey is a helper function that takes a key type/private key pair, and returns Identity
-func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdentity, error) {
+func identityFromKey(goKeyType string, goPrivKeyStr string) (identity.FullIdentity, error) {
 	if goKeyType == "" || goPrivKeyStr == "" {
 		return nil, nil
 	}
@@ -159,5 +160,5 @@ func identityFromKey(goKeyType string, goPrivKeyStr string) (*identity.FullIdent
 		return nil, fmt.Errorf("failed to create identity from private key: %w", err)
 	}
 
-	return &id, nil
+	return id, nil
 }

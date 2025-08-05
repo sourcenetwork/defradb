@@ -39,9 +39,10 @@ type CWrapper struct {
 	nodeNum int
 }
 
-func NewCWrapper() *CWrapper {
+func NewCWrapper(ctx context.Context) *CWrapper {
+	identityString := identityFromContext(ctx)
 	nodeNum := atomic.AddInt32(&wrapperCount, 1) - 1
-	setupTests(int(nodeNum))
+	setupTests(int(nodeNum), identityString)
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 
@@ -284,6 +285,64 @@ func (w *CWrapper) DeleteDACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, err
 	}
 	return deleteRelationshipRes, nil
+}
+
+func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
+	result := cbindings.ACPNodeStatus(w.nodeNum, identity, txnID)
+	if result.Status != 0 {
+		return client.NACStatusResult{}, errors.New(result.Error)
+	}
+	return unmarshalResult[client.NACStatusResult](result.Value)
+}
+
+func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
+	result := cbindings.ACPNodeReEnable(w.nodeNum, identity, txnID)
+	if result.Status != 0 {
+		return errors.New(result.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) DisableNAC(ctx context.Context) error {
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
+	result := cbindings.ACPNodeDisable(w.nodeNum, identity, txnID)
+	if result.Status != 0 {
+		return errors.New(result.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
+	result := cbindings.ACPNodeRelationshipAdd(w.nodeNum, identity, relation, targetActor, txnID)
+	if result.Status != 0 {
+		return client.AddActorRelationshipResult{}, errors.New(result.Error)
+	}
+	return unmarshalResult[client.AddActorRelationshipResult](result.Value)
+}
+
+func (w *CWrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	txnID := txnIDFromContext(ctx)
+	identity := identityFromContext(ctx)
+	result := cbindings.ACPNodeRelationshipDelete(w.nodeNum, identity, relation, targetActor, txnID)
+	if result.Status != 0 {
+		return client.DeleteActorRelationshipResult{}, errors.New(result.Error)
+	}
+	return unmarshalResult[client.DeleteActorRelationshipResult](result.Value)
 }
 
 func (w *CWrapper) PatchSchema(

@@ -84,15 +84,15 @@ func ACPNodeReEnable(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
 	return returnC(gcr)
 }
 
-//export ACPNodeReRelationshipAdd
-func ACPNodeReRelationshipAdd(
+//export ACPNodeRelationshipAdd
+func ACPNodeRelationshipAdd(
 	n int,
 	cIdentity *C.char,
 	cRelation *C.char,
 	cActor *C.char,
 	cTxnID C.ulonglong,
 ) *C.Result {
-	gcr := cbindings.ACPNodeReRelationshipAdd(
+	gcr := cbindings.ACPNodeRelationshipAdd(
 		n,
 		C.GoString(cIdentity),
 		C.GoString(cRelation),

@@ -140,7 +140,7 @@ func setupNode(
 
 	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
 	err = node.Start(s.Ctx)
-	resetStateContext(s)
+	defer resetStateContext(s)
 
 	if err != nil {
 		return nil, err
