@@ -14,20 +14,16 @@ package config
 
 import (
 	"time"
-
-	"google.golang.org/grpc"
 )
 
 // Options is the node options.
 type Options struct {
-	ListenAddresses   []string
-	PrivateKey        []byte
-	EnablePubSub      bool
-	EnableRelay       bool
-	GRPCServerOptions []grpc.ServerOption
-	GRPCDialOptions   []grpc.DialOption
-	BootstrapPeers    []string
-	RetryIntervals    []time.Duration
+	ListenAddresses []string
+	PrivateKey      []byte
+	EnablePubSub    bool
+	EnableRelay     bool
+	BootstrapPeers  []string
+	RetryIntervals  []time.Duration
 }
 
 // DefaultOptions returns the default net options.
