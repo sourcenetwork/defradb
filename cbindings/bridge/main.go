@@ -22,14 +22,14 @@ import (
 	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 )
 
-//export ACPAddPolicy
-func ACPAddPolicy(n int, cIdentity *C.char, cPolicy *C.char, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.ACPAddPolicy(n, C.GoString(cIdentity), C.GoString(cPolicy), uint64(cTxnID))
+//export ACPAddDACPolicy
+func ACPAddDACPolicy(n int, cIdentity *C.char, cPolicy *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPAddDACPolicy(n, C.GoString(cIdentity), C.GoString(cPolicy), uint64(cTxnID))
 	return returnC(gcr)
 }
 
-//export ACPAddRelationship
-func ACPAddRelationship(
+//export ACPAddDACActorRelationship
+func ACPAddDACActorRelationship(
 	n int,
 	cIdentity *C.char,
 	cCollection *C.char,
@@ -38,7 +38,7 @@ func ACPAddRelationship(
 	cActor *C.char,
 	cTxnID C.ulonglong,
 ) *C.Result {
-	gcr := cbindings.ACPAddRelationship(
+	gcr := cbindings.ACPAddDACActorRelationship(
 		n,
 		C.GoString(cIdentity),
 		C.GoString(cCollection),
@@ -51,7 +51,7 @@ func ACPAddRelationship(
 }
 
 //export ACPDeleteRelationship
-func ACPDeleteRelationship(
+func ACPDeleteDACActorRelationship(
 	n int,
 	cIdentity *C.char,
 	cCollection *C.char,
@@ -60,7 +60,7 @@ func ACPDeleteRelationship(
 	cActor *C.char,
 	cTxnID C.ulonglong,
 ) *C.Result {
-	gcr := cbindings.ACPDeleteRelationship(
+	gcr := cbindings.ACPDeleteDACActorRelationship(
 		n,
 		C.GoString(cIdentity),
 		C.GoString(cCollection),
@@ -297,12 +297,6 @@ func LensSetRegistry(n int, cCollectionID *C.char, cLensCfg *C.char, cTxnID C.ul
 func NodeInit(n int, cOptions C.NodeInitOptions) *C.Result {
 	gocOptions := convertNodeInitOptionsToGoNodeInitOptions(cOptions)
 	gcr := cbindings.NodeInit(n, gocOptions)
-	return returnC(gcr)
-}
-
-//export NodeStart
-func NodeStart(n int, cIdentity *C.char) *C.Result {
-	gcr := cbindings.NodeStart(n, C.GoString(cIdentity))
 	return returnC(gcr)
 }
 

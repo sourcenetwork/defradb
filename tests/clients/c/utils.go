@@ -29,7 +29,7 @@ import (
 )
 
 // setupTests is a function that initializes and starts the globalNode (in memory), for the tests
-func setupTests(n int, identityString string, enableNAC bool) {
+func setupTests(n int, identityPrivateKey string, enableNAC bool) {
 	var nodeOpts cbindings.GoNodeInitOptions
 	nodeOpts.DbPath = ""
 	nodeOpts.ListeningAddresses = ""
@@ -39,8 +39,8 @@ func setupTests(n int, identityString string, enableNAC bool) {
 	nodeOpts.DisableP2P = 0
 	nodeOpts.DisableAPI = 0
 	nodeOpts.InMemory = 1
-	nodeOpts.IdentityPrivateKey = identityString
-	if identityString != "" {
+	nodeOpts.IdentityPrivateKey = identityPrivateKey
+	if identityPrivateKey != "" {
 		if enableNAC {
 			nodeOpts.EnableNodeACP = 1
 		}
@@ -48,7 +48,6 @@ func setupTests(n int, identityString string, enableNAC bool) {
 	}
 
 	cbindings.NodeInit(n, nodeOpts)
-	//cbindings.NodeStart(n, identityString)
 }
 
 // txnIDFromContext is a helper function that extracts a transaction ID from a context

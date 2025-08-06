@@ -40,9 +40,9 @@ type CWrapper struct {
 }
 
 func NewCWrapper(ctx context.Context, enableNAC bool) *CWrapper {
-	identityString := identityFromContext(ctx)
+	identityPrivateKey := identityFromContext(ctx)
 	nodeNum := atomic.AddInt32(&wrapperCount, 1) - 1
-	setupTests(int(nodeNum), identityString, enableNAC)
+	setupTests(int(nodeNum), identityPrivateKey, enableNAC)
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 
@@ -227,7 +227,7 @@ func (w *CWrapper) AddDACPolicy(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPAddPolicy(w.nodeNum, identity, policy, txnID)
+	result := cbindings.ACPAddDACPolicy(w.nodeNum, identity, policy, txnID)
 
 	if result.Status != 0 {
 		return client.AddPolicyResult{}, errors.New(result.Error)
@@ -250,7 +250,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPAddRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
+	result := cbindings.ACPAddDACActorRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
 
 	if result.Status != 0 {
 		return client.AddActorRelationshipResult{}, errors.New(result.Error)
@@ -274,7 +274,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPDeleteRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
+	result := cbindings.ACPDeleteDACActorRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
 
 	if result.Status != 0 {
 		return client.DeleteActorRelationshipResult{}, errors.New(result.Error)

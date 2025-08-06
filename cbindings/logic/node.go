@@ -29,16 +29,49 @@ var (
 	globalNodesMu sync.RWMutex
 )
 
+func nodeStart(n int, identityPrivateKey string) GoCResult {
+	if globalNodes[n] == nil {
+		return returnGoC(1, errUninitializedNode, "")
+	}
+	ctx := context.Background()
+
+	var err error
+	if identityPrivateKey != "" {
+		ctx, err = contextWithIdentity(ctx, identityPrivateKey)
+		if err != nil {
+			return returnGoC(1, err.Error(), "")
+		}
+	}
+
+	errCh := make(chan error, 1)
+
+	go func() {
+		err := globalNodes[n].Start(ctx)
+		errCh <- err
+	}()
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return returnGoC(1, err.Error(), "")
+		}
+		return returnGoC(0, "", "")
+	case <-time.After(5 * time.Second):
+		// Timeout occurred, node may still start later
+		return returnGoC(2, errUnreadyStart, "")
+	}
+}
+
 func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	var err error
 
 	inMemoryFlag := cOptions.InMemory != 0
 	listeningAddresses := splitCommaSeparatedString(cOptions.ListeningAddresses)
 
-	identityString := cOptions.IdentityPrivateKey
+	identityPrivateKeyString := cOptions.IdentityPrivateKey
 	identityKeyType := cOptions.IdentityKeyType
 
-	nodeIdentity, err := identityFromKey(identityKeyType, identityString)
+	nodeIdentity, err := identityFromKey(identityKeyType, identityPrivateKeyString)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -122,40 +155,7 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")
 	}
 
-	return NodeStart(n, identityString)
-}
-
-func NodeStart(n int, identityString string) GoCResult {
-	if globalNodes[n] == nil {
-		return returnGoC(1, errUninitializedNode, "")
-	}
-	ctx := context.Background()
-
-	var err error
-	if identityString != "" {
-		ctx, err = contextWithIdentity(ctx, identityString)
-		if err != nil {
-			return returnGoC(1, err.Error(), "")
-		}
-	}
-
-	errCh := make(chan error, 1)
-
-	go func() {
-		err := globalNodes[n].Start(ctx)
-		errCh <- err
-	}()
-
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return returnGoC(1, err.Error(), "")
-		}
-		return returnGoC(0, "", "")
-	case <-time.After(5 * time.Second):
-		// Timeout occurred, node may still start later
-		return returnGoC(2, errUnreadyStart, "")
-	}
+	return nodeStart(n, identityPrivateKeyString)
 }
 
 func NodeStop(n int) GoCResult {

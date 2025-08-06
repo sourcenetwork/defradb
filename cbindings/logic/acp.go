@@ -16,10 +16,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func ACPAddPolicy(n int, identityStr string, policy string, TxnID uint64) GoCResult {
+func ACPAddDACPolicy(n int, identityPrivateKey string, policy string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -37,7 +37,7 @@ func ACPAddPolicy(n int, identityStr string, policy string, TxnID uint64) GoCRes
 	return marshalJSONToGoCResult(policyResult)
 }
 
-func ACPAddRelationship(n int, identityStr string,
+func ACPAddDACActorRelationship(n int, identityPrivateKey string,
 	collectionArg string,
 	docIDArg string,
 	relationArg string,
@@ -46,7 +46,7 @@ func ACPAddRelationship(n int, identityStr string,
 ) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -64,9 +64,9 @@ func ACPAddRelationship(n int, identityStr string,
 	return marshalJSONToGoCResult(result)
 }
 
-func ACPDeleteRelationship(
+func ACPDeleteDACActorRelationship(
 	n int,
-	identityStr string,
+	identityPrivateKey string,
 	collectionArg string,
 	docIDArg string,
 	relationArg string,
@@ -75,7 +75,7 @@ func ACPDeleteRelationship(
 ) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -93,10 +93,10 @@ func ACPDeleteRelationship(
 	return marshalJSONToGoCResult(result)
 }
 
-func ACPNodeDisable(n int, identityStr string, TxnID uint64) GoCResult {
+func ACPNodeDisable(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -113,10 +113,10 @@ func ACPNodeDisable(n int, identityStr string, TxnID uint64) GoCResult {
 	return marshalJSONToGoCResult(client.SuccessResponse{Success: true})
 }
 
-func ACPNodeReEnable(n int, identityStr string, TxnID uint64) GoCResult {
+func ACPNodeReEnable(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -135,14 +135,14 @@ func ACPNodeReEnable(n int, identityStr string, TxnID uint64) GoCResult {
 
 func ACPNodeRelationshipAdd(
 	n int,
-	identityStr string,
+	identityPrivateKey string,
 	relationArg string,
 	targetActorArg string,
 	TxnID uint64,
 ) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -162,14 +162,14 @@ func ACPNodeRelationshipAdd(
 
 func ACPNodeRelationshipDelete(
 	n int,
-	identityStr string,
+	identityPrivateKey string,
 	relationArg string,
 	targetActorArg string,
 	TxnID uint64,
 ) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
@@ -187,10 +187,10 @@ func ACPNodeRelationshipDelete(
 	return marshalJSONToGoCResult(deleteNACActorRelationshipResult)
 }
 
-func ACPNodeStatus(n int, identityStr string, TxnID uint64) GoCResult {
+func ACPNodeStatus(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, identityStr)
+	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
 	if err != nil {
 		return returnGoC(1, err.Error(), "")
 	}
