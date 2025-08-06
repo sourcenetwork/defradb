@@ -1,12 +1,9 @@
 # This file contains our linter configurations that will be used for all Source Inc. projects.
 
 yaml-files:
-  - '*.yaml'
-  - '*.yml'
-  - '.yamllint'
-
-ignore:
-  - playground/node_modules/
+  - "*.yaml"
+  - "*.yml"
+  - ".yamllint"
 
 rules:
   # Disabled lint rules
