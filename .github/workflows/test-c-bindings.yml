@@ -26,7 +26,7 @@ on:
       - develop
 
 jobs:
-  check-data-format-changes:
+  test-c-bindings:
     name: Check C bindings job
 
     runs-on: ubuntu-latest
