@@ -37,7 +37,9 @@ func ACPAddDACPolicy(n int, identityPrivateKey string, policy string, TxnID uint
 	return marshalJSONToGoCResult(policyResult)
 }
 
-func ACPAddDACActorRelationship(n int, identityPrivateKey string,
+func ACPAddDACActorRelationship(
+	n int,
+	identityPrivateKey string,
 	collectionArg string,
 	docIDArg string,
 	relationArg string,

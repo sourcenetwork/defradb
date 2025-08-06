@@ -250,7 +250,15 @@ func (w *CWrapper) AddDACActorRelationship(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPAddDACActorRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
+	result := cbindings.ACPAddDACActorRelationship(
+		w.nodeNum,
+		identity,
+		collectionName,
+		docID,
+		relation,
+		targetActor,
+		txnID,
+	)
 
 	if result.Status != 0 {
 		return client.AddActorRelationshipResult{}, errors.New(result.Error)
@@ -274,7 +282,15 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	txnID := txnIDFromContext(ctx)
 	identity := identityFromContext(ctx)
 
-	result := cbindings.ACPDeleteDACActorRelationship(w.nodeNum, identity, collectionName, docID, relation, targetActor, txnID)
+	result := cbindings.ACPDeleteDACActorRelationship(
+		w.nodeNum,
+		identity,
+		collectionName,
+		docID,
+		relation,
+		targetActor,
+		txnID,
+	)
 
 	if result.Status != 0 {
 		return client.DeleteActorRelationshipResult{}, errors.New(result.Error)
