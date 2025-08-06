@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -141,6 +142,10 @@ func (db *DB) GetAllIndexes(
 func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeSchemaAddPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

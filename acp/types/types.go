@@ -88,6 +88,7 @@ const (
 	NodeNACStatusPerm
 	NodeNACRelationAddPerm
 	NodeNACRelationDeletePerm
+	NodeSchemaAddPerm
 )
 
 // List of all valid resource interface permissions for node access control, the order of
@@ -108,6 +109,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-status",
 	"nac-relation-add",
 	"nac-relation-delete",
+	"schema-add",
 }
 
 const NodeACPObject = "NodeObject"
@@ -151,6 +153,8 @@ resources:
       nac-relation-add:
         expr: owner + admin
       nac-relation-delete:
+        expr: owner + admin
+      schema-add:
         expr: owner + admin
 
     relations:
