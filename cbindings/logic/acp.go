@@ -95,7 +95,7 @@ func ACPDeleteDACActorRelationship(
 	return marshalJSONToGoCResult(result)
 }
 
-func ACPNodeDisable(n int, identityPrivateKey string, TxnID uint64) GoCResult {
+func ACPDisableNAC(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
@@ -115,7 +115,7 @@ func ACPNodeDisable(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	return marshalJSONToGoCResult(client.SuccessResponse{Success: true})
 }
 
-func ACPNodeReEnable(n int, identityPrivateKey string, TxnID uint64) GoCResult {
+func ACPReEnableNAC(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPrivateKey)
@@ -135,7 +135,7 @@ func ACPNodeReEnable(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	return marshalJSONToGoCResult(client.SuccessResponse{Success: true})
 }
 
-func ACPNodeRelationshipAdd(
+func ACPAddNACActorRelationship(
 	n int,
 	identityPrivateKey string,
 	relationArg string,
@@ -162,7 +162,7 @@ func ACPNodeRelationshipAdd(
 	return marshalJSONToGoCResult(addNACActorRelationshipResult)
 }
 
-func ACPNodeRelationshipDelete(
+func ACPDeleteNACActorRelationship(
 	n int,
 	identityPrivateKey string,
 	relationArg string,
@@ -189,7 +189,7 @@ func ACPNodeRelationshipDelete(
 	return marshalJSONToGoCResult(deleteNACActorRelationshipResult)
 }
 
-func ACPNodeStatus(n int, identityPrivateKey string, TxnID uint64) GoCResult {
+func ACPGetNACStatus(n int, identityPrivateKey string, TxnID uint64) GoCResult {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPrivateKey)

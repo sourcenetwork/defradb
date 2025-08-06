@@ -72,27 +72,27 @@ func ACPDeleteDACActorRelationship(
 	return returnC(gcr)
 }
 
-//export ACPNodeDisable
-func ACPNodeDisable(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.ACPNodeDisable(n, C.GoString(cIdentity), uint64(cTxnID))
+//export ACPDisableNAC
+func ACPDisableNAC(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPDisableNAC(n, C.GoString(cIdentity), uint64(cTxnID))
 	return returnC(gcr)
 }
 
-//export ACPNodeReEnable
-func ACPNodeReEnable(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.ACPNodeReEnable(n, C.GoString(cIdentity), uint64(cTxnID))
+//export ACPReEnableNAC
+func ACPReEnableNAC(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPReEnableNAC(n, C.GoString(cIdentity), uint64(cTxnID))
 	return returnC(gcr)
 }
 
-//export ACPNodeRelationshipAdd
-func ACPNodeRelationshipAdd(
+//export ACPAddNACActorRelationship
+func ACPAddNACActorRelationship(
 	n int,
 	cIdentity *C.char,
 	cRelation *C.char,
 	cActor *C.char,
 	cTxnID C.ulonglong,
 ) *C.Result {
-	gcr := cbindings.ACPNodeRelationshipAdd(
+	gcr := cbindings.ACPAddNACActorRelationship(
 		n,
 		C.GoString(cIdentity),
 		C.GoString(cRelation),
@@ -102,15 +102,15 @@ func ACPNodeRelationshipAdd(
 	return returnC(gcr)
 }
 
-//export ACPNodeRelationshipDelete
-func ACPNodeRelationshipDelete(
+//export ACPDeleteNACActorRelationship
+func ACPDeleteNACActorRelationship(
 	n int,
 	cIdentity *C.char,
 	cRelation *C.char,
 	cActor *C.char,
 	cTxnID C.ulonglong,
 ) *C.Result {
-	gcr := cbindings.ACPNodeRelationshipDelete(
+	gcr := cbindings.ACPDeleteNACActorRelationship(
 		n,
 		C.GoString(cIdentity),
 		C.GoString(cRelation),
@@ -120,9 +120,9 @@ func ACPNodeRelationshipDelete(
 	return returnC(gcr)
 }
 
-//export ACPNodeStatus
-func ACPNodeStatus(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.ACPNodeStatus(n, C.GoString(cIdentity), uint64(cTxnID))
+//export ACPGetNACStatus
+func ACPGetNACStatus(n int, cIdentity *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.ACPGetNACStatus(n, C.GoString(cIdentity), uint64(cTxnID))
 	return returnC(gcr)
 }
 

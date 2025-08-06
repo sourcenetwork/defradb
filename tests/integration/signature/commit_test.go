@@ -52,7 +52,6 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// C bindings do not support calling functions with non-Secp256k key yet
-			testUtils.CClientType,
 			testUtils.GoClientType,
 			testUtils.CLIClientType,
 			testUtils.HTTPClientType,
