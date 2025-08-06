@@ -362,13 +362,6 @@ test\:coverage-js:
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
-.PHONY: test\:coverage-c
-test\:coverage-c:
-	@$(MAKE) clean:coverage
-	mkdir $(COVERAGE_DIRECTORY)
-	DEFRA_CLIENT_C=true gotestsum --format testname -- ./tests/integration/... $(TEST_FLAGS) $(COVERAGE_FLAGS)
-	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
-
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector

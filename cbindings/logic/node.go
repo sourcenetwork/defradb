@@ -44,8 +44,6 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 	}
 	ctx := context.Background()
 
-	fmt.Println("Node Init identityString", identityString)
-
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
 
@@ -128,8 +126,6 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 }
 
 func NodeStart(n int, identityString string) GoCResult {
-	fmt.Println("Node Start identityString", identityString)
-
 	if globalNodes[n] == nil {
 		return returnGoC(1, errUninitializedNode, "")
 	}
