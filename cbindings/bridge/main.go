@@ -50,7 +50,7 @@ func ACPAddDACActorRelationship(
 	return returnC(gcr)
 }
 
-//export ACPDeleteRelationship
+//export ACPDeleteDACActorRelationship
 func ACPDeleteDACActorRelationship(
 	n int,
 	cIdentity *C.char,
