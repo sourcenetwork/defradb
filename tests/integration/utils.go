@@ -789,7 +789,6 @@ func setStartingNodes(
 			s,
 			acpIdentity.None,
 			testCase,
-			false,
 			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
 		)
 		require.Nil(s.T, err)
