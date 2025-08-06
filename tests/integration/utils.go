@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -357,9 +355,6 @@ func performAction(
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
 
-	case SchemaUpdate:
-		updateSchema(s, action)
-
 	case SchemaPatch:
 		patchSchema(s, action)
 
@@ -590,13 +585,6 @@ func getCollectionNames(testCase TestCase) []string {
 
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case SchemaUpdate:
-			if action.ExpectedError != "" {
-				// If an error is expected then no collections should result from this action
-				continue
-			}
-
-			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 		case *action.AddSchema:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
@@ -746,7 +734,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, SchemaUpdate, CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -1105,70 +1093,6 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t te
 	for key := range expectedMap {
 		assert.Equal(t, expectedMap[key], actualMap[key], "index fields' values mismatch")
 	}
-}
-
-// updateSchema updates the schema using the given details.
-func updateSchema(
-	s *state.State,
-	action SchemaUpdate,
-) {
-	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
-	if len(action.Replace) > 0 {
-		for substituteLabel := range action.Replace {
-			if substituteLabel == "" {
-				require.Fail(s.T, "Empty substitution label.")
-			}
-
-			howManyLabelsToSub := strings.Count(action.Schema, substituteLabel)
-			if howManyLabelsToSub == 0 {
-				require.Fail(
-					s.T,
-					"Can't do substitution because no label: "+substituteLabel,
-				)
-			}
-		}
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		// This schema might be modified if the caller needs some substitution magic done.
-		var modifiedSchema = action.Schema
-
-		// We need to substitute the policyIDs into the `%policyID% place holders.
-		if len(action.Replace) > 0 {
-			nodeID := nodeIDs[index]
-			nodesPolicyIDs := s.PolicyIDs[nodeID]
-			templateData := map[string]string{}
-			// Build template with the replacing values.
-			for substituteLabel, replaceWith := range action.Replace {
-				replacer, err := replaceWith.Replacer(nodesPolicyIDs)
-				require.NoError(s.T, err)
-				templateData[substituteLabel] = replacer
-			}
-
-			// Template should be built now, so execute it.
-			tmpl := template.Must(template.New("schema").Parse(modifiedSchema))
-			var renderedSchema bytes.Buffer
-			err := tmpl.Execute(&renderedSchema, templateData)
-			if err != nil {
-				require.Fail(s.T, "Template execution for schema update failed.")
-			}
-
-			modifiedSchema = renderedSchema.String()
-		}
-
-		results, err := node.AddSchema(s.Ctx, modifiedSchema)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if action.ExpectedResults != nil {
-			assertCollectionVersions(s, action.ExpectedResults, results)
-		}
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
 }
 
 func patchSchema(
@@ -2523,9 +2447,6 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	for _, act := range actions {
 		switch a := act.(type) {
 		case *action.AddSchema:
-			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
-
-		case SchemaUpdate:
 			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
 		}
 	}
