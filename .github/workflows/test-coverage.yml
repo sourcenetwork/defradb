@@ -31,6 +31,7 @@ env:
   DEFRA_CLIENT_GO: true
   DEFRA_CLIENT_HTTP: false
   DEFRA_CLIENT_CLI: false
+  DEFRA_CLIENT_C: false
 
   DEFRA_BADGER_MEMORY: true
   DEFRA_BADGER_FILE: false
@@ -299,6 +300,31 @@ jobs:
           coverage-artifact-name: "coverage_js"
           coverage-path: coverage.txt
 
+  # This job runs the database C-binding logic tests (DEFRA_CLIENT_C=true) with coverage, on Linux.
+  test-c:
+    name: Test C Bindings job
+
+    runs-on: ubuntu-latest
+
+    env:
+      DEFRA_CLIENT_C: true
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Run C bindings test coverage
+        run: make test:coverage-c
+
+      - name: Save coverage report in an artifact
+        uses: ./.github/composites/upload-coverage-artifact
+        with:
+          coverage-artifact-name: "coverage_c"
+          coverage-path: coverage.txt
+
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job
@@ -312,6 +338,7 @@ jobs:
       - test-encryption   #  1 test(s)
       - test-telemetry    #  1 test(s)
       - test-js           #  1 test(s)
+      - test-c            #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
