@@ -43,6 +43,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -309,7 +310,14 @@ func performAction(
 	actionIndex int,
 	act any,
 ) {
+	if stateful, ok := act.(action.Stateful); ok {
+		stateful.SetState(s)
+	}
+
 	switch action := act.(type) {
+	case action.Action:
+		action.Execute()
+
 	case ConfigureNode:
 		configureNode(s, testCase, action)
 
@@ -589,6 +597,13 @@ func getCollectionNames(testCase TestCase) []string {
 			}
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
+		case *action.AddSchema:
+			if action.ExpectedError != "" {
+				// If an error is expected then no collections should result from this action
+				continue
+			}
+
+			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 
 		case CreateView:
 			if action.ExpectedError != "" {
@@ -731,7 +746,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, SchemaUpdate, CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -2507,6 +2522,9 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
 	for _, act := range actions {
 		switch a := act.(type) {
+		case *action.AddSchema:
+			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
+
 		case SchemaUpdate:
 			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
 		}
