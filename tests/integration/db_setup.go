@@ -52,7 +52,6 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	enableNAC bool,
 	opts ...node.Option,
 ) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
@@ -134,20 +133,29 @@ func setupNode(
 		opts = append(opts, node.WithDisableP2P(false))
 	}
 
-	node, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = node.Start(s.Ctx)
-	defer resetStateContext(s)
+	err = nodeObj.Start(s.Ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := setupClient(s, node, enableNAC)
+	// Get enableNAC boolean from the opts
+	tmpOptions := node.DefaultNodeACPOptions()
+	for _, opt := range opts {
+		if opt, ok := opt.(node.NodeACPOpt); ok {
+			opt(tmpOptions)
+		}
+	}
+	enableNAC := tmpOptions.IsEnabled()
+
+	c, err := setupClient(s, nodeObj, enableNAC)
+	resetStateContext(s)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
@@ -161,8 +169,8 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	if node.Peer != nil {
-		st.AddrInfo = node.Peer.PeerInfo()
+	if nodeObj.Peer != nil {
+		st.AddrInfo = nodeObj.Peer.PeerInfo()
 	}
 
 	return st, nil
