@@ -31,7 +31,6 @@ env:
   DEFRA_CLIENT_GO: true
   DEFRA_CLIENT_HTTP: false
   DEFRA_CLIENT_CLI: false
-  DEFRA_CLIENT_C: false
 
   DEFRA_BADGER_MEMORY: true
   DEFRA_BADGER_FILE: false
@@ -313,7 +312,7 @@ jobs:
       - test-encryption   #  1 test(s)
       - test-telemetry    #  1 test(s)
       - test-js           #  1 test(s)
-      
+
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
     # - `if: success()` is always implied unless `always()` or `failure()` is specified.
