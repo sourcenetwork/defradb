@@ -147,6 +147,7 @@ func setupNode(
 	}
 
 	c, err := setupClient(s, nodeObj, enableNAC)
+
 	resetStateContext(s)
 	require.Nil(s.T, err)
 
