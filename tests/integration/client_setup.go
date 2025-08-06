@@ -29,7 +29,7 @@ func init() {
 		goClient = true
 	}
 	if cClient {
-		// Support will be added in the future
+		// TODO: Network test support for C client
 		skipNetworkTests = true
 		skipBackupTests = true
 	}
