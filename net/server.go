@@ -106,7 +106,7 @@ func (s *server) processPushlog(
 	req *protocol.PushLogRequest,
 	isReplicator bool,
 ) (*protocol.PushLogReply, error) {
-	pid, err := libpeer.Decode(req.PeerID)
+	pid, err := libpeer.Decode(req.SenderID)
 	if err != nil {
 		return nil, errors.Wrap("parsing stream PeerID", err)
 	}
@@ -311,7 +311,7 @@ func (s *server) pubSubMessageHandler(from libpeer.ID, topic string, msg []byte)
 		log.ErrorE("Failed to unmarshal pubsub message %s", err)
 		return nil, err
 	}
-	req.PeerID = from.String()
+	req.SenderID = from.String()
 	if _, err := s.processPushlog(s.peer.ctx, req, false); err != nil {
 		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
 	}

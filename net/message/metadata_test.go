@@ -21,7 +21,7 @@ func TestMetaData_AllMessageMethods_ShouldSucceed(t *testing.T) {
 	// set all fields
 	metaData.SetErrMessage("some error")
 	metaData.SetMessageID("some message ID")
-	metaData.SetPeerID("some peer ID")
+	metaData.SetSenderID("some peer ID")
 	metaData.SetPubkey([]byte("pubkey"))
 	metaData.SetSignature([]byte("signature"))
 	metaData.SetVersion()
@@ -29,7 +29,7 @@ func TestMetaData_AllMessageMethods_ShouldSucceed(t *testing.T) {
 	// get all fields and assert values
 	require.Equal(t, "some error", metaData.GetErrMessage())
 	require.Equal(t, "some message ID", metaData.GetMessageID())
-	require.Equal(t, "some peer ID", metaData.GetPeerID())
+	require.Equal(t, "some peer ID", metaData.GetSenderID())
 	require.Equal(t, []byte("pubkey"), metaData.GetPubkey())
 	require.Equal(t, []byte("signature"), metaData.GetSignature())
 	require.Equal(t, messageVersion, metaData.GetVersion())

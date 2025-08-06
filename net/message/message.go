@@ -36,8 +36,8 @@ type Message interface {
 	SetVersion()
 	GetMessageID() string
 	SetMessageID(id string)
-	GetPeerID() string
-	SetPeerID(id string)
+	GetSenderID() string
+	SetSenderID(id string)
 	GetPubkey() []byte
 	SetPubkey(key []byte)
 	GetSignature() []byte
@@ -162,7 +162,7 @@ func verifyMessage(m Message) error {
 	if err != nil {
 		return err
 	}
-	peerID, err := peer.Decode(m.GetPeerID())
+	peerID, err := peer.Decode(m.GetSenderID())
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ func signAndSetMetaData(h host.Host, m Message) error {
 	}
 	m.SetVersion()
 	m.SetPubkey(nodePubKey)
-	m.SetPeerID(h.ID().String())
+	m.SetSenderID(h.ID().String())
 
 	signature, err := signMessage(h, m)
 	if err != nil {
