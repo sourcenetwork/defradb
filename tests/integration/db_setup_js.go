@@ -67,17 +67,7 @@ func setupNode(
 	if err != nil {
 		return nil, err
 	}
-
-	// Get enableNAC boolean from the opts
-	tmpOptions := node.DefaultNodeACPOptions()
-	for _, opt := range opts {
-		if opt, ok := opt.(node.NodeACPOpt); ok {
-			opt(tmpOptions)
-		}
-	}
-	enableNAC := tmpOptions.IsEnabled()
-
-	c, err := setupClient(s, nodeObj, enableNAC)
+	c, err := setupClient(s, nodeObj, true)
 	if err != nil {
 		return nil, err
 	}
