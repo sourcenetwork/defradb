@@ -18,7 +18,6 @@ import (
 
 func BlockVerifySignature(n int, keyTypeStr string, pubKeyStr string, CIDStr string) GoCResult {
 	ctx := context.Background()
-
 	keyType := crypto.KeyTypeSecp256k1
 	if keyTypeStr != "" {
 		keyType = crypto.KeyType(keyTypeStr)

@@ -817,7 +817,6 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		}
 		opts = append(opts, netConfig.WithListenAddresses(addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
-		fmt.Println("action.EnableNAC", action.EnableNAC)
 		node, err := setupNode(
 			s,
 			getIdentityOption(s, action.Identity),

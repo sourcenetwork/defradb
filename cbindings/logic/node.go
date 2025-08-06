@@ -37,6 +37,7 @@ func nodeStart(n int, identityPrivateKey string) GoCResult {
 
 	var err error
 	if identityPrivateKey != "" {
+		fmt.Println("identityPrivateKey", identityPrivateKey)
 		ctx, err = contextWithIdentity(ctx, identityPrivateKey)
 		if err != nil {
 			return returnGoC(1, err.Error(), "")

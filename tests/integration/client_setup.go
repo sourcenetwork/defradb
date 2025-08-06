@@ -50,7 +50,6 @@ func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Cl
 		return newGoClientWrapper(nodeObj), nil
 
 	case CClientType:
-		fmt.Println("enableNAC", enableNAC)
 		return cwrap.NewCWrapper(s.Ctx, enableNAC), nil
 
 	default:

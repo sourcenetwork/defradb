@@ -197,6 +197,9 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 				return
 			default:
 				res := cbindings.PollSubscription(subID)
+				if res.Value == "" {
+					continue
+				}
 				goRes, err := convertGoCResultToGQLResult(res)
 				if err != nil {
 					goRes.Errors = append(goRes.Errors, err)
