@@ -8,7 +8,7 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 #
-# TO DO: Proper coverage test for C bindings
+# todo: https://github.com/sourcenetwork/defradb/issues/3917
 
 name: Check C Bindings Workflow
 
