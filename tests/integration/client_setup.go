@@ -38,7 +38,7 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state.State, nodeObj *node.Node, opts ...node.Option) (clients.Client, error) {
+func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Client, error) {
 	switch s.ClientType {
 	case HTTPClientType:
 		return http.NewWrapper(nodeObj)
@@ -50,13 +50,7 @@ func setupClient(s *state.State, nodeObj *node.Node, opts ...node.Option) (clien
 		return newGoClientWrapper(nodeObj), nil
 
 	case CClientType:
-		tmpOptions := node.DefaultNodeACPOptions()
-		for _, opt := range opts {
-			if opt, ok := opt.(node.NodeACPOpt); ok {
-				opt(tmpOptions)
-			}
-		}
-		enableNAC := tmpOptions.IsEnabled()
+		fmt.Println("enableNAC", enableNAC)
 		return cwrap.NewCWrapper(s.Ctx, enableNAC), nil
 
 	default:
