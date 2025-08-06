@@ -14,7 +14,7 @@ package message
 type MetaData struct {
 	Version    string
 	MessageID  string
-	PeerID     string
+	SenderID   string
 	Pubkey     []byte
 	Signature  []byte `cbor:",omitempty"`
 	ErrMessage string `cbor:",omitempty"`
@@ -38,12 +38,12 @@ func (m *MetaData) SetMessageID(id string) {
 	m.MessageID = id
 }
 
-func (m *MetaData) GetPeerID() string {
-	return m.PeerID
+func (m *MetaData) GetSenderID() string {
+	return m.SenderID
 }
 
-func (m *MetaData) SetPeerID(id string) {
-	m.PeerID = id
+func (m *MetaData) SetSenderID(id string) {
+	m.SenderID = id
 }
 
 func (m *MetaData) GetPubkey() []byte {
