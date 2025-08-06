@@ -13,13 +13,14 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -73,7 +74,7 @@ func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -126,7 +127,7 @@ func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T
 func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -167,7 +168,7 @@ func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -219,7 +220,7 @@ func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -271,7 +272,7 @@ func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -323,7 +324,7 @@ func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithNeFilterAgainstNullField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

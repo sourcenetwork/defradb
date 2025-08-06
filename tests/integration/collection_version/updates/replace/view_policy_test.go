@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -59,7 +60,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
                               - actor
                 `,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

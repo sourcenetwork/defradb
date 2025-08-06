@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -88,7 +89,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_AllActorsCanReadButNotUpdateOrD
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -98,10 +99,6 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_AllActorsCanReadButNotUpdateOrD
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -324,7 +321,7 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_CanReadEvenWithoutIdentityButNo
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -334,10 +331,6 @@ func TestACP_OwnerGivesOnlyReadAccessToAllActors_CanReadEvenWithoutIdentityButNo
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

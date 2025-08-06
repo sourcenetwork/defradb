@@ -13,6 +13,7 @@ package constraints
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationCreate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with size contraint",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -62,7 +63,7 @@ func TestMutationCreate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with array size mismatch",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

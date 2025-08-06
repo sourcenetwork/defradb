@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create followed by delete in same transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -70,7 +71,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 	test := testUtils.TestCase{
 		Description: "Create followed by delete on 2nd transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -146,7 +147,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Update followed by read in same transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -204,7 +205,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 	test := testUtils.TestCase{
 		Description: "Update followed by read in different transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -266,7 +267,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "Update by two different transactions",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

@@ -14,13 +14,14 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -49,7 +50,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -78,7 +79,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFieldKind_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -107,7 +108,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

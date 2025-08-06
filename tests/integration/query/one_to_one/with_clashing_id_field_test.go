@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -29,7 +30,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 			testUtils.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -90,7 +91,7 @@ func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, id field with name clash on primary side",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String

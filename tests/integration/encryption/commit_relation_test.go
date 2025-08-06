@@ -13,6 +13,7 @@ package encryption
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

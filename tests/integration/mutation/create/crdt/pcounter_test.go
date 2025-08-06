@@ -13,6 +13,7 @@ package create
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestPCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Document creation with P Counter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -60,7 +61,7 @@ func TestPCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Document creation with float32 P Counter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -100,7 +101,7 @@ func TestPCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Document creation with float64 P Counter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

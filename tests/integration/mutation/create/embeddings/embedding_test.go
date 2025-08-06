@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -32,7 +33,7 @@ func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 			testUtils.GoClientType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -89,7 +90,7 @@ func TestMutationCreate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with manually defined vector embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

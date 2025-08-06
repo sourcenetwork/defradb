@@ -13,6 +13,7 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field, index by name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -54,7 +55,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field, index by name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -88,7 +89,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedI
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field, index by name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -111,7 +112,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field, index by name, and test-op via name-index",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

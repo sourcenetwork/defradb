@@ -13,6 +13,7 @@ package move
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, move collection",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

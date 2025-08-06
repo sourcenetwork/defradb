@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -189,7 +190,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         points: Int @crdt(type: pcounter)
@@ -232,7 +233,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         points: Int @crdt(type: pcounter)

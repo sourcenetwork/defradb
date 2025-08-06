@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation query with simple filter on sub type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -73,7 +74,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation query with simple filter on parent",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -128,7 +129,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation query with simple sub filter on child",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -183,7 +184,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation query with filter on parent referencing parent through child",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -252,7 +253,7 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 	test := testUtils.TestCase{
 		Description: "One-to-one relation with simple sub filter on child, but not child selections",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -297,7 +298,7 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation with _and filter that includes relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -377,7 +378,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation with _or filter that includes relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -500,7 +501,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 	test := testUtils.TestCase{
 		Description: "One-to-one relation with _and filter that includes relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
 			testUtils.CreateDoc{

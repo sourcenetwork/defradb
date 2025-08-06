@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If field is not unique, creating of unique index fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -78,7 +79,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 	test := testUtils.TestCase{
 		Description: "adding a new doc with existing value for indexed field should fail",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -139,7 +140,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "create unique index if all docs have unique field values",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -194,7 +195,7 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -255,7 +256,7 @@ func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test adding a doc with nil value for indexed field should succeed",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -280,7 +281,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 	test := testUtils.TestCase{
 		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -319,7 +320,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

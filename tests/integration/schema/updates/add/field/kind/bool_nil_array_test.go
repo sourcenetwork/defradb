@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind nillable bool array (18)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -56,7 +57,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind nillable bool array (18) with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -102,7 +103,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *tes
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind nillable bool array substitution with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

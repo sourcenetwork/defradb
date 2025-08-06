@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -80,7 +81,7 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -90,10 +91,6 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -273,7 +270,7 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -283,10 +280,6 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -493,7 +486,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -503,10 +496,6 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -694,7 +683,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -704,10 +693,6 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -972,7 +957,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -982,10 +967,6 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -1161,7 +1142,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -1171,10 +1152,6 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -1329,7 +1306,7 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -1339,10 +1316,6 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

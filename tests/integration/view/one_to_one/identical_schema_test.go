@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one view with same schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type LeftHand {
 						name: String
@@ -98,7 +99,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to one view followed by GQL type update",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -133,7 +134,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 			// that `BookView` is not forgotten.  A GQL error would appear if this
 			// was broken as `AuthorView.books` would reference a type that does
 			// not exist.
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

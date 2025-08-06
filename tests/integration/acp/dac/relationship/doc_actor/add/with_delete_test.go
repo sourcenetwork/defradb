@@ -13,6 +13,7 @@ package test_acp_dac_relationship_doc_actor_add
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -78,7 +79,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -88,10 +89,6 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -230,7 +227,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -240,10 +237,6 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -418,7 +411,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -428,10 +421,6 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

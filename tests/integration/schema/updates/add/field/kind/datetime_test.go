@@ -13,6 +13,7 @@ package kind
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind datetime (10)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -54,7 +55,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind datetime (10) with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -100,7 +101,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind datetime substitution with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

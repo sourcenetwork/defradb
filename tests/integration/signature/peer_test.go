@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -31,7 +32,7 @@ func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -88,7 +89,7 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -145,7 +146,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -243,7 +244,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

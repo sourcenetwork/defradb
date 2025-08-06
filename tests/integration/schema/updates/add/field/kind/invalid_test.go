@@ -13,6 +13,7 @@ package kind
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesAddFieldKind15(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind deprecated (15)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -46,7 +47,7 @@ func TestSchemaUpdatesAddFieldKind25(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind unsupported (22)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -72,7 +73,7 @@ func TestSchemaUpdatesAddFieldKind198(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind unsupported (198)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -96,7 +97,7 @@ func TestSchemaUpdatesAddFieldKindInvalid(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind unsupported",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

@@ -13,6 +13,7 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter equal value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -64,7 +65,7 @@ func TestQueryJSON_WithLesserEqualFilterWithLesserValue_ShouldFilter(t *testing.
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter lesser value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -108,7 +109,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNullValue_ShouldFilter(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter null value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -151,7 +152,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedEqualValue_ShouldFilter(t *tes
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter nested equal value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -195,7 +196,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *te
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le nested filter nested lesser value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -239,7 +240,7 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *test
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter nested null value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -282,7 +283,7 @@ func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter bool value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -320,7 +321,7 @@ func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter string value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -358,7 +359,7 @@ func TestQueryJSON_WithLesserEqualFilterWithObjectValue_ReturnsError(t *testing.
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter object value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -396,7 +397,7 @@ func TestQueryJSON_WithLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter array value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -434,7 +435,7 @@ func TestQueryJSON_WithLesserEqualFilterWithAllTypes_ShouldFilter(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "Simple query with JSON _le filter all types",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String

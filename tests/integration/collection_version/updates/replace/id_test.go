@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -45,12 +46,12 @@ func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Books {}
 				`,
@@ -76,7 +77,7 @@ func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -114,12 +115,12 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Dogs {}
 				`,
@@ -150,7 +151,7 @@ func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T
 func TestColVersionUpdateReplaceID_WithNew_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,

@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -307,7 +308,7 @@ func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Explain (default) request with JSON equal (_eq) filter.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON

@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -81,13 +82,13 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
 			},
 			testUtils.SetupComplete{},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -102,7 +103,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchema(t *testing.T) {
 func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 					type Users {}
@@ -118,7 +119,7 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDL(t *testing.T) {
 func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDLMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 					type Users {}
@@ -135,12 +136,12 @@ func TestSchemaSimpleErrorsGivenDuplicateSchemaInSameSDLMultiple(t *testing.T) {
 func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Books {}
 				`,
@@ -168,7 +169,7 @@ func TestSchemaSimpleCreatesSchemaGivenNewTypes(t *testing.T) {
 func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -204,7 +205,7 @@ func TestSchemaSimpleCreatesSchemaWithDefaultFieldsGivenEmptyType(t *testing.T) 
 func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: NotAType
@@ -221,7 +222,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldType(t *testing.T) {
 func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: NotAType
@@ -239,7 +240,7 @@ func TestSchemaSimpleErrorsGivenTypeWithInvalidFieldTypeMultiple(t *testing.T) {
 func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -285,7 +286,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithStringField(t *testing.T) {
 func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						email: String!
@@ -302,7 +303,7 @@ func TestSchemaSimpleErrorsGivenNonNullField(t *testing.T) {
 func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Dogs {
 						name: String
@@ -323,7 +324,7 @@ func TestSchemaSimpleErrorsGivenNonNullManyRelationField(t *testing.T) {
 func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						data: Blob
@@ -369,7 +370,7 @@ func TestSchemaSimpleCreatesSchemaGivenTypeWithBlobField(t *testing.T) {
 func TestSchemaSimple_WithJSONField_CreatesSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						data: JSON
@@ -415,7 +416,7 @@ func TestSchemaSimple_WithJSONField_CreatesSchemaGivenType(t *testing.T) {
 func TestSchemaSimple_WithFloat32Field_CreatesSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						data: Float32
@@ -461,7 +462,7 @@ func TestSchemaSimple_WithFloat32Field_CreatesSchemaGivenType(t *testing.T) {
 func TestSchemaSimple_WithFloat64Field_CreatesSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						data: Float64
@@ -507,7 +508,7 @@ func TestSchemaSimple_WithFloat64Field_CreatesSchemaGivenType(t *testing.T) {
 func TestSchemaSimple_WithFloatField_CreatesSchemaGivenType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						data: Float
@@ -557,7 +558,7 @@ func TestSchemaSimple_WithFloatField_CreatesSchemaGivenType(t *testing.T) {
 func TestSchemaSimple_WithAllTypes_CreatesSchemaGivenTypes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						tBool: Boolean

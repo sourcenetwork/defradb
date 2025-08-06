@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with invalid cid and invalid docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -50,7 +51,7 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with unknown cid and invalid docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -78,7 +79,7 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -117,7 +118,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with (first) cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -161,7 +162,7 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with (last) cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -205,7 +206,7 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with (middle) cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -265,7 +266,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -318,7 +319,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with first cid and docID with pncounter int type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -372,7 +373,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with first cid and docID with pncounter and float type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -426,7 +427,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with first cid and docID with pcounter int type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -475,7 +476,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with first cid and docID with pcounter and float type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

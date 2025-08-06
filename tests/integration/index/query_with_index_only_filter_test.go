@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +27,7 @@ func TestQueryWithIndex_WithNonIndexedFields_ShouldFetchAllOfThem(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "If there are non-indexed fields in the query, they should be fetched",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -66,7 +67,7 @@ func TestQueryWithIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -102,7 +103,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _eq filter, they should be fetched",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -147,7 +148,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -184,7 +185,7 @@ func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -222,7 +223,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -259,7 +260,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -297,7 +298,7 @@ func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -342,7 +343,7 @@ func TestQueryWithIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -375,7 +376,7 @@ func TestQueryWithIndex_WithInFilterOnFloat_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -435,7 +436,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If there are several docs matching _in filter, they should be fetched",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -480,7 +481,7 @@ func TestQueryWithIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -545,7 +546,7 @@ func TestQueryWithIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -644,7 +645,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -681,7 +682,7 @@ func TestQueryWithIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -732,7 +733,7 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -818,7 +819,7 @@ func TestQueryWithIndex_WithNeFilterAgainstIntField_ShouldFetchNilValues(t *test
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -887,7 +888,7 @@ func TestQueryWithIndex_WithNeFilterAgainstFloatField_ShouldFetchNilValues(t *te
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -956,7 +957,7 @@ func TestQueryWithIndex_WithNeFilterAgainstStringField_ShouldFetchNilValues(t *t
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -1025,7 +1026,7 @@ func TestQueryWithIndex_WithNeFilterAgainstDateTimeField_ShouldFetchNilValues(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -1094,7 +1095,7 @@ func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

@@ -13,6 +13,7 @@ package one_to_one_multiple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -124,7 +125,7 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -228,7 +229,7 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -55,7 +56,7 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnDeletePermissionExprOn
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -65,10 +66,6 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnDeletePermissionExprOn
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
@@ -141,7 +138,7 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnDeletePermissionExpr
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -151,10 +148,6 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnDeletePermissionExpr
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
@@ -227,7 +220,7 @@ func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnDeletePermissionExprOnDRI
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -237,10 +230,6 @@ func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnDeletePermissionExprOnDRI
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",

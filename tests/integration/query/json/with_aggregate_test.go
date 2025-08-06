@@ -13,6 +13,7 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple JSON, aggregate with filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON

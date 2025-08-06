@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -132,7 +133,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -243,7 +244,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -359,7 +360,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -474,7 +475,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String

@@ -13,6 +13,7 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 		Description: "Test the fields for the many side groupBy are generated.",
 
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -84,7 +85,7 @@ func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 		Description: "Test the fields for the single side groupBy are generated.",
 
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String

@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -27,7 +28,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -91,7 +92,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -168,7 +169,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 	test := testUtils.TestCase{
 		Description: "Test schema migration",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

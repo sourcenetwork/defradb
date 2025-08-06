@@ -13,6 +13,7 @@ package one_to_many_multiple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-many relation query from one side with multiple many fitlers",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String

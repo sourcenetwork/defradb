@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -90,7 +91,7 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -100,10 +101,6 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_GQL_ManagerCanR
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -369,7 +366,7 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -379,10 +376,6 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_GQL_ManagerCantR
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -545,7 +538,7 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -555,10 +548,6 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
