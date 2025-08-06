@@ -26,8 +26,9 @@ import (
 
 var subscriptionStore sync.Map // map[string]*Subscription
 
-// The subscriptionStore holds objects of this type. The structure bundles the result channel, which
-// we will be polling, with a function that can cancel the context when the subscription is closed.
+// Subscription is a wrapper for a GraphQL subscription query that also contains a function to
+// cancel the context when the subscription is closed. This is used to allow us to avoid leaking
+// goroutines.
 type Subscription struct {
 	ctxCancel  context.CancelFunc
 	resultChan <-chan client.GQLResult
