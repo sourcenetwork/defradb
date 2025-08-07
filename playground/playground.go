@@ -10,6 +10,8 @@
 
 //go:build playground
 
+//go:generate ../tools/scripts/download_playground.sh
+
 package playground
 
 import (

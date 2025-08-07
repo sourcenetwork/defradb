@@ -74,7 +74,6 @@ COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
-PLAYGROUND_DIRECTORY=playground
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=./...
 
@@ -171,7 +170,7 @@ deps\:mocks:
 
 .PHONY: deps\:playground
 deps\:playground:
-	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
+	go generate -tags playground ./playground/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -427,7 +426,6 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
-	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
 fix:
