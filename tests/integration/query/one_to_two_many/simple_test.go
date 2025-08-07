@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -142,7 +141,6 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 
 func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -269,7 +267,6 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -432,7 +429,6 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 
 func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

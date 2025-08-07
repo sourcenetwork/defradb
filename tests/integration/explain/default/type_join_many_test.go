@@ -22,8 +22,6 @@ import (
 func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a 1-to-M join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

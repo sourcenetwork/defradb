@@ -19,7 +19,6 @@ import (
 
 func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Invalid type of explain request should error.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

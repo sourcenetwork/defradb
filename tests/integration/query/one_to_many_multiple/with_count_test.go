@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -139,7 +138,6 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

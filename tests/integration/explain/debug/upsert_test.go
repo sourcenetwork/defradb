@@ -36,8 +36,6 @@ var upsertPattern = dataMap{
 func TestDebugExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with upsert.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

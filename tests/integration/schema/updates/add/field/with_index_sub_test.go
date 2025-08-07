@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field, index by name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field, index by name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -87,7 +85,6 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedInValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field, index by name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -110,7 +107,6 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedI
 }
 func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field, index by name, and test-op via name-index",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

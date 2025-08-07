@@ -19,7 +19,6 @@ import (
 
 func TestNAC_AddRelationshipWhenNACNotConfiguredBefore_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to add relationship when nac is not configured before, return an error",
 		Actions: []any{
 			// With requestor identity.
 			testUtils.AddNACActorRelationship{
@@ -52,7 +51,6 @@ func TestNAC_AddRelationshipWhenNACNotConfiguredBefore_Error(t *testing.T) {
 
 func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to add relationship when nac is enabled, with invalid identities, return an error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -108,7 +106,6 @@ func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testi
 
 func TestNAC_AddRelationshipWhenNACIsDisabledWithInvalidIdentities_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to add relationship when nac is disabled, with invalid identities, return an error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -166,7 +163,6 @@ func TestNAC_AddRelationshipWhenNACIsDisabledWithInvalidIdentities_Error(t *test
 
 func TestNAC_AddRelationshipWithInvalidRelationName_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Add relationship with invalid relation name, error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -188,7 +184,6 @@ func TestNAC_AddRelationshipWithInvalidRelationName_Error(t *testing.T) {
 
 func TestNAC_AddRelationshipWithValidIdentity_RelationshipAdded(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Add relationship with valid identity, relationship formed",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -235,7 +230,6 @@ func TestNAC_AddRelationshipWithValidIdentity_RelationshipAdded(t *testing.T) {
 
 func TestNAC_AddRelationshipForAllIdentities_AllIdentitiesCanAccess(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Add relationship for all identities, all identities can acccess",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -270,7 +264,6 @@ func TestNAC_AddRelationshipForAllIdentities_AllIdentitiesCanAccess(t *testing.T
 
 func TestNAC_AddRelationshipStillRequiresIdentityEvenIfAllIdentitiesGivenAccess_StillNeedIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Add relationship still needs identity even if all identities have access",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{

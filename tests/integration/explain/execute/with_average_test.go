@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request using average on array field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -79,8 +77,6 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 
 func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request using average on joined field.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

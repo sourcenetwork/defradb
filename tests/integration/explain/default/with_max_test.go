@@ -36,8 +36,6 @@ var maxPattern = dataMap{
 func TestDefaultExplainRequest_WithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with max on an inline array field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of string array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of non null string array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -90,7 +88,6 @@ func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of int array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -126,7 +123,6 @@ func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of non null int array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -162,7 +158,6 @@ func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -198,7 +193,6 @@ func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of non null float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -234,7 +228,6 @@ func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of boolean array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -270,7 +263,6 @@ func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 
 func TestQueryInlineNonNullBooleanArrayWithNoneFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered none of non null boolean array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

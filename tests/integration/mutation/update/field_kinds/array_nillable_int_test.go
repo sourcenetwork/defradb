@@ -21,7 +21,6 @@ import (
 
 func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable ints",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

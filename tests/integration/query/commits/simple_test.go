@@ -26,7 +26,6 @@ func TestQueryCommits(t *testing.T) {
 	headCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		Description: "Simple all commits query",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -64,7 +63,6 @@ func TestQueryCommits(t *testing.T) {
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, multiple docs",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -118,7 +116,6 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 
 func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query yielding schemaVersionId",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -160,7 +157,6 @@ func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
 
 func TestQueryCommitsWithFieldNameField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query yielding fieldName",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -199,7 +195,6 @@ func TestQueryCommitsWithFieldNameField(t *testing.T) {
 
 func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query yielding fieldName",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -370,7 +365,6 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 
 func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits with alias query",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

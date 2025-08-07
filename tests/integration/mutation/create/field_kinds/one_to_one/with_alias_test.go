@@ -20,7 +20,6 @@ import (
 
 func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, alias relation, with an invalid field.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -45,7 +44,6 @@ func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_CreatedDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, alias relation, from the wrong side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -75,7 +73,6 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_Creat
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation with an alias relation.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -138,7 +135,6 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_QueryFromPrimarySid
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_CollectionAPI_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side with alias relation.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionSaveMutationType,
 			testUtils.CollectionNamedMutationType,
@@ -166,7 +162,6 @@ func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_CollectionAPI_Error
 
 func TestMutationCreateOneToOne_UseAliasedRelationNameToLink_GQL_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side with alias relation.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.GQLRequestMutationType,
 		}),

@@ -38,8 +38,6 @@ var minTypeIndexJoinPattern = dataMap{
 func TestDefaultExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with min on a one-to-many joined field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -116,8 +114,6 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing
 
 func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with min on a one-to-many joined field, with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -209,8 +205,6 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(
 
 func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithManySources_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with min on a one-to-many joined field with many sources.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

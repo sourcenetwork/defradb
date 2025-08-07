@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum with filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

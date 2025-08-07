@@ -37,8 +37,6 @@ var similarityPattern = dataMap{
 func TestDebugExplainRequestWith_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with similarity.",
-
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {

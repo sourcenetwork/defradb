@@ -23,7 +23,6 @@ import (
 
 func TestSchemaMigrationQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -85,7 +84,6 @@ func TestSchemaMigrationQuery(t *testing.T) {
 
 func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, multiple documents",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -167,7 +165,6 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 // for downgrading documents recieved via P2P.
 func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration set before schema updated",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -229,7 +226,6 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforeSchemaPatch(t *testing
 
 func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, to intermediary version",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -302,7 +298,6 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 
 func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, from intermediary version",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -375,7 +370,6 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 
 func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, across multiple migrated versions",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -463,7 +457,6 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 
 func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, multiple migrations before patch",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -551,7 +544,6 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 
 func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, multiple migrations before patch",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -646,7 +638,6 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 // bridging the gap.
 func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -708,7 +699,6 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 
 func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration mutating existing scalar field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -771,7 +761,6 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 
 func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration mutating existing inline-array field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -834,7 +823,6 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 
 func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration removing existing field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -897,7 +885,6 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 
 func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration preserves existing field without requesting it",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -975,7 +962,6 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 
 func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration copies existing field without requesting src",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -1039,7 +1025,6 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 
 func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRequested(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, migration copies existing field without requesting src or dst",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

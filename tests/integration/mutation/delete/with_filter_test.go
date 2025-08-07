@@ -19,7 +19,6 @@ import (
 
 func TestMutationDeletion_WithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete using filter - One matching document, that exists.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -55,7 +54,6 @@ func TestMutationDeletion_WithFilter(t *testing.T) {
 
 func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete using filter - Multiple matching documents that exist.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -108,7 +106,6 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 
 func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete using filter - Match everything in this collection.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -160,7 +157,6 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 
 func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "No delete with filter: because no document matches filter.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -192,7 +188,6 @@ func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 
 func TestMutationDeletion_WithFilterOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "No delete with filter: because the collection is empty.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

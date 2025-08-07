@@ -24,7 +24,6 @@ const johnDocID = "bae-774fbeea-813b-52c8-82b0-d08515a075d7"
 
 func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If field is not unique, creating of unique index fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,7 +76,6 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 
 func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "adding a new doc with existing value for indexed field should fail",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -138,7 +136,6 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 
 func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique index if all docs have unique field values",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -193,7 +190,6 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 
 func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -254,7 +250,6 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 
 func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test adding a doc with nil value for indexed field should succeed",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -279,7 +274,6 @@ func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 
 func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -44,7 +43,6 @@ func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove all fields",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -69,7 +67,6 @@ func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -94,7 +91,6 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field kind",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -119,7 +115,6 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field Typ",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

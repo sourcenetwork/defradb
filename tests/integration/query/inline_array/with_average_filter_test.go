@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered average of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with filter, average of populated nillable integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered average of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered average of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

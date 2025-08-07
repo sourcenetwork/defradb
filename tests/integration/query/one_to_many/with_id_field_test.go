@@ -22,7 +22,6 @@ import (
 // This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation primary direction, id field with name clash on primary side",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match

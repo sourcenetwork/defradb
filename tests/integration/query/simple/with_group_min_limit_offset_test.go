@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWithLimitAndOffset_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, offsetted limited min on non-rendered group integer value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

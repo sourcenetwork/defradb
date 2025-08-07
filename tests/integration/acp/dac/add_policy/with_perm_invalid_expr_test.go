@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with permission having empr expr, error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -62,8 +60,6 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with permission expr having owner in the end with incorrect symbol, error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -104,8 +100,6 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 
 func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpace_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy with permission expr having owner in the end with incorrect symbol with no space, error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

@@ -21,8 +21,6 @@ import (
 func TestACP_LinkSchema_OwnerMissingRequiredDeletePermissionOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with owner missing required delete permission, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -102,8 +100,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredDeletePermissionOnDRI_SchemaRejected
 func TestACP_LinkSchema_OwnerMissingRequiredDeletePermissionLabelOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with owner missing required delete permission label, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -176,8 +172,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredDeletePermissionLabelOnDRI_SchemaRej
 
 func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnDeletePermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, owner specified incorrectly on delete permission expression, reject schema",
 
 		Actions: []any{
 
@@ -258,8 +252,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnDeletePermissionExprOnDRI_Sch
 func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnDeletePermissionNoSpaceExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner specified incorrectly on delete permission expression (no space), reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -338,8 +330,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnDeletePermissionNoSpaceExprOn
 
 func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, malicious owner specified on delete permission expression, reject schema",
 
 		Actions: []any{
 

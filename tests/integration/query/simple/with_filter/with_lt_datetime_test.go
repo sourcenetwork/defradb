@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic lt DateTime filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic lt DateTime filter with null value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -89,7 +87,6 @@ func TestQuerySimpleWithDateTimeLTFilterBlockWithNullValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeLTAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter with nil value and non-nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{

@@ -27,7 +27,6 @@ func TestQueryWithIndex_IfIndexFilterWithRegular_ShouldFilter(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Combination of a filter on regular and of an indexed field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -68,7 +67,6 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegular_ShouldFilter(t *testin
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Combination of a filter on regular and of 2 indexed fields",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -109,7 +107,6 @@ func TestQueryWithIndex_IfMultipleIndexFiltersWithRegularCaseInsensitive_ShouldF
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Combination of a filter on regular and of 2 indexed fields and case insensitive operator",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -150,7 +147,6 @@ func TestQueryWithIndex_FilterOnNonIndexedField_ShouldIgnoreIndex(t *testing.T) 
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "If filter does not contain indexed field, index should be ignored",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

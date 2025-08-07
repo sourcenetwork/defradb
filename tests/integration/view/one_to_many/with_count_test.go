@@ -21,7 +21,6 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/2113
 func TestView_OneToManyWithCount_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with count",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -87,7 +86,6 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 
 func TestView_OneToManyWithAliasedCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with aliased count",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -161,7 +159,6 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 
 func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with count in query but not sdl",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

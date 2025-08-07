@@ -22,8 +22,6 @@ import (
 func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollectionCreateDocActorRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, p2p subscribe collection that has a policy, and create a new doc-actor relationship",
-
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
 				testUtils.SourceHubDocumentACPType,

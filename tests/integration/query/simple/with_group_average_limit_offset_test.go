@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, limited average on non-rendered group integer value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

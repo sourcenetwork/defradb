@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequestWithGroup(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

@@ -20,7 +20,6 @@ import (
 
 func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Getting indexes should return empty list if there are no indexes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

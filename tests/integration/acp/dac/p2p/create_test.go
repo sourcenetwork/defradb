@@ -22,8 +22,6 @@ import (
 func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, p2p create private documents on different nodes, with source-hub",
-
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
 				testUtils.SourceHubDocumentACPType,
@@ -134,7 +132,6 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 
 func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, p2p create a private documents and sync after adding actor relationship, with source-hub",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
 				testUtils.SourceHubDocumentACPType,

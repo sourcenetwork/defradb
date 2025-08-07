@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(age)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -60,7 +59,6 @@ func TestQuerySimpleWithDateTimeEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(CreatedAt)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -108,7 +106,6 @@ func TestQuerySimpleWithDateTimeEqualsNilFilterBlock(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeEqualsAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter with nil value and non-nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{

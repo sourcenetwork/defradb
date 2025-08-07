@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -131,7 +130,6 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -242,7 +240,6 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -358,7 +355,6 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -473,7 +469,6 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 
 func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildrenOrderedAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum with limit and offset and order",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

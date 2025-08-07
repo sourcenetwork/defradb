@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_IfFloatFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If float field is set to null, should set to nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

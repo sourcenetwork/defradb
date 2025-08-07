@@ -25,7 +25,6 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -86,7 +85,6 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 
 func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -122,7 +120,6 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -175,7 +172,6 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 
 func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add to unknown collection fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -209,7 +205,6 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 
 func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add multiple fields in single patch",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -245,7 +240,6 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add multiple patches",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -287,7 +281,6 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field without name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -311,7 +304,6 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add multiple fields in single patch with rollback",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -358,7 +350,6 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field that already exists",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -382,7 +373,6 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field that already exists",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -407,7 +397,6 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.
 
 func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add duplicate fields",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

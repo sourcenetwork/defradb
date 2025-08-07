@@ -21,7 +21,6 @@ import (
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create followed by delete in same transaction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -69,7 +68,6 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 
 func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create followed by delete on 2nd transaction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -145,7 +143,6 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Update followed by read in same transaction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -203,7 +200,6 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Update followed by read in different transaction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -265,7 +261,6 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Update by two different transactions",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

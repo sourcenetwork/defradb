@@ -35,8 +35,6 @@ var limitTypeJoinPattern = dataMap{
 func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with only limit on related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -84,8 +82,6 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 
 func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with only offset on related child.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -135,8 +131,6 @@ func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with both limit and offset on related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -184,8 +178,6 @@ func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T)
 
 func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with limit on related child & both limit + offset on parent.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

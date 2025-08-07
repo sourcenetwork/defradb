@@ -20,7 +20,6 @@ import (
 
 func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation, with an invalid field, with alias.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -42,7 +41,6 @@ func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *te
 
 func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation, non-existing id, from the single side, no id relation field, with alias.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -67,7 +65,6 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSid
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_CreatedDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation, non-existing id, from the many side, with alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -97,7 +94,6 @@ func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationManySide_
 
 func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation using relation id from many side, with alias.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -165,7 +161,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	bookID := "bae-1d943ec7-1701-5910-a467-7d863beada5d"
 
 	nonAliasedTest := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from single side (wrong)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -202,7 +197,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	// Note: Everything should be same, only diff should be the use of alias.
 
 	aliasedTest := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from single side (wrong)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

@@ -21,7 +21,6 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 	schemaVersionID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, move collection",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

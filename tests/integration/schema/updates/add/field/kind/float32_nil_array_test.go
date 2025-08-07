@@ -21,7 +21,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable float32 array (22)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -55,7 +54,6 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable int array (22) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -105,7 +103,6 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindNillableFloat32ArraySubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable int array substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

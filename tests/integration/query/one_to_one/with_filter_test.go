@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple filter on sub type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -72,7 +71,6 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 
 func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple filter on parent",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -127,7 +125,6 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 
 func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple sub filter on child",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -182,7 +179,6 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 
 func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with filter on parent referencing parent through child",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -251,7 +247,6 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 
 func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation with simple sub filter on child, but not child selections",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -296,7 +291,6 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 
 func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation with _and filter that includes relation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -376,7 +370,6 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 
 func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation with _or filter that includes relation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -499,7 +492,6 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 
 func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResults(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation with _and filter that includes relation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,

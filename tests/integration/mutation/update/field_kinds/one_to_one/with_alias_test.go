@@ -23,7 +23,6 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 	bookID := "bae-dafb74e9-2bf1-5f12-aea9-967814592bad"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using alias relation id from single side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -65,7 +64,6 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_Collect
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using alias relation id from secondary side",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionSaveMutationType,
 			testUtils.CollectionNamedMutationType,
@@ -111,7 +109,6 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_GQL(t *
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using alias relation id from secondary side",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.GQLRequestMutationType,
 		}),
@@ -157,7 +154,6 @@ func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *
 	invalidBookID := "bae-" + invalidLenSubID
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using invalid alias relation id",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

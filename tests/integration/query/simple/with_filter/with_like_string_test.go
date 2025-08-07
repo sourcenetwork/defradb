@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter contains string",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsString(t *testing.T
 
 func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic case insensitive like-string filter contains string",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -90,7 +88,6 @@ func TestQuerySimple_WithCaseInsensitiveLike_ShouldMatchString(t *testing.T) {
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with string as prefix",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -126,7 +123,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsPrefixString(t *testing.T
 
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic case insensitive like-string filter with string as prefix",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -162,7 +158,6 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchPrefixString(t *te
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with string as suffix",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -198,7 +193,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockAsSuffixString(t *testing.T
 
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic case insensitive like-string filter with string as suffix",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -234,7 +228,6 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchSuffixString(t *te
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with string as suffix",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -270,7 +263,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockExactString(t *testing.T) {
 
 func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with string as suffix",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -306,7 +298,6 @@ func TestQuerySimple_WithCaseInsensitiveLikeString_ShouldMatchExactString(t *tes
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResults(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with contains string multiple results",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -345,7 +336,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with string as start and end",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -381,7 +371,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasStartAndEnd(t *testing.T
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with none of the strings",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -413,7 +402,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with either strings",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -449,7 +437,6 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockHasEither(t *testing.T) {
 
 func TestQuerySimpleWithLikeStringContainsFilterBlockPropNotSet(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic like-string filter with either strings",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

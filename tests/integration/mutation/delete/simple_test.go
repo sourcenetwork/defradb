@@ -19,7 +19,6 @@ import (
 
 func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete without sub-selection, should give error.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -42,7 +41,6 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 
 func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete without sub-selection fields, should give error.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

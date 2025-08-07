@@ -18,7 +18,6 @@ import (
 
 func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query documents' count without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -41,7 +40,6 @@ func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query count of related objects without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -71,7 +69,6 @@ func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query documents' count with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -95,7 +92,6 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 
 func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query count of related objects with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -128,7 +124,6 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 
 func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query documents' count without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -152,7 +147,6 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 
 func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query count of related objects without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),

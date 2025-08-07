@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docIDs on inner _group.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

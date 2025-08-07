@@ -19,7 +19,6 @@ import (
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with invalid cid and invalid docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -49,7 +48,6 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with unknown cid and invalid docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,7 +75,6 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 
 func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with cid and docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -116,7 +113,6 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (first) cid and docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -160,7 +156,6 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (last) cid and docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -204,7 +199,6 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (middle) cid and docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -264,7 +258,6 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -317,7 +310,6 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pncounter int type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -371,7 +363,6 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pncounter and float type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -425,7 +416,6 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pcounter int type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -474,7 +464,6 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pcounter and float type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

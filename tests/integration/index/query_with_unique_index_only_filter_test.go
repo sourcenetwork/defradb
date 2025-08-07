@@ -24,7 +24,6 @@ func TestQueryWithUniqueIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -60,7 +59,6 @@ func TestQueryWithUniqueIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _gt filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -97,7 +95,6 @@ func TestQueryWithUniqueIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T)
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _ge filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -135,7 +132,6 @@ func TestQueryWithUniqueIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _lt filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -172,7 +168,6 @@ func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _le filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -210,7 +205,6 @@ func TestQueryWithUniqueIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _ne filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -255,7 +249,6 @@ func TestQueryWithUniqueIndex_WithInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _in filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -293,7 +286,6 @@ func TestQueryWithUniqueIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _nin filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -358,7 +350,6 @@ func TestQueryWithUniqueIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _like filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -457,7 +448,6 @@ func TestQueryWithUniqueIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -500,7 +490,6 @@ func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *te
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _nilike filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -539,7 +528,6 @@ func TestQueryWithUniqueIndex_WithNotCaseInsensitiveLikeFilter_ShouldFetch(t *te
 
 func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If filter does not match any document, return empty result",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -574,7 +562,6 @@ func TestQueryWithUniqueIndex_IfNoMatch_ReturnEmptyResult(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -622,7 +609,6 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnNilValue_ShouldFetch(t *testing.T
 
 func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -675,7 +661,6 @@ func TestQueryWithUniqueIndex_WithEqualFilterOnZero_ShouldNotFetchNil(t *testing
 
 func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -729,7 +714,6 @@ func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testin
 
 func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test index filtering with _eq filter on nil value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

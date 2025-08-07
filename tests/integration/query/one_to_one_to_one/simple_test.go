@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -123,7 +122,6 @@ func TestQueryOneToOneToOne(t *testing.T) {
 
 func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation, secondary then primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -227,7 +225,6 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 
 func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation, primary then secondary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -331,7 +328,6 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 
 func TestQueryOneToOneToOneSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation, secondary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If int field is set to null, should set to nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

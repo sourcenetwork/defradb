@@ -17,7 +17,6 @@ package one_to_one
 // and we have no good way atm to skip it.
 /*func TestQueryOneToOne_WithVersionOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Embedded commits query within one-one query",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

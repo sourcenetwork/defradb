@@ -21,7 +21,6 @@ import (
 
 func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

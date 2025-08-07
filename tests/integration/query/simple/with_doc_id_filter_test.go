@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithDocIDFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter (docID by filter block)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

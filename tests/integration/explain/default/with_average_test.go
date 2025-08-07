@@ -40,8 +40,6 @@ var averagePattern = dataMap{
 func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with average on array field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

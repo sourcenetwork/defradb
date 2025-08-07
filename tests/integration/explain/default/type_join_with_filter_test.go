@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with related and regular filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -93,8 +91,6 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithManyRelatedFilters(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with many related filters.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

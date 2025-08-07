@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum with limit and offset",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

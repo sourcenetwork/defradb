@@ -41,8 +41,6 @@ var topLevelMinPattern = dataMap{
 func TestDefaultExplain_WithTopLevelMinRequest_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level min request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -94,8 +92,6 @@ func TestDefaultExplain_WithTopLevelMinRequest_Succeeds(t *testing.T) {
 
 func TestDefaultExplain_WithTopLevelMinRequestWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) top-level min request with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

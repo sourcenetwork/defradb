@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with order field on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -72,8 +70,6 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 
 func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) with multiple order fields on parent.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -159,8 +155,6 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with order field on child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -220,8 +214,6 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 
 func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) with order field on both parent and child.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -286,8 +278,6 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 
 func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) where parent field is ordered by child field.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

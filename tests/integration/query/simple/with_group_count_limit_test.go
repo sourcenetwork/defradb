@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, count with limit on non-rendered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -66,7 +65,6 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, child limit, count with limit on rendered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

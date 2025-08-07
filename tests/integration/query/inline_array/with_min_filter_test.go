@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered min of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with filter, min of nillable integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineNillableIntegerArray_WithMinWithFilter_Succeeds(t *testing.T
 
 func TestQueryInlineFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered min of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with filter, min of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

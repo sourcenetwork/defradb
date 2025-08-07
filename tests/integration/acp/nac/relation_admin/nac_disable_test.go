@@ -19,7 +19,6 @@ import (
 
 func TestNAC_AdminRelation_CanDisableNAC(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Grant admin relation, gain ability to disable nac",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

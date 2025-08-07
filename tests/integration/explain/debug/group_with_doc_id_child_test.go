@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithDocIDsOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs on inner _group.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

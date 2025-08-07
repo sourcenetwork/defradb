@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithIds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with ids",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

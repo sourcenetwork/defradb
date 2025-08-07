@@ -19,7 +19,6 @@ import (
 
 func TestMutationDeletion_WithUpdateAndIDsAndSelectAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist, when given multiple IDs with alias after update.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

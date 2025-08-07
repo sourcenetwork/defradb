@@ -19,7 +19,6 @@ import (
 
 func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with default value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

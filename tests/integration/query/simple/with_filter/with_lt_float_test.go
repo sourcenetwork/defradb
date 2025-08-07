@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic lt float filter with greater value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic lt float filter with greater int value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -90,7 +88,6 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 
 func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic lt float filter with null value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

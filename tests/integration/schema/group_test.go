@@ -20,8 +20,6 @@ import (
 func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test the fields for the many side groupBy are generated.",
-
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -81,8 +79,6 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 
 func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test the fields for the single side groupBy are generated.",
 
 		Actions: []any{
 			&action.AddSchema{

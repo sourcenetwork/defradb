@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, limited min on non-rendered group integer value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

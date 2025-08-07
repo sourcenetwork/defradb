@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithMinFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with min filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

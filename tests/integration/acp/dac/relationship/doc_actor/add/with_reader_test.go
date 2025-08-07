@@ -22,8 +22,6 @@ import (
 func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives read access to another actor twice, no-op",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -159,8 +157,6 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives read access to another actor",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -309,8 +305,6 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 // that no transfer of ownership has taken place.
 func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives read access to another actor, both can read",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -463,8 +457,6 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives read access to another actor, but the other actor can't update",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -649,8 +641,6 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives read access to another actor, but the other actor can't delete",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

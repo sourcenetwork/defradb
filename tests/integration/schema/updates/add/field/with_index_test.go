@@ -20,7 +20,6 @@ import (
 
 func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test patching schema for collection with index still works",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -103,7 +102,6 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 
 func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test patching schema for collection with index still works",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

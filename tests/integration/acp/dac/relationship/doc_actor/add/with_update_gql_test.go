@@ -22,8 +22,6 @@ import (
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives update access to another actor twice, no-op",
-
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
 				// GQL mutation will return no error when wrong identity is used so test that separately.
@@ -181,8 +179,6 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationsh
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives update access to another actor",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{

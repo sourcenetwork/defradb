@@ -19,7 +19,6 @@ import (
 
 func TestMutationInvalidMutation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple invalid mutation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

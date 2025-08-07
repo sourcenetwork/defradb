@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind json (14)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind json (14) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindJSONSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind json substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple descending order by sub type",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -92,7 +91,6 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 
 func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple ascending order by sub type",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -166,7 +164,6 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 
 func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with descending order by sub-type's int field, but only parent fields are selected.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -228,7 +225,6 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 
 func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with ascending order by sub-type's int field, but only parent fields are selected.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -290,7 +286,6 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 
 func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with ascending order by aliased child's int field.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -361,7 +356,6 @@ func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.
 
 func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with ascending order by child's aliased int field.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

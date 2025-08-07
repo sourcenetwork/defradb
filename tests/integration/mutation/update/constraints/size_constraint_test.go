@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with size contraint",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -66,7 +65,6 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 
 func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with array size mismatch",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -24,7 +24,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from single side (wrong)",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionSaveMutationType,
 			testUtils.CollectionNamedMutationType,
@@ -74,7 +73,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from single side (wrong)",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.GQLRequestMutationType,
 		}),
@@ -125,7 +123,6 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from many side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -165,7 +162,6 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from many side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -205,7 +201,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from many side, with a wrong field.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -258,7 +253,6 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation alias name from many side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

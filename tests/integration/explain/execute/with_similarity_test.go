@@ -20,7 +20,6 @@ import (
 
 func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (execute) request with similarity.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {

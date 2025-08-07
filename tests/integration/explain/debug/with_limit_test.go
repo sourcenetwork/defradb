@@ -36,8 +36,6 @@ var limitPattern = dataMap{
 func TestDebugExplainRequestWithOnlyLimit(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with only limit.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -60,8 +58,6 @@ func TestDebugExplainRequestWithOnlyLimit(t *testing.T) {
 func TestDebugExplainRequestWithOnlyOffset(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with only offset.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -83,8 +79,6 @@ func TestDebugExplainRequestWithOnlyOffset(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with limit and offset.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
