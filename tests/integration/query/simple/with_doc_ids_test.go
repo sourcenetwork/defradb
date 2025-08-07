@@ -53,7 +53,7 @@ func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						Users(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
+						Users(docID: ["bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c"]) {
 							Name
 							Age
 						}
@@ -90,7 +90,7 @@ func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						Users(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-d4303725-7db9-53d2-b324-f3ee44020e52"]) {
+						Users(docID: ["bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c", "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c"]) {
 							Name
 							Age
 						}
@@ -115,6 +115,12 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
+						"Name": "Jim",
+						"Age": 27
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
@@ -125,15 +131,9 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 						"Age": 32
 					}`,
 			},
-			testUtils.CreateDoc{
-				Doc: `{
-						"Name": "Jim",
-						"Age": 27
-					}`,
-			},
 			testUtils.Request{
 				Request: `query {
-						Users(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-428c6d76-3491-520b-ad1f-a218f4dad787"]) {
+						Users(docID: ["bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c", "bae-29b5683d-cf46-5de2-94c3-bcdb726432f4"]) {
 							Name
 							Age
 						}

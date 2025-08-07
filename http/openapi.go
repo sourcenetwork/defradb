@@ -39,6 +39,7 @@ var openApiSchemas = map[string]any{
 	"replicator_params":                        &ReplicatorParams{},
 	"ccip_request":                             &CCIPRequest{},
 	"ccip_response":                            &CCIPResponse{},
+	"patch_collection_request":                 &patchCollectionRequest{},
 	"add_view_request":                         &addViewRequest{},
 	"migrate_request":                          &migrateRequest{},
 	"set_migration_request":                    &setMigrationRequest{},

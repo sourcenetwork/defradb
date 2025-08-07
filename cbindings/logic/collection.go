@@ -17,11 +17,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 type docIDResult struct {
