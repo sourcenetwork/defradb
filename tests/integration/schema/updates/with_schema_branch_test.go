@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -182,7 +183,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, with patch on branching schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -328,7 +329,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -432,7 +433,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches then patch",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -581,7 +582,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 		Description: `Test schema update, with branching schema toggling between branches and gets the 
 collection at a specific version`,
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

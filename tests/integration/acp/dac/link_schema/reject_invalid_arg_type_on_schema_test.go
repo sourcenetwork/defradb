@@ -13,6 +13,7 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -54,7 +55,7 @@ func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejecte
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(id: 123 , resource: "users") {
 						name: String
@@ -127,17 +128,13 @@ func TestACP_LinkSchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejecte
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type Users @policy(id: "{{.Policy0}}" , resource: 123) {
 						name: String
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: `Argument "resource" has invalid value 123`,
 			},

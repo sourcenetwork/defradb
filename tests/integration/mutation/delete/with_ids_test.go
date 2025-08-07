@@ -13,6 +13,7 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Delete multiple documents that exist, when given multiple IDs.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -64,7 +65,7 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deletion of using ids, empty ids set.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -119,7 +120,7 @@ func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deletion of using ids, single unknown item.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -146,7 +147,7 @@ func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deletion of using ids, single unknown item.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -173,7 +174,7 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deletion of using ids, known and unknown items.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

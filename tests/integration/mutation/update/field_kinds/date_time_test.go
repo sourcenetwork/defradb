@@ -13,6 +13,7 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update of date time field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -65,7 +66,7 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update of date time field, multiple docs",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -115,7 +116,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update of date time field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						created_at: DateTime

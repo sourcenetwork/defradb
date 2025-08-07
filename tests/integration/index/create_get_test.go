@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -21,7 +22,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Getting indexes should return list of existing indexes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(name: "age_index", includes: [{field: "age"}]) {
 						name: String @index(name: "name_index")
@@ -62,7 +63,7 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 	test := testUtils.TestCase{
 		Description: "Getting indexes for a collection should return only the indexes on that collection",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

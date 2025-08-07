@@ -13,6 +13,7 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -54,7 +55,7 @@ func TestACP_LinkSchema_NoPolicyIDWasSpecifiedOnSchema_SchemaRejected(t *testing
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(resource: "users") {
 						name: String
@@ -127,7 +128,7 @@ func TestACP_LinkSchema_SpecifiedPolicyIDArgIsEmptyOnSchema_SchemaRejected(t *te
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(resource: "users", id: "") {
 						name: String

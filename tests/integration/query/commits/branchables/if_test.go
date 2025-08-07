@@ -15,6 +15,7 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +29,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable(if: true) {
 						name: String
@@ -80,7 +81,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable(if: false) {
 						name: String

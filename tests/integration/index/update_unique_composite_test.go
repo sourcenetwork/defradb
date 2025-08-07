@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_Should
 	test := testUtils.TestCase{
 		Description: "updating non-indexed fields on a doc with existing field combination for composite index should succeed",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String 

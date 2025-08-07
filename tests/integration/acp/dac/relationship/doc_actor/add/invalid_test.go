@@ -13,6 +13,7 @@ package test_acp_dac_relationship_doc_actor_add
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -78,7 +79,7 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -88,10 +89,6 @@ func TestACP_AddDocActorRelationshipMissingDocID_Error(t *testing.T) {
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -188,7 +185,7 @@ func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -198,10 +195,6 @@ func TestACP_AddDocActorRelationshipMissingCollection_Error(t *testing.T) {
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -298,7 +291,7 @@ func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -308,10 +301,6 @@ func TestACP_AddDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -408,7 +397,7 @@ func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -418,10 +407,6 @@ func TestACP_AddDocActorRelationshipMissingTargetActorName_Error(t *testing.T) {
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -518,7 +503,7 @@ func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testin
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -528,10 +513,6 @@ func TestACP_AddDocActorRelationshipMissingReqestingIdentityName_Error(t *testin
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,7 +25,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Int @crdt(type: pncounter)
@@ -63,7 +64,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Float @crdt(type: pncounter)
@@ -100,7 +101,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: String @crdt(type: pncounter)
@@ -117,7 +118,7 @@ func TestSchemaCreate_ContainsPNCounterTypeWithWrongKind_Error(t *testing.T) {
 func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Int @crdt(type: "invalid")
@@ -136,7 +137,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Int @crdt(type: pcounter)
@@ -175,7 +176,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Float @crdt(type: pcounter)
@@ -214,7 +215,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) 
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Float64 @crdt(type: pcounter)
@@ -253,7 +254,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) 
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: Float32 @crdt(type: pcounter)
@@ -290,7 +291,7 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) 
 func TestSchemaCreate_ContainsPCounterTypeWithWrongKind_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						points: String @crdt(type: pcounter)

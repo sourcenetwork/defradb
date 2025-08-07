@@ -13,6 +13,7 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, move field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -45,7 +46,7 @@ func TestSchemaUpdatesMoveFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, move field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

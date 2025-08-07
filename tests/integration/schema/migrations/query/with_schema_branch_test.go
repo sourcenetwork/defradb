@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -26,7 +27,7 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema migrations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

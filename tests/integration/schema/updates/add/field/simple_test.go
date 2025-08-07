@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +27,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -87,7 +88,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -123,7 +124,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -176,7 +177,7 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 	test := testUtils.TestCase{
 		Description: "Test schema update, add to unknown collection fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -210,7 +211,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add multiple fields in single patch",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -246,7 +247,7 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add multiple patches",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -288,7 +289,7 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field without name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -312,7 +313,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add multiple fields in single patch with rollback",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -359,7 +360,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field that already exists",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -383,7 +384,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field that already exists",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -408,7 +409,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add duplicate fields",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

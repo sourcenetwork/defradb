@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -21,7 +22,7 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "create composite index and retrieve it",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -77,7 +78,7 @@ func TestCompositeIndexCreate_UsingObjectDirective_SetsDefaultDirection(t *testi
 	test := testUtils.TestCase{
 		Description: "create composite index using object directive sets default direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -115,7 +116,7 @@ func TestCompositeIndexCreate_UsingObjectDirective_OverridesDefaultDirection(t *
 	test := testUtils.TestCase{
 		Description: "create composite object using field directive overrides default direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age", direction: ASC}]) {
 						name: String
@@ -153,7 +154,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_ImplicitlyAddsField(t *testing
 	test := testUtils.TestCase{
 		Description: "create composite index using field directive implicitly adds field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(includes: [{field: "age"}])
@@ -188,7 +189,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_SetsDefaultDirection(t *testin
 	test := testUtils.TestCase{
 		Description: "create composite index using field directive sets default direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(direction: DESC, includes: [{field: "age"}])
@@ -226,7 +227,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_OverridesDefaultDirection(t *t
 	test := testUtils.TestCase{
 		Description: "create composite index using field directive overrides default direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(direction: DESC, includes: [{field: "age", direction: ASC}])
@@ -264,7 +265,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_WithExplicitIncludes_RespectsO
 	test := testUtils.TestCase{
 		Description: "create composite index using field directive with explicit includes respects order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(includes: [{field: "age"}, {field: "name"}])

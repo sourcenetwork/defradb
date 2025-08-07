@@ -11,6 +11,7 @@
 package test_acp_dac
 
 import (
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -64,7 +65,7 @@ func getSetupEmployeeCompanyActions() []any {
 			Policy:   employeeCompanyPolicy,
 		},
 
-		testUtils.SchemaUpdate{
+		&action.AddSchema{
 			Schema: `
 					type Employee @policy(
 						id: "{{.Policy0}}",
@@ -84,10 +85,6 @@ func getSetupEmployeeCompanyActions() []any {
 						employees: [Employee]
 					}
 				`,
-
-			Replace: map[string]testUtils.ReplaceType{
-				"Policy0": testUtils.NewPolicyIndex(0),
-			},
 		},
 
 		testUtils.CreateDoc{

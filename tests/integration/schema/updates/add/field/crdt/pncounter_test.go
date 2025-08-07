@@ -13,6 +13,7 @@ package crdt
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdates_AddFieldCRDTPNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with crdt PN Counter (4)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -54,7 +55,7 @@ func TestSchemaUpdates_AddFieldCRDTPNCounterWithMismatchKind_Error(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with crdt PN Counter (4)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

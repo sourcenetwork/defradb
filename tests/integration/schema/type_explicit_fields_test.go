@@ -13,6 +13,7 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestEncryptFieldsForCreateMutation(t *testing.T) {
 		Description: "Test that type explicit (or user-defined) fields are generated.",
 
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

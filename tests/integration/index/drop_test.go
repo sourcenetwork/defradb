@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -21,7 +22,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Drop index should not hinder querying",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -66,7 +67,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -114,7 +115,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Drop index should return error if index does not exist",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

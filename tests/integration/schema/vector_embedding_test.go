@@ -13,6 +13,7 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name_v: [String!] @embedding
@@ -38,7 +39,7 @@ func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name_v: [Int!] @embedding
@@ -55,7 +56,7 @@ func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name_v: [Float!] @embedding
@@ -73,7 +74,7 @@ func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name_v: [Float64!] @embedding
@@ -91,7 +92,7 @@ func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name_v: [Float32] @embedding
@@ -109,7 +110,7 @@ func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -127,7 +128,7 @@ func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -146,7 +147,7 @@ func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T
 	test := testUtils.TestCase{
 		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -165,7 +166,7 @@ func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T
 func TestSchema_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -183,7 +184,7 @@ func TestSchema_WithUnsupportedProviderForEmbedding_ShouldError(t *testing.T) {
 func TestSchema_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -201,7 +202,7 @@ func TestSchema_WithMissingModelForEmbedding_ShouldError(t *testing.T) {
 func TestSchema_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -219,7 +220,7 @@ func TestSchema_ReferenceToSelfForEmbedding_ShouldError(t *testing.T) {
 func TestSchema_ReferenceToAnotherEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
