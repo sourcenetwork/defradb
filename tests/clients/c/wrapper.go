@@ -621,7 +621,6 @@ func (w *CWrapper) ExecRequest(
 	if result.Status == 2 {
 		id := result.Value
 		newchan := wrapSubscriptionAsChannel(ctx, id)
-		fmt.Println("Returning result")
 		return &client.RequestResult{
 			Subscription: newchan,
 		}
