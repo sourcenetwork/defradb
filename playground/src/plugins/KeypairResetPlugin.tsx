@@ -38,7 +38,12 @@ const KeypairResetComponent = () => {
       <section>
         <button
           type="button"
-          onClick={resetKeypair}
+          onClick={() => {
+            resetKeypair();
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }}
           disabled={isResetting}
           className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
           aria-describedby={result ? 'keypair-result keypair-description' : 'keypair-description'}

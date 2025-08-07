@@ -596,9 +596,6 @@ export const usePlaygroundStore = create<AppState>()(
                 isLoading: false,
               },
             }));
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
           }
         } else {
           const errorResult: KeypairResult = {
@@ -702,6 +699,9 @@ export const usePlaygroundStore = create<AppState>()(
         let useSourceHub = false;
         if (acpClient === 'sourcehub') {
           useSourceHub = await get().checkSourceHubAvailability();
+        }
+        if (useSourceHub && import.meta.env.VITE_API_TARGET?.includes('localhost')) {
+          (window as any).acp_DeleteKeypair?.();
         }
         const db = useSourceHub
           ? await window.defradb.open('sourcehub')
