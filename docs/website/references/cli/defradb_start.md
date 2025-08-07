@@ -18,7 +18,7 @@ defradb start [flags]
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data 
                                            - generates temporary node identity if keyring is disabled
-      --document-acp-type string          Specify the document acp engine to use (supported: none (default), local, source-hub)
+      --document-acp-type string          Specify the document acp engine to use (supported: none (default), local, source-hub) (default "none")
   -h, --help                              help for start
   -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
@@ -26,7 +26,7 @@ defradb start [flags]
       --no-p2p                            Disable the peer-to-peer network synchronization system
       --no-signing                        Disable signing of commits.
       --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
-      --node-acp-enable false             Enable the node access control system. Defaults to false.
+      --node-acp-enable false             Enable the node access control system. Defaults to false. (default "false")
       --p2paddr strings                   Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
