@@ -167,7 +167,6 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
-<<<<<<< HEAD
 func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	res, err := execute(ctx, w.value, "getNACStatus")
 	if err != nil {
@@ -222,10 +221,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) PatchSchema(
-=======
 func (w *Wrapper) PatchCollection(
->>>>>>> 6f65e15a9 (Move schema to blockstore)
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
