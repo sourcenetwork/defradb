@@ -10,7 +10,7 @@
 
 //go:build playground
 
-//go:generate ./download.sh
+//go:generate ../tools/scripts/download_playground.sh
 
 package playground
 

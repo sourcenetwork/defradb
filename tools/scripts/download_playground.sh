@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Download static assets from: `github.com/sourcenetwork/defradb-playground`.
 #
