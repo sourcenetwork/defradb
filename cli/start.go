@@ -321,11 +321,11 @@ func MakeStartCommand() *cobra.Command {
 		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().String(
 		"node-acp-enable",
-		cfg.GetString(configFlags["acp.node.enable"]),
+		cfg.GetString(configFlags["node-acp-enable"]),
 		"Enable the node access control system. Defaults to `false`.")
 	cmd.PersistentFlags().String(
 		"document-acp-type",
-		cfg.GetString(configFlags["acp.document.type"]),
+		cfg.GetString(configFlags["document-acp-type"]),
 		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
