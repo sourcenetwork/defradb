@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,7 +24,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String

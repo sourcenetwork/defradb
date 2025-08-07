@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -74,7 +75,7 @@ func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t 
 	test := testUtils.TestCase{
 		Description: "Simple query with logical compound filter (and) on inline int array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					FavoriteNumbers: [Int!]

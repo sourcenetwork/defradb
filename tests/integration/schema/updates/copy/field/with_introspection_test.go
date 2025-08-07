@@ -13,6 +13,7 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	introspectionUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -21,7 +22,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 	test := testUtils.TestCase{
 		Description: "Test schema update, copy and replace field with gql introspection",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

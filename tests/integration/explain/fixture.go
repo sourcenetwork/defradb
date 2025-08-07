@@ -13,10 +13,11 @@ package test_explain
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-var SchemaForExplainTests = testUtils.SchemaUpdate{
+var SchemaForExplainTests = &action.AddSchema{
 	Schema: (`
 		type Article {
 			name: String

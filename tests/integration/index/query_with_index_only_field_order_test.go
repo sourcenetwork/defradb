@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +29,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGt_ShouldFetchInRevertedOrder(t
 	test := testUtils.TestCase{
 		Description: "If indexed int field is in DESC order with _gt, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -111,7 +112,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t
 	test := testUtils.TestCase{
 		Description: "If indexed int field is in DESC order with _ge, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -194,7 +195,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t
 	test := testUtils.TestCase{
 		Description: "If indexed int field is in DESC order with _lt, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -273,7 +274,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t
 	test := testUtils.TestCase{
 		Description: "If indexed int field is in DESC order with _le, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -356,7 +357,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLt_ShouldFetchInRevertedOrder
 	test := testUtils.TestCase{
 		Description: "If indexed float field is in DESC order with _lt, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -439,7 +440,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGt_ShouldFetchInRevertedOrder
 	test := testUtils.TestCase{
 		Description: "If indexed float field is in DESC order with _gt, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -522,7 +523,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder
 	test := testUtils.TestCase{
 		Description: "If indexed float field is in DESC order with _ge, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -605,7 +606,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 	test := testUtils.TestCase{
 		Description: "If indexed float field is in DESC order with _le, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -680,7 +681,7 @@ func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *
 	test := testUtils.TestCase{
 		Description: "If indexed float32 field is in DESC order, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -743,7 +744,7 @@ func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *t
 	test := testUtils.TestCase{
 		Description: "If indexed string field is in DESC order, it should be fetched in reverted order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(direction: DESC)

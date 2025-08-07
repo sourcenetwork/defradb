@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,7 +24,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Creation of index with collection should not hinder querying",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -78,7 +79,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Creation of index separately from a collection should not hinder querying",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -137,7 +138,7 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If invalid index name is provided, return error",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String 
@@ -161,7 +162,7 @@ func TestIndexCreate_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "If given same index name, should return error",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(name: "age_index", includes: [{field: "age"}]) @index(name: "age_index", includes: [{field: "age"}]) {
 						name: String 

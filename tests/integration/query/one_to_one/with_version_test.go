@@ -19,7 +19,7 @@ package one_to_one
 	test := testUtils.TestCase{
 		Description: "Embedded commits query within one-one query",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String

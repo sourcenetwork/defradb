@@ -13,6 +13,7 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -69,7 +70,7 @@ func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -79,10 +80,6 @@ func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -181,7 +178,7 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -191,10 +188,6 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -236,7 +229,7 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
 				},
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Books @policy(
 						id: "{{.Policy0}}",,
@@ -245,10 +238,6 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
 						name: String
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{

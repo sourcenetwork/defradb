@@ -11,11 +11,12 @@
 package one_to_many_to_one
 
 import (
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func gqlSchemaOneToManyToOne() testUtils.SchemaUpdate {
-	return testUtils.SchemaUpdate{
+func gqlSchemaOneToManyToOne() *action.AddSchema {
+	return &action.AddSchema{
 		Schema: (`
 			type Author {
 				name: String

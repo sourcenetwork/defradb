@@ -13,6 +13,7 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -65,7 +66,7 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -110,7 +111,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with same size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -155,7 +156,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with smaller size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -200,7 +201,7 @@ func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with float array, replace with larger size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

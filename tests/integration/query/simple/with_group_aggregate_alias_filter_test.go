@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with group average alias filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -76,7 +77,7 @@ func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with group sum alias filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -132,7 +133,7 @@ func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with group min alias filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -188,7 +189,7 @@ func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with group max alias filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Score: Int
@@ -244,7 +245,7 @@ func TestQuerySimple_WithGroupCountAliasFilter_FiltersResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with group count alias filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Score: Int

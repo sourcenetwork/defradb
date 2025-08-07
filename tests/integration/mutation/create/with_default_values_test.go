@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -23,7 +24,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 	test := testUtils.TestCase{
 		Description: "Simple create mutation, with default values and no values provided",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
@@ -82,7 +83,7 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 	test := testUtils.TestCase{
 		Description: "Simple create mutation, with default values and null values provided",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
@@ -150,7 +151,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Simple create mutation, with default values and values provided",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
@@ -226,7 +227,7 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 			testUtils.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String @default(string: "Bob")
@@ -261,7 +262,7 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 			testUtils.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String @default(string: "Bob") @index(unique: true)

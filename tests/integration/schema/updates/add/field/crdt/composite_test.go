@@ -13,6 +13,7 @@ package crdt
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with crdt composite (3)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -44,7 +45,7 @@ func TestSchemaUpdatesAddFieldCRDTCompositeErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with crdt composite (3)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

@@ -13,6 +13,7 @@ package one_to_many_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "1-N-M Query to ensure joins are linked properly.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String

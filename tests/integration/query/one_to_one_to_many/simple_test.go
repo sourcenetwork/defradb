@@ -13,6 +13,7 @@ package one_to_one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryOneToOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple one to one to many query, from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -95,7 +96,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple one to one to many query, secondary direction across the one to many",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -172,7 +173,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple one to one to many query, secondary direction across the one to one",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -247,7 +248,7 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple one to one to many query, from secondary direction ",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
