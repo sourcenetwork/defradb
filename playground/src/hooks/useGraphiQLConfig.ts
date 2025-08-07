@@ -43,10 +43,10 @@ export const useGraphiQLConfig = () => {
         }
       };
       const plugins = [
-        ...(isSourceHubAvailable ? [keypairResetPlugin] : []),
         policyPlugin,
         schemaPlugin,
         relationshipPlugin,
+        ...(isSourceHubAvailable ? [keypairResetPlugin] : []),
       ];
       return { fetcher: wasmFetcher, plugins };
     } else {
