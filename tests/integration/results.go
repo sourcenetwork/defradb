@@ -81,7 +81,7 @@ var _ TestStateMatcher = (*anyOf)(nil)
 
 func (matcher *anyOf) Match(actual any) (bool, error) {
 	switch matcher.s.GetClientType() {
-	case HTTPClientType, CLIClientType, JSClientType:
+	case HTTPClientType, CLIClientType, JSClientType, CClientType:
 		if !areResultsAnyOf(matcher.Values, actual) {
 			return gomega.ContainElement(actual).Match(matcher.Values)
 		}
@@ -208,7 +208,7 @@ func (matcher *SameValue) NegatedFailureMessage(actual any) string {
 // The comparison is relaxed when using client types other than goClientType.
 func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
-	case HTTPClientType, CLIClientType, JSClientType:
+	case HTTPClientType, CLIClientType, JSClientType, CClientType:
 		if !areResultsEqual(expected, actual) {
 			assert.EqualValues(t, expected, actual, msgAndArgs...)
 		}

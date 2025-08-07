@@ -14,15 +14,24 @@ import (
 	"testing"
 
 	"github.com/onsi/gomega"
+	"github.com/sourcenetwork/immutable"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// C bindings do not support calling functions with non-Secp256k key yet
+			testUtils.GoClientType,
+			testUtils.CLIClientType,
+			testUtils.HTTPClientType,
+			testUtils.JSClientType,
+		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

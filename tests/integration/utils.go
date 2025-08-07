@@ -192,6 +192,9 @@ func ExecuteTestCase(
 	if jsClient {
 		clients = append(clients, JSClientType)
 	}
+	if cClient {
+		clients = append(clients, CClientType)
+	}
 
 	var databases []state.DatabaseType
 	if badgerInMemory {
@@ -789,6 +792,7 @@ func setStartingNodes(
 			s,
 			acpIdentity.None,
 			testCase,
+			false,
 			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
 		)
 		require.Nil(s.T, err)
@@ -820,6 +824,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			s,
 			getIdentityOption(s, action.Identity),
 			testCase,
+			action.EnableNAC,
 			opts...,
 		)
 		databaseDir = originalPath
@@ -947,7 +952,7 @@ func configureNode(
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
-	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, testCase, false, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)

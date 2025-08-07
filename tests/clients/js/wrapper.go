@@ -14,7 +14,6 @@ package js
 
 import (
 	"context"
-	"fmt"
 	sysjs "syscall/js"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -434,7 +433,6 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("txn id:", id)
 	return &Transaction{w, txn}, nil
 }
 

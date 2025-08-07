@@ -300,6 +300,10 @@ test\:http:
 .PHONY: test\:cli
 test\:cli:
 	DEFRA_CLIENT_CLI=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+	
+.PHONY: test\:c
+test\:c:
+	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -432,3 +436,11 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
+	
+build-c-shared-linux:
+	@echo "Building c-shared library for Linux..."
+	@rm -f build/libdefradb.so build/libdefradb.h
+	@CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
+		-buildmode=c-shared -o build/libdefradb.so ./cbindings/bridge
+	@cp ./cbindings/bridge/defra_structs.h ./build/
+	@echo "Build complete: build/libdefradb.so"

@@ -26,6 +26,7 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
+	enableNAC bool,
 	opts ...node.Option,
 ) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
@@ -57,17 +58,17 @@ func setupNode(
 		// no-op, use the `node` package default
 	}
 
-	node, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = node.Start(s.Ctx)
+	err = nodeObj.Start(s.Ctx)
 	resetStateContext(s)
 	if err != nil {
 		return nil, err
 	}
-	c, err := setupClient(s, node)
+	c, err := setupClient(s, nodeObj, true)
 	if err != nil {
 		return nil, err
 	}
