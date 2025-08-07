@@ -30,15 +30,20 @@ const KeypairResetComponent = () => {
       <header>
         <h3 className={styles.pluginTitle}>Keypair Reset</h3>
         <p id="keypair-description" className={styles.pluginDescription}>
-          Optionally, reset the keypair used for SourceHub ACP operations and reload the page.
-          This is useful to get a fresh keypair after resetting the SourceHub state.
+          Manually reset the keypair used for SourceHub ACP operations and reload the page.
+          This is useful to get a fresh keypair when switching between different SourceHub environments.
         </p>
       </header>
 
       <section>
         <button
           type="button"
-          onClick={resetKeypair}
+          onClick={() => {
+            resetKeypair();
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }}
           disabled={isResetting}
           className={`${styles.button} ${styles.primary} ${styles.fullWidth}`}
           aria-describedby={result ? 'keypair-result keypair-description' : 'keypair-description'}
