@@ -27,7 +27,7 @@ on:
 
 jobs:
   test-c-bindings:
-    name: Check C bindings job
+    name: Test C bindings job
 
     runs-on: ubuntu-latest
 
