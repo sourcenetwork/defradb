@@ -42,7 +42,6 @@ func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidFilterType_WithGoClient_ReturnsError(t *testing.T) {
 	type invalidFilterType struct{ Number int }
 	test := testUtils.TestCase{
-		Description:          "Test update users with invalid filter type (go client)",
 		SupportedClientTypes: immutable.Some([]state.ClientType{testUtils.GoClientType}),
 		Actions: []any{
 			testUtils.UpdateWithFilter{
