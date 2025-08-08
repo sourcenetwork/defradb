@@ -376,6 +376,59 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `type User {
+					name: String
+					pointsList: [Int!]
+				}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "John",
+					"pointsList": []int64{2, 4, 1},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "Bob",
+					"pointsList": []int64{1, 1, 1},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "Alice",
+					"pointsList": []int64{4, 5, 3},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 2){
+						name
+						sim: _similarity(pointsList: {vector: [1, 2, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"sim":  float64(14),
+						},
+						{
+							"name": "John",
+							"sim":  float64(10),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query, similarity on empty",
