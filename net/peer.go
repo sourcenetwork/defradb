@@ -23,27 +23,23 @@ import (
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/bootstrap"
 	blocks "github.com/ipfs/go-block-format"
-	gostream "github.com/libp2p/go-libp2p-gostream"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	libp2pevent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
-	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
-	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/net/config"
+	"github.com/sourcenetwork/defradb/net/protocol"
 )
 
 var tracer = telemetry.NewTracer()
@@ -71,7 +67,6 @@ type Peer struct {
 	ps   *pubsub.PubSub
 
 	server *server
-	p2pRPC *grpc.Server // rpc server over the P2P network
 
 	// peer DAG service
 	blockService blockservice.BlockService
@@ -144,7 +139,6 @@ func NewPeer(
 		bus:              bus,
 		documentACP:      documentACP,
 		db:               db,
-		p2pRPC:           grpc.NewServer(options.GRPCServerOptions...),
 		retryIntervals:   options.RetryIntervals,
 		handleRetryMutex: &sync.Mutex{},
 	}
@@ -167,7 +161,7 @@ func NewPeer(
 		go p.handleMessageLoop()
 	}
 
-	p.server, err = newServer(p, options.GRPCDialOptions...)
+	p.server, err = newServer(p)
 	if err != nil {
 		return nil, err
 	}
@@ -177,23 +171,10 @@ func NewPeer(
 	bswap := bitswap.New(ctx, bswapnet, ddht, bs, bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
 	p.blockService = blockservice.New(bs, bswap)
 
-	p2pListener, err := gostream.Listen(h, corenet.Protocol)
-	if err != nil {
-		return nil, err
-	}
-
 	p.bootCloser, err = bootstrap.Bootstrap(p.PeerID(), h, ddht, bootstrap.BootstrapConfigWithPeers(peers))
 	if err != nil {
 		return nil, err
 	}
-
-	// register the P2P gRPC server
-	go func() {
-		registerServiceServer(p.p2pRPC, p.server)
-		if err := p.p2pRPC.Serve(p2pListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			log.ErrorE("Fatal P2P RPC server error", err)
-		}
-	}()
 
 	// There is a possibility for the PeerInfo event to trigger before the PeerInfo has been set for the host.
 	// To avoid this, we wait for the host to indicate that its local address has been updated.
@@ -268,20 +249,6 @@ func (p *Peer) Close() {
 	if err := p.host.Close(); err != nil {
 		log.ErrorE("Error closing host", err)
 	}
-
-	stopped := make(chan struct{})
-	go func() {
-		p.p2pRPC.GracefulStop()
-		close(stopped)
-	}()
-	timer := time.NewTimer(10 * time.Second)
-	select {
-	case <-timer.C:
-		p.p2pRPC.Stop()
-		log.Info("Peer gRPC server was shutdown ungracefully")
-	case <-stopped:
-		timer.Stop()
-	}
 }
 
 // handleMessage loop manages the transition of messages
@@ -320,7 +287,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 
 	// Retries are for replicators only and should not pollute the pubsub network.
 	if !evt.IsRetry {
-		req := &pushLogRequest{
+		req := &protocol.PushLogRequest{
 			DocID:        evt.DocID,
 			CID:          evt.Cid.Bytes(),
 			CollectionID: evt.CollectionID,
@@ -357,7 +324,9 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 	if exists {
 		for pid := range reps {
 			go func(peerID peer.ID) {
-				if err := p.server.pushLog(lg, peerID); err != nil {
+				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
+				defer cancel()
+				if _, err := p.server.PushToReplicator(ctx, lg, peerID); err != nil {
 					log.ErrorE(
 						"Failed pushing log",
 						err,
