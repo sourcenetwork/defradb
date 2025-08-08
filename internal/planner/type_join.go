@@ -11,7 +11,7 @@
 package planner
 
 import (
-	"github.com/sourcenetwork/immutable"
+	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	"github.com/sourcenetwork/immutable"
 )
 
 /*
@@ -743,10 +744,8 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.
-		for i := range join.encounteredDocIDs {
-			if join.encounteredDocIDs[i] == secondaryDocID {
-				return join.Next()
-			}
+		if slices.Contains(join.encounteredDocIDs, secondaryDocID) {
+			return join.Next()
 		}
 		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
 	}

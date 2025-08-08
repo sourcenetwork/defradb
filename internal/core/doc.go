@@ -14,10 +14,11 @@ Package core provides commonly shared interfaces and building blocks.
 package core
 
 import (
-	"github.com/sourcenetwork/immutable"
+	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/immutable"
 )
 
 // DocIDFieldIndex is the index of the DocID field in a document.
@@ -289,10 +290,8 @@ func (m *DocumentMapping) SetChildAt(index int, childMapping *DocumentMapping) {
 func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string, bool) {
 	// Try to find the name of this index in the IndexesByName.
 	for name, indexes := range mapping.IndexesByName {
-		for _, index := range indexes {
-			if index == targetIndex {
-				return name, true
-			}
+		if slices.Contains(indexes, targetIndex) {
+			return name, true
 		}
 	}
 

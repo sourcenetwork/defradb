@@ -10,6 +10,8 @@
 package filter
 
 import (
+	"slices"
+
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -109,13 +111,7 @@ func traverseProperties(
 			}
 		case *mapper.Operator:
 			// Skip this operator if it's in the ignore list
-			shouldIgnore := false
-			for _, ignore := range skipOps {
-				if t.Operation == ignore {
-					shouldIgnore = true
-					break
-				}
-			}
+			shouldIgnore := slices.Contains(skipOps, t.Operation)
 			if shouldIgnore {
 				continue
 			}
