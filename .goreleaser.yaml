@@ -64,7 +64,7 @@ release:
     To get a full outline of the changes, we invite you to review the official changelog below.
     This release does include a Breaking Change to existing v{{ .Major }}.{{ .Minor }}.x databases.
     If you need help migrating an existing deployment, reach out at hello@source.network or join
-    our Discord at https://discord.gg/w7jYQVJ/.
+    our Discord at https://source.network/discord.
 
   name_template: "v{{ .Version }} Release"
 
