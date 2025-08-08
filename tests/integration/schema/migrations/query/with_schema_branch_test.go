@@ -22,7 +22,7 @@ import (
 )
 
 func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema migrations",
@@ -34,11 +34,11 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
-				SetAsDefaultVersion: immutable.Some(true),
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 				Lens: immutable.Some(model.Lens{
@@ -60,16 +60,16 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 					"email": "john@source.hub"
 				}`,
 			},
-			testUtils.SetActiveSchemaVersion{
+			testUtils.SetActiveCollectionVersion{
 				// Set the active schema version back to the first
 				SchemaVersionID: schemaVersion1ID,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 				Lens: immutable.Some(model.Lens{

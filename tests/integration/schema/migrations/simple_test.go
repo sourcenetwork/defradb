@@ -106,8 +106,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					DestinationSchemaVersionID: "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -150,14 +150,10 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					},
 					{
 						IsMaterialized: true,
-						VersionID:      "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
-					},
-					{
-						IsMaterialized: true,
-						VersionID:      "bafkreiahhaeagyfsxaxmv3d665qvnbtyn3ts6jshhghy5bijwztbe7efpq",
+						VersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 						Sources: []any{
 							&client.CollectionSource{
-								SourceCollectionID: "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+								SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
 								Transform: immutable.Some(
 									model.Lens{
 										Lenses: []model.LensModule{
@@ -173,6 +169,10 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 								),
 							},
 						},
+					},
+					{
+						IsMaterialized: true,
+						VersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
 					},
 					{
 						VersionID:      "does not exist",

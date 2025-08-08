@@ -94,8 +94,8 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifhbll6j3m5imwxdkumaumjl5hevppuzcfbofamsbihla6ob2asyi",
+							docID: "bae-0623ed7c-0861-5995-a5d7-cce53642a83e"
 						) {
 						name
 					}
@@ -138,8 +138,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifhbll6j3m5imwxdkumaumjl5hevppuzcfbofamsbihla6ob2asyi",
+							docID: "bae-0623ed7c-0861-5995-a5d7-cce53642a83e"
 						) {
 						name
 					}
@@ -182,8 +182,8 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreihmihcd4hgubxxtvngdesz2pyehhowakg3sov7kfyselmn3yg7eei",
+							docID: "bae-0623ed7c-0861-5995-a5d7-cce53642a83e"
 						) {
 						name
 					}
@@ -231,8 +231,8 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreihmihcd4hgubxxtvngdesz2pyehhowakg3sov7kfyselmn3yg7eei",
+							docID: "bae-0623ed7c-0861-5995-a5d7-cce53642a83e"
 						) {
 						name
 						_version {
@@ -246,10 +246,10 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 							"name": "Johnn",
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
+									"cid": "bafyreihmihcd4hgubxxtvngdesz2pyehhowakg3sov7kfyselmn3yg7eei",
 								},
 								{
-									"cid": "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
+									"cid": "bafyreifhbll6j3m5imwxdkumaumjl5hevppuzcfbofamsbihla6ob2asyi",
 								},
 							},
 						},
@@ -286,8 +286,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifhbll6j3m5imwxdkumaumjl5hevppuzcfbofamsbihla6ob2asyi",
+							docID: "bae-0623ed7c-0861-5995-a5d7-cce53642a83e"
 						) {
 						name
 						_version {
@@ -301,7 +301,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 							"name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+									"schemaVersionId": "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
 								},
 							},
 						},
@@ -346,8 +346,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihsqayh6zvmjrvmma3sjmrb4bkeiyy6l56nt6y2t2tm4xajkif3gu",
-						docID: "bae-bc5464e4-26a6-5307-b516-aada0abeb089"
+						cid: "bafyreiggwvfcs3z5v7ovvg7bcgaxgbvxcf3lj2glj4d25ikats6z5mkvra",
+						docID: "bae-b9db5d1c-0f75-5d98-a65b-d086dbe9adf0"
 					) {
 						name
 						points
@@ -400,8 +400,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreigkdjnvkpqfjoqoke3aqc3b6ibb45xjuxx5djpk7c6tart2lw3dcm",
-						docID: "bae-2c7c40a7-92c1-5ed4-8a00-9e8595514945"
+						cid: "bafyreifnratxa3bv4tyb2d4kof5zbn4rvz6pkzz64uq2gc4273imfzh2h4",
+						docID: "bae-60aa594f-20be-5370-b47b-a95a9191f148"
 					) {
 						name
 						points
@@ -449,8 +449,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihxjjootrhxhapn563gsoagmtpld6uqhzf5mtn3fmmzp5sawadheu",
-						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
+						cid: "bafyreihjdxfwfazfnugiw5j65ixknvoixvnyvo5wluepy3czryzvbdwy44",
+						docID: "bae-f0c1cc11-ca60-5db2-8e7b-8ff63234e54c"
 					) {
 						name
 						points
@@ -498,8 +498,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihf2nipoyoxu3wjicqj6pftndjnnxljdw6nephkamgwyw5n6lcwca",
-						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
+						cid: "bafyreibrhd7uh6f2fzijqct32f3kwsmpdcopywl2kde7oeehrjiak53v3m",
+						docID: "bae-2e998ed4-a819-5e7d-bc08-8dbbdca860a1"
 					) {
 						name
 						points

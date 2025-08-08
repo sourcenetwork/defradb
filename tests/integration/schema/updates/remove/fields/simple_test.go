@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
+func TestSchemaUpdatesRemoveField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, remove field",
 		Actions: []any{
@@ -29,20 +29,38 @@ func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2" }
 					]
 				`,
-				ExpectedError: "deleting an existing field is not supported. Name: name",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						email
+					}
+				}`,
+				ExpectedError: "Cannot query field \"name\" on type \"Users\".",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
+func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, remove all fields",
 		Actions: []any{
@@ -54,13 +72,22 @@ func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields" }
 					]
 				`,
-				ExpectedError: "deleting an existing field is not supported",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						_docID
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -79,13 +106,13 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Name" }
 					]
 				`,
-				ExpectedError: "deleting an existing field is not supported. Name: name",
+				ExpectedError: "mutating an existing field is not supported. ProposedName: ",
 			},
 		},
 	}
@@ -104,7 +131,7 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Kind" }
@@ -129,7 +156,7 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Typ" }

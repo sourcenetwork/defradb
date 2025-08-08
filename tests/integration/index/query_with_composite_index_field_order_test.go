@@ -785,8 +785,8 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Shahzad"},
-						{"name": "Andy"},
 						{"name": "Fred"},
+						{"name": "Andy"},
 					},
 				},
 			},

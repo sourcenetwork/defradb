@@ -1722,8 +1722,8 @@ func TestNormalValue_NewNormalNil(t *testing.T) {
 	for _, kind := range FieldKindStringToEnumMapping {
 		fieldKinds = append(fieldKinds, kind)
 	}
-	fieldKinds = append(fieldKinds, NewSchemaKind("a", false))
-	fieldKinds = append(fieldKinds, NewSchemaKind("a", true))
+	fieldKinds = append(fieldKinds, NewCollectionKind("a", false))
+	fieldKinds = append(fieldKinds, NewCollectionKind("a", true))
 
 	for _, kind := range fieldKinds {
 		if kind.IsNillable() {

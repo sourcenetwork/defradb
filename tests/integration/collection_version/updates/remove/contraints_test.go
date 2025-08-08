@@ -32,11 +32,11 @@ func TestColVersionUpdate_FieldFieldSizeContraint_ShouldError(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/bafkreiegxruspmodnptoor6w5z6h42wjcao6souorcd2e5q3xtxxryxchu/Fields/1/Size"
+							"path": "/Users/Fields/1/Size"
 						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated.",
+				ExpectedError: "mutating an existing field is not supported.",
 			},
 		},
 	}

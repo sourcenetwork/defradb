@@ -34,7 +34,7 @@ func TestQuerySimpleWithDocIDFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {_docID: {_eq: "bae-d4303725-7db9-53d2-b324-f3ee44020e52"}}) {
+					Users(filter: {_docID: {_eq: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c"}}) {
 						Name
 						Age
 					}

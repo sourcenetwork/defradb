@@ -13,8 +13,6 @@ package schema
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -22,8 +20,6 @@ import (
 )
 
 func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
-	schemaVersionID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -37,7 +33,9 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 						IsActive:       true,
 						Fields: []client.CollectionFieldDescription{
 							{
-								Name: request.DocIDFieldName,
+								Name:    request.DocIDFieldName,
+								Kind:    client.FieldKind_DocID,
+								FieldID: "bafyreie6fnppc6bkpo5tifamx3rotptp6mveyz5mvkqldkrojpu5ayds74",
 							},
 						},
 					},
@@ -54,22 +52,6 @@ func TestSchemaSimpleCreatesSchemaGivenEmptyType(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-					},
-				},
-			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
-					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
 					},
 				},
 			},

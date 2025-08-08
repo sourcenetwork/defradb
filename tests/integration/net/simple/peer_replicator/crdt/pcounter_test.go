@@ -66,10 +66,10 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"points": int64(0),
+							"points": int64(3000),
 						},
 						{
-							"points": int64(3000),
+							"points": int64(0),
 						},
 					},
 				},
@@ -99,10 +99,10 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"points": int64(0),
+							"points": int64(3000),
 						},
 						{
-							"points": int64(3000),
+							"points": int64(0),
 						},
 					},
 				},

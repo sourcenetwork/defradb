@@ -165,27 +165,6 @@ type Store interface {
 	// types previously defined.
 	AddSchema(ctx context.Context, sdl string) ([]CollectionVersion, error)
 
-	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
-	// present in the database.
-	//
-	// If true is provided, the new schema versions will be made active and previous versions deactivated, otherwise
-	// [SetActiveSchemaVersion] should be called to do so.
-	//
-	// It will also update the GQL types used by the query system. It will error and not apply any of the
-	// requested, valid updates should the net result of the patch result in an invalid state.  The
-	// individual operations defined in the patch do not need to result in a valid state, only the net result
-	// of the full patch.
-	//
-	// The collections (including the schema version ID) will only be updated if any changes have actually
-	// been made, if the net result of the patch matches the current persisted description then no changes
-	// will be applied.
-	//
-	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
-	// [FieldKindStringToEnumMapping].
-	//
-	// A lens configuration may also be provided, it will be added to all collections using the schema.
-	PatchSchema(ctx context.Context, patch string, migration immutable.Option[model.Lens], setDefault bool) error
-
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.
 	//
@@ -194,17 +173,28 @@ type Store interface {
 	// individual operations defined in the patch do not need to result in a valid state, only the net result
 	// of the full patch.
 	//
-	// Currently only the collection name can be modified.
-	PatchCollection(ctx context.Context, patch string) error
-
-	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
-	// those without it (if they share the same schema root).
+	// New CollectionVersions created by modifying the global type definition (e.g. renaming, adding fields, etc)
+	// will automatically become the active version of the Collection, unless `IsActive` is set to false by the patch.
 	//
-	// This will affect all operations interacting with the schema where a schema version is not explicitly
+	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
+	// [FieldKindStringToEnumMapping].
+	//
+	// CollectionVersions may be referenced by their VersionID, or their Name.  Referencing by name will patch
+	// the current active version, whereas referencing by VersionID will patch that specific version, whether it is
+	// currently active or not.
+	//
+	// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
+	// by the patch.
+	PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error
+
+	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
+	// those share the same CollectionID as the activated CollectionVersion.
+	//
+	// This will affect all operations interacting with the collection where a version ID is not explicitly
 	// provided.  This includes GQL queries and Collection operations.
 	//
-	// It will return an error if the provided schema version ID does not exist.
-	SetActiveSchemaVersion(ctx context.Context, version string) error
+	// It will return an error if the provided version ID does not exist.
+	SetActiveCollectionVersion(ctx context.Context, versionID string) error
 
 	// AddView creates a new Defra View.
 	//
@@ -286,16 +276,6 @@ type Store interface {
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection]s will respect that transaction.
 	GetCollections(ctx context.Context, options CollectionFetchOptions) ([]Collection, error)
-
-	// GetSchemaByVersionID returns the schema description for the schema version of the
-	// ID provided.
-	//
-	// Will return an error if it is not found.
-	GetSchemaByVersionID(ctx context.Context, versionID string) (SchemaDescription, error)
-
-	// GetSchemas returns all schema versions that currently exist within
-	// this [Store].
-	GetSchemas(ctx context.Context, options SchemaFetchOptions) ([]SchemaDescription, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
@@ -433,6 +413,9 @@ type CollectionFetchOptions struct {
 
 	// If provided, only collections with this CollectionID will be returned.
 	CollectionID immutable.Option[string]
+
+	// If provided, only collections with this CollectionSetID will be returned.
+	CollectionSetID immutable.Option[string]
 
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]

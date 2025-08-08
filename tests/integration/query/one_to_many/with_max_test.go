@@ -70,12 +70,12 @@ func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":      "Cornelia Funke",
-							"maxRating": 4.8,
-						},
-						{
 							"name":      "John Grisham",
 							"maxRating": 4.9,
+						},
+						{
+							"name":      "Cornelia Funke",
+							"maxRating": 4.8,
 						},
 					},
 				},

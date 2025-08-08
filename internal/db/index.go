@@ -73,11 +73,11 @@ func NewCollectionIndex(
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
-		fieldsDescs:     make([]client.SchemaFieldDescription, len(desc.Fields)),
+		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
 		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
 	}
 	for i := range desc.Fields {
-		field, foundField := collection.Schema().GetFieldByName(desc.Fields[i].Name)
+		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
 			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
 		}
@@ -162,7 +162,7 @@ type collectionBaseIndex struct {
 	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
-	fieldsDescs     []client.SchemaFieldDescription
+	fieldsDescs     []client.CollectionFieldDescription
 	fieldGenerators []FieldIndexGenerator
 }
 
@@ -380,7 +380,7 @@ func (index *collectionUniqueIndex) Save(
 	})
 }
 
-func newUniqueIndexError(doc *client.Document, fieldsDescs []client.SchemaFieldDescription) error {
+func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFieldDescription) error {
 	kvs := make([]errors.KV, 0, len(fieldsDescs))
 	for iter := range fieldsDescs {
 		fieldVal, err := doc.TryGetValue(fieldsDescs[iter].Name)
@@ -415,7 +415,7 @@ func validateUniqueKeyValue(
 	key keys.IndexDataStoreKey,
 	val []byte,
 	doc *client.Document,
-	fieldsDescs []client.SchemaFieldDescription,
+	fieldsDescs []client.CollectionFieldDescription,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
@@ -435,7 +435,7 @@ func addNewUniqueKey(
 	ctx context.Context,
 	doc *client.Document,
 	key keys.IndexDataStoreKey,
-	fieldsDescs []client.SchemaFieldDescription,
+	fieldsDescs []client.CollectionFieldDescription,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 

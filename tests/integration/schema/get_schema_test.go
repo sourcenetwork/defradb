@@ -23,8 +23,10 @@ import (
 func TestGetSchema_GivenNonExistantSchemaVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetSchema{
-				VersionID:     immutable.Some("does not exist"),
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some("does not exist"),
+				},
 				ExpectedError: "key not found",
 			},
 		},
@@ -36,8 +38,8 @@ func TestGetSchema_GivenNonExistantSchemaVersionID_Errors(t *testing.T) {
 func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
 	}
@@ -48,9 +50,11 @@ func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetSchema{
-				Root:            immutable.Some("does not exist"),
-				ExpectedResults: []client.SchemaDescription{},
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					CollectionID: immutable.Some("does not exist"),
+				},
+				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
 	}
@@ -61,9 +65,11 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetSchema{
-				Name:            immutable.Some("does not exist"),
-				ExpectedResults: []client.SchemaDescription{},
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					Name: immutable.Some("does not exist"),
+				},
+				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
 	}
@@ -72,10 +78,6 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsAllSchema(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-	usersSchemaVersion2ID := "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
-	booksSchemaVersion1ID := "bafkreibiu34zrehpq346pwp5z24qkderm7ibhnpcqalhkivhnf5e2afqoy"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -88,32 +90,24 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion2ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       false,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -127,10 +121,21 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						},
 					},
 					{
-						Name:      "Books",
-						Root:      booksSchemaVersion1ID,
-						VersionID: booksSchemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Books",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+						},
+					},
+					{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -146,8 +151,8 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-	usersSchemaVersion2ID := "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
+	usersSchemaVersion1ID := "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
+	usersSchemaVersion2ID := "bafyreidfzu2x6i4akqlmt5lloaeflwep4ykq2f4unwm2utkmrkgpfyf7bi"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -161,22 +166,27 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.GetSchema{
-				Root: immutable.Some(usersSchemaVersion1ID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+					CollectionID:    immutable.Some(usersSchemaVersion1ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						CollectionID:   usersSchemaVersion1ID,
+						VersionID:      usersSchemaVersion1ID,
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -184,10 +194,12 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						},
 					},
 					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion2ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						CollectionID:   usersSchemaVersion1ID,
+						VersionID:      usersSchemaVersion2ID,
+						IsActive:       false,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -209,9 +221,6 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
-	usersSchemaVersion1ID := "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
-	usersSchemaVersion2ID := "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -224,33 +233,25 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.GetSchema{
-				Name: immutable.Some("Users"),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					Name:            immutable.Some("Users"),
+					IncludeInactive: immutable.Some(true),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:      "Users",
-						Root:      usersSchemaVersion1ID,
-						VersionID: usersSchemaVersion2ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       false,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -260,6 +261,17 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},

@@ -28,7 +28,7 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 10} }
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 10} }
@@ -108,7 +108,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "DateTime"} }

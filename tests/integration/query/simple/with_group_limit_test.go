@@ -241,18 +241,18 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(32),
-							"_group": []map[string]any{
-								{
-									"Name": "Bob",
-								},
-							},
-						},
-						{
 							"Age": int64(42),
 							"_group": []map[string]any{
 								{
 									"Name": "Alice",
+								},
+							},
+						},
+						{
+							"Age": int64(32),
+							"_group": []map[string]any{
+								{
+									"Name": "Bob",
 								},
 							},
 						},

@@ -226,22 +226,22 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_avg": float64(55),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_avg":     float64(55),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_avg": float64(19),
 							"_group": []map[string]any{
 								{
 									"Verified": false,
 									"_avg":     float64(19),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_avg": float64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(55),
 								},
 							},
 						},
@@ -402,12 +402,12 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Alice",
-							"_avg": float64(2.04),
+							"Name": "Carlo",
+							"_avg": float64(1.74),
 							"_group": []map[string]any{
 								{
-									"Verified": false,
-									"_avg":     float64(2.04),
+									"Verified": true,
+									"_avg":     float64(1.74),
 								},
 							},
 						},
@@ -426,12 +426,12 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_avg": float64(1.74),
+							"Name": "Alice",
+							"_avg": float64(2.04),
 							"_group": []map[string]any{
 								{
-									"Verified": true,
-									"_avg":     float64(1.74),
+									"Verified": false,
+									"_avg":     float64(2.04),
 								},
 							},
 						},
@@ -506,22 +506,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"_avg": float64(1.74),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_avg":     float64(1.74),
-									"_group": []map[string]any{
-										{
-											"Age":  int64(55),
-											"_avg": float64(1.74),
-										},
-									},
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_avg": float64(2.04),
 							"_group": []map[string]any{
@@ -562,6 +546,22 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 										{
 											"Age":  int64(34),
 											"_avg": float64(2.22),
+										},
+									},
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_avg": float64(1.74),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(1.74),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(55),
+											"_avg": float64(1.74),
 										},
 									},
 								},

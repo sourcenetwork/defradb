@@ -82,7 +82,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 						[
 							{
 								"op": "replace",
-								"path": "/bafkreigz4kfik46hfu7zs4l762vjrlowt6qe3kajq2pz6u7ggyyzkrrjeu/Sources/0/Transform",
+								"path": "/UserView/Sources/0/Transform",
 								"value": %s
 							}
 						]

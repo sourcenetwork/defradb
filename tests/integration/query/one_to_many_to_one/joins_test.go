@@ -168,62 +168,62 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"_docID": "bae-489b4e01-4764-56f6-913f-b3c92dffcaa3",
+							"_docID": testUtils.NewDocIndex(0, 2),
 							"book":   []map[string]any{},
 							"name":   "Not a Writer",
 						},
 						{
 							"name":   "John Grisham",
-							"_docID": "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+							"_docID": testUtils.NewDocIndex(0, 0),
 							"book": []map[string]any{
 								{
-									"_docID":    "bae-5ce5698b-5af6-5f50-a6fb-633252be8d12",
+									"_docID":    testUtils.NewDocIndex(1, 2),
 									"name":      "The Associate",
 									"publisher": nil,
 								},
 								{
-									"_docID": "bae-86f7a96a-be15-5b4d-91c7-bb6047aa4008",
-									"name":   "Theif Lord",
+									"_docID": testUtils.NewDocIndex(1, 5),
+									"name":   "Sooley",
 									"publisher": map[string]any{
-										"_docID": "bae-6223fba1-5461-5e47-9682-6c769c8e5518",
-										"name":   "Only Publisher of Theif Lord",
+										"_docID": testUtils.NewDocIndex(2, 4),
+										"name":   "Only Publisher of Sooley",
 									},
 								},
 								{
-									"_docID": "bae-d890c705-8a7a-57ce-88b1-ddd7827438ea",
+									"_docID": testUtils.NewDocIndex(1, 3),
 									"name":   "Painted House",
 									"publisher": map[string]any{
-										"_docID": "bae-de7d087b-d33f-5b4b-b0e4-79de4335d9ed",
+										"_docID": testUtils.NewDocIndex(2, 2),
 										"name":   "Only Publisher of Painted House",
 									},
 								},
 								{
-									"_docID": "bae-fc61b19e-646a-5537-82d6-69259e4f959a",
+									"_docID": testUtils.NewDocIndex(1, 4),
 									"name":   "A Time for Mercy",
 									"publisher": map[string]any{
-										"_docID": "bae-5fd29915-86c6-5e9f-863a-a03292206b8c",
+										"_docID": testUtils.NewDocIndex(2, 3),
 										"name":   "Only Publisher of A Time for Mercy",
 									},
 								},
 								{
-									"_docID": "bae-fc9f77fd-7b26-58c3-ad29-b2bd58a877be",
-									"name":   "Sooley",
+									"_docID": testUtils.NewDocIndex(1, 1),
+									"name":   "Theif Lord",
 									"publisher": map[string]any{
-										"_docID": "bae-e2cc19bd-4b3e-5cbe-9146-fb24f5913566",
-										"name":   "Only Publisher of Sooley",
+										"_docID": testUtils.NewDocIndex(2, 1),
+										"name":   "Only Publisher of Theif Lord",
 									},
 								},
 							},
 						},
 						{
 							"name":   "Cornelia Funke",
-							"_docID": "bae-fb2a1852-3951-5ce9-a3bf-6825202f201b",
+							"_docID": testUtils.NewDocIndex(0, 1),
 							"book": []map[string]any{
 								{
-									"_docID": "bae-5a5ef6dd-0c2b-5cd0-a644-f0c47a640565",
+									"_docID": testUtils.NewDocIndex(1, 0),
 									"name":   "The Rooster Bar",
 									"publisher": map[string]any{
-										"_docID": "bae-0020b43b-500c-57d0-81b3-43342c9d8d1d",
+										"_docID": testUtils.NewDocIndex(2, 0),
 										"name":   "Only Publisher of The Rooster Bar",
 									},
 								},

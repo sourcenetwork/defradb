@@ -87,8 +87,8 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Addo"},
 					{"name": "Keenan"},
+					{"name": "Addo"},
 				},
 			},
 			indexFetches: 2,
@@ -442,8 +442,8 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Addo"},
 					{"name": "Keenan"},
+					{"name": "Addo"},
 				},
 			},
 			indexFetches: 2,
@@ -808,8 +808,8 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Addo"},
 					{"name": "Keenan"},
+					{"name": "Addo"},
 				},
 			},
 			indexFetches: 2,
@@ -826,8 +826,8 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Addo"},
 					{"name": "Keenan"},
+					{"name": "Addo"},
 				},
 			},
 			indexFetches: 2,

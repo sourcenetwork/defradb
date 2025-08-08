@@ -93,7 +93,7 @@ func TestView_OneToMany(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
+func TestView_OneToManyWithMixedSDL(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to many view with mixed sdl errors",
 		Actions: []any{
@@ -124,7 +124,41 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 						books: [Book]
 					}
 				`,
-				ExpectedError: "relation missing field. Object: Book, RelationName: authorview_book",
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Harper Lee"
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "To Kill a Mockingbird",
+					"author_id": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+							AuthorView {
+								name
+								books {
+									name
+								}
+							}
+						}`,
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Harper Lee",
+							"books": []map[string]any{
+								{
+									"name": "To Kill a Mockingbird",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}

@@ -33,20 +33,6 @@ var (
 			Fields: []CollectionFieldDescription{
 				{
 					Name: "Name",
-				},
-				{
-					Name: "Age",
-				},
-				{
-					Name: "Custom",
-				},
-			},
-		},
-		Schema: SchemaDescription{
-			Name: "User",
-			Fields: []SchemaFieldDescription{
-				{
-					Name: "Name",
 					Typ:  LWW_REGISTER,
 					Kind: FieldKind_NILLABLE_STRING,
 				},

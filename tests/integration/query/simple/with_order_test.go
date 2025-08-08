@@ -49,16 +49,16 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 					},
 				},
@@ -1109,16 +1109,16 @@ func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 						{
 							"Name": "Alice",
@@ -1171,16 +1171,16 @@ func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 						{
 							"Name": "Alice",

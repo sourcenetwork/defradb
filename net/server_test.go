@@ -77,7 +77,7 @@ func TestPushLog(t *testing.T) {
 	_, err = p.server.pushLogHandler(ctx, &pushLogRequest{
 		DocID:        doc.ID().String(),
 		CID:          headCID.Bytes(),
-		CollectionID: col.SchemaRoot(),
+		CollectionID: col.CollectionID(),
 		Creator:      p.PeerID().String(),
 		Block:        b,
 	})

@@ -86,7 +86,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NodeIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreiaqqaqoe73ioolf6lofprgekb4lnrcteanpbjgjegkn6ug77ghmri",
+				Cid:            "bafyreibghvvhikn37fj2jhshvomcyaxlf5rj3watzcxlaajxawwkqgczqa",
 				ExpectedError:  db.ErrMissingPermission.Error(),
 			},
 		},
@@ -129,7 +129,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreiaqqaqoe73ioolf6lofprgekb4lnrcteanpbjgjegkn6ug77ghmri",
+				Cid:            "bafyreibghvvhikn37fj2jhshvomcyaxlf5rj3watzcxlaajxawwkqgczqa",
 			},
 		},
 	}

@@ -58,8 +58,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Shahzad"},
-						{"name": "Islam"},
 						{"name": "Keenan"},
+						{"name": "Islam"},
 					},
 				},
 			},
@@ -137,8 +137,8 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "John"},
 						{"name": "Shahzad"},
+						{"name": "John"},
 						{"name": "Fred"},
 					},
 				},
@@ -420,18 +420,18 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 						{
 							"name": "Chris",
 							"devices": []map[string]any{
+								// The filter is on User, so all devices belonging to it will be returned
 								{
-									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"model":        "Running Man",
+									"manufacturer": "Braveworld Productions",
 								},
 								{
 									"model":        "Walkman",
 									"manufacturer": "The Proclaimers",
 								},
-								// The filter is on User, so all devices belonging to it will be returned
 								{
-									"model":        "Running Man",
-									"manufacturer": "Braveworld Productions",
+									"model":        "Walkman",
+									"manufacturer": "Sony",
 								},
 							},
 						},
@@ -516,12 +516,12 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 							"name": "Chris",
 							"devices": []map[string]any{
 								{
-									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
-								},
-								{
 									"model":        "Running Man",
 									"manufacturer": "Braveworld Productions",
+								},
+								{
+									"model":        "Walkman",
+									"manufacturer": "The Proclaimers",
 								},
 							},
 						},
@@ -601,16 +601,16 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 							"name": "Chris",
 							"devices": []map[string]any{
 								{
-									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"model":        "Running Man",
+									"manufacturer": "Braveworld Productions",
 								},
 								{
 									"model":        "Walkman",
 									"manufacturer": "The Proclaimers",
 								},
 								{
-									"model":        "Running Man",
-									"manufacturer": "Braveworld Productions",
+									"model":        "Walkman",
+									"manufacturer": "Sony",
 								},
 							},
 						},
@@ -719,12 +719,6 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 				Results: map[string]any{
 					"Device": []map[string]any{
 						{
-							"model": "Playstation 5",
-							"owner": map[string]any{
-								"name": "Addo",
-							},
-						},
-						{
 							"model": "iPhone 10",
 							"owner": map[string]any{
 								"name": "Addo",
@@ -734,6 +728,12 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 							"model": "Playstation 5",
 							"owner": map[string]any{
 								"name": "Islam",
+							},
+						},
+						{
+							"model": "Playstation 5",
+							"owner": map[string]any{
+								"name": "Addo",
 							},
 						},
 					},

@@ -181,25 +181,6 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 							},
 						},
 						{
-							"cid":   gomega.And(doc1NameCid, uniqueCid),
-							"links": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc1AgeCid, uniqueCid),
-							"links": []map[string]any{},
-						},
-						{
-							"cid": gomega.And(doc1CreateCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc1NameCid,
-								},
-								{
-									"cid": doc1AgeCid,
-								},
-							},
-						},
-						{
 							"cid":   gomega.And(doc2NameCid, uniqueCid),
 							"links": []map[string]any{},
 						},
@@ -215,6 +196,25 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 								},
 								{
 									"cid": doc2AgeCid,
+								},
+							},
+						},
+						{
+							"cid":   gomega.And(doc1NameCid, uniqueCid),
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   gomega.And(doc1AgeCid, uniqueCid),
+							"links": []map[string]any{},
+						},
+						{
+							"cid": gomega.And(doc1CreateCid, uniqueCid),
+							"links": []map[string]any{
+								{
+									"cid": doc1NameCid,
+								},
+								{
+									"cid": doc1AgeCid,
 								},
 							},
 						},

@@ -28,13 +28,13 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1/name", "value": "Email" }
 					]
 				`,
-				ExpectedError: "testing value /Users/Fields/1/name failed: test failed",
+				ExpectedError: "failed: test failed",
 			},
 		},
 	}
@@ -52,7 +52,7 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1/Name", "value": "name" }
@@ -75,13 +75,13 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "testing value /Users/Fields/1 failed: test failed",
+				ExpectedError: "test failed",
 			},
 		},
 	}
@@ -99,11 +99,12 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {
-							"Name": "name", "Kind": 11, "Typ":1
+							"FieldID": "bafyreibmntjy3cruz23uhrmzelan3thncsk5ji6jb5xvjgrg5cyeodkazi",
+							"Name": "name", "Kind": 11, "Typ":1, "RelationName": null, "IsPrimary": false, "DefaultValue": null, "Size": 0
 						} }
 					]
 				`,
@@ -124,11 +125,12 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name", "value": {
-							"Kind": 11, "Typ":1
+							"FieldID": "bafyreibmntjy3cruz23uhrmzelan3thncsk5ji6jb5xvjgrg5cyeodkazi",
+							"Name": "name", "Kind": 11, "Typ":1, "RelationName": null, "IsPrimary": false, "DefaultValue": null, "Size": 0
 						} }
 					]
 				`,
@@ -149,7 +151,7 @@ func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *tes
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name/Kind", "value": 11 }

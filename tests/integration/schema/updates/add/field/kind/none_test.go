@@ -28,7 +28,7 @@ func TestSchemaUpdatesAddFieldKindNone(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 0} }

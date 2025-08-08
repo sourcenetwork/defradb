@@ -120,7 +120,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		var isEmbedded bool
 		for _, definition := range collections {
-			if t.Name() == definition.Schema.Name && definition.Version.IsEmbeddedOnly {
+			if t.Name() == definition.Version.Name && definition.Version.IsEmbeddedOnly {
 				isEmbedded = true
 				break
 			}
@@ -226,7 +226,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		if !collectionFound {
 			// If we did not find a collection with this name, check for matching schemas (embedded objects)
 			for _, definition := range collections {
-				if t.Name() == definition.Schema.Name {
+				if t.Name() == definition.Version.Name {
 					// All embedded objects are readonly
 					isReadOnly = true
 					collectionFound = true
@@ -438,21 +438,13 @@ func (g *Generator) buildTypes(
 		isQuerySource := len(collection.Version.QuerySources()) > 0
 		isViewObject := collection.Version.IsEmbeddedOnly || isQuerySource
 
-		var objectName string
-		if collection.Version.IsEmbeddedOnly {
-			// If this is an embedded object, take the type name from the Schema
-			objectName = collection.Schema.Name
-		} else {
-			objectName = collection.Version.Name
-		}
-
 		// check if type exists
-		if _, ok := g.manager.schema.TypeMap()[objectName]; ok {
-			return nil, NewErrSchemaTypeAlreadyExist(objectName)
+		if _, ok := g.manager.schema.TypeMap()[collection.Version.Name]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(collection.Version.Name)
 		}
 
 		objconf := gql.ObjectConfig{
-			Name: objectName,
+			Name: collection.Version.Name,
 		}
 
 		// Wrap field definition in a thunk so we can
@@ -501,9 +493,9 @@ func (g *Generator) buildTypes(
 				}
 			}
 
-			gqlType, ok := g.manager.schema.TypeMap()[objectName]
+			gqlType, ok := g.manager.schema.TypeMap()[collection.Version.Name]
 			if !ok {
-				return nil, NewErrObjectNotFoundDuringThunk(objectName)
+				return nil, NewErrObjectNotFoundDuringThunk(collection.Version.Name)
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{

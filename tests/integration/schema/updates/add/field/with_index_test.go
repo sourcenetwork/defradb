@@ -29,7 +29,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -128,7 +128,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 						"name":	"John"
 					}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }

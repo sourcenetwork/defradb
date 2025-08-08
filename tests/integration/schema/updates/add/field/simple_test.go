@@ -21,8 +21,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -52,14 +52,18 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersion2ID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some(schemaVersion2ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersion2ID,
-						Root:      schemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						CollectionID:   schemaVersion1ID,
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -84,7 +88,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
+func TestSchemaUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
 		Actions: []any{
@@ -95,13 +99,13 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -118,8 +122,8 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_Errors(t *testing.T) {
 }
 
 func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field",
@@ -131,24 +135,28 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersion2ID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some(schemaVersion2ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
 						Name: "Users",
 						// Even though schema version 2 is not active, it should still be possible to
 						// fetch it.
-						VersionID: schemaVersion2ID,
-						Root:      schemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						VersionID:      schemaVersion2ID,
+						CollectionID:   schemaVersion1ID,
+						IsActive:       false,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -184,7 +192,7 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Authors/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -218,7 +226,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
@@ -254,14 +262,14 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "city", "Kind": 11} }
@@ -296,7 +304,7 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Kind": 11} }
@@ -320,7 +328,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Email field is valid, City field has invalid kind
 				Patch: `
 					[
@@ -367,13 +375,13 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "mutating an existing field is not supported. ProposedName: name",
+				ExpectedError: "duplicate field. Name: name",
 			},
 		},
 	}
@@ -391,14 +399,14 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} },
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "mutating an existing field is not supported. ProposedName: name\nmutating an existing field is not supported. ProposedName: name",
+				ExpectedError: "duplicate field. Name: name",
 			},
 		},
 	}
@@ -416,7 +424,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },

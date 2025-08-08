@@ -126,12 +126,12 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_avg": float64(2.3333333333333335),
-						},
-						{
 							"name": "John Grisham",
 							"_avg": float64(2.25),
+						},
+						{
+							"name": "Cornelia Funke",
+							"_avg": float64(2.3333333333333335),
 						},
 					},
 				},

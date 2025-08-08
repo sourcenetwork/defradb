@@ -25,7 +25,7 @@ func TestBackupExport_Simple_NoError(t *testing.T) {
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]}`,
 			},
 		},
 	}
@@ -41,7 +41,7 @@ func TestBackupExport_Empty_NoError(t *testing.T) {
 				Doc:          `{}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-0e6d7a02-4b15-5c2b-964f-208708db9ba5","_docIDNew":"bae-0e6d7a02-4b15-5c2b-964f-208708db9ba5"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-637e35d9-6fb5-53f2-ad93-b99571cb5151","_docIDNew":"bae-637e35d9-6fb5-53f2-ad93-b99571cb5151"}]}`,
 			},
 		},
 	}
@@ -98,7 +98,7 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]}`,
 			},
 		},
 	}

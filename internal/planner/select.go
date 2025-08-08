@@ -337,7 +337,7 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 		col := scanNode.col.Version()
 		conditions := scanNode.filter.ExternalConditions
 		filter.TraverseFields(conditions, func(path []string, val any) bool {
-			for _, field := range scanNode.col.Schema().Fields {
+			for _, field := range scanNode.col.Version().Fields {
 				if field.Name != path[0] {
 					continue
 				}
@@ -392,7 +392,7 @@ func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexD
 }
 
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
-	for _, field := range col.Schema().Fields {
+	for _, field := range col.Version().Fields {
 		if field.Name != fieldName {
 			continue
 		}

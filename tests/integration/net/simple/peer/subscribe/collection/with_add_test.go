@@ -81,10 +81,10 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Fred",
+							"name": "John",
 						},
 						{
-							"name": "John",
+							"name": "Fred",
 						},
 					},
 				},

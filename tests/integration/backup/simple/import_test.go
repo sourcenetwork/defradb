@@ -20,7 +20,7 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.BackupImport{
-				ImportContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
+				ImportContent: `{"User":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]}`,
 			},
 			testUtils.Request{
 				Request: `
@@ -62,7 +62,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.BackupImport{
-				ImportContent: `{"Invalid":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
+				ImportContent: `{"Invalid":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]}`,
 				ExpectedError: "failed to get collection: key not found. Name: Invalid",
 			},
 		},
@@ -79,7 +79,7 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 				Doc:          `{"name": "John", "age": 30}`,
 			},
 			testUtils.BackupImport{
-				ImportContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
+				ImportContent: `{"User":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]}`,
 				ExpectedError: "a document with the given ID already exists",
 			},
 		},
@@ -138,16 +138,16 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
+							"name": "Smith",
+							"age":  int64(31),
+						},
+						{
 							"name": "John",
 							"age":  int64(30),
 						},
 						{
 							"name": "Bob",
 							"age":  int64(32),
-						},
-						{
-							"name": "Smith",
-							"age":  int64(31),
 						},
 					},
 				},

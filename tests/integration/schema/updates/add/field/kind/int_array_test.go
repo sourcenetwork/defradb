@@ -28,7 +28,7 @@ func TestSchemaUpdatesAddFieldKindIntArray(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 5} }
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindIntArrayWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 5} }
@@ -108,7 +108,7 @@ func TestSchemaUpdatesAddFieldKindIntArraySubstitutionWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "[Int!]"} }

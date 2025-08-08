@@ -105,10 +105,10 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Alice",
+							"Name": "Bob",
 						},
 						{
-							"Name": "Bob",
+							"Name": "Alice",
 						},
 					},
 				},

@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddField_DoesNotAffectExistingRelation(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Book/Fields/-", "value": {"Name": "rating", "Kind": 4} }

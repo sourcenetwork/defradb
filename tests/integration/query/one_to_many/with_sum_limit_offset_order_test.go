@@ -111,14 +111,14 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_sum": float64(0),
-						},
-						{
 							"name": "John Grisham",
 							// 4.9 + 3.2
 							// ...00001 is float math artifact
 							"_sum": 8.100000000000001,
+						},
+						{
+							"name": "Cornelia Funke",
+							"_sum": float64(0),
 						},
 					},
 				},
@@ -223,13 +223,13 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_sum": float64(0),
-						},
-						{
 							"name": "John Grisham",
 							// 4.2 + 3.2
 							"_sum": 7.4,
+						},
+						{
+							"name": "Cornelia Funke",
+							"_sum": float64(0),
 						},
 					},
 				},
@@ -335,17 +335,17 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"asc":  float64(0),
-							"desc": float64(0),
-						},
-						{
 							"name": "John Grisham",
 							// 4.9 + 3.2
 							// ...00001 is float math artifact
 							"asc": 8.100000000000001,
 							// 4.2 + 3.2
 							"desc": 7.4,
+						},
+						{
+							"name": "Cornelia Funke",
+							"asc":  float64(0),
+							"desc": float64(0),
 						},
 					},
 				},
@@ -451,16 +451,16 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":     "Cornelia Funke",
-							"byName":   float64(0),
-							"byRating": float64(0),
-						},
-						{
 							"name": "John Grisham",
 							// 4.2 + 3.2
 							"byName": 7.4,
 							// 4.5 + 4.2
 							"byRating": 8.7,
+						},
+						{
+							"name":     "Cornelia Funke",
+							"byName":   float64(0),
+							"byRating": float64(0),
 						},
 					},
 				},
@@ -568,11 +568,6 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":      "Cornelia Funke",
-							"_sum":      float64(0),
-							"published": []map[string]any{},
-						},
-						{
 							"name": "John Grisham",
 							// 4.2 + 3.2
 							"_sum": 7.4,
@@ -584,6 +579,11 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 									"name": "Sooley",
 								},
 							},
+						},
+						{
+							"name":      "Cornelia Funke",
+							"_sum":      float64(0),
+							"published": []map[string]any{},
 						},
 					},
 				},

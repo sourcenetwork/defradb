@@ -235,7 +235,7 @@ Result:
     "Name": "Users",
     "ID": 1,
     "RootID": 1,
-    "SchemaVersionID": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+    "SchemaVersionID": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
     "Sources": [],
     "Fields": [
       {
@@ -539,7 +539,7 @@ Result:
     "Name": "Users",
     "ID": 1,
     "RootID": 1,
-    "SchemaVersionID": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+    "SchemaVersionID": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
     "Sources": [],
     "Fields": [
       {

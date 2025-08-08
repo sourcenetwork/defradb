@@ -184,7 +184,7 @@ func processCreateIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	err = checkExistingFieldsAndAdjustRelFieldNames(def.Schema, desc.Fields)
+	err = checkExistingFieldsAndAdjustRelFieldNames(def.Version, desc.Fields)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -399,11 +399,11 @@ func (c *collection) GetIndexes(context.Context) ([]client.IndexDescription, err
 // exist in the collection schema.
 // If a field is a relation, it will be adjusted to relation id field name, a.k.a. `field_name + _id`.
 func checkExistingFieldsAndAdjustRelFieldNames(
-	schema client.SchemaDescription,
+	collection client.CollectionVersion,
 	fields []client.IndexedFieldDescription,
 ) error {
 	for i := range fields {
-		field, found := schema.GetFieldByName(fields[i].Name)
+		field, found := collection.GetFieldByName(fields[i].Name)
 		if !found {
 			return NewErrNonExistingFieldForIndex(fields[i].Name)
 		}

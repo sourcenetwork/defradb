@@ -15,20 +15,11 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/sourcenetwork/immutable"
 )
 
-// This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation secondary direction, id field with name clash on secondary side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL will parse the input type as ID and
-			// will return an unexpected type error
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,42 +34,7 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 						published: Book @primary
 					}
 				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				Doc: `{
-					"name": "Painted House",
-					"author_id": 123456
-				}`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 1,
-				DocMap: map[string]any{
-					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					Book {
-						name
-						author_id
-						author {
-							name
-						}
-					}
-				}`,
-				Results: map[string]any{
-					"Book": []map[string]any{
-						{
-							"name":      "Painted House",
-							"author_id": "bae-5da9ad38-0a01-51ad-b54f-43eb9288d4f5",
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-						},
-					},
-				},
+				ExpectedError: "duplicate field. Name: author_id",
 			},
 		},
 	}
@@ -86,7 +42,6 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, id field with name clash on primary side",
@@ -104,7 +59,7 @@ func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 						published: Book
 					}
 				`,
-				ExpectedError: "relational id field of invalid kind. Field: author_id, Expected: ID, Actual: Int",
+				ExpectedError: "duplicate field. Name: author_id",
 			},
 		},
 	}

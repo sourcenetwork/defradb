@@ -34,14 +34,14 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -50,8 +50,8 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreicdkt3m6mgwuoix7qyijvwxwtj3dlre4a4c6mdnqbucbndwuxjsvi",
-					DestinationSchemaVersionID: "bafkreigijxrkfpadmnkpagokjdy6zpwtryad32m6nkgsqrd452kjlfp46e",
+					SourceSchemaVersionID:      "bafyreih7useaapqn4pf6k5rxb2oufmsjb3e7xnccmbjr2njva3bgpdwyzu",
+					DestinationSchemaVersionID: "bafyreih5sk2gsbddpvkil76x5sgbdgx6gmglhycpyvgli3szatqnfmxaka",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -67,8 +67,8 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafkreigijxrkfpadmnkpagokjdy6zpwtryad32m6nkgsqrd452kjlfp46e",
-					DestinationSchemaVersionID: "bafkreibtmdbc3nbdt74xdwvfrez53fxwyz6nh4b6ppwsrxiqpj5zpwgole",
+					SourceSchemaVersionID:      "bafyreih5sk2gsbddpvkil76x5sgbdgx6gmglhycpyvgli3szatqnfmxaka",
+					DestinationSchemaVersionID: "bafyreicrtehvnvxkjdxac523mb7kkiwyn3wntj3yiuljskcco5ixhcpk7y",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -89,8 +89,8 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 					"height": 185
 				}`,
 			},
-			testUtils.SetActiveSchemaVersion{
-				SchemaVersionID: "bafkreicdkt3m6mgwuoix7qyijvwxwtj3dlre4a4c6mdnqbucbndwuxjsvi",
+			testUtils.SetActiveCollectionVersion{
+				SchemaVersionID: "bafyreih7useaapqn4pf6k5rxb2oufmsjb3e7xnccmbjr2njva3bgpdwyzu",
 			},
 			testUtils.Request{
 				Request: `query {

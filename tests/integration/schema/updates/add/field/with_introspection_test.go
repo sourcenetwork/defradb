@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
@@ -78,7 +78,7 @@ func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *
 					type Users {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The [Name] field is valid, but [Email] has an invalid [Kind].
 				// [Name] should not be added to the GQL types.
 				Patch: `

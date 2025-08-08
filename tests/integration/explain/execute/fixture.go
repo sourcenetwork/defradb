@@ -124,7 +124,7 @@ func create2AddressDocuments() []testUtils.CreateDoc {
 	return []testUtils.CreateDoc{
 		{
 			CollectionID: 4,
-			// _docID: bae-14f20db7-3654-58de-9156-596ef2cfd790
+			// _docID: bae-b7bb2486-6364-58c0-bf60-91ff90ee72be
 			Doc: `{
 					"city": "Waterloo",
 					"country": "Canada"
@@ -132,7 +132,7 @@ func create2AddressDocuments() []testUtils.CreateDoc {
 		},
 		{
 			CollectionID: 4,
-			// _docID: bae-49f715e7-7f01-5509-a213-ed98cb81583f
+			// _docID: bae-0d4eb5f3-499d-553d-9fb9-80a19463ec9a
 			Doc: `{
 					"city": "Brampton",
 					"country": "Canada"

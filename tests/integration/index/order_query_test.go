@@ -521,8 +521,8 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "pixel"},
 						{"model": "walkman"},
+						{"model": "pixel"},
 						{"model": "iPhone"},
 					},
 				},
@@ -655,11 +655,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 					},
 				},
@@ -678,11 +678,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 						{
 							"name": "Alan",
@@ -771,11 +771,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 					},
 				},
@@ -794,11 +794,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 						{
 							"name": "Alan",
@@ -887,11 +887,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 					},
 				},
@@ -910,11 +910,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 						{
 							"name": "Alan",
@@ -1003,11 +1003,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 					},
 				},
@@ -1026,11 +1026,11 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  24,
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  38,
 						},
 						{
 							"name": "Alan",
@@ -1134,12 +1134,12 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserI
 						{
 							"name":  "Alice",
 							"age":   24,
-							"level": 3,
+							"level": 1,
 						},
 						{
 							"name":  "Alice",
 							"age":   24,
-							"level": 1,
+							"level": 2,
 						},
 						{
 							"name":  "Alice",
@@ -1149,7 +1149,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserI
 						{
 							"name":  "Alice",
 							"age":   24,
-							"level": 2,
+							"level": 3,
 						},
 						{
 							"name":  "Alice",
@@ -1254,12 +1254,12 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserInde
 						{
 							"name":  "Alice",
 							"age":   24,
-							"level": 3,
+							"level": 1,
 						},
 						{
 							"name":  "Alice",
 							"age":   24,
-							"level": 1,
+							"level": 2,
 						},
 						{
 							"name":  "Alice",
@@ -1269,7 +1269,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserInde
 						{
 							"name":  "Alice",
 							"age":   24,
-							"level": 2,
+							"level": 3,
 						},
 						{
 							"name":  "Alice",

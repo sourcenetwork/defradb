@@ -24,7 +24,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 			// Authors
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84, Has written 5 books
+				// bae-9e70648f-c722-5875-97f5-574ec6f703e9, Has written 5 books
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -61,7 +61,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-86f7a96a-be15-5b4d-91c7-bb6047aa4008", Has 1 Publisher
+				// "bae-4e3f217c-0dd4-5ff3-bee6-5740d8fe3ae6", Has 1 Publisher
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
@@ -70,7 +70,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
-				// "bae-5ce5698b-5af6-5f50-a6fb-633252be8d12", Has no Publisher.
+				// "bae-efa4a57f-e766-530f-a5a6-4a5669106c74", Has no Publisher.
 				DocMap: map[string]any{
 					"name":      "The Associate",
 					"rating":    4.2,
@@ -111,6 +111,13 @@ func TestQueryOneToOneRelations(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
+							"name": "The Associate",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"publisher": nil,
+						},
+						{
 							"name": "The Rooster Bar",
 							"author": map[string]any{
 								"name": "Cornelia Funke",
@@ -118,13 +125,6 @@ func TestQueryOneToOneRelations(t *testing.T) {
 							"publisher": map[string]any{
 								"name": "Only Publisher of The Rooster Bar",
 							},
-						},
-						{
-							"name": "The Associate",
-							"author": map[string]any{
-								"name": "John Grisham",
-							},
-							"publisher": nil,
 						},
 						{
 							"name": "Theif Lord",

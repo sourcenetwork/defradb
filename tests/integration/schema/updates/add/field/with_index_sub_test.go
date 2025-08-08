@@ -28,7 +28,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/email", "value": {"Kind": 11} }
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/email", "value": {"Name": "email","Kind": 11} }
@@ -96,7 +96,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithDifferentNameDefinedI
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/email", "value": {"Name": "different field name","Kind": 11} }
@@ -119,7 +119,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/email", "value": {"Kind": 11} },

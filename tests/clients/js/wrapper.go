@@ -221,30 +221,22 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) PatchSchema(
+func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
 ) error {
 	migrationVal, err := goji.MarshalJS(migration)
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, w.value, "patchSchema", patch, migrationVal, setAsDefaultVersion)
+
+	_, err = execute(ctx, w.value, "patchCollection", patch, migrationVal)
 	return err
 }
 
-func (w *Wrapper) PatchCollection(
-	ctx context.Context,
-	patch string,
-) error {
-	_, err := execute(ctx, w.value, "patchCollection", patch)
-	return err
-}
-
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	_, err := execute(ctx, w.value, "setActiveSchemaVersion", schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	_, err := execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID)
 	return err
 }
 
@@ -324,37 +316,6 @@ func (w *Wrapper) GetCollections(
 		out[i] = &Collection{
 			client: res[0].Index(i),
 		}
-	}
-	return out, nil
-}
-
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	res, err := execute(ctx, w.value, "getSchemaByVersionID", versionID)
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-	var out client.SchemaDescription
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return out, nil
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	optionsVal, err := goji.MarshalJS(options)
-	if err != nil {
-		return nil, err
-	}
-	res, err := execute(ctx, w.value, "getSchemas", optionsVal)
-	if err != nil {
-		return nil, err
-	}
-	var out []client.SchemaDescription
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return nil, err
 	}
 	return out, nil
 }

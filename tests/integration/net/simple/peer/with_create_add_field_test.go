@@ -31,7 +31,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Patch the schema on the node that we will directly create a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -108,7 +108,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Patch the schema on the node that we will sync docs to
 				NodeID: immutable.Some(1),
 				Patch: `
@@ -167,7 +167,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Patch the schema on all nodes
 				Patch: `
 					[
@@ -235,7 +235,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Patch the schema on the first node only
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -253,7 +253,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// Update the schema on the second node
 				NodeID: immutable.Some(1),
 				Patch: `

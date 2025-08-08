@@ -29,11 +29,12 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
-						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "fax" }
+						{ "op": "replace", "path": "/Users/Fields/2/Name", "value": "fax" },
+						{ "op": "remove", "path": "/Users/Fields/2/FieldID" }
 					]
 				`,
 			},

@@ -150,10 +150,10 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 					},
 				},
@@ -199,14 +199,14 @@ func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *test
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":      "Bob",
-							"Age":       int64(32),
-							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
-						},
-						{
 							"Name":      "John",
 							"Age":       int64(21),
 							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+						},
+						{
+							"Name":      "Bob",
+							"Age":       int64(32),
+							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
 						},
 					},
 				},

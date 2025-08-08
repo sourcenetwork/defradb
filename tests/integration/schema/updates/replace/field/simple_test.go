@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
+func TestSchemaUpdatesReplaceField(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, replace field",
 		Actions: []any{
@@ -29,38 +29,32 @@ func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "replace", "path": "/Users/Fields/2", "value": {"Name": "Fax", "Kind": 11} }
+						{ "op": "replace", "path": "/Users/Fields/1", "value": {"Name": "fax", "Kind": 11} }
 					]
 				`,
-				ExpectedError: "deleting an existing field is not supported. Name: name",
 			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Test schema update, replace field with correct ID",
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type Users {
-						name: String
-						email: String
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						email
 					}
-				`,
+				}`,
+				ExpectedError: "Cannot query field \"email\" on type \"Users\".",
 			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "replace", "path": "/Users/Fields/2", "value": {"Name": "fax", "Kind": 11} }
-					]
-				`,
-				ExpectedError: "deleting an existing field is not supported. Name: name",
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						fax
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
 			},
 		},
 	}

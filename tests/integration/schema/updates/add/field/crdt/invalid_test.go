@@ -28,7 +28,7 @@ func TestSchemaUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":99} }
@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldCRDTInvalidErrorsMultiple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 2, "Typ":99} },

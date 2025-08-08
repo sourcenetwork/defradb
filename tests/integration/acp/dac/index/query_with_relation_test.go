@@ -46,7 +46,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
+			// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 			Doc: `{
 				"name": "John Grisham",
 				"age": 65,

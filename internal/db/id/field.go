@@ -30,7 +30,6 @@ func GetShortFieldID(
 	collectionShortID uint32,
 	fieldID string,
 ) (uint32, error) {
-	// This concatenation is temporary, soon we can just use the field CID
 	uniqueKey := strconv.Itoa(int(collectionShortID)) + ":" + fieldID
 
 	cache := getFieldShortIDCache(ctx)
@@ -75,7 +74,6 @@ func GetShortFieldID(
 		}
 		sID := uint32(v)
 
-		// This concatenation is temporary, soon we can just use the field CID
 		uniqueKey := strconv.Itoa(int(collectionShortID)) + ":" + key.FieldID
 		cache[uniqueKey] = sID
 
@@ -93,7 +91,6 @@ func SetShortFieldID(
 	collectionShortID uint32,
 	fieldID string,
 ) error {
-	// This concatenation is temporary, soon we can just use the field CID
 	uniqueKey := strconv.Itoa(int(collectionShortID)) + ":" + fieldID
 
 	cache := getFieldShortIDCache(ctx)
@@ -141,7 +138,13 @@ func SetShortFieldIDs(ctx context.Context, collection client.CollectionVersion) 
 	}
 
 	for _, field := range collection.Fields {
-		err := SetShortFieldID(ctx, collectionShortID, field.Name)
+		if field.FieldID == "" {
+			// Short field IDs only exist for fields with full ids, and they only need to exist for these,
+			// as all fields that are saved to the store need short ids.
+			continue
+		}
+
+		err := SetShortFieldID(ctx, collectionShortID, field.FieldID)
 		if err != nil {
 			return err
 		}
@@ -152,9 +155,7 @@ func SetShortFieldIDs(ctx context.Context, collection client.CollectionVersion) 
 
 type fieldShortIDCacheKey struct{}
 
-// fieldShortIDCache contains field short-ids by a concatenation of [CollectionID][FieldName].
-//
-// In the near future the key will be replaced by the field cid.
+// fieldShortIDCache contains field short-ids by a concatenation of [CollectionID][FieldID].
 type fieldShortIDCache map[string]uint32
 
 // InitCollectionShortIDCache initialializes the context with a none-nil collection

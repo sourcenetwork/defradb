@@ -21,9 +21,9 @@ import (
 )
 
 func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
-	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
+	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema",
@@ -35,21 +35,21 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
-				SetAsDefaultVersion: immutable.Some(false),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},
@@ -63,15 +63,19 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				// The email field is not queriable
 				ExpectedError: `Cannot query field "email" on type "Users".`,
 			},
-			testUtils.GetSchema{
+			testUtils.GetCollections{
 				// The second schema version is present in the system, with the email field
-				VersionID: immutable.Some(schemaVersion2ID),
-				ExpectedResults: []client.SchemaDescription{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some(schemaVersion2ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersion2ID,
-						Root:      schemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						CollectionID:   schemaVersion1ID,
+						IsActive:       false,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -103,15 +107,19 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetSchema{
+			testUtils.GetCollections{
 				// The third schema version is present in the system, with the phone field
-				VersionID: immutable.Some(schemaVersion3ID),
-				ExpectedResults: []client.SchemaDescription{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some(schemaVersion3ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersion3ID,
-						Root:      schemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						VersionID:      schemaVersion3ID,
+						CollectionID:   schemaVersion1ID,
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -137,12 +145,6 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive (has no name).
-						VersionID:      schemaVersion1ID,
-						IsMaterialized: true,
-						Name:           "Users",
-					},
-					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
 						Name:           "Users",
@@ -153,6 +155,12 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 								SourceCollectionID: schemaVersion1ID,
 							},
 						},
+					},
+					{
+						// The original collection version is present, it has no source and is inactive (has no name).
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						Name:           "Users",
 					},
 					{
 						// The collection version for schema version 3 is present and is active, it also has the first collection
@@ -175,10 +183,10 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 }
 
 func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
-	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
-	schemaVersion4ID := "bafkreic2heai3vgufxcxs6bfvil2oyz27w3bzkwoqehjevlnkewq3ffp4e"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
+	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
+	schemaVersion4ID := "bafyreih3jgjlud3h3xnnjysgtvfegcn2xdixlavwzbw7s6as65atwfhtvi"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with patch on branching schema",
@@ -190,30 +198,30 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
-				SetAsDefaultVersion: immutable.Some(false),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The fourth schema version will be set as the active version, going from version 3 to 4
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "discordName", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "discordName", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},
@@ -230,15 +238,19 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetSchema{
+			testUtils.GetCollections{
 				// The fourth schema version is present in the system, with the phone and discordName field
-				VersionID: immutable.Some(schemaVersion4ID),
-				ExpectedResults: []client.SchemaDescription{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some(schemaVersion4ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersion4ID,
-						Root:      schemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						VersionID:      schemaVersion4ID,
+						CollectionID:   schemaVersion1ID,
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -269,6 +281,19 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
+						// The collection version for schema version 2 is present, it has the first collection as a source
+						// and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion2ID,
+						IsMaterialized: true,
+						IsActive:       false,
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: schemaVersion1ID,
+							},
+						},
+					},
+					{
 						// The original collection version is present, it has no source and is inactive
 						Name:           "Users",
 						VersionID:      schemaVersion1ID,
@@ -285,19 +310,6 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: schemaVersion3ID,
-							},
-						},
-					},
-					{
-						// The collection version for schema version 2 is present, it has the first collection as a source
-						// and is inactive.
-						Name:           "Users",
-						VersionID:      schemaVersion2ID,
-						IsMaterialized: true,
-						IsActive:       false,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: schemaVersion1ID,
 							},
 						},
 					},
@@ -322,9 +334,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
-	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
+	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches",
@@ -336,25 +348,25 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
-				SetAsDefaultVersion: immutable.Some(false),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},
-			testUtils.SetActiveSchemaVersion{
+			testUtils.SetActiveCollectionVersion{
 				// Set the second schema version to be active
 				SchemaVersionID: schemaVersion2ID,
 			},
@@ -386,13 +398,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive.
-						Name:           "Users",
-						VersionID:      schemaVersion1ID,
-						IsMaterialized: true,
-						IsActive:       false,
-					},
-					{
 						// The collection version for schema version 2 is present and is active, it has the first collection as a source
 						Name:           "Users",
 						VersionID:      schemaVersion2ID,
@@ -403,6 +408,13 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 								SourceCollectionID: schemaVersion1ID,
 							},
 						},
+					},
+					{
+						// The original collection version is present, it has no source and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
 					},
 					{
 						// The collection version for schema version 3 is present and is inactive, it also has the first collection
@@ -425,10 +437,10 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPatch(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
-	schemaVersion2ID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
-	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
-	schemaVersion4ID := "bafkreifdkkauc4b4rkazmzijiu2nxlikqatxa5zbmjc4sn3wrtlcqqcrt4"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
+	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
+	schemaVersion4ID := "bafyreih3jgjlud3h3xnnjysgtvfegcn2xdixlavwzbw7s6as65atwfhtvi"
 
 	test := testUtils.TestCase{
 		Description: "Test schema update, with branching schema toggling between branches then patch",
@@ -440,34 +452,34 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
-				SetAsDefaultVersion: immutable.Some(false),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "phone", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},
-			testUtils.SetActiveSchemaVersion{
+			testUtils.SetActiveCollectionVersion{
 				// Set the second schema version to be active
 				SchemaVersionID: schemaVersion2ID,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The fourth schema version will be set as the active version, going from version 2 to 4
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "discordName", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "discordName", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},
@@ -484,15 +496,19 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetSchema{
+			testUtils.GetCollections{
 				// The fourth schema version is present in the system, with the email and discordName field
-				VersionID: immutable.Some(schemaVersion4ID),
-				ExpectedResults: []client.SchemaDescription{
+				FilterOptions: client.CollectionFetchOptions{
+					VersionID: immutable.Some(schemaVersion4ID),
+				},
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersion4ID,
-						Root:      schemaVersion1ID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						VersionID:      schemaVersion4ID,
+						CollectionID:   schemaVersion1ID,
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -523,13 +539,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						// The original collection version is present, it has no source and is inactive.
-						Name:           "Users",
-						VersionID:      schemaVersion1ID,
-						IsMaterialized: true,
-						IsActive:       false,
-					},
-					{
 						// The collection version for schema version 2 is present, it has the first collection as a source
 						// and is inactive.
 						Name:           "Users",
@@ -539,6 +548,26 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						Sources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: schemaVersion1ID,
+							},
+						},
+					},
+					{
+						// The original collection version is present, it has no source and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
+					},
+					{
+						// The collection version for schema version 4 is present and is active, it also has the second collection
+						// as source.
+						Name:           "Users",
+						VersionID:      schemaVersion4ID,
+						IsMaterialized: true,
+						IsActive:       true,
+						Sources: []any{
+							&client.CollectionSource{
+								SourceCollectionID: schemaVersion2ID,
 							},
 						},
 					},
@@ -555,19 +584,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 							},
 						},
 					},
-					{
-						// The collection version for schema version 4 is present and is active, it also has the second collection
-						// as source.
-						Name:           "Users",
-						VersionID:      schemaVersion4ID,
-						IsMaterialized: true,
-						IsActive:       true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: schemaVersion2ID,
-							},
-						},
-					},
 				},
 			},
 		},
@@ -576,7 +592,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 }
 
 func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T) {
-	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
 
 	test := testUtils.TestCase{
 		Description: `Test schema update, with branching schema toggling between branches and gets the 
@@ -589,12 +605,12 @@ collection at a specific version`,
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
-				SetAsDefaultVersion: immutable.Some(true),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": true }
 					]
 				`,
 			},

@@ -14,16 +14,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaSetActiveCommand() *cobra.Command {
+func MakeCollectionSetActiveCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set-active [versionID]",
 		Short: "Set the active collection version",
-		Long: `Activates all collection versions with the given schema version, and deactivates all
-those without it (if they share the same schema root).`,
+		Long: `Activates all collection versions with the given version id, and deactivates all
+other versions of that collection.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SetActiveSchemaVersion(cmd.Context(), args[0])
+			return cliClient.SetActiveCollectionVersion(cmd.Context(), args[0])
 		},
 	}
 	return cmd

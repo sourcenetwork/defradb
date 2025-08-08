@@ -76,8 +76,8 @@ func (c *typeUsageCounters) addRelationUsage(
 ) {
 	var collectionRoot string
 	switch kind := field.Kind.(type) {
-	case *client.SchemaKind:
-		collectionRoot = kind.Root
+	case *client.CollectionKind:
+		collectionRoot = kind.CollectionID
 
 	default:
 		return
@@ -98,8 +98,8 @@ func (c *typeUsageCounters) addRelationUsage(
 func (c *typeUsageCounters) getNextTypeIndForField(secondaryType string, field *client.FieldDefinition) int {
 	var collectionRoot string
 	switch kind := field.Kind.(type) {
-	case *client.SchemaKind:
-		collectionRoot = kind.Root
+	case *client.CollectionKind:
+		collectionRoot = kind.CollectionID
 	}
 
 	current := c.m[collectionRoot][secondaryType][field.Name]
@@ -281,7 +281,7 @@ func (g *docsGenConfigurator) allocateUsageCounterIndexes() {
 
 		def := g.types[typeName]
 
-		for _, usage := range g.usageCounter.m[def.Schema.Root] {
+		for _, usage := range g.usageCounter.m[def.Version.CollectionID] {
 			for _, field := range usage {
 				if field.numAvailablePrimaryDocs == math.MaxInt {
 					field.numAvailablePrimaryDocs = max
@@ -306,11 +306,11 @@ func (g *docsGenConfigurator) getDemandForPrimaryType(
 	for _, field := range primaryTypeDef.GetFields() {
 		var otherRoot immutable.Option[string]
 		switch kind := field.Kind.(type) {
-		case *client.SchemaKind:
-			otherRoot = immutable.Some(kind.Root)
+		case *client.CollectionKind:
+			otherRoot = immutable.Some(kind.CollectionID)
 		}
 
-		if otherRoot.HasValue() && otherRoot.Value() == secondaryTypeDef.Schema.Root {
+		if otherRoot.HasValue() && otherRoot.Value() == secondaryTypeDef.Version.CollectionID {
 			primaryDemand := typeDemand{min: secondaryDemand.min, max: secondaryDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
 
@@ -443,11 +443,11 @@ func (g *docsGenConfigurator) initRelationUsages(secondaryType, primaryType stri
 	for _, secondaryTypeField := range secondaryTypeDef.GetFields() {
 		var otherRoot immutable.Option[string]
 		switch kind := secondaryTypeField.Kind.(type) {
-		case *client.SchemaKind:
-			otherRoot = immutable.Some(kind.Root)
+		case *client.CollectionKind:
+			otherRoot = immutable.Some(kind.CollectionID)
 		}
 
-		if otherRoot.HasValue() && otherRoot.Value() == primaryTypeDef.Schema.Root {
+		if otherRoot.HasValue() && otherRoot.Value() == primaryTypeDef.Version.CollectionID {
 			g.usageCounter.addRelationUsage(secondaryType, secondaryTypeField, minPerDoc,
 				maxPerDoc, g.docsDemand[primaryType].getAverage())
 		}

@@ -87,51 +87,31 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name:         "boss",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								Kind:         client.NewSelfKind("", false),
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "boss_id",
-								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
 							},
 							{
 								Name:         "minion",
-								Kind:         immutable.Some[client.FieldKind](client.NewSelfKind("", false)),
+								Kind:         client.NewSelfKind("", false),
 								RelationName: immutable.Some("user_user"),
 							},
 							{
 								Name:         "minion_id",
-								Kind:         immutable.Some[client.FieldKind](client.FieldKind_DocID),
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
-							},
-						},
-					},
-				},
-			},
-			testUtils.GetSchema{
-				ExpectedResults: []client.SchemaDescription{
-					{
-						Name:      "User",
-						Root:      "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
-						VersionID: "bafkreifchjktkdtha7vkcqt6itzsw6lnzfyp7ufws4s32e7vigu7akn2q4",
-						Fields: []client.SchemaFieldDescription{
-							{
-								Name: request.DocIDFieldName,
-								Kind: client.FieldKind_DocID,
-							},
-							{
-								Name: "boss",
-								Kind: client.NewSelfKind("", false),
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "boss_id",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.LWW_REGISTER,
 							},
 						},
 					},

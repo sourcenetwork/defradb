@@ -28,7 +28,7 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
+					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 						cid
 						links {
 							cid
@@ -39,14 +39,14 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 				Results: map[string]any{
 					"latestCommits": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+									"cid":  "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+									"cid":  "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
 									"name": "name",
 								},
 							},
@@ -62,7 +62,6 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 
 func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and schema versiion id field",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -72,7 +71,7 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
+					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 						cid
 						schemaVersionId
 					}
@@ -80,8 +79,8 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 				Results: map[string]any{
 					"latestCommits": []map[string]any{
 						{
-							"cid":             "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
-							"schemaVersionId": "bafkreicprhqxzlw3akyssz2v6pifwfueavp7jq2yj3dghapi3qcq6achs4",
+							"cid":             "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
 						},
 					},
 				},
@@ -104,7 +103,7 @@ func TestQueryLatestCommits_WithDocIDAndAliased_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					history: latestCommits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
+					history: latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 						cid
 						links {
 							cid
@@ -115,14 +114,14 @@ func TestQueryLatestCommits_WithDocIDAndAliased_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"history": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+									"cid":  "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+									"cid":  "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
 									"name": "name",
 								},
 							},

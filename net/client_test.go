@@ -28,14 +28,6 @@ var def = client.CollectionDefinition{
 		Fields: []client.CollectionFieldDescription{
 			{
 				Name: "test",
-			},
-		},
-	},
-	Schema: client.SchemaDescription{
-		Name: "test",
-		Fields: []client.SchemaFieldDescription{
-			{
-				Name: "test",
 				Kind: client.FieldKind_NILLABLE_STRING,
 				Typ:  client.LWW_REGISTER,
 			},

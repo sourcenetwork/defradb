@@ -30,7 +30,7 @@ func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/IsActive",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
 							"value": false
 						}
 					]
@@ -63,7 +63,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/IsActive",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
 							"value": false
 						}
 					]
@@ -74,7 +74,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/IsActive",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
 							"value": true
 						}
 					]
@@ -104,7 +104,7 @@ func TestColVersionUpdateReplaceIsActive_MultipleVersionsToTrue(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -116,7 +116,7 @@ func TestColVersionUpdateReplaceIsActive_MultipleVersionsToTrue(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/IsActive",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
 							"value": true
 						}
 					]

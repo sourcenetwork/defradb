@@ -361,30 +361,10 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	return unmarshalResult[client.DeleteActorRelationshipResult](result.Value)
 }
 
-func (w *CWrapper) PatchSchema(
-	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	txnID := txnIDFromContext(ctx)
-	cMigration, migrationErr := optionToString(migration)
-
-	if migrationErr != nil {
-		return migrationErr
-	}
-
-	result := cbindings.PatchSchema(w.nodeNum, patch, cMigration, setAsDefaultVersion, txnID)
-
-	if result.Status != 0 {
-		return errors.New(result.Error)
-	}
-	return nil
-}
-
 func (w *CWrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
 	var opts cbindings.GoCOptions
 	opts.TxID = txnIDFromContext(ctx)
@@ -394,7 +374,12 @@ func (w *CWrapper) PatchCollection(
 	opts.Name = ""
 	opts.GetInactive = 0
 
-	result := cbindings.CollectionPatch(w.nodeNum, patch, opts)
+	cMigration, migrationErr := optionToString(migration)
+	if migrationErr != nil {
+		return migrationErr
+	}
+
+	result := cbindings.CollectionPatch(w.nodeNum, patch, cMigration, opts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -402,9 +387,9 @@ func (w *CWrapper) PatchCollection(
 	return nil
 }
 
-func (w *CWrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
 	txnID := txnIDFromContext(ctx)
-	result := cbindings.SetActiveSchema(w.nodeNum, schemaVersionID, txnID)
+	result := cbindings.SetActiveCollection(w.nodeNum, schemaVersionID, txnID)
 	if result.Status != 0 {
 		return errors.New(result.Error)
 	}
@@ -552,36 +537,6 @@ func (w *CWrapper) GetCollections(
 		cols[i] = &Collection{def: def, nodeNum: w.nodeNum}
 	}
 	return cols, nil
-}
-
-func (w *CWrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schemas[0], nil
-}
-
-func (w *CWrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	txnID := txnIDFromContext(ctx)
-	root := stringFromImmutableOptionString(options.Root)
-	version := stringFromImmutableOptionString(options.ID)
-	name := stringFromImmutableOptionString(options.Name)
-
-	result := cbindings.DescribeSchema(w.nodeNum, name, root, version, txnID)
-
-	if result.Status != 0 {
-		return []client.SchemaDescription{}, errors.New(result.Error)
-	}
-
-	res, err := unmarshalResult[[]client.SchemaDescription](result.Value)
-	if err != nil {
-		return []client.SchemaDescription{}, errors.New(result.Error)
-	}
-	return res, nil
 }
 
 func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

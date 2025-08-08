@@ -66,6 +66,12 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
+							"custom": false,
+						},
+						{
+							"custom": "Viserys I Targaryen, King of the Andals",
+						},
+						{
 							"custom": map[string]any{"one": float64(1)},
 						},
 						{
@@ -73,12 +79,6 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 						},
 						{
 							"custom": []any{float64(1), float64(2)},
-						},
-						{
-							"custom": "Viserys I Targaryen, King of the Andals",
-						},
-						{
-							"custom": false,
 						},
 					},
 				},

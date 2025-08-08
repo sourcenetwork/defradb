@@ -13,16 +13,12 @@ package schema
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreigsnu67poxm3663e7vl5cncl6pxdzndcc7jf66cnnvxzw5uko5iuu"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -32,14 +28,13 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -60,8 +55,6 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreieflo3tkhsywsqcyzoj6nqgxc6ovv5m5lc7bfbum6yqls5rxlwkye"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -71,14 +64,13 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -133,8 +125,6 @@ func TestSchemaCreate_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreigbmy67fjsys3li5rbs64k3vezvdtbfryc67pxiju4nis7lrbanea"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -144,14 +134,13 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -172,8 +161,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreifcyba45ov5zqi6dbhlu72rmf4wp3crjynjvvpq6iuauns2ofbvzi"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -183,14 +170,13 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -211,8 +197,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreifcyba45ov5zqi6dbhlu72rmf4wp3crjynjvvpq6iuauns2ofbvzi"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -222,14 +206,13 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,
@@ -250,8 +233,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) 
 }
 
 func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
-	schemaVersionID := "bafkreicza5tsxxy7v5qj2bbsd7ox6jrdaypwqk4qm4qda52wr6pwkis3cy"
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -261,14 +242,13 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.GetSchema{
-				VersionID: immutable.Some(schemaVersionID),
-				ExpectedResults: []client.SchemaDescription{
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:      "Users",
-						VersionID: schemaVersionID,
-						Root:      schemaVersionID,
-						Fields: []client.SchemaFieldDescription{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
 								Kind: client.FieldKind_DocID,

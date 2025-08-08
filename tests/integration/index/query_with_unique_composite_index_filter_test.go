@@ -961,8 +961,8 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": nil, "age": 32, "email": "bob@gmail.com"},
 						{"name": nil, "age": 32, "email": "cate@gmail.com"},
+						{"name": nil, "age": 32, "email": "bob@gmail.com"},
 					},
 				},
 			},
@@ -1093,8 +1093,8 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Bob", "age": nil, "email": "bob1@gmail.com"},
 						{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
+						{"name": "Bob", "age": nil, "email": "bob1@gmail.com"},
 					},
 				},
 			},
@@ -1168,8 +1168,8 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 					}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"about": "nil_nil_2"},
 						{"about": "nil_nil_1"},
+						{"about": "nil_nil_2"},
 					},
 				},
 			},
@@ -1182,8 +1182,8 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 					}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"about": "nil_nil_2"},
 						{"about": "nil_nil_1"},
+						{"about": "nil_nil_2"},
 						{"about": "nil_22"},
 					},
 				},
@@ -1197,9 +1197,9 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 					}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"about": "bob_nil"},
-						{"about": "nil_nil_2"},
 						{"about": "nil_nil_1"},
+						{"about": "nil_nil_2"},
+						{"about": "bob_nil"},
 					},
 				},
 			},
@@ -1337,10 +1337,10 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 					}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"about": "bob_22 -> bob_nil"},
+						{"about": "nil_nil -> bob_nil"},
 						{"about": "nil_22 -> bob_nil"},
 						{"about": "bob_nil -> nil_nil"},
-						{"about": "nil_nil -> bob_nil"},
+						{"about": "bob_22 -> bob_nil"},
 					},
 				},
 			},

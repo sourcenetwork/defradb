@@ -87,13 +87,13 @@ func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"time": time.Date(2017, time.July, 23, 3, 46, 56, 1, time.UTC),
-						},
-						{
 							"time": time.Date(2017, time.July, 23, 3, 46, 56, 0, time.UTC),
 						},
 						{
 							"time": time.Date(2017, time.July, 23, 3, 46, 56, 2, time.UTC),
+						},
+						{
+							"time": time.Date(2017, time.July, 23, 3, 46, 56, 1, time.UTC),
 						},
 					},
 				},

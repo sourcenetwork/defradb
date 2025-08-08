@@ -176,9 +176,14 @@ func CollectionGet(n int, cDocID *C.char, cShowDeleted C.int, cOptions C.Collect
 }
 
 //export CollectionPatch
-func CollectionPatch(n int, cPatch *C.char, cOptions C.CollectionOptions) *C.Result {
+func CollectionPatch(n int, cPatch *C.char, cLensConfig *C.char, cOptions C.CollectionOptions) *C.Result {
 	gocOptions := convertCOptionsToGoCOptions(cOptions)
-	gcr := cbindings.CollectionPatch(n, C.GoString(cPatch), gocOptions)
+	gcr := cbindings.CollectionPatch(
+		n,
+		C.GoString(cPatch),
+		C.GoString(cLensConfig),
+		gocOptions,
+	)
 	return returnC(gcr)
 }
 
@@ -412,33 +417,9 @@ func AddSchema(n int, cSchema *C.char, cTxnID C.ulonglong) *C.Result {
 	return returnC(gcr)
 }
 
-//export DescribeSchema
-func DescribeSchema(n int, cName *C.char, cRoot *C.char, cVersion *C.char, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.DescribeSchema(
-		n,
-		C.GoString(cName),
-		C.GoString(cRoot),
-		C.GoString(cVersion),
-		uint64(cTxnID),
-	)
-	return returnC(gcr)
-}
-
-//export PatchSchema
-func PatchSchema(n int, cPatch *C.char, cLensConfig *C.char, cSetActive C.int, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.PatchSchema(
-		n,
-		C.GoString(cPatch),
-		C.GoString(cLensConfig),
-		cSetActive != 0,
-		uint64(cTxnID),
-	)
-	return returnC(gcr)
-}
-
-//export SetActiveSchema
-func SetActiveSchema(n int, cVersion *C.char, cTxnID C.ulonglong) *C.Result {
-	gcr := cbindings.SetActiveSchema(
+//export SetActiveCollection
+func SetActiveCollection(n int, cVersion *C.char, cTxnID C.ulonglong) *C.Result {
+	gcr := cbindings.SetActiveCollection(
 		n,
 		C.GoString(cVersion),
 		uint64(cTxnID),

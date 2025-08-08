@@ -50,7 +50,7 @@ func TestColVersionUpdateReplaceNameOneToMany(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreifusksmaa5pzrz3s7l5empvmixh6vgekpbztuqc2jwpmvsagwy75a/Name",
+							"path": "/Author/Name",
 							"value": "Writer"
 						}
 					]

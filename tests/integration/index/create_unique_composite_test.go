@@ -14,8 +14,6 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -52,13 +50,10 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 					}`,
 			},
 			testUtils.CreateIndex{
-				CollectionID: 0,
-				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
-				Unique:       true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-c20024f0-bd72-56c2-85d5-865d3aa270b7",
-					errors.NewKV("name", "John"), errors.NewKV("age", 21),
-				).Error(),
+				CollectionID:  0,
+				Fields:        []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
+				Unique:        true,
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 			testUtils.GetIndexes{
 				CollectionID:    0,
@@ -100,9 +95,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 						"age":	21,
 						"email": "another@gmail.com"
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-4da27b71-f735-59f6-b6b8-ea0fa181e3e3",
-					errors.NewKV("name", "John"), errors.NewKV("age", 21)).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 		},
 	}

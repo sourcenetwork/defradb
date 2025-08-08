@@ -43,33 +43,48 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name:         "active",
+								Kind:         client.FieldKind_NILLABLE_BOOL,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: true,
 							},
 							{
 								Name:         "age",
+								Kind:         client.FieldKind_NILLABLE_INT,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: float64(10),
 							},
 							{
 								Name:         "created",
+								Kind:         client.FieldKind_NILLABLE_DATETIME,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "2000-07-23T03:00:00Z",
 							},
 							{
 								Name:         "image",
+								Kind:         client.FieldKind_NILLABLE_BLOB,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "ff0099",
 							},
 							{
 								Name:         "metadata",
+								Kind:         client.FieldKind_NILLABLE_JSON,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "{\"value\":1}",
 							},
 							{
 								Name:         "name",
+								Kind:         client.FieldKind_NILLABLE_STRING,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "Bob",
 							},
 							{
 								Name:         "points",
+								Kind:         client.FieldKind_NILLABLE_FLOAT64,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: float64(30),
 							},
 						},
