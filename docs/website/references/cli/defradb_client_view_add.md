@@ -6,20 +6,29 @@ Add new view
 
 Add new database view.
 
-Example: add from an argument string:
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'
+Example: add from string flags:
+  defradb client view add --query 'Foo { name, ...}' --sdl 'type Foo { ... }' --lens '{"lenses": [...'
+Example: add from file flags:
+  defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-file /path/to/lens
+
+Flag pairs <key>/<key>-file are mutually exclusive.
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client view add [query] [sdl] [transform] [flags]
+defradb client view add [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   Lens configuration file
-  -h, --help          help for add
+      --lens string         Lens configuration
+      --lens-file string    Lens configuration file
+      --query string        Query
+      --query-file string   Query file
+      --sdl string          SDL
+      --sdl-file string     SDL file
+  -h, --help                help for add
 ```
 
 ### Options inherited from parent commands
