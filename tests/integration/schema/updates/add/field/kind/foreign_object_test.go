@@ -13,6 +13,7 @@ package kind
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -44,7 +45,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object, unknown schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -70,7 +71,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object, id field missing kind",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -97,7 +98,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object, id field invalid kind",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -124,7 +125,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, add field with kind foreign object, valid, functional",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

@@ -31,12 +31,7 @@ var _ DocumentACP = (*bridgeDocumentACP)(nil)
 // bridgeDocumentACP wraps an [ACPSystemClient], hosting the DefraDB specific logic away
 // from ACP client specific code.
 type bridgeDocumentACP struct {
-	clientACP   acp.ACPSystemClient
-	supportsP2P bool
-}
-
-func (a *bridgeDocumentACP) Init(ctx context.Context, path string) {
-	a.clientACP.Init(ctx, path)
+	clientACP acp.ACPSystemClient
 }
 
 func (a *bridgeDocumentACP) Start(ctx context.Context) error {
@@ -45,7 +40,7 @@ func (a *bridgeDocumentACP) Start(ctx context.Context) error {
 
 func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error) {
 	// Having a creator identity is a MUST requirement for adding a policy.
-	if creator.DID == "" {
+	if creator == nil || creator.DID() == "" {
 		return "", acp.ErrPolicyCreatorMustNotBeEmpty
 	}
 
@@ -67,7 +62,7 @@ func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Iden
 	)
 
 	if err != nil {
-		return "", acp.NewErrFailedToAddPolicyWithACP(err, "Local", creator.DID)
+		return "", acp.NewErrFailedToAddPolicyWithACP(err, "Local", creator.DID())
 	}
 
 	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
@@ -83,7 +78,7 @@ func (a *bridgeDocumentACP) ValidateResourceInterface(
 	var err error
 	switch a.clientACP.(type) {
 	case *LocalDocumentACP:
-		err = acp.ValidateResourceInterfaceAccordingToACPSystem(
+		err = acp.ValidateResourceInterface(
 			ctx,
 			policyID,
 			resourceName,
@@ -91,7 +86,7 @@ func (a *bridgeDocumentACP) ValidateResourceInterface(
 			a.clientACP,
 		)
 	case *SourceHubDocumentACP:
-		err = acp.ValidateResourceInterfaceAccordingToACPSystem(
+		err = acp.ValidateResourceInterface(
 			ctx,
 			policyID,
 			resourceName,
@@ -122,7 +117,7 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 	)
 
 	if err != nil {
-		return acp.NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID, resourceName, docID)
+		return acp.NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID(), resourceName, docID)
 	}
 
 	return nil
@@ -250,14 +245,18 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 		resourceName == "" ||
 		docID == "" ||
 		relation == "" ||
-		requestActor == (identity.Identity{}) ||
+		requestActor == nil ||
 		targetActor == "" {
+		var requestActorDID string
+		if requestActor != nil {
+			requestActorDID = requestActor.DID()
+		}
 		return false, acp.NewErrMissingRequiredArgToAddDocActorRelationship(
 			policyID,
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActorDID,
 			targetActor,
 		)
 	}
@@ -281,7 +280,7 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActor.DID(),
 			targetActor,
 		)
 	}
@@ -293,7 +292,7 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 		corelog.Any("ResourceName", resourceName),
 		corelog.Any("DocID", docID),
 		corelog.Any("Relation", relation),
-		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("RequestActor", requestActor.DID()),
 		corelog.Any("TargetActor", targetActor),
 		corelog.Any("Existed", exists),
 	)
@@ -314,14 +313,18 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 		resourceName == "" ||
 		docID == "" ||
 		relation == "" ||
-		requestActor == (identity.Identity{}) ||
+		requestActor == nil ||
 		targetActor == "" {
+		var requestActorDID string
+		if requestActor != nil {
+			requestActorDID = requestActor.DID()
+		}
 		return false, acp.NewErrMissingRequiredArgToDeleteDocActorRelationship(
 			policyID,
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActorDID,
 			targetActor,
 		)
 	}
@@ -345,7 +348,7 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 			resourceName,
 			docID,
 			relation,
-			requestActor.DID,
+			requestActor.DID(),
 			targetActor,
 		)
 	}
@@ -357,16 +360,12 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 		corelog.Any("ResourceName", resourceName),
 		corelog.Any("DocID", docID),
 		corelog.Any("Relation", relation),
-		corelog.Any("RequestActor", requestActor.DID),
+		corelog.Any("RequestActor", requestActor.DID()),
 		corelog.Any("TargetActor", targetActor),
 		corelog.Any("RecordFound", recordFound),
 	)
 
 	return recordFound, nil
-}
-
-func (a *bridgeDocumentACP) SupportsP2P() bool {
-	return a.supportsP2P
 }
 
 func (a *bridgeDocumentACP) Close() error {

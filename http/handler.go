@@ -16,7 +16,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -70,13 +70,21 @@ func NewApiRouter() (*Router, error) {
 	return router, nil
 }
 
+type DB interface {
+	client.TxnStore
+	// Events returns the database event queue.
+	//
+	// It may be used to monitor database events - a new event will be yielded for each mutation.
+	// Note: it does not copy the queue, just the reference to it.
+	Events() event.Bus
+}
+
 type Handler struct {
-	db  client.DB
 	mux *chi.Mux
 	txs *sync.Map
 }
 
-func NewHandler(db client.DB) (*Handler, error) {
+func NewHandler(db DB, p2p client.P2P) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
@@ -85,7 +93,7 @@ func NewHandler(db client.DB) (*Handler, error) {
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs),
+			ApiMiddleware(db, p2p, txs),
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
@@ -99,13 +107,12 @@ func NewHandler(db client.DB) (*Handler, error) {
 	})
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
-		db:  db,
 		mux: mux,
 		txs: txs,
 	}, nil
 }
 
-func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
+func (h *Handler) Transaction(id uint64) (client.Txn, error) {
 	tx, ok := h.txs.Load(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId

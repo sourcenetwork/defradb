@@ -20,130 +20,104 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // eventTimeout is the amount of time to wait
 // for an event before timing out
 const eventTimeout = 1 * time.Second
 
-// waitForNetworkSetupEvents waits for p2p topic completed and
-// replicator completed events to be published on the local node event bus.
-func waitForNetworkSetupEvents(s *state, nodeID int) {
-	cols, err := s.nodes[nodeID].GetAllP2PCollections(s.ctx)
-	require.NoError(s.t, err)
-
-	reps, err := s.nodes[nodeID].GetAllReplicators(s.ctx)
-	require.NoError(s.t, err)
-
-	replicatorEvents := len(reps)
-	p2pTopicEvent := len(cols) > 0
-
-	for p2pTopicEvent && replicatorEvents > 0 {
-		select {
-		case _, ok := <-s.nodes[nodeID].event.replicator.Message():
-			if !ok {
-				require.Fail(s.t, "subscription closed waiting for network setup events")
-			}
-			replicatorEvents--
-
-		case _, ok := <-s.nodes[nodeID].event.p2pTopic.Message():
-			if !ok {
-				require.Fail(s.t, "subscription closed waiting for network setup events")
-			}
-			p2pTopicEvent = false
-
-		case <-time.After(eventTimeout):
-			s.t.Fatalf("timeout waiting for network setup events")
-		}
-	}
-}
-
 // waitForReplicatorConfigureEvent waits for a  node to publish a
 // replicator completed event on the local event bus.
 //
 // Expected document heads will be updated for the targeted node.
-func waitForReplicatorConfigureEvent(s *state, cfg ConfigureReplicator) {
+func waitForReplicatorConfigureEvent(s *state.State, cfg ConfigureReplicator) {
 	select {
-	case _, ok := <-s.nodes[cfg.SourceNodeID].event.replicator.Message():
+	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {
-			require.Fail(s.t, "subscription closed waiting for replicator event")
+			require.Fail(s.T, "subscription closed waiting for replicator event")
 		}
 
 	case <-time.After(eventTimeout):
-		require.Fail(s.t, "timeout waiting for replicator event")
+		require.Fail(s.T, "timeout waiting for replicator event")
 	}
 
 	// all previous documents should be merged on the subscriber node
-	for key, val := range s.nodes[cfg.SourceNodeID].p2p.actualDAGHeads {
-		s.nodes[cfg.TargetNodeID].p2p.expectedDAGHeads[key] = val.cid
+	for key, val := range s.Nodes[cfg.SourceNodeID].P2P.ActualDAGHeads {
+		s.Nodes[cfg.TargetNodeID].P2P.ExpectedDAGHeads[key] = val.CID
 	}
 
 	// update node connections and replicators
-	s.nodes[cfg.TargetNodeID].p2p.connections[cfg.SourceNodeID] = struct{}{}
-	s.nodes[cfg.SourceNodeID].p2p.connections[cfg.TargetNodeID] = struct{}{}
-	s.nodes[cfg.SourceNodeID].p2p.replicators[cfg.TargetNodeID] = struct{}{}
+	s.Nodes[cfg.TargetNodeID].P2P.Connections[cfg.SourceNodeID] = struct{}{}
+	s.Nodes[cfg.SourceNodeID].P2P.Connections[cfg.TargetNodeID] = struct{}{}
+	s.Nodes[cfg.SourceNodeID].P2P.Replicators[cfg.TargetNodeID] = struct{}{}
 }
 
 // waitForReplicatorDeleteEvent waits for a node to publish a
 // replicator completed event on the local event bus.
-func waitForReplicatorDeleteEvent(s *state, cfg DeleteReplicator) {
+func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
 	select {
-	case _, ok := <-s.nodes[cfg.SourceNodeID].event.replicator.Message():
+	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {
-			require.Fail(s.t, "subscription closed waiting for replicator event")
+			require.Fail(s.T, "subscription closed waiting for replicator event")
 		}
 
 	case <-time.After(eventTimeout):
-		require.Fail(s.t, "timeout waiting for replicator event")
+		require.Fail(s.T, "timeout waiting for replicator event")
 	}
 
-	delete(s.nodes[cfg.TargetNodeID].p2p.connections, cfg.SourceNodeID)
-	delete(s.nodes[cfg.SourceNodeID].p2p.connections, cfg.TargetNodeID)
-	delete(s.nodes[cfg.SourceNodeID].p2p.replicators, cfg.TargetNodeID)
+	delete(s.Nodes[cfg.TargetNodeID].P2P.Connections, cfg.SourceNodeID)
+	delete(s.Nodes[cfg.SourceNodeID].P2P.Connections, cfg.TargetNodeID)
+	delete(s.Nodes[cfg.SourceNodeID].P2P.Replicators, cfg.TargetNodeID)
 }
 
 // waitForSubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToCollectionEvent(s *state, action SubscribeToCollection) {
-	select {
-	case _, ok := <-s.nodes[action.NodeID].event.p2pTopic.Message():
-		if !ok {
-			require.Fail(s.t, "subscription closed waiting for p2p topic event")
-		}
-
-	case <-time.After(eventTimeout):
-		require.Fail(s.t, "timeout waiting for p2p topic event")
-	}
-
+func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollection) {
 	// update peer collections of target node
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
 		}
-		s.nodes[action.NodeID].p2p.peerCollections[collectionIndex] = struct{}{}
+		s.Nodes[action.NodeID].P2P.PeerCollections[collectionIndex] = struct{}{}
 	}
 }
 
 // waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollection) {
-	select {
-	case _, ok := <-s.nodes[action.NodeID].event.p2pTopic.Message():
-		if !ok {
-			require.Fail(s.t, "subscription closed waiting for p2p topic event")
-		}
-
-	case <-time.After(eventTimeout):
-		require.Fail(s.t, "timeout waiting for p2p topic event")
-	}
-
+func waitForUnsubscribeToCollectionEvent(s *state.State, action UnsubscribeToCollection) {
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
 		}
-		delete(s.nodes[action.NodeID].p2p.peerCollections, collectionIndex)
+		delete(s.Nodes[action.NodeID].P2P.PeerCollections, collectionIndex)
+	}
+}
+
+// waitForSubscribeToDocumentEvent waits for a node to publish a
+// p2p topic completed event on the local event bus.
+//
+// Expected document heads will be updated for the subscriber node.
+func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument) {
+	// update peer documents of target node
+	for _, colDocIndex := range action.DocIDs {
+		if colDocIndex.Doc == NonExistentDocID {
+			continue // don't track non existent documents
+		}
+		s.Nodes[action.NodeID].P2P.PeerDocuments[colDocIndex] = struct{}{}
+	}
+}
+
+// waitForUnsubscribeToDocumentEvent waits for a node to publish a
+// p2p topic completed event on the local event bus.
+func waitForUnsubscribeToDocumentEvent(s *state.State, action UnsubscribeToDocument) {
+	for _, colDocIndex := range action.DocIDs {
+		if colDocIndex.Doc == NonExistentDocID {
+			continue // don't track non existent documents
+		}
+		delete(s.Nodes[action.NodeID].P2P.PeerDocuments, colDocIndex)
 	}
 }
 
@@ -152,25 +126,25 @@ func waitForUnsubscribeToCollectionEvent(s *state, action UnsubscribeToCollectio
 //
 // Expected document heads will be updated for any connected nodes.
 func waitForUpdateEvents(
-	s *state,
+	s *state.State,
 	nodeID immutable.Option[int],
 	collectionIndex int,
 	docIDs map[string]struct{},
-	ident immutable.Option[Identity],
+	ident immutable.Option[state.Identity],
 ) {
-	for i := 0; i < len(s.nodes); i++ {
+	for i := 0; i < len(s.Nodes); i++ {
 		if nodeID.HasValue() && nodeID.Value() != i {
 			continue // node is not selected
 		}
 
-		node := s.nodes[i]
-		if node.closed {
+		node := s.Nodes[i]
+		if node.Closed {
 			continue // node is closed
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.collections[collectionIndex]
+		col := node.Collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.SchemaRoot()] = struct{}{}
 		}
@@ -181,24 +155,24 @@ func waitForUpdateEvents(
 		for len(expect) > 0 {
 			var evt event.Update
 			select {
-			case msg, ok := <-node.event.update.Message():
+			case msg, ok := <-node.Event.Update.Message():
 				if !ok {
-					require.Fail(s.t, "subscription closed waiting for update event", "Node %d", i)
+					require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
 				}
 				evt = msg.Data.(event.Update)
 
 			case <-time.After(eventTimeout):
-				require.Fail(s.t, "timeout waiting for update event", "Node %d", i)
+				require.Fail(s.T, "timeout waiting for update event", "Node %d", i)
 			}
 
 			// make sure the event is expected
 			_, ok := expect[getUpdateEventKey(evt)]
-			require.True(s.t, ok, "unexpected document update", getUpdateEventKey(evt))
+			require.True(s.T, ok, "unexpected document update", getUpdateEventKey(evt))
 			delete(expect, getUpdateEventKey(evt))
 
 			// we only need to update the network state if the nodes
 			// are configured for networking
-			if s.isNetworkEnabled {
+			if s.IsNetworkEnabled {
 				updateNetworkState(s, i, evt, ident)
 			}
 		}
@@ -209,31 +183,31 @@ func waitForUpdateEvents(
 //
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
-func waitForMergeEvents(s *state, action WaitForSync) {
-	for nodeID := 0; nodeID < len(s.nodes); nodeID++ {
-		node := s.nodes[nodeID]
-		if node.closed {
+func waitForMergeEvents(s *state.State, action WaitForSync) {
+	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
+		node := s.Nodes[nodeID]
+		if node.Closed {
 			continue // node is closed
 		}
 
-		expect := node.p2p.expectedDAGHeads
+		expect := node.P2P.ExpectedDAGHeads
 
 		// remove any heads that are already merged
 		// up to the expected head
-		for key, val := range node.p2p.actualDAGHeads {
-			if head, ok := expect[key]; ok && head.String() == val.cid.String() {
+		for key, val := range node.P2P.ActualDAGHeads {
+			if head, ok := expect[key]; ok && head.String() == val.CID.String() {
 				delete(expect, key)
 			}
 		}
 
 		expectDecrypted := make(map[string]struct{}, len(action.Decrypted))
 		for _, docIndex := range action.Decrypted {
-			if len(s.docIDs[0]) <= docIndex {
-				require.Fail(s.t, "doc index %d out of range", docIndex)
+			if len(s.DocIDs[0]) <= docIndex {
+				require.Fail(s.T, "doc index %d out of range", docIndex)
 			}
-			docID := s.docIDs[0][docIndex].String()
-			actual, hasActual := node.p2p.actualDAGHeads[docID]
-			if !hasActual || !actual.decrypted {
+			docID := s.DocIDs[0][docIndex].String()
+			actual, hasActual := node.P2P.ActualDAGHeads[docID]
+			if !hasActual || !actual.Decrypted {
 				expectDecrypted[docID] = struct{}{}
 			}
 		}
@@ -247,14 +221,14 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 		for len(expect) > 0 || len(expectDecrypted) > 0 {
 			var evt event.MergeComplete
 			select {
-			case msg, ok := <-node.event.merge.Message():
+			case msg, ok := <-node.Event.Merge.Message():
 				if !ok {
-					require.Fail(s.t, "subscription closed waiting for merge complete event")
+					require.Fail(s.T, "subscription closed waiting for merge complete event")
 				}
 				evt = msg.Data.(event.MergeComplete)
 
 			case <-time.After(30 * eventTimeout):
-				require.Fail(s.t, "timeout waiting for merge complete event")
+				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
 			_, ok := expectDecrypted[evt.Merge.DocID]
@@ -266,41 +240,48 @@ func waitForMergeEvents(s *state, action WaitForSync) {
 			if ok && head.String() == evt.Merge.Cid.String() {
 				delete(expect, getMergeEventKey(evt.Merge))
 			}
-			node.p2p.actualDAGHeads[getMergeEventKey(evt.Merge)] = docHeadState{cid: evt.Merge.Cid, decrypted: evt.Decrypted}
+			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
+				CID:       evt.Merge.Cid,
+				Decrypted: evt.Decrypted,
+			}
 		}
 	}
 }
 
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
-func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.Option[Identity]) {
+func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity]) {
 	// find the correct collection index for this update
 	collectionID := -1
-	for i, c := range s.nodes[nodeID].collections {
+	for i, c := range s.Nodes[nodeID].Collections {
 		if c.Version().CollectionID == evt.CollectionID {
 			collectionID = i
 		}
 	}
+	docIndex := -1
+	if collectionID != -1 {
+		for i, docID := range s.DocIDs[collectionID] {
+			if docID.String() == evt.DocID {
+				docIndex = i
+			}
+		}
+	}
 
-	node := s.nodes[nodeID]
+	node := s.Nodes[nodeID]
 
 	// update the actual document head on the node that updated it
 	// as the node created the document, it is already decrypted
-	node.p2p.actualDAGHeads[getUpdateEventKey(evt)] = docHeadState{cid: evt.Cid, decrypted: true}
+	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid, Decrypted: true}
 
 	// update the expected document heads of replicator targets
-	for id := range node.p2p.replicators {
+	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 	}
 
 	// update the expected document heads of connected nodes
-	for id := range node.p2p.connections {
-		// connected nodes share updates of documents they have in common
-		if _, ok := s.nodes[id].p2p.actualDAGHeads[getUpdateEventKey(evt)]; ok {
-			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
-		}
-		if ident.HasValue() && ident.Value().selector != strconv.Itoa(id) {
+	for id := range node.P2P.Connections {
+		if ident.HasValue() && ident.Value().Selector != strconv.Itoa(id) {
 			// If the document is created by a specific identity, only the node with the
 			// same index as the identity can initially access it.
 			// If this network state update comes from the adding of an actor relationship,
@@ -308,40 +289,44 @@ func updateNetworkState(s *state, nodeID int, evt event.Update, ident immutable.
 			continue
 		}
 		// peer collection subscribers receive updates from any other subscriber node
-		if _, ok := s.nodes[id].p2p.peerCollections[collectionID]; ok {
-			s.nodes[id].p2p.expectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		}
+		// peer document subscribers receive updates from any other subscriber node
+		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
 	}
 }
 
 // getEventsForUpdateDoc returns a map of docIDs that should be
 // published to the local event bus after an UpdateDoc action.
-func getEventsForUpdateDoc(s *state, action UpdateDoc) map[string]struct{} {
-	docID := s.docIDs[action.CollectionID][action.DocID]
+func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
+	docID := s.DocIDs[action.CollectionID][action.DocID]
 
 	docMap := make(map[string]any)
 	err := json.Unmarshal([]byte(action.Doc), &docMap)
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 
 	return map[string]struct{}{
 		docID.String(): {},
 	}
 }
 
-func waitForSync(s *state, action WaitForSync) {
+func waitForSync(s *state.State, action WaitForSync) {
 	waitForMergeEvents(s, action)
 }
 
 // getEventsForUpdateWithFilter returns a map of docIDs that should be
 // published to the local event bus after a UpdateWithFilter action.
 func getEventsForUpdateWithFilter(
-	s *state,
+	s *state.State,
 	action UpdateWithFilter,
 	result *client.UpdateResult,
 ) map[string]struct{} {
 	var docPatch map[string]any
 	err := json.Unmarshal([]byte(action.Updater), &docPatch)
-	require.NoError(s.t, err)
+	require.NoError(s.T, err)
 
 	expect := make(map[string]struct{}, len(result.DocIDs))
 

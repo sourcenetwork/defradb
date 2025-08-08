@@ -33,7 +33,7 @@ type CCIPResponse struct {
 
 // ExecCCIP handles GraphQL over Cross Chain Interoperability Protocol requests.
 func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+	db := mustGetContextClientDB(req)
 
 	var ccipReq CCIPRequest
 	switch req.Method {
@@ -58,7 +58,7 @@ func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := store.ExecRequest(req.Context(), request.Query)
+	result := db.ExecRequest(req.Context(), request.Query)
 	if result.Subscription != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
 		return

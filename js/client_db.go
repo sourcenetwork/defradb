@@ -14,8 +14,10 @@ package js
 
 import (
 	"context"
+	"fmt"
 	"syscall/js"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/goji"
 )
@@ -92,6 +94,124 @@ func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.
 	return goji.MarshalJS(res)
 }
 
+func (c *Client) verifyDACAccess(this js.Value, args []js.Value) (js.Value, error) {
+	permission, err := stringArg(args, 0, "permission")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	actorID, err := stringArg(args, 1, "actorID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	policyID, err := stringArg(args, 2, "policyID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	resourceName, err := stringArg(args, 3, "resourceName")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	docID, err := stringArg(args, 4, "docID")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 5, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	if !c.node.DB.DocumentACP().HasValue() {
+		return js.Undefined(), fmt.Errorf("ACP system not available")
+	}
+	var docPermission acpTypes.DocumentResourcePermission
+	switch permission {
+	case "read":
+		docPermission = acpTypes.DocumentReadPerm
+	case "update":
+		docPermission = acpTypes.DocumentUpdatePerm
+	case "delete":
+		docPermission = acpTypes.DocumentDeletePerm
+	default:
+		return js.Undefined(), fmt.Errorf("invalid permission: %s", permission)
+	}
+	hasAccess, err := c.node.DB.DocumentACP().Value().CheckDocAccess(ctx, docPermission, actorID, policyID, resourceName, docID)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(map[string]interface{}{
+		"hasAccess": hasAccess,
+	})
+}
+
+func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.GetNACStatus(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (c *Client) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.ReEnableNAC(ctx)
+	return js.Undefined(), err
+}
+
+func (c *Client) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.node.DB.DisableNAC(ctx)
+	return js.Undefined(), err
+}
+
+func (c *Client) addNACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.AddNACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
+func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.Value, error) {
+	relation, err := stringArg(args, 0, "relation")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	targetActor, err := stringArg(args, 1, "targetActor")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 2, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	res, err := c.node.DB.DeleteNACActorRelationship(ctx, relation, targetActor)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(res)
+}
+
 func (c *Client) getNodeIdentity(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, c.txns)
 	if err != nil {
@@ -118,7 +238,7 @@ func (c *Client) newTxn(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	c.txns.Store(txn.ID(), txn)
-	return newTransaction(txn), nil
+	return newTransaction(txn, c.txns), nil
 }
 
 func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, error) {
@@ -135,7 +255,7 @@ func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, err
 		return js.Undefined(), err
 	}
 	c.txns.Store(txn.ID(), txn)
-	return newTransaction(txn), nil
+	return newTransaction(txn, c.txns), nil
 }
 
 func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, error) {

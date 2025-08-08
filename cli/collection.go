@@ -44,10 +44,10 @@ func MakeCollectionCommand() *cobra.Command {
 			if err := setContextTransaction(cmd, txID); err != nil {
 				return err
 			}
-			if err := setContextDB(cmd); err != nil {
+			if err := setContextClient(cmd); err != nil {
 				return err
 			}
-			store := mustGetContextStore(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			options := client.CollectionFetchOptions{}
 			if versionID != "" {
@@ -63,7 +63,7 @@ func MakeCollectionCommand() *cobra.Command {
 				options.IncludeInactive = immutable.Some(getInactive)
 			}
 
-			cols, err := store.GetCollections(cmd.Context(), options)
+			cols, err := cliClient.GetCollections(cmd.Context(), options)
 			if err != nil {
 				return err
 			}

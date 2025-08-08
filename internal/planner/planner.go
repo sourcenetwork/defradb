@@ -19,7 +19,6 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -88,10 +87,9 @@ type PlanContext struct {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn         datastore.Txn
 	identity    immutable.Option[acpIdentity.Identity]
 	documentACP immutable.Option[dac.DocumentACP]
-	db          client.Store
+	db          client.TxnStore
 
 	ctx context.Context
 }
@@ -100,11 +98,9 @@ func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	documentACP immutable.Option[dac.DocumentACP],
-	db client.Store,
-	txn datastore.Txn,
+	db client.TxnStore,
 ) *Planner {
 	return &Planner{
-		txn:         txn,
 		identity:    identity,
 		documentACP: documentACP,
 		db:          db,
@@ -211,6 +207,10 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	// wire up source to plan
 	plan.planNode = plan.selectNode
 
+	// The similarity plan need to be expanded before group, order, aggregate and limit or otherwise
+	// it wont be taken into consideration if one of them tries to targets it.
+	p.expandSimilarityPlans(plan)
+
 	// if group
 	if plan.group != nil {
 		err := p.expandGroupNodePlan(plan)
@@ -231,8 +231,6 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	if plan.limit != nil {
 		p.expandLimitPlan(plan, parentPlan)
 	}
-
-	p.expandSimilarityPlans(plan)
 
 	return nil
 }

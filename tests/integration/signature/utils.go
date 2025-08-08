@@ -20,10 +20,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 type signatureMatcher struct {
@@ -54,13 +56,17 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 	}
 
 	ident := matcher.s.GetIdentity(testUtils.NodeIdentity(matcher.s.GetCurrentNodeID()).Value())
+	fullIdent, ok := ident.(acpIdentity.FullIdentity)
+	if !ok {
+		return false, fmt.Errorf("identity does not implement FullIdentity")
+	}
 
-	if ident.PrivateKey.Type() != matcher.expectedKeyType {
-		matcher.unexpectedKeyType = immutable.Some(ident.PrivateKey.Type())
+	if fullIdent.PrivateKey().Type() != matcher.expectedKeyType {
+		matcher.unexpectedKeyType = immutable.Some(fullIdent.PrivateKey().Type())
 		return false, nil
 	}
 
-	expectedSigBytes, err := ident.PrivateKey.Sign(blockBytes)
+	expectedSigBytes, err := fullIdent.PrivateKey().Sign(blockBytes)
 	if err != nil {
 		return false, err
 	}
@@ -110,7 +116,7 @@ func (matcher *signatureMatcher) NegatedFailureMessage(actual any) string {
 // The identity is represented as a byte slice, which is the string representation of the public key of the identity.
 type identityMatcher struct {
 	s        testUtils.TestState
-	identity testUtils.Identity
+	identity state.Identity
 }
 
 // newIdentityMatcher creates a new identity matcher.
@@ -118,7 +124,7 @@ type identityMatcher struct {
 // This is used to match the identity of a node or a client.
 //
 // The identity is represented as a byte slice, which is the string representation of the public key of the identity.
-func newIdentityMatcher(ident testUtils.Identity) *identityMatcher {
+func newIdentityMatcher(ident state.Identity) *identityMatcher {
 	return &identityMatcher{
 		identity: ident,
 	}
@@ -156,11 +162,11 @@ func (matcher *identityMatcher) Match(actual any) (bool, error) {
 		actualString = string(actualBytes)
 	}
 
-	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey.Type(), actualString)
+	pubKey, err := crypto.PublicKeyFromString(ident.PublicKey().Type(), actualString)
 	if err != nil {
 		return false, errors.Wrap("failed to convert actual to public key", err)
 	}
-	return ident.PublicKey.Equal(pubKey), nil
+	return ident.PublicKey().Equal(pubKey), nil
 }
 
 func (matcher *identityMatcher) FailureMessage(actual any) string {

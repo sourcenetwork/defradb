@@ -13,6 +13,7 @@ package create
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -22,7 +23,7 @@ func TestMutationCreateWithNonNullVariable(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with non null variable input.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -58,7 +59,7 @@ func TestMutationCreateWithDefaultVariable(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with default variable input.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -89,7 +90,7 @@ func TestMutationCreate_WithJSONVariable_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple create mutation with JSON variable input.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						embed: JSON

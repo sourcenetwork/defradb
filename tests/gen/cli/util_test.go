@@ -29,8 +29,13 @@ import (
 
 var log = corelog.NewLogger("cli")
 
+type DB interface {
+	client.TxnStore
+	Close()
+}
+
 type defraInstance struct {
-	db     client.DB
+	db     DB
 	server *httptest.Server
 }
 
@@ -47,13 +52,16 @@ func start(ctx context.Context) (*defraInstance, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	db, err := db.NewDB(ctx, rootstore, dac.NoDocumentACP, nil)
+	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	if err != nil {
+		return nil, errors.Wrap("failed to setup node access control info", err)
+	}
+	db, err := db.NewDB(ctx, rootstore, adminInfo, dac.NoDocumentACP, nil)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}
 
-	handler, err := httpapi.NewHandler(db)
+	handler, err := httpapi.NewHandler(db, nil)
 	if err != nil {
 		return nil, errors.Wrap("failed to create http handler", err)
 	}

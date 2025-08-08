@@ -13,8 +13,10 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestQueryPerformance_Simple(t *testing.T) {
@@ -29,7 +31,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name:   String
@@ -37,7 +39,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						email:  String
 					}`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type IndexedUser {
 						name:   String
@@ -68,7 +70,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						}
 					}`,
 				},
-				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
+				FocusClients: []state.ClientType{testUtils.GoClientType},
 				Factor:       2,
 			},
 		},
@@ -89,7 +91,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 
 	test1 := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name:   String
@@ -97,7 +99,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 						email:  String
 					}`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type IndexedUser {
 						name:   String
@@ -128,7 +130,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 						}
 					}`,
 				},
-				FocusClients: []testUtils.ClientType{testUtils.GoClientType},
+				FocusClients: []state.ClientType{testUtils.GoClientType},
 				Factor:       2,
 			},
 		},

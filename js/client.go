@@ -16,7 +16,7 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/goji"
 )
@@ -54,8 +54,14 @@ func (c *Client) JSValue() js.Value {
 		"getAllIndexes":              goji.Async(c.getAllIndexes),
 		"execRequest":                goji.Async(c.execRequest),
 		"addDACPolicy":               goji.Async(c.addDACPolicy),
+		"verifyDACAccess":            goji.Async(c.verifyDACAccess),
 		"addDACActorRelationship":    goji.Async(c.addDACActorRelationship),
 		"deleteDACActorRelationship": goji.Async(c.deleteDACActorRelationship),
+		"getNACStatus":               goji.Async(c.getNACStatus),
+		"reEnableNAC":                goji.Async(c.reEnableNAC),
+		"disableNAC":                 goji.Async(c.disableNAC),
+		"addNACActorRelationship":    goji.Async(c.addNACActorRelationship),
+		"deleteNACActorRelationship": goji.Async(c.deleteNACActorRelationship),
 		"getNodeIdentity":            goji.Async(c.getNodeIdentity),
 		"newTxn":                     goji.Async(c.newTxn),
 		"newConcurrentTxn":           goji.Async(c.newConcurrentTxn),
@@ -64,10 +70,10 @@ func (c *Client) JSValue() js.Value {
 	})
 }
 
-func (c *Client) Transaction(id uint64) (datastore.Txn, error) {
+func (c *Client) Transaction(id uint64) (client.Txn, error) {
 	tx, ok := c.txns.Load(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}
-	return tx.(datastore.Txn), nil //nolint:forcetypeassert
+	return tx.(client.Txn), nil //nolint:forcetypeassert
 }

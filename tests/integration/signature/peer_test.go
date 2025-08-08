@@ -17,20 +17,22 @@ import (
 
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
 			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeSecp256k1,
 		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -80,14 +82,14 @@ func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -137,14 +139,14 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
 			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -235,14 +237,14 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		IdentityTypes: map[testUtils.Identity]crypto.KeyType{
+		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
 			testUtils.NodeIdentity(1).Value(): crypto.KeyTypeEd25519,
 		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

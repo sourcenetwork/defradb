@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -21,7 +22,7 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

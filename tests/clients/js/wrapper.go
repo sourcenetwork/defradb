@@ -16,24 +16,22 @@ import (
 	"context"
 	sysjs "syscall/js"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/goji"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/js"
 	"github.com/sourcenetwork/defradb/node"
-
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/goji"
-	"github.com/sourcenetwork/immutable"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
 
-// Wrapper implements the client.DB
+// Wrapper implements the client.TxnStore
 // interface using the JS client.
 type Wrapper struct {
 	client *js.Client
@@ -54,11 +52,11 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -66,15 +64,35 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
 func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+	panic("not implemented")
+}
+
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+	panic("not implemented")
+}
+
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+	panic("not implemented")
+}
+
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	panic("not implemented")
+}
+
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
 	panic("not implemented")
 }
 
@@ -139,6 +157,60 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
 	res, err := execute(ctx, w.value, "deleteDACActorRelationship", collectionName, docID, relation, targetActor)
+	if err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+	var out client.DeleteActorRelationshipResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.DeleteActorRelationshipResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	res, err := execute(ctx, w.value, "getNACStatus")
+	if err != nil {
+		return client.NACStatusResult{}, err
+	}
+	var out client.NACStatusResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.NACStatusResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+	_, err := execute(ctx, w.value, "reEnableNAC")
+	return err
+}
+
+func (w *Wrapper) DisableNAC(ctx context.Context) error {
+	_, err := execute(ctx, w.value, "disableNAC")
+	return err
+}
+
+func (w *Wrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "addNACActorRelationship", relation, targetActor)
+	if err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+	var out client.AddActorRelationshipResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return client.AddActorRelationshipResult{}, err
+	}
+	return out, nil
+}
+
+func (w *Wrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	res, err := execute(ctx, w.value, "deleteNACActorRelationship", relation, targetActor)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -350,7 +422,7 @@ func handleSubscription(value sysjs.Value) <-chan client.GQLResult {
 	return sub
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	res, err := execute(ctx, w.value, "newTxn", readOnly)
 	if err != nil {
 		return nil, err
@@ -361,13 +433,10 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{
-		server: txn,
-		client: client,
-	}, nil
+	return &Transaction{w, txn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	res, err := execute(ctx, w.value, "newConcurrentTxn", readOnly)
 	if err != nil {
 		return nil, err
@@ -378,37 +447,14 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{
-		server: txn,
-		client: client,
-	}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() corekv.Reader {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
+	return &Transaction{w, txn}, nil
 }
 
 func (w *Wrapper) Close() {
 	_ = w.node.Close(context.Background())
 }
 
-func (w *Wrapper) Events() *event.Bus {
+func (w *Wrapper) Events() event.Bus {
 	return w.node.DB.Events()
 }
 

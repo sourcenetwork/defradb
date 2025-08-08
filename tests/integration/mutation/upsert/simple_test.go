@@ -13,6 +13,7 @@ package upsert
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with no filter match",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -84,7 +85,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with filter match",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -154,7 +155,7 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with multiple filter matches",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -197,7 +198,7 @@ func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with null create input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -228,7 +229,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with null update input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -259,7 +260,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with null filter input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -290,7 +291,7 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 	test := testUtils.TestCase{
 		Description: "Simple upsert mutation with unique composite index and update",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @index(includes: [{field: "name"}, {field: "age"}], unique: true) {
 						name: String 

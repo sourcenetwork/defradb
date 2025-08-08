@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub is not supported in JS environments.
+// SourceHub ACP implementation for non-JS environments.
+// JS environments are handled by source_hub_js.go
 //
 //go:build !js
 
@@ -42,8 +43,7 @@ func NewSourceHubACP(
 	}
 
 	return &bridgeDocumentACP{
-		clientACP:   acpSourceHub,
-		supportsP2P: true,
+		clientACP: acpSourceHub,
 	}, nil
 }
 
@@ -81,10 +81,6 @@ func NewACPSourceHub(
 		txBuilder: &txBuilder,
 		signer:    signer,
 	}, nil
-}
-
-func (a *SourceHubDocumentACP) Init(ctx context.Context, path string) {
-	// no-op
 }
 
 func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
@@ -191,16 +187,22 @@ func fromSourceHubPermission(perm *coreTypes.Permission) *acpTypes.Permission {
 
 func (a *SourceHubDocumentACP) RegisterObject(
 	ctx context.Context,
-	identity identity.Identity,
+	ident identity.Identity,
 	policyID string,
 	resourceName string,
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
+	// Check if the identity is a TokenIdentity (has BearerToken)
+	tokenIdentity, ok := ident.(identity.TokenIdentity)
+	if !ok {
+		return identity.ErrMustBeTokenIdentity
+	}
+
 	msgSet := sourcehub.MsgSet{}
 	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
-		BearerToken: identity.BearerToken,
+		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
 		Cmd:         sourcehubTypes.NewRegisterObjectCmd(coreTypes.NewObject(resourceName, objectID)),
 	})
@@ -300,6 +302,12 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	// Check if the requester is a TokenIdentity (has BearerToken)
+	tokenIdentity, ok := requester.(identity.TokenIdentity)
+	if !ok {
+		return false, identity.ErrMustBeTokenIdentity
+	}
+
 	msgSet := sourcehub.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
@@ -320,7 +328,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
-		BearerToken: requester.BearerToken,
+		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
 		Cmd:         sourcehubTypes.NewSetRelationshipCmd(newActorRelationship),
 	})
@@ -346,7 +354,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 		return false, err
 	}
 
-	return cmdResult.GetResult().GetSetRelationshipResult().RecordExisted, nil
+	return cmdResult.GetResult().GetSetRelationshipResult().GetRecordExisted(), nil
 }
 
 func (a *SourceHubDocumentACP) DeleteActorRelationship(
@@ -359,6 +367,12 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	// Check if the requester is a TokenIdentity (has BearerToken)
+	tokenIdentity, ok := requester.(identity.TokenIdentity)
+	if !ok {
+		return false, identity.ErrMustBeTokenIdentity
+	}
+
 	msgSet := sourcehub.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
@@ -379,16 +393,14 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
-		BearerToken: requester.BearerToken,
+		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
 		Cmd:         sourcehubTypes.NewDeleteRelationshipCmd(newActorRelationship),
 	})
-
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
 		return false, err
 	}
-
 	resp, err := a.client.BroadcastTx(ctx, tx)
 	if err != nil {
 		return false, err
@@ -398,7 +410,6 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	if err != nil {
 		return false, err
 	}
-
 	if result.Error() != nil {
 		return false, result.Error()
 	}

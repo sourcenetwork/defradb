@@ -13,6 +13,7 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +29,7 @@ var schema = `
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	test.Actions = append(
 		[]any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: schema,
 			},
 		},

@@ -13,6 +13,7 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deletion using document id that doesn't exist, where the collection is empty.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -47,7 +48,7 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 	test := testUtils.TestCase{
 		Description: "Deletion using document id that doesn't exist, where the collection is non-empty.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

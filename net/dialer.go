@@ -27,8 +27,8 @@ import (
 
 // dial attempts to open a gRPC connection over libp2p to a peer.
 func (s *server) dial(peerID libpeer.ID) (*grpc.ClientConn, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.connMu.Lock()
+	defer s.connMu.Unlock()
 	conn, ok := s.conns[peerID]
 	if ok {
 		if conn.GetState() == connectivity.Shutdown {
@@ -39,6 +39,7 @@ func (s *server) dial(peerID libpeer.ID) (*grpc.ClientConn, error) {
 			return conn, nil
 		}
 	}
+
 	// We need the "passthrough:" in the beginning of the target,
 	// otherwise [grpc.NewClient] will assume (the default) "dns" target.
 	// More information here:

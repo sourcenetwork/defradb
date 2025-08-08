@@ -17,7 +17,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // These tests document https://github.com/sourcenetwork/defradb/issues/2569
@@ -25,14 +27,14 @@ import (
 func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This issue only affects the http and the cli clients
 				testUtils.HTTPClientType,
 				testUtils.CLIClientType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -70,14 +72,14 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This issue only affects the http and the cli clients
 				testUtils.HTTPClientType,
 				testUtils.CLIClientType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -115,7 +117,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This issue only affects the http and the cli clients
 				testUtils.HTTPClientType,
 				testUtils.CLIClientType,
@@ -131,7 +133,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

@@ -66,3 +66,17 @@ html, body, #root {
 .swagger-ui .opblock .opblock-section-header {
   background-color: hsl(var(--color-base));
 }
+
+.defradb-playground {
+  height: 100vh;
+  background-color: #202a3b;
+}
+
+.graphiql-container .graphiql-logo {
+  font-size: 1rem;
+  font-weight: 400;
+  padding-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}

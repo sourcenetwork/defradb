@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
@@ -24,7 +26,7 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -45,6 +47,12 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.DeleteDoc{
 				// Delete John from the first node only, and allow the value to sync

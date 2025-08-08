@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,7 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type cliWrapper struct {
@@ -56,14 +56,16 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	tx, ok := txnctx.TryGet(ctx)
+	tx, ok := datastore.CtxTryGetClientTxn(ctx)
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
 	id := identity.FromContext(ctx)
-	if id.HasValue() && id.Value().PrivateKey != nil {
-		args = append(args, "--identity", id.Value().PrivateKey.String())
-		args = append(args, "--source-hub-address", w.sourceHubAddress)
+	if id.HasValue() {
+		if fullIdent, ok := id.Value().(identity.FullIdentity); ok && fullIdent.PrivateKey() != nil {
+			args = append(args, "--identity", fullIdent.PrivateKey().String())
+			args = append(args, "--source-hub-address", w.sourceHubAddress)
+		}
 	}
 	args = append(args, "--url", w.address)
 

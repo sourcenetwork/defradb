@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -21,7 +22,7 @@ func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Explain (execute) request with similarity.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Float64!]

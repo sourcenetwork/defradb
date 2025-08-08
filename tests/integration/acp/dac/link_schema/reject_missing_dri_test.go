@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +27,7 @@ func TestACP_LinkSchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 
 		Actions: []any{
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: fmt.Sprintf(`
 					type Users @policy(
 						id: "%s",
@@ -107,7 +108,7 @@ func TestACP_LinkSchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaRej
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: fmt.Sprintf(`
 					type Users @policy(
 						id: "%s",

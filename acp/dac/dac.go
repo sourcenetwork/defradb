@@ -29,12 +29,6 @@ var (
 
 // DocumentACP is the interface to all types of document access control that might exist.
 type DocumentACP interface {
-	// Init initializes the acp, with an absolute path. The provided path indicates where the
-	// persistent data will be stored for acp.
-	//
-	// If the path is empty then acp will run in memory.
-	Init(ctx context.Context, path string)
-
 	// Start starts the acp, using the initialized path. Will recover acp state
 	// from a previous run if under the same path.
 	//
@@ -136,7 +130,4 @@ type DocumentACP interface {
 		requestActor identity.Identity,
 		targetActor string,
 	) (bool, error)
-
-	// SupportsP2P returns true if the implementation supports ACP across a peer network.
-	SupportsP2P() bool
 }

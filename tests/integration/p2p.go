@@ -13,8 +13,8 @@ package tests
 import (
 	"time"
 
-	"github.com/sourcenetwork/defradb/client"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
@@ -75,6 +75,11 @@ const (
 	// for a non-existent collection ID when used in actions that support this.
 	NonExistentCollectionID         int    = -1
 	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
+
+	// NonExistentDocID can be used to represent a non-existent docID, it will be substituted
+	// for a non-existent dicID when used in actions that support this.
+	NonExistentDocID       int    = -1
+	NonExistentDocIDString string = "NonExistentDocID"
 )
 
 // SubscribeToCollection sets up a subscription on the given node to the given collection.
@@ -128,6 +133,57 @@ type GetAllP2PCollections struct {
 	ExpectedCollectionIDs []int
 }
 
+// SubscribeToDocument sets up a subscription on the given node to the given document.
+//
+// Changes made to subscribed documents in peers connected to this node will be synced from
+// them to this node.
+type SubscribeToDocument struct {
+	// NodeID is the node ID (index) of the node in which to activate the subscription.
+	//
+	// Changes made to subscribed documents in peers connected to this node will be synced from
+	// them to this node.
+	NodeID int
+
+	// DocIDs are the docIDs (indexes) of the documents to subscribe to.
+	//
+	// A [NonExistentDocID] may be provided to test non-existent  docIDs.
+	DocIDs []state.ColDocIndex
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// UnsubscribeToDocument removes the given documents from the set of active subscriptions on
+// the given node.
+type UnsubscribeToDocument struct {
+	// NodeID is the node ID (index) of the node in which to remove the subscription.
+	NodeID int
+
+	// DocIDs are the docIDs (indexes) of the documents to unsubscribe from.
+	//
+	// A [NonExistentDocID] may be provided to test non-existent docIDs.
+	DocIDs []state.ColDocIndex
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// GetAllP2PDocuments gets the active subscriptions for the given node and compares them against the
+// expected results.
+type GetAllP2PDocuments struct {
+	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+	NodeID int
+
+	// ExpectedDocIDs are the docIDs (indexes) of the documents expected.
+	ExpectedDocIDs []state.ColDocIndex
+}
+
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
 // to complete before progressing.
 //
@@ -143,21 +199,21 @@ type WaitForSync struct {
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func connectPeers(
-	s *state,
+	s *state.State,
 	cfg ConnectPeers,
 ) {
-	sourceNode := s.nodes[cfg.SourceNodeID]
-	targetNode := s.nodes[cfg.TargetNodeID]
+	sourceNode := s.Nodes[cfg.SourceNodeID]
+	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	log.InfoContext(s.ctx, "Connect peers",
+	log.InfoContext(s.Ctx, "Connect peers",
 		corelog.Any("Source", sourceNode.PeerInfo()),
 		corelog.Any("Target", targetNode.PeerInfo()))
 
-	err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
-	require.NoError(s.t, err)
+	err := sourceNode.Connect(s.Ctx, targetNode.PeerInfo())
+	require.NoError(s.T, err)
 
-	s.nodes[cfg.SourceNodeID].p2p.connections[cfg.TargetNodeID] = struct{}{}
-	s.nodes[cfg.TargetNodeID].p2p.connections[cfg.SourceNodeID] = struct{}{}
+	s.Nodes[cfg.SourceNodeID].P2P.Connections[cfg.TargetNodeID] = struct{}{}
+	s.Nodes[cfg.TargetNodeID].P2P.Connections[cfg.SourceNodeID] = struct{}{}
 
 	// Bootstrap triggers a bunch of async stuff for which we have no good way of waiting on.  It must be
 	// allowed to complete before documentation begins or it will not even try and sync it. So for now, we
@@ -171,18 +227,16 @@ func connectPeers(
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
 func configureReplicator(
-	s *state,
+	s *state.State,
 	cfg ConfigureReplicator,
 ) {
-	sourceNode := s.nodes[cfg.SourceNodeID]
-	targetNode := s.nodes[cfg.TargetNodeID]
+	sourceNode := s.Nodes[cfg.SourceNodeID]
+	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.PeerInfo(),
-	})
+	err := sourceNode.SetReplicator(s.Ctx, targetNode.PeerInfo())
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, cfg.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, cfg.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
 
 	if err == nil {
 		waitForReplicatorConfigureEvent(s, cfg)
@@ -190,16 +244,14 @@ func configureReplicator(
 }
 
 func deleteReplicator(
-	s *state,
+	s *state.State,
 	cfg DeleteReplicator,
 ) {
-	sourceNode := s.nodes[cfg.SourceNodeID]
-	targetNode := s.nodes[cfg.TargetNodeID]
+	sourceNode := s.Nodes[cfg.SourceNodeID]
+	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.ctx, client.ReplicatorParams{
-		Info: targetNode.PeerInfo(),
-	})
-	require.NoError(s.t, err)
+	err := sourceNode.DeleteReplicator(s.Ctx, targetNode.PeerInfo())
+	require.NoError(s.T, err)
 	waitForReplicatorDeleteEvent(s, cfg)
 }
 
@@ -207,29 +259,29 @@ func deleteReplicator(
 //
 // Any errors generated during this process will result in a test failure.
 func subscribeToCollection(
-	s *state,
+	s *state.State,
 	action SubscribeToCollection,
 ) {
-	n := s.nodes[action.NodeID]
+	n := s.Nodes[action.NodeID]
 
-	schemaRoots := []string{}
+	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
-		col := s.nodes[action.NodeID].collections[collectionIndex]
-		schemaRoots = append(schemaRoots, col.SchemaRoot())
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		collectionNames = append(collectionNames, col.Name())
 	}
 
-	err := n.AddP2PCollections(s.ctx, schemaRoots)
+	err := n.AddP2PCollections(s.Ctx, collectionNames...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -241,29 +293,29 @@ func subscribeToCollection(
 //
 // Any errors generated during this process will result in a test failure.
 func unsubscribeToCollection(
-	s *state,
+	s *state.State,
 	action UnsubscribeToCollection,
 ) {
-	n := s.nodes[action.NodeID]
+	n := s.Nodes[action.NodeID]
 
-	schemaRoots := []string{}
+	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
-			schemaRoots = append(schemaRoots, NonExistentCollectionSchemaRoot)
+			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
 			continue
 		}
 
-		col := s.nodes[action.NodeID].collections[collectionIndex]
-		schemaRoots = append(schemaRoots, col.SchemaRoot())
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		collectionNames = append(collectionNames, col.Name())
 	}
 
-	err := n.RemoveP2PCollections(s.ctx, schemaRoots)
+	err := n.RemoveP2PCollections(s.Ctx, collectionNames...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
 
-	expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
@@ -276,35 +328,124 @@ func unsubscribeToCollection(
 //
 // Any errors generated during this process will result in a test failure.
 func getAllP2PCollections(
-	s *state,
+	s *state.State,
 	action GetAllP2PCollections,
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
-		col := s.nodes[action.NodeID].collections[collectionIndex]
-		expectedCollections = append(expectedCollections, col.SchemaRoot())
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		expectedCollections = append(expectedCollections, col.Name())
 	}
 
-	n := s.nodes[action.NodeID]
-	cols, err := n.GetAllP2PCollections(s.ctx)
-	require.NoError(s.t, err)
+	n := s.Nodes[action.NodeID]
+	cols, err := n.GetAllP2PCollections(s.Ctx)
+	require.NoError(s.T, err)
 
-	assert.Equal(s.t, expectedCollections, cols)
+	assert.Equal(s.T, expectedCollections, cols)
+}
+
+// subscribeToDocument sets up a collection subscription on the given node/collection.
+//
+// Any errors generated during this process will result in a test failure.
+func subscribeToDocument(
+	s *state.State,
+	action SubscribeToDocument,
+) {
+	n := s.Nodes[action.NodeID]
+
+	docIDs := []string{}
+	for _, colDocIndex := range action.DocIDs {
+		if colDocIndex.Doc == NonExistentDocID {
+			docIDs = append(docIDs, NonExistentDocIDString)
+			continue
+		}
+
+		docID := s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		docIDs = append(docIDs, docID.String())
+	}
+
+	err := n.AddP2PDocuments(s.Ctx, docIDs...)
+	if err == nil {
+		waitForSubscribeToDocumentEvent(s, action)
+	}
+
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.AddP2PDocuments(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
+}
+
+// unsubscribeToDocument removes the given collections from subscriptions on the given nodes.
+//
+// Any errors generated during this process will result in a test failure.
+func unsubscribeToDocument(
+	s *state.State,
+	action UnsubscribeToDocument,
+) {
+	n := s.Nodes[action.NodeID]
+
+	docIDs := []string{}
+	for _, colDocIndex := range action.DocIDs {
+		if colDocIndex.Doc == NonExistentDocID {
+			docIDs = append(docIDs, NonExistentDocIDString)
+			continue
+		}
+
+		docID := s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		docIDs = append(docIDs, docID.String())
+	}
+
+	err := n.RemoveP2PDocuments(s.Ctx, docIDs...)
+	if err == nil {
+		waitForUnsubscribeToDocumentEvent(s, action)
+	}
+
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.RemoveP2PDocuments(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
+}
+
+// getAllP2PDocuments gets all the active peer subscriptions and compares them against the
+// given expected results.
+//
+// Any errors generated during this process will result in a test failure.
+func getAllP2PDocuments(
+	s *state.State,
+	action GetAllP2PDocuments,
+) {
+	expectedDocuments := []string{}
+	for _, colDocIndex := range action.ExpectedDocIDs {
+		docID := s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		expectedDocuments = append(expectedDocuments, docID.String())
+	}
+
+	n := s.Nodes[action.NodeID]
+	cols, err := n.GetAllP2PDocuments(s.Ctx)
+	require.NoError(s.T, err)
+
+	assert.Equal(s.T, expectedDocuments, cols)
 }
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
-func reconnectPeers(s *state) {
-	for i, n := range s.nodes {
-		for j := range n.p2p.connections {
-			sourceNode := s.nodes[i]
-			targetNode := s.nodes[j]
+func reconnectPeers(s *state.State) {
+	for i, n := range s.Nodes {
+		for j := range n.P2P.Connections {
+			sourceNode := s.Nodes[i]
+			targetNode := s.Nodes[j]
 
-			log.InfoContext(s.ctx, "Connect peers",
+			log.InfoContext(s.Ctx, "Connect peers",
 				corelog.Any("Source", sourceNode.PeerInfo()),
 				corelog.Any("Target", targetNode.PeerInfo()))
 
-			err := sourceNode.Connect(s.ctx, targetNode.PeerInfo())
-			require.NoError(s.t, err)
+			err := sourceNode.Connect(s.Ctx, targetNode.PeerInfo())
+			require.NoError(s.T, err)
 		}
 	}
 }
@@ -314,6 +455,41 @@ func RandomNetworkingConfig() ConfigureNode {
 		return []netConfig.NodeOpt{
 			netConfig.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
 			netConfig.WithEnableRelay(false),
+		}
+	}
+}
+
+// syncDocs requests document sync from peers.
+func syncDocs(s *state.State, action SyncDocs) {
+	node := s.Nodes[action.NodeID]
+
+	docIDStrings := make([]string, len(action.DocIDs))
+	for i, docIndex := range action.DocIDs {
+		docIDStrings[i] = s.DocIDs[action.CollectionID][docIndex].String()
+	}
+
+	collectionName := s.Nodes[action.NodeID].Collections[action.CollectionID].Name()
+
+	err := withRetryOnNode(
+		node,
+		func() error {
+			return node.SyncDocuments(
+				s.Ctx,
+				collectionName,
+				docIDStrings,
+			)
+		},
+	)
+
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		for i, docInd := range action.DocIDs {
+			nodeID := action.SourceNodes[i]
+			docID := s.DocIDs[action.CollectionID][docInd].String()
+			node.P2P.ExpectedDAGHeads[docID] = s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID
 		}
 	}
 }

@@ -23,8 +23,8 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -76,6 +76,8 @@ func (f *lensedFetcher) Init(
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	f.col = col
 
 	f.fieldDescriptionsByName = make(map[string]client.FieldDefinition, len(col.Schema().Fields))
@@ -87,7 +89,7 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := getTargetedCollectionHistory(ctx, txn, f.col.Schema().Root, f.col.Schema().VersionID)
+	history, err := getTargetedCollectionHistory(ctx, f.col.Schema().Root, f.col.Schema().VersionID)
 	if err != nil {
 		return err
 	}
@@ -310,6 +312,8 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		InstanceType:      keys.ValueKey,
 	}
 
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	for fieldName, value := range modifiedFieldValuesByName {
 		fieldDesc, ok := f.fieldDescriptionsByName[fieldName]
 		if !ok {
@@ -330,14 +334,14 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			return err
 		}
 
-		err = f.txn.Datastore().Set(ctx, fieldKey.Bytes(), bytes)
+		err = txn.Datastore().Set(ctx, fieldKey.Bytes(), bytes)
 		if err != nil {
 			return err
 		}
 	}
 
 	versionKey := datastoreKeyBase.WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	err = f.txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
+	err = txn.Datastore().Set(ctx, versionKey.Bytes(), []byte(f.targetVersionID))
 	if err != nil {
 		return err
 	}

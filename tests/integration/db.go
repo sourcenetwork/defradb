@@ -16,12 +16,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
-
-type DatabaseType string
 
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
@@ -32,9 +30,9 @@ const (
 )
 
 const (
-	BadgerIMType   DatabaseType = "badger-in-memory"
-	DefraIMType    DatabaseType = "defra-memory-datastore"
-	BadgerFileType DatabaseType = "badger-file-system"
+	BadgerIMType   state.DatabaseType = "badger-in-memory"
+	DefraIMType    state.DatabaseType = "defra-memory-datastore"
+	BadgerFileType state.DatabaseType = "badger-file-system"
 )
 
 var (
@@ -71,7 +69,7 @@ func defaultNodeOpts() []node.Option {
 	return []node.Option{
 		node.WithLensPoolSize(lensPoolSize),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
-		// into a [client.DB].
+		// into a [client.TxnStore].
 		node.WithDisableAPI(true),
 		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
 		// to keep the tests as lightweight as possible.
@@ -80,7 +78,7 @@ func defaultNodeOpts() []node.Option {
 	}
 }
 
-func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
+func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
 	opts := []node.Option{
 		node.WithDisableP2P(true),
 		node.WithDisableAPI(true),
@@ -98,7 +96,7 @@ func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	return node.DB, err
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{

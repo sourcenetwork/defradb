@@ -15,10 +15,12 @@ package net
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/fxamacker/cbor/v2"
 	cid "github.com/ipfs/go-cid"
+	"github.com/libp2p/go-libp2p/core/peer"
 	libpeer "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/sourcenetwork/corelog"
@@ -33,9 +35,15 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+// DocSyncTopic is the fixed topic for document sync operations.
+const docSyncTopic = "doc-sync"
 
 // server is the request/response instance for all P2P RPC communication.
 // Implements gRPC server. See net/pb/net.proto for corresponding service definitions.
@@ -51,7 +59,10 @@ type server struct {
 	replicators map[string]map[libpeer.ID]struct{}
 	mu          sync.Mutex
 
-	conns map[libpeer.ID]*grpc.ClientConn
+	docSyncTopic pubsubTopic
+
+	conns  map[libpeer.ID]*grpc.ClientConn
+	connMu sync.RWMutex
 
 	peerIdentities map[libpeer.ID]identity.Identity
 	piMux          sync.RWMutex
@@ -83,6 +94,13 @@ func newServer(p *Peer, opts ...grpc.DialOption) (*server, error) {
 	}
 
 	s.opts = append(defaultOpts, opts...)
+
+	docSyncTopic, err := s.addPubSubTopic(docSyncTopic, true, s.docSyncMessageHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	s.docSyncTopic = docSyncTopic
 
 	return s, nil
 }
@@ -148,15 +166,6 @@ func (s *server) processPushlog(
 	log.InfoContext(ctx, "DAG sync complete",
 		corelog.Any("PeerID", pid.String()),
 		corelog.Any("DocID", req.DocID))
-
-	// Once processed, subscribe to the DocID topic on the pubsub network unless we already
-	// subscribed to the collection.
-	if !s.hasPubSubTopicAndSubscribed(req.CollectionID) && req.DocID != "" {
-		_, err = s.addPubSubTopic(req.DocID, true, nil)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	s.peer.bus.Publish(event.NewMessage(event.MergeName, event.Merge{
 		DocID:        req.DocID,
@@ -235,14 +244,6 @@ func (s *server) AddPubSubTopic(topicName string, handler rpc.MessageHandler) er
 	return err
 }
 
-// hasPubSubTopicAndSubscribed checks if we are subscribed to a topic.
-func (s *server) hasPubSubTopicAndSubscribed(topic string) bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	t, ok := s.topics[topic]
-	return ok && t.subscribed
-}
-
 // removePubSubTopic unsubscribes to a topic
 func (s *server) removePubSubTopic(topic string) error {
 	if s.peer.ps == nil {
@@ -287,42 +288,50 @@ func (s *server) publishLog(ctx context.Context, topic string, req *pushLogReque
 	if s.peer.ps == nil { // skip if we aren't running with a pubsub net
 		return nil
 	}
-	s.mu.Lock()
-	t, ok := s.topics[topic]
-	s.mu.Unlock()
-	if !ok {
-		subscribe := topic != req.CollectionID && !s.hasPubSubTopicAndSubscribed(req.CollectionID)
-		_, err := s.addPubSubTopic(topic, subscribe, nil)
-		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
-		}
-		return s.publishLog(ctx, topic, req)
-	}
-
-	if topic == req.CollectionID && req.DocID == "" && !t.subscribed {
-		// If the push log request is scoped to the schema and not to a document, subscribe to the
-		// schema.
-		var err error
-		t, err = s.addPubSubTopic(topic, true, nil)
-		if err != nil {
-			return errors.Wrap(fmt.Sprintf("failed to created single use topic %s", topic), err)
-		}
-	}
-
-	log.InfoContext(ctx, "Publish log",
-		corelog.String("PeerID", s.peer.PeerID().String()),
-		corelog.String("Topic", topic))
 
 	data, err := cbor.Marshal(req)
 	if err != nil {
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
-	if err != nil {
-		return errors.Wrap(fmt.Sprintf("failed publishing to thread %s", topic), err)
+	log.InfoContext(ctx, "Publish log",
+		corelog.String("PeerID", s.peer.PeerID().String()),
+		corelog.String("Topic", topic))
+
+	s.mu.Lock()
+	t, ok := s.topics[topic]
+	s.mu.Unlock()
+	if ok {
+		_, err = t.Publish(ctx, data, rpc.WithIgnoreResponse(true))
+		if err != nil {
+			return NewErrPushLog(err, errors.NewKV("Topic", topic))
+		}
+		return nil
 	}
-	return nil
+
+	// If the topic hasn't been explicitly subscribed to, we temporarily join it
+	// to publish the log.
+	return s.publishDirectToTopic(ctx, topic, data, false)
+}
+
+// publishDirectToTopic temporarily joins a pubsub topic to publish data and immediately closes it.
+//
+// This is useful to publish messages without incurring the cost of a full pubsub rpc topic.
+func (s *server) publishDirectToTopic(ctx context.Context, topic string, data []byte, isRetry bool) error {
+	psTopic, err := s.peer.ps.Join(topic)
+	if err != nil {
+		if strings.Contains(err.Error(), "topic already exists") && !isRetry {
+			// Reaching this is really rare and probably only possible
+			// through from tests. We can handle this by simply trying again a single time.
+			return s.publishDirectToTopic(ctx, topic, data, true)
+		}
+		return NewErrPushLog(err, errors.NewKV("Topic", topic))
+	}
+	err = psTopic.Publish(ctx, data)
+	if err != nil {
+		return NewErrPushLog(err, errors.NewKV("Topic", topic))
+	}
+	return psTopic.Close()
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
@@ -382,69 +391,38 @@ func peerIDFromContext(ctx context.Context) (libpeer.ID, error) {
 	return pid, nil
 }
 
-func (s *server) updatePubSubTopics(evt event.P2PTopic) {
-	for _, topic := range evt.ToAdd {
-		_, err := s.addPubSubTopic(topic, true, nil)
-		if err != nil {
-			log.ErrorE("Failed to add pubsub topic.", err)
-		}
-	}
-
-	for _, topic := range evt.ToRemove {
-		err := s.removePubSubTopic(topic)
-		if err != nil {
-			log.ErrorE("Failed to remove pubsub topic.", err)
-		}
-	}
-	s.peer.bus.Publish(event.NewMessage(event.P2PTopicCompletedName, nil))
-}
-
-func (s *server) updateReplicators(evt event.Replicator) {
-	if len(evt.Schemas) == 0 {
+func (s *server) updateReplicators(rep peer.AddrInfo, collectionIDs map[string]struct{}) {
+	if len(collectionIDs) == 0 {
 		// remove peer from store
-		s.peer.host.Peerstore().ClearAddrs(evt.Info.ID)
+		s.peer.host.Peerstore().ClearAddrs(rep.ID)
 	} else {
 		// add peer to store
-		s.peer.host.Peerstore().AddAddrs(evt.Info.ID, evt.Info.Addrs, peerstore.PermanentAddrTTL)
+		s.peer.host.Peerstore().AddAddrs(rep.ID, rep.Addrs, peerstore.PermanentAddrTTL)
 		// connect to the peer
-		if err := s.peer.Connect(s.peer.ctx, evt.Info); err != nil {
+		if err := s.peer.Connect(s.peer.ctx, rep); err != nil {
 			log.ErrorE("Failed to connect to replicator peer", err)
 		}
 	}
 
 	// update the cached replicators
 	s.mu.Lock()
-	for schema, peers := range s.replicators {
-		if _, hasSchema := evt.Schemas[schema]; hasSchema {
-			s.replicators[schema][evt.Info.ID] = struct{}{}
-			delete(evt.Schemas, schema)
+	for collectionID, peers := range s.replicators {
+		if _, hasID := collectionIDs[collectionID]; hasID {
+			s.replicators[collectionID][rep.ID] = struct{}{}
+			delete(collectionIDs, collectionID)
 		} else {
-			if _, exists := peers[evt.Info.ID]; exists {
-				delete(s.replicators[schema], evt.Info.ID)
+			if _, exists := peers[rep.ID]; exists {
+				delete(s.replicators[collectionID], rep.ID)
 			}
 		}
 	}
-	for schema := range evt.Schemas {
-		if _, exists := s.replicators[schema]; !exists {
-			s.replicators[schema] = make(map[libpeer.ID]struct{})
+	for collectionID := range collectionIDs {
+		if _, exists := s.replicators[collectionID]; !exists {
+			s.replicators[collectionID] = make(map[libpeer.ID]struct{})
 		}
-		s.replicators[schema][evt.Info.ID] = struct{}{}
+		s.replicators[collectionID][rep.ID] = struct{}{}
 	}
 	s.mu.Unlock()
-
-	if evt.Docs != nil {
-		for update := range evt.Docs {
-			if err := s.pushLog(update, evt.Info.ID); err != nil {
-				log.ErrorE(
-					"Failed to replicate log",
-					err,
-					corelog.Any("CID", update.Cid),
-					corelog.Any("PeerID", evt.Info.ID),
-				)
-			}
-		}
-	}
-	s.peer.bus.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 }
 
 func (s *server) SendPubSubMessage(
@@ -469,7 +447,15 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		return true
 	}
 
-	rawblock, err := s.peer.db.Blockstore().Get(s.peer.ctx, c)
+	clientTxn, err := s.peer.db.NewTxn(s.peer.ctx, false)
+	if err != nil {
+		log.ErrorE("Failed to get new transaction", err)
+		return false
+	}
+	defer clientTxn.Discard(s.peer.ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
+	rawblock, err := txn.Blockstore().Get(s.peer.ctx, c)
 	if err != nil {
 		log.ErrorE("Failed to get block", err)
 		return false
@@ -487,7 +473,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		return false
 	}
 
-	cols, err := s.peer.db.GetCollections(
+	cols, err := clientTxn.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
 			VersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
@@ -528,7 +514,12 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 				log.ErrorE("Failed to parse identity token", err)
 				return immutable.None[identity.Identity]()
 			}
-			err = identity.VerifyAuthToken(ident, s.peer.PeerID().String())
+			tokenIdent, ok := ident.(identity.TokenIdentity)
+			if !ok {
+				log.ErrorE("Identity is not of type TokenIdentity", nil, corelog.String("Actual", fmt.Sprintf("%T", ident)))
+				return immutable.None[identity.Identity]()
+			}
+			err = identity.VerifyAuthToken(tokenIdent, s.peer.PeerID().String())
 			if err != nil {
 				log.ErrorE("Failed to verify auth token", err)
 				return immutable.None[identity.Identity]()
@@ -566,7 +557,13 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 		return true, nil
 	}
 
-	cols, err := s.peer.db.GetCollections(
+	clientTxn, err := s.peer.db.NewTxn(s.peer.ctx, false)
+	if err != nil {
+		return false, err
+	}
+	defer clientTxn.Discard(s.peer.ctx)
+
+	cols, err := clientTxn.GetCollections(
 		s.peer.ctx,
 		client.CollectionFetchOptions{
 			CollectionID: immutable.Some(p2pID),
@@ -578,7 +575,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	if len(cols) == 0 {
 		return false, client.ErrCollectionNotFound
 	}
-	ident, err := s.peer.db.GetNodeIdentity(s.peer.ctx)
+	ident, err := clientTxn.GetNodeIdentity(s.peer.ctx)
 	if err != nil {
 		return false, err
 	}
@@ -589,7 +586,7 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
 		s.peer.ctx,
 		func() immutable.Option[identity.Identity] {
-			return immutable.Some(identity.Identity{DID: ident.Value().DID})
+			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
 		s.peer.documentACP.Value(),
 		cols[0], // For now we assume there is only one collection.
@@ -601,4 +598,67 @@ func (s *server) trySelfHasAccess(block *coreblock.Block, p2pID string) (bool, e
 	}
 
 	return peerHasAccess, nil
+}
+
+// docSyncMessageHandler handles incoming document sync requests from the pubsub network.
+func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte) ([]byte, error) {
+	req := &docSyncRequest{}
+	if err := cbor.Unmarshal(msg, req); err != nil {
+		return nil, err
+	}
+
+	var results []docSyncItem
+
+	for _, docID := range req.DocIDs {
+		result, err := s.processDocSyncItem(docID)
+		if err != nil {
+			log.ErrorE("Failed to process doc sync item", err, corelog.String("DocID", docID))
+			continue // Skip failed items
+		}
+		results = append(results, result)
+	}
+
+	reply := &docSyncReply{
+		Sender:  s.peer.host.ID().String(),
+		Results: results,
+	}
+
+	return cbor.Marshal(reply)
+}
+
+// processDocSyncItem processes a single document sync request and returns the result.
+func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
+	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
+	if err != nil {
+		return docSyncItem{}, NewErrFailedToCreateTransaction(err)
+	}
+	defer txn.Discard(s.peer.ctx)
+
+	key := keys.HeadstoreDocKey{
+		DocID:   docID,
+		FieldID: core.COMPOSITE_NAMESPACE,
+	}
+
+	headstore := datastore.HeadstoreFrom(s.peer.db.Rootstore())
+	headset := coreblock.NewHeadSet(headstore, key)
+
+	cids, _, err := headset.List(s.peer.ctx)
+	if err != nil {
+		return docSyncItem{}, fmt.Errorf("failed to get list of heads docID %s: %w", key.ToString(), err)
+	}
+
+	if len(cids) == 0 {
+		return docSyncItem{}, fmt.Errorf("heads not found for %s", key.ToString())
+	}
+
+	result := docSyncItem{
+		DocID: docID,
+		Heads: make([][]byte, 0, len(cids)),
+	}
+
+	for _, cid := range cids {
+		result.Heads = append(result.Heads, cid.Bytes())
+	}
+
+	return result, nil
 }

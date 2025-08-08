@@ -13,6 +13,7 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Deletion of using document ids and filter, known id and empty filter.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

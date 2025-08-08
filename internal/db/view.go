@@ -14,18 +14,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -146,20 +146,20 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, txn)
+	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
 
 	// temporarily disable the cache in order to query without using it
 	col.Version.IsMaterialized = false
-	err = description.SaveCollection(ctx, txn, col.Version)
+	err = description.SaveCollection(ctx, col.Version)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
 		col.Version.IsMaterialized = true
-		defErr = description.SaveCollection(ctx, txn, col.Version)
+		defErr = description.SaveCollection(ctx, col.Version)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -233,7 +233,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 }
 
 func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, col.Version.CollectionID)
 	if err != nil {

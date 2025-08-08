@@ -16,21 +16,23 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
-
 	"github.com/sourcenetwork/goji"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 func execute(ctx context.Context, value js.Value, method string, args ...any) ([]js.Value, error) {
 	contextValues := map[string]any{}
-	tx, ok := txnctx.TryGet(ctx)
+	tx, ok := datastore.CtxTryGetClientTxn(ctx)
 	if ok {
 		contextValues["transaction"] = tx.ID()
 	}
-	id := identity.FromContext(ctx)
-	if id.HasValue() && id.Value().PrivateKey != nil {
-		contextValues["identity"] = id.Value().PrivateKey.String()
+	ident := identity.FromContext(ctx)
+	if ident.HasValue() {
+		if full, ok := ident.Value().(identity.FullIdentity); ok && full.PrivateKey() != nil {
+			contextValues["full_identity"] = full.PrivateKey().String()
+		}
 	}
 	args = append(args, contextValues)
 	prom := value.Call(method, args...)

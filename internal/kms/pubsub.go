@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -28,10 +28,10 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
@@ -51,8 +51,8 @@ type pubSubService struct {
 	ctx             context.Context
 	peerID          libpeer.ID
 	pubsub          PubSubServer
-	keyRequestedSub *event.Subscription
-	eventBus        *event.Bus
+	keyRequestedSub event.Subscription
+	eventBus        event.Bus
 	encStore        *ipldEncStorage
 	documentACP     immutable.Option[dac.DocumentACP]
 	colRetriever    CollectionRetriever
@@ -81,7 +81,7 @@ func NewPubSubService(
 	ctx context.Context,
 	peerID libpeer.ID,
 	pubsub PubSubServer,
-	eventBus *event.Bus,
+	eventBus event.Bus,
 	encstore datastore.Blockstore,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
@@ -377,7 +377,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		immutable.Some(identity.Identity{DID: actorIdentity}),
+		immutable.Some(identity.FromDID(actorIdentity)),
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,

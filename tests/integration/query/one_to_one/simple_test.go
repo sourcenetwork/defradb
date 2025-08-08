@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -119,7 +120,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, multiple records",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -203,7 +204,7 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one-to-one relation secondary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -348,7 +349,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation primary direction, relation ID field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -400,7 +401,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One-to-one relation secondary direction, relation ID field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String

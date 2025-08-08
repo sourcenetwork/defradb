@@ -16,4 +16,5 @@ import (
 
 var (
 	ErrSubscribedToClosedChan = errors.New("cannot subscribe to a closed channel")
+	ErrWildcardNotSupported   = errors.New("wildcard subscriptions are not supported")
 )

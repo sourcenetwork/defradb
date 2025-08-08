@@ -15,6 +15,27 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// Bus handles routing and publishing of messages to subscribers.
+type Bus interface {
+	// Publish broadcasts the given message to the bus subscribers. Non-blocking.
+	Publish(msg Message)
+	// Subscribe returns a new subscription that will receive all of the events
+	// contained in the given list of events.
+	Subscribe(events ...Name) (Subscription, error)
+	// Unsubscribe removes all event subscriptions and closes the subscription.
+	//
+	// Will do nothing if this object is already closed.
+	Unsubscribe(sub Subscription)
+	// Close unsubscribes all active subscribers and closes the bus.
+	Close()
+}
+
+// Subscription receives subscribed messages until closed.
+type Subscription interface {
+	// Message returns the message channel for the subscription.
+	Message() <-chan Message
+}
+
 // Name identifies an event
 type Name string
 
@@ -29,16 +50,12 @@ const (
 	UpdateName = Name("update")
 	// PubSubName is the name of the network pubsub event.
 	PubSubName = Name("pubsub")
-	// P2PTopicName is the name of the network p2p topic update event.
-	P2PTopicName = Name("p2p-topic")
 	// PeerInfoName is the name of the network peer info event.
 	PeerInfoName = Name("peer-info")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
 	// ReplicatorFailureName is the name of the replicator failure event.
 	ReplicatorFailureName = Name("replicator-failure")
-	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
-	P2PTopicCompletedName = Name("p2p-topic-completed")
 	// ReplicatorCompletedName is the name of the replicator completed event.
 	ReplicatorCompletedName = Name("replicator-completed")
 	// PurgeName is the name of the purge event.
@@ -72,10 +89,6 @@ type Update struct {
 
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
-
-	// Success is a channel that will receive a boolean value indicating if the update was successful.
-	// It is used during retries.
-	Success chan bool
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.
@@ -117,24 +130,6 @@ type Message struct {
 // NewMessage returns a new message with the given name and optional data.
 func NewMessage(name Name, data any) Message {
 	return Message{name, data}
-}
-
-// Subscription is a read-only event stream.
-type Subscription struct {
-	id     uint64
-	value  chan Message
-	events []Name
-}
-
-// Message returns the next event value from the subscription.
-func (s *Subscription) Message() <-chan Message {
-	return s.value
-}
-
-// P2PTopic is an event that is published when a peer has updated the topics it is subscribed to.
-type P2PTopic struct {
-	ToAdd    []string
-	ToRemove []string
 }
 
 // PeerInfo is an event that is published when the node has updated its peer info.

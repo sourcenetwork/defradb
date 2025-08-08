@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 var def = client.CollectionDefinition{
@@ -133,7 +134,7 @@ func TestPushlog_WithValidPeerID_NoError(t *testing.T) {
 	headCID, err := getHead(ctx, db1, doc.ID())
 	require.NoError(t, err)
 
-	b, err := db1.Blockstore().AsIPLDStorage().Get(ctx, headCID.KeyString())
+	b, err := datastore.BlockstoreFrom(db1.Rootstore()).AsIPLDStorage().Get(ctx, headCID.KeyString())
 	require.NoError(t, err)
 
 	err = p1.server.pushLog(event.Update{

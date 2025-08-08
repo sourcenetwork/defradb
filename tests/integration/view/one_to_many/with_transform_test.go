@@ -13,9 +13,10 @@ package one_to_many
 import (
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -24,7 +25,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to many view with transform on outer",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -115,7 +116,7 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "One to many view with transform adding inner docs",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String

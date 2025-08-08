@@ -13,6 +13,7 @@ package test_acp_dac_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,7 +25,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -34,10 +35,6 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Doc: `
@@ -81,7 +78,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -91,10 +88,6 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Doc: `
@@ -144,7 +137,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   userPolicy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -154,10 +147,6 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Doc: `

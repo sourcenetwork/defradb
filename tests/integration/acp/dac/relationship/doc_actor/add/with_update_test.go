@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -87,7 +88,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAl
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -97,10 +98,6 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -252,7 +249,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -262,10 +259,6 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -434,7 +427,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwn
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -444,10 +437,6 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdateSoCanTheOwn
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

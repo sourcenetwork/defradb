@@ -13,66 +13,66 @@
 package tests
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
+	cwrap "github.com/sourcenetwork/defradb/tests/clients/c"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
-
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func init() {
-	if !goClient && !httpClient && !cliClient {
+	if !goClient && !httpClient && !cliClient && !cClient {
 		// Default is to test go client type.
 		goClient = true
+	}
+	if cClient {
+		// todo: Network test support for C client
+		// See: https://github.com/sourcenetwork/defradb/issues/3920
+		skipNetworkTests = true
+		skipBackupTests = true
 	}
 }
 
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state, node *node.Node) (clients.Client, error) {
-	switch s.clientType {
+func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Client, error) {
+	switch s.ClientType {
 	case HTTPClientType:
-		return http.NewWrapper(node)
+		return http.NewWrapper(nodeObj)
 
 	case CLIClientType:
-		return cli.NewWrapper(node, s.sourcehubAddress)
+		return cli.NewWrapper(nodeObj, s.SourcehubAddress)
 
 	case GoClientType:
-		return newGoClientWrapper(node), nil
+		return newGoClientWrapper(nodeObj), nil
+
+	case CClientType:
+		return cwrap.NewCWrapper(s.Ctx, enableNAC), nil
 
 	default:
-		return nil, fmt.Errorf("invalid client type: %v", s.dbt)
+		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
 	}
 }
 
 type goClientWrapper struct {
-	client.DB
-	peer node.Peer
+	node.DB
+	node.Peer
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		peer: n.Peer,
+		Peer: n.Peer,
 	}
-}
-
-func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	if w.peer != nil {
-		return w.peer.Connect(ctx, addr)
-	}
-	return nil
 }
 
 func (w *goClientWrapper) Close() {
-	if w.peer != nil {
-		w.peer.Close()
+	if w.Peer != nil {
+		w.Peer.Close()
 	}
 	w.DB.Close()
 }

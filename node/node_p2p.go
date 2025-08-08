@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/net"
@@ -27,12 +28,11 @@ func (n *Node) startP2P(ctx context.Context) error {
 	if n.config.disableP2P {
 		return nil
 	}
-	coreDB, _ := n.DB.(*db.DB)
 	peer, err := net.NewPeer(
 		ctx,
 		n.DB.Events(),
-		coreDB.DocumentACP(),
-		coreDB,
+		n.DB.DocumentACP(),
+		n.DB,
 		filterOptions[netConfig.NodeOpt](n.options)...,
 	)
 	if err != nil {
@@ -52,8 +52,8 @@ func (n *Node) startP2P(ctx context.Context) error {
 				peer.PeerID(),
 				peer.Server(),
 				n.DB.Events(),
-				n.DB.Encstore(),
-				coreDB.DocumentACP(),
+				datastore.EncstoreFrom(n.DB.Rootstore()),
+				n.DB.DocumentACP(),
 				db.NewCollectionRetriever(n.DB),
 				ident.Value().DID,
 			)

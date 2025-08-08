@@ -25,11 +25,11 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -61,7 +61,7 @@ var (
 //
 // Transient/Ephemeral datastores are intanciated for the lifetime of the
 // traversal query request, on a per object basis. This should be a basic map based
-// ds.Datastore, abstracted into a DSReaderWriter.
+// ds.Datastore, abstracted into a ReaderWriter.
 //
 // The goal of the VersionedFetcher is to implement the same external API/Interface as
 // the DocumentFetcher, and to have it return the encoded/decoded document as
@@ -89,7 +89,7 @@ type VersionedFetcher struct {
 	ctx context.Context
 
 	// Transient version store
-	root  datastore.Rootstore
+	root  corekv.TxnStore
 	store datastore.Txn
 
 	queuedCids *list.List
@@ -128,7 +128,7 @@ func (vf *VersionedFetcher) Init(
 	if err != nil {
 		return err
 	}
-	dst := datastore.MultiStoreFrom(root).Systemstore()
+	dst := datastore.SystemstoreFrom(root)
 	for {
 		hasValue, err := iter.Next()
 		if err != nil {
@@ -397,7 +397,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 	err = coreblock.ProcessBlock(
 		vf.ctx,
-		vf.txn,
 		mcrdt,
 		block,
 		cidlink.Link{

@@ -38,7 +38,7 @@ func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/graphql", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -72,7 +72,7 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/graphql", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -121,7 +121,7 @@ func TestExecRequest_HttpGet_WithOperationName(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, endpointURL, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -167,7 +167,7 @@ func TestExecRequest_HttpGet_WithVariables(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, endpointURL, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 

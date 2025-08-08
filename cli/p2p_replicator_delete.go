@@ -15,8 +15,6 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PReplicatorDeleteCommand() *cobra.Command {
@@ -32,17 +30,13 @@ Example:
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetContextP2P(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			var info peer.AddrInfo
 			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
-			rep := client.ReplicatorParams{
-				Info:        info,
-				Collections: collections,
-			}
-			return p2p.DeleteReplicator(cmd.Context(), rep)
+			return cliClient.DeleteReplicator(cmd.Context(), info, collections...)
 		},
 	}
 	cmd.Flags().StringSliceVarP(&collections, "collection", "c",

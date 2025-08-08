@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -113,12 +113,12 @@ func CheckDocAccessWithIdentityFunc(
 		// a document registered with acp. So we pass an empty `did` to accommodate that case.
 		identityValue = ""
 	} else {
-		identityValue = identity.Value().DID
+		identityValue = identity.Value().DID()
 	}
 
 	documentResourcePerm, ok := permission.(acpTypes.DocumentResourcePermission)
 	if !ok {
-		return false, ErrInvalidResourcePermissionType
+		return false, client.ErrInvalidResourcePermissionType
 	}
 
 	// Now actually check using the signature if this identity has access or not.

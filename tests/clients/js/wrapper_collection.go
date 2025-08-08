@@ -16,8 +16,9 @@ import (
 	"context"
 	"syscall/js"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/goji"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 var _ client.Collection = (*Collection)(nil)

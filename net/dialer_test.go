@@ -23,11 +23,11 @@ import (
 )
 
 func TestDial_WithConnectedPeer_NoError(t *testing.T) {
-	db1 := fixtureNewMemoryDBWithBroadcaster(t)
-	db2 := fixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	db1 := newTestDB(ctx, t)
+	db2 := newTestDB(ctx, t)
 	defer db1.Close()
 	defer db2.Close()
-	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
 		db1.Events(),
@@ -55,11 +55,11 @@ func TestDial_WithConnectedPeer_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
-	db1 := fixtureNewMemoryDBWithBroadcaster(t)
-	db2 := fixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	db1 := newTestDB(ctx, t)
+	db2 := newTestDB(ctx, t)
 	defer db1.Close()
 	defer db2.Close()
-	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
 		db1.Events(),
@@ -90,11 +90,11 @@ func TestDial_WithConnectedPeerAndSecondConnection_NoError(t *testing.T) {
 }
 
 func TestDial_WithConnectedPeerAndSecondConnectionWithConnectionShutdown_ClosingConnectionError(t *testing.T) {
-	db1 := fixtureNewMemoryDBWithBroadcaster(t)
-	db2 := fixtureNewMemoryDBWithBroadcaster(t)
+	ctx := context.Background()
+	db1 := newTestDB(ctx, t)
+	db2 := newTestDB(ctx, t)
 	defer db1.Close()
 	defer db2.Close()
-	ctx := context.Background()
 	n1, err := NewPeer(
 		ctx,
 		db1.Events(),

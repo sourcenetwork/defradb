@@ -14,25 +14,24 @@ import (
 	"context"
 	"net/http/httptest"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
+var _ client.P2P = (*Wrapper)(nil)
 
 // Wrapper combines an HTTP client and server into a
-// single struct that implements the client.DB interface.
+// single struct that implements the client.TxnStore interface.
 type Wrapper struct {
 	node       *node.Node
 	handler    *http.Handler
@@ -41,7 +40,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+	handler, err := http.NewHandler(node.DB, node.Peer)
 	if err != nil {
 		return nil, err
 	}
@@ -64,28 +63,48 @@ func (w *Wrapper) PeerInfo() peer.AddrInfo {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	return w.client.SetReplicator(ctx, rep)
+func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+	return w.client.SetReplicator(ctx, info, collections...)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	return w.client.DeleteReplicator(ctx, rep)
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+	return w.client.DeleteReplicator(ctx, info, collections...)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	return w.client.GetAllReplicators(ctx)
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
-	return w.client.AddP2PCollections(ctx, collectionIDs)
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+	return w.client.AddP2PCollections(ctx, collectionIDs...)
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	return w.client.RemoveP2PCollections(ctx, collectionIDs)
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+	return w.client.RemoveP2PCollections(ctx, collectionIDs...)
 }
 
 func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return w.client.GetAllP2PCollections(ctx)
+}
+
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.AddP2PDocuments(ctx, collectionIDs...)
+}
+
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.RemoveP2PDocuments(ctx, collectionIDs...)
+}
+
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	return w.client.GetAllP2PDocuments(ctx)
+}
+
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	return w.client.SyncDocuments(ctx, collectionName, docIDs)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
@@ -137,6 +156,42 @@ func (w *Wrapper) DeleteDACActorRelationship(
 		relation,
 		targetActor,
 	)
+}
+
+func (w *Wrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	return w.client.AddNACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	return w.client.DeleteNACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+	return w.client.ReEnableNAC(ctx)
+}
+
+func (w *Wrapper) DisableNAC(ctx context.Context) error {
+	return w.client.DisableNAC(ctx)
+}
+
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	return w.client.GetNACStatus(ctx)
 }
 
 func (w *Wrapper) PatchSchema(
@@ -214,48 +269,28 @@ func (w *Wrapper) ExecRequest(
 	return w.client.ExecRequest(ctx, query, opts...)
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	client, err := w.client.NewTxn(ctx, readOnly)
+func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewTxn(ctx, readOnly)
 	if err != nil {
 		return nil, err
 	}
-	server, err := w.handler.Transaction(client.ID())
+	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{server, client}, nil
+	return &Transaction{w, serverTxn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	client, err := w.client.NewConcurrentTxn(ctx, readOnly)
+func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewConcurrentTxn(ctx, readOnly)
 	if err != nil {
 		return nil, err
 	}
-	server, err := w.handler.Transaction(client.ID())
+	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{server, client}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() corekv.Reader {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
+	return &Transaction{w, serverTxn}, nil
 }
 
 func (w *Wrapper) Close() {
@@ -264,7 +299,7 @@ func (w *Wrapper) Close() {
 	_ = w.node.Close(context.Background())
 }
 
-func (w *Wrapper) Events() *event.Bus {
+func (w *Wrapper) Events() event.Bus {
 	return w.node.DB.Events()
 }
 

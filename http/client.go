@@ -20,22 +20,19 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	sse "github.com/vito/go-sse/sse"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/event"
 )
 
-var _ client.DB = (*Client)(nil)
+var _ client.TxnStore = (*Client)(nil)
 
-// Client implements the client.DB interface over HTTP.
+// Client implements the client.TxnStore interface over HTTP.
 type Client struct {
 	http *httpClient
 }
@@ -48,7 +45,7 @@ func NewClient(rawURL string) (*Client, error) {
 	return &Client{httpClient}, nil
 }
 
-func (c *Client) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (c *Client) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
@@ -65,10 +62,10 @@ func (c *Client) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, erro
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{txRes.ID, c.http}, nil
+	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
-func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
@@ -85,7 +82,7 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{txRes.ID, c.http}, nil
+	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
@@ -489,38 +486,6 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	}
 	_, err = c.http.request(req)
 	return err
-}
-
-func (c *Client) Close() {
-	// do nothing
-}
-
-func (c *Client) Rootstore() datastore.Rootstore {
-	panic("client side database")
-}
-
-func (c *Client) Blockstore() datastore.Blockstore {
-	panic("client side database")
-}
-
-func (c *Client) Encstore() datastore.Blockstore {
-	panic("client side database")
-}
-
-func (c *Client) Peerstore() datastore.DSReaderWriter {
-	panic("client side database")
-}
-
-func (c *Client) Headstore() corekv.Reader {
-	panic("client side database")
-}
-
-func (c *Client) Events() *event.Bus {
-	panic("client side database")
-}
-
-func (c *Client) MaxTxnRetries() int {
-	panic("client side database")
 }
 
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {

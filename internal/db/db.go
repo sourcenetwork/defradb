@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -9,7 +9,7 @@
 // licenses/APL.txt.
 
 /*
-Package db provides the implementation of the [client.DB] interface, collection operations,
+Package db provides the implementation of the [client.TxnStore] interface, collection operations,
 and related components.
 */
 package db
@@ -27,10 +27,10 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -57,10 +57,9 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
-	rootstore  datastore.Rootstore
-	multistore datastore.MultiStore
+	rootstore corekv.TxnStore
 
-	events *event.Bus
+	events event.Bus
 
 	parser core.Parser
 
@@ -78,54 +77,49 @@ type DB struct {
 	// The identity of the current node
 	nodeIdentity immutable.Option[identity.Identity]
 
+	// Node ACP system along with it's current state information.
+	nodeACP NACInfo
+
 	// Contains document ACP if it exists
 	documentACP immutable.Option[dac.DocumentACP]
-
-	// The peer ID and network address information for the current node
-	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
-	peerInfo atomic.Value
 
 	// To be able to close the context passed to NewDB on DB close,
 	// we need to keep a reference to the cancel function. Otherwise,
 	// some goroutines might leak.
 	ctxCancel context.CancelFunc
 
-	// The intervals at which to retry replicator failures.
-	// For example, this can define an exponential backoff strategy.
-	retryIntervals []time.Duration
-
 	// If true, block signing is disabled. By default, block signing is enabled.
 	signingDisabled bool
 }
 
-var _ client.DB = (*DB)(nil)
+var _ client.TxnStore = (*DB)(nil)
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
-	rootstore datastore.Rootstore,
+	rootstore corekv.TxnStore,
+	nodeACP NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, documentACP, lens, options...)
+	return newDB(ctx, rootstore, nodeACP, documentACP, lens, options...)
 }
 
 func newDB(
 	ctx context.Context,
-	rootstore datastore.Rootstore,
+	rootstore corekv.TxnStore,
+	nodeACP NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	multistore := datastore.MultiStoreFrom(rootstore)
-
 	parser, err := graphql.NewParser()
 	if err != nil {
 		return nil, err
 	}
 
-	opts := defaultOptions()
+	opts := &dbOptions{}
 	for _, opt := range options {
 		opt(opts)
 	}
@@ -133,15 +127,14 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:      rootstore,
-		multistore:     multistore,
-		documentACP:    documentACP,
-		lensRegistry:   lens,
-		parser:         parser,
-		options:        options,
-		events:         event.NewBus(commandBufferSize, eventBufferSize),
-		ctxCancel:      cancel,
-		retryIntervals: opts.RetryIntervals,
+		rootstore:    rootstore,
+		nodeACP:      nodeACP,
+		documentACP:  documentACP,
+		lensRegistry: lens,
+		parser:       parser,
+		options:      options,
+		events:       event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctxCancel:    cancel,
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -160,51 +153,27 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, event.ReplicatorFailureName)
+	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
 	if err != nil {
 		return nil, err
 	}
 	go db.handleMessages(ctx, sub)
-	go db.handleReplicatorRetries(ctx)
 
 	return db, nil
 }
 
 // NewTxn creates a new transaction.
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly), nil
+	txn := datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly), nil
-}
-
-// Rootstore returns the root datastore.
-func (db *DB) Rootstore() datastore.Rootstore {
-	return db.rootstore
-}
-
-// Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Blockstore() datastore.Blockstore {
-	return db.multistore.Blockstore()
-}
-
-// Encstore returns the internal enc store which contains encryption key for documents and their fields.
-func (db *DB) Encstore() datastore.Blockstore {
-	return db.multistore.Encstore()
-}
-
-// Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Peerstore() datastore.DSReaderWriter {
-	return db.multistore.Peerstore()
-}
-
-// Headstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Headstore() corekv.Reader {
-	return db.multistore.Headstore()
+	txn := datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 func (db *DB) LensRegistry() client.LensRegistry {
@@ -238,12 +207,12 @@ func (db *DB) AddDACPolicy(
 	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
-// PurgeACPState purges the ACP state(s), and calls [Close()] on the ACP system(s) before returning.
+// PurgeDACState purges all document ACP state, and calls [Close()] on the acp instance before returning.
 //
-// This will close the ACP system(s), purge it's state(s), then restart it/them, and finally close it/them.
+// This will close the acp system, reset it's state (purge then restart), and finally close it.
 //
-// Note: all ACP state(s) will be lost, and won't be recoverable.
-func (db *DB) PurgeACPState(ctx context.Context) error {
+// Note: all document ACP state will be lost, and won't be recoverable.
+func (db *DB) PurgeDACState(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -256,13 +225,6 @@ func (db *DB) PurgeACPState(ctx context.Context) error {
 			// implement the ResetState.
 			log.ErrorE("Failed to reset document ACP state", err)
 		}
-
-		// follow up close call on document ACP is required since the node.Start function starts
-		// document ACP again anyways so we need to gracefully close before starting again.
-		err = documentACP.Close()
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -272,7 +234,12 @@ func (db *DB) PurgeACPState(ctx context.Context) error {
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
-	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
+	headsIterator, err := NewHeadBlocksIterator(
+		ctx,
+		datastore.HeadstoreFrom(db.rootstore),
+		datastore.BlockstoreFrom(db.rootstore),
+		docID,
+	)
 	if err != nil {
 		return err
 	}
@@ -388,16 +355,23 @@ func (db *DB) DeleteDACActorRelationship(
 
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
-		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
+		return immutable.Some(db.nodeIdentity.Value().ToPublicRawIdentity()), nil
 	}
 	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
 func (db *DB) GetNodeIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
-	if db.nodeIdentity.HasValue() {
-		return db.nodeIdentity.Value().NewToken(time.Hour*24, audience, immutable.None[string]())
+	if !db.nodeIdentity.HasValue() {
+		return nil, nil
 	}
-	return nil, nil
+
+	ident := db.nodeIdentity.Value()
+	fullIdentity, ok := ident.(identity.FullIdentity)
+	if !ok || fullIdentity.PrivateKey() == nil {
+		return nil, identity.ErrPrivateKeyNotAvailable
+	}
+
+	return fullIdentity.NewToken(time.Hour*24, audience, immutable.None[string]())
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
@@ -412,6 +386,10 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 	defer txn.Discard(ctx)
 
+	if err := db.initializeNodeACP(ctx, txn); err != nil {
+		return err
+	}
+
 	// Start document acp if enabled, this will recover previous state if there is any.
 	if db.documentACP.HasValue() {
 		// db is responsible to call db.documentACP.Close() to free acp resources while closing.
@@ -421,7 +399,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	}
 
 	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+	if err != nil {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
@@ -451,8 +429,12 @@ func (db *DB) initialize(ctx context.Context) error {
 	return txn.Commit(ctx)
 }
 
+func (db *DB) Rootstore() corekv.TxnStore {
+	return db.rootstore
+}
+
 // Events returns the events Channel.
-func (db *DB) Events() *event.Bus {
+func (db *DB) Events() event.Bus {
 	return db.events
 }
 
@@ -467,7 +449,7 @@ func (db *DB) MaxTxnRetries() int {
 
 // PrintDump prints the entire database to console.
 func (db *DB) PrintDump(ctx context.Context) error {
-	return printStore(ctx, db.multistore.Rootstore())
+	return printStore(ctx, db.rootstore)
 }
 
 // Close is called when we are shutting down the database.
@@ -484,6 +466,12 @@ func (db *DB) Close() {
 		log.ErrorE("Failure closing running process", err)
 	}
 
+	if db.nodeACP.NodeACP != nil {
+		if err := db.nodeACP.NodeACP.Close(); err != nil {
+			log.ErrorE("Failure closing node acp", err)
+		}
+	}
+
 	if db.documentACP.HasValue() {
 		if err := db.documentACP.Value().Close(); err != nil {
 			log.ErrorE("Failure closing acp", err)
@@ -493,7 +481,7 @@ func (db *DB) Close() {
 	log.Info("Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
+func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err

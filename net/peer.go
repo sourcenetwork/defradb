@@ -15,6 +15,7 @@ package net
 import (
 	"context"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/ipfs/boxo/bitswap"
@@ -30,39 +31,37 @@ import (
 	"github.com/libp2p/go-libp2p/core/routing"
 
 	"github.com/multiformats/go-multiaddr"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	"google.golang.org/grpc"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/net/config"
 )
 
+var tracer = telemetry.NewTracer()
+
 // DB hold the database related methods that are required by Peer.
 type DB interface {
-	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
-	Blockstore() datastore.Blockstore
-	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
-	Encstore() datastore.Blockstore
-	// GetCollections returns the list of collections according to the given options.
-	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
+	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
-	// GetNodeIdentity returns the node's public raw identity.
-	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
+	// Rootstore returns the instance's root store.
+	Rootstore() corekv.TxnStore
 }
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	bus       *event.Bus
-	updateSub *event.Subscription
+	bus       event.Bus
+	updateSub event.Subscription
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -81,12 +80,19 @@ type Peer struct {
 	db          DB
 
 	bootCloser io.Closer
+
+	// The intervals at which to retry replicator failures.
+	// For example, this can define an exponential backoff strategy.
+	retryIntervals   []time.Duration
+	handleRetryMutex *sync.Mutex
 }
+
+var _ client.P2P = (*Peer)(nil)
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
 	ctx context.Context,
-	bus *event.Bus,
+	bus event.Bus,
 	documentACP immutable.Option[dac.DocumentACP],
 	db DB,
 	opts ...config.NodeOpt,
@@ -131,14 +137,16 @@ func NewPeer(
 	)
 
 	p = &Peer{
-		host:        h,
-		dht:         ddht,
-		ctx:         ctx,
-		cancel:      cancel,
-		bus:         bus,
-		documentACP: documentACP,
-		db:          db,
-		p2pRPC:      grpc.NewServer(options.GRPCServerOptions...),
+		host:             h,
+		dht:              ddht,
+		ctx:              ctx,
+		cancel:           cancel,
+		bus:              bus,
+		documentACP:      documentACP,
+		db:               db,
+		p2pRPC:           grpc.NewServer(options.GRPCServerOptions...),
+		retryIntervals:   options.RetryIntervals,
+		handleRetryMutex: &sync.Mutex{},
 	}
 
 	if options.EnablePubSub {
@@ -151,7 +159,7 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.P2PTopicName, event.ReplicatorName)
+		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.ReplicatorName)
 		if err != nil {
 			return nil, err
 		}
@@ -164,9 +172,10 @@ func NewPeer(
 		return nil, err
 	}
 
+	bs := datastore.BlockstoreFrom(db.Rootstore())
 	bswapnet := bsnet.NewFromIpfsHost(h)
-	bswap := bitswap.New(ctx, bswapnet, ddht, db.Blockstore(), bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
-	p.blockService = blockservice.New(db.Blockstore(), bswap)
+	bswap := bitswap.New(ctx, bswapnet, ddht, bs, bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
+	p.blockService = blockservice.New(bs, bswap)
 
 	p2pListener, err := gostream.Listen(h, corenet.Protocol)
 	if err != nil {
@@ -181,8 +190,7 @@ func NewPeer(
 	// register the P2P gRPC server
 	go func() {
 		registerServiceServer(p.p2pRPC, p.server)
-		if err := p.p2pRPC.Serve(p2pListener); err != nil &&
-			!errors.Is(err, grpc.ErrServerStopped) {
+		if err := p.p2pRPC.Serve(p2pListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			log.ErrorE("Fatal P2P RPC server error", err)
 		}
 	}()
@@ -202,6 +210,22 @@ func NewPeer(
 	}
 
 	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
+
+	go p.handleReplicatorRetries(ctx)
+
+	err = p.loadAndPublishReplicators(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.loadAndPublishP2PCollections(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = p.loadAndPublishP2PDocuments(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return p, nil
 }
@@ -224,11 +248,13 @@ func (p *Peer) Close() {
 		}
 
 		// stop gRPC server
+		p.server.connMu.Lock()
 		for _, c := range p.server.conns {
 			if err := c.Close(); err != nil {
 				log.ErrorE("Failed closing server RPC connections", err)
 			}
 		}
+		p.server.connMu.Unlock()
 	}
 
 	if p.updateSub != nil {
@@ -274,12 +300,6 @@ func (p *Peer) handleMessageLoop() {
 				log.ErrorE("Error while handling broadcast log", err)
 			}
 
-		case event.P2PTopic:
-			p.server.updatePubSubTopics(evt)
-
-		case event.Replicator:
-			p.server.updateReplicators(evt)
-
 		default:
 			// ignore other events
 			continue
@@ -298,7 +318,7 @@ func (p *Peer) handleLog(evt event.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(evt)
 
-	// Retries are for replicators only and should not polluting the pubsub network.
+	// Retries are for replicators only and should not pollute the pubsub network.
 	if !evt.IsRetry {
 		req := &pushLogRequest{
 			DocID:        evt.DocID,

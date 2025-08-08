@@ -24,12 +24,12 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -57,12 +57,12 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		key = keys.NewHeadstoreColKey(shortID)
 	}
 
-	mt, err := getHeadsAsMergeTarget(ctx, txn, key)
+	mt, err := getHeadsAsMergeTarget(ctx, key)
 	if err != nil {
 		return err
 	}
 
-	mp, err := db.newMergeProcessor(txn, col)
+	mp, err := db.newMergeProcessor(ctx, col)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,6 @@ func (m *mergeQueue) done(key string) {
 }
 
 type mergeProcessor struct {
-	txn        datastore.Txn
 	blockLS    linking.LinkSystem
 	encBlockLS linking.LinkSystem
 	col        *collection
@@ -159,9 +158,11 @@ type mergeProcessor struct {
 }
 
 func (db *DB) newMergeProcessor(
-	txn datastore.Txn,
+	ctx context.Context,
 	col *collection,
 ) (*mergeProcessor, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	blockLS := cidlink.DefaultLinkSystem()
 	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
 
@@ -169,7 +170,6 @@ func (db *DB) newMergeProcessor(
 	encBlockLS.SetReadStorage(txn.Encstore().AsIPLDStorage())
 
 	return &mergeProcessor{
-		txn:                       txn,
 		blockLS:                   blockLS,
 		encBlockLS:                encBlockLS,
 		col:                       col,
@@ -396,7 +396,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = coreblock.ProcessBlock(ctx, mp.txn, crdt, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}
@@ -446,6 +446,8 @@ func decryptBlock(
 }
 
 func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (core.ReplicatedData, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
 		return nil, err
@@ -457,7 +459,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		mp.docIDs[docID] = struct{}{}
 
 		return crdt.NewDocComposite(
-			mp.txn.Datastore(),
+			txn.Datastore(),
 			mp.col.Schema().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
@@ -488,7 +490,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		}
 
 		return crdt.FieldLevelCRDTWithStore(
-			mp.txn.Datastore(),
+			txn.Datastore(),
 			mp.col.Schema().VersionID,
 			fd.Typ,
 			fd.Kind,
@@ -527,8 +529,8 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 
 // getHeadsAsMergeTarget retrieves the heads of the composite DAG for the given document
 // and returns them as a merge target.
-func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) (mergeTarget, error) {
-	cids, err := getHeads(ctx, txn, key)
+func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTarget, error) {
+	cids, err := getHeads(ctx, key)
 
 	if err != nil {
 		return mergeTarget{}, err
@@ -536,7 +538,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 
 	mt := newMergeTarget()
 	for _, cid := range cids {
-		block, err := loadBlockFromBlockStore(ctx, txn, cid)
+		block, err := loadBlockFromBlockStore(ctx, cid)
 		if err != nil {
 			return mergeTarget{}, err
 		}
@@ -549,7 +551,8 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 }
 
 // getHeads retrieves the heads associated with the given datastore key.
-func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
+func getHeads(ctx context.Context, key keys.HeadstoreKey) ([]cid.Cid, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
 	headset := coreblock.NewHeadSet(txn.Headstore(), key)
 
 	cids, _, err := headset.List(ctx)
@@ -561,7 +564,8 @@ func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]
 }
 
 // loadBlockFromBlockStore loads a block from the blockstore.
-func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid) (*coreblock.Block, error) {
+func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
 	b, err := txn.Blockstore().Get(ctx, cid)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -27,7 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/keyring"
 )
 
@@ -44,9 +44,9 @@ var (
 	cfgContextKey = contextKey("cfg")
 	// rootDirContextKey is the context key for the root directory.
 	rootDirContextKey = contextKey("rootDir")
-	// dbContextKey is the context key for the client.DB
-	dbContextKey = contextKey("db")
-	// colContextKey is the context key for the client.Collection
+	// clientContextKey is the context key for the cliclient.TxnStore
+	clientContextKey = contextKey("client")
+	// colContextKey is the context key for the cliClient.Collection
 	//
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
@@ -58,32 +58,11 @@ const (
 	authTokenExpiration = time.Minute * 15
 )
 
-// mustGetContextDB returns the db for the current command context.
+// mustGetContextCLIClient returns the CLI for the current command context.
 //
-// If a db is not set in the current context this function panics.
-func mustGetContextDB(cmd *cobra.Command) client.DB {
-	return cmd.Context().Value(dbContextKey).(client.DB) //nolint:forcetypeassert
-}
-
-// mustGetContextStore returns the store for the current command context.
-//
-// If a store is not set in the current context this function panics.
-func mustGetContextStore(cmd *cobra.Command) client.Store {
-	return cmd.Context().Value(dbContextKey).(client.Store) //nolint:forcetypeassert
-}
-
-// mustGetContextP2P returns the p2p implementation for the current command context.
-//
-// If a p2p implementation is not set in the current context this function panics.
-func mustGetContextP2P(cmd *cobra.Command) client.P2P {
-	return cmd.Context().Value(dbContextKey).(client.P2P) //nolint:forcetypeassert
-}
-
-// mustGetContextHTTP returns the http client for the current command context.
-//
-// If http client is not set in the current context this function panics.
-func mustGetContextHTTP(cmd *cobra.Command) *http.Client {
-	return cmd.Context().Value(dbContextKey).(*http.Client) //nolint:forcetypeassert
+// If a CLI is not set in the current context this function panics.
+func mustGetContextCLIClient(cmd *cobra.Command) CLI {
+	return cmd.Context().Value(clientContextKey).(CLI) //nolint:forcetypeassert
 }
 
 // mustGetContextConfig returns the config for the current command context.
@@ -107,14 +86,14 @@ func tryGetContextCollection(cmd *cobra.Command) (client.Collection, bool) {
 	return col, ok
 }
 
-// setContextDB sets the db for the current command context.
-func setContextDB(cmd *cobra.Command) error {
+// setContextClient sets the db for the current command context.
+func setContextClient(cmd *cobra.Command) error {
 	cfg := mustGetContextConfig(cmd)
-	db, err := http.NewClient(cfg.GetString("api.address"))
+	client, err := http.NewClient(cfg.GetString("api.address"))
 	if err != nil {
 		return err
 	}
-	ctx := context.WithValue(cmd.Context(), dbContextKey, db)
+	ctx := context.WithValue(cmd.Context(), clientContextKey, client)
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -141,7 +120,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := db.InitContext(cmd.Context(), tx)
+	ctx := datastore.CtxSetFromClientTxn(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -158,7 +137,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 
 	cfg := mustGetContextConfig(cmd)
 
-	sourcehubAddressString := cfg.GetString("acp.dac.sourceHub.address")
+	sourcehubAddressString := cfg.GetString("acp.document.sourceHub.address")
 	var sourcehubAddress immutable.Option[string]
 	if sourcehubAddressString != "" {
 		sourcehubAddress = immutable.Some(sourcehubAddressString)
@@ -177,7 +156,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some(ident))
+	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some[acpIdentity.Identity](ident))
 	cmd.SetContext(ctx)
 	return nil
 }

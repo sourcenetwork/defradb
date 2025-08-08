@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -42,7 +43,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
@@ -69,6 +70,14 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        0,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{

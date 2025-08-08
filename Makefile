@@ -66,6 +66,8 @@ BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
+
+JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/misc/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
@@ -298,6 +300,10 @@ test\:http:
 .PHONY: test\:cli
 test\:cli:
 	DEFRA_CLIENT_CLI=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+	
+.PHONY: test\:c
+test\:c:
+	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -353,7 +359,7 @@ test\:coverage-html:
 test\:coverage-js:
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
-	GOOS=js GOARCH=wasm gotestsum --format pkgname -- ./tests/integration/... $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
+	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:changes
@@ -362,7 +368,7 @@ test\:changes:
 
 .PHONY: test\:js
 test\:js:
-    GOOS=js GOARCH=wasm go test $(JS_TEST_FLAGS) ./node/...
+	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
 
 .PHONY: validate\:codecov
 validate\:codecov:
@@ -421,6 +427,7 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
+	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
 fix:
@@ -429,3 +436,11 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
+	
+build-c-shared-linux:
+	@echo "Building c-shared library for Linux..."
+	@rm -f build/libdefradb.so build/libdefradb.h
+	@CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
+		-buildmode=c-shared -o build/libdefradb.so ./cbindings/bridge
+	@cp ./cbindings/bridge/defra_structs.h ./build/
+	@echo "Build complete: build/libdefradb.so"

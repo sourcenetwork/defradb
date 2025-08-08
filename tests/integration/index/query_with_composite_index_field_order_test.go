@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 	test := testUtils.TestCase{
 		Description: "Test composite index in default order",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"},  {field: "age"}]) {
 						name: String
@@ -98,7 +99,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDe
 	test := testUtils.TestCase{
 		Description: "Test composite index in default order and case insensitive operator",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"},  {field: "age"}]) {
 						name: String
@@ -182,7 +183,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on first field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
@@ -276,7 +277,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_Should
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
@@ -365,7 +366,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_Sh
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on first field and case insensitive operator",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
@@ -455,7 +456,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRev
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on second field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
@@ -535,7 +536,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on second field and case insensitive operator",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
@@ -613,7 +614,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on first field and filter with exact match",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
@@ -671,7 +672,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on second field and filter with exact match",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
@@ -729,7 +730,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on first field and filtering with _in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: DESC}, {field: "age", direction: ASC}]) {
 						name: String
@@ -764,7 +765,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 	test := testUtils.TestCase{
 		Description: "Test composite index with reverted order on second field and filtering with _in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name", direction: ASC}, {field: "age", direction: DESC}]) {
 						name: String
@@ -788,6 +789,263 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 						{"name": "Fred"},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimization(t *testing.T) {
+	req := `
+		query {
+			User(filter: {age: {_gt: 25}}) {
+				name
+				age
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Description: "Test composite index with range query on first field",
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User @index(includes: [{field: "age"}, {field: "name"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	30
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Charlie",
+						"age":	25
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"David",
+						"age":	35
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Eve",
+						"age":	28
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Eve",
+							"age":  28,
+						},
+						{
+							"name": "Bob",
+							"age":  30,
+						},
+						{
+							"name": "David",
+							"age":  35,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_ShouldUseRangeOptimization(t *testing.T) {
+	req := `
+		query {
+			User(filter: {age: {_gt: 25}, name: {_eq: "Bob"}}) {
+				name
+				age
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Description: "Test composite index with range query and additional filter",
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User @index(includes: [{field: "age"}, {field: "name"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	30
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Charlie",
+						"age":	25
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"David",
+						"age":	35
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Eve",
+						"age":	28
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	32
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  30,
+						},
+						{
+							"name": "Bob",
+							"age":  32,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// Should fetch all entries with age > 25, then filter by name
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUseRangeOptimization(t *testing.T) {
+	req := `
+		query {
+			User(filter: {age: {_le: 30}}) {
+				name
+				age
+			}
+		}`
+
+	test := testUtils.TestCase{
+		Description: "Test composite index with descending first field and range query",
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User @index(includes: [{field: "age", direction: DESC}, {field: "name"}]) {
+						name: String
+						age: Int
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Alice",
+						"age":	22
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Bob",
+						"age":	30
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Charlie",
+						"age":	25
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"David",
+						"age":	35
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `
+					{
+						"name":	"Eve",
+						"age":	28
+					}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Bob",
+							"age":  30,
+						},
+						{
+							"name": "Eve",
+							"age":  28,
+						},
+						{
+							"name": "Charlie",
+							"age":  25,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}

@@ -16,15 +16,14 @@ import (
 	"strings"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 )
 
 func (db *DB) createCollections(
@@ -61,8 +60,6 @@ func (db *DB) createCollections(
 
 	setFieldKinds(newDefinitions)
 
-	txn := txnctx.MustGet(ctx)
-
 	err = db.validateNewCollection(
 		ctx,
 		slices.Concat(newDefinitions, existingDefinitions),
@@ -73,7 +70,7 @@ func (db *DB) createCollections(
 	}
 
 	for _, def := range parseResults {
-		_, err := description.CreateSchemaVersion(ctx, txn, def.Definition.Schema)
+		_, err := description.CreateSchemaVersion(ctx, def.Definition.Schema)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +90,7 @@ func (db *DB) createCollections(
 			def.Definition.Version.Indexes = append(def.Definition.Version.Indexes, desc)
 		}
 
-		err = description.SaveCollection(ctx, txn, def.Definition.Version)
+		err = description.SaveCollection(ctx, def.Definition.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -211,9 +208,8 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	txn := txnctx.MustGet(ctx)
 	for _, col := range newColsByID {
-		err := description.SaveCollection(ctx, txn, col)
+		err := description.SaveCollection(ctx, col)
 		if err != nil {
 			return err
 		}
@@ -289,18 +285,17 @@ func (db *DB) setActiveSchemaVersion(
 	if schemaVersionID == "" {
 		return ErrSchemaVersionIDEmpty
 	}
-	txn := txnctx.MustGet(ctx)
-	col, err := description.GetCollectionByID(ctx, txn, schemaVersionID)
+	col, err := description.GetCollectionByID(ctx, schemaVersionID)
 	if err != nil {
 		return err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, txn, schemaVersionID)
+	schema, err := description.GetSchemaVersion(ctx, schemaVersionID)
 	if err != nil {
 		return err
 	}
 
-	colsWithRoot, err := description.GetCollectionsBySchemaRoot(ctx, txn, schema.Root)
+	colsWithRoot, err := description.GetCollectionsBySchemaRoot(ctx, schema.Root)
 	if err != nil {
 		return err
 	}
@@ -341,14 +336,14 @@ func (db *DB) setActiveSchemaVersion(
 	}
 
 	col.IsActive = true
-	err = description.SaveCollection(ctx, txn, col)
+	err = description.SaveCollection(ctx, col)
 	if err != nil {
 		return err
 	}
 
 	if isActiveFound {
 		activeCol.IsActive = false
-		err = description.SaveCollection(ctx, txn, activeCol)
+		err = description.SaveCollection(ctx, activeCol)
 		if err != nil {
 			return err
 		}

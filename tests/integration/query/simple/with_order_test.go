@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -134,7 +135,7 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order ASC",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Points: Float32
@@ -202,7 +203,7 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order ASC",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					HeightM: Float
@@ -270,7 +271,7 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order ASC",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Raw: Blob
@@ -466,7 +467,7 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order DESC",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Points: Float32
@@ -534,7 +535,7 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order DESC",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					HeightM: Float
@@ -602,7 +603,7 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple query with basic order DESC",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					Raw: Blob

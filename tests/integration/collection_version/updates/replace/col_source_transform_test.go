@@ -15,9 +15,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -40,7 +41,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

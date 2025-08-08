@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -58,7 +59,7 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: fmt.Sprintf(`
 					type OldUsers @policy(
 						id: "{{.Policy0}}",
@@ -70,10 +71,6 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
 				`,
 					sharedSameResourceName,
 				),
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -115,7 +112,7 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
 				},
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: fmt.Sprintf(`
 					type NewUsers @policy(
 						id: "{{.Policy0}}",
@@ -127,10 +124,6 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
 				`,
 					sharedSameResourceName,
 				),
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{

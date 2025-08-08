@@ -27,7 +27,7 @@
             }
         },
         "schemas": {
-            "acp_dac_relationship_add_request": {
+            "acp_document_relationship_add_request": {
                 "properties": {
                     "CollectionName": {
                         "type": "string"
@@ -44,7 +44,7 @@
                 },
                 "type": "object"
             },
-            "acp_dac_relationship_delete_request": {
+            "acp_document_relationship_delete_request": {
                 "properties": {
                     "CollectionName": {
                         "type": "string"
@@ -56,6 +56,36 @@
                         "type": "string"
                     },
                     "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_node_relationship_add_request": {
+                "properties": {
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_node_relationship_delete_request": {
+                "properties": {
+                    "Relation": {
+                        "type": "string"
+                    },
+                    "TargetActor": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "acp_node_status_result": {
+                "properties": {
+                    "Status": {
                         "type": "string"
                     }
                 },
@@ -596,6 +626,12 @@
             },
             "replicator": {
                 "properties": {
+                    "CollectionIDs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "Info": {
                         "properties": {
                             "Addrs": {
@@ -614,12 +650,6 @@
                     "LastStatusChange": {
                         "format": "date-time",
                         "type": "string"
-                    },
-                    "Schemas": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
                     },
                     "Status": {
                         "maximum": 255,
@@ -751,7 +781,7 @@
     },
     "openapi": "3.0.3",
     "paths": {
-        "/acp/dac/policy": {
+        "/acp/document/policy": {
             "post": {
                 "description": "Add a policy using document acp system",
                 "operationId": "add dac policy",
@@ -784,11 +814,11 @@
                     }
                 },
                 "tags": [
-                    "acp_dac_policy"
+                    "acp_document_policy"
                 ]
             }
         },
-        "/acp/dac/relationship": {
+        "/acp/document/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using document acp system",
                 "operationId": "delete dac relationship",
@@ -796,7 +826,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_dac_relationship_delete_request"
+                                "$ref": "#/components/schemas/acp_document_relationship_delete_request"
                             }
                         }
                     },
@@ -821,7 +851,7 @@
                     }
                 },
                 "tags": [
-                    "acp_dac_relationship"
+                    "acp_document_relationship"
                 ]
             },
             "post": {
@@ -831,7 +861,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/acp_dac_relationship_add_request"
+                                "$ref": "#/components/schemas/acp_document_relationship_add_request"
                             }
                         }
                     },
@@ -856,7 +886,146 @@
                     }
                 },
                 "tags": [
-                    "acp_dac_relationship"
+                    "acp_document_relationship"
+                ]
+            }
+        },
+        "/acp/node/disable": {
+            "post": {
+                "description": "Disable nac",
+                "operationId": "disable nac",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_node_disable"
+                ]
+            }
+        },
+        "/acp/node/re-enable": {
+            "post": {
+                "description": "Re-enable nac",
+                "operationId": "re-enable nac",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_node_re-enable"
+                ]
+            }
+        },
+        "/acp/node/relationship": {
+            "delete": {
+                "description": "Delete an actor relationship using node acp system",
+                "operationId": "delete nac relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_node_relationship_delete_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_delete_result"
+                                }
+                            }
+                        },
+                        "description": "Delete node acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_node_relationship"
+                ]
+            },
+            "post": {
+                "description": "Add an actor relationship using node acp system",
+                "operationId": "add nac relationship",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/acp_node_relationship_add_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_relationship_add_result"
+                                }
+                            }
+                        },
+                        "description": "Add node acp relationship result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_node_relationship"
+                ]
+            }
+        },
+        "/acp/node/status": {
+            "get": {
+                "description": "Check status of node acp system",
+                "operationId": "Check status of nac",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/acp_node_status_result"
+                                }
+                            }
+                        },
+                        "description": "Node acp status result"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "acp_node_status"
                 ]
             }
         },
@@ -1915,7 +2084,7 @@
         "/p2p/collections": {
             "delete": {
                 "description": "Remove peer collections",
-                "operationId": "peer_collection_remove",
+                "operationId": "peer_collections_remove",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1946,7 +2115,7 @@
             },
             "get": {
                 "description": "List peer collections",
-                "operationId": "peer_collection_list",
+                "operationId": "peer_collections_list",
                 "responses": {
                     "200": {
                         "content": {
@@ -1974,7 +2143,7 @@
             },
             "post": {
                 "description": "Add peer collections",
-                "operationId": "peer_collection_add",
+                "operationId": "peer_collections_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1993,6 +2162,145 @@
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/documents": {
+            "delete": {
+                "description": "Remove peer documents",
+                "operationId": "peer_documents_remove",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "get": {
+                "description": "List peer documents",
+                "operationId": "peer_documents_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Peer documents"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            },
+            "post": {
+                "description": "Add peer documents",
+                "operationId": "peer_documents_add",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/documents/sync": {
+            "post": {
+                "description": "Synchronize documents from the network",
+                "operationId": "peer_sync_documents",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "collectionName": {
+                                        "type": "string"
+                                    },
+                                    "docIDs": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "timeout": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document sync completed successfully"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
                         "$ref": "#/components/responses/error"
                     },
                     "default": {

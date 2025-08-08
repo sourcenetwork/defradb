@@ -13,6 +13,7 @@ package copy
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test schema update, copy collection, rename and remove ids",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

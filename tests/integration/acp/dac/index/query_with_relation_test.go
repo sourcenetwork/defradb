@@ -13,6 +13,7 @@ package test_acp_dac_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			Identity: testUtils.ClientIdentity(1),
 			Policy:   bookAuthorPolicy,
 		},
-		testUtils.SchemaUpdate{
+		&action.AddSchema{
 			Schema: `
 				type Author @policy(
 					id: "{{.Policy0}}",
@@ -42,10 +43,6 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					rating: Float @index
 					author: Author
 				}`,
-
-			Replace: map[string]testUtils.ReplaceType{
-				"Policy0": testUtils.NewPolicyIndex(0),
-			},
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,

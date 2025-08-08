@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -51,6 +52,7 @@ const developmentDescription = `Enables a set of features that make development 
  - generates temporary node identity if keyring is disabled`
 
 func MakeStartCommand() *cobra.Command {
+	var identity string
 	var cmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start a DefraDB node",
@@ -64,7 +66,13 @@ func MakeStartCommand() *cobra.Command {
 			if err := createConfig(rootdir, cmd.Flags()); err != nil {
 				return err
 			}
-			return setContextConfig(cmd)
+			if err := setContextConfig(cmd); err != nil {
+				return err
+			}
+			if err := setContextIdentity(cmd, identity); err != nil {
+				return err
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := mustGetContextConfig(cmd)
@@ -80,9 +88,10 @@ func MakeStartCommand() *cobra.Command {
 
 			opts := []node.Option{
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithSourceHubChainID(cfg.GetString("acp.dac.sourceHub.ChainID")),
-				node.WithSourceHubGRPCAddress(cfg.GetString("acp.dac.sourceHub.GRPCAddress")),
-				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.dac.sourceHub.CometRPCAddress")),
+				node.WithEnableNodeACP(cfg.GetBool("acp.node.enable")),
+				node.WithSourceHubChainID(cfg.GetString("acp.document.sourceHub.ChainID")),
+				node.WithSourceHubGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")),
+				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress")),
 				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 				node.WithEnableDevelopment(cfg.GetBool("development")),
 				// store options
@@ -90,12 +99,13 @@ func MakeStartCommand() *cobra.Command {
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
-				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
 				netConfig.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				netConfig.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
 				netConfig.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
 				netConfig.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
+				netConfig.WithRetryInterval(replicatorRetryIntervals),
+
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
 				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
@@ -105,13 +115,18 @@ func MakeStartCommand() *cobra.Command {
 
 			if cfg.GetString("datastore.store") != configStoreMemory {
 				rootDir := mustGetContextRootDir(cmd)
-				// TODO-ACP: Infuture when we add support for the --no-acp flag when admin signatures are in,
+				// TODO-ACP: Infuture when we add support for the --no-acp flag when node acp is implemented,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
 				// https://github.com/sourcenetwork/defradb/issues/2271
 				opts = append(opts, node.WithDocumentACPPath(rootDir))
+				opts = append(opts, node.WithNodeACPPath(rootDir))
 			}
 
-			documentACPType := cfg.GetString("acp.dac.type")
+			if cfg.GetBool("acp.node.enable") && identity == "" {
+				return client.ErrCanNotStartNACWithoutIdentity
+			}
+
+			documentACPType := cfg.GetString("acp.document.type")
 			if documentACPType != "" {
 				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(documentACPType)))
 			}
@@ -139,7 +154,7 @@ func MakeStartCommand() *cobra.Command {
 				}
 
 				// setup the sourcehub transaction signer
-				sourceHubKeyName := cfg.GetString("acp.dac.sourceHub.KeyName")
+				sourceHubKeyName := cfg.GetString("acp.document.sourceHub.KeyName")
 				if sourceHubKeyName != "" {
 					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
 					if err != nil {
@@ -302,9 +317,15 @@ func MakeStartCommand() *cobra.Command {
 		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
+	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
+		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().String(
-		"dac-type",
-		cfg.GetString(configFlags["acp.dac.type"]),
+		"node-acp-enable",
+		cfg.GetString(configFlags["node-acp-enable"]),
+		"Enable the node access control system. Defaults to `false`.")
+	cmd.PersistentFlags().String(
+		"document-acp-type",
+		cfg.GetString(configFlags["document-acp-type"]),
 		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
@@ -364,7 +385,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 		if err != nil {
 			return nil, err
 		}
-		rawKey := ident.PrivateKey.Raw()
+		rawKey := ident.PrivateKey().Raw()
 		// Make sure the outerscope knows about the newly created identity
 		identityBytes = append([]byte(keyType+":"), rawKey...)
 		err = kr.Set(nodeIdentityKeyName, identityBytes)
@@ -397,15 +418,15 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 	return append(opts, db.WithNodeIdentity(ident)), nil
 }
 
-func generateIdentity(keyType string) (identity.Identity, error) {
+func generateIdentity(keyType string) (identity.FullIdentity, error) {
 	privateKey, err := crypto.GenerateKey(crypto.KeyType(keyType))
 	if err != nil {
-		return identity.Identity{}, err
+		return nil, err
 	}
 
 	nodeIdentity, err := identity.FromPrivateKey(privateKey)
 	if err != nil {
-		return identity.Identity{}, err
+		return nil, err
 	}
 
 	return nodeIdentity, nil

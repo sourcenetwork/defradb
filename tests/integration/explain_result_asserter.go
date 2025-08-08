@@ -134,37 +134,37 @@ func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
 }
 
 func (a *ExplainResultAsserter) WithIterations(iterations int) *ExplainResultAsserter {
-	a.iterations = immutable.Some[int](iterations)
+	a.iterations = immutable.Some(iterations)
 	return a
 }
 
 func (a *ExplainResultAsserter) WithDocFetches(docFetches int) *ExplainResultAsserter {
-	a.docFetches = immutable.Some[int](docFetches)
+	a.docFetches = immutable.Some(docFetches)
 	return a
 }
 
 func (a *ExplainResultAsserter) WithFieldFetches(fieldFetches int) *ExplainResultAsserter {
-	a.fieldFetches = immutable.Some[int](fieldFetches)
+	a.fieldFetches = immutable.Some(fieldFetches)
 	return a
 }
 
 func (a *ExplainResultAsserter) WithIndexFetches(indexFetches int) *ExplainResultAsserter {
-	a.indexFetches = immutable.Some[int](indexFetches)
+	a.indexFetches = immutable.Some(indexFetches)
 	return a
 }
 
 func (a *ExplainResultAsserter) WithFilterMatches(filterMatches int) *ExplainResultAsserter {
-	a.filterMatches = immutable.Some[int](filterMatches)
+	a.filterMatches = immutable.Some(filterMatches)
 	return a
 }
 
 func (a *ExplainResultAsserter) WithSizeOfResults(sizeOfResults int) *ExplainResultAsserter {
-	a.sizeOfResults = immutable.Some[int](sizeOfResults)
+	a.sizeOfResults = immutable.Some(sizeOfResults)
 	return a
 }
 
 func (a *ExplainResultAsserter) WithPlanExecutions(planExecutions uint64) *ExplainResultAsserter {
-	a.planExecutions = immutable.Some[uint64](planExecutions)
+	a.planExecutions = immutable.Some(planExecutions)
 	return a
 }
 

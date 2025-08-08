@@ -15,19 +15,6 @@ import (
 )
 
 func MakeDocumentACPRelationshipAddCommand() *cobra.Command {
-	const (
-		collectionFlagLong  string = "collection"
-		collectionFlagShort string = "c"
-
-		relationFlagLong  string = "relation"
-		relationFlagShort string = "r"
-
-		targetActorFlagLong  string = "actor"
-		targetActorFlagShort string = "a"
-
-		docIDFlag string = "docID"
-	)
-
 	var (
 		collectionArg  string
 		relationArg    string
@@ -81,8 +68,8 @@ Example: Creating a dummy relationship does nothing (from database perspective):
 	-i e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db := mustGetContextDB(cmd)
-			exists, err := db.AddDACActorRelationship(
+			cliClient := mustGetContextCLIClient(cmd)
+			exists, err := cliClient.AddDACActorRelationship(
 				cmd.Context(),
 				collectionArg,
 				docIDArg,
@@ -100,38 +87,38 @@ Example: Creating a dummy relationship does nothing (from database perspective):
 
 	cmd.Flags().StringVarP(
 		&collectionArg,
-		collectionFlagLong,
-		collectionFlagShort,
+		"collection",
+		"c",
 		"",
 		"Collection that has the resource and policy for object",
 	)
-	_ = cmd.MarkFlagRequired(collectionFlagLong)
+	_ = cmd.MarkFlagRequired("collection")
 
 	cmd.Flags().StringVarP(
 		&relationArg,
-		relationFlagLong,
-		relationFlagShort,
+		"relation",
+		"r",
 		"",
 		"Relation that needs to be set for the relationship",
 	)
-	_ = cmd.MarkFlagRequired(relationFlagLong)
+	_ = cmd.MarkFlagRequired("relation")
 
 	cmd.Flags().StringVarP(
 		&targetActorArg,
-		targetActorFlagLong,
-		targetActorFlagShort,
+		"actor",
+		"a",
 		"",
 		"Actor to add relationship with",
 	)
-	_ = cmd.MarkFlagRequired(targetActorFlagLong)
+	_ = cmd.MarkFlagRequired("actor")
 
 	cmd.Flags().StringVar(
 		&docIDArg,
-		docIDFlag,
+		"docID",
 		"",
 		"Document Identifier (ObjectID) to make relationship for",
 	)
-	_ = cmd.MarkFlagRequired(docIDFlag)
+	_ = cmd.MarkFlagRequired("docID")
 
 	return cmd
 }

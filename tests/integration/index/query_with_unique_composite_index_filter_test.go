@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -38,7 +39,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Test filtering on composite index with _eq filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -112,7 +113,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
@@ -133,7 +134,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -150,7 +151,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _gt filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -188,7 +189,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
@@ -210,7 +211,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -227,7 +228,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ge filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -266,7 +267,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
@@ -287,7 +288,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -304,7 +305,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _lt filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -342,7 +343,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "age"}, {field: "name"}]) {
 						name: String
@@ -364,7 +365,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -381,7 +382,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _le filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -420,7 +421,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _ne filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -466,7 +467,7 @@ func TestQueryWithUniqueCompositeIndex_WithInForFirstAndEqForRest_ShouldFetchEff
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -542,7 +543,7 @@ func TestQueryWithUniqueCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -597,7 +598,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T)
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nin filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -667,7 +668,7 @@ func TestQueryWithUniqueCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) 
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _like filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
 						name: String 
@@ -764,7 +765,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nlike filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
 						name: String 
@@ -804,7 +805,7 @@ func TestQueryWithUniqueCompositeIndex_WithNotCaseInsensitiveLikeFilter_ShouldFe
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _nilike and _nlike filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}]) {
 						name: String 
@@ -840,7 +841,7 @@ func TestQueryWithUniqueCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseInd
 	test := testUtils.TestCase{
 		Description: "Test if index is not used when first field is not in filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -869,7 +870,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFe
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on first field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -923,7 +924,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on first field with multiple matches",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -979,7 +980,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldF
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on second field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -1046,7 +1047,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on second field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -1111,7 +1112,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 	test := testUtils.TestCase{
 		Description: "Test index filtering with _eq filter on nil value on both fields",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -1212,7 +1213,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 	test := testUtils.TestCase{
 		Description: "Test index querying on nil values works after values update",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String
@@ -1353,7 +1354,7 @@ func TestQueryWithUniqueCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreVa
 	test := testUtils.TestCase{
 		Description: "Test composite index with filter without middle field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "email"}, {field: "age"}]) {
 						name: String

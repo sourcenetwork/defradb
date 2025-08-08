@@ -13,6 +13,7 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestMutationUpdate_WithId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with document id",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -67,7 +68,7 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 	test := testUtils.TestCase{
 		Description: "Simple update mutation with non existant document id",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

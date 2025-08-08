@@ -20,18 +20,17 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // heads manages the current Merkle-CRDT heads.
 type heads struct {
-	store     datastore.DSReaderWriter
+	store     corekv.ReaderWriter
 	namespace keys.HeadstoreKey
 }
 
-func NewHeadSet(store datastore.DSReaderWriter, namespace keys.HeadstoreKey) *heads {
+func NewHeadSet(store corekv.ReaderWriter, namespace keys.HeadstoreKey) *heads {
 	return &heads{
 		store:     store,
 		namespace: namespace,

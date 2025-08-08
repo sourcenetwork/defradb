@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -29,11 +29,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/txnctx"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
@@ -88,14 +88,12 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 }
 
 func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
-	txn := txnctx.MustGet(ctx)
-
-	col, err := description.GetCollectionByID(ctx, txn, id)
+	col, err := description.GetCollectionByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	schema, err := description.GetSchemaVersion(ctx, txn, id)
+	schema, err := description.GetSchemaVersion(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -136,19 +134,17 @@ func (db *DB) getCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	txn := txnctx.MustGet(ctx)
-
 	var cols []client.CollectionVersion
 	switch {
 	case options.Name.HasValue():
-		col, err := description.GetCollectionByName(ctx, txn, options.Name.Value())
+		col, err := description.GetCollectionByName(ctx, options.Name.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
 	case options.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, txn, options.VersionID.Value())
+		col, err := description.GetCollectionByID(ctx, options.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +152,7 @@ func (db *DB) getCollections(
 
 	case options.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, txn, options.CollectionID.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, options.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -164,13 +160,13 @@ func (db *DB) getCollections(
 	default:
 		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
 			var err error
-			cols, err = description.GetCollections(ctx, txn)
+			cols, err = description.GetCollections(ctx)
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			var err error
-			cols, err = description.GetActiveCollections(ctx, txn)
+			cols, err = description.GetActiveCollections(ctx)
 			if err != nil {
 				return nil, err
 			}
@@ -190,7 +186,7 @@ func (db *DB) getCollections(
 			continue
 		}
 
-		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
+		schema, err := description.GetSchemaVersion(ctx, col.VersionID)
 		if err != nil {
 			// If the schema is not found we leave it as empty and carry on. This can happen when
 			// a migration is registered before the schema is declared locally.
@@ -211,16 +207,14 @@ func (db *DB) getCollections(
 
 // getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
 func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
-	txn := txnctx.MustGet(ctx)
-
-	cols, err := description.GetActiveCollections(ctx, txn)
+	cols, err := description.GetActiveCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	definitions := make([]client.CollectionDefinition, len(cols))
 	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, txn, col.VersionID)
+		schema, err := description.GetSchemaVersion(ctx, col.VersionID)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +226,7 @@ func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionD
 		definitions[i] = collection.Definition()
 	}
 
-	schemas, err := description.GetCollectionlessSchemas(ctx, txn)
+	schemas, err := description.GetCollectionlessSchemas(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +263,7 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
@@ -288,12 +282,14 @@ func (c *collection) getAllDocIDsChan(
 
 	resCh := make(chan client.DocIDResult)
 	go func() {
-		defer func() {
+		closeIterator := func() {
 			if err := iter.Close(); err != nil {
 				log.ErrorContextE(ctx, errFailedtoCloseQueryReqAllIDs, err)
 			}
+		}
+		defer func() {
+			closeIterator()
 			close(resCh)
-			txn.Discard(ctx)
 		}()
 		for {
 			// check for Done on context first
@@ -307,6 +303,7 @@ func (c *collection) getAllDocIDsChan(
 
 			hasNext, err := iter.Next()
 			if err != nil {
+				closeIterator()
 				resCh <- client.DocIDResult{
 					Err: err,
 				}
@@ -321,6 +318,7 @@ func (c *collection) getAllDocIDsChan(
 
 			docID, err := client.NewDocIDFromString(rawDocID)
 			if err != nil {
+				closeIterator()
 				resCh <- client.DocIDResult{
 					Err: err,
 				}
@@ -334,6 +332,7 @@ func (c *collection) getAllDocIDsChan(
 			)
 
 			if err != nil {
+				closeIterator()
 				resCh <- client.DocIDResult{
 					Err: err,
 				}
@@ -478,7 +477,7 @@ func (c *collection) create(
 
 	// write value object marker if we have an empty doc
 	if len(doc.Values()) == 0 {
-		txn := txnctx.MustGet(ctx)
+		txn := datastore.CtxMustGetTxn(ctx)
 
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
@@ -640,6 +639,14 @@ func (c *collection) Save(
 	return txn.Commit(ctx)
 }
 
+// hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
+func hasPrivateKey(ident identity.Identity) bool {
+	if fullIdent, ok := ident.(identity.FullIdentity); ok {
+		return fullIdent.PrivateKey() != nil
+	}
+	return false
+}
+
 func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	encConf := encryption.GetContextConfig(ctx)
 	if !encConf.HasValue() {
@@ -679,10 +686,10 @@ func (c *collection) save(
 			return err
 		}
 	}
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	ident := identity.FromContext(ctx)
-	if (!ident.HasValue() || ident.Value().PrivateKey == nil) && c.db.nodeIdentity.HasValue() {
+	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
 		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
@@ -768,7 +775,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, txn, merkleCRDT, delta)
+			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -783,7 +790,7 @@ func (c *collection) save(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := coreblock.AddDelta(ctx, txn, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -815,7 +822,6 @@ func (c *collection) save(
 
 		link, headNode, err := coreblock.AddDelta(
 			ctx,
-			txn,
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,
@@ -1010,7 +1016,7 @@ func (c *collection) exists(
 		return false, false, nil
 	}
 
-	txn := txnctx.MustGet(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
