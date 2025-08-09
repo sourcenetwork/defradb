@@ -24,6 +24,7 @@ defradb start [flags]
       --max-txn-retries int               Specify the maximum number of retries per transaction (default 5)
       --no-encryption                     Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.
       --no-p2p                            Disable the peer-to-peer network synchronization system
+      --no-searchable-encryption          Skip generating a searchable encryption key. Searchable encryption will be disabled.
       --no-signing                        Disable signing of commits.
       --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
       --node-acp-enable false             Enable the node access control system. Defaults to false. (default "false")

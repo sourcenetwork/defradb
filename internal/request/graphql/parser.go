@@ -33,17 +33,19 @@ var _ core.Parser = (*parser)(nil)
 var tracer = telemetry.NewTracer()
 
 type parser struct {
-	schemaManager *schema.SchemaManager
+	schemaManager                 *schema.SchemaManager
+	isSearchableEncryptionEnabled bool
 }
 
-func NewParser() (*parser, error) {
-	schemaManager, err := schema.NewSchemaManager()
+func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
+	schemaManager, err := schema.NewSchemaManager(isSearchableEncryptionEnabled)
 	if err != nil {
 		return nil, err
 	}
 
 	p := &parser{
-		schemaManager: schemaManager,
+		schemaManager:                 schemaManager,
+		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
 
 	return p, nil
@@ -120,7 +122,7 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionD
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	schemaManager, err := schema.NewSchemaManager()
+	schemaManager, err := schema.NewSchemaManager(p.isSearchableEncryptionEnabled)
 	if err != nil {
 		return err
 	}

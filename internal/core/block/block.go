@@ -24,7 +24,6 @@ import (
 	"github.com/multiformats/go-multicodec"
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
@@ -199,7 +198,7 @@ func (block *Block) IPLDSchemaBytes() []byte {
 }
 
 // New creates a new block with the given delta and links.
-func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
+func New(delta crdt.CRDT, links []DAGLink, heads ...cid.Cid) *Block {
 	// Sort the heads lexicographically by CID.
 	// We need to do this to ensure that the block is deterministic.
 	sort.Slice(heads, func(i, j int) bool {
@@ -242,7 +241,7 @@ func New(delta core.Delta, links []DAGLink, heads ...cid.Cid) *Block {
 	return &Block{
 		Heads: headLinks,
 		Links: blockLinks,
-		Delta: crdt.NewCRDT(delta),
+		Delta: delta,
 	}
 }
 

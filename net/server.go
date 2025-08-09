@@ -40,6 +40,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/se"
+	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
 // DocSyncTopic is the fixed topic for document sync operations.
@@ -192,6 +194,76 @@ func (s *server) getIdentityHandler(
 		return nil, err
 	}
 	return &getIdentityReply{IdentityToken: token}, nil
+}
+
+// pushSEArtifactsHandler receives SE artifacts from peers
+func (s *server) pushSEArtifactsHandler(ctx context.Context, req *pushSEArtifactsRequest) (*pushSEArtifactsReply, error) {
+	sb := strings.Builder{}
+	for i, netArtifact := range req.Artifacts {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(netArtifact.DocID)
+	}
+	log.InfoContext(ctx, "Handle push SE artifacts", corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.Creator))
+
+	_, err := peerIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	artifacts := make([]secore.Artifact, len(req.Artifacts))
+	for i, netArtifact := range req.Artifacts {
+		artifacts[i] = secore.Artifact{
+			DocID:        netArtifact.DocID,
+			IndexID:      netArtifact.IndexID,
+			SearchTag:    netArtifact.SearchTag,
+			CollectionID: req.CollectionID,
+		}
+	}
+
+	// Store artifacts directly in the datastore
+	if err := se.StoreArtifacts(ctx, datastore.DatastoreFrom(s.peer.db.Rootstore()), artifacts); err != nil {
+		return nil, err
+	}
+
+	return &pushSEArtifactsReply{}, nil
+}
+
+// querySEArtifactsHandler handles SE queries from peers
+func (s *server) querySEArtifactsHandler(ctx context.Context, req *querySEArtifactsRequest) (*querySEArtifactsReply, error) {
+	peerID, err := peerIDFromContext(ctx)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to get peer ID from context", err)
+		return nil, err
+	}
+
+	matchingDocIDs, err := s.querySEArtifactsFromDatastore(ctx, req)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
+		return nil, err
+	}
+
+	log.InfoContext(ctx, "Handle SE artifacts query", corelog.String("DocIDs", strings.Join(matchingDocIDs, ", ")),
+		corelog.String("Sender", peerID.String()))
+
+	return &querySEArtifactsReply{
+		DocIDs: matchingDocIDs,
+	}, nil
+}
+
+// querySEArtifactsFromDatastore queries SE artifacts from the local datastore
+func (s *server) querySEArtifactsFromDatastore(ctx context.Context, req *querySEArtifactsRequest) ([]string, error) {
+	queries := make([]se.FieldQuery, len(req.Queries))
+	for i, q := range req.Queries {
+		queries[i] = se.FieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	return se.FetchDocIDs(ctx, datastore.DatastoreFrom(s.peer.db.Rootstore()), req.CollectionID, queries)
 }
 
 // addPubSubTopic subscribes to a topic on the pubsub network
@@ -628,12 +700,6 @@ func (s *server) docSyncMessageHandler(from libpeer.ID, topic string, msg []byte
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (s *server) processDocSyncItem(docID string) (docSyncItem, error) {
-	txn, err := s.peer.db.NewTxn(s.peer.ctx, true)
-	if err != nil {
-		return docSyncItem{}, NewErrFailedToCreateTransaction(err)
-	}
-	defer txn.Discard(s.peer.ctx)
-
 	key := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,

@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
 
 	"github.com/sourcenetwork/immutable"
@@ -30,6 +31,15 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
+func init() {
+	format.RegisterCustomFormatter(func(value any) (string, bool) {
+		if matcher, ok := value.(*docIDAt); ok {
+			return matcher.String(), true
+		}
+		return "", false
+	})
+}
+
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
 // without allowing them to modify the state.
 type TestState interface {
@@ -39,6 +49,8 @@ type TestState interface {
 	GetCurrentNodeID() int
 	// GetIdentity returns the identity for the given node index.
 	GetIdentity(state.Identity) acpIdentity.Identity
+	// GetDocID returns the document ID for the given collection index and document index.
+	GetDocID(collectionIndex, docIndex int) client.DocID
 }
 
 type testStateMatcher struct {
@@ -201,6 +213,49 @@ func (matcher *SameValue) FailureMessage(actual any) string {
 func (matcher *SameValue) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected value to be different from the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
 		matcher.value, actual)
+}
+
+// DocIDAt returns a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+func DocIDAt(collectionIndex, docIndex int) *docIDAt {
+	return &docIDAt{
+		collectionIndex: collectionIndex,
+		docIndex:        docIndex,
+	}
+}
+
+// docIDAt is a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+type docIDAt struct {
+	testStateMatcher
+	collectionIndex int
+	docIndex        int
+}
+
+var _ TestStateMatcher = (*docIDAt)(nil)
+
+func (matcher *docIDAt) Match(actual any) (bool, error) {
+	actualDocID, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a document ID string, got %T", actual)
+	}
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return actualDocID == expectedDocID, nil
+}
+
+func (matcher *docIDAt) FailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nto be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) String() string {
+	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
+		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
 // assertResultsEqual asserts that actual result is equal to the expected result.

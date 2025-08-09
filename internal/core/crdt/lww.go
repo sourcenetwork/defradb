@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -36,7 +35,7 @@ type LWWDelta struct {
 	Data            []byte
 }
 
-var _ core.Delta = (*LWWDelta)(nil)
+var _ Delta = (*LWWDelta)(nil)
 
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
@@ -71,7 +70,7 @@ type LWW struct {
 }
 
 var _ FieldLevelCRDT = (*LWW)(nil)
-var _ core.ReplicatedData = (*LWW)(nil)
+var _ ReplicatedData = (*LWW)(nil)
 
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
@@ -94,7 +93,7 @@ func (m *LWW) HeadstorePrefix() keys.HeadstoreKey {
 }
 
 // Save the value of the register to the DAG.
-func (m *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
+func (m *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
@@ -112,7 +111,7 @@ func (m *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg *LWW) Merge(ctx context.Context, delta core.Delta) error {
+func (reg *LWW) Merge(ctx context.Context, delta Delta) error {
 	d, ok := delta.(*LWWDelta)
 	if !ok {
 		return ErrMismatchedMergeType

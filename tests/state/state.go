@@ -192,6 +192,9 @@ type State struct {
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[Identity]crypto.KeyType
 
+	// EnableSearchableEncryption indicates whether searchable encryption is enabled.
+	EnableSearchableEncryption bool
+
 	// Identities contains all Identities created in this test.
 	// The map key is the identity reference that uniquely identifies Identities of different
 	// types. See [identRef].
@@ -267,11 +270,16 @@ func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
 	return GetIdentity(s, immutable.Some(ident))
 }
 
+func (s *State) GetDocID(collectionIndex, docIndex int) client.DocID {
+	return s.DocIDs[collectionIndex][docIndex]
+}
+
 // NewState returns a new fresh state for the given testCase.
 func NewState(
 	ctx context.Context,
 	t testing.TB,
 	identityTypes map[Identity]crypto.KeyType,
+	enableSearchableEncryption bool,
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
@@ -285,6 +293,7 @@ func NewState(
 		ClientType:                      clientType,
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,
+		EnableSearchableEncryption:      enableSearchableEncryption,
 		Identities:                      map[Identity]*IdentityHolder{},
 		NextIdentityGenSeed:             0,
 		AllActionsDone:                  make(chan struct{}),

@@ -77,6 +77,10 @@ type TestCase struct {
 	// Use [IdentityTypes] to customize the key type that is used for identity and signing.
 	EnableSigning bool
 
+	// EnableSearchableEncryption indicates if searchable encryption should be enabled for the test.
+	// When enabled, a searchable encryption key will be generated and passed to the database.
+	EnableSearchableEncryption bool
+
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[state.Identity]crypto.KeyType
@@ -550,6 +554,72 @@ type GetIndexes struct {
 
 	// The expected indexes to be returned.
 	ExpectedIndexes []client.IndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// CreateEncryptedIndex will attempt to create the given encrypted index for the given collection
+// using the collection api.
+type CreateEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to create the encrypted index on.
+	//
+	// If a value is not provided the index will be created in all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this index should be created.
+	CollectionID int
+
+	// The name of the field to index. Used only for single field indexes.
+	FieldName string
+
+	// The type of the index to create.
+	Type string
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// GetEncryptedIndexes will attempt to get the given encrypted index from the given collection
+// using the collection api.
+type GetEncryptedIndexes struct {
+	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	//
+	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this encrypted indexes should be retrieved.
+	CollectionID int
+
+	// The expected encrypted indexes to be returned.
+	ExpectedIndexes []client.EncryptedIndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// DeleteEncryptedIndex will attempt to delete the given encrypted index for the given collection
+// using the collection api.
+type DeleteEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to drop the encrypted index on.
+	//
+	// If a value is not provided the index will be dropped on all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this index should be dropped.
+	CollectionID int
+
+	// The name of the field whose encrypted index should be dropped.
+	FieldName string
 
 	// Any error expected from the action. Optional.
 	//

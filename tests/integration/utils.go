@@ -267,7 +267,8 @@ func executeTestCase(
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := state.NewState(ctx, t, testCase.IdentityTypes, kms, dbt, clientType, collectionNames)
+	s := state.NewState(ctx, t, testCase.IdentityTypes, testCase.EnableSearchableEncryption,kms, dbt, 
+		clientType, collectionNames)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -426,6 +427,15 @@ func performAction(
 
 	case GetIndexes:
 		getIndexes(s, action)
+
+	case CreateEncryptedIndex:
+		createEncryptedIndex(s, action)
+
+	case GetEncryptedIndexes:
+		getEncryptedIndexes(s, action)
+
+	case DeleteEncryptedIndex:
+		deleteEncryptedIndex(s, action)
 
 	case BackupExport:
 		backupExport(s, action)
@@ -1723,6 +1733,98 @@ func dropIndex(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
+func createEncryptedIndex(
+	s *state.State,
+	action CreateEncryptedIndex,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		if action.FieldName == "" {
+			s.T.Fatalf("fieldName is required for encrypted index")
+		}
+
+		indexDesc := client.EncryptedIndexCreateRequest{
+			FieldName: action.FieldName,
+			Type:      client.EncryptedIndexType(action.Type),
+		}
+
+		err := withRetryOnNode(
+			node,
+			func() error {
+				_, err := collection.CreateEncryptedIndex(s.Ctx, indexDesc)
+				return err
+			},
+		)
+		if AssertError(s.T, err, action.ExpectedError) {
+			return
+		}
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+}
+
+func getEncryptedIndexes(
+	s *state.State,
+	action GetEncryptedIndexes,
+) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	var expectedErrorRaised bool
+
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	for _, nodeID := range nodeIDs {
+		collections := s.Nodes[nodeID].Collections
+		err := withRetryOnNode(
+			s.Nodes[nodeID],
+			func() error {
+				actualIndexes, err := collections[action.CollectionID].GetEncryptedIndexes(s.Ctx)
+				if err != nil {
+					return err
+				}
+
+				require.ElementsMatch(s.T, action.ExpectedIndexes, actualIndexes,
+					"Unexpected encrypted indexes")
+
+				return nil
+			},
+		)
+		expectedErrorRaised = expectedErrorRaised ||
+			AssertError(s.T, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+}
+
+func deleteEncryptedIndex(
+	s *state.State,
+	action DeleteEncryptedIndex,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		if action.FieldName == "" {
+			s.T.Fatalf("fieldName is required for deleting encrypted index")
+		}
+
+		err := withRetryOnNode(
+			node,
+			func() error {
+				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName)
+			},
+		)
+		if AssertError(s.T, err, action.ExpectedError) {
+			return
+		}
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+}
+
 // backupExport generates a backup using the db api.
 func backupExport(
 	s *state.State,
@@ -2540,17 +2642,44 @@ func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *s
 		return
 	}
 
+	var elements []any
+	var matchersList []gomega.OmegaMatcher
+
 	switch exp := exp.(type) {
 	case *matchers.AndMatcher:
-		for _, m := range exp.Matchers {
-			traverseGomegaMatchers(m, s, f)
-		}
+		matchersList = exp.Matchers
 	case *matchers.OrMatcher:
-		for _, m := range exp.Matchers {
+		matchersList = exp.Matchers
+	case *matchers.NotMatcher:
+		matchersList = []gomega.OmegaMatcher{exp.Matcher}
+	case *matchers.ConsistOfMatcher:
+		elements = exp.Elements
+	case *matchers.ContainElementMatcher:
+		elements = []any{exp.Element}
+	case *matchers.BeElementOfMatcher:
+		elements = exp.Elements
+	case *matchers.HaveExactElementsMatcher:
+		elements = exp.Elements
+	case *matchers.ContainElementsMatcher:
+		elements = exp.Elements
+	case *matchers.HaveEachMatcher:
+		elements = []any{exp.Element}
+	case *matchers.WithTransformMatcher:
+		matchersList = []gomega.OmegaMatcher{exp.Matcher}
+	}
+
+	if len(matchersList) > 0 {
+		for _, m := range matchersList {
 			traverseGomegaMatchers(m, s, f)
 		}
-	case *matchers.NotMatcher:
-		traverseGomegaMatchers(exp.Matcher, s, f)
+	}
+
+	if len(elements) > 0 {
+		for _, el := range elements {
+			if m, ok := el.(gomega.OmegaMatcher); ok {
+				traverseGomegaMatchers(m, s, f)
+			}
+		}
 	}
 }
 

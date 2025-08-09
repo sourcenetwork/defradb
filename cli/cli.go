@@ -129,6 +129,13 @@ func NewDefraCommand() *cobra.Command {
 		MakeIndexListCommand(),
 	)
 
+	encrypted_index := MakeEncryptedIndexCommand()
+	encrypted_index.AddCommand(
+		MakeEncryptedIndexCreateCommand(),
+		MakeEncryptedIndexDeleteCommand(),
+		MakeEncryptedIndexListCommand(),
+	)
+
 	backup := MakeBackupCommand()
 	backup.AddCommand(
 		MakeBackupExportCommand(),
@@ -168,6 +175,7 @@ func NewDefraCommand() *cobra.Command {
 		acp,
 		view,
 		index,
+		encrypted_index,
 		p2p,
 		backup,
 		tx,

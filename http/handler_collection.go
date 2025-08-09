@@ -301,6 +301,51 @@ func (s *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (s *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	var indexDesc client.EncryptedIndexCreateRequest
+	if err := requestJSON(req, &indexDesc); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, index)
+}
+
+func (s *collectionHandler) GetEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	indexes, err := col.GetEncryptedIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, indexes)
+}
+
+func (s *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	fieldName := chi.URLParam(req, "field")
+	if fieldName == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("field name is required")})
+		return
+	}
+
+	err := col.DeleteEncryptedIndex(req.Context(), fieldName)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *collectionHandler) bindRoutes(router *Router) {
 	errorResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/error",
@@ -327,7 +372,13 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		Ref: "#/components/schemas/index",
 	}
 	indexCreateRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/index_create_request",
+		Ref: "#/components/schemas/index_create",
+	}
+	encryptedIndexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/encrypted_index",
+	}
+	encryptedIndexCreateRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/encrypted_index_create",
 	}
 
 	collectionNamePathParam := openapi3.NewPathParameter("name").
@@ -491,6 +542,54 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionKeys.Responses.Set("200", successResponse)
 	collectionKeys.Responses.Set("400", errorResponse)
 
+	createEncryptedIndexRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(encryptedIndexCreateRequestSchema))
+	createEncryptedIndexResponse := openapi3.NewResponse().
+		WithDescription("Encrypted index description").
+		WithJSONSchemaRef(encryptedIndexSchema)
+
+	createEncryptedIndex := openapi3.NewOperation()
+	createEncryptedIndex.OperationID = "encrypted_index_create"
+	createEncryptedIndex.Description = "Create an encrypted index"
+	createEncryptedIndex.Tags = []string{"encrypted_index"}
+	createEncryptedIndex.AddParameter(collectionNamePathParam)
+	createEncryptedIndex.RequestBody = &openapi3.RequestBodyRef{
+		Value: createEncryptedIndexRequest,
+	}
+	createEncryptedIndex.AddResponse(200, createEncryptedIndexResponse)
+	createEncryptedIndex.Responses.Set("400", errorResponse)
+
+	encryptedIndexArraySchema := openapi3.NewArraySchema()
+	encryptedIndexArraySchema.Items = encryptedIndexSchema
+
+	getEncryptedIndexesResponse := openapi3.NewResponse().
+		WithDescription("List of encrypted indexes").
+		WithJSONSchema(encryptedIndexArraySchema)
+
+	getEncryptedIndexes := openapi3.NewOperation()
+	getEncryptedIndexes.OperationID = "encrypted_index_list"
+	getEncryptedIndexes.Description = "List encrypted indexes"
+	getEncryptedIndexes.Tags = []string{"encrypted_index"}
+	getEncryptedIndexes.AddParameter(collectionNamePathParam)
+	getEncryptedIndexes.AddResponse(200, getEncryptedIndexesResponse)
+	getEncryptedIndexes.Responses.Set("400", errorResponse)
+
+	fieldNamePathParam := openapi3.NewPathParameter("field").
+		WithRequired(true).
+		WithDescription("Field name of the encrypted index").
+		WithSchema(openapi3.NewStringSchema())
+
+	deleteEncryptedIndex := openapi3.NewOperation()
+	deleteEncryptedIndex.OperationID = "encrypted_index_delete"
+	deleteEncryptedIndex.Description = "Delete an encrypted index"
+	deleteEncryptedIndex.Tags = []string{"encrypted_index"}
+	deleteEncryptedIndex.AddParameter(collectionNamePathParam)
+	deleteEncryptedIndex.AddParameter(fieldNamePathParam)
+	deleteEncryptedIndex.Responses = openapi3.NewResponses()
+	deleteEncryptedIndex.Responses.Set("200", successResponse)
+	deleteEncryptedIndex.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
@@ -501,4 +600,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodPatch, collectionUpdate, h.Update)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodDelete, collectionDelete, h.Delete)
+	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodPost, createEncryptedIndex, h.CreateEncryptedIndex)
+	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, getEncryptedIndexes, h.GetEncryptedIndexes)
+	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex, h.DeleteEncryptedIndex)
 }

@@ -300,6 +300,9 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
 
+	// GetAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
+	GetAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
+
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
 
@@ -313,7 +316,7 @@ type Store interface {
 
 // Txn is a Store instance that has been wrapped by a transaction.
 //
-// It privides access to all the Store methods and ensures that they are
+// It provides access to all the Store methods and ensures that they are
 // executed under the transaction.
 type Txn interface {
 	Store

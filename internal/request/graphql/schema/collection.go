@@ -147,6 +147,7 @@ func fromAstDefinition(
 
 	indexes := []client.IndexCreateRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
+	encryptedIndexes := []client.EncryptedIndexCreateRequest{}
 	for _, field := range def.Fields {
 		tmpSchemaFieldDescriptions, tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -174,6 +175,12 @@ func fromAstDefinition(
 					return core.Collection{}, err
 				}
 				vectorEmbeddings = append(vectorEmbeddings, embedding)
+			case types.EncryptedIndexDirectiveLabel:
+				encryptedIndex, err := encryptedIndexFromAST(directive, field)
+				if err != nil {
+					return core.Collection{}, err
+				}
+				encryptedIndexes = append(encryptedIndexes, encryptedIndex)
 			}
 		}
 	}
@@ -270,7 +277,8 @@ func fromAstDefinition(
 				Fields: schemaFieldDescriptions,
 			},
 		},
-		CreateIndexes: indexes,
+		CreateIndexes:          indexes,
+		CreateEncryptedIndexes: encryptedIndexes,
 	}, nil
 }
 
@@ -470,6 +478,36 @@ func defaultFromAST(
 		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
 	}
 	return value, nil
+}
+
+func encryptedIndexFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.EncryptedIndexCreateRequest, error) {
+	encryptedIndex := client.EncryptedIndexCreateRequest{
+		FieldName: fieldDef.Name.Value,
+	}
+
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.EncryptedIndexDirectivePropType:
+			typeVal, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
+			}
+
+			// Currently only equality is supported
+			if typeVal.Value != string(client.EncryptedIndexTypeEquality) {
+				return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexTypeNotSupported(typeVal.Value)
+			}
+			encryptedIndex.Type = client.EncryptedIndexType(typeVal.Value)
+
+		default:
+			return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexWithUnknownArg(arg.Name.Value)
+		}
+	}
+
+	return encryptedIndex, nil
 }
 
 func fieldsFromAST(

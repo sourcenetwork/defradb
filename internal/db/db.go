@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
@@ -90,6 +91,12 @@ type DB struct {
 
 	// If true, block signing is disabled. By default, block signing is enabled.
 	signingDisabled bool
+
+	// The key used for searchable encryption.
+	searchableEncryptionKey []byte
+
+	// SE replication coordinator
+	seCoordinator *se.ReplicationCoordinator
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -114,14 +121,14 @@ func newDB(
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	parser, err := graphql.NewParser()
-	if err != nil {
-		return nil, err
-	}
-
 	opts := &dbOptions{}
 	for _, opt := range options {
 		opt(opts)
+	}
+
+	parser, err := graphql.NewParser(len(opts.searchableEncryptionKey) > 0)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -143,6 +150,7 @@ func newDB(
 
 	db.nodeIdentity = opts.identity
 	db.signingDisabled = opts.disableSigning
+	db.searchableEncryptionKey = opts.searchableEncryptionKey
 
 	if lens != nil {
 		lens.Init(db)
@@ -151,6 +159,15 @@ func newDB(
 	err = db.initialize(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Initialize SE replication coordinator
+	if len(db.searchableEncryptionKey) > 0 {
+		coord, err := se.NewReplicationCoordinator(db, db.searchableEncryptionKey)
+		if err != nil {
+			return nil, err
+		}
+		db.seCoordinator = coord
 	}
 
 	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
@@ -478,6 +495,10 @@ func (db *DB) Close() {
 		}
 	}
 
+	if db.seCoordinator != nil {
+		db.seCoordinator.Close()
+	}
+
 	log.Info("Successfully closed running process")
 }
 
@@ -506,4 +527,8 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	}
 
 	return iter.Close()
+}
+
+func (db *DB) GetSearchableEncryptionKey() []byte {
+	return db.searchableEncryptionKey
 }

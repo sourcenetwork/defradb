@@ -58,6 +58,14 @@ func setupNode(
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
 
+	if s.EnableSearchableEncryption {
+		seKey, err := crypto.GenerateAES256()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate searchable encryption key: %w", err)
+		}
+		opts = append(opts, db.WithSearchableEncryptionKey(seKey))
+	}
+
 	err := createBadgerEncryptionKey()
 	if err != nil {
 		return nil, err

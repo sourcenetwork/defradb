@@ -292,3 +292,21 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	}
 	return out, nil
 }
+
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	req client.EncryptedIndexCreateRequest,
+) (client.EncryptedIndexDescription, error) {
+	// TODO: implement
+	return client.EncryptedIndexDescription{}, nil
+}
+
+func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	// TODO: implement
+	return nil, nil
+}
+
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	// TODO: implement
+	return nil
+}

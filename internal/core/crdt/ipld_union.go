@@ -10,8 +10,6 @@
 
 package crdt
 
-import "github.com/sourcenetwork/defradb/internal/core"
-
 // CRDT is a union type used for IPLD schemas that can hold any of the CRDT deltas.
 type CRDT struct {
 	LWWDelta          *LWWDelta
@@ -21,7 +19,7 @@ type CRDT struct {
 }
 
 // NewCRDT returns a new CRDT.
-func NewCRDT(delta core.Delta) CRDT {
+func NewCRDT(delta Delta) CRDT {
 	switch d := delta.(type) {
 	case *LWWDelta:
 		return CRDT{LWWDelta: d}
@@ -49,7 +47,7 @@ func (c CRDT) IPLDSchemaBytes() []byte {
 }
 
 // GetDelta returns the delta that is stored in the CRDT.
-func (c CRDT) GetDelta() core.Delta {
+func (c CRDT) GetDelta() Delta {
 	switch {
 	case c.LWWDelta != nil:
 		return c.LWWDelta

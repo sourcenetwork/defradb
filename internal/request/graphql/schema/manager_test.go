@@ -17,12 +17,12 @@ import (
 )
 
 func Test_SchemaManager_NewNoErrs(t *testing.T) {
-	_, err := NewSchemaManager()
+	_, err := NewSchemaManager(false)
 	assert.NoError(t, err, "NewSchemaManager returned an error")
 }
 
 func Test_SchemaManager_ResolveTypes(t *testing.T) {
-	s, _ := NewSchemaManager()
+	s, _ := NewSchemaManager(false)
 	err := s.ResolveTypes()
 	assert.NoError(t, err, "Failed to ResolveTypes on a brand new SchemaManager")
 }

@@ -25,6 +25,7 @@ type dbOptions struct {
 	maxTxnRetries  immutable.Option[int]
 	identity       immutable.Option[identity.Identity]
 	disableSigning bool
+	searchableEncryptionKey []byte
 }
 
 // Option is a funtion that sets a config value on the db.
@@ -48,5 +49,13 @@ func WithNodeIdentity(ident identity.Identity) Option {
 func WithEnabledSigning(value bool) Option {
 	return func(opts *dbOptions) {
 		opts.disableSigning = !value
+	}
+}
+
+// WithSearchableEncryptionKey sets the key used for searchable encryption.
+// This key is used to generate search tags for encrypted fields.
+func WithSearchableEncryptionKey(key []byte) Option {
+	return func(opts *dbOptions) {
+		opts.searchableEncryptionKey = key
 	}
 }

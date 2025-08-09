@@ -42,6 +42,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	corenet "github.com/sourcenetwork/defradb/internal/core/net"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/net/config"
 )
@@ -51,6 +52,8 @@ var tracer = telemetry.NewTracer()
 // DB hold the database related methods that are required by Peer.
 type DB interface {
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
+	// GetCollections returns the list of collections according to the given options.
+	GetCollections(ctx context.Context, opts client.CollectionFetchOptions) ([]client.Collection, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// Rootstore returns the instance's root store.
@@ -159,7 +162,12 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.ReplicatorName)
+		p.updateSub, err = p.bus.Subscribe(
+			event.UpdateName,
+			event.ReplicatorName,
+			se.ReplicateEventName,
+			se.QuerySEArtifactsEventName,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -293,12 +301,26 @@ func (p *Peer) handleMessageLoop() {
 			return
 		}
 
+		log.InfoContext(p.ctx, "Received message from internal broadcaster",
+			corelog.String("Event", string(msg.Name)),
+			corelog.Any("Data", msg.Data),
+		)
+
 		switch evt := msg.Data.(type) {
 		case event.Update:
 			err := p.handleLog(evt)
 			if err != nil {
 				log.ErrorE("Error while handling broadcast log", err)
 			}
+
+		case se.ReplicateEvent:
+			err := p.handleSELog(evt)
+			if err != nil {
+				log.ErrorE("Error while handling SE log", err)
+			}
+
+		case se.QuerySEArtifactsRequest:
+			go p.handleSEQuery(evt)
 
 		default:
 			// ignore other events
@@ -363,6 +385,91 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 						err,
 						corelog.String("DocID", lg.DocID),
 						corelog.Any("CID", lg.Cid),
+						corelog.Any("PeerID", peerID))
+				}
+			}(pid)
+		}
+	}
+}
+
+func (p *Peer) handleSELog(evt se.ReplicateEvent) error {
+	p.pushSEArtifactsToReplicators(evt)
+	return nil
+}
+
+func (p *Peer) handleSEQuery(req se.QuerySEArtifactsRequest) {
+	p.server.mu.Lock()
+	reps, exists := p.server.replicators[req.CollectionID]
+	p.server.mu.Unlock()
+
+	if !exists || len(reps) == 0 {
+		req.Response <- se.QuerySEArtifactsResponse{
+			DocIDs: []string{},
+			Error:  nil,
+		}
+		return
+	}
+
+	grpcQueries := make([]seFieldQuery, len(req.Queries))
+	for i, q := range req.Queries {
+		grpcQueries[i] = seFieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	grpcReq := querySEArtifactsRequest{
+		CollectionID: req.CollectionID,
+		Queries:      grpcQueries,
+	}
+
+	docIDSet := make(map[string]struct{})
+	var queryErr error
+
+	// TODO: ask replicators one-by-one.
+	for pid := range reps {
+		reply, err := p.server.querySEArtifacts(p.ctx, pid, grpcReq)
+		if err != nil {
+			log.ErrorE(
+				"Failed querying SE artifacts from replicator",
+				err,
+				corelog.String("CollectionID", req.CollectionID),
+				corelog.Any("PeerID", pid))
+			queryErr = err
+			continue
+		}
+
+		for _, docID := range reply.DocIDs {
+			docIDSet[docID] = struct{}{}
+		}
+	}
+
+	docIDs := make([]string, 0, len(docIDSet))
+	for docID := range docIDSet {
+		docIDs = append(docIDs, docID)
+	}
+
+	req.Response <- se.QuerySEArtifactsResponse{
+		DocIDs: docIDs,
+		Error:  queryErr,
+	}
+}
+
+func (p *Peer) pushSEArtifactsToReplicators(evt se.ReplicateEvent) {
+	p.server.mu.Lock()
+	reps, exists := p.server.replicators[evt.CollectionID]
+	p.server.mu.Unlock()
+
+	if exists {
+		for pid := range reps {
+			go func(peerID peer.ID) {
+				if err := p.server.pushSEArtifacts(evt, peerID); err != nil {
+					log.ErrorE(
+						"Failed pushing SE artifacts",
+						err,
+						corelog.String("DocID", evt.DocID),
+						corelog.String("CollectionID", evt.CollectionID),
 						corelog.Any("PeerID", peerID))
 				}
 			}(pid)

@@ -19,6 +19,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -84,21 +85,27 @@ type PlanContext struct {
 	context.Context
 }
 
+type DB interface {
+	client.TxnStore
+	Events() event.Bus
+	// GetSearchableEncryptionKey returns the key used for searchable encryption.
+	GetSearchableEncryptionKey() []byte
+}
+
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
 	identity    immutable.Option[acpIdentity.Identity]
 	documentACP immutable.Option[dac.DocumentACP]
-	db          client.TxnStore
-
-	ctx context.Context
+	db          DB
+	ctx         context.Context
 }
 
 func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	documentACP immutable.Option[dac.DocumentACP],
-	db client.TxnStore,
+	db DB,
 ) *Planner {
 	return &Planner{
 		identity:    identity,

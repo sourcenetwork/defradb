@@ -694,7 +694,7 @@ func (c *collection) save(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
+		ctx = core.ContextWithEnabledSigning(ctx)
 	}
 
 	// NOTE: We delay the final Clean() call until we know
@@ -775,7 +775,7 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
+			link, _, err := core.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -790,7 +790,7 @@ func (c *collection) save(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, headNode, err := core.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -799,6 +799,7 @@ func (c *collection) save(
 	updateEvent := event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          link.Cid,
+		Identity:     ident,
 		CollectionID: c.Version().CollectionID,
 		Block:        headNode,
 	}
@@ -820,7 +821,7 @@ func (c *collection) save(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := coreblock.AddDelta(
+		link, headNode, err := core.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
@@ -834,6 +835,7 @@ func (c *collection) save(
 			Cid:          link.Cid,
 			CollectionID: c.Version().CollectionID,
 			Block:        headNode,
+			Identity:     ident,
 		}
 
 		txn.OnSuccess(func() {
