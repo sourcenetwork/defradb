@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithLimit0(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with limit 0",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -58,7 +57,6 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 func TestQuerySimpleWithLimit(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with basic limit",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -91,7 +89,6 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic limit, more rows",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -149,7 +146,6 @@ func TestQuerySimpleWithLimit(t *testing.T) {
 func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with basic limit & offset",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -182,7 +178,6 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic limit & offset, more rows",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -240,7 +235,6 @@ func TestQuerySimpleWithLimitAndOffset(t *testing.T) {
 func TestQuerySimpleWithOffset(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with offset only",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -273,7 +267,6 @@ func TestQuerySimpleWithOffset(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with offset only, more rows",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{

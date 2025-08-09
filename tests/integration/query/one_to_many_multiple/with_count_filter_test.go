@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with counts with and without filters",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -144,7 +143,6 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with counts with filters",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

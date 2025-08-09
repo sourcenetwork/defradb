@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with average",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, count with filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 
 func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, count with datetime filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

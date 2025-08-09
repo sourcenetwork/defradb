@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with deletion using document id.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -70,8 +68,6 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 
 func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) mutation request with deletion using filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

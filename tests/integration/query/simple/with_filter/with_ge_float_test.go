@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with lesser value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -90,7 +88,6 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with lesser int value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -126,7 +123,6 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 
 func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge float nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

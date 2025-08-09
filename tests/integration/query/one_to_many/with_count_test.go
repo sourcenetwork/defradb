@@ -19,7 +19,6 @@ import (
 func TestQueryOneToManyWithCount(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-many relation query from many side with count, no child records",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 1,
@@ -48,7 +47,6 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 			},
 		},
 		{
-			Description: "One-to-many relation query from many side with count",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -121,7 +119,6 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -191,7 +188,6 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

@@ -19,7 +19,6 @@ import (
 
 func TestView_OneToOneSameSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view with same schema",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -97,7 +96,6 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 
 func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view followed by GQL type update",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

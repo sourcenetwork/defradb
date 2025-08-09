@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with field",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -50,7 +49,6 @@ func TestQueryCommitsWithField(t *testing.T) {
 
 func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -111,7 +109,6 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

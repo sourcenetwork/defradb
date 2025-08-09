@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with child filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -86,7 +85,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with number filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -150,7 +148,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 
 func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with number filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -203,7 +200,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child number filter that excludes all records",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -296,7 +292,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 
 func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with child filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

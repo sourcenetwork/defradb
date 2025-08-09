@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by height",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -60,7 +59,6 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by height",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -125,7 +123,6 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -181,7 +178,6 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 
 func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by document ID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -237,7 +233,6 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 
 func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by fieldName",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -282,7 +277,6 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 
 func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, group by fieldName",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

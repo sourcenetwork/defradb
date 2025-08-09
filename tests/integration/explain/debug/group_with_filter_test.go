@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with filter on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

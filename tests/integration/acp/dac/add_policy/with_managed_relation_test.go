@@ -19,7 +19,6 @@ import (
 func TestACP_AddPolicy_WithRelationManagingOtherRelation_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, where a relation is managing another relation, valid policy id",
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),

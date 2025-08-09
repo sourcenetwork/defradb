@@ -21,7 +21,6 @@ import (
 
 func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, set default version to empty string",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -48,7 +47,6 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 
 func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, set default version to invalid string",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -75,7 +73,6 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 
 func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, set default version to original schema version",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -112,7 +109,6 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 
 func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, set default version to new schema version",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

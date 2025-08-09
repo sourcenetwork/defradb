@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with docIDs filter on _group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

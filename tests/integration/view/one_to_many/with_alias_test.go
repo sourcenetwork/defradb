@@ -19,7 +19,6 @@ import (
 
 func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with alias on outer object",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -95,7 +94,6 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 
 func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with alias on inner object",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

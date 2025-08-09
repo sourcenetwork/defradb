@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with related and regular filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -63,8 +61,6 @@ func TestDebugExplainRequestWithRelatedAndRegularFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithManyRelatedFilters(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with many related filters.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

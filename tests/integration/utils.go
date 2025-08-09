@@ -263,7 +263,7 @@ func executeTestCase(
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
-	log.InfoContext(ctx, testCase.Description, logAttrs...)
+	log.InfoContext(ctx, "", logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
@@ -300,7 +300,7 @@ func executeTestCase(
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout):
-			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
+			assert.Fail(t, "timeout occurred while waiting for data stream")
 		}
 	}
 }

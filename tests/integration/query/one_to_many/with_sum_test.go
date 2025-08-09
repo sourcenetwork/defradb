@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -89,7 +88,6 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -155,7 +153,6 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 
 func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum alias on float32 field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

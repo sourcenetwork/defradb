@@ -20,8 +20,6 @@ import (
 func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, but invalid policyID arg type was specified on schema, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -92,8 +90,6 @@ func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejecte
 
 func TestACP_LinkSchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, but invalid resource arg type was specified on schema, reject schema",
 
 		Actions: []any{
 

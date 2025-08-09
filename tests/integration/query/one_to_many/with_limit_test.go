@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with limit",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -101,7 +100,6 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 
 func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with limit",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

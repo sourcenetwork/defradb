@@ -41,7 +41,6 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 	require.NoError(t, err)
 
 	test := testUtils.TestCase{
-		Description: "Simple view with transform",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

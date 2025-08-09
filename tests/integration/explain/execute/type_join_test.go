@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain a one-to-one join relation query, with alias.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -79,8 +77,6 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 
 func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) with two one-to-one join relation.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -164,8 +160,6 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 
 func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) with two nested level deep one to one join.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

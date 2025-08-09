@@ -35,8 +35,6 @@ var orderTypeJoinPattern = dataMap{
 func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order field on a related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -90,8 +88,6 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 
 func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with order field on parent and related child.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -164,8 +160,6 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 
 func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request where parent is ordered by it's related child.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

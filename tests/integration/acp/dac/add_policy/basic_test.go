@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, adding basic policy in YAML format",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -57,8 +55,6 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 
 func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, adding basic policy in JSON format",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

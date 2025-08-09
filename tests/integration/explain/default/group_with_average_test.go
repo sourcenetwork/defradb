@@ -42,8 +42,6 @@ var groupAveragePattern = dataMap{
 func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with group-by with average on inner field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -129,8 +127,6 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with group-by with average of the inner _group on a field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -207,8 +203,6 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAField(t *testing.
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with group-by with average of the inner _group on a field and nested group-by.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -289,8 +283,6 @@ func TestDefaultExplainRequestWithAverageInsideTheInnerGroupOnAFieldAndNestedGro
 
 func TestDefaultExplainRequestWithAverageInsideTheInnerGroupAndNestedGroupByWithAverage(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with average inside the inner _group and nested groupBy with average.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

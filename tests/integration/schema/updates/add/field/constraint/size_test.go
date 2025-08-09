@@ -21,7 +21,6 @@ import (
 
 func TestSchemaUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add size contraint to array field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

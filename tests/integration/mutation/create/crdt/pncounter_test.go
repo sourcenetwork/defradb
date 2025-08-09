@@ -19,7 +19,6 @@ import (
 
 func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Document creation with PN Counter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -59,7 +58,6 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Document creation with float32 PN Counter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPNCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Document creation with float64 PN Counter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

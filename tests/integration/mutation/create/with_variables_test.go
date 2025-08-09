@@ -21,7 +21,6 @@ import (
 
 func TestMutationCreateWithNonNullVariable(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with non null variable input.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -57,7 +56,6 @@ func TestMutationCreateWithNonNullVariable(t *testing.T) {
 
 func TestMutationCreateWithDefaultVariable(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with default variable input.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -88,7 +86,6 @@ func TestMutationCreateWithDefaultVariable(t *testing.T) {
 
 func TestMutationCreate_WithJSONVariable_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with JSON variable input.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

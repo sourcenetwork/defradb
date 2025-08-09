@@ -19,7 +19,6 @@ import (
 
 func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with empty order",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -71,7 +70,6 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 
 func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order ASC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -133,7 +131,6 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order ASC",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -201,7 +198,6 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order ASC",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -269,7 +265,6 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order ASC",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -337,7 +332,6 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order ASC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -403,7 +397,6 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 
 func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order DESC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -465,7 +458,6 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order DESC",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -533,7 +525,6 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 
 func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order DESC",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -601,7 +592,6 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order DESC",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -669,7 +659,6 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic order DESC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -735,7 +724,6 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 
 func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with compound order",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -806,7 +794,6 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 
 func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with invalid order",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -827,7 +814,6 @@ func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with multiple order fields and a single entry",
 			Actions: []any{
 				testUtils.Request{
 					Request: `query {
@@ -841,7 +827,6 @@ func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with multiple order fields and multiple entries",
 			Actions: []any{
 				testUtils.Request{
 					Request: `query {
@@ -863,7 +848,6 @@ func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order ASC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -925,7 +909,6 @@ func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {
 
 func TestQuerySimple_WithAliasOrderOnNonAliasedField_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order on non aliased field ASC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -987,7 +970,6 @@ func TestQuerySimple_WithAliasOrderOnNonAliasedField_ShouldOrderResults(t *testi
 
 func TestQuerySimple_WithAliasOrderOnNonExistantField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order on non existant field ASC",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -1030,7 +1012,6 @@ func TestQuerySimple_WithAliasOrderOnNonExistantField_ShouldError(t *testing.T) 
 
 func TestQuerySimple_WithInvalidAliasOrder_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order invalid",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -1073,7 +1054,6 @@ func TestQuerySimple_WithInvalidAliasOrder_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order empty",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -1135,7 +1115,6 @@ func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 
 func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order null",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -1197,7 +1176,6 @@ func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 
 func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic alias order empty",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -1240,7 +1218,6 @@ func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithCompoundAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with compound alias order",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

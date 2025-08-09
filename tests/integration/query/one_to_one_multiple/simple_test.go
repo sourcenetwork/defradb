@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -123,7 +122,6 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 
 func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -227,7 +225,6 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 
 func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

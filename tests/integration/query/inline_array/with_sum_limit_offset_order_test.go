@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -51,7 +50,6 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -84,7 +82,6 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -117,7 +114,6 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -150,7 +146,6 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -183,7 +178,6 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -216,7 +210,6 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -249,7 +242,6 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

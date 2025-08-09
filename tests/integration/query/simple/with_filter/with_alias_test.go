@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with alias filter(age)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 
 func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with empty alias filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -98,7 +96,6 @@ func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 
 func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with null alias filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -131,7 +128,6 @@ func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 
 func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non object alias filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -164,7 +160,6 @@ func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 
 func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non existant alias filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -195,7 +190,6 @@ func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 
 func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non aliased filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -233,7 +227,6 @@ func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 
 func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with compound alias filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -276,7 +269,6 @@ func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 
 func TestQuerySimple_WithAliasWithCompound_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with alias with compound filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy, extra permissions, still valid",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -58,8 +56,6 @@ func TestACP_AddPolicy_ExtraPermissions_ValidPolicyID(t *testing.T) {
 
 func TestACP_AddPolicy_ExtraDuplicatePermissions_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy, extra duplicate permissions, return error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

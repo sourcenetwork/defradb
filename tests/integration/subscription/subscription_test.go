@@ -18,7 +18,6 @@ import (
 
 func TestSubscriptionWithCreateMutations(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Subscription with user creations",
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
@@ -85,7 +84,6 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 
 func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Subscription with filter and one user creation",
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
@@ -127,7 +125,6 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 
 func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Subscription with filter and one user creation outside of the filter",
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
@@ -161,7 +158,6 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 
 func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Subscription with filter and user creation in and outside of the filter",
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
@@ -217,7 +213,6 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Subscription with user creations and single mutation",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -279,7 +274,6 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Subscription with user creations and mutations for all",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

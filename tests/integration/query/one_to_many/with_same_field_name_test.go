@@ -33,7 +33,6 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
-			Description: test.Description,
 			Actions: append(
 				[]any{
 					&action.AddSchema{
@@ -49,7 +48,6 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-many relation query from one side, same field name",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -87,7 +85,6 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 			},
 		},
 		{
-			Description: "One-to-many relation query from many side, same field name",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,

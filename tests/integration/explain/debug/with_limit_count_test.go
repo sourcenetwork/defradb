@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit on related child with count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -71,8 +69,6 @@ func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with limit args on parent and related child with count.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

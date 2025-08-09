@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with typename",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -49,7 +48,6 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 
 func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with aliased typename",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -19,7 +19,6 @@ import (
 
 func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "updating non-indexed fields on a doc with a unique index should succeed",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToOneRelations(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple One-to-one relations query with no filter.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors

@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id (from many side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -182,7 +181,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id, with id selection (from many side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -346,7 +344,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -442,7 +439,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id, with id selection (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

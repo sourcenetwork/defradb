@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with multiple many fitlers",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

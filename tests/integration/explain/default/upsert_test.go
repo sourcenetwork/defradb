@@ -36,8 +36,6 @@ var upsertPattern = dataMap{
 func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with upsert.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

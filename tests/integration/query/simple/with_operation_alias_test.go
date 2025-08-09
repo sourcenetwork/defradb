@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithOperationAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with operation alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

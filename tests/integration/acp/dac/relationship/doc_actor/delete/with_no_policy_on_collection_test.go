@@ -20,8 +20,6 @@ import (
 func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, delete doc actor relationship on a collection with no policy, not allowed error",
-
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

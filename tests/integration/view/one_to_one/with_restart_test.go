@@ -19,7 +19,6 @@ import (
 
 func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view and restart",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

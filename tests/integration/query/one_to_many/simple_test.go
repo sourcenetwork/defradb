@@ -19,7 +19,6 @@ import (
 func TestQueryOneToMany(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-many relation query from one side",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -64,7 +63,6 @@ func TestQueryOneToMany(t *testing.T) {
 			},
 		},
 		{
-			Description: "One-to-many relation query from many side",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -157,7 +155,6 @@ func TestQueryOneToMany(t *testing.T) {
 
 func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with non-existant parent",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

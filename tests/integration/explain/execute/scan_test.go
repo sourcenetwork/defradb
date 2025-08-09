@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with all documents matching.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -86,8 +84,6 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with no documents.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -130,8 +126,6 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 
 func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with some documents matching.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -196,8 +190,6 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 
 func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with documents but no matches.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

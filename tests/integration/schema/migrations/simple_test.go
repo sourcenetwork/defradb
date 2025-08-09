@@ -25,7 +25,6 @@ import (
 // may migrate to/from them if recieved by the P2P system.
 func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, unknown schema ids",
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
@@ -85,7 +84,6 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 
 func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, multiple migrations",
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
@@ -188,7 +186,6 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 
 func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, replace migration",
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{

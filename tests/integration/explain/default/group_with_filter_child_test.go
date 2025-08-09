@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with filter on the inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -82,8 +80,6 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 
 func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with filter on parent groupBy and on the inner _group selection.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

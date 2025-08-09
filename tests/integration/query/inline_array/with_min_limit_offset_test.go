@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, offsetted limited min of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

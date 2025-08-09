@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and min of count",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -19,7 +19,6 @@ import (
 
 func TestMutationCreate_WithNullEncrypt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with null encrypt",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -50,7 +49,6 @@ func TestMutationCreate_WithNullEncrypt_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with null input",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,7 +75,6 @@ func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithNullInputEntry_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with null input entry returns error",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -102,7 +99,6 @@ func TestMutationCreate_WithNullInputEntry_ReturnsError(t *testing.T) {
 
 func TestMutationCreate_WithNullEncryptFields_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with null encryptFields",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

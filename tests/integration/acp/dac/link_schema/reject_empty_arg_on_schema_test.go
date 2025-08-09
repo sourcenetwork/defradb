@@ -20,8 +20,6 @@ import (
 func TestACP_LinkSchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, but no arg was specified on schema, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -92,8 +90,6 @@ func TestACP_LinkSchema_NoArgWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 
 func TestACP_LinkSchema_SpecifiedArgsAreEmptyOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, specified args on schema are empty, reject schema",
 
 		Actions: []any{
 

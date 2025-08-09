@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, limited count of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 
 func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, limited count of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

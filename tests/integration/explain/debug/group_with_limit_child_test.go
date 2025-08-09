@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit and offset on inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -46,8 +44,6 @@ func TestDebugExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T
 
 func TestDebugExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with limit and offset on multiple inner _group selections.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

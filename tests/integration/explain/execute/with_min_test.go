@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequest_WithMinOfInlineArrayField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with min on an inline array.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -73,8 +71,6 @@ func TestExecuteExplainRequest_WithMinOfInlineArrayField_Succeeds(t *testing.T) 
 
 func TestExecuteExplainRequest_MinOfRelatedOneToManyField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with min of a related one to many field.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

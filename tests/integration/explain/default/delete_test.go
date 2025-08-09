@@ -36,8 +36,6 @@ var deletePattern = dataMap{
 func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with delete using filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -92,8 +90,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with delete using filter to match everything.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -139,8 +135,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 
 func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using document id.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -189,8 +183,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -245,8 +237,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with delete using no ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -292,8 +282,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using filter and ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

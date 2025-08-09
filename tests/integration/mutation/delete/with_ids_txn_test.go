@@ -21,7 +21,6 @@ import (
 
 func TestMutationDeletion_WithIDsAndTxn(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple multi-docIDs delete mutation with one ID that exists and txn.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

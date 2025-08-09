@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id alias (primary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -107,7 +106,6 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id alias (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -173,7 +171,6 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *t
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id alias (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -248,7 +245,6 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJ
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id alias (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -327,7 +323,6 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 
 func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id alias (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

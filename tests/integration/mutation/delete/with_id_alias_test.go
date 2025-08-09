@@ -19,7 +19,6 @@ import (
 
 func TestMutationDeletion_WithIDAndAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation with an alias field name.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -19,7 +19,6 @@ import (
 func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with basic filter (single ID by docIDs arg)",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -46,7 +45,6 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (single ID by docIDs arg), no results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -68,7 +66,6 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (duplicate ID by docIDs arg), partial results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -101,7 +98,6 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (multiple ID by docIDs arg), partial results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -152,7 +148,6 @@ func TestQuerySimpleWithDocIDsFilter(t *testing.T) {
 
 func TestQuerySimpleReturnsNothinGivenEmptyDocIDsFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with empty docIDs arg",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

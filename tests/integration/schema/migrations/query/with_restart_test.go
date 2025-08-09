@@ -23,7 +23,6 @@ import (
 
 func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with restart",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -86,7 +85,6 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 
 func TestSchemaMigrationQueryWithRestartAndMigrationBeforeSchemaPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with migration and restart before patch",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

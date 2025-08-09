@@ -23,8 +23,6 @@ func TestACP_LinkSchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, but no policy was added, reject schema",
-
 		Actions: []any{
 
 			&action.AddSchema{
@@ -72,8 +70,6 @@ func TestACP_LinkSchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaRej
 	incorrectPolicyID := "60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0"
 
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, but specify incorrect policy ID, reject schema",
 
 		Actions: []any{
 

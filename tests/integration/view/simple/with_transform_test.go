@@ -23,7 +23,6 @@ import (
 
 func TestView_SimpleWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with transform",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -96,7 +95,6 @@ func TestView_SimpleWithTransform(t *testing.T) {
 
 func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with multiple transforms",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -181,7 +179,6 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 
 func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with transform returning more docs than input",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -254,7 +251,6 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 
 func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with transform returning fewer docs than input",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

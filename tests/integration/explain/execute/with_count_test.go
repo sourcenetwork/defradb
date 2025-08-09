@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with count on one to many relation.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

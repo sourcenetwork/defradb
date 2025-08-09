@@ -20,7 +20,6 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, order on sub",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -100,7 +99,6 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 
 func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, filter on sub from root",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

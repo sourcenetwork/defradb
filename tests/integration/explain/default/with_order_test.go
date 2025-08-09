@@ -36,8 +36,6 @@ var orderPattern = dataMap{
 func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with ascending order on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -77,8 +75,6 @@ func TestDefaultExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 
 func TestDefaultExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with multiple order fields on parent.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

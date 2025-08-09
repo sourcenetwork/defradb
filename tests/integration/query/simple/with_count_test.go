@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, count on undefined",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -34,7 +33,6 @@ func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 
 func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, count on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -52,7 +50,6 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, count",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +79,6 @@ func TestQuerySimpleWithCount(t *testing.T) {
 
 func TestQuerySimple_WithAliasedCount_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, aliased count on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {

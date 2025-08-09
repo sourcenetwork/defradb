@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with invalid CRDT (99)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,7 +42,6 @@ func TestSchemaUpdatesAddFieldCRDTInvalidErrors(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldCRDTInvalidErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with invalid CRDT (99)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and link count",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

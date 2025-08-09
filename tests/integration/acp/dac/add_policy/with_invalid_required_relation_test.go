@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy, missing requred owner relation, should return error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -58,8 +56,6 @@ func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
 
 func TestACP_AddPolicy_DuplicateOwnerRelation_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy, duplicate required owner relations, return error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

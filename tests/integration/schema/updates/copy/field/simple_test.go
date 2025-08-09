@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -55,7 +54,6 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -92,7 +90,6 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 
 func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field and rename",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -132,7 +129,6 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 // This is an odd test, but still a possibility and we should still cover it.
 func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field, rename, re-type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -184,7 +180,6 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 // This is an odd test, but still a possibility and we should still cover it.
 func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy field, rename, re-type to invalid",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

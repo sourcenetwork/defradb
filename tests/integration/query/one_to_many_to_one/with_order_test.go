@@ -18,7 +18,6 @@ import (
 
 func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple orderby with depth greater than 1.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
@@ -91,7 +90,6 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 
 func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple orderby with depth greater than 1, order switched.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),

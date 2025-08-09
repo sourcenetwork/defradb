@@ -21,8 +21,6 @@ import (
 func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add multiple different policies",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -94,8 +92,6 @@ func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T)
 
 func TestACP_AddPolicy_AddMultipleDifferentPoliciesInDifferentFmts_ValidPolicyIDs(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add multiple different policies in different formats",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -208,8 +204,6 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add duplicate policies by different actors, valid",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -238,8 +232,6 @@ func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testin
 
 func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add duplicate policies, error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -313,8 +305,6 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 
 func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDifferentIDs(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add duplicate policies different formats, error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

@@ -18,7 +18,6 @@ import (
 
 func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Sum of integer array, and sum of one-to-many field.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors

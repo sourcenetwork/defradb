@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDepth1(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with depth 1",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -56,7 +55,6 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with depth 1, and doc updates",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -107,7 +105,6 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with depth 2, and doc updates",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -176,7 +173,6 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with depth 1",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

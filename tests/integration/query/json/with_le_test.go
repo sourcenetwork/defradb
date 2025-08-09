@@ -19,7 +19,6 @@ import (
 
 func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter equal value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -63,7 +62,6 @@ func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T
 
 func TestQueryJSON_WithLesserEqualFilterWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter lesser value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -107,7 +105,6 @@ func TestQueryJSON_WithLesserEqualFilterWithLesserValue_ShouldFilter(t *testing.
 
 func TestQueryJSON_WithLesserEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter null value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -150,7 +147,6 @@ func TestQueryJSON_WithLesserEqualFilterWithNullValue_ShouldFilter(t *testing.T)
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter nested equal value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -194,7 +190,6 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedEqualValue_ShouldFilter(t *tes
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le nested filter nested lesser value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -238,7 +233,6 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *te
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter nested null value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -281,7 +275,6 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *test
 
 func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter bool value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -319,7 +312,6 @@ func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T)
 
 func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter string value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -357,7 +349,6 @@ func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.
 
 func TestQueryJSON_WithLesserEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter object value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -395,7 +386,6 @@ func TestQueryJSON_WithLesserEqualFilterWithObjectValue_ReturnsError(t *testing.
 
 func TestQueryJSON_WithLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter array value",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -433,7 +423,6 @@ func TestQueryJSON_WithLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T
 
 func TestQueryJSON_WithLesserEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _le filter all types",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

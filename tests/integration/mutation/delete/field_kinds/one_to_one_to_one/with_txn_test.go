@@ -20,7 +20,6 @@ import (
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete related doc with transaction from primary side (forward).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				// publishers
@@ -90,7 +89,6 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete related doc with transaction from primary side (backward).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				// books
@@ -154,7 +152,6 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Transaction can read a record that was deleted in a non-commited transaction (forward).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				// books
@@ -250,7 +247,6 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Transaction can read a record that was deleted in a non-commited transaction (backward).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				// books
@@ -340,7 +336,6 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete related doc with transaction from non-primary side (forward).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				// books
@@ -405,7 +400,6 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete related doc with transaction from non-primary side (backward).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				// books

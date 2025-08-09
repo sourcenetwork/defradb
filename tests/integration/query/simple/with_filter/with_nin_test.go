@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithNotInFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with not-in filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

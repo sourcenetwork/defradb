@@ -18,7 +18,6 @@ import (
 
 func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many-to-one deep filter on rendered children.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors
@@ -129,7 +128,6 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sums of deep filter subtypes of both descending and ascending.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
@@ -171,7 +169,6 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sum of deep filter subtypes and non-sum deep filter",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
@@ -221,7 +218,6 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 
 func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 two level deep filter",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
@@ -294,7 +290,6 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 
 func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 two level deep filter with compound operator and relation",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
@@ -375,7 +370,6 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 
 func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 with sub filter with compound operator and relation",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),

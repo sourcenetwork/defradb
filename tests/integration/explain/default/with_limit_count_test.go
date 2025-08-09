@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit on related child with count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -90,8 +88,6 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T)
 
 func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with limit args on parent and related child with count.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

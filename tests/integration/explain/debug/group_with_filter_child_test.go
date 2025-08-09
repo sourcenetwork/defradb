@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with filter on the inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -46,8 +44,6 @@ func TestDebugExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 
 func TestDebugExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with filter on parent groupBy and on the inner _group selection.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with update using document IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -78,8 +76,6 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 
 func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) mutation request with update using filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

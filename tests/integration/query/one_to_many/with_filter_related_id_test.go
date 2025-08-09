@@ -18,7 +18,6 @@ import (
 
 func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query from many side with _eq filter on related field type.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -114,7 +113,6 @@ func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 
 func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query from many side with filter on related field.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -210,7 +208,6 @@ func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 
 func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query from many side with same filters in different way on related type.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -311,7 +308,6 @@ func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.
 
 func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query from single side with _eq filter on related field type.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -407,7 +403,6 @@ func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 
 func TestQueryFromSingleSideWithFilterOnRelatedObjectID_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query from single side with filter on related field.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

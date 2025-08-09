@@ -19,7 +19,6 @@ import (
 
 func TestMutationCreate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with size contraint",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -61,7 +60,6 @@ func TestMutationCreate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 
 func TestMutationCreate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with array size mismatch",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

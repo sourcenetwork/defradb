@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, replace collection",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

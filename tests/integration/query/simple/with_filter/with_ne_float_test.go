@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with ne float filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with ne float nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

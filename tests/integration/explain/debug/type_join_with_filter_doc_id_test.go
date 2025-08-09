@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with related and regular filter + docIDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -67,8 +65,6 @@ func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 
 func TestDebugExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with many related filters + docID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

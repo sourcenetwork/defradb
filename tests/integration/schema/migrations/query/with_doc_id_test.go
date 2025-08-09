@@ -24,7 +24,6 @@ import (
 // This test asserts that prefixes are being passed correctly through the new Lens fetcher.
 func TestSchemaMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, query by docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -104,7 +103,6 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 // documents/queries, if the size changes so should this test.
 func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, multiple queries by docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

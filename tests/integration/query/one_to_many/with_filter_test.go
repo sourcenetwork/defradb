@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, simple filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -105,7 +104,6 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 
 func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, simple filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -175,7 +173,6 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -257,7 +254,6 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 
 func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, simple filter on root and sub type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -360,7 +356,6 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 
 func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query filter with compound operator and relation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -472,7 +467,6 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 
 func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiveLike_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query filter with compound operator and relation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
@@ -566,7 +560,6 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 
 func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, alias filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,

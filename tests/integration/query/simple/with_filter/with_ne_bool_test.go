@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with ne true filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -62,7 +61,6 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with ne nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -106,7 +104,6 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with ne false filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

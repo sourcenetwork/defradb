@@ -23,7 +23,6 @@ import (
 
 func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with txn",
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				TransactionID: immutable.Some(0),

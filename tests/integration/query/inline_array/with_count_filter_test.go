@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of bool array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with filter, count of nillable bool array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -146,7 +142,6 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -178,7 +173,6 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 
 func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -210,7 +204,6 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -242,7 +235,6 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of string array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -274,7 +266,6 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 
 func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered count of string array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

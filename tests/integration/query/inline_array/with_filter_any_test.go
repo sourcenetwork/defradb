@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of string array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQueryInlineStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of non null string array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -90,7 +88,6 @@ func TestQueryInlineNotNullStringArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of int array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -126,7 +123,6 @@ func TestQueryInlineIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of non null int array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -162,7 +158,6 @@ func TestQueryInlineNotNullIntArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -198,7 +193,6 @@ func TestQueryInlineFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of non null float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -234,7 +228,6 @@ func TestQueryInlineNotNullFloatArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of boolean array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -270,7 +263,6 @@ func TestQueryInlineBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNotNullBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of non null boolean array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -306,7 +298,6 @@ func TestQueryInlineNotNullBooleanArray_WithAnyFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineStringArray_WithAnyFilterAndNullValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered any of string array with null",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

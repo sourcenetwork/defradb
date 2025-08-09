@@ -19,7 +19,6 @@ import (
 
 func TestView_SimpleWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -74,7 +73,6 @@ func TestView_SimpleWithFilter(t *testing.T) {
 
 func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -18,7 +18,6 @@ import (
 
 func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one subtype descending order query with filter, no subtype child fields selected.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -83,7 +82,6 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 
 func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one subtype ascending order query with filter, no subtype child fields selected.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

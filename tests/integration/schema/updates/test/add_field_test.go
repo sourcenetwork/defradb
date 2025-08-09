@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesTestAddField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, passing test allows new field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -54,7 +53,6 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 
 func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, failing test blocks new field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

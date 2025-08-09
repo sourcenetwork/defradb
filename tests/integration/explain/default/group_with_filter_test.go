@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with filter on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

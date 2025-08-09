@@ -20,8 +20,6 @@ import (
 func TestDebugExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) multation request with delete having no sub-selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

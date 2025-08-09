@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy collection, rename and remove ids",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

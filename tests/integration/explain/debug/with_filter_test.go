@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with string equal (_eq) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -44,8 +42,6 @@ func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with integer equal (_eq) filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -70,8 +66,6 @@ func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with greater than (_gt) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -94,8 +88,6 @@ func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with logical compound (_and) filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -120,8 +112,6 @@ func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with logical compound (_or) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -144,8 +134,6 @@ func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 
 func TestDebugExplainRequestWithMatchInsideList(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request filtering values that match within (_in) a list.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

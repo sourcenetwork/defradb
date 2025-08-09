@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by empty set, children",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -63,7 +62,6 @@ func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -117,7 +115,6 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 
 func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -171,7 +168,6 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, child string",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -246,7 +242,6 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 
 func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with groupBy without selecting field grouped by, with inner _group.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -321,7 +316,6 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 
 func TestQuerySimpleWithGroupByString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -396,7 +390,6 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -508,7 +501,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string then by boolean",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -607,7 +599,6 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 
 func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by boolean then by string",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -706,7 +697,6 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, undefined group value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -749,7 +739,6 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, with children, undefined group value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -808,7 +797,6 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 
 func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {

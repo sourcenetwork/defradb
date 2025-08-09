@@ -21,8 +21,6 @@ import (
 func TestACP_LinkSchema_WithManagedRelation_AcceptSchemas(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, where one resource is specified on different schemas, schemas accepted",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

@@ -19,7 +19,6 @@ import (
 
 func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-M Query to ensure joins are linked properly.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, move field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -44,7 +43,6 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesMoveFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, move field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
