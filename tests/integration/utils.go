@@ -263,7 +263,7 @@ func executeTestCase(
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
-	log.InfoContext(ctx, "", logAttrs...)
+	log.InfoContext(ctx, t.Name(), logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
