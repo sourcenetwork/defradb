@@ -53,9 +53,9 @@ const docSyncTopic = "doc-sync"
 // Specifically, server handles the push/get request/response aspects of the RPC service
 // but not the API calls.
 type server struct {
-	*protocol.IdentityProtocol
-	*protocol.ReplicatorProtocol
-	peer *Peer
+	identityProtocol   *protocol.IdentityProtocol
+	replicatorProtocol *protocol.ReplicatorProtocol
+	peer               *Peer
 
 	topics map[string]pubsubTopic
 	// replicators is a map from collection CollectionID => peerId
@@ -87,9 +87,9 @@ func newServer(p *Peer) (*server, error) {
 		topics:           make(map[string]pubsubTopic),
 		replicators:      make(map[string]map[libpeer.ID]struct{}),
 		peerIdentities:   make(map[libpeer.ID]identity.Identity),
-		IdentityProtocol: protocol.NewIdentityProtocol(p.host, p.db.GetNodeIdentityToken),
+		identityProtocol: protocol.NewIdentityProtocol(p.host, p.db.GetNodeIdentityToken),
 	}
-	s.ReplicatorProtocol = protocol.NewReplicatorProtocol(p.host, s.processPushlog, p.handleReplicatorFailure)
+	s.replicatorProtocol = protocol.NewReplicatorProtocol(p.host, s.processPushlog, p.handleReplicatorFailure)
 	docSyncTopic, err := s.addPubSubTopic(docSyncTopic, true, s.docSyncMessageHandler)
 	if err != nil {
 		return nil, err
@@ -447,7 +447,7 @@ func (s *server) hasAccess(p libpeer.ID, c cid.Cid) bool {
 		if !ok {
 			ctx, cancel := context.WithTimeout(s.peer.ctx, networkRequestTimeout)
 			defer cancel()
-			resp, err := s.GetIdentity(ctx, p)
+			resp, err := s.identityProtocol.GetIdentity(ctx, p)
 			if err != nil {
 				log.ErrorE("Failed to get identity", err)
 				return immutable.None[identity.Identity]()

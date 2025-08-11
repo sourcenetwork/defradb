@@ -326,7 +326,7 @@ func (p *Peer) pushLogToReplicators(lg event.Update) {
 			go func(peerID peer.ID) {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
-				if _, err := p.server.PushToReplicator(ctx, lg, peerID); err != nil {
+				if _, err := p.server.replicatorProtocol.PushToReplicator(ctx, lg, peerID); err != nil {
 					log.ErrorE(
 						"Failed pushing log",
 						err,

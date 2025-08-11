@@ -194,7 +194,7 @@ func (p *Peer) pushHeadsForDoc(ctx context.Context, docID, collectionID string, 
 		}
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
-		if _, err := p.server.PushToReplicator(ctx, update, peerID); err != nil {
+		if _, err := p.server.replicatorProtocol.PushToReplicator(ctx, update, peerID); err != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
 				err,
@@ -758,7 +758,7 @@ func (p *Peer) retryDoc(ctx context.Context, peerIDString string, docID string) 
 		}
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
-		if _, err := p.server.PushToReplicator(ctx, updateEvent, peerID); err != nil {
+		if _, err := p.server.replicatorProtocol.PushToReplicator(ctx, updateEvent, peerID); err != nil {
 			return err
 		}
 	}
