@@ -21,8 +21,6 @@ import (
 func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, has both valid & invalid resources, but use invalid resource, schema rejected",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

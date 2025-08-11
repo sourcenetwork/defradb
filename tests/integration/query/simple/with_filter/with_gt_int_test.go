@@ -19,7 +19,6 @@ import (
 func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with basic filter(age), greater than",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -52,7 +51,6 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter(age), no results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -80,7 +78,6 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter(age), multiple results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -125,7 +122,6 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic int greater than filter, with null filter value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

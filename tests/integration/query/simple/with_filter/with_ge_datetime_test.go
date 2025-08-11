@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -94,7 +92,6 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -128,7 +125,6 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -166,7 +162,6 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter with nil value and non-nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{

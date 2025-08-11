@@ -20,7 +20,6 @@ import (
 
 func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Getting indexes should return list of existing indexes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -61,7 +60,6 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 
 func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Getting indexes for a collection should return only the indexes on that collection",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

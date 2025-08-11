@@ -22,7 +22,6 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 	updatedSchemaVersionID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with update after schema update, version join",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -116,7 +115,6 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 	updatedSchemaVersionID := "bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with update after schema update, commits query",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

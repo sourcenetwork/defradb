@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter (Name)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic string nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -100,7 +98,6 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with basic filter and selection",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -131,7 +128,6 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter and selection (diff from filter)",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -162,7 +158,6 @@ func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter(name), no results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{

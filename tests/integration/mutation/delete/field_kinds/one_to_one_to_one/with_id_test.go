@@ -19,7 +19,6 @@ import (
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Relational delete mutation where one element exists.",
 			Actions: []any{
 				testUtils.CreateDoc{
 					// Books
@@ -69,7 +68,6 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		},
 
 		{
-			Description: "Relational delete mutation with an aliased _docID name.",
 			Actions: []any{
 				testUtils.CreateDoc{
 					// Books
@@ -119,7 +117,6 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 		},
 
 		{
-			Description: "Relational Delete of an updated document and an aliased _docID name.",
 			Actions: []any{
 				testUtils.CreateDoc{
 					// Books

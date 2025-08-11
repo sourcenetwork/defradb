@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, for different doc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -50,7 +49,6 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, for different doc with update",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -89,7 +87,6 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, with update",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -131,7 +128,6 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, with update",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

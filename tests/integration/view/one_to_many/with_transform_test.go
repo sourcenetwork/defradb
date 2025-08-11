@@ -23,7 +23,6 @@ import (
 
 func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with transform on outer",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -114,7 +113,6 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 
 func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with transform adding inner docs",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

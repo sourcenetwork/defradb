@@ -38,8 +38,6 @@ var countTypeIndexJoinPattern = dataMap{
 func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with count on a one-to-many joined field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -112,8 +110,6 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 
 func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with count on a one-to-many joined field with many sources.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -256,8 +252,6 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) 1-to-M relation request from many side with count filter shared.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -299,8 +293,6 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 // reuse the rendered join as they dont have matching filters.
 func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) 1-to-M relation request from many side with count filter not shared.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

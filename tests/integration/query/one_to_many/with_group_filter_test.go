@@ -19,7 +19,6 @@ import (
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-many relation query from many side with parent level group and filter on join",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -160,7 +159,6 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-many relation query from many side with parent level group and group filter",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -304,7 +302,6 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroupJoin(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-many relation query from many side with parent level group and filters",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,

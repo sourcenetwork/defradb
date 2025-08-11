@@ -22,7 +22,6 @@ import (
 // This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation secondary direction, id field with name clash on secondary side",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL will parse the input type as ID and
 			// will return an unexpected type error
@@ -89,7 +88,6 @@ func TestQueryOneToOneWithClashingIdFieldOnSecondary(t *testing.T) {
 // This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToOneWithClashingIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, id field with name clash on primary side",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

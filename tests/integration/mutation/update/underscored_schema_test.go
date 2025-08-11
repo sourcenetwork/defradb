@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of schema with underscored name",
 
 		Actions: []any{
 			&action.AddSchema{

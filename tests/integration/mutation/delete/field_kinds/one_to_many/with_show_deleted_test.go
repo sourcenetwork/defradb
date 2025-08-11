@@ -32,7 +32,6 @@ type Author {
 
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: schemas,

@@ -20,7 +20,6 @@ import (
 func TestQueryOneToOne(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "One-to-one relation query with no filter",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -65,7 +64,6 @@ func TestQueryOneToOne(t *testing.T) {
 			},
 		},
 		{
-			Description: "One-to-one relation secondary direction, no filter",
 			Actions: []any{
 				testUtils.CreateDoc{
 					CollectionID: 0,
@@ -118,7 +116,6 @@ func TestQueryOneToOne(t *testing.T) {
 
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, multiple records",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -202,7 +199,6 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation secondary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -280,7 +276,6 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, nil child",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -314,7 +309,6 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 
 func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, nil parent",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -347,7 +341,6 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, relation ID field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -399,7 +392,6 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation secondary direction, relation ID field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

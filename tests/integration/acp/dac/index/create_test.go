@@ -19,7 +19,6 @@ import (
 
 func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, with creating new index using separate request on permissioned collection, no error",
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -66,7 +65,6 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 
 func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, with creating new index using directive on permissioned collection, no error",
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

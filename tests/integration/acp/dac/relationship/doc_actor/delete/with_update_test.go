@@ -22,8 +22,6 @@ import (
 func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes update access from another actor, they can not update anymore",
-
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionNamedMutationType,
 			testUtils.CollectionSaveMutationType,
@@ -241,8 +239,6 @@ func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) 
 
 func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner revokes update access from another actor, they can not update anymore (gql)",
 
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return no error.

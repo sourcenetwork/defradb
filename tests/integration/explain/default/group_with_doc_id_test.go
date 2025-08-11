@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a docID on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -74,8 +72,6 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 
 func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with docIDs and filter on parent groupBy.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

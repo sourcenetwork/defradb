@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with max alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -88,7 +87,6 @@ func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with max alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

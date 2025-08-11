@@ -20,7 +20,6 @@ import (
 
 func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation, with an invalid field.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -42,7 +41,6 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 
 func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation, non-existing id, from the single side, no id relation field.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -67,7 +65,6 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation, non-existing id, from the many side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -97,7 +94,6 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 
 func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many create mutation using relation id from many side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

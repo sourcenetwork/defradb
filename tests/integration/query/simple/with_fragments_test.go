@@ -20,7 +20,6 @@ import (
 
 func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with fragments succeeds",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -70,7 +69,6 @@ func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with nested fragment succeeds",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -118,7 +116,6 @@ func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with fragment spread and select",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -163,7 +160,6 @@ func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with missing fragment returns error",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -193,7 +189,6 @@ func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with fragment with invalid field returns error",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -226,7 +221,6 @@ func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with fragment with aggregate",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -259,7 +253,6 @@ func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with fragment with aggregate",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -305,7 +298,6 @@ func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithInlineFragment_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with inline fragment",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

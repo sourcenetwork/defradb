@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of nil integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of empty integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T)
 
 func TestQueryInlineNillableIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of nillable integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -146,7 +142,6 @@ func TestQueryInlineNillableIntegerArray_WithMinAndPopulatedArray_Succeeds(t *te
 
 func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of nil float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -178,7 +173,6 @@ func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of empty float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -210,7 +204,6 @@ func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -242,7 +235,6 @@ func TestQueryInlineFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, min of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

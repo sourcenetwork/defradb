@@ -20,8 +20,6 @@ import (
 func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, but specified resource does not exist, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

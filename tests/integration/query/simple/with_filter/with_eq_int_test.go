@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(age)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimpleWithIntEqualsFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithIntEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic int nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

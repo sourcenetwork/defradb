@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithIntInFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with special filter (or)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -72,7 +71,6 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 
 func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with _in filter on float",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -123,7 +121,6 @@ func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 
 func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with special filter (or)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

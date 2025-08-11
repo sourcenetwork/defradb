@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field name passes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,7 +42,6 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field name passes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -66,7 +64,6 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -90,7 +87,6 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field passes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -115,7 +111,6 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field passes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -140,7 +135,6 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field passes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

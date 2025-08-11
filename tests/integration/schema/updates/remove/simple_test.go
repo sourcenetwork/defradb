@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove collection name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -44,7 +43,6 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema version id",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -80,7 +78,6 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

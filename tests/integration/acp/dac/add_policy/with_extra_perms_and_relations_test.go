@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy, extra permissions and relations, still valid",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),

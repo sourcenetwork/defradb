@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query with docID property",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

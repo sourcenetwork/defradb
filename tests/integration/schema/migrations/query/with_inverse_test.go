@@ -23,7 +23,6 @@ import (
 
 func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, inverses across multiple migrated versions",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

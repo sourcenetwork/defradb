@@ -23,7 +23,6 @@ import (
 
 func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with update request",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -105,7 +104,6 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 
 func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with migration registered after update",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

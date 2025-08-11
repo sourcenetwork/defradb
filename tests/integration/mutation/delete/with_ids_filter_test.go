@@ -19,7 +19,6 @@ import (
 
 func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using document ids and filter, known id and empty filter.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

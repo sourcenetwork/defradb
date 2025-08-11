@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with document id",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -66,7 +65,6 @@ func TestMutationUpdate_WithId(t *testing.T) {
 
 func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with non existant document id",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

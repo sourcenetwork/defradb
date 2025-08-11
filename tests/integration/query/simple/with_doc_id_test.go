@@ -19,7 +19,6 @@ import (
 func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple query with basic filter (by docID arg)",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -46,7 +45,6 @@ func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (by docID arg), no results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -68,7 +66,6 @@ func TestQuerySimpleWithDocIDFilter(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple query with basic filter (by docID arg), partial results",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{

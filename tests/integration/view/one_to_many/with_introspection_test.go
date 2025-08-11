@@ -20,7 +20,6 @@ import (
 
 func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view, introspection test",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

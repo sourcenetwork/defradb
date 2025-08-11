@@ -19,7 +19,6 @@ import (
 
 func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered none of string array",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -61,7 +60,6 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered none of string array",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {

@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, adding empty policy, return error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -37,8 +35,6 @@ func TestACP_AddPolicy_EmptyPolicyData_Error(t *testing.T) {
 
 func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, adding policy, with empty creator, return error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -78,8 +74,6 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 
 func TestACP_AddPolicy_EmptyCreatorAndPolicyArgs_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, adding policy, with empty policy and empty creator, return error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

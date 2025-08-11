@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy, one resource that is empty, should return error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),

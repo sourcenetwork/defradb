@@ -20,8 +20,6 @@ import (
 func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner gives delete access without explicit read permission, can still delete",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 

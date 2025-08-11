@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -60,7 +59,6 @@ func TestQueryCommitsWithCid(t *testing.T) {
 func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -99,7 +97,6 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by invalid CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -130,7 +127,6 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by invalid, short CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -161,7 +157,6 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by unknown CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

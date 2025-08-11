@@ -34,8 +34,6 @@ var dagScanPattern = dataMap{
 func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) commits query-op.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -60,8 +58,6 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) commits query-op with only docID (no field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -85,8 +81,6 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 
 func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) latestCommits query-op.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -113,8 +107,6 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) latestCommits query-op with only docID (no field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -140,8 +132,6 @@ func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) latestCommits query without docID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -166,8 +156,6 @@ func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 
 func TestDebugExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) latestCommits query without any arguments.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

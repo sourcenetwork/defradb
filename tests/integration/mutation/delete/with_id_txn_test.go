@@ -21,7 +21,6 @@ import (
 
 func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation where one element exists.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

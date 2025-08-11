@@ -19,7 +19,6 @@ import (
 
 func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion using document id that doesn't exist, where the collection is empty.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -46,7 +45,6 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 
 func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion using document id that doesn't exist, where the collection is non-empty.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

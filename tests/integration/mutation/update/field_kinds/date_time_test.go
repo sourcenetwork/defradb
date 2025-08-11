@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of date time field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -64,7 +63,6 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 
 func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of date time field, multiple docs",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -114,7 +112,6 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 
 func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of date time field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

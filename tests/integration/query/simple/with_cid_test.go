@@ -19,7 +19,6 @@ import (
 
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with cid",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

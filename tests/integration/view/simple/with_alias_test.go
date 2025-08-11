@@ -19,7 +19,6 @@ import (
 
 func TestView_SimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with alias",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

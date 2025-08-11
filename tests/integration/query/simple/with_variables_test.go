@@ -20,7 +20,6 @@ import (
 
 func TestQuerySimpleWithNonNullVariable(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non null variable",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -63,7 +62,6 @@ func TestQuerySimpleWithNonNullVariable(t *testing.T) {
 
 func TestQuerySimpleWithVariableDefaultValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with variable default value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -102,7 +100,6 @@ func TestQuerySimpleWithVariableDefaultValue(t *testing.T) {
 
 func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non null variable returns error when null",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -132,7 +129,6 @@ func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 
 func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with variable default value override",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -171,7 +167,6 @@ func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 
 func TestQuerySimpleWithOrderVariable(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with order variable",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -216,7 +211,6 @@ func TestQuerySimpleWithOrderVariable(t *testing.T) {
 
 func TestQuerySimpleWithAggregateCountVariable(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with aggregate count variable",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

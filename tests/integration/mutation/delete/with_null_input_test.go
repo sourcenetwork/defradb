@@ -19,7 +19,6 @@ import (
 
 func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation, with null filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -55,7 +54,6 @@ func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 
 func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation, with null docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -91,7 +89,6 @@ func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 
 func TestMutationDelete_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation, with null docIDs",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

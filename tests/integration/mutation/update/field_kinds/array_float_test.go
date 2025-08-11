@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with float array, replace with nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -64,7 +63,6 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with float array, replace with empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -109,7 +107,6 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with float array, replace with same size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -154,7 +151,6 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with float array, replace with smaller size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -199,7 +195,6 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with float array, replace with larger size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

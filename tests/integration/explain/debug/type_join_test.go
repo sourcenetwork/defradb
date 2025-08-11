@@ -48,8 +48,6 @@ var debugTypeJoinPattern = dataMap{
 func TestDebugExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with 2 single joins and 1 many join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

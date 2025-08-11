@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docID filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -45,8 +43,6 @@ func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using one ID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -69,8 +65,6 @@ func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 
 func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with docIDs filter using multiple but duplicate IDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -100,8 +94,6 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *test
 func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using multiple unique IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -129,8 +121,6 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T)
 
 func TestDebugExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with a filter to match ID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

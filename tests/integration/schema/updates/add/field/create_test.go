@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -66,7 +65,6 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with create after schema update",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

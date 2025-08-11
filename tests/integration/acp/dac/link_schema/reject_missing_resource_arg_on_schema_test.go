@@ -20,8 +20,6 @@ import (
 func TestACP_LinkSchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, but no resource was specified on schema, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -92,8 +90,6 @@ func TestACP_LinkSchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing
 
 func TestACP_LinkSchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, specified resource arg on schema is empty, reject schema",
 
 		Actions: []any{
 

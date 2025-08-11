@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, grouped and ordered by docID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

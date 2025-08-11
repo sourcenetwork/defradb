@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithNullDepth(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null depth",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -56,7 +55,6 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 
 func TestQueryCommitsWithNullCID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -121,7 +119,6 @@ func TestQueryCommitsWithNullField(t *testing.T) {
 
 func TestQueryCommitsWithNullOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null order",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -159,7 +156,6 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 
 func TestQueryCommitsWithNullOrderField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null order field",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -197,7 +193,6 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 
 func TestQueryCommitsWithNullLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null limit",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -235,7 +230,6 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 
 func TestQueryCommitsWithNullOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null offset",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -273,7 +267,6 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 
 func TestQueryCommitsWithNullGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null groupBy",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

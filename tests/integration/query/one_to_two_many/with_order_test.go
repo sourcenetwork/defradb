@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side, order in opposite directions on children",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

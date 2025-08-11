@@ -42,8 +42,6 @@ var debugAverageTypeIndexJoinManyPattern = dataMap{
 func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with average on joined/related field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -66,8 +64,6 @@ func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 
 func TestDebugExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with average on multiple joined fields with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

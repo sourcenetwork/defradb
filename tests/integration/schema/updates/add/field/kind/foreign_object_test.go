@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,7 +42,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object, unknown schema",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -69,7 +67,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object, id field missing kind",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -96,7 +93,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 
 func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object, id field invalid kind",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -123,7 +119,6 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 
 func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object, valid, functional",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

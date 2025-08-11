@@ -21,7 +21,6 @@ import (
 
 func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable floats",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

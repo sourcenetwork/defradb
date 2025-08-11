@@ -21,7 +21,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable bool array (18)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -55,7 +54,6 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable bool array (18) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -101,7 +99,6 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind nillable bool array substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

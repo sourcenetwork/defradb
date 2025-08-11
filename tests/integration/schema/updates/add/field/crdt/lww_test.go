@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldCRDTLWW(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt LWW (1)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

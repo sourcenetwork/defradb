@@ -23,7 +23,6 @@ import (
 
 func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view with transform on outer",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

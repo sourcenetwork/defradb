@@ -21,7 +21,6 @@ import (
 func TestQueryInlineArrayWithBooleans(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple inline array with no filter, nil boolean array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -48,7 +47,6 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, empty boolean array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -75,7 +73,6 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, booleans",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -110,7 +107,6 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, booleans",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -148,7 +144,6 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 func TestQueryInlineArrayWithIntegers(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple inline array with no filter, default integer array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -174,7 +169,6 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, nil integer array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -201,7 +195,6 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, empty integer array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -228,7 +221,6 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, positive integers",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -255,7 +247,6 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, negative integers",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -282,7 +273,6 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, mixed integers",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -317,7 +307,6 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable ints",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -356,7 +345,6 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 func TestQueryInlineArrayWithFloats(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple inline array with no filter, nil float array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -383,7 +371,6 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, empty float array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -410,7 +397,6 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, positive floats",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -445,7 +431,6 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable floats",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -483,7 +468,6 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 func TestQueryInlineArrayWithStrings(t *testing.T) {
 	tests := []testUtils.TestCase{
 		{
-			Description: "Simple inline array with no filter, nil string array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -510,7 +494,6 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, empty string array",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -537,7 +520,6 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 			},
 		},
 		{
-			Description: "Simple inline array with no filter, strings",
 			Actions: []any{
 				testUtils.CreateDoc{
 					Doc: `{
@@ -572,7 +554,6 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 
 func TestQueryInlineArrayWithNillableString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable strings",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

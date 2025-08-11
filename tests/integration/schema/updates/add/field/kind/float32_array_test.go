@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float32 array (9)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindFloat32ArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float32 array (9) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindFloat32ArrayWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindFloat32ArraySubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float32 array substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

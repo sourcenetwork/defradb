@@ -21,8 +21,6 @@ import (
 func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner relation with difference (-) set operation on read permission expression, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -103,8 +101,6 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDR
 func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner relation with intersection (&) set operation on read permission expression, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -184,8 +180,6 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOn
 
 func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, owner relation with invalid set operation on read permission expression, reject schema",
 
 		Actions: []any{
 

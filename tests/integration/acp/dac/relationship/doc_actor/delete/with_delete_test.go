@@ -20,8 +20,6 @@ import (
 func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes delete access from another actor, they can not delete anymore",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 

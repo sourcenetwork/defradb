@@ -20,7 +20,6 @@ import (
 
 func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Drop index should not hinder querying",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -113,7 +112,6 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 
 func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Drop index should return error if index does not exist",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

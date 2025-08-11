@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindBoolArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind bool array (3)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindBoolArray(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind bool array (3) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind bool array substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

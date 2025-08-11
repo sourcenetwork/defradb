@@ -22,7 +22,6 @@ import (
 
 func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min on undefined object",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -38,7 +37,6 @@ func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min on undefined field",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -54,7 +52,6 @@ func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -72,7 +69,6 @@ func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -113,7 +109,6 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 			testUtils.CollectionSaveMutationType,
 			testUtils.CollectionNamedMutationType,
 		}),
-		Description: "Simple query min and max value int",
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
@@ -137,7 +132,6 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithAliasedMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query aliased min on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {

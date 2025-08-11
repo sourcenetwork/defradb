@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, replace field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -44,7 +43,6 @@ func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, replace field with correct ID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

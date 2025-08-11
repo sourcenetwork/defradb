@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt composite (3)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,7 +42,6 @@ func TestSchemaUpdatesAddFieldCRDTCompositeErrors(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldCRDTCompositeErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt composite (3)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

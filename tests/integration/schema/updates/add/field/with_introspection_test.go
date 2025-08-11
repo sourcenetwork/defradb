@@ -20,7 +20,6 @@ import (
 
 func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with gql introspection",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -71,7 +70,6 @@ func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenBadPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add invalid field with gql introspection",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindInt(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind int (4)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindInt(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindIntWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind int (4) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindIntWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindIntSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind int substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

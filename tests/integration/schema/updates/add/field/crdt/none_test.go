@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt default",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldCRDTNone(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with crdt none (0)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

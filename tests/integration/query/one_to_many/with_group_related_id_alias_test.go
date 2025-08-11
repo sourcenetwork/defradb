@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias (from many side).",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -199,7 +198,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias (from many side).",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -391,7 +389,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias, with id selection & related selection (from many side).",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -571,7 +568,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias, with id selection & related selection (from many side).",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -767,7 +763,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id field alias (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -859,7 +854,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t 
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id field alias, with id selection (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

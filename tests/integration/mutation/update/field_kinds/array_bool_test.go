@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -64,7 +63,6 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -109,7 +107,6 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with same size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -154,7 +151,6 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with smaller size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -199,7 +195,6 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with larger size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

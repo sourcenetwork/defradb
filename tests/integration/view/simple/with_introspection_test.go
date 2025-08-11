@@ -20,7 +20,6 @@ import (
 
 func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

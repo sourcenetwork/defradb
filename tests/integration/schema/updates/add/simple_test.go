@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add schema fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 
 func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add collection property fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,7 +75,6 @@ func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 
 func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add schema property fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -101,7 +98,6 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add to unsupported collection prop",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -135,7 +131,6 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add to unsupported schema prop",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

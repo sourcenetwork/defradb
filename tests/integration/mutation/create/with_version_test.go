@@ -19,7 +19,6 @@ import (
 
 func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with version cid",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

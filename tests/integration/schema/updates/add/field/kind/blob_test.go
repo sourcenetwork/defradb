@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindBlob(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind blob (13)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindBlob(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind blob (13) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind blob substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

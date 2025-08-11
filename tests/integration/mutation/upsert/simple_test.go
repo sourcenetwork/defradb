@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with no filter match",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -83,7 +82,6 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 
 func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with filter match",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -153,7 +151,6 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with multiple filter matches",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -196,7 +193,6 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 
 func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with null create input",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -227,7 +223,6 @@ func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with null update input",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -258,7 +253,6 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with null filter input",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -289,7 +283,6 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with unique composite index and update",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

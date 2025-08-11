@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with top level average.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -110,8 +108,6 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with top level count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -182,8 +178,6 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 
 func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with top level sum.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

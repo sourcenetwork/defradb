@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindNone(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind none (0)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

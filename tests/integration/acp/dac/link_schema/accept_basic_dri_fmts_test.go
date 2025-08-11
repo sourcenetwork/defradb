@@ -21,8 +21,6 @@ import (
 func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, specify basic policy that was added in YAML format, accept schema",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -111,8 +109,6 @@ func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 
 func TestACP_LinkSchema_BasicJSON_SchemaAccepted(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, specify basic policy that was added in JSON format, accept schema",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

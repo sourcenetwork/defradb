@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with sum on unspecified field",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -43,7 +42,6 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on non-rendered group, empty collection",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -64,7 +62,6 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group integer value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -113,7 +110,6 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group nil and integer values",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -161,7 +157,6 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of sum on int",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -256,7 +251,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group float (default) value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -303,7 +297,6 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group float value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -351,7 +344,6 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of sum on float",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -446,7 +438,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of sum of sum of float",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

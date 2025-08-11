@@ -20,7 +20,6 @@ import (
 // func by targeting a specific docID in the parent select.
 func TestQueryInlineNillableFloatArray_WithDocIDAndMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with doc id, max of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

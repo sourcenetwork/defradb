@@ -19,7 +19,6 @@ import (
 
 func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view and duplicate embedded schema",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
