@@ -102,18 +102,13 @@ func (proto *ReplicatorProtocol) PushToReplicator(
 		Creator:      proto.host.ID().String(),
 		Block:        evt.Block,
 	}
-	m, err := message.Send[*PushLogReply](ctx, proto, &req, pid, replicatorProtocolRequest)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
+	return message.Send[*PushLogReply](ctx, proto, &req, pid, replicatorProtocolRequest)
 }
 
 func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
 	ctx := context.Background()
-	var err error
-
-	req, err := message.Receive[*PushLogRequest](s, proto)
+	req := PushLogRequest{}
+	err := message.Receive(s, proto, &req)
 	if err != nil {
 		return
 	}
@@ -128,7 +123,7 @@ func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
 		}
 	}()
 
-	resp, err := proto.pushLogFunc(ctx, req, true)
+	resp, err := proto.pushLogFunc(ctx, &req, true)
 	if err != nil {
 		return
 	}
@@ -138,5 +133,5 @@ func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
 }
 
 func (proto *ReplicatorProtocol) onResponse(s network.Stream) {
-	_, _ = message.Receive[*PushLogReply](s, proto)
+	_ = message.Receive(s, proto, &PushLogReply{})
 }

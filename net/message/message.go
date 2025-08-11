@@ -83,26 +83,25 @@ type proto interface {
 }
 
 // Reveive takes in a network stream and store the unmarshalled message in the provided [Message]
-func Receive[T Message](s network.Stream, proto proto) (T, error) {
-	var m T
+func Receive(s network.Stream, proto proto, m Message) error {
 	b, err := io.ReadAll(s)
 	if err != nil {
 		resetErr := s.Reset()
-		return m, errors.Join(err, resetErr)
+		return errors.Join(err, resetErr)
 	}
 	err = s.Close()
 	if err != nil {
-		return m, err
+		return err
 	}
 
 	err = cbor.Unmarshal(b, m)
 	if err != nil {
-		return m, err
+		return err
 	}
 
 	err = verifyMessage(m)
 	if err != nil {
-		return m, err
+		return err
 	}
 
 	messageChan, ok := proto.GetResponseChan(m.GetMessageID())
@@ -111,7 +110,7 @@ func Receive[T Message](s network.Stream, proto proto) (T, error) {
 		proto.DeleteResponseChan(m.GetMessageID())
 	}
 
-	return m, nil
+	return nil
 }
 
 // SendAndForget creates a new network stream with the provided peer, signs and set the appropriate meta data
@@ -232,7 +231,7 @@ func send(
 	pid peer.ID,
 	protoID protocol.ID,
 ) (err error) {
-	signed, err := cbor.Marshal(m)
+	data, err := cbor.Marshal(m)
 	if err != nil {
 		return err
 	}
@@ -246,7 +245,7 @@ func send(
 		err = errors.Join(err, closeErr)
 	}()
 
-	_, err = s.Write(signed)
+	_, err = s.Write(data)
 	if err != nil {
 		resetErr := s.Reset()
 		return errors.Join(err, resetErr)

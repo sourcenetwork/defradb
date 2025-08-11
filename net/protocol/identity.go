@@ -75,8 +75,8 @@ func (proto *IdentityProtocol) GetIdentity(ctx context.Context, pid peer.ID) (*I
 
 func (proto *IdentityProtocol) onRequest(s network.Stream) {
 	ctx := context.Background()
-	var err error
-	req, err := message.Receive[*IdentityRequest](s, proto)
+	req := IdentityRequest{}
+	err := message.Receive(s, proto, &req)
 	if err != nil {
 		return
 	}
@@ -99,8 +99,5 @@ func (proto *IdentityProtocol) onRequest(s network.Stream) {
 }
 
 func (proto *IdentityProtocol) onResponse(s network.Stream) {
-	_, err := message.Receive[*IdentityResponse](s, proto)
-	if err != nil {
-		return
-	}
+	_ = message.Receive(s, proto, &IdentityResponse{})
 }
