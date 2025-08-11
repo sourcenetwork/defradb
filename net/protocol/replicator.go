@@ -39,8 +39,9 @@ type PushLogReply struct {
 }
 
 const (
-	replicatorProtocolRequest  = "/defradb/rep_req/0.0.1"
-	replicatorProtocolResponse = "/defradb/rep_resp/0.0.1"
+	replicatorProtocolVersion  = "0.0.1"
+	replicatorProtocolRequest  = "/defradb/rep_req/" + replicatorProtocolVersion
+	replicatorProtocolResponse = "/defradb/rep_resp/" + replicatorProtocolVersion
 )
 
 type pushLogFunc func(
@@ -101,19 +102,18 @@ func (proto *ReplicatorProtocol) PushToReplicator(
 		Creator:      proto.host.ID().String(),
 		Block:        evt.Block,
 	}
-	m, err := message.Send(ctx, proto, &req, pid, replicatorProtocolRequest, true)
+	m, err := message.Send[*PushLogReply](ctx, proto, &req, pid, replicatorProtocolRequest)
 	if err != nil {
 		return nil, err
 	}
-	return m.(*PushLogReply), nil //nolint:forcetypeassert
+	return m, nil
 }
 
 func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
 	ctx := context.Background()
 	var err error
 
-	req := PushLogRequest{}
-	err = message.Receive(s, proto, &req)
+	req, err := message.Receive[*PushLogRequest](s, proto)
 	if err != nil {
 		return
 	}
@@ -124,23 +124,19 @@ func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
 			resp := PushLogReply{}
 			resp.SetMessageID(req.MessageID)
 			resp.SetErrMessage(err.Error())
-			_, _ = message.Send(ctx, proto, &resp, s.Conn().RemotePeer(), replicatorProtocolResponse, false)
+			_ = message.SendAndForget(ctx, proto, &resp, s.Conn().RemotePeer(), replicatorProtocolResponse)
 		}
 	}()
 
-	resp, err := proto.pushLogFunc(ctx, &req, true)
+	resp, err := proto.pushLogFunc(ctx, req, true)
 	if err != nil {
 		return
 	}
 
 	resp.SetMessageID(req.MessageID)
-	_, _ = message.Send(ctx, proto, resp, s.Conn().RemotePeer(), replicatorProtocolResponse, false)
+	err = message.SendAndForget(ctx, proto, resp, s.Conn().RemotePeer(), replicatorProtocolResponse)
 }
 
 func (proto *ReplicatorProtocol) onResponse(s network.Stream) {
-	resp := PushLogReply{}
-	err := message.Receive(s, proto, &resp)
-	if err != nil {
-		return
-	}
+	_, _ = message.Receive[*PushLogReply](s, proto)
 }

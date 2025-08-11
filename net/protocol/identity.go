@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	identityProtocolRequest  = "/defradb/ident_req/0.0.1"
-	identityProtocolResponse = "/defradb/ident_resp/0.0.1"
+	identityProtocolVersion  = "0.0.1"
+	identityProtocolRequest  = "/defradb/ident_req/" + identityProtocolVersion
+	identityProtocolResponse = "/defradb/ident_resp/" + identityProtocolVersion
 )
 
 // IdentityRequest is the struct used to request the identity of a peer node.
@@ -69,18 +70,13 @@ func (proto *IdentityProtocol) GetIdentity(ctx context.Context, pid peer.ID) (*I
 	req := IdentityRequest{
 		PeerID: proto.host.ID().String(),
 	}
-	m, err := message.Send(ctx, proto, &req, pid, identityProtocolRequest, true)
-	if err != nil {
-		return nil, err
-	}
-	return m.(*IdentityResponse), nil //nolint:forcetypeassert
+	return message.Send[*IdentityResponse](ctx, proto, &req, pid, identityProtocolRequest)
 }
 
 func (proto *IdentityProtocol) onRequest(s network.Stream) {
 	ctx := context.Background()
 	var err error
-	req := IdentityRequest{}
-	err = message.Receive(s, proto, &req)
+	req, err := message.Receive[*IdentityRequest](s, proto)
 	if err != nil {
 		return
 	}
@@ -90,7 +86,7 @@ func (proto *IdentityProtocol) onRequest(s network.Stream) {
 			resp := IdentityResponse{}
 			resp.SetMessageID(req.MessageID)
 			resp.SetErrMessage(err.Error())
-			_, _ = message.Send(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse, false)
+			_ = message.SendAndForget(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse)
 		}
 	}()
 	token, err := proto.getIdentityFunc(ctx, immutable.Some(req.PeerID))
@@ -99,12 +95,11 @@ func (proto *IdentityProtocol) onRequest(s network.Stream) {
 	}
 	resp := IdentityResponse{IdentityToken: token}
 	resp.SetMessageID(req.MessageID)
-	_, err = message.Send(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse, false)
+	err = message.SendAndForget(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse)
 }
 
 func (proto *IdentityProtocol) onResponse(s network.Stream) {
-	resp := IdentityResponse{}
-	err := message.Receive(s, proto, &resp)
+	_, err := message.Receive[*IdentityResponse](s, proto)
 	if err != nil {
 		return
 	}
