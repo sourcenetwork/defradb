@@ -812,38 +812,39 @@ func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 }
 
 func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Actions: []any{
-				testUtils.Request{
-					Request: `query {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					Users(order: {Age: ASC, Name: DESC}) {
 						Name
 						Age
 					}
 				}`,
-					ExpectedError: "each order argument can only define one field",
-				},
+				ExpectedError: "each order argument can only define one field",
 			},
 		},
-		{
-			Actions: []any{
-				testUtils.Request{
-					Request: `query {
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithMultipleOrderFieldsNestedWithinMultpleFields_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.Request{
+				Request: `query {
 					Users(order: [{Age: ASC}, {Age: ASC, Name: DESC}]) {
 						Name
 						Age
 					}
 				}`,
-					ExpectedError: "each order argument can only define one field",
-				},
+				ExpectedError: "each order argument can only define one field",
 			},
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {

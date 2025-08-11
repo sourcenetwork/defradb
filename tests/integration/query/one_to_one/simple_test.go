@@ -17,28 +17,27 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToOne(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
 						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Book {
 							name
 							rating
@@ -48,41 +47,46 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Book": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
-								"author": map[string]any{
-									"name": "John Grisham",
-									"age":  int64(65),
-								},
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
 							},
 						},
 					},
 				},
 			},
 		},
-		{
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
 						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Author {
 							name
 							age
@@ -92,15 +96,14 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"name": "John Grisham",
-								"age":  int64(65),
-								"published": map[string]any{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"published": map[string]any{
+								"name":   "Painted House",
+								"rating": 4.9,
 							},
 						},
 					},
@@ -109,9 +112,7 @@ func TestQueryOneToOne(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {

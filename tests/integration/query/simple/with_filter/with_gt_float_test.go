@@ -16,92 +16,31 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users(filter: {HeightM: {_gt: 2.0999999999999}}) {
 							Name
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"Name": "John",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "John",
-						"HeightM": 2.1
-					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "Bob",
-						"HeightM": 1.82
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users(filter: {HeightM: {_gt: 40}}) {
-							Name
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{},
-					},
-				},
-			},
-		},
-		{
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "John",
-						"HeightM": 2.1
-					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "Bob",
-						"HeightM": 1.82
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users(filter: {HeightM: {_gt: 1.8199999999999}}) {
-							Name
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"Name": "John",
-							},
-							{
-								"Name": "Bob",
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
 						},
 					},
 				},
@@ -109,9 +48,76 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "John",
+						"HeightM": 2.1
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "Bob",
+						"HeightM": 1.82
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users(filter: {HeightM: {_gt: 40}}) {
+							Name
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
 	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "John",
+						"HeightM": 2.1
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "Bob",
+						"HeightM": 1.82
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users(filter: {HeightM: {_gt: 1.8199999999999}}) {
+							Name
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+						{
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing.T) {
