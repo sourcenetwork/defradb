@@ -13,14 +13,14 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on undefined object",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					vector: [Int!]
@@ -40,9 +40,8 @@ func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on undefined field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 				}`,
@@ -63,9 +62,8 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -89,9 +87,8 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 
 func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pets: [String!]
@@ -114,9 +111,8 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -140,9 +136,8 @@ func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T)
 
 func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -178,9 +173,8 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -209,9 +203,8 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 
 func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Float32!]
@@ -247,9 +240,8 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Float64!]
@@ -285,9 +277,8 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Float64!]
@@ -323,9 +314,8 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -375,11 +365,63 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `type User {
+					name: String
+					pointsList: [Int!]
+				}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "John",
+					"pointsList": []int64{2, 4, 1},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "Bob",
+					"pointsList": []int64{1, 1, 1},
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name":       "Alice",
+					"pointsList": []int64{4, 5, 3},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 2){
+						name
+						sim: _similarity(pointsList: {vector: [1, 2, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"sim":  float64(14),
+						},
+						{
+							"name": "John",
+							"sim":  float64(10),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]
@@ -432,9 +474,8 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 // https://github.com/sourcenetwork/defradb/issues/3468
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Int!]

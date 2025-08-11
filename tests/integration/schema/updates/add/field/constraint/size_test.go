@@ -15,14 +15,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add size contraint to array field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

@@ -13,14 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestView_OneToMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -94,9 +94,8 @@ func TestView_OneToMany(t *testing.T) {
 
 func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with mixed sdl errors",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -133,9 +132,8 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 
 func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view from inner side",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -185,9 +183,8 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 
 func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view from outer to inner to outer",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -243,9 +240,8 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 
 func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with relation in query but not SDL",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -309,9 +305,8 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 
 func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one to many views with embedded schemas",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -369,9 +364,8 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 
 func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String

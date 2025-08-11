@@ -16,15 +16,15 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
 func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with restart",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -85,9 +85,8 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 
 func TestSchemaMigrationQueryWithRestartAndMigrationBeforeSchemaPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with migration and restart before patch",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

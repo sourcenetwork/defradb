@@ -13,14 +13,14 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove collection name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -43,9 +43,8 @@ func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema version id",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -79,9 +78,8 @@ func TestSchemaUpdatesRemoveSchemaVersionIDErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove schema name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

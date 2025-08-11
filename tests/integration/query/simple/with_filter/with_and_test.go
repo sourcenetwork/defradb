@@ -13,12 +13,12 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (and)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -72,9 +72,8 @@ func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 
 func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (and) on inline int array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					FavoriteNumbers: [Int!]

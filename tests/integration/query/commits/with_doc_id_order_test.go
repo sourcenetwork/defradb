@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order height desc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -75,7 +74,6 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order height asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -132,7 +130,6 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order cid desc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -189,7 +186,6 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order cid asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -246,7 +242,6 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, multiple updates with order cid asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

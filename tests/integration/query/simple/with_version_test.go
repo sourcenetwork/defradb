@@ -13,12 +13,12 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Embedded latest commits query within object query",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -72,7 +72,6 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 
 func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Embedded commits query within object query with schema version id",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -112,7 +111,6 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
 	test := testUtils.TestCase{
-		Description: "Embedded commits query within object query with document ID",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -152,7 +150,6 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Embedded, aliased, latest commits query within object query",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -219,9 +216,8 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
 	test := testUtils.TestCase{
-		Description: "Embedded commits query within object query with document ID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
 			testUtils.CreateDoc{
@@ -289,9 +285,8 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 	const docID = "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
 
 	test := testUtils.TestCase{
-		Description: "Embedded commits query within object query with document ID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
 			testUtils.CreateDoc{

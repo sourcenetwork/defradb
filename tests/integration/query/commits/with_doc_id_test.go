@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with unknown document ID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -46,7 +45,6 @@ func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 
 func TestQueryCommitsWithDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -84,7 +82,6 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, with links",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -138,7 +135,6 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, multiple results",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -198,7 +194,6 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 // includes link._Name).
 func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, multiple results and links",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

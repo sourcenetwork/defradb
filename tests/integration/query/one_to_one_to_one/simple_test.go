@@ -13,14 +13,14 @@ package one_to_one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -122,9 +122,8 @@ func TestQueryOneToOneToOne(t *testing.T) {
 
 func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation, secondary then primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -226,9 +225,8 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 
 func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation, primary then secondary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -330,9 +328,8 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 
 func TestQueryOneToOneToOneSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation, secondary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String

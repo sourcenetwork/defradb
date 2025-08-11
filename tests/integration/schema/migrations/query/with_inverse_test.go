@@ -16,15 +16,15 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
 func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, inverses across multiple migrated versions",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

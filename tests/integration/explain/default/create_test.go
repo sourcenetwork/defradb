@@ -35,7 +35,6 @@ var createPattern = dataMap{
 
 func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) mutation request with create.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -73,7 +72,6 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 
 func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) mutation request with create, document exists.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

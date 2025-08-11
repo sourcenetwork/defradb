@@ -207,6 +207,10 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	// wire up source to plan
 	plan.planNode = plan.selectNode
 
+	// The similarity plan need to be expanded before group, order, aggregate and limit or otherwise
+	// it wont be taken into consideration if one of them tries to targets it.
+	p.expandSimilarityPlans(plan)
+
 	// if group
 	if plan.group != nil {
 		err := p.expandGroupNodePlan(plan)
@@ -227,8 +231,6 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	if plan.limit != nil {
 		p.expandLimitPlan(plan, parentPlan)
 	}
-
-	p.expandSimilarityPlans(plan)
 
 	return nil
 }

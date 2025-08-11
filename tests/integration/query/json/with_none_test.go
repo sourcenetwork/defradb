@@ -13,14 +13,14 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered none of string array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON
@@ -60,9 +60,8 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered none of string array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON

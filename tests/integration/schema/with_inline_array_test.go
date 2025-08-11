@@ -13,13 +13,14 @@ package schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						favouriteIntegers: [Int!]
@@ -49,14 +50,14 @@ func TestSchemaInlineArrayCreatesSchemaGivenSingleType(t *testing.T) {
 func TestSchemaInlineArrayCreatesSchemaGivenSecondType(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						favouriteIntegers: [Int!]
 					}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Books {
 						pageNumbers: [Int!]

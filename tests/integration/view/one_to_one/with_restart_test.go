@@ -13,14 +13,14 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestView_OneToOneEmbeddedSchemaIsNotLostORestart(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view and restart",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String

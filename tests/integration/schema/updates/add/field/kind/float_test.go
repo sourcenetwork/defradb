@@ -13,14 +13,14 @@ package kind
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesAddFieldKindFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float (6)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -52,9 +52,8 @@ func TestSchemaUpdatesAddFieldKindFloat(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindFloatWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float (6) with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -98,9 +97,8 @@ func TestSchemaUpdatesAddFieldKindFloatWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindFloatSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind float substitution with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

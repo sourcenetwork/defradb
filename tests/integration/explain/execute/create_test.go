@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainMutationRequestWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with create.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

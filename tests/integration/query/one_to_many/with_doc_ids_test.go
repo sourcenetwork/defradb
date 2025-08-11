@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with child docIDs",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

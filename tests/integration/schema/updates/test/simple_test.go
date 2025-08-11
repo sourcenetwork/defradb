@@ -13,14 +13,14 @@ package test
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test collection name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -42,9 +42,8 @@ func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesTestCollectionNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test collection name passes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

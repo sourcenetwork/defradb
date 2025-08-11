@@ -13,14 +13,14 @@ package kind
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind json (14)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -52,9 +52,8 @@ func TestSchemaUpdatesAddFieldKindJSON(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind json (14) with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -98,9 +97,8 @@ func TestSchemaUpdatesAddFieldKindJSONWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindJSONSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind json substitution with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

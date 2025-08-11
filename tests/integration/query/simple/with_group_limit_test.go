@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, rendered, limited group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -76,7 +75,6 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 
 func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, multiple rendered, limited groups",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -150,7 +148,6 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number and limit, no children, rendered, limited group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -203,7 +200,6 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number and limit, no children, rendered, limited group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

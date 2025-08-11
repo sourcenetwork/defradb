@@ -13,14 +13,14 @@ package one_to_many_multiple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with counts with and without filters",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String
@@ -143,9 +143,8 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with counts with filters",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String

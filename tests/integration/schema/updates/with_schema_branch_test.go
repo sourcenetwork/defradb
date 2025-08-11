@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,9 +26,8 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, with branching schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -180,9 +180,8 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	schemaVersion4ID := "bafkreic2heai3vgufxcxs6bfvil2oyz27w3bzkwoqehjevlnkewq3ffp4e"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, with patch on branching schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -326,9 +325,8 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 	schemaVersion3ID := "bafkreifc46y7pk2xfwc3nc442r7iqf6cjixxerxrrnrsouky544gmz4zve"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, with branching schema toggling between branches",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -430,9 +428,8 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 	schemaVersion4ID := "bafkreifdkkauc4b4rkazmzijiu2nxlikqatxa5zbmjc4sn3wrtlcqqcrt4"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, with branching schema toggling between branches then patch",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -578,10 +575,8 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
 
 	test := testUtils.TestCase{
-		Description: `Test schema update, with branching schema toggling between branches and gets the 
-collection at a specific version`,
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

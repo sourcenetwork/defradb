@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -21,9 +22,8 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 	user1ID := "bae-93b58e20-b3e1-55b9-b5b8-0617fabe710e"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation, self referencing from primary",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

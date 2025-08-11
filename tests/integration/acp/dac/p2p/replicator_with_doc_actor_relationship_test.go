@@ -15,13 +15,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, p2p replicator with collection that has a policy, create a new doc-actor relationship",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
@@ -90,7 +89,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -100,10 +99,6 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.ConfigureReplicator{

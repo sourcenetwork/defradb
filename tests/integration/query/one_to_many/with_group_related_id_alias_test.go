@@ -13,14 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias (from many side).",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -198,9 +198,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias (from many side).",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -390,9 +389,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias, with id selection & related selection (from many side).",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -570,9 +568,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySideUsingAliasAndRelatedSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related field alias, with id selection & related selection (from many side).",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -766,7 +763,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id field alias (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -858,7 +854,6 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t 
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSideUsingAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id field alias, with id selection (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

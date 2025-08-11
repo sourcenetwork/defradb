@@ -52,8 +52,6 @@ var debugLimitTypeJoinManyPattern = dataMap{
 func TestDebugExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with only limit on related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -92,8 +90,6 @@ func TestDebugExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 
 func TestDebugExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with only offset on related child.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -134,8 +130,6 @@ func TestDebugExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 func TestDebugExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with both limit and offset on related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -174,8 +168,6 @@ func TestDebugExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T) {
 
 func TestDebugExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with limit on related child & both limit + offset on parent.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

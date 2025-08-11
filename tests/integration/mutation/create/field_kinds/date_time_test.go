@@ -14,13 +14,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreateFieldKinds_WithDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						time: DateTime
@@ -55,7 +56,7 @@ func TestMutationCreateFieldKinds_WithDateTime(t *testing.T) {
 func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						time: DateTime

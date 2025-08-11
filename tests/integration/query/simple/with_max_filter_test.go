@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithMaxFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with max filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

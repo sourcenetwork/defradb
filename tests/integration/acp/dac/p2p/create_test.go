@@ -15,13 +15,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, p2p create private documents on different nodes, with source-hub",
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
@@ -90,7 +89,7 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -100,10 +99,6 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -137,7 +132,6 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 
 func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, p2p create a private documents and sync after adding actor relationship, with source-hub",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
 				testUtils.SourceHubDocumentACPType,
@@ -208,7 +202,7 @@ func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -218,10 +212,6 @@ func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.SubscribeToCollection{

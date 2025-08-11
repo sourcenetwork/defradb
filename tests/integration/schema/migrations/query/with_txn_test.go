@@ -17,15 +17,15 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
 func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, with transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -87,9 +87,8 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 
 func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

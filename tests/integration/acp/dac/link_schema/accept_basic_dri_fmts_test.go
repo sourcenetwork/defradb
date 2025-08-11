@@ -13,14 +13,13 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
 
 func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, specify basic policy that was added in YAML format, accept schema",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -52,7 +51,7 @@ func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -62,10 +61,6 @@ func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -115,8 +110,6 @@ func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 func TestACP_LinkSchema_BasicJSON_SchemaAccepted(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, specify basic policy that was added in JSON format, accept schema",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -155,7 +148,7 @@ func TestACP_LinkSchema_BasicJSON_SchemaAccepted(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -165,10 +158,6 @@ func TestACP_LinkSchema_BasicJSON_SchemaAccepted(t *testing.T) {
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{

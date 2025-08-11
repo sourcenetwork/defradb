@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -45,7 +46,7 @@ func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,

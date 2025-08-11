@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -112,7 +113,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
 				Actions: []any{
-					testUtils.SchemaUpdate{
+					&action.AddSchema{
 						Schema: `
 							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
 								name: String 
@@ -275,7 +276,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
 				Actions: []any{
-					testUtils.SchemaUpdate{
+					&action.AddSchema{
 						Schema: `
 							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
 								name: String 
@@ -467,7 +468,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
 				Actions: []any{
-					testUtils.SchemaUpdate{
+					&action.AddSchema{
 						Schema: `
 							type User @index(includes: [{field: "age"}, {field: "custom"}]) {
 								name: String 
@@ -659,7 +660,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
 				Actions: []any{
-					testUtils.SchemaUpdate{
+					&action.AddSchema{
 						Schema: `
 							type User @index(includes: [{field: "custom"}, {field: "age"}]) {
 								name: String 
@@ -851,7 +852,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 		t.Run(tc.name, func(t *testing.T) {
 			test := testUtils.TestCase{
 				Actions: []any{
-					testUtils.SchemaUpdate{
+					&action.AddSchema{
 						Schema: `
 							type User @index(includes: [{field: "custom"}, {field: "tags"}]) {
 								name: String 

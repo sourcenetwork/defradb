@@ -14,14 +14,14 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Getting indexes should return empty list if there are no indexes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

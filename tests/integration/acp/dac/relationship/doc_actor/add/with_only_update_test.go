@@ -15,13 +15,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives update access without explicit read permission, can still update",
 
 		SupportedMutationTypes: immutable.Some(
 			[]testUtils.MutationType{
@@ -87,7 +86,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -97,10 +96,6 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

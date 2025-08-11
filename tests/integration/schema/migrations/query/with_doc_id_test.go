@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -23,9 +24,8 @@ import (
 // This test asserts that prefixes are being passed correctly through the new Lens fetcher.
 func TestSchemaMigrationQueryByDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, query by docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -103,9 +103,8 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 // documents/queries, if the size changes so should this test.
 func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema migration, multiple queries by docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

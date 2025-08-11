@@ -12,7 +12,7 @@ package encryption
 
 import (
 	"github.com/sourcenetwork/defradb/crypto"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/action"
 )
 
 // we explicitly set LWW CRDT type because we want to test encryption with this specific CRDT type
@@ -38,8 +38,8 @@ const (
 	islam33DocID = "bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6"
 )
 
-func updateUserCollectionSchema() testUtils.SchemaUpdate {
-	return testUtils.SchemaUpdate{
+func updateUserCollectionSchema() *action.AddSchema {
+	return &action.AddSchema{
 		Schema: userCollectionGQLSchema,
 	}
 }

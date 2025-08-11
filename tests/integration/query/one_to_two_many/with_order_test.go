@@ -13,14 +13,14 @@ package one_to_two_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side, order in opposite directions on children",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String

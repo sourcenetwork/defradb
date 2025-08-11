@@ -16,13 +16,13 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with updates are currently only compatible with the Go client.
 			// The docID is updated by collection.Create after vector embedding generation and
@@ -32,7 +32,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 			testUtils.GoClientType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -101,7 +101,6 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 
 func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with manually defined vector embedding",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with updates are currently only compatible with the Go client.
 			// The docID is updated by collection.Create after vector embedding generation and
@@ -111,7 +110,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 			testUtils.GoClientType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -157,7 +156,6 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 
 func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with manually defined vector embedding",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with updates are currently only compatible with the Go client.
 			// The docID is updated by collection.Create after vector embedding generation and
@@ -167,7 +165,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 			testUtils.GoClientType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

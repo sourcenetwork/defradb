@@ -18,7 +18,6 @@ import (
 
 func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N ascending order & filter on parent, with sum on on subtype field.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -132,7 +131,6 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 
 func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N descending order & filter on parent, with sum on on subtype field.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -246,7 +244,6 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum subtype and sum subtype with desc. order on field with limit.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -369,7 +366,6 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum subtype and sum subtype with asc. order on field with limit.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -492,7 +488,6 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 
 func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum of subtype float field with limit and asc. order, and non-sum query of same subtype fields.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -623,7 +618,6 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 
 func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum of subtype float field with limit and desc. order, and non-sum query of same subtype fields.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

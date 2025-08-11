@@ -13,14 +13,14 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation, with null filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -54,9 +54,8 @@ func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 
 func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation, with null docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -90,9 +89,8 @@ func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 
 func TestMutationDelete_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple delete mutation, with null docIDs",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

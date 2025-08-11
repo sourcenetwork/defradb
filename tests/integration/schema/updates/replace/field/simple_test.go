@@ -13,14 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, replace field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -43,9 +43,8 @@ func TestSchemaUpdatesReplaceFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesReplaceFieldWithIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, replace field with correct ID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

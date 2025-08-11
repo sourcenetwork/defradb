@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) a request by providing the directive on wrong location (field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -44,8 +42,6 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 
 func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) a basic request.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -90,8 +86,6 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 
 func TestDefaultExplainWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) a basic request with alias, no filter",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

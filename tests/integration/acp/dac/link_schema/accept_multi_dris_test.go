@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
@@ -48,8 +49,6 @@ func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_Ac
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add same policy (DRI compliant) twice by different actors, accept both schemas",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -65,7 +64,7 @@ func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_Ac
 				Policy: policyUsedByBoth,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: fmt.Sprintf(`
 					type OldUsers @policy(
 						id: "{{.Policy0}}",
@@ -77,10 +76,6 @@ func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_Ac
 				`,
 					validResourceNameOnPolicyUsedByBoth,
 				),
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -122,7 +117,7 @@ func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_Ac
 				},
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: fmt.Sprintf(`
 					type NewUsers @policy(
 						id: "{{.Policy1}}",
@@ -134,10 +129,6 @@ func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_Ac
 				`,
 					validResourceNameOnPolicyUsedByBoth,
 				),
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy1": testUtils.NewPolicyIndex(1),
-				},
 			},
 
 			testUtils.IntrospectionRequest{

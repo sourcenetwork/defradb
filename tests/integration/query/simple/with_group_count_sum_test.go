@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of count",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

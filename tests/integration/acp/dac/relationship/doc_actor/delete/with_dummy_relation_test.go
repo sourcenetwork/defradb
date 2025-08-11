@@ -13,13 +13,12 @@ package test_acp_dac_relationship_doc_actor_delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChanges(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, delete doc actor relationship with a dummy relation defined on policy, nothing happens",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -78,7 +77,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -88,10 +87,6 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -165,8 +160,6 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingC
 func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, delete doc actor relationship with an invalid relation (not defined on policy), error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -224,7 +217,7 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -234,10 +227,6 @@ func TestACP_DeleteDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

@@ -13,13 +13,12 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, but invalid policyID arg type was specified on schema, reject schema",
 
 		Actions: []any{
 
@@ -54,7 +53,7 @@ func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejecte
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(id: 123 , resource: "users") {
 						name: String
@@ -92,8 +91,6 @@ func TestACP_LinkSchema_InvalidPolicyIDArgTypeWasSpecifiedOnSchema_SchemaRejecte
 func TestACP_LinkSchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, but invalid resource arg type was specified on schema, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -127,17 +124,13 @@ func TestACP_LinkSchema_InvalidResourceArgTypeWasSpecifiedOnSchema_SchemaRejecte
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type Users @policy(id: "{{.Policy0}}" , resource: 123) {
 						name: String
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: `Argument "resource" has invalid value 123`,
 			},

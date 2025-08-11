@@ -13,14 +13,14 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithIDsAndSelectAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist, when given multiple IDs with alias.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

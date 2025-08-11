@@ -19,7 +19,6 @@ import (
 
 func TestDebugExplainRequest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (debug) a basic request, assert full graph.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

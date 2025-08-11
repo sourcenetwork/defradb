@@ -13,14 +13,14 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with create",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -65,9 +65,8 @@ func TestSchemaUpdatesAddFieldWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldWithCreateAfterSchemaUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with create after schema update",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

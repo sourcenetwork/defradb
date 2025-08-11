@@ -13,12 +13,12 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with no filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -52,7 +52,6 @@ func TestQuerySimple(t *testing.T) {
 
 func TestQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with alias, no filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -84,7 +83,6 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with no filter, multiple rows",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -126,7 +124,6 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 
 func TestQuerySimpleWithUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query for undefined field",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -145,7 +142,6 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with some default-value fields",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -182,7 +178,6 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with default-value fields",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{ }`,
@@ -219,9 +214,8 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 // It documents the fixing of the bug described in #3242.
 func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deleted docs in collection 2 should not yield deleted docs on collection 1 query",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type User {
                         name: String

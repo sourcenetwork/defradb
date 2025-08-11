@@ -13,12 +13,12 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count with filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -88,7 +88,6 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 
 func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count with filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -181,9 +180,8 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 
 func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count with JSON filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type Book {
 					name: String

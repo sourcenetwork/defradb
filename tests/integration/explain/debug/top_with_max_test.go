@@ -41,8 +41,6 @@ var topLevelMaxPattern = dataMap{
 func TestDebugExplain_TopLevelMaxRequest_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) top-level max request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -66,8 +64,6 @@ func TestDebugExplain_TopLevelMaxRequest_Succeeds(t *testing.T) {
 
 func TestDebugExplain_TopLevelMaxRequestWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) top-level max request with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

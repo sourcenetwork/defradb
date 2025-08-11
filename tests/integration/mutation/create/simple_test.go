@@ -15,12 +15,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with non existant field",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -28,7 +28,7 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 			testUtils.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -63,9 +63,8 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 
 func TestMutationCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -107,7 +106,6 @@ func TestMutationCreate(t *testing.T) {
 
 func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation where document already exists.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// Collection.Save would treat the second create as an update, and so
 			// is excluded from this test.
@@ -115,7 +113,7 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 			testUtils.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -144,9 +142,8 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 
 func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with empty input param.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

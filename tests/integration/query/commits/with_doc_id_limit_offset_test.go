@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDocIDAndLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, limit and offset",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

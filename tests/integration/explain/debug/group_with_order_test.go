@@ -40,8 +40,6 @@ var debugGroupOrderPattern = dataMap{
 func TestDebugExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order (descending) on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -70,8 +68,6 @@ func TestDebugExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 func TestDebugExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order (ascending) on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -99,8 +95,6 @@ func TestDebugExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 
 func TestDebugExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with order on parent groupBy and inner _group selection.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

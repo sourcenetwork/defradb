@@ -13,14 +13,14 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add schema fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -52,9 +52,8 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 
 func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add collection property fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -76,9 +75,8 @@ func TestSchemaUpdatesAddSimpleErrorsAddingCollectionProp(t *testing.T) {
 
 func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add schema property fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -100,9 +98,8 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add to unsupported collection prop",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -134,9 +131,8 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 
 func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add to unsupported schema prop",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, min on non-rendered, unfiltered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -66,7 +65,6 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, min on rendered, unfiltered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -130,7 +128,6 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWithMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, min on rendered, matching filtered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -187,7 +184,6 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 
 func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWithDifferentFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, min on non-rendered, different filtered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -244,7 +240,6 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 
 func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithDifferentFilters_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, min on non-rendered, unfiltered group",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -13,14 +13,14 @@ package kind
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object array, unknown schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -44,9 +44,8 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 
 func TestSchemaUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind foreign object array, known schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

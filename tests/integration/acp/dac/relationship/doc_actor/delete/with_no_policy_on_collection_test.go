@@ -13,16 +13,15 @@ package test_acp_dac_relationship_doc_actor_delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, delete doc actor relationship on a collection with no policy, not allowed error",
-
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

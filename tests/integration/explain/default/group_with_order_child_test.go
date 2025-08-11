@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order (descending) on inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -72,8 +70,6 @@ func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testin
 func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order (ascending) on inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -123,8 +119,6 @@ func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing
 
 func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with order on nested parent groupBy and on nested parent's inner _group.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

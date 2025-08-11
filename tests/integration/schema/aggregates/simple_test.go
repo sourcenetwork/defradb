@@ -13,13 +13,14 @@ package aggregates
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -115,7 +116,7 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -221,7 +222,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,

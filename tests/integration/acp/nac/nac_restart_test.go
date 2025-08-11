@@ -30,8 +30,6 @@ func TestNAC_RestartNodeWithNACEnabledWithoutNACArgs_RestartsAndNACIsStillEnable
 			},
 		),
 
-		Description: "Restart node after it has nac started before (without nac args), nac should still be enabled.",
-
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -61,8 +59,6 @@ func TestNAC_RestartNodeWithNACEnabledWithExplicitlySpecifyingSameArgs_RestartsA
 				testUtils.BadgerFileType,
 			},
 		),
-
-		Description: "Restart node with same args again, after it has nac started before, nac should still be enabled.",
 
 		Actions: []any{
 			testUtils.Close{},
@@ -97,8 +93,6 @@ func TestNAC_RestartNodeWithNACEnabledWithAnotherIdentity_IgnoreNewIdentityAndRe
 				testUtils.BadgerFileType,
 			},
 		),
-
-		Description: "Restart node with new identity arg, after it has nac started before, recover existing nac state.",
 
 		Actions: []any{
 			testUtils.Close{},

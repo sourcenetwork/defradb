@@ -13,13 +13,12 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_LinkSchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, but no resource was specified on schema, reject schema",
 
 		Actions: []any{
 
@@ -54,7 +53,7 @@ func TestACP_LinkSchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type Users @policy(id: "{{.Policy0}}") {
 						name: String
@@ -92,8 +91,6 @@ func TestACP_LinkSchema_NoResourceWasSpecifiedOnSchema_SchemaRejected(t *testing
 func TestACP_LinkSchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, specified resource arg on schema is empty, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -127,17 +124,13 @@ func TestACP_LinkSchema_SpecifiedResourceArgIsEmptyOnSchema_SchemaRejected(t *te
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type Users @policy(id: "{{.Policy0}}", resource: "") {
 						name: String
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: "resource name must not be empty",
 			},

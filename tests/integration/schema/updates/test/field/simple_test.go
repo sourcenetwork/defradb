@@ -13,14 +13,14 @@ package test
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field name passes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -42,9 +42,8 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field name passes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -65,9 +64,8 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -89,9 +87,8 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field passes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -114,9 +111,8 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field passes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -139,9 +135,8 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 
 func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test field passes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

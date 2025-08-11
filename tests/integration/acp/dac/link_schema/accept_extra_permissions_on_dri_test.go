@@ -13,14 +13,13 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
 )
 
 func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, with extra permissions having required relation, schema accepted",
 
 		Actions: []any{
 
@@ -57,7 +56,7 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *tes
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -67,10 +66,6 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *tes
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -120,8 +115,6 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *tes
 func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with extra permissions having required relation in the end, schema accepted",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -157,7 +150,7 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchem
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -167,10 +160,6 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchem
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{
@@ -220,8 +209,6 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchem
 func TestACP_LinkSchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with extra permissions having no required relation, schema accepted",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -257,7 +244,7 @@ func TestACP_LinkSchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *t
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -267,10 +254,6 @@ func TestACP_LinkSchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *t
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.IntrospectionRequest{

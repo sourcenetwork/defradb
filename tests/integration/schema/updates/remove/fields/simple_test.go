@@ -13,14 +13,14 @@ package fields
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -43,9 +43,8 @@ func TestSchemaUpdatesRemoveFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove all fields",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -68,9 +67,8 @@ func TestSchemaUpdatesRemoveAllFieldsErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field name",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -93,9 +91,8 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field kind",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -118,9 +115,8 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 
 func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, remove field Typ",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

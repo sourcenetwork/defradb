@@ -18,7 +18,6 @@ import (
 
 func TestQueryLatestCommitsWithDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -62,7 +61,6 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 
 func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and schema versiion id field",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -94,7 +92,6 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 
 func TestQueryLatestCommits_WithDocIDAndAliased_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and aliased",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -15,18 +15,18 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// We only wish to test collection.Save in this test.
 			testUtils.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

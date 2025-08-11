@@ -16,14 +16,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If combination of fields is not unique, creating of unique index fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -71,9 +71,8 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 
 func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "adding a new doc with existing field combination for composite index should fail",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String 
@@ -111,9 +110,8 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 
 func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique composite index if all docs have unique fields combinations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -181,9 +179,8 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 
 func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique composite index if all docs have unique fields combinations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

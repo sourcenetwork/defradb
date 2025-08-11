@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with permission expr having owner in the end with minus, ValidID",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -60,8 +58,6 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 // Note: this and above test both result in different policy ids.
 func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy with permission expr having owner in the end with minus no space, ValidID",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

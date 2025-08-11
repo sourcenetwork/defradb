@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -64,7 +65,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
  					type Users @policy(
 						id: "{{.Policy0}}",
@@ -74,9 +75,6 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
  						age: Int
  					}
  				`,
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
@@ -110,7 +108,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
  					type Users @policy(
 						id: "{{.Policy0}}",
@@ -120,9 +118,6 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
  						age: Int
  					}
  				`,
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),

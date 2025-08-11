@@ -41,8 +41,6 @@ var topLevelMaxPattern = dataMap{
 func TestDefaultExplain_WithTopLevelMaxRequest_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level max request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -94,8 +92,6 @@ func TestDefaultExplain_WithTopLevelMaxRequest_Succeeds(t *testing.T) {
 
 func TestDefaultExplain_WithTopLevelMaxRequestWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) top-level max request with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

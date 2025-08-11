@@ -20,7 +20,6 @@ import (
 // desired behaviour (it looks totally broken to me).
 func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and field name",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -55,7 +54,6 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 
 func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and field id",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -87,7 +85,6 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 // desired behaviour (Users should not be specifying field ids).
 func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and composite field id",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

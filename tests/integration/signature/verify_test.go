@@ -13,8 +13,11 @@ package signature
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -22,8 +25,16 @@ import (
 func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// TODO: C binding test harness must be reworked to support this test
+			// See: https://github.com/sourcenetwork/defradb/issues/3919
+			testUtils.GoClientType,
+			testUtils.CLIClientType,
+			testUtils.HTTPClientType,
+			testUtils.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -66,8 +77,16 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// TODO: C binding test harness must be reworked to support this test
+			// See: https://github.com/sourcenetwork/defradb/issues/3919
+			testUtils.GoClientType,
+			testUtils.CLIClientType,
+			testUtils.HTTPClientType,
+			testUtils.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -93,8 +112,16 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// TODO: C binding test harness must be reworked to support this test
+			// See: https://github.com/sourcenetwork/defradb/issues/3919
+			testUtils.GoClientType,
+			testUtils.CLIClientType,
+			testUtils.HTTPClientType,
+			testUtils.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -122,7 +149,7 @@ func TestSignatureVerify_WithWrongCid_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

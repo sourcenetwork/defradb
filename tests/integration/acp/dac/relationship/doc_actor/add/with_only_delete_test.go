@@ -13,13 +13,12 @@ package test_acp_dac_relationship_doc_actor_add
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner gives delete access without explicit read permission, can still delete",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -78,7 +77,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -88,10 +87,6 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorWithoutExplicitReadPerm_OtherAc
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{

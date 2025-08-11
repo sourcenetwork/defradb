@@ -41,8 +41,6 @@ var topLevelCountPattern = dataMap{
 func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level count request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -89,8 +87,6 @@ func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
 
 func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) top-level count request with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -19,8 +19,6 @@ import (
 func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy, multiple resources, valid ID",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -76,8 +74,6 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy, multiple resources using other's relation, return error",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -131,8 +127,6 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 
 func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy, multiple resources second missing required owner, return error",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
