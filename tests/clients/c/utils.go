@@ -28,28 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// setupTests is a function that initializes and starts the globalNode (in memory), for the tests
-func setupTests(n int, identityPrivateKey string, enableNAC bool) {
-	var nodeOpts cbindings.GoNodeInitOptions
-	nodeOpts.DbPath = ""
-	nodeOpts.ListeningAddresses = ""
-	nodeOpts.ReplicatorRetryIntervals = ""
-	nodeOpts.Peers = ""
-	nodeOpts.MaxTransactionRetries = 5
-	nodeOpts.DisableP2P = 0
-	nodeOpts.DisableAPI = 0
-	nodeOpts.InMemory = 1
-	nodeOpts.IdentityPrivateKey = identityPrivateKey
-	if identityPrivateKey != "" {
-		if enableNAC {
-			nodeOpts.EnableNodeACP = 1
-		}
-		nodeOpts.IdentityKeyType = "secp256k1"
-	}
-
-	cbindings.NodeInit(n, nodeOpts)
-}
-
 // txnIDFromContext is a helper function that extracts a transaction ID from a context
 func txnIDFromContext(ctx context.Context) uint64 {
 	tx, ok := datastore.CtxTryGetTxn(ctx)

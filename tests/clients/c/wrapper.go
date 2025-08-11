@@ -19,12 +19,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
-
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/node"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
@@ -39,10 +39,9 @@ type CWrapper struct {
 	nodeNum int
 }
 
-func NewCWrapper(ctx context.Context, enableNAC bool) *CWrapper {
-	identityPrivateKey := identityFromContext(ctx)
+func NewCWrapper(nodeObj *node.Node) *CWrapper {
 	nodeNum := atomic.AddInt32(&wrapperCount, 1) - 1
-	setupTests(int(nodeNum), identityPrivateKey, enableNAC)
+	cbindings.InjectNode(int(nodeNum), nodeObj)
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 

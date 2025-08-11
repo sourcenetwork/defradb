@@ -182,3 +182,9 @@ func GetNode(n int) *node.Node {
 	defer globalNodesMu.RUnlock()
 	return globalNodes[n]
 }
+
+func InjectNode(n int, node *node.Node) {
+	globalNodesMu.Lock()
+	defer globalNodesMu.Unlock()
+	globalNodes[n] = node
+}
