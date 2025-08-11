@@ -183,6 +183,8 @@ func GetNode(n int) *node.Node {
 	return globalNodes[n]
 }
 
+// Inject node is a thread-safe setter node that allows the integration
+// test suite to pass in its own node object for use in the tests
 func InjectNode(n int, node *node.Node) {
 	globalNodesMu.Lock()
 	defer globalNodesMu.Unlock()
