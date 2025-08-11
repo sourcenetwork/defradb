@@ -13,8 +13,6 @@
 
 package main
 
-// The following comment is to allow use of C structs in the Go code
-
 /*
 #include "defra_structs.h"
 */
