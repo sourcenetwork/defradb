@@ -575,8 +575,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
 
 	test := testUtils.TestCase{
-		Description: `Test schema update, with branching schema toggling between branches and gets the 
-collection at a specific version`,
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

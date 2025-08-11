@@ -27,9 +27,6 @@ import (
 
 // TestCase contains the details of the test case to execute.
 type TestCase struct {
-	// Test description, optional.
-	Description string
-
 	// Actions contains the set of actions and their expected results that
 	// this test should execute.  They will execute in the order that they
 	// are provided.
