@@ -83,25 +83,26 @@ type proto interface {
 }
 
 // Reveive takes in a network stream and store the unmarshalled message in the provided [Message]
-func Receive(s network.Stream, proto proto, m Message) error {
+func Receive[T Message](s network.Stream, proto proto) (T, error) {
+	var m T
 	b, err := io.ReadAll(s)
 	if err != nil {
 		resetErr := s.Reset()
-		return errors.Join(err, resetErr)
+		return m, errors.Join(err, resetErr)
 	}
 	err = s.Close()
 	if err != nil {
-		return err
+		return m, err
 	}
 
 	err = cbor.Unmarshal(b, m)
 	if err != nil {
-		return err
+		return m, err
 	}
 
 	err = verifyMessage(m)
 	if err != nil {
-		return err
+		return m, err
 	}
 
 	messageChan, ok := proto.GetResponseChan(m.GetMessageID())
@@ -110,74 +111,147 @@ func Receive(s network.Stream, proto proto, m Message) error {
 		proto.DeleteResponseChan(m.GetMessageID())
 	}
 
-	return nil
+	return m, nil
 }
 
-// Send creates a new network stream with the provided peer, signs and set the appropriate meta data
+// SendAndForget creates a new network stream with the provided peer, signs and set the appropriate meta data
 // on the message and writes it to the stream.
 //
-// If wait is set to true and the response is never received, the call to this function will hang forever. It is the
-// responsibility of the caller to set a reasonable timeout.
-func Send(
+// This function does not wait for the response.
+func SendAndForget(
 	ctx context.Context,
 	proto proto,
 	m Message,
 	pid peer.ID,
 	protoID protocol.ID,
-	wait bool,
-) (resp Message, err error) {
+) (err error) {
 	err = signAndSetMetaData(proto.Host(), m)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	return send(ctx, proto, m, pid, protoID)
+}
+
+// Send creates a new network stream with the provided peer, signs and set the appropriate meta data
+// on the message and writes it to the stream.
+//
+// This blocks until a response is received. It is the responsibility of the caller to set a reasonable timeout.
+func Send[ResponseType Message](
+	ctx context.Context,
+	proto proto,
+	m Message,
+	pid peer.ID,
+	protoID protocol.ID,
+) (resp ResponseType, err error) {
+	err = signAndSetMetaData(proto.Host(), m)
+	if err != nil {
+		return resp, err
+	}
+
+	responseChan := make(chan Message, 1)
+	proto.SetResponseChan(m.GetMessageID(), responseChan)
+
+	err = send(ctx, proto, m, pid, protoID)
+	if err != nil {
+		proto.DeleteResponseChan(m.GetMessageID())
+		close(responseChan)
+		return resp, err
+	}
+
+	select {
+	case respMessage := <-responseChan:
+		if m.GetErrMessage() != "" {
+			return resp, errors.New(respMessage.GetErrMessage())
+		}
+		switch typedResp := respMessage.(type) {
+		case ResponseType:
+			return typedResp, nil
+		default:
+			return resp, NewErrResponseType(resp, typedResp)
+		}
+	case <-ctx.Done():
+		proto.DeleteResponseChan(m.GetMessageID())
+		close(responseChan)
+		return resp, ErrResponseTimeout
+	}
+}
+
+// SendAsync creates a new network stream with the provided peer, signs and set the appropriate meta data
+// on the message and writes it to the stream.
+//
+// It doesn't block for the response but instead provided a response channel for the
+// to handle however they prefer. It is the responsibility of the caller to set a reasonable
+// timeout otherwise this call will leak go routines and channels
+func SendAsync[ResponseType Message](
+	ctx context.Context,
+	proto proto,
+	m Message,
+	pid peer.ID,
+	protoID protocol.ID,
+) (resp <-chan ResponseType, err error) {
+	err = signAndSetMetaData(proto.Host(), m)
+	if err != nil {
+		return resp, err
+	}
+
+	responseChan := make(chan Message, 1)
+	proto.SetResponseChan(m.GetMessageID(), responseChan)
+
+	err = send(ctx, proto, m, pid, protoID)
+	if err != nil {
+		proto.DeleteResponseChan(m.GetMessageID())
+		close(responseChan)
+		return resp, err
+	}
+
+	funcResponseChan := make(chan ResponseType, 1)
+	go func() {
+		select {
+		case respMessage := <-responseChan:
+			switch typedResp := respMessage.(type) {
+			case ResponseType:
+				funcResponseChan <- typedResp
+				close(funcResponseChan)
+			default:
+				close(funcResponseChan)
+			}
+		case <-ctx.Done():
+			close(funcResponseChan)
+			proto.DeleteResponseChan(m.GetMessageID())
+			close(responseChan)
+		}
+	}()
+
+	return funcResponseChan, nil
+}
+
+func send(
+	ctx context.Context,
+	proto proto,
+	m Message,
+	pid peer.ID,
+	protoID protocol.ID,
+) (err error) {
 	signed, err := cbor.Marshal(m)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	s, err := proto.Host().NewStream(ctx, pid, protoID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() {
 		closeErr := s.Close()
 		err = errors.Join(err, closeErr)
 	}()
 
-	var responseChan chan Message
-	if wait {
-		// we create a response channel before sending the message so that we can catch
-		// the response.
-		responseChan = make(chan Message, 1)
-		proto.SetResponseChan(m.GetMessageID(), responseChan)
-	}
-
 	_, err = s.Write(signed)
 	if err != nil {
-		close(responseChan)
-		proto.DeleteResponseChan(m.GetMessageID())
 		resetErr := s.Reset()
-		return nil, errors.Join(err, resetErr)
+		return errors.Join(err, resetErr)
 	}
-	err = s.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	if wait {
-		select {
-		case m := <-responseChan:
-			if m.GetErrMessage() != "" {
-				return nil, errors.New(m.GetErrMessage())
-			}
-			return m, nil
-		case <-ctx.Done():
-			close(responseChan)
-			proto.DeleteResponseChan(m.GetMessageID())
-			return nil, ErrResponseTimeout
-		}
-	}
-	return nil, nil
+	return s.Close()
 }
 
 func verifyMessage(m Message) error {

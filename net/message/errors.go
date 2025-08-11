@@ -10,10 +10,23 @@
 
 package message
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
 
 var (
 	ErrResponseTimeout      = errors.New("timeout waiting for response")
 	ErrPubkeyPeerIDMismatch = errors.New("pubkey mismatch peerID")
 	ErrInvalidSignature     = errors.New("invalid signature")
+	ErrResponseType         = errors.New("unexpected response type")
 )
+
+func NewErrResponseType(expected, actual any) error {
+	return errors.WithStack(
+		ErrResponseType,
+		errors.NewKV("Expected", fmt.Sprintf("%T", expected)),
+		errors.NewKV("Actual", fmt.Sprintf("%T", actual)),
+	)
+}
