@@ -10,22 +10,29 @@
 
 package cbindings
 
+/*
+#include <stdlib.h>
+#include "defra_structs.h"
+*/
+import "C"
+
 import (
 	"context"
 	"fmt"
+	"runtime/cgo"
+
+	"github.com/sourcenetwork/defradb/node"
 )
 
-func AddSchema(n int, newSchema string, txnID uint64) GoCResult {
+//export AddSchema
+func AddSchema(nodePtr C.uintptr_t, schema *C.char) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(n, ctx, txnID)
+	h := cgo.Handle(nodePtr)
+	node := h.Value().(*node.Node)
+	collectionVersions, err := node.DB.AddSchema(ctx, C.GoString(schema))
 	if err != nil {
-		return returnGoC(1, err.Error(), "")
+		return returnC(returnGoC(1, fmt.Sprintf(errAddingSchema, err), ""))
 	}
-
-	collectionVersions, err := GetNode(n).DB.AddSchema(ctx, newSchema)
-	if err != nil {
-		return returnGoC(1, fmt.Sprintf(errAddingSchema, err), "")
-	}
-	return marshalJSONToGoCResult(collectionVersions)
+	return returnC(marshalJSONToGoCResult(collectionVersions))
 }

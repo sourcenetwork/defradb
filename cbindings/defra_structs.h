@@ -1,12 +1,25 @@
 // defra_structs.h
 #ifndef DEFRA_STRUCTS_H
 #define DEFRA_STRUCTS_H
+#include <stdint.h>
 
 typedef struct {
     int status;
     char* error;
     char* value;
 } Result;
+
+typedef struct {
+    int status;
+    char* error;
+    uintptr_t nodePtr;
+} NewNodeResult;
+
+typedef struct {
+    int status;
+    char* error;
+    uintptr_t txnPtr;
+} NewTxnResult;
 
 typedef struct {
     unsigned long long tx;

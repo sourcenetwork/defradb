@@ -10,13 +10,21 @@
 
 package cbindings
 
+/*
+#include <stdlib.h>
+#include "defra_structs.h"
+*/
+import "C"
+
 import (
 	"context"
+	"runtime/cgo"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
@@ -63,54 +71,55 @@ func removeSubscription(id string) {
 // it exists will see if there's a message in its result channel. If there isn't, it will
 // return with status 2, and a blank payload. If there is, it will return with status 0,
 // and the payload of the message. If an error occurs, status 1 is returned.
-func PollSubscription(id string) GoCResult {
-	sub, ok := getSubscription(id)
+//
+//export PollSubscription
+func PollSubscription(id *C.char) *C.Result {
+	subID := C.GoString(id)
+	sub, ok := getSubscription(subID)
 	if !ok {
-		return returnGoC(1, errInvalidSubscriptionID, "")
+		return returnC(returnGoC(1, errInvalidSubscriptionID, ""))
 	}
 	select {
 	case msg, ok := <-sub.resultChan:
 		if !ok {
-			removeSubscription(id)
-			return returnGoC(1, errGEttingSubscription, "")
+			removeSubscription(subID)
+			return returnC(returnGoC(1, errGEttingSubscription, ""))
 		}
-		return marshalJSONToGoCResult(msg)
+		return returnC(marshalJSONToGoCResult(msg))
 	default:
-		return returnGoC(2, "", "")
+		return returnC(returnGoC(2, "", ""))
 	}
 }
 
-func CloseSubscription(id string) GoCResult {
-	removeSubscription(id)
-	return returnGoC(0, "", "")
+//export CloseSubscription
+func CloseSubscription(id *C.char) *C.Result {
+	removeSubscription(C.GoString(id))
+	return returnC(returnGoC(0, "", ""))
 }
 
+//export ExecuteQuery
 func ExecuteQuery(
-	n int,
-	query string,
-	identity string,
-	txnID uint64,
-	operationName string,
-	variables string,
-) GoCResult {
+	nodePtr C.uintptr_t,
+	query *C.char,
+	identity *C.char,
+	operationName *C.char,
+	variables *C.char,
+) *C.Result {
 	ctx := context.Background()
-	opts, err := buildRequestOptions(operationName, variables)
+	opts, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
 	if err != nil {
-		return returnGoC(1, err.Error(), "")
+		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx, err = contextWithIdentity(ctx, identity)
+	ctx, err = contextWithIdentity(ctx, C.GoString(identity))
 	if err != nil {
-		return returnGoC(1, err.Error(), "")
-	}
-
-	ctx, err = contextWithTransaction(n, ctx, txnID)
-	if err != nil {
-		return returnGoC(1, err.Error(), "")
+		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
 	ctx, cancelFunc := context.WithCancel(ctx)
-	res := GetNode(n).DB.ExecRequest(ctx, query, opts...)
+	h := cgo.Handle(nodePtr)
+	node := h.Value().(*node.Node)
+	res := node.DB.ExecRequest(ctx, C.GoString(query), opts...)
 	sub := &Subscription{
 		ctxCancel:  cancelFunc,
 		resultChan: res.Subscription,
@@ -120,7 +129,7 @@ func ExecuteQuery(
 	// error is part of the GQL result, to be GQL-compliant.
 	if res.Subscription != nil {
 		id := storeSubscription(sub)
-		return returnGoC(2, "", id)
+		return returnC(returnGoC(2, "", id))
 	}
-	return marshalJSONToGoCResult(res.GQL)
+	return returnC(marshalJSONToGoCResult(res.GQL))
 }

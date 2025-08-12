@@ -11,22 +11,25 @@
 //go:build cgo
 // +build cgo
 
-package main
+package cbindings
 
 // The following comment is to allow use of C structs in the Go code
 
 /*
+#include <stdlib.h>
 #include "defra_structs.h"
 */
 import "C"
 import (
+	"runtime/cgo"
 	"unsafe"
 
-	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 // Helper function which builds a return struct from Go to C
-func returnC(gcr cbindings.GoCResult) *C.Result {
+func returnC(gcr GoCResult) *C.Result {
 	result := (*C.Result)(C.malloc(C.size_t(unsafe.Sizeof(C.Result{}))))
 
 	result.status = C.int(gcr.Status)
@@ -36,8 +39,42 @@ func returnC(gcr cbindings.GoCResult) *C.Result {
 	return result
 }
 
-func convertCOptionsToGoCOptions(cOptions C.CollectionOptions) cbindings.GoCOptions {
-	return cbindings.GoCOptions{
+func returnNewNodeResultC(status int, error string, n *node.Node) C.NewNodeResult {
+	result := C.NewNodeResult{}
+	result.status = C.int(status)
+	if error != "" {
+		result.error = C.CString(error)
+	} else {
+		result.error = nil
+	}
+	if n != nil {
+		result.nodePtr = C.uintptr_t(0)
+	} else {
+		result.nodePtr = C.uintptr_t(cgo.NewHandle(n))
+	}
+
+	return result
+}
+
+func returnNewTxnResultC(status int, error string, n client.Txn) C.NewTxnResult {
+	result := C.NewTxnResult{}
+	result.status = C.int(status)
+	if error != "" {
+		result.error = C.CString(error)
+	} else {
+		result.error = nil
+	}
+	if n != nil {
+		result.txnPtr = C.uintptr_t(0)
+	} else {
+		result.txnPtr = C.uintptr_t(cgo.NewHandle(n))
+	}
+
+	return result
+}
+
+func convertCOptionsToGoCOptions(cOptions C.CollectionOptions) GoCOptions {
+	return GoCOptions{
 		TxID:         uint64(cOptions.tx),
 		Version:      C.GoString(cOptions.version),
 		CollectionID: C.GoString(cOptions.collectionID),
@@ -47,8 +84,8 @@ func convertCOptionsToGoCOptions(cOptions C.CollectionOptions) cbindings.GoCOpti
 	}
 }
 
-func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) cbindings.GoNodeInitOptions {
-	return cbindings.GoNodeInitOptions{
+func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) GoNodeInitOptions {
+	return GoNodeInitOptions{
 		DbPath:                   C.GoString(cOptions.dbPath),
 		ListeningAddresses:       C.GoString(cOptions.listeningAddresses),
 		ReplicatorRetryIntervals: C.GoString(cOptions.replicatorRetryIntervals),

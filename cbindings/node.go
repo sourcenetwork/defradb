@@ -10,29 +10,25 @@
 
 package cbindings
 
+/*
+#include <stdlib.h>
+#include "defra_structs.h"
+*/
+import "C"
+
 import (
 	"context"
 	"fmt"
-	"os"
+	"runtime/cgo"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/node"
-
 	netConfig "github.com/sourcenetwork/defradb/net/config"
+	"github.com/sourcenetwork/defradb/node"
 )
 
-var (
-	globalNodes   = make(map[int]*node.Node)
-	globalNodesMu sync.RWMutex
-)
-
-func nodeStart(n int, identityPrivateKey string) GoCResult {
-	if globalNodes[n] == nil {
-		return returnGoC(1, errUninitializedNode, "")
-	}
+func nodeStar(n *node.Node, identityPrivateKey string) GoCResult {
 	ctx := context.Background()
 
 	var err error
@@ -46,7 +42,7 @@ func nodeStart(n int, identityPrivateKey string) GoCResult {
 	errCh := make(chan error, 1)
 
 	go func() {
-		err := globalNodes[n].Start(ctx)
+		err := n.Start(ctx)
 		errCh <- err
 	}()
 
@@ -62,87 +58,78 @@ func nodeStart(n int, identityPrivateKey string) GoCResult {
 	}
 }
 
-func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
+//export NewNode
+func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
+	gocOptions := convertNodeInitOptionsToGoNodeInitOptions(cOptions)
 	var err error
 
-	inMemoryFlag := cOptions.InMemory != 0
-	listeningAddresses := splitCommaSeparatedString(cOptions.ListeningAddresses)
+	inMemoryFlag := gocOptions.InMemory != 0
+	listeningAddresses := splitCommaSeparatedString(gocOptions.ListeningAddresses)
 
-	identityPrivateKeyString := cOptions.IdentityPrivateKey
-	identityKeyType := cOptions.IdentityKeyType
+	identityPrivateKeyString := gocOptions.IdentityPrivateKey
+	identityKeyType := gocOptions.IdentityKeyType
 
 	nodeIdentity, err := identityFromKey(identityKeyType, identityPrivateKeyString)
 	if err != nil {
-		return returnGoC(1, err.Error(), "")
+		return returnNewNodeResultC(1, err.Error(), nil)
 	}
 	ctx := context.Background()
 
-	globalNodesMu.Lock()
-	defer globalNodesMu.Unlock()
-
-	if globalNodes[n] != nil {
-		err := globalNodes[n].Close(ctx)
-		if err != nil {
-			return returnGoC(1, fmt.Sprintf(errClosingNode, err), "")
-		}
-		globalNodes[n] = nil
-	}
-
-	// Create the directory if it doesn't exist, and inMemory flag is not set
-	if !inMemoryFlag {
-		if _, err = os.Stat(cOptions.DbPath); os.IsNotExist(err) {
-			err := os.MkdirAll(cOptions.DbPath, 0755)
-			if err != nil {
-				return returnGoC(1, fmt.Sprintf(errCreatingStoreDirectory, err), "")
-			}
-		}
-	}
+	// // Create the directory if it doesn't exist, and inMemory flag is not set
+	// if !inMemoryFlag {
+	// 	if _, err = os.Stat(gocOptions.DbPath); os.IsNotExist(err) {
+	// 		err := os.MkdirAll(gocOptions.DbPath, 0755)
+	// 		if err != nil {
+	// 			return returnGoC(1, fmt.Sprintf(errCreatingStoreDirectory, err), "")
+	// 		}
+	// 	}
+	// }
 
 	opts := []node.Option{
-		node.WithStorePath(cOptions.DbPath),
+		node.WithStorePath(gocOptions.DbPath),
 		node.WithLensRuntime(node.Wazero),
 	}
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, netConfig.WithListenAddresses(listeningAddresses...))
 	}
-	maxTxnRetries := int(cOptions.MaxTransactionRetries)
+	maxTxnRetries := int(gocOptions.MaxTransactionRetries)
 	if maxTxnRetries > 0 {
 		opts = append(opts, db.WithMaxRetries(maxTxnRetries))
 	}
-	disableP2PFlag := cOptions.DisableP2P != 0
+	disableP2PFlag := gocOptions.DisableP2P != 0
 	if disableP2PFlag {
 		opts = append(opts, node.WithDisableP2P(true))
 	}
-	disableAPIFlag := cOptions.DisableAPI != 0
+	disableAPIFlag := gocOptions.DisableAPI != 0
 	if disableAPIFlag {
 		opts = append(opts, node.WithDisableAPI(true))
 	}
 	if inMemoryFlag {
 		opts = append(opts, node.WithBadgerInMemory(true))
 	}
-	peers := splitCommaSeparatedString(cOptions.Peers)
+	peers := splitCommaSeparatedString(gocOptions.Peers)
 	if len(peers) > 0 {
 		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
 	}
-	if cOptions.IdentityPrivateKey != "" {
+	if gocOptions.IdentityPrivateKey != "" {
 		opts = append(opts, db.WithNodeIdentity(nodeIdentity))
 	}
-	if cOptions.EnableNodeACP != 0 {
+	if gocOptions.EnableNodeACP != 0 {
 		opts = append(opts, node.WithEnableNodeACP(true))
 	}
 	opts = append(opts, node.WithDocumentACPPath(""))
 	opts = append(opts, node.WithNodeACPPath(""))
 
 	// Configure the replicator retry times. Go from string slice -> time.Duration slice
-	replicatorRetryTimes := splitCommaSeparatedString(cOptions.ReplicatorRetryIntervals)
+	replicatorRetryTimes := splitCommaSeparatedString(gocOptions.ReplicatorRetryIntervals)
 	var replicatorRetryIntervals []time.Duration
 	for _, s := range replicatorRetryTimes {
 		n, err := strconv.Atoi(s)
 		if err != nil {
-			return returnGoC(1, fmt.Sprintf(errParsingReplicatorTimes, err), "")
+			return returnNewNodeResultC(1, err.Error(), nil)
 		}
 		if n <= 0 {
-			return returnGoC(1, errNegativeReplicatorTime, "")
+			return returnNewNodeResultC(1, errNegativeReplicatorTime, nil)
 		}
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
@@ -150,35 +137,25 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 		opts = append(opts, netConfig.WithRetryInterval(replicatorRetryIntervals))
 	}
 
-	globalNodes[n], err = node.New(ctx, opts...)
+	n, err := node.New(ctx, opts...)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(errCreatingNode, err), "")
+		return returnNewNodeResultC(1, err.Error(), nil)
 	}
-
-	return nodeStart(n, identityPrivateKeyString)
+	err = n.Start(ctx)
+	if err != nil {
+		return returnNewNodeResultC(1, err.Error(), nil)
+	}
+	return returnNewNodeResultC(0, "", n)
 }
 
-func NodeStop(n int) GoCResult {
-	globalNodesMu.Lock()
-	defer globalNodesMu.Unlock()
-
-	if globalNodes[n] == nil {
-		return returnGoC(1, errStoppedNode, "")
-	}
-	ctx := context.Background()
-	err := globalNodes[n].Close(ctx)
+//export NodeClose
+func NodeClose(nodePtr C.uintptr_t) *C.Result {
+	h := cgo.Handle(nodePtr)
+	n := h.Value().(*node.Node)
+	err := n.Close(context.Background())
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(errStoppingNode, err), "")
+		return returnC(GoCResult{1, fmt.Sprintf(errStoppingNode, err), ""})
 	}
-	globalNodes[n] = nil
 
-	return returnGoC(0, "", "")
-}
-
-// GetNode is a thread-safe getter for a global node
-// It is exported so that it can be used for integration testing
-func GetNode(n int) *node.Node {
-	globalNodesMu.RLock()
-	defer globalNodesMu.RUnlock()
-	return globalNodes[n]
+	return returnC(GoCResult{0, "", ""})
 }
