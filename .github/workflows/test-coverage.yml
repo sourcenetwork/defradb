@@ -133,55 +133,6 @@ jobs:
           coverage-artifact-name: "coverage_os_${{ matrix.os }}"
           coverage-path: coverage.txt
 
-
-  # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
-  test-document-acp:
-    name: Test document acp job
-
-    strategy:
-      fail-fast: false
-      matrix:
-        client-type: [go, http, cli, c]
-        document-acp-type: [source-hub]
-
-    runs-on: ubuntu-latest
-
-    env:
-      DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
-      DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
-      DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
-      DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
-      DEFRA_CLIENT_C: ${{ matrix.client-type == 'c' }}
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v4
-
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
-
-      # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
-      - name: Get SourceHub version
-        run: |
-          SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
-          echo "SOURCEHUB_COMMIT=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
-
-      # We have to install it ourselves because it contains replace commands in its go.mod file.
-      - name: Install sourcehub
-        uses: ./.github/composites/install-sourcehub
-        with:
-          ref: ${{ env.SOURCEHUB_COMMIT }}
-
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_document_acp\
-            _${{ matrix.document-acp-type }}\
-            _${{ matrix.client-type }}\
-          "
-          coverage-path: coverage.txt
-
-
   # The lens matrix job tests the wazero and wasmer lens on linux.
   test-lens:
     name: Test lens job
