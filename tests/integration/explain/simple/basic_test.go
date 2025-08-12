@@ -21,7 +21,6 @@ type dataMap = map[string]any
 
 func TestSimpleExplainRequest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (simple) a basic request, assert full graph.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

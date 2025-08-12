@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindStringArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind string array (12)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindStringArray(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindStringArrayWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind string array (12) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindStringArrayWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindStringArraySubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind string array substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

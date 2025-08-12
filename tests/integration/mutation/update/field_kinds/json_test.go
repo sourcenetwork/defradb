@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If json field is set to null, should set to nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

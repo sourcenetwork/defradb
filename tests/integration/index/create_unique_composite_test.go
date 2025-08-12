@@ -22,7 +22,6 @@ import (
 
 func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If combination of fields is not unique, creating of unique index fails",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -72,7 +71,6 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 
 func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "adding a new doc with existing field combination for composite index should fail",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -112,7 +110,6 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 
 func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique composite index if all docs have unique fields combinations",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -182,7 +179,6 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 
 func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique composite index if all docs have unique fields combinations",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

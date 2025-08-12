@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If bool field is set to null, should set to nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

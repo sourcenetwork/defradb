@@ -26,7 +26,6 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 	schemaVersionID2 := "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba"
 
 	test := testUtils.TestCase{
-		Description: "Test schema migration",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -90,7 +89,6 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 	schemaVersionID2 := "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba"
 
 	test := testUtils.TestCase{
-		Description: "Test schema migration",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -167,7 +165,6 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 	schemaVersionID2 := "bafkreif7z5sj2ehtmjenverki7c2hqfjgvbajqdlch6yk4kkbx7qvm2yba"
 
 	test := testUtils.TestCase{
-		Description: "Test schema migration",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

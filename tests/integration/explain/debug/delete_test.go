@@ -36,8 +36,6 @@ var deletePattern = dataMap{
 func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -59,8 +57,6 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) mutation request with delete using filter to match everything.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -84,8 +80,6 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *te
 func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using document id.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -107,8 +101,6 @@ func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) mutation request with delete using ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -135,8 +127,6 @@ func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using no ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -158,8 +148,6 @@ func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 
 func TestDebugExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) mutation request with delete using filter and ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

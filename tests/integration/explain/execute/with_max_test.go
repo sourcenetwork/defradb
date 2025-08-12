@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequest_WithMaxOfInlineArrayField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with max on an inline array.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -73,8 +71,6 @@ func TestExecuteExplainRequest_WithMaxOfInlineArrayField_Succeeds(t *testing.T) 
 
 func TestExecuteExplainRequest_MaxOfRelatedOneToManyField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with max of a related one to many field.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

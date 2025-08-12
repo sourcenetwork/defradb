@@ -22,8 +22,6 @@ import (
 func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a 1-to-1 join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -110,8 +108,6 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 
 func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with two level deep nested joins.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

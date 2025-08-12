@@ -22,7 +22,6 @@ import (
 
 func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max on undefined object",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -38,7 +37,6 @@ func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max on undefined field",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -54,7 +52,6 @@ func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -72,7 +69,6 @@ func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -113,7 +109,6 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 			testUtils.CollectionSaveMutationType,
 			testUtils.CollectionNamedMutationType,
 		}),
-		Description: "Simple query max and max value int",
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
@@ -137,7 +132,6 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithAliasedMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query aliased max on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {

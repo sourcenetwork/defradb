@@ -20,8 +20,6 @@ import (
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes read access from actors that were given read access implicitly",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -223,8 +221,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRead(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner revokes read access from actors that were given read access implicitly",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -551,8 +547,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNotReadAnymore(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner revokes read access from actors that were given read access implicitly, non-identity actors can't read anymore",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

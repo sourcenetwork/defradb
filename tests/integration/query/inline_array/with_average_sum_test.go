@@ -22,7 +22,6 @@ import (
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average and sum of populated integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

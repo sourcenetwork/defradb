@@ -38,8 +38,6 @@ var groupLimitPattern = dataMap{
 func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit and offset on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -89,8 +87,6 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 
 func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with limit and offset on parent groupBy and inner _group selection.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

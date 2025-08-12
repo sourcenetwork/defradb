@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, from primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -94,7 +93,6 @@ func TestQueryOneToOneToMany(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, secondary direction across the one to many",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -171,7 +169,6 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, secondary direction across the one to one",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -246,7 +243,6 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, from secondary direction ",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

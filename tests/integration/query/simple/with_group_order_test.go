@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, and child order ascending",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -93,7 +92,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrder(t *testing.T)
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, and child order descending",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -168,7 +166,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithGroupOrderDescending(t *
 
 func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, and child order ascending",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -243,7 +240,6 @@ func TestQuerySimpleWithGroupByStringAndOrderDescendingWithGroupNumberWithGroupO
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child order desc",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -357,7 +353,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndOrderAscendingThenI
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child order desc",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

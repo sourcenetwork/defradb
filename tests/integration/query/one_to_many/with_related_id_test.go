@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with related id (from many side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -136,7 +135,6 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 
 func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with related id (from single side).",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

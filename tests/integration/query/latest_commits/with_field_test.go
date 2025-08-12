@@ -21,7 +21,6 @@ import (
 // field in the collection).
 func TestQueryLatestCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with field",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -52,7 +51,6 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 // field in the collection).
 func TestQueryLatestCommitsWithFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with field",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

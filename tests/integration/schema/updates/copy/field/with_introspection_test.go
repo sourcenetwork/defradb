@@ -20,7 +20,6 @@ import (
 
 func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, copy and replace field with gql introspection",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

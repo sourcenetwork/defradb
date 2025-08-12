@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field, query with new field as filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -52,7 +51,6 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field, query with new field as filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

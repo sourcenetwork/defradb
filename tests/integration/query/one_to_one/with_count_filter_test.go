@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation with count with _or filter that includes relation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,

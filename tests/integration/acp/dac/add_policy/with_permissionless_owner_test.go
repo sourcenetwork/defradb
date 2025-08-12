@@ -26,8 +26,6 @@ import (
 func TestACP_AddPolicy_PermissionlessOwnerUpdate_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with owner having no update permissions, valid ID",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -66,8 +64,6 @@ func TestACP_AddPolicy_PermissionlessOwnerUpdate_ValidID(t *testing.T) {
 
 func TestACP_AddPolicy_PermissionlessOwnerDelete_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy with owner having no delete permissions, valid ID",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -108,8 +104,6 @@ func TestACP_AddPolicy_PermissionlessOwnerDelete_ValidID(t *testing.T) {
 func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, add policy with owner having no read permissions, valid ID",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -148,8 +142,6 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 
 func TestACP_AddPolicy_PermissionlessOwnerReadUpdateDelete_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, add policy with owner having no read/update/delete permissions, valid ID",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

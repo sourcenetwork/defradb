@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with default value does not overwrite",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

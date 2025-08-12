@@ -20,7 +20,6 @@ import (
 
 func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite index and retrieve it",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -76,7 +75,6 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 
 func TestCompositeIndexCreate_UsingObjectDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite index using object directive sets default direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -114,7 +112,6 @@ func TestCompositeIndexCreate_UsingObjectDirective_SetsDefaultDirection(t *testi
 
 func TestCompositeIndexCreate_UsingObjectDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite object using field directive overrides default direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -152,7 +149,6 @@ func TestCompositeIndexCreate_UsingObjectDirective_OverridesDefaultDirection(t *
 
 func TestCompositeIndexCreate_UsingFieldDirective_ImplicitlyAddsField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite index using field directive implicitly adds field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -187,7 +183,6 @@ func TestCompositeIndexCreate_UsingFieldDirective_ImplicitlyAddsField(t *testing
 
 func TestCompositeIndexCreate_UsingFieldDirective_SetsDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite index using field directive sets default direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -225,7 +220,6 @@ func TestCompositeIndexCreate_UsingFieldDirective_SetsDefaultDirection(t *testin
 
 func TestCompositeIndexCreate_UsingFieldDirective_OverridesDefaultDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite index using field directive overrides default direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -263,7 +257,6 @@ func TestCompositeIndexCreate_UsingFieldDirective_OverridesDefaultDirection(t *t
 
 func TestCompositeIndexCreate_UsingFieldDirective_WithExplicitIncludes_RespectsOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create composite index using field directive with explicit includes respects order",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

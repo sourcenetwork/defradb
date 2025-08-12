@@ -20,8 +20,6 @@ import (
 func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, admin tries to revoke it's own access, not allowed error.",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -153,8 +151,6 @@ func TestACP_AdminTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 
 func TestACP_OwnerTriesToRevokeItsOwnAccess_NotAllowedError(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner tries to revoke it's own access, not allowed error.",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

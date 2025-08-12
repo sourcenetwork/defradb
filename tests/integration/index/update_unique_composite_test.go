@@ -19,7 +19,6 @@ import (
 
 func TestUniqueCompositeIndexUpdate_UponUpdatingDocWithExistingFieldValue_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "updating non-indexed fields on a doc with existing field combination for composite index should succeed",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

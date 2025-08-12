@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum on undefined object",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -34,7 +33,6 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum on undefined field",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -50,7 +48,6 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -68,7 +65,6 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind DocID (1)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindDocID(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind DocID (1) and create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind DocID substitution and create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

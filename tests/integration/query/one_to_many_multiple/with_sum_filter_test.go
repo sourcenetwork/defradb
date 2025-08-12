@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sums with and without filters",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -144,7 +143,6 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *tes
 
 func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sums with filters",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

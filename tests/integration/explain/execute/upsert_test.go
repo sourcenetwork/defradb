@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with upsert and matching filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -74,8 +72,6 @@ func TestExecuteExplainMutationRequest_WithUpsertAndMatchingFilter_Succeeds(t *t
 
 func TestExecuteExplainMutationRequest_WithUpsertAndNoMatchingFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) mutation request with upsert and no matching filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

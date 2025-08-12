@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation primary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

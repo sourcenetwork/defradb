@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter (Name)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 
 func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic string nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -97,95 +95,96 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithStringFilterBlockAndSelect(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "Simple query with basic filter and selection",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQuerySimpleWithStringFilterBlockAndSelect_SelectSameFieldAsFilterWithMatch(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				Doc: `{
 						"Name": "Bob",
 						"Age": 32
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"Name": "John",
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
 						},
-					},
-				},
-			},
-		},
-		{
-			Description: "Simple query with basic filter and selection (diff from filter)",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "Bob",
-						"Age": 32
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users(filter: {Name: {_eq: "John"}}) {
-							Age
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"Age": int64(21),
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Description: "Simple query with basic filter(name), no results",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"Name": "John",
-						"Age": 21
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users(filter: {Name: {_eq: "Bob"}}) {
-							Name
-							Age
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{},
 					},
 				},
 			},
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	executeTestCase(t, test)
+}
+func TestQuerySimpleWithStringFilterBlockAndSelect_SelectDifferentFieldThanFilterWithMatch(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "Bob",
+						"Age": 32
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users(filter: {Name: {_eq: "John"}}) {
+							Age
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
+					},
+				},
+			},
+		},
 	}
+
+	executeTestCase(t, test)
+}
+func TestQuerySimpleWithStringFilterBlockAndSelect_SelectMultipleFieldsButNoMatch(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users(filter: {Name: {_eq: "Bob"}}) {
+							Name
+							Age
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }

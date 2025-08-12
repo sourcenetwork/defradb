@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field (bool) with crdt Object (2)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,7 +42,6 @@ func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrors(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldCRDTObjectWithBoolFieldErrorsMultiple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field (bool) with crdt Object (2)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

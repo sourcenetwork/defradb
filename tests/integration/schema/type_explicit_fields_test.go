@@ -20,8 +20,6 @@ import (
 func TestEncryptFieldsForCreateMutation(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test that type explicit (or user-defined) fields are generated.",
-
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

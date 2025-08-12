@@ -24,8 +24,6 @@ func TestACP_LinkSchema_UseSameResourceOnDifferentSchemas_AcceptSchemas(t *testi
 
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, where one resource is specified on different schemas, schemas accepted",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

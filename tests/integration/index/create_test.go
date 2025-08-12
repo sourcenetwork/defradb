@@ -22,7 +22,6 @@ import (
 
 func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Creation of index with collection should not hinder querying",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,7 +76,6 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 
 func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Creation of index separately from a collection should not hinder querying",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -136,7 +134,6 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 
 func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If invalid index name is provided, return error",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -160,7 +157,6 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 
 func TestIndexCreate_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If given same index name, should return error",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

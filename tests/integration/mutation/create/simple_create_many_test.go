@@ -19,7 +19,6 @@ import (
 
 func TestMutationCreateMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create many mutation",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

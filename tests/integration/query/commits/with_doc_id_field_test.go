@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and unknown field",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -46,7 +45,6 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and unknown field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -74,7 +72,6 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and field",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -106,7 +103,6 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and field id",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

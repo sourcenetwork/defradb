@@ -19,7 +19,6 @@ import (
 
 func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with vector embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

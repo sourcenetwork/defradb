@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with a document ID on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -49,8 +47,6 @@ func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 
 func TestDebugExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with document IDs and filter on parent groupBy.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

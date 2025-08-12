@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean equals filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -57,7 +56,6 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 
 func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

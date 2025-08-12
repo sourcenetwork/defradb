@@ -21,7 +21,6 @@ import (
 
 func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Save existing, deleted document",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// We only wish to test collection.Save in this test.
 			testUtils.CollectionSaveMutationType,

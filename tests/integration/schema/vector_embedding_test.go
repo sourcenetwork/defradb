@@ -19,7 +19,6 @@ import (
 
 func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -37,7 +36,6 @@ func TestSchema_WithStringForEmbedding_ShouldError(t *testing.T) {
 
 func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -54,7 +52,6 @@ func TestSchema_WithIntForEmbedding_ShouldError(t *testing.T) {
 }
 func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -72,7 +69,6 @@ func TestSchema_WithFloatForEmbedding_ShouldError(t *testing.T) {
 
 func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -90,7 +86,6 @@ func TestSchema_WithFloat64ForEmbedding_ShouldError(t *testing.T) {
 
 func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -108,7 +103,6 @@ func TestSchema_WithNillableFloat32ForEmbedding_ShouldError(t *testing.T) {
 
 func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -126,7 +120,6 @@ func TestSchema_WithFloat32ForEmbedding_ShouldSucceed(t *testing.T) {
 
 func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -145,7 +138,6 @@ func TestSchema_WithNonExistantFieldForEmbedding_ShouldError(t *testing.T) {
 
 func TestSchema_WithInvalidEmbeddingGenerationFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with invalid type for embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

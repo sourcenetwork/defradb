@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (primary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -98,7 +97,6 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -164,7 +162,6 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -239,7 +236,6 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -318,7 +314,6 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

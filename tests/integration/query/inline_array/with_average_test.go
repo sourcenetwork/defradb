@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of nil integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of empty integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of zero integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of populated integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -146,7 +142,6 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of populated nillable integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -178,7 +173,6 @@ func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.
 
 func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of nil float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -210,7 +204,6 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of empty float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -242,7 +235,6 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of zero float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -275,7 +267,6 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 
 func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of populated float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -307,7 +298,6 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average of populated nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -38,8 +38,6 @@ var debugSumTypeIndexJoinManyPattern = dataMap{
 func TestDebugExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with sum on a one-to-many joined field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -65,8 +63,6 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 
 func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with sum on a one-to-many joined field, with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -99,8 +95,6 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T
 
 func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with sum on a one-to-many joined field with many sources.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

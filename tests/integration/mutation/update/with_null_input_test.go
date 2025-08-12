@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation, with null filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -55,7 +54,6 @@ func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 
 func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation, with null docID",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -91,7 +89,6 @@ func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 
 func TestMutationUpdate_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation, with null docIDs",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

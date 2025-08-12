@@ -19,7 +19,6 @@ import (
 
 func TestQuerySimpleWithRestart(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with no filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

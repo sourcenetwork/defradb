@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nil integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of empty integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T)
 
 func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nillable integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -146,7 +142,6 @@ func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *te
 
 func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nil float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -178,7 +173,6 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of empty float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -210,7 +204,6 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -242,7 +235,6 @@ func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -274,7 +266,6 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 
 func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

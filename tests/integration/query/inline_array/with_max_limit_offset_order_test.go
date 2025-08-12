@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -51,7 +50,6 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds
 
 func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -84,7 +82,6 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeed
 
 func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -117,7 +114,6 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_
 
 func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -150,7 +146,6 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc
 
 func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -183,7 +178,6 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t
 
 func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -216,7 +210,6 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(
 
 func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -249,7 +242,6 @@ func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Su
 
 func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -33,7 +33,6 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
-			Description: test.Description,
 			Actions: append(
 				[]any{
 					&action.AddSchema{
@@ -46,26 +45,24 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 	)
 }
 
-func TestQueryOneToManyWithSameFieldName(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-many relation query from one side, same field name",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"relationship1_id": "bae-ee5973cf-73c3-558f-8aec-8b590b8e77cf"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Book {
 							name
 							relationship1 {
@@ -73,37 +70,41 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Book": []map[string]any{
-							{
-								"name": "Painted House",
-								"relationship1": map[string]any{
-									"name": "John Grisham",
-								},
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"relationship1": map[string]any{
+								"name": "John Grisham",
 							},
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "One-to-many relation query from many side, same field name",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	}
+
+	executeSameFieldNameTestCase(t, test)
+}
+
+func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"relationship1_id": "bae-ee5973cf-73c3-558f-8aec-8b590b8e77cf"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Author {
 							name
 							relationship1 {
@@ -112,14 +113,13 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 						}
 					}`,
 
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"name": "John Grisham",
-								"relationship1": []map[string]any{
-									{
-										"name": "Painted House",
-									},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"relationship1": []map[string]any{
+								{
+									"name": "Painted House",
 								},
 							},
 						},
@@ -129,7 +129,5 @@ func TestQueryOneToManyWithSameFieldName(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeSameFieldNameTestCase(t, test)
-	}
+	executeSameFieldNameTestCase(t, test)
 }

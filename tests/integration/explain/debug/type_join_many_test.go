@@ -20,8 +20,6 @@ import (
 func TestDebugExplainRequestWithAOneToManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with a 1-to-M join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 

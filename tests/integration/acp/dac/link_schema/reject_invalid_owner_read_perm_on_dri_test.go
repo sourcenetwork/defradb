@@ -21,8 +21,6 @@ import (
 func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with owner missing required read permission, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -102,8 +100,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t
 func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with owner missing required read permission label, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -176,8 +172,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejec
 
 func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, owner specified incorrectly on read permission expression, reject schema",
 
 		Actions: []any{
 
@@ -258,8 +252,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_Schem
 func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner specified incorrectly on read permission expression (no space), reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -338,8 +330,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDR
 
 func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, malicious owner specified on read permission expression, reject schema",
 
 		Actions: []any{
 

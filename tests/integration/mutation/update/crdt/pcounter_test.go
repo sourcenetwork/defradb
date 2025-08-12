@@ -24,7 +24,6 @@ import (
 
 func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Int type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -71,7 +70,6 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 
 func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Int type",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -124,7 +122,6 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 // This test documents what happens when an overflow occurs in a P Counter with Int type.
 func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Int type causing overflow behaviour",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JS client does not support 64 bit integers
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#number_encoding
@@ -184,7 +181,6 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 
 func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Float type. Note the lack of precision",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -237,7 +233,6 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 
 func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Float32 type. Note the lack of precision",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -289,7 +284,6 @@ func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *test
 
 func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Float64 type. Note the lack of precision",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -344,7 +338,6 @@ func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *test
 // In this case it is the same as a no-op.
 func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Positive increments of a P Counter with Float type and overflow causing a no-op",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

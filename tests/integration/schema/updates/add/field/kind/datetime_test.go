@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind datetime (10)",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -53,7 +52,6 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind datetime (10) with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -99,7 +97,6 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 
 func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, add field with kind datetime substitution with create",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

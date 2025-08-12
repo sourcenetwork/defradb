@@ -19,7 +19,6 @@ import (
 
 func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with sum",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

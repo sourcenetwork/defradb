@@ -21,7 +21,6 @@ func execute(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
-			Description: test.Description,
 			Actions: append(
 				[]any{
 					&action.AddSchema{

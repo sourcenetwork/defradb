@@ -47,8 +47,6 @@ var topLevelAveragePattern = dataMap{
 func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level average request with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -129,8 +127,6 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 
 func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) top-level average request with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

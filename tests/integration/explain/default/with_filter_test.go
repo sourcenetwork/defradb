@@ -21,8 +21,6 @@ import (
 func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with string equal (_eq) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -64,8 +62,6 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with integer equal (_eq) filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -109,8 +105,6 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with greater than (_gt) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -152,8 +146,6 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with logical compound (_and) filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -206,8 +198,6 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with logical compound (_or) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -259,8 +249,6 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request filtering values that match within (_in) a list.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -306,7 +294,6 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 
 func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) request with JSON equal (_eq) filter.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {

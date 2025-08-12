@@ -25,7 +25,6 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 	schemaVersion1ID := "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
 
 	test := testUtils.TestCase{
-		Description: "Test schema update, with branching schema migrations",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

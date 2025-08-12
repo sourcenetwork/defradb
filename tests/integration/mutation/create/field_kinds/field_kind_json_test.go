@@ -21,7 +21,6 @@ import (
 
 func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given an object value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -64,7 +63,6 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a list of scalars value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -104,7 +102,6 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 
 func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a list of objects value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -150,7 +147,6 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 
 func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a int value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -190,7 +186,6 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a string value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -230,7 +225,6 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a boolean value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -270,7 +264,6 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a null value.",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -311,7 +304,6 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 // This test confirms that our JSON value encoding is determinstic.
 func TestMutationCreate_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with duplicate JSON field errors.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// Save will not produce an error on duplicate
 			// because it will just update the previous doc

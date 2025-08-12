@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -64,7 +63,6 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -109,7 +107,6 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with same size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -154,7 +151,6 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with smaller size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -199,7 +195,6 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with larger size",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -17,29 +17,27 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToOne(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-one relation query with no filter",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
 						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Book {
 							name
 							rating
@@ -49,42 +47,46 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Book": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
-								"author": map[string]any{
-									"name": "John Grisham",
-									"age":  int64(65),
-								},
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
 							},
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "One-to-one relation secondary direction, no filter",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
 						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Author {
 							name
 							age
@@ -94,15 +96,14 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"name": "John Grisham",
-								"age":  int64(65),
-								"published": map[string]any{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"published": map[string]any{
+								"name":   "Painted House",
+								"rating": 4.9,
 							},
 						},
 					},
@@ -111,14 +112,11 @@ func TestQueryOneToOne(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, multiple records",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -202,7 +200,6 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation secondary direction",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -280,7 +277,6 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, nil child",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -314,7 +310,6 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 
 func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, nil parent",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -347,7 +342,6 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, relation ID field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -399,7 +393,6 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation secondary direction, relation ID field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

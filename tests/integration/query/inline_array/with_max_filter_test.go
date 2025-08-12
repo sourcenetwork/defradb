@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered max of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -50,7 +49,6 @@ func TestQueryInlineIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with filter, max of nillable integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -82,7 +80,6 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T
 
 func TestQueryInlineFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, filtered max of float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -114,7 +111,6 @@ func TestQueryInlineFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with filter, max of nillable float array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

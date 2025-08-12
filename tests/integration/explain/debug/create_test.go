@@ -35,7 +35,6 @@ var createPattern = dataMap{
 
 func TestDebugExplainMutationRequestWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (debug) mutation request with create.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -59,7 +58,6 @@ func TestDebugExplainMutationRequestWithCreate(t *testing.T) {
 
 func TestDebugExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (debug) mutation request with create, document exists.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

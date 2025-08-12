@@ -19,7 +19,6 @@ import (
 
 func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON, aggregate with filter",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {

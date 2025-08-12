@@ -19,7 +19,6 @@ import (
 
 func TestMutationUpdate_WithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of blob field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -64,7 +63,6 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 
 func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If blob field is set to null, should set to nil",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

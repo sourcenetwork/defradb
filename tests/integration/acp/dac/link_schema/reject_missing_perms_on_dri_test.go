@@ -20,8 +20,6 @@ import (
 func TestACP_LinkSchema_MissingRequiredReadPermissionOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with missing required read permission, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{

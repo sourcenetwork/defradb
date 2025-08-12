@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit and offset on inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -69,8 +67,6 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing
 
 func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with limit and offset on multiple inner _group selections.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

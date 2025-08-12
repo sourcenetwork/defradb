@@ -22,8 +22,6 @@ import (
 func TestACP_P2PUpdatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, p2p update private documents on different nodes, with source-hub",
-
 		SupportedDocumentACPTypes: immutable.Some(
 			[]testUtils.DocumentACPType{
 				testUtils.SourceHubDocumentACPType,

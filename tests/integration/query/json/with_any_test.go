@@ -19,7 +19,6 @@ import (
 
 func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered any of all types array",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
@@ -85,7 +84,6 @@ func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithAnyFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered any of all types array",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {

@@ -23,7 +23,6 @@ import (
 
 func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with multiple embedding fields",
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Embedding test with mutations are currently only compatible with the Go client.
 			// The docID is updated by collection. Create after vector embedding generation and
@@ -88,7 +87,6 @@ func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 
 func TestMutationCreate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation with manually defined vector embedding",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

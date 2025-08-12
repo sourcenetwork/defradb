@@ -19,7 +19,6 @@ import (
 
 func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test collection name",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -43,7 +42,6 @@ func TestSchemaUpdatesTestCollectionNameErrors(t *testing.T) {
 
 func TestSchemaUpdatesTestCollectionNamePasses(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test schema update, test collection name passes",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

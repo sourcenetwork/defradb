@@ -19,7 +19,6 @@ import (
 
 func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on undefined object",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -41,7 +40,6 @@ func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on undefined field",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -64,7 +62,6 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -90,7 +87,6 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 
 func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -115,7 +111,6 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -141,7 +136,6 @@ func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T)
 
 func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -179,7 +173,6 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -210,7 +203,6 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 
 func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -248,7 +240,6 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -286,7 +277,6 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -324,7 +314,6 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 
 func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -431,7 +420,6 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {
@@ -486,7 +474,6 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 // https://github.com/sourcenetwork/defradb/issues/3468
 func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, similarity on empty",
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type User {

@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainCommitsDagScan(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) commits request - dagScan.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -67,8 +65,6 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 
 func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) latest commits request - dagScan.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
