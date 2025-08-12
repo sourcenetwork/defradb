@@ -81,7 +81,7 @@ func (p *Planner) makeTypeIndexJoin(
 	var joinPlan planNode
 	var err error
 
-	typeFieldDesc, ok := parent.collection.Definition().GetFieldByName(subType.Name)
+	typeFieldDesc, ok := parent.collection.Version().GetFieldByName(subType.Name)
 	if !ok {
 		return nil, client.NewErrFieldNotExist(subType.Name)
 	}
@@ -306,7 +306,7 @@ func (p *Planner) newInvertableTypeJoin(
 		return invertibleTypeJoin{}, err
 	}
 
-	parentsRelFieldDef, ok := parent.collection.Definition().GetFieldByName(subSelect.Name)
+	parentsRelFieldDef, ok := parent.collection.Version().GetFieldByName(subSelect.Name)
 	if !ok {
 		return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
 	}
@@ -328,15 +328,15 @@ func (p *Planner) newInvertableTypeJoin(
 		return invertibleTypeJoin{}, err
 	}
 
-	var childsRelFieldDef immutable.Option[client.FieldDefinition]
+	var childsRelFieldDef immutable.Option[client.CollectionFieldDescription]
 	var childSideRelIDFieldMapIndex immutable.Option[int]
 	childsRelFieldDesc, ok := subCol.Version().GetFieldByRelation(
-		parentsRelFieldDef.RelationName,
+		parentsRelFieldDef.RelationName.Value(),
 		parent.collection.Name(),
 		parentsRelFieldDef.Name,
 	)
 	if ok {
-		def, ok := subCol.Definition().GetFieldByName(childsRelFieldDesc.Name)
+		def, ok := subCol.Version().GetFieldByName(childsRelFieldDesc.Name)
 		if !ok {
 			return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
 		}
@@ -390,7 +390,7 @@ type joinSide struct {
 	//
 	// This will always have a value on the primary side, but it may not have a value on
 	// the secondary side, as the secondary half of the relation is optional.
-	relFieldDef        immutable.Option[client.FieldDefinition]
+	relFieldDef        immutable.Option[client.CollectionFieldDescription]
 	relFieldMapIndex   immutable.Option[int]
 	relIDFieldMapIndex immutable.Option[int]
 	col                client.Collection
@@ -399,7 +399,7 @@ type joinSide struct {
 }
 
 func (s *joinSide) isPrimary() bool {
-	return s.relFieldDef.HasValue() && s.relFieldDef.Value().IsPrimaryRelation
+	return s.relFieldDef.HasValue() && s.relFieldDef.Value().IsPrimary
 }
 
 func (join *invertibleTypeJoin) getFirstSide() *joinSide {
@@ -526,7 +526,7 @@ func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
 
 type primaryObjectsRetriever struct {
-	relIDFieldDef client.FieldDefinition
+	relIDFieldDef client.CollectionFieldDescription
 	primarySide   *joinSide
 	secondarySide *joinSide
 
@@ -540,7 +540,7 @@ type primaryObjectsRetriever struct {
 }
 
 func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {
-	relIDFieldDef, ok := r.primarySide.col.Definition().GetFieldByName(
+	relIDFieldDef, ok := r.primarySide.col.Version().GetFieldByName(
 		r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
 	if !ok {
 		return client.NewErrFieldNotExist(r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)

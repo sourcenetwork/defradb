@@ -245,7 +245,7 @@ func (w *Wrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	transformVal, err := goji.MarshalJS(transform)
 	if err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ func (w *Wrapper) AddView(
 	if err != nil {
 		return nil, err
 	}
-	var out []client.CollectionDefinition
+	var out []client.CollectionVersion
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}

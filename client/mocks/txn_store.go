@@ -269,23 +269,23 @@ func (_c *TxnStore_AddSchema_Call) RunAndReturn(run func(ctx context.Context, sd
 }
 
 // AddView provides a mock function for the type TxnStore
-func (_mock *TxnStore) AddView(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionDefinition, error) {
+func (_mock *TxnStore) AddView(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionVersion, error) {
 	ret := _mock.Called(ctx, gqlQuery, sdl, transform)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddView")
 	}
 
-	var r0 []client.CollectionDefinition
+	var r0 []client.CollectionVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) ([]client.CollectionDefinition, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) ([]client.CollectionVersion, error)); ok {
 		return returnFunc(ctx, gqlQuery, sdl, transform)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) []client.CollectionDefinition); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) []client.CollectionVersion); ok {
 		r0 = returnFunc(ctx, gqlQuery, sdl, transform)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.CollectionDefinition)
+			r0 = ret.Get(0).([]client.CollectionVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, immutable.Option[model.Lens]) error); ok {
@@ -317,12 +317,12 @@ func (_c *TxnStore_AddView_Call) Run(run func(ctx context.Context, gqlQuery stri
 	return _c
 }
 
-func (_c *TxnStore_AddView_Call) Return(collectionDefinitions []client.CollectionDefinition, err error) *TxnStore_AddView_Call {
-	_c.Call.Return(collectionDefinitions, err)
+func (_c *TxnStore_AddView_Call) Return(collectionVersions []client.CollectionVersion, err error) *TxnStore_AddView_Call {
+	_c.Call.Return(collectionVersions, err)
 	return _c
 }
 
-func (_c *TxnStore_AddView_Call) RunAndReturn(run func(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionDefinition, error)) *TxnStore_AddView_Call {
+func (_c *TxnStore_AddView_Call) RunAndReturn(run func(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionVersion, error)) *TxnStore_AddView_Call {
 	_c.Call.Return(run)
 	return _c
 }

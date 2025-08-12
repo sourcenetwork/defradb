@@ -487,7 +487,7 @@ func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutabl
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Version.Name], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -495,10 +495,10 @@ func generateDocs(s *state.State, action GenerateDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
-	defs := make([]client.CollectionDefinition, 0, len(collections))
+	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, collection := range collections {
 		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
-			defs = append(defs, collection.Definition())
+			defs = append(defs, collection.Version())
 		}
 	}
 	docs, err := gen.AutoGenerate(defs, action.Options...)
@@ -512,9 +512,9 @@ func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
-	defs := make([]client.CollectionDefinition, 0, len(collections))
+	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, col := range collections {
-		defs = append(defs, col.Definition())
+		defs = append(defs, col.Version())
 	}
 	docs, err := predefined.Create(defs, action.Docs)
 	if err != nil {
@@ -2419,17 +2419,17 @@ func CBORValue(value any) []byte {
 func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
-		val, err := client.NewDocFromMap(action.DocMap, collection.Definition())
+		val, err := client.NewDocFromMap(action.DocMap, collection.Version())
 		if err != nil {
 			return nil, err
 		}
 		return []*client.Document{val}, nil
 
 	case client.IsJSONArray([]byte(action.Doc)):
-		return client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
+		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version())
 
 	default:
-		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version())
 		if err != nil {
 			return nil, err
 		}

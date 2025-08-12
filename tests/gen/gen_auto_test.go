@@ -72,7 +72,7 @@ func getDocIDsFromDocs(docs []*client.Document) []string {
 func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
 	var result []*client.Document
 	for _, doc := range docs {
-		if doc.Col.Version.Name == name {
+		if doc.Col.Name == name {
 			result = append(result, doc.Doc)
 		}
 	}
@@ -1197,35 +1197,32 @@ func TestAutoGenerateFromSchema_InvalidOption(t *testing.T) {
 }
 
 func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.T) {
-	getValidDefs := func() []client.CollectionDefinition {
-		return []client.CollectionDefinition{
+	getValidDefs := func() []client.CollectionVersion {
+		return []client.CollectionVersion{
 			{
-				Version: client.CollectionVersion{
-					Name: "User",
-					Fields: []client.CollectionFieldDescription{
-						{
-							Name: "name",
-							Kind: client.FieldKind_NILLABLE_INT,
-						},
-						{
-							Name: "device",
-							Kind: client.NewNamedKind("Device", false),
-						},
+				Name: "User",
+				Fields: []client.CollectionFieldDescription{
+					{
+						Name: "name",
+						Kind: client.FieldKind_NILLABLE_INT,
+					},
+					{
+						Name: "device",
+						Kind: client.NewNamedKind("Device", false),
 					},
 				},
 			},
+
 			{
-				Version: client.CollectionVersion{
-					Name: "Device",
-					Fields: []client.CollectionFieldDescription{
-						{
-							Name: "model",
-							Kind: client.FieldKind_NILLABLE_STRING,
-						},
-						{
-							Name: "owner",
-							Kind: client.NewNamedKind("User", false),
-						},
+				Name: "Device",
+				Fields: []client.CollectionFieldDescription{
+					{
+						Name: "model",
+						Kind: client.FieldKind_NILLABLE_STRING,
+					},
+					{
+						Name: "owner",
+						Kind: client.NewNamedKind("User", false),
 					},
 				},
 			},
@@ -1234,18 +1231,18 @@ func TestAutoGenerate_IfCollectionDefinitionIsIncomplete_ReturnError(t *testing.
 
 	testCases := []struct {
 		name       string
-		changeDefs func(defs []client.CollectionDefinition)
+		changeDefs func(defs []client.CollectionVersion)
 	}{
 		{
 			name: "description name is empty",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Version.Name = ""
+			changeDefs: func(defs []client.CollectionVersion) {
+				defs[0].Name = ""
 			},
 		},
 		{
 			name: "field name is empty",
-			changeDefs: func(defs []client.CollectionDefinition) {
-				defs[0].Version.Fields[0].Name = ""
+			changeDefs: func(defs []client.CollectionVersion) {
+				defs[0].Fields[0].Name = ""
 			},
 		},
 	}
@@ -1266,63 +1263,59 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 		numUsers = 20
 	)
 
-	defs := []client.CollectionDefinition{
+	defs := []client.CollectionVersion{
 		{
-			Version: client.CollectionVersion{
-				Name:           "User",
-				VersionID:      "a",
-				CollectionID:   "a",
-				IsActive:       true,
-				IsMaterialized: true,
-				Fields: []client.CollectionFieldDescription{
-					{
-						Name: "name",
-						Kind: client.FieldKind_NILLABLE_STRING,
-						Typ:  client.LWW_REGISTER,
-					},
-					{
-						Name: "age",
-						Kind: client.FieldKind_NILLABLE_INT,
-						Typ:  client.LWW_REGISTER,
-					},
-					{
-						Name: "rating",
-						Kind: client.FieldKind_NILLABLE_FLOAT64,
-						Typ:  client.LWW_REGISTER,
-					},
-					{
-						Name:         "devices",
-						Kind:         client.NewCollectionKind("b", true),
-						RelationName: immutable.Some("Device_owner"),
-					},
+			Name:           "User",
+			VersionID:      "a",
+			CollectionID:   "a",
+			IsActive:       true,
+			IsMaterialized: true,
+			Fields: []client.CollectionFieldDescription{
+				{
+					Name: "name",
+					Kind: client.FieldKind_NILLABLE_STRING,
+					Typ:  client.LWW_REGISTER,
+				},
+				{
+					Name: "age",
+					Kind: client.FieldKind_NILLABLE_INT,
+					Typ:  client.LWW_REGISTER,
+				},
+				{
+					Name: "rating",
+					Kind: client.FieldKind_NILLABLE_FLOAT64,
+					Typ:  client.LWW_REGISTER,
+				},
+				{
+					Name:         "devices",
+					Kind:         client.NewCollectionKind("b", true),
+					RelationName: immutable.Some("Device_owner"),
 				},
 			},
 		},
 		{
-			Version: client.CollectionVersion{
-				Name:           "Device",
-				VersionID:      "b",
-				CollectionID:   "b",
-				IsActive:       true,
-				IsMaterialized: true,
-				Fields: []client.CollectionFieldDescription{
-					{
-						Name: "model",
-						Kind: client.FieldKind_NILLABLE_STRING,
-					},
-					{
-						Name:         "owner",
-						Kind:         client.NewCollectionKind("a", false),
-						RelationName: immutable.Some("Device_owner"),
-						IsPrimary:    true,
-					},
-					{
-						Name:         "owner_id",
-						Kind:         client.FieldKind_DocID,
-						Typ:          client.LWW_REGISTER,
-						RelationName: immutable.Some("Device_owner"),
-						IsPrimary:    true,
-					},
+			Name:           "Device",
+			VersionID:      "b",
+			CollectionID:   "b",
+			IsActive:       true,
+			IsMaterialized: true,
+			Fields: []client.CollectionFieldDescription{
+				{
+					Name: "model",
+					Kind: client.FieldKind_NILLABLE_STRING,
+				},
+				{
+					Name:         "owner",
+					Kind:         client.NewCollectionKind("a", false),
+					RelationName: immutable.Some("Device_owner"),
+					IsPrimary:    true,
+				},
+				{
+					Name:         "owner_id",
+					Kind:         client.FieldKind_DocID,
+					Typ:          client.LWW_REGISTER,
+					RelationName: immutable.Some("Device_owner"),
+					IsPrimary:    true,
 				},
 			},
 		},

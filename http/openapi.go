@@ -29,7 +29,6 @@ var openApiSchemas = map[string]any{
 	"graphql_request":                          &GraphQLRequest{},
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
-	"collection_definition":                    &client.CollectionDefinition{},
 	"index":                                    &client.IndexDescription{},
 	"index_create_request":                     &client.IndexCreateRequest{},
 	"delete_result":                            &client.DeleteResult{},

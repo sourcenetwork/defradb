@@ -60,9 +60,6 @@ type Collection interface {
 	// CollectionID returns the Root of the Schema used to define this Collection.
 	CollectionID() string
 
-	// Definition contains the metadata defining what a Collection is.
-	Definition() CollectionDefinition
-
 	// Version returns the CollectionVersion of this Collection.
 	Version() CollectionVersion
 

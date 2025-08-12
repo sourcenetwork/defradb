@@ -97,14 +97,14 @@ type Document struct {
 	// marks if document has unsaved changes
 	isDirty bool
 
-	collectionDefinition CollectionDefinition
+	collection CollectionVersion
 }
 
-func newEmptyDoc(collectionDefinition CollectionDefinition) (*Document, error) {
+func newEmptyDoc(collection CollectionVersion) (*Document, error) {
 	doc := &Document{
-		fields:               make(map[string]Field),
-		values:               make(map[Field]*FieldValue),
-		collectionDefinition: collectionDefinition,
+		fields:     make(map[string]Field),
+		values:     make(map[Field]*FieldValue),
+		collection: collection,
 	}
 	if err := doc.setDefaultValues(); err != nil {
 		return nil, err
@@ -113,8 +113,8 @@ func newEmptyDoc(collectionDefinition CollectionDefinition) (*Document, error) {
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc, err := newEmptyDoc(collectionDefinition)
+func NewDocWithID(docID DocID, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(collection)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +123,8 @@ func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) (*Docu
 }
 
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc, err := newEmptyDoc(collectionDefinition)
+func NewDocFromMap(data map[string]any, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(collection)
 	if err != nil {
 		return nil, err
 	}
@@ -166,8 +166,8 @@ func IsJSONArray(obj []byte) bool {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc, err := newEmptyDoc(collectionDefinition)
+func NewDocFromJSON(obj []byte, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(collection)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Doc
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
-func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*Document, error) {
+func NewDocsFromJSON(obj []byte, collection CollectionVersion) ([]*Document, error) {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*
 		if err != nil {
 			return nil, err
 		}
-		doc, err := newEmptyDoc(collectionDefinition)
+		doc, err := newEmptyDoc(collection)
 		if err != nil {
 			return nil, err
 		}
@@ -222,7 +222,7 @@ func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
+func validateFieldSchema(val any, field CollectionFieldDescription) (NormalValue, error) {
 	if field.Kind.IsNillable() {
 		if val == nil {
 			return NewNormalNil(field.Kind)
@@ -696,18 +696,18 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 
 // Set the value of a field.
 func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.collectionDefinition.GetFieldByName(field)
+	fd, exists := doc.collection.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
 
 	if fd.Kind == FieldKind_DocID && strings.HasSuffix(field, request.RelatedObjectID) {
 		objFieldName := strings.TrimSuffix(field, request.RelatedObjectID)
-		ofd, exists := doc.collectionDefinition.GetFieldByName(objFieldName)
-		if exists && !ofd.IsPrimaryRelation {
+		ofd, exists := doc.collection.GetFieldByName(objFieldName)
+		if exists && !ofd.IsPrimary {
 			return NewErrCannotSetRelationFromSecondarySide(field)
 		}
-	} else if fd.Kind.IsObject() && !fd.IsPrimaryRelation {
+	} else if fd.Kind.IsObject() && !fd.IsPrimary {
 		return NewErrCannotSetRelationFromSecondarySide(field)
 	}
 
@@ -715,7 +715,7 @@ func (doc *Document) Set(field string, value any) error {
 		if !strings.HasSuffix(field, request.RelatedObjectID) {
 			field = field + request.RelatedObjectID
 		}
-		fd, exists = doc.collectionDefinition.GetFieldByName(field)
+		fd, exists = doc.collection.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}
@@ -758,7 +758,7 @@ func (doc *Document) setAndParseObjectType(value map[string]any) error {
 }
 
 func (doc *Document) setDefaultValues() error {
-	for _, field := range doc.collectionDefinition.GetFields() {
+	for _, field := range doc.collection.Fields {
 		if field.DefaultValue == nil {
 			continue // no default value to set
 		}
@@ -929,7 +929,7 @@ func (doc *Document) GenerateDocID() (DocID, error) {
 	// The DocID must take into consideration the schema root, this ensures that
 	// otherwise identical documents created using different schema will have different
 	// document IDs - we do not want cross-schema docID collisions.
-	bytes = append(bytes, []byte(doc.collectionDefinition.Version.CollectionID)...)
+	bytes = append(bytes, []byte(doc.collection.CollectionID)...)
 
 	cid, err := ccid.NewSHA256CidV1(bytes)
 	if err != nil {

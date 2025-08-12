@@ -107,7 +107,7 @@ func (vf *VersionedFetcher) Init(
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
 	docmapper *core.DocumentMapping,
@@ -368,7 +368,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		)
 
 	default:
-		field, ok := vf.col.Definition().GetFieldByName(block.Delta.GetFieldName())
+		field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
 		if !ok {
 			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 		}

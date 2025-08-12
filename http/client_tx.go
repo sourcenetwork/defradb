@@ -131,7 +131,7 @@ func (txn *Transaction) AddView(
 	gqlQuery string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.AddView(ctx, gqlQuery, sdl, transform)
 }

@@ -25,11 +25,11 @@ var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
 	nodeNum int
-	def     client.CollectionDefinition
+	def     client.CollectionVersion
 }
 
 func (c *Collection) Version() client.CollectionVersion {
-	return c.def.Version
+	return c.def
 }
 
 func (c *Collection) Name() string {
@@ -44,10 +44,6 @@ func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
 }
 
-func (c *Collection) Definition() client.CollectionDefinition {
-	return c.def
-}
-
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
@@ -60,7 +56,7 @@ func (c *Collection) Create(
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
 	copts.CollectionID = ""
-	copts.Name = c.def.GetName()
+	copts.Name = c.Name()
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
@@ -92,7 +88,7 @@ func (c *Collection) CreateMany(
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
 	copts.CollectionID = ""
-	copts.Name = c.def.GetName()
+	copts.Name = c.Name()
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
@@ -177,7 +173,7 @@ func (c *Collection) Delete(
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
 	copts.CollectionID = ""
-	copts.Name = c.def.GetName()
+	copts.Name = c.Name()
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
@@ -228,7 +224,7 @@ func (c *Collection) UpdateWithFilter(
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
 	copts.CollectionID = ""
-	copts.Name = c.def.GetName()
+	copts.Name = c.Name()
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
@@ -261,7 +257,7 @@ func (c *Collection) DeleteWithFilter(
 	copts.TxID = txnIDFromContext(ctx)
 	copts.Version = ""
 	copts.CollectionID = ""
-	copts.Name = c.def.GetName()
+	copts.Name = c.Name()
 	copts.Identity = identityFromContext(ctx)
 	copts.GetInactive = 0
 
@@ -299,7 +295,7 @@ func (c *Collection) Get(
 	}
 
 	jsonStr := result.Value
-	doc, err := client.NewDocWithID(docID, c.Definition())
+	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +362,7 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
 	txnID := txnIDFromContext(ctx)
-	name := c.def.GetName()
+	name := c.Name()
 
 	orderedFields := make([]string, len(indexDesc.Fields))
 	for i, f := range indexDesc.Fields {
@@ -393,7 +389,7 @@ func (c *Collection) CreateIndex(
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	txnID := txnIDFromContext(ctx)
-	name := c.def.GetName()
+	name := c.Name()
 
 	result := cbindings.IndexDrop(c.nodeNum, name, indexName, txnID)
 
@@ -405,7 +401,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
 	txnID := txnIDFromContext(ctx)
-	name := c.def.GetName()
+	name := c.Name()
 
 	result := cbindings.IndexList(c.nodeNum, name, txnID)
 

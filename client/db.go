@@ -231,7 +231,7 @@ type Store interface {
 		gqlQuery string,
 		sdl string,
 		transform immutable.Option[model.Lens],
-	) ([]CollectionDefinition, error)
+	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
 	// will be refreshed.

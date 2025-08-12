@@ -211,7 +211,7 @@ type dagBuilder struct {
 func newDagBuilder(col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
 	doc, err := client.NewDocFromMap(
 		initalDocState,
-		col.Definition(),
+		col.Version(),
 	)
 	if err != nil {
 		panic(err)

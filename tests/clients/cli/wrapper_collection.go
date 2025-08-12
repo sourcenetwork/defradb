@@ -24,11 +24,11 @@ var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
 	cmd *cliWrapper
-	def client.CollectionDefinition
+	def client.CollectionVersion
 }
 
 func (c *Collection) Version() client.CollectionVersion {
-	return c.def.Version
+	return c.def
 }
 
 func (c *Collection) Name() string {
@@ -41,10 +41,6 @@ func (c *Collection) VersionID() string {
 
 func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
-}
-
-func (c *Collection) Definition() client.CollectionDefinition {
-	return c.def
 }
 
 func (c *Collection) Create(
@@ -247,7 +243,7 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Definition())
+	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err
 	}

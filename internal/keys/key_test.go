@@ -184,9 +184,9 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedKey := NewIndexDataStoreKey(colID, indexID, tc.expectedFields)
-			fieldDescs := make([]client.FieldDefinition, len(tc.desc.Fields))
+			fieldDescs := make([]client.CollectionFieldDescription, len(tc.desc.Fields))
 			for i := range tc.fieldKinds {
-				fieldDescs[i] = client.FieldDefinition{Kind: tc.fieldKinds[i]}
+				fieldDescs[i] = client.CollectionFieldDescription{Kind: tc.fieldKinds[i]}
 			}
 			key, err := DecodeIndexDataStoreKey(tc.inputBytes, &tc.desc, fieldDescs)
 			assert.NoError(t, err)
@@ -258,9 +258,9 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 	indexDesc := client.IndexDescription{ID: indexID, Fields: []client.IndexedFieldDescription{{}}}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			fieldDescs := make([]client.FieldDefinition, c.numFields)
+			fieldDescs := make([]client.CollectionFieldDescription, c.numFields)
 			for i := 0; i < c.numFields; i++ {
-				fieldDescs[i] = client.FieldDefinition{Kind: client.FieldKind_NILLABLE_INT}
+				fieldDescs[i] = client.CollectionFieldDescription{Kind: client.FieldKind_NILLABLE_INT}
 			}
 			_, err := DecodeIndexDataStoreKey(c.val, &indexDesc, fieldDescs)
 			assert.Error(t, err, c.name)

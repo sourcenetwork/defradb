@@ -92,14 +92,14 @@ Example: create from stdin:
 			}
 
 			if client.IsJSONArray(docData) {
-				docs, err := client.NewDocsFromJSON(docData, col.Definition())
+				docs, err := client.NewDocsFromJSON(docData, col.Version())
 				if err != nil {
 					return err
 				}
 				return col.CreateMany(cmd.Context(), docs, createOpts...)
 			}
 
-			doc, err := client.NewDocFromJSON(docData, col.Definition())
+			doc, err := client.NewDocFromJSON(docData, col.Version())
 			if err != nil {
 				return err
 			}

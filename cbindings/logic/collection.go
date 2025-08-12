@@ -115,7 +115,7 @@ func CollectionCreate(
 	jsonString = strings.TrimSpace(jsonString)
 	if strings.HasPrefix(jsonString, "[") {
 		// Multiple documents
-		docs, err := client.NewDocsFromJSON(jsonBytes, col.Definition())
+		docs, err := client.NewDocsFromJSON(jsonBytes, col.Version())
 		if err != nil {
 			return returnGoC(1, err.Error(), "")
 		}
@@ -125,7 +125,7 @@ func CollectionCreate(
 		}
 	} else {
 		// Single document
-		doc, err := client.NewDocFromJSON(jsonBytes, col.Definition())
+		doc, err := client.NewDocFromJSON(jsonBytes, col.Version())
 		if err != nil {
 			return returnGoC(1, err.Error(), "")
 		}
@@ -205,9 +205,9 @@ func CollectionDescribe(n int, gocOptions GoCOptions) GoCResult {
 		return returnGoC(1, err.Error(), "")
 	}
 
-	colDesc := make([]client.CollectionDefinition, len(cols))
+	colDesc := make([]client.CollectionVersion, len(cols))
 	for i, col := range cols {
-		colDesc[i] = col.Definition()
+		colDesc[i] = col.Version()
 	}
 
 	return marshalJSONToGoCResult(colDesc)

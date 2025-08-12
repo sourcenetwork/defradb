@@ -73,7 +73,7 @@ type indexIterResult struct {
 type indexMatchIterator struct {
 	// Index metadata
 	indexDesc     client.IndexDescription
-	indexedFields []client.FieldDefinition
+	indexedFields []client.CollectionFieldDescription
 	execInfo      *ExecInfo
 
 	// Iterator state
@@ -804,7 +804,7 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 func makeFieldFilterCondition(
 	op string,
 	jsonPath client.JSONPath,
-	indexedField client.FieldDefinition,
+	indexedField client.CollectionFieldDescription,
 	filterVal any,
 ) (fieldFilterCond, error) {
 	cond := fieldFilterCond{
@@ -842,7 +842,7 @@ func makeFieldFilterCondition(
 // nested operator condition and returns it along with the JSON path to the nested field.
 // If the indexed field is not JSON, it returns the original condition map.
 func getNestedOperatorConditionIfJSON(
-	indexedField client.FieldDefinition,
+	indexedField client.CollectionFieldDescription,
 	condMap map[connor.FilterKey]any,
 ) (map[connor.FilterKey]any, client.JSONPath) {
 	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {

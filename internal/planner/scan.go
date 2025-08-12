@@ -42,7 +42,7 @@ type scanNode struct {
 	p   *Planner
 	col client.Collection
 
-	fields []client.FieldDefinition
+	fields []client.CollectionFieldDescription
 
 	showDeleted bool
 
@@ -110,7 +110,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 				if target.Filter != nil {
 					fieldDescs, err := parser.ParseFilterFieldsForDescription(
 						target.Filter.ExternalConditions,
-						n.col.Definition(),
+						n.col.Version(),
 					)
 					if err != nil {
 						return err
@@ -133,7 +133,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 }
 
 func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
-	fd, ok := n.col.Definition().GetFieldByName(fieldName)
+	fd, ok := n.col.Version().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
 		// schema description. The scanner (and fetcher)
@@ -146,7 +146,7 @@ func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
 
 // addField adds a field to the list of fields to be fetched.
 // It will not add the field if it is already in the list.
-func (n *scanNode) addField(field client.FieldDefinition) {
+func (n *scanNode) addField(field client.CollectionFieldDescription) {
 	found := false
 	for i := range n.fields {
 		if n.fields[i].Name == field.Name {

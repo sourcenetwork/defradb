@@ -478,7 +478,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		mp.docIDs[docID] = struct{}{}
 
 		field := crdtUnion.GetFieldName()
-		fd, ok := mp.col.Definition().GetFieldByName(field)
+		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.
 			return nil, nil

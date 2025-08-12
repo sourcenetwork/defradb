@@ -42,10 +42,10 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Version())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
 	err = col1.Create(ctx, doc1)
@@ -57,7 +57,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
 	err = col2.Create(ctx, doc3)
@@ -107,10 +107,10 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Version())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
 	err = col1.Create(ctx, doc1)
@@ -122,7 +122,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
 	err = col2.Create(ctx, doc3)
@@ -172,10 +172,10 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Version())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
 	err = col1.Create(ctx, doc1)
@@ -187,7 +187,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
 	err = col2.Create(ctx, doc3)
@@ -238,10 +238,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Version())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 31}`), col1.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 31}`), col1.Version())
 	require.NoError(t, err)
 
 	err = col1.Create(ctx, doc1)
@@ -253,10 +253,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	col2, err := db.GetCollectionByName(ctx, "Book")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-a911f9cc-217a-58a3-a2f4-96548197403e"}`), col2.Definition())
+	doc3, err := client.NewDocFromJSON([]byte(`{"name": "John and the sourcerers' stone", "author": "bae-a911f9cc-217a-58a3-a2f4-96548197403e"}`), col2.Version())
 	require.NoError(t, err)
 
-	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-a911f9cc-217a-58a3-a2f4-96548197403e"}`), col2.Definition())
+	doc4, err := client.NewDocFromJSON([]byte(`{"name": "Game of chains", "author": "bae-a911f9cc-217a-58a3-a2f4-96548197403e"}`), col2.Version())
 	require.NoError(t, err)
 
 	err = col2.Create(ctx, doc3)
@@ -314,10 +314,10 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Definition())
+	doc1, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col1.Version())
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "Bob", "age": 40}`), col1.Version())
 	require.NoError(t, err)
 
 	err = col1.Create(ctx, doc1)
@@ -329,7 +329,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Definition())
+	doc3, err := client.NewDocFromJSON([]byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
 	require.NoError(t, err)
 
 	err = col2.Create(ctx, doc3)

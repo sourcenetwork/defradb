@@ -211,13 +211,13 @@ func setupDatabase(t *testing.T) DB {
 	col, err := cdb.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "bob"}`), col.Definition())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "bob"}`), col.Version())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "adam"}`), col.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "adam"}`), col.Version())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc2)

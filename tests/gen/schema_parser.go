@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
+func ParseSDL(gqlSDL string) (map[string]client.CollectionVersion, error) {
 	ctx := context.Background()
 
 	// Spinning up a temporary in-memory node with all extras disabled is the
@@ -56,9 +56,9 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionDefinition, error) {
 		return nil, err
 	}
 
-	result := make(map[string]client.CollectionDefinition, len(cols))
+	result := make(map[string]client.CollectionVersion, len(cols))
 	for _, col := range cols {
-		result[col.Definition().GetName()] = col.Definition()
+		result[col.Version().Name] = col.Version()
 	}
 	return result, nil
 }

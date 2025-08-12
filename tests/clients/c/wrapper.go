@@ -401,23 +401,23 @@ func (w *CWrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	txnID := txnIDFromContext(ctx)
 	cTransform, err := stringFromLensOption(transform)
 
 	if err != nil {
-		return []client.CollectionDefinition{}, err
+		return []client.CollectionVersion{}, err
 	}
 
 	result := cbindings.ViewAdd(w.nodeNum, query, sdl, cTransform, txnID)
 
 	if result.Status != 0 {
-		return []client.CollectionDefinition{}, errors.New(result.Error)
+		return []client.CollectionVersion{}, errors.New(result.Error)
 	}
 
-	colDefRes, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
+	colDefRes, err := unmarshalResult[[]client.CollectionVersion](result.Value)
 	if err != nil {
-		return []client.CollectionDefinition{}, err
+		return []client.CollectionVersion{}, err
 	}
 	return colDefRes, nil
 }
@@ -527,7 +527,7 @@ func (w *CWrapper) GetCollections(
 		return []client.Collection{}, errors.New(result.Error)
 	}
 
-	defs, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
+	defs, err := unmarshalResult[[]client.CollectionVersion](result.Value)
 	if err != nil {
 		return nil, err
 	}

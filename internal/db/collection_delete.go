@@ -183,7 +183,7 @@ func (c *collection) applyDelete(
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	})
 
-	if c.def.Version.IsBranchable {
+	if c.def.IsBranchable {
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err

@@ -291,136 +291,6 @@
                 },
                 "type": "object"
             },
-            "collection_definition": {
-                "properties": {
-                    "version": {
-                        "properties": {
-                            "CollectionID": {
-                                "type": "string"
-                            },
-                            "CollectionSet": {},
-                            "Fields": {
-                                "items": {
-                                    "properties": {
-                                        "DefaultValue": {},
-                                        "FieldID": {
-                                            "type": "string"
-                                        },
-                                        "IsPrimary": {
-                                            "type": "boolean"
-                                        },
-                                        "Kind": {},
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "RelationName": {},
-                                        "Size": {
-                                            "type": "integer"
-                                        },
-                                        "Typ": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Indexes": {
-                                "items": {
-                                    "properties": {
-                                        "Fields": {
-                                            "items": {
-                                                "properties": {
-                                                    "Descending": {
-                                                        "type": "boolean"
-                                                    },
-                                                    "Name": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "type": "array"
-                                        },
-                                        "ID": {
-                                            "maximum": 4294967295,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        },
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "Unique": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "IsActive": {
-                                "type": "boolean"
-                            },
-                            "IsBranchable": {
-                                "type": "boolean"
-                            },
-                            "IsEmbeddedOnly": {
-                                "type": "boolean"
-                            },
-                            "IsMaterialized": {
-                                "type": "boolean"
-                            },
-                            "IsPlaceholder": {
-                                "type": "boolean"
-                            },
-                            "Name": {
-                                "type": "string"
-                            },
-                            "Policy": {},
-                            "Sources": {
-                                "items": {},
-                                "type": "array"
-                            },
-                            "VectorEmbeddings": {
-                                "items": {
-                                    "properties": {
-                                        "FieldName": {
-                                            "type": "string"
-                                        },
-                                        "Fields": {
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "type": "array"
-                                        },
-                                        "Model": {
-                                            "type": "string"
-                                        },
-                                        "Provider": {
-                                            "type": "string"
-                                        },
-                                        "Template": {
-                                            "type": "string"
-                                        },
-                                        "URL": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "VersionID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
             "collection_delete": {
                 "properties": {
                     "filter": {}
@@ -2631,11 +2501,11 @@
                                 "schema": {
                                     "oneOf": [
                                         {
-                                            "$ref": "#/components/schemas/collection_definition"
+                                            "$ref": "#/components/schemas/collection"
                                         },
                                         {
                                             "items": {
-                                                "$ref": "#/components/schemas/collection_definition"
+                                                "$ref": "#/components/schemas/collection"
                                             },
                                             "type": "array"
                                         }

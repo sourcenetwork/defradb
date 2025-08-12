@@ -247,50 +247,6 @@ func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
-// Definition provides a mock function for the type Collection
-func (_mock *Collection) Definition() client.CollectionDefinition {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Definition")
-	}
-
-	var r0 client.CollectionDefinition
-	if returnFunc, ok := ret.Get(0).(func() client.CollectionDefinition); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(client.CollectionDefinition)
-	}
-	return r0
-}
-
-// Collection_Definition_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Definition'
-type Collection_Definition_Call struct {
-	*mock.Call
-}
-
-// Definition is a helper method to define mock.On call
-func (_e *Collection_Expecter) Definition() *Collection_Definition_Call {
-	return &Collection_Definition_Call{Call: _e.mock.On("Definition")}
-}
-
-func (_c *Collection_Definition_Call) Run(run func()) *Collection_Definition_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Collection_Definition_Call) Return(collectionDefinition client.CollectionDefinition) *Collection_Definition_Call {
-	_c.Call.Return(collectionDefinition)
-	return _c
-}
-
-func (_c *Collection_Definition_Call) RunAndReturn(run func() client.CollectionDefinition) *Collection_Definition_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Delete provides a mock function for the type Collection
 func (_mock *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
 	ret := _mock.Called(ctx, docID)

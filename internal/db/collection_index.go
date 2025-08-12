@@ -87,7 +87,7 @@ func (c *collection) updateIndexedDoc(
 	oldDoc, err := c.get(
 		ctx,
 		primaryKey,
-		c.Definition().CollectIndexedFields(),
+		c.Version().CollectIndexedFields(),
 		false,
 	)
 	if err != nil {
@@ -130,7 +130,7 @@ func (c *collection) deleteIndexedDocWithID(
 	doc, err := c.get(
 		ctx,
 		primaryKey,
-		c.Definition().CollectIndexedFields(),
+		c.Version().CollectIndexedFields(),
 		false,
 	)
 	if err != nil {
@@ -176,7 +176,7 @@ func (c *collection) CreateIndex(
 
 func processCreateIndexRequest(
 	ctx context.Context,
-	def client.CollectionDefinition,
+	def client.CollectionVersion,
 	desc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
 	err := validateIndexDescription(desc)
@@ -184,19 +184,19 @@ func processCreateIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	err = checkExistingFieldsAndAdjustRelFieldNames(def.Version, desc.Fields)
+	err = checkExistingFieldsAndAdjustRelFieldNames(def, desc.Fields)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
 
-	indexName, err := generateIndexNameIfNeeded(def.Version, desc)
+	indexName, err := generateIndexNameIfNeeded(def, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
 
 	colSeq, err := sequence.Get(
 		ctx,
-		keys.NewIndexIDSequenceKey(def.Version.CollectionID),
+		keys.NewIndexIDSequenceKey(def.CollectionID),
 	)
 	if err != nil {
 		return client.IndexDescription{}, err
@@ -218,22 +218,22 @@ func (c *collection) createIndex(
 	ctx context.Context,
 	createReq client.IndexCreateRequest,
 ) (CollectionIndex, error) {
-	desc, err := processCreateIndexRequest(ctx, c.Definition(), createReq)
+	desc, err := processCreateIndexRequest(ctx, c.Version(), createReq)
 	if err != nil {
 		return nil, err
 	}
 
-	c.def.Version.Indexes = append(c.def.Version.Indexes, desc)
+	c.def.Indexes = append(c.def.Indexes, desc)
 
-	err = description.SaveCollection(ctx, c.def.Version)
+	err = description.SaveCollection(ctx, c.def)
 	if err != nil {
-		c.def.Version.Indexes = c.def.Version.Indexes[:len(c.def.Version.Indexes)-1]
+		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return nil, err
 	}
 
 	index, err := c.addNewIndex(ctx, desc)
 	if err != nil {
-		c.def.Version.Indexes = c.def.Version.Indexes[:len(c.def.Version.Indexes)-1]
+		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return nil, err
 	}
 
@@ -259,7 +259,7 @@ func (c *collection) addNewIndex(ctx context.Context, desc client.IndexDescripti
 
 func (c *collection) iterateAllDocs(
 	ctx context.Context,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	exec func(doc *client.Document) error,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -303,7 +303,7 @@ func (c *collection) iterateAllDocs(
 			break
 		}
 
-		doc, err := fetcher.Decode(encodedDoc, c.Definition())
+		doc, err := fetcher.Decode(encodedDoc, c.Version())
 		if err != nil {
 			return errors.Join(err, df.Close())
 		}
@@ -321,9 +321,9 @@ func (c *collection) indexExistingDocs(
 	ctx context.Context,
 	index CollectionIndex,
 ) error {
-	fields := make([]client.FieldDefinition, 0, 1)
+	fields := make([]client.CollectionFieldDescription, 0, 1)
 	for _, field := range index.Description().Fields {
-		colField, ok := c.Definition().GetFieldByName(field.Name)
+		colField, ok := c.Version().GetFieldByName(field.Name)
 		if ok {
 			fields = append(fields, colField)
 		}
@@ -376,14 +376,14 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 	copy(oldIndexes, c.Version().Indexes)
 	for i := range c.Version().Indexes {
 		if c.Version().Indexes[i].Name == indexName {
-			c.def.Version.Indexes = slices.Delete(c.Version().Indexes, i, i+1)
+			c.def.Indexes = slices.Delete(c.Version().Indexes, i, i+1)
 			break
 		}
 	}
 
-	err := description.SaveCollection(ctx, c.def.Version)
+	err := description.SaveCollection(ctx, c.def)
 	if err != nil {
-		c.def.Version.Indexes = oldIndexes
+		c.def.Indexes = oldIndexes
 		return err
 	}
 

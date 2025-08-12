@@ -35,7 +35,6 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"versionID":        goji.Async(c.versionID),
 		"version":          goji.Async(c.version),
 		"collectionID":     goji.Async(c.collectionID),
-		"definition":       goji.Async(c.definition),
 		"create":           goji.Async(c.create),
 		"createMany":       goji.Async(c.createMany),
 		"update":           goji.Async(c.update),
@@ -67,10 +66,6 @@ func (c *clientCollection) collectionID(this js.Value, args []js.Value) (js.Valu
 	return js.ValueOf(c.col.CollectionID()), nil
 }
 
-func (c *clientCollection) definition(this js.Value, args []js.Value) (js.Value, error) {
-	return goji.MarshalJS(c.col.Definition())
-}
-
 func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, error) {
 	var docMap map[string]any
 	if err := structArg(args, 0, "doc", &docMap); err != nil {
@@ -86,7 +81,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	doc, err := client.NewDocFromMap(docMap, c.col.Definition())
+	doc, err := client.NewDocFromMap(docMap, c.col.Version())
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -111,7 +106,7 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 	}
 	var docs []*client.Document
 	for _, d := range docMaps {
-		doc, err := client.NewDocFromMap(d, c.col.Definition())
+		doc, err := client.NewDocFromMap(d, c.col.Version())
 		if err != nil {
 			return js.Undefined(), err
 		}
