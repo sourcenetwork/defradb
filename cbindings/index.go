@@ -18,11 +18,9 @@ import "C"
 
 import (
 	"context"
-	"runtime/cgo"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export IndexCreate
@@ -65,9 +63,8 @@ func IndexCreate(
 		Fields: fields,
 		Unique: isUnique != 0,
 	}
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := node.DB.GetCollectionByName(ctx, C.GoString(collectionName))
+	store := getStoreFromPointer(nodePtr)
+	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -82,14 +79,13 @@ func IndexCreate(
 //export IndexList
 func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 	ctx := context.Background()
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	store := getStoreFromPointer(nodePtr)
 
 	colName := C.GoString(collectionName)
 	switch {
 	// Get the indices associated with a given collection
 	case colName != "":
-		col, err := node.DB.GetCollectionByName(ctx, colName)
+		col, err := store.GetCollectionByName(ctx, colName)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -100,7 +96,7 @@ func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 		return returnC(marshalJSONToGoCResult(indices))
 	// Get all of the indices, because no collection was specified
 	default:
-		indices, err := node.DB.GetAllIndexes(ctx)
+		indices, err := store.GetAllIndexes(ctx)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -112,9 +108,8 @@ func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 func IndexDrop(nodePtr C.uintptr_t, collectionName *C.char, indexName *C.char) *C.Result {
 	ctx := context.Background()
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := node.DB.GetCollectionByName(ctx, C.GoString(collectionName))
+	store := getStoreFromPointer(nodePtr)
+	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

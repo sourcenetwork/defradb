@@ -18,10 +18,8 @@ import "C"
 
 import (
 	"context"
-	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export ACPAddDACPolicy
@@ -33,9 +31,8 @@ func ACPAddDACPolicy(nodePtr C.uintptr_t, identity *C.char, policy *C.char) *C.R
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	policyResult, err := node.DB.AddDACPolicy(ctx, C.GoString(policy))
+	store := getStoreFromPointer(nodePtr)
+	policyResult, err := store.AddDACPolicy(ctx, C.GoString(policy))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -59,9 +56,8 @@ func ACPAddDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	result, err := node.DB.AddDACActorRelationship(
+	store := getStoreFromPointer(nodePtr)
+	result, err := store.AddDACActorRelationship(
 		ctx,
 		C.GoString(collection),
 		C.GoString(docID),
@@ -91,9 +87,8 @@ func ACPDeleteDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	result, err := node.DB.DeleteDACActorRelationship(
+	store := getStoreFromPointer(nodePtr)
+	result, err := store.DeleteDACActorRelationship(
 		ctx,
 		C.GoString(collection),
 		C.GoString(docID),
@@ -116,9 +111,8 @@ func ACPDisableNAC(nodePtr C.uintptr_t, identity *C.char) *C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	if err := node.DB.DisableNAC(ctx); err != nil {
+	store := getStoreFromPointer(nodePtr)
+	if err := store.DisableNAC(ctx); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
@@ -134,9 +128,8 @@ func ACPReEnableNAC(nodePtr C.uintptr_t, identity *C.char) *C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	if err := node.DB.ReEnableNAC(ctx); err != nil {
+	store := getStoreFromPointer(nodePtr)
+	if err := store.ReEnableNAC(ctx); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
@@ -157,9 +150,8 @@ func ACPAddNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	addNACActorRelationshipResult, err := node.DB.AddNACActorRelationship(
+	store := getStoreFromPointer(nodePtr)
+	addNACActorRelationshipResult, err := store.AddNACActorRelationship(
 		ctx,
 		C.GoString(relation),
 		C.GoString(actor),
@@ -185,9 +177,8 @@ func ACPDeleteNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	deleteNACActorRelationshipResult, err := node.DB.DeleteNACActorRelationship(
+	store := getStoreFromPointer(nodePtr)
+	deleteNACActorRelationshipResult, err := store.DeleteNACActorRelationship(
 		ctx,
 		C.GoString(relation),
 		C.GoString(actor),
@@ -208,9 +199,8 @@ func ACPGetNACStatus(nodePtr C.uintptr_t, identity *C.char) *C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	status, err := node.DB.GetNACStatus(ctx)
+	store := getStoreFromPointer(nodePtr)
+	status, err := store.GetNACStatus(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

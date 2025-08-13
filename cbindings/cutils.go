@@ -99,3 +99,15 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) GoNod
 		EnableNodeACP:            int(cOptions.enableNodeACP),
 	}
 }
+
+func getStoreFromPointer(nodePtr C.uintptr_t) client.Store {
+	h := cgo.Handle(nodePtr)
+	switch v := h.Value().(type) {
+	case *node.Node:
+		return v.DB
+	case client.Txn:
+		return v
+	default:
+		return nil
+	}
+}

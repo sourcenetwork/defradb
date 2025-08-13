@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime/cgo"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -29,7 +28,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 type docIDResult struct {
@@ -64,11 +62,11 @@ func parseCollectionOptions(goColOptions GoCOptions) client.CollectionFetchOptio
 // getCollection is a helper function wrapping DB.GetCollections, and ensuring
 // that only one collection matches the criteria
 func getCollection(
-	n *node.Node,
+	store client.Store,
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) (client.Collection, error) {
-	cols, err := n.DB.GetCollections(ctx, options)
+	cols, err := store.GetCollections(ctx, options)
 	if err != nil {
 		return nil, fmt.Errorf(errGettingCollection, err)
 	}
@@ -100,9 +98,8 @@ func CollectionCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := getCollection(node, ctx, colOptions)
+	store := getStoreFromPointer(nodePtr)
+	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -155,9 +152,8 @@ func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, 
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := getCollection(node, ctx, colOptions)
+	store := getStoreFromPointer(nodePtr)
+	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -204,9 +200,8 @@ func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Res
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	cols, err := node.DB.GetCollections(ctx, colOptions)
+	store := getStoreFromPointer(nodePtr)
+	cols, err := store.GetCollections(ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -230,9 +225,8 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) *C.R
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := getCollection(node, ctx, colOptions)
+	store := getStoreFromPointer(nodePtr)
+	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -274,9 +268,8 @@ func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, opt
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := getCollection(node, ctx, colOptions)
+	store := getStoreFromPointer(nodePtr)
+	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -323,9 +316,8 @@ func CollectionPatch(nodePtr C.uintptr_t, patch *C.char, lensConfig *C.char, opt
 		}
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err = node.DB.PatchCollection(ctx, C.GoString(patch), migration)
+	store := getStoreFromPointer(nodePtr)
+	err = store.PatchCollection(ctx, C.GoString(patch), migration)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -349,9 +341,8 @@ func CollectionUpdate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	col, err := getCollection(node, ctx, colOptions)
+	store := getStoreFromPointer(nodePtr)
+	col, err := getCollection(store, ctx, colOptions)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -403,9 +394,8 @@ func CollectionUpdate(
 func SetActiveCollection(nodePtr C.uintptr_t, version *C.char) *C.Result {
 	ctx := context.Background()
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err := node.DB.SetActiveCollectionVersion(ctx, C.GoString(version))
+	store := getStoreFromPointer(nodePtr)
+	err := store.SetActiveCollectionVersion(ctx, C.GoString(version))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

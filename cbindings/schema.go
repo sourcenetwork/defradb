@@ -19,18 +19,14 @@ import "C"
 import (
 	"context"
 	"fmt"
-	"runtime/cgo"
-
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export AddSchema
 func AddSchema(nodePtr C.uintptr_t, schema *C.char) *C.Result {
 	ctx := context.Background()
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	collectionVersions, err := node.DB.AddSchema(ctx, C.GoString(schema))
+	store := getStoreFromPointer(nodePtr)
+	collectionVersions, err := store.AddSchema(ctx, C.GoString(schema))
 	if err != nil {
 		return returnC(returnGoC(1, fmt.Sprintf(errAddingSchema, err), ""))
 	}

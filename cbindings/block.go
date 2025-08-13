@@ -18,10 +18,8 @@ import "C"
 
 import (
 	"context"
-	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export BlockVerifySignature
@@ -38,9 +36,8 @@ func BlockVerifySignature(nodePtr C.uintptr_t, keyType *C.char, publicKey *C.cha
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err = node.DB.VerifySignature(ctx, C.GoString(cid), pubKey)
+	store := getStoreFromPointer(nodePtr)
+	err = store.VerifySignature(ctx, C.GoString(cid), pubKey)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

@@ -28,36 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 )
 
-func nodeStar(n *node.Node, identityPrivateKey string) GoCResult {
-	ctx := context.Background()
-
-	var err error
-	if identityPrivateKey != "" {
-		ctx, err = contextWithIdentity(ctx, identityPrivateKey)
-		if err != nil {
-			return returnGoC(1, err.Error(), "")
-		}
-	}
-
-	errCh := make(chan error, 1)
-
-	go func() {
-		err := n.Start(ctx)
-		errCh <- err
-	}()
-
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return returnGoC(1, err.Error(), "")
-		}
-		return returnGoC(0, "", "")
-	case <-time.After(5 * time.Second):
-		// Timeout occurred, node may still start later
-		return returnGoC(2, errUnreadyStart, "")
-	}
-}
-
 //export NewNode
 func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	gocOptions := convertNodeInitOptionsToGoNodeInitOptions(cOptions)

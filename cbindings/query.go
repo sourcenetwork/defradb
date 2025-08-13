@@ -18,13 +18,11 @@ import "C"
 
 import (
 	"context"
-	"runtime/cgo"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
@@ -117,9 +115,8 @@ func ExecuteQuery(
 	}
 
 	ctx, cancelFunc := context.WithCancel(ctx)
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	res := node.DB.ExecRequest(ctx, C.GoString(query), opts...)
+	store := getStoreFromPointer(nodePtr)
+	res := store.ExecRequest(ctx, C.GoString(query), opts...)
 	sub := &Subscription{
 		ctxCancel:  cancelFunc,
 		resultChan: res.Subscription,

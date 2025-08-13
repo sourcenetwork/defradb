@@ -20,14 +20,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"runtime/cgo"
 	"strings"
 
 	"github.com/sourcenetwork/immutable/enumerable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export LensSet
@@ -45,9 +43,8 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) *C.Resu
 		DestinationSchemaVersionID: C.GoString(dst),
 		Lens:                       lensCfg,
 	}
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err := node.DB.SetMigration(ctx, migrationCfg)
+	store := getStoreFromPointer(nodePtr)
+	err := store.SetMigration(ctx, migrationCfg)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -64,9 +61,8 @@ func LensDown(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.R
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	out, err := node.DB.LensRegistry().MigrateDown(ctx, enumerable.New(src), C.GoString(collectionID))
+	store := getStoreFromPointer(nodePtr)
+	out, err := store.LensRegistry().MigrateDown(ctx, enumerable.New(src), C.GoString(collectionID))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -92,9 +88,8 @@ func LensUp(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.Res
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	out, err := node.DB.LensRegistry().MigrateUp(ctx, enumerable.New(src), C.GoString(collectionID))
+	store := getStoreFromPointer(nodePtr)
+	out, err := store.LensRegistry().MigrateUp(ctx, enumerable.New(src), C.GoString(collectionID))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -114,9 +109,8 @@ func LensUp(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.Res
 func LensReload(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err := node.DB.LensRegistry().ReloadLenses(ctx)
+	store := getStoreFromPointer(nodePtr)
+	err := store.LensRegistry().ReloadLenses(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -134,9 +128,8 @@ func LensSetRegistry(nodePtr C.uintptr_t, collectionID *C.char, cfg *C.char) *C.
 		return returnC(returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err := node.DB.LensRegistry().SetMigration(ctx, C.GoString(collectionID), lensCfg)
+	store := getStoreFromPointer(nodePtr)
+	err := store.LensRegistry().SetMigration(ctx, C.GoString(collectionID), lensCfg)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

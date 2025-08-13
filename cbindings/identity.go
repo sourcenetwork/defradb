@@ -18,11 +18,9 @@ import "C"
 
 import (
 	"context"
-	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export IdentityNew
@@ -44,9 +42,8 @@ func IdentityNew(keyType *C.char) *C.Result {
 //export NodeIdentity
 func NodeIdentity(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	identity, err := node.DB.GetNodeIdentity(ctx)
+	store := getStoreFromPointer(nodePtr)
+	identity, err := store.GetNodeIdentity(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

@@ -20,14 +20,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"runtime/cgo"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export ViewAdd
@@ -46,9 +44,8 @@ func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.ch
 		transform = immutable.Some(lensCfg)
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	defs, err := node.DB.AddView(ctx, C.GoString(query), C.GoString(sdl), transform)
+	store := getStoreFromPointer(nodePtr)
+	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transform)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -83,9 +80,8 @@ func ViewRefresh(
 		options.IncludeInactive = immutable.Some(getInactive != 0)
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
-	err := node.DB.RefreshViews(ctx, options)
+	store := getStoreFromPointer(nodePtr)
+	err := store.RefreshViews(ctx, options)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
