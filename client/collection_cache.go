@@ -89,11 +89,11 @@ func GetCollection(
 	return CollectionVersion{}, false
 }
 
-// GetDefinitionFromStore returns the definition that the given [FieldKind] points to, if it is found
+// GetCollectionFromStore returns the definition that the given [FieldKind] points to, if it is found
 // in the given store.
 //
 // If the related definition is not found, or an error occurs, default and false will be returned.
-func GetDefinitionFromStore(
+func GetCollectionFromStore(
 	ctx context.Context,
 	store TxnStore,
 	host CollectionVersion,

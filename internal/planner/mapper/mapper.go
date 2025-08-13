@@ -900,7 +900,7 @@ func getCollectionName(
 
 		hostFieldDesc, parentHasField := parentCollection.Version().GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.Kind.IsObject() {
-			def, found, err := client.GetDefinitionFromStore(ctx, store, parentCollection.Version(), hostFieldDesc.Kind)
+			def, found, err := client.GetCollectionFromStore(ctx, store, parentCollection.Version(), hostFieldDesc.Kind)
 			if !found {
 				return "", NewErrTypeNotFound(hostFieldDesc.Kind.String())
 			}
