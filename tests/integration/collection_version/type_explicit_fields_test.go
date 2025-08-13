@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package schema
+package collection_version
 
 import (
 	"testing"
@@ -17,16 +17,40 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchema_WithMissingType_Errors(t *testing.T) {
+func TestEncryptFieldsForCreateMutation(t *testing.T) {
 	test := testUtils.TestCase{
+
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
 					type User {
-						name:
+						name: String
+						age:  Int
 					}
 				`,
-				ExpectedError: "field type not specified. Object: User, Field: name",
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+				{
+				  __type(name: "UserField") {
+				    name
+				    kind
+				    enumValues {
+				      name
+				    }
+				  }
+				}
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"kind": "ENUM",
+						"name": "UserField",
+						"enumValues": []any{
+							map[string]any{"name": "name"},
+							map[string]any{"name": "age"},
+						},
+					},
+				},
 			},
 		},
 	}

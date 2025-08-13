@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	introspectionUtils "github.com/sourcenetwork/defradb/tests/integration/schema"
+	introspectionUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
 func TestSchemaUpdatesAddFieldIntrospection(t *testing.T) {
