@@ -68,7 +68,7 @@ endif
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
 JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
-JS_TEST_FLAGS=-exec="$$(go env GOROOT)/misc/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
+JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
