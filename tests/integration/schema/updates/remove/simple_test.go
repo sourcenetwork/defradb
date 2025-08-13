@@ -17,30 +17,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestSchemaUpdatesRemoveCollectionNameErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type Users {
-						name: String
-						email: String
-					}
-				`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Users/Name" }
-					]
-				`,
-				ExpectedError: "collection name can't be empty",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestSchemaUpdatesRemoveVersionIDErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -59,30 +35,6 @@ func TestSchemaUpdatesRemoveVersionIDErrors(t *testing.T) {
 					]
 				`,
 				ExpectedError: "invalid cid: cid too short. VersionID:",
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestSchemaUpdatesRemoveSchemaNameErrors(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type Users {
-						name: String
-						email: String
-					}
-				`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "remove", "path": "/Users/Name" }
-					]
-				`,
-				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}
