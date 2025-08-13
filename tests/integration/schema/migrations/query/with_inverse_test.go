@@ -89,7 +89,7 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 				}`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: "bafyreih7useaapqn4pf6k5rxb2oufmsjb3e7xnccmbjr2njva3bgpdwyzu",
+				VersionID: "bafyreih7useaapqn4pf6k5rxb2oufmsjb3e7xnccmbjr2njva3bgpdwyzu",
 			},
 			testUtils.Request{
 				Request: `query {

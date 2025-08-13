@@ -61,7 +61,7 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 			},
 			testUtils.SetActiveCollectionVersion{
 				// Set the active schema version back to the first
-				SchemaVersionID: schemaVersion1ID,
+				VersionID: schemaVersion1ID,
 			},
 			testUtils.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3

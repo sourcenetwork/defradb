@@ -35,8 +35,8 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: "",
-				ExpectedError:   "schema version ID can't be empty",
+				VersionID:     "",
+				ExpectedError: "schema version ID can't be empty",
 			},
 		},
 	}
@@ -61,8 +61,8 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: "does not exist",
-				ExpectedError:   "key not found",
+				VersionID:     "does not exist",
+				ExpectedError: "key not found",
 			},
 		},
 	}
@@ -88,7 +88,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+				VersionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -124,7 +124,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
+				VersionID: "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
 			},
 			testUtils.Request{
 				Request: `query {

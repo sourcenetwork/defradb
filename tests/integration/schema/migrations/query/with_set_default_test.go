@@ -60,7 +60,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 				}),
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: schemaVersionID2,
+				VersionID: schemaVersionID2,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -107,7 +107,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: schemaVersionID2,
+				VersionID: schemaVersionID2,
 			},
 			// Create John using the new schema version
 			testUtils.CreateDoc{
@@ -135,7 +135,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 			},
 			// Set the schema version back to the original
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: schemaVersionID1,
+				VersionID: schemaVersionID1,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -208,7 +208,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 			},
 			// Set the schema version back to the original
 			testUtils.SetActiveCollectionVersion{
-				SchemaVersionID: schemaVersionID1,
+				VersionID: schemaVersionID1,
 			},
 			testUtils.Request{
 				Request: `query {

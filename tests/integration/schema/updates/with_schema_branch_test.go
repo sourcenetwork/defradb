@@ -365,7 +365,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 			},
 			testUtils.SetActiveCollectionVersion{
 				// Set the second schema version to be active
-				SchemaVersionID: schemaVersion2ID,
+				VersionID: schemaVersion2ID,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -468,7 +468,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 			},
 			testUtils.SetActiveCollectionVersion{
 				// Set the second schema version to be active
-				SchemaVersionID: schemaVersion2ID,
+				VersionID: schemaVersion2ID,
 			},
 			testUtils.PatchCollection{
 				// The fourth schema version will be set as the active version, going from version 2 to 4
