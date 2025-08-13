@@ -77,8 +77,6 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 						minion: User
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",

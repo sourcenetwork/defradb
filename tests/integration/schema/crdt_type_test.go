@@ -27,8 +27,6 @@ func TestSchemaCreate_ContainsPNCounterTypeWithIntKind_NoError(t *testing.T) {
 						points: Int @crdt(type: pncounter)
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -63,8 +61,6 @@ func TestSchemaCreate_ContainsPNCounterTypeWithFloatKind_NoError(t *testing.T) {
 						points: Float @crdt(type: pncounter)
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -133,8 +129,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 						points: Int @crdt(type: pcounter)
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -169,8 +163,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 						points: Float @crdt(type: pcounter)
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -205,8 +197,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) 
 						points: Float64 @crdt(type: pcounter)
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -241,8 +231,6 @@ func TestSchemaCreate_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) 
 						points: Float32 @crdt(type: pcounter)
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

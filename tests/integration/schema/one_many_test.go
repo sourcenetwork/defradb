@@ -205,8 +205,6 @@ func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 						minions: [User]
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",

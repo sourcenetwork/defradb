@@ -25,8 +25,6 @@ func TestColVersionSimpleCreatesColGivenEmptyType(t *testing.T) {
 				Schema: `
 					type Users {}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
