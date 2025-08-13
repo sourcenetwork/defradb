@@ -74,18 +74,44 @@ type TxnStore_AddDACActorRelationship_Call struct {
 }
 
 // AddDACActorRelationship is a helper method to define mock.On call
-//   - ctx
-//   - collectionName
-//   - docID
-//   - relation
-//   - targetActor
+//   - ctx context.Context
+//   - collectionName string
+//   - docID string
+//   - relation string
+//   - targetActor string
 func (_e *TxnStore_Expecter) AddDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *TxnStore_AddDACActorRelationship_Call {
 	return &TxnStore_AddDACActorRelationship_Call{Call: _e.mock.On("AddDACActorRelationship", ctx, collectionName, docID, relation, targetActor)}
 }
 
 func (_c *TxnStore_AddDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *TxnStore_AddDACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -132,15 +158,26 @@ type TxnStore_AddDACPolicy_Call struct {
 }
 
 // AddDACPolicy is a helper method to define mock.On call
-//   - ctx
-//   - policy
+//   - ctx context.Context
+//   - policy string
 func (_e *TxnStore_Expecter) AddDACPolicy(ctx interface{}, policy interface{}) *TxnStore_AddDACPolicy_Call {
 	return &TxnStore_AddDACPolicy_Call{Call: _e.mock.On("AddDACPolicy", ctx, policy)}
 }
 
 func (_c *TxnStore_AddDACPolicy_Call) Run(run func(ctx context.Context, policy string)) *TxnStore_AddDACPolicy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -187,16 +224,32 @@ type TxnStore_AddNACActorRelationship_Call struct {
 }
 
 // AddNACActorRelationship is a helper method to define mock.On call
-//   - ctx
-//   - relation
-//   - targetActor
+//   - ctx context.Context
+//   - relation string
+//   - targetActor string
 func (_e *TxnStore_Expecter) AddNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *TxnStore_AddNACActorRelationship_Call {
 	return &TxnStore_AddNACActorRelationship_Call{Call: _e.mock.On("AddNACActorRelationship", ctx, relation, targetActor)}
 }
 
 func (_c *TxnStore_AddNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *TxnStore_AddNACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -245,15 +298,26 @@ type TxnStore_AddSchema_Call struct {
 }
 
 // AddSchema is a helper method to define mock.On call
-//   - ctx
-//   - sdl
+//   - ctx context.Context
+//   - sdl string
 func (_e *TxnStore_Expecter) AddSchema(ctx interface{}, sdl interface{}) *TxnStore_AddSchema_Call {
 	return &TxnStore_AddSchema_Call{Call: _e.mock.On("AddSchema", ctx, sdl)}
 }
 
 func (_c *TxnStore_AddSchema_Call) Run(run func(ctx context.Context, sdl string)) *TxnStore_AddSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -302,17 +366,38 @@ type TxnStore_AddView_Call struct {
 }
 
 // AddView is a helper method to define mock.On call
-//   - ctx
-//   - gqlQuery
-//   - sdl
-//   - transform
+//   - ctx context.Context
+//   - gqlQuery string
+//   - sdl string
+//   - transform immutable.Option[model.Lens]
 func (_e *TxnStore_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, transform interface{}) *TxnStore_AddView_Call {
 	return &TxnStore_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl, transform)}
 }
 
 func (_c *TxnStore_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens])) *TxnStore_AddView_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(immutable.Option[model.Lens]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 immutable.Option[model.Lens]
+		if args[3] != nil {
+			arg3 = args[3].(immutable.Option[model.Lens])
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -350,15 +435,26 @@ type TxnStore_BasicExport_Call struct {
 }
 
 // BasicExport is a helper method to define mock.On call
-//   - ctx
-//   - config
+//   - ctx context.Context
+//   - config *client.BackupConfig
 func (_e *TxnStore_Expecter) BasicExport(ctx interface{}, config interface{}) *TxnStore_BasicExport_Call {
 	return &TxnStore_BasicExport_Call{Call: _e.mock.On("BasicExport", ctx, config)}
 }
 
 func (_c *TxnStore_BasicExport_Call) Run(run func(ctx context.Context, config *client.BackupConfig)) *TxnStore_BasicExport_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*client.BackupConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *client.BackupConfig
+		if args[1] != nil {
+			arg1 = args[1].(*client.BackupConfig)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -396,15 +492,26 @@ type TxnStore_BasicImport_Call struct {
 }
 
 // BasicImport is a helper method to define mock.On call
-//   - ctx
-//   - filepath
+//   - ctx context.Context
+//   - filepath string
 func (_e *TxnStore_Expecter) BasicImport(ctx interface{}, filepath interface{}) *TxnStore_BasicImport_Call {
 	return &TxnStore_BasicImport_Call{Call: _e.mock.On("BasicImport", ctx, filepath)}
 }
 
 func (_c *TxnStore_BasicImport_Call) Run(run func(ctx context.Context, filepath string)) *TxnStore_BasicImport_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -451,18 +558,44 @@ type TxnStore_DeleteDACActorRelationship_Call struct {
 }
 
 // DeleteDACActorRelationship is a helper method to define mock.On call
-//   - ctx
-//   - collectionName
-//   - docID
-//   - relation
-//   - targetActor
+//   - ctx context.Context
+//   - collectionName string
+//   - docID string
+//   - relation string
+//   - targetActor string
 func (_e *TxnStore_Expecter) DeleteDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *TxnStore_DeleteDACActorRelationship_Call {
 	return &TxnStore_DeleteDACActorRelationship_Call{Call: _e.mock.On("DeleteDACActorRelationship", ctx, collectionName, docID, relation, targetActor)}
 }
 
 func (_c *TxnStore_DeleteDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *TxnStore_DeleteDACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -509,16 +642,32 @@ type TxnStore_DeleteNACActorRelationship_Call struct {
 }
 
 // DeleteNACActorRelationship is a helper method to define mock.On call
-//   - ctx
-//   - relation
-//   - targetActor
+//   - ctx context.Context
+//   - relation string
+//   - targetActor string
 func (_e *TxnStore_Expecter) DeleteNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *TxnStore_DeleteNACActorRelationship_Call {
 	return &TxnStore_DeleteNACActorRelationship_Call{Call: _e.mock.On("DeleteNACActorRelationship", ctx, relation, targetActor)}
 }
 
 func (_c *TxnStore_DeleteNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *TxnStore_DeleteNACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -556,14 +705,20 @@ type TxnStore_DisableNAC_Call struct {
 }
 
 // DisableNAC is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *TxnStore_Expecter) DisableNAC(ctx interface{}) *TxnStore_DisableNAC_Call {
 	return &TxnStore_DisableNAC_Call{Call: _e.mock.On("DisableNAC", ctx)}
 }
 
 func (_c *TxnStore_DisableNAC_Call) Run(run func(ctx context.Context)) *TxnStore_DisableNAC_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -609,9 +764,9 @@ type TxnStore_ExecRequest_Call struct {
 }
 
 // ExecRequest is a helper method to define mock.On call
-//   - ctx
-//   - request
-//   - opts
+//   - ctx context.Context
+//   - request string
+//   - opts ...client.RequestOption
 func (_e *TxnStore_Expecter) ExecRequest(ctx interface{}, request interface{}, opts ...interface{}) *TxnStore_ExecRequest_Call {
 	return &TxnStore_ExecRequest_Call{Call: _e.mock.On("ExecRequest",
 		append([]interface{}{ctx, request}, opts...)...)}
@@ -619,8 +774,25 @@ func (_e *TxnStore_Expecter) ExecRequest(ctx interface{}, request interface{}, o
 
 func (_c *TxnStore_ExecRequest_Call) Run(run func(ctx context.Context, request string, opts ...client.RequestOption)) *TxnStore_ExecRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[2].([]client.RequestOption)
-		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []client.RequestOption
+		var variadicArgs []client.RequestOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]client.RequestOption)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
 	})
 	return _c
 }
@@ -669,14 +841,20 @@ type TxnStore_GetAllIndexes_Call struct {
 }
 
 // GetAllIndexes is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *TxnStore_Expecter) GetAllIndexes(ctx interface{}) *TxnStore_GetAllIndexes_Call {
 	return &TxnStore_GetAllIndexes_Call{Call: _e.mock.On("GetAllIndexes", ctx)}
 }
 
 func (_c *TxnStore_GetAllIndexes_Call) Run(run func(ctx context.Context)) *TxnStore_GetAllIndexes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -725,15 +903,26 @@ type TxnStore_GetCollectionByName_Call struct {
 }
 
 // GetCollectionByName is a helper method to define mock.On call
-//   - ctx
-//   - name
+//   - ctx context.Context
+//   - name client.CollectionName
 func (_e *TxnStore_Expecter) GetCollectionByName(ctx interface{}, name interface{}) *TxnStore_GetCollectionByName_Call {
 	return &TxnStore_GetCollectionByName_Call{Call: _e.mock.On("GetCollectionByName", ctx, name)}
 }
 
 func (_c *TxnStore_GetCollectionByName_Call) Run(run func(ctx context.Context, name client.CollectionName)) *TxnStore_GetCollectionByName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.CollectionName))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 client.CollectionName
+		if args[1] != nil {
+			arg1 = args[1].(client.CollectionName)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -782,15 +971,26 @@ type TxnStore_GetCollections_Call struct {
 }
 
 // GetCollections is a helper method to define mock.On call
-//   - ctx
-//   - options
+//   - ctx context.Context
+//   - options client.CollectionFetchOptions
 func (_e *TxnStore_Expecter) GetCollections(ctx interface{}, options interface{}) *TxnStore_GetCollections_Call {
 	return &TxnStore_GetCollections_Call{Call: _e.mock.On("GetCollections", ctx, options)}
 }
 
 func (_c *TxnStore_GetCollections_Call) Run(run func(ctx context.Context, options client.CollectionFetchOptions)) *TxnStore_GetCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.CollectionFetchOptions))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 client.CollectionFetchOptions
+		if args[1] != nil {
+			arg1 = args[1].(client.CollectionFetchOptions)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -837,14 +1037,20 @@ type TxnStore_GetNACStatus_Call struct {
 }
 
 // GetNACStatus is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *TxnStore_Expecter) GetNACStatus(ctx interface{}) *TxnStore_GetNACStatus_Call {
 	return &TxnStore_GetNACStatus_Call{Call: _e.mock.On("GetNACStatus", ctx)}
 }
 
 func (_c *TxnStore_GetNACStatus_Call) Run(run func(ctx context.Context)) *TxnStore_GetNACStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -891,14 +1097,20 @@ type TxnStore_GetNodeIdentity_Call struct {
 }
 
 // GetNodeIdentity is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *TxnStore_Expecter) GetNodeIdentity(ctx interface{}) *TxnStore_GetNodeIdentity_Call {
 	return &TxnStore_GetNodeIdentity_Call{Call: _e.mock.On("GetNodeIdentity", ctx)}
 }
 
 func (_c *TxnStore_GetNodeIdentity_Call) Run(run func(ctx context.Context)) *TxnStore_GetNodeIdentity_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -993,15 +1205,26 @@ type TxnStore_NewConcurrentTxn_Call struct {
 }
 
 // NewConcurrentTxn is a helper method to define mock.On call
-//   - ctx
-//   - readOnly
+//   - ctx context.Context
+//   - readOnly bool
 func (_e *TxnStore_Expecter) NewConcurrentTxn(ctx interface{}, readOnly interface{}) *TxnStore_NewConcurrentTxn_Call {
 	return &TxnStore_NewConcurrentTxn_Call{Call: _e.mock.On("NewConcurrentTxn", ctx, readOnly)}
 }
 
 func (_c *TxnStore_NewConcurrentTxn_Call) Run(run func(ctx context.Context, readOnly bool)) *TxnStore_NewConcurrentTxn_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bool))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bool
+		if args[1] != nil {
+			arg1 = args[1].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1050,15 +1273,26 @@ type TxnStore_NewTxn_Call struct {
 }
 
 // NewTxn is a helper method to define mock.On call
-//   - ctx
-//   - readOnly
+//   - ctx context.Context
+//   - readOnly bool
 func (_e *TxnStore_Expecter) NewTxn(ctx interface{}, readOnly interface{}) *TxnStore_NewTxn_Call {
 	return &TxnStore_NewTxn_Call{Call: _e.mock.On("NewTxn", ctx, readOnly)}
 }
 
 func (_c *TxnStore_NewTxn_Call) Run(run func(ctx context.Context, readOnly bool)) *TxnStore_NewTxn_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bool))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bool
+		if args[1] != nil {
+			arg1 = args[1].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1096,16 +1330,32 @@ type TxnStore_PatchCollection_Call struct {
 }
 
 // PatchCollection is a helper method to define mock.On call
-//   - ctx
-//   - patch
-//   - migration
+//   - ctx context.Context
+//   - patch string
+//   - migration immutable.Option[model.Lens]
 func (_e *TxnStore_Expecter) PatchCollection(ctx interface{}, patch interface{}, migration interface{}) *TxnStore_PatchCollection_Call {
 	return &TxnStore_PatchCollection_Call{Call: _e.mock.On("PatchCollection", ctx, patch, migration)}
 }
 
 func (_c *TxnStore_PatchCollection_Call) Run(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens])) *TxnStore_PatchCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(immutable.Option[model.Lens]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 immutable.Option[model.Lens]
+		if args[2] != nil {
+			arg2 = args[2].(immutable.Option[model.Lens])
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -1143,14 +1393,20 @@ type TxnStore_PrintDump_Call struct {
 }
 
 // PrintDump is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *TxnStore_Expecter) PrintDump(ctx interface{}) *TxnStore_PrintDump_Call {
 	return &TxnStore_PrintDump_Call{Call: _e.mock.On("PrintDump", ctx)}
 }
 
 func (_c *TxnStore_PrintDump_Call) Run(run func(ctx context.Context)) *TxnStore_PrintDump_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -1188,14 +1444,20 @@ type TxnStore_ReEnableNAC_Call struct {
 }
 
 // ReEnableNAC is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *TxnStore_Expecter) ReEnableNAC(ctx interface{}) *TxnStore_ReEnableNAC_Call {
 	return &TxnStore_ReEnableNAC_Call{Call: _e.mock.On("ReEnableNAC", ctx)}
 }
 
 func (_c *TxnStore_ReEnableNAC_Call) Run(run func(ctx context.Context)) *TxnStore_ReEnableNAC_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -1233,15 +1495,26 @@ type TxnStore_RefreshViews_Call struct {
 }
 
 // RefreshViews is a helper method to define mock.On call
-//   - ctx
-//   - options
+//   - ctx context.Context
+//   - options client.CollectionFetchOptions
 func (_e *TxnStore_Expecter) RefreshViews(ctx interface{}, options interface{}) *TxnStore_RefreshViews_Call {
 	return &TxnStore_RefreshViews_Call{Call: _e.mock.On("RefreshViews", ctx, options)}
 }
 
 func (_c *TxnStore_RefreshViews_Call) Run(run func(ctx context.Context, options client.CollectionFetchOptions)) *TxnStore_RefreshViews_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.CollectionFetchOptions))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 client.CollectionFetchOptions
+		if args[1] != nil {
+			arg1 = args[1].(client.CollectionFetchOptions)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1279,15 +1552,26 @@ type TxnStore_SetActiveCollectionVersion_Call struct {
 }
 
 // SetActiveCollectionVersion is a helper method to define mock.On call
-//   - ctx
-//   - versionID
+//   - ctx context.Context
+//   - versionID string
 func (_e *TxnStore_Expecter) SetActiveCollectionVersion(ctx interface{}, versionID interface{}) *TxnStore_SetActiveCollectionVersion_Call {
 	return &TxnStore_SetActiveCollectionVersion_Call{Call: _e.mock.On("SetActiveCollectionVersion", ctx, versionID)}
 }
 
 func (_c *TxnStore_SetActiveCollectionVersion_Call) Run(run func(ctx context.Context, versionID string)) *TxnStore_SetActiveCollectionVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1325,15 +1609,26 @@ type TxnStore_SetMigration_Call struct {
 }
 
 // SetMigration is a helper method to define mock.On call
-//   - ctx
-//   - config
+//   - ctx context.Context
+//   - config client.LensConfig
 func (_e *TxnStore_Expecter) SetMigration(ctx interface{}, config interface{}) *TxnStore_SetMigration_Call {
 	return &TxnStore_SetMigration_Call{Call: _e.mock.On("SetMigration", ctx, config)}
 }
 
 func (_c *TxnStore_SetMigration_Call) Run(run func(ctx context.Context, config client.LensConfig)) *TxnStore_SetMigration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(client.LensConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 client.LensConfig
+		if args[1] != nil {
+			arg1 = args[1].(client.LensConfig)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -1371,16 +1666,32 @@ type TxnStore_VerifySignature_Call struct {
 }
 
 // VerifySignature is a helper method to define mock.On call
-//   - ctx
-//   - blockCid
-//   - pubKey
+//   - ctx context.Context
+//   - blockCid string
+//   - pubKey crypto.PublicKey
 func (_e *TxnStore_Expecter) VerifySignature(ctx interface{}, blockCid interface{}, pubKey interface{}) *TxnStore_VerifySignature_Call {
 	return &TxnStore_VerifySignature_Call{Call: _e.mock.On("VerifySignature", ctx, blockCid, pubKey)}
 }
 
 func (_c *TxnStore_VerifySignature_Call) Run(run func(ctx context.Context, blockCid string, pubKey crypto.PublicKey)) *TxnStore_VerifySignature_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(crypto.PublicKey))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 crypto.PublicKey
+		if args[2] != nil {
+			arg2 = args[2].(crypto.PublicKey)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
