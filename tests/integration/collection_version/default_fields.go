@@ -45,6 +45,7 @@ func (fieldSet fields) Tidy() []any {
 
 func (fieldSet fields) sort() fields {
 	sort.Slice(fieldSet, func(i, j int) bool {
+		//nolint:forcetypeassert
 		return fieldSet[i]["name"].(string) < fieldSet[j]["name"].(string)
 	})
 	return fieldSet
