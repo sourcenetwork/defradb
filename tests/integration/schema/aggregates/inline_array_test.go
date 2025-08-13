@@ -17,7 +17,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-/* WIP
 func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -59,32 +58,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 								"name": "_count",
 								"args": []any{
 									map[string]any{
-										"name": "favouriteIntegers",
-										"type": map[string]any{
-											"name": "Users__favouriteIntegers__CountSelector",
-											"inputFields": []any{
-												map[string]any{
-													"name": "filter",
-													"type": map[string]any{
-														"name": "NotNullIntFilterArg",
-													},
-												},
-												map[string]any{
-													"name": "limit",
-													"type": map[string]any{
-														"name": "Int",
-													},
-												},
-												map[string]any{
-													"name": "offset",
-													"type": map[string]any{
-														"name": "Int",
-													},
-												},
-											},
-										},
-									},
-									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
 											"name": "Users__CountSelector",
@@ -113,8 +86,34 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 									map[string]any{
 										"name": "_version",
 										"type": map[string]any{
-											"name": "Users___version__CountSelector",
 											"inputFields": []any{
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+											},
+											"name": "Users___version__CountSelector",
+										},
+									},
+									map[string]any{
+										"name": "favouriteIntegers",
+										"type": map[string]any{
+											"name": "Users__favouriteIntegers__CountSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullIntFilterArg",
+													},
+												},
 												map[string]any{
 													"name": "limit",
 													"type": map[string]any{
@@ -141,7 +140,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
 func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 	test := testUtils.TestCase{
@@ -265,7 +263,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-/* WIP
 func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -307,38 +304,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								"name": "_avg",
 								"args": []any{
 									map[string]any{
-										"name": "favouriteIntegers",
-										"type": map[string]any{
-											"name": "Users__favouriteIntegers__NumericSelector",
-											"inputFields": []any{
-												map[string]any{
-													"name": "filter",
-													"type": map[string]any{
-														"name": "NotNullIntFilterArg",
-													},
-												},
-												map[string]any{
-													"name": "limit",
-													"type": map[string]any{
-														"name": "Int",
-													},
-												},
-												map[string]any{
-													"name": "offset",
-													"type": map[string]any{
-														"name": "Int",
-													},
-												},
-												map[string]any{
-													"name": "order",
-													"type": map[string]any{
-														"name": "Ordering",
-													},
-												},
-											},
-										},
-									},
-									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
 											"name": "Users__NumericSelector",
@@ -370,7 +335,39 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"name": "UsersOrderArg",
+														"name": nil,
+													},
+												},
+											},
+										},
+									},
+									map[string]any{
+										"name": "favouriteIntegers",
+										"type": map[string]any{
+											"name": "Users__favouriteIntegers__NumericSelector",
+											"inputFields": []any{
+												map[string]any{
+													"name": "filter",
+													"type": map[string]any{
+														"name": "NotNullIntFilterArg",
+													},
+												},
+												map[string]any{
+													"name": "limit",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "offset",
+													"type": map[string]any{
+														"name": "Int",
+													},
+												},
+												map[string]any{
+													"name": "order",
+													"type": map[string]any{
+														"name": "Ordering",
 													},
 												},
 											},
@@ -387,7 +384,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-*/
 
 func aggregateGroupArg(fieldType string) map[string]any {
 	return map[string]any{
