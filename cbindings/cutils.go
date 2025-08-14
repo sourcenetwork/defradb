@@ -75,7 +75,6 @@ func returnNewTxnResultC(status int, error string, n client.Txn) C.NewTxnResult 
 
 func convertCOptionsToGoCOptions(cOptions C.CollectionOptions) GoCOptions {
 	return GoCOptions{
-		TxID:         uint64(cOptions.tx),
 		Version:      C.GoString(cOptions.version),
 		CollectionID: C.GoString(cOptions.collectionID),
 		Name:         C.GoString(cOptions.name),
@@ -109,5 +108,17 @@ func getStoreFromPointer(nodePtr C.uintptr_t) client.Store {
 		return v
 	default:
 		return nil
+	}
+}
+
+// ConvertAndFreeCResult exists to convert C.Result to GoCResult for use in integration tests
+// It will, in converting,consume the C.Result, freeing the memory for it
+func ConvertAndFreeCResult(cResult *C.Result) GoCResult {
+	defer C.free(unsafe.Pointer(cResult.error))
+	defer C.free(unsafe.Pointer(cResult.value))
+	return GoCResult{
+		Status: int(cResult.status),
+		Error:  C.GoString(cResult.error),
+		Value:  C.GoString(cResult.value),
 	}
 }

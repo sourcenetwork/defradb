@@ -91,20 +91,6 @@ func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Con
 	return newctx, nil
 }
 
-// contextWithTransaction is a helper function that attaches transaction to a context
-// func contextWithTransaction(n int, ctx context.Context, TxnIDu64 uint64) (context.Context, error) {
-// 	if TxnIDu64 == 0 {
-// 		return ctx, nil
-// 	}
-// 	tx, ok := TxnStoreMap[n].Load(TxnIDu64)
-// 	if !ok {
-// 		return ctx, fmt.Errorf(errTxnDoesNotExist, TxnIDu64)
-// 	}
-// 	txn := tx.(datastore.Txn) //nolint:forcetypeassert
-// 	ctx2 := datastore.CtxSetTxn(ctx, txn)
-// 	return ctx2, nil
-// }
-
 // splitCommaSeparatedString is a helper function that turns a single string into an array
 func splitCommaSeparatedString(baseStr string) []string {
 	var retArr []string

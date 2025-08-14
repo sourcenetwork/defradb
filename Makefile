@@ -437,10 +437,30 @@ fix:
 	@$(MAKE) mocks
 	@$(MAKE) docs
 	
+build-c-shared-linux: SHELL := /bin/bash
 build-c-shared-linux:
 	@echo "Building c-shared library for Linux..."
-	@rm -f build/libdefradb.so build/libdefradb.h
-	@CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
-		-buildmode=c-shared -o build/libdefradb.so ./cbindings/bridge
-	@cp ./cbindings/bridge/defra_structs.h ./build/
-	@echo "Build complete: build/libdefradb.so"
+	@( \
+	  search="package cbindings"; \
+	  replace="package main"; \
+	  search_escaped=$$(echo $$search | sed 's/[\/&]/\\&/g'); \
+	  replace_escaped=$$(echo $$replace | sed 's/[\/&]/\\&/g'); \
+	  \
+	  trap 'echo "Restoring package names..."; \
+	        find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
+	            -exec sed -i "s/$$replace_escaped/$$search_escaped/g" {} +' EXIT; \
+	  \
+	  echo "Temporarily replacing '$$search' with '$$replace'..."; \
+	  find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
+	      -exec sed -i "s/$$search_escaped/$$replace_escaped/g" {} +; \
+	  \
+	  rm -f build/libdefradb.so build/libdefradb.h; \
+	  CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
+	      -buildmode=c-shared -o build/libdefradb.so ./cbindings; \
+	  cp ./cbindings/defra_structs.h ./build/; \
+	  \
+	  echo "Build complete: build/libdefradb.so" \
+	)
+
+
+

@@ -22,7 +22,6 @@ typedef struct {
 } NewTxnResult;
 
 typedef struct {
-    unsigned long long tx;
     const char* version;
     const char* collectionID;
     const char* name;

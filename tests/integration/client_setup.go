@@ -15,9 +15,9 @@ package tests
 import (
 	"fmt"
 
+	cbindings "github.com/sourcenetwork/defradb/cbindings"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
-	cwrap "github.com/sourcenetwork/defradb/tests/clients/c"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -39,7 +39,7 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Client, error) {
+func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	switch s.ClientType {
 	case HTTPClientType:
 		return http.NewWrapper(nodeObj)
@@ -51,7 +51,7 @@ func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Cl
 		return newGoClientWrapper(nodeObj), nil
 
 	case CClientType:
-		return cwrap.NewCWrapper(s.Ctx, enableNAC), nil
+		return cbindings.NewCWrapper(nodeObj)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
