@@ -17,28 +17,36 @@ package node
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/net"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
+	"github.com/sourcenetwork/defradb/internal/kms"
 )
 
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
+func (n *Node) startKMS(ctx context.Context) error {
 	if n.config.disableP2P {
 		return nil
 	}
-
-	peer, err := net.NewPeer(
-		ctx,
-		datastore.BlockstoreFrom(store),
-		filterOptions[netConfig.NodeOpt](n.options)...,
-	)
+	ident, err := n.DB.GetNodeIdentity(ctx)
 	if err != nil {
 		return err
 	}
-	n.options = append(n.options, db.WithP2P(peer))
-	n.peer = peer
+	if n.config.kmsType.HasValue() {
+		switch n.config.kmsType.Value() {
+		case kms.PubSubServiceType:
+			n.kmsService, err = kms.NewPubSubService(
+				ctx,
+				n.peer.ID(),
+				n.peer,
+				n.DB.Events(),
+				datastore.EncstoreFrom(n.DB.Rootstore()),
+				n.DB.DocumentACP(),
+				db.NewCollectionRetriever(n.DB),
+				ident.Value().DID,
+			)
+		}
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

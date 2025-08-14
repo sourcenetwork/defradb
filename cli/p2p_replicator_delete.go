@@ -13,8 +13,9 @@ package cli
 import (
 	"encoding/json"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PReplicatorDeleteCommand() *cobra.Command {
@@ -32,7 +33,7 @@ Example:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			var info peer.AddrInfo
+			var info client.PeerInfo
 			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}

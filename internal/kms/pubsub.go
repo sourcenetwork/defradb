@@ -18,8 +18,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	libpeer "github.com/libp2p/go-libp2p/core/peer"
-	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
 	"github.com/sourcenetwork/immutable"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -39,8 +37,13 @@ import (
 const pubsubTopic = "encryption"
 
 type PubSubServer interface {
-	AddPubSubTopic(string, rpc.MessageHandler) error
-	SendPubSubMessage(context.Context, string, []byte) (<-chan rpc.Response, error)
+	AddPubSubTopic(topicName string, subscribe bool, handler client.PubsubMessageHandler) error
+	PublishToTopic(
+		ctx context.Context,
+		topic string,
+		data []byte,
+		withMultiResponse bool,
+	) (<-chan client.PubsubResponse, error)
 }
 
 type CollectionRetriever interface {
@@ -49,7 +52,7 @@ type CollectionRetriever interface {
 
 type pubSubService struct {
 	ctx             context.Context
-	peerID          libpeer.ID
+	peerID          string
 	pubsub          PubSubServer
 	keyRequestedSub event.Subscription
 	eventBus        event.Bus
@@ -79,7 +82,7 @@ func (s *pubSubService) GetKeys(ctx context.Context, cids ...cidlink.Link) (*enc
 // "enc-keys-request" event on the event bus.
 func NewPubSubService(
 	ctx context.Context,
-	peerID libpeer.ID,
+	peerID string,
 	pubsub PubSubServer,
 	eventBus event.Bus,
 	encstore datastore.Blockstore,
@@ -97,7 +100,7 @@ func NewPubSubService(
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
 	}
-	err := pubsub.AddPubSubTopic(pubsubTopic, s.handleRequestFromPeer)
+	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +156,7 @@ type fetchEncryptionKeyRequest struct {
 }
 
 // handleEncryptionMessage handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
-func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg []byte) ([]byte, error) {
+func (s *pubSubService) handleRequestFromPeer(peerID string, topic string, msg []byte) ([]byte, error) {
 	req := new(fetchEncryptionKeyRequest)
 	if err := cbor.Unmarshal(msg, req); err != nil {
 		log.ErrorContextE(s.ctx, "Failed to unmarshal pubsub message %s", err)
@@ -208,7 +211,7 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	respChan, err := s.pubsub.SendPubSubMessage(ctx, pubsubTopic, data)
+	respChan, err := s.pubsub.PublishToTopic(ctx, pubsubTopic, data, false)
 	if err != nil {
 		return errors.Wrap("failed publishing to encryption thread", err)
 	}
@@ -228,7 +231,7 @@ type fetchEncryptionKeyReply struct {
 
 // handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
 func (s *pubSubService) handleFetchEncryptionKeyResponse(
-	resp rpc.Response,
+	resp client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
@@ -270,7 +273,7 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 }
 
 // makeAssociatedData creates the associated data for the encryption key request
-func makeAssociatedData(req *fetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
+func makeAssociatedData(req *fetchEncryptionKeyRequest, peerID string) []byte {
 	return encodeToBase64(bytes.Join([][]byte{
 		req.EphemeralPublicKey,
 		[]byte(peerID),
@@ -391,17 +394,17 @@ func encodeToBase64(data []byte) []byte {
 	return encoded
 }
 
-func newGRPCPeer(peerID libpeer.ID) *grpcpeer.Peer {
+func newGRPCPeer(peerID string) *grpcpeer.Peer {
 	return &grpcpeer.Peer{
 		Addr: addr{peerID},
 	}
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
-type addr struct{ id libpeer.ID }
+type addr struct{ id string }
 
 // Network returns the name of the network that this address belongs to (libp2p).
 func (a addr) Network() string { return "libp2p" }
 
 // String returns the peer ID of this address in string form (B58-encoded).
-func (a addr) String() string { return a.id.String() }
+func (a addr) String() string { return a.id }

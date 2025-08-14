@@ -180,7 +180,7 @@ func (c *collection) applyDelete(
 		Block:        b,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		c.db.sendUpdate(updateEvent)
 	})
 
 	if c.def.IsBranchable {
@@ -211,7 +211,7 @@ func (c *collection) applyDelete(
 		}
 
 		txn.OnSuccess(func() {
-			c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+			c.db.sendUpdate(updateEvent)
 		})
 	}
 

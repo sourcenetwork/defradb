@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 const (
@@ -25,6 +26,7 @@ type dbOptions struct {
 	maxTxnRetries  immutable.Option[int]
 	identity       immutable.Option[identity.Identity]
 	disableSigning bool
+	p2p            immutable.Option[client.Host]
 }
 
 // Option is a funtion that sets a config value on the db.
@@ -48,5 +50,11 @@ func WithNodeIdentity(ident identity.Identity) Option {
 func WithEnabledSigning(value bool) Option {
 	return func(opts *dbOptions) {
 		opts.disableSigning = !value
+	}
+}
+
+func WithP2P(host client.Host) Option {
+	return func(opts *dbOptions) {
+		opts.p2p = immutable.Some(host)
 	}
 }

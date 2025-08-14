@@ -13,13 +13,11 @@ package protocol
 import (
 	"context"
 	"errors"
+	"io"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
-
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/net/message"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
 // PushLogRequest is the struct used to send a resource update to a peer node
@@ -44,31 +42,31 @@ const (
 	replicatorProtocolResponse = "/defradb/rep_resp/" + replicatorProtocolVersion
 )
 
-type pushLogFunc func(
+type pushLogProcessorFunc func(
 	ctx context.Context,
 	req *PushLogRequest,
 	isReplicator bool,
-) (*PushLogReply, error)
+) error
 
 type replicatorFailureFunc func(ctx context.Context, peerID, docID string) error
 
 // ReplicatorProtocol is the protocol implementation for sending resource updates to a peer node.
 type ReplicatorProtocol struct {
 	*baseProto
-	pushLogFunc           pushLogFunc
+	pushLogProcessorFunc  pushLogProcessorFunc
 	replicatorFailureFunc replicatorFailureFunc
 }
 
 // NewReplicatorProtocol returns and a new [ReplicatorProtocol] struct and registers the protocol
 // on the stream handler.
 func NewReplicatorProtocol(
-	h host.Host,
-	pushLogFunc pushLogFunc,
+	h client.Host,
+	pushLogProcessorFunc pushLogProcessorFunc,
 	replicatorFailureFunc replicatorFailureFunc,
 ) *ReplicatorProtocol {
 	proto := &ReplicatorProtocol{
 		baseProto:             newBaseProto(h),
-		pushLogFunc:           pushLogFunc,
+		pushLogProcessorFunc:  pushLogProcessorFunc,
 		replicatorFailureFunc: replicatorFailureFunc,
 	}
 	h.SetStreamHandler(replicatorProtocolRequest, proto.onRequest)
@@ -82,13 +80,13 @@ func NewReplicatorProtocol(
 func (proto *ReplicatorProtocol) PushToReplicator(
 	ctx context.Context,
 	evt event.Update,
-	pid peer.ID,
+	pid string,
 ) (reply *PushLogReply, err error) {
 	defer func() {
 		// When the event is a retry, we don't need to republish the failure as
 		// it is already being handled by the retry mechanism through the success channel.
 		if err != nil && !evt.IsRetry {
-			handleRepErr := proto.replicatorFailureFunc(ctx, pid.String(), evt.DocID)
+			handleRepErr := proto.replicatorFailureFunc(ctx, pid, evt.DocID)
 			if handleRepErr != nil {
 				err = errors.Join(err, handleRepErr)
 			}
@@ -99,16 +97,16 @@ func (proto *ReplicatorProtocol) PushToReplicator(
 		DocID:        evt.DocID,
 		CID:          evt.Cid.Bytes(),
 		CollectionID: evt.CollectionID,
-		Creator:      proto.host.ID().String(),
+		Creator:      proto.host.ID(),
 		Block:        evt.Block,
 	}
 	return message.Send[*PushLogReply](ctx, proto, &req, pid, replicatorProtocolRequest)
 }
 
-func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
+func (proto *ReplicatorProtocol) onRequest(stream io.Reader, peerID string) {
 	ctx := context.Background()
 	req := PushLogRequest{}
-	err := message.Receive(s, proto, &req)
+	err := message.Receive(stream, peerID, proto, &req)
 	if err != nil {
 		return
 	}
@@ -119,19 +117,20 @@ func (proto *ReplicatorProtocol) onRequest(s network.Stream) {
 			resp := PushLogReply{}
 			resp.SetMessageID(req.MessageID)
 			resp.SetErrMessage(err.Error())
-			_ = message.SendAndForget(ctx, proto, &resp, s.Conn().RemotePeer(), replicatorProtocolResponse)
+			_ = message.SendAndForget(ctx, proto, &resp, peerID, replicatorProtocolResponse)
 		}
 	}()
 
-	resp, err := proto.pushLogFunc(ctx, &req, true)
+	err = proto.pushLogProcessorFunc(ctx, &req, true)
 	if err != nil {
 		return
 	}
 
+	resp := PushLogReply{}
 	resp.SetMessageID(req.MessageID)
-	err = message.SendAndForget(ctx, proto, resp, s.Conn().RemotePeer(), replicatorProtocolResponse)
+	err = message.SendAndForget(ctx, proto, &resp, peerID, replicatorProtocolResponse)
 }
 
-func (proto *ReplicatorProtocol) onResponse(s network.Stream) {
-	_ = message.Receive(s, proto, &PushLogReply{})
+func (proto *ReplicatorProtocol) onResponse(stream io.Reader, peerID string) {
+	_ = message.Receive(stream, peerID, proto, &PushLogReply{})
 }

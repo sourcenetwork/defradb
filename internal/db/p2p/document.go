@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package net
+package p2p
 
 import (
 	"context"
@@ -21,15 +21,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (p *Peer) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard(ctx)
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// Ensure we can add all the docIDs to the store on the transaction
@@ -49,25 +45,21 @@ func (p *Peer) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 
 	txn.OnSuccess(func() {
 		for _, docID := range docIDs {
-			_, err := p.server.addPubSubTopic(docID, true, nil)
+			err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler)
 			if err != nil {
 				log.ErrorE("Failed to add pubsub topic.", err)
 			}
 		}
 	})
 
-	return txn.Commit(ctx)
+	return nil
 }
 
-func (p *Peer) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (p *P2P) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard(ctx)
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	for _, docID := range docIDs {
@@ -85,25 +77,21 @@ func (p *Peer) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 
 	txn.OnSuccess(func() {
 		for _, docID := range docIDs {
-			err := p.server.removePubSubTopic(docID)
+			err := p.host.RemovePubSubTopic(docID)
 			if err != nil {
 				log.ErrorE("Failed to remove pubsub topic.", err)
 			}
 		}
 	})
 
-	return txn.Commit(ctx)
+	return nil
 }
 
-func (p *Peer) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (p *P2P) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer clientTxn.Discard(ctx)
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -134,13 +122,20 @@ func (p *Peer) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	return docIDs, iter.Close()
 }
 
-func (p *Peer) loadAndPublishP2PDocuments(ctx context.Context) error {
+func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
+
 	docIDs, err := p.GetAllP2PDocuments(ctx)
 	if err != nil {
 		return err
 	}
 	for _, docID := range docIDs {
-		_, err := p.server.addPubSubTopic(docID, true, nil)
+		err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler)
 		if err != nil {
 			return err
 		}

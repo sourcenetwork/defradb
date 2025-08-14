@@ -827,11 +827,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		var addresses []string
-		for _, addr := range s.Nodes[nodeIndex].AddrInfo.Addrs {
-			addresses = append(addresses, addr.String())
-		}
-		opts = append(opts, netConfig.WithListenAddresses(addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].AddrInfo.Addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,

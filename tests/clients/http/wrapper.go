@@ -14,7 +14,6 @@ import (
 	"context"
 	"net/http/httptest"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
@@ -40,7 +39,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, node.Peer)
+	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +58,19 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() client.PeerInfo {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+	return w.client.Connect(ctx, addr)
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	return w.client.SetReplicator(ctx, info, collections...)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	return w.client.DeleteReplicator(ctx, info, collections...)
 }
 
@@ -290,10 +293,6 @@ func (w *Wrapper) MaxTxnRetries() int {
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
-}
-
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

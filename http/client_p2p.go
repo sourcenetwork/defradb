@@ -17,8 +17,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
-
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -27,26 +25,41 @@ var _ client.P2P = (*Client)(nil)
 // ReplicatorParams contains the replicator fields that can be modified by the user.
 type ReplicatorParams struct {
 	// Info is the address of the peer to replicate to.
-	Info peer.AddrInfo
+	Info client.PeerInfo
 	// Collections is the list of collection names to replicate.
 	Collections []string
 }
 
-func (c *Client) PeerInfo() peer.AddrInfo {
+func (c *Client) PeerInfo() client.PeerInfo {
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
 	if err != nil {
-		return peer.AddrInfo{}
+		return client.PeerInfo{}
 	}
-	var res peer.AddrInfo
+	var res client.PeerInfo
 	if err := c.http.requestJson(req, &res); err != nil {
-		return peer.AddrInfo{}
+		return client.PeerInfo{}
 	}
 	return res
 }
 
-func (c *Client) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (c *Client) Connect(ctx context.Context, info client.PeerInfo) error {
+	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
+
+	body, err := json.Marshal(info)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(ReplicatorParams{
@@ -64,7 +77,7 @@ func (c *Client) SetReplicator(ctx context.Context, info peer.AddrInfo, collecti
 	return err
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (c *Client) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(ReplicatorParams{

@@ -176,6 +176,11 @@ func CtxTryGetTxn(ctx context.Context) (Txn, bool) {
 	return txn, ok
 }
 
+// CtxMustGetClientTxn returns a client transaction from the context or panics.
+func CtxMustGetClientTxn(ctx context.Context) client.Txn {
+	return ctx.Value(txnKey{}).(client.Txn) //nolint:forcetypeassert
+}
+
 // CtxTryGetClientTxn returns a client transaction and a bool indicating if the
 // txn was retrieved from the given context.
 func CtxTryGetClientTxn(ctx context.Context) (client.Txn, bool) {

@@ -162,9 +162,7 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	if nodeObj.Peer != nil {
-		st.AddrInfo = nodeObj.Peer.PeerInfo()
-	}
+	st.AddrInfo = nodeObj.DB.PeerInfo()
 
 	return st, nil
 }

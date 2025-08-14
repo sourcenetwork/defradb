@@ -13,7 +13,6 @@ package node
 import (
 	"context"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -30,8 +29,7 @@ var log = corelog.NewLogger("node")
 
 // Peer defines the minimal p2p network interface.
 type Peer interface {
-	client.P2P
-	Connect(ctx context.Context, addr peer.AddrInfo) error
+	client.Host
 	Close()
 }
 
@@ -52,7 +50,7 @@ type Node struct {
 	// DB is the database instance
 	DB DB
 	// Peer is the p2p networking subsystem instance
-	Peer Peer
+	peer Peer
 	// api http server instance
 	server *http.Server
 	// kms subsystem instance
@@ -95,14 +93,22 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	err = n.startP2P(ctx, rootstore)
+	if err != nil {
+		return err
+	}
+
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, lens, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
-	err = n.startP2P(ctx)
+
+	err = n.startKMS(ctx)
 	if err != nil {
 		return err
 	}
+
 	return n.startAPI(ctx)
 }
 
@@ -112,8 +118,8 @@ func (n *Node) Close(ctx context.Context) error {
 	if n.server != nil {
 		err = n.server.Shutdown(ctx)
 	}
-	if n.Peer != nil {
-		n.Peer.Close()
+	if n.peer != nil {
+		n.peer.Close()
 	}
 	if n.DB != nil {
 		n.DB.Close()
