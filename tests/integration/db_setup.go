@@ -162,5 +162,7 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
+	st.CachedPeerInfo = nodeObj.DB.PeerInfo()
+
 	return st, nil
 }

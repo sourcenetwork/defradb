@@ -48,7 +48,7 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 }
 
 func (w *Wrapper) PeerInfo() client.PeerInfo {
-	panic("not implemented")
+	return client.PeerInfo{}
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {

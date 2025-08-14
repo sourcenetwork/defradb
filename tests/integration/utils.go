@@ -827,7 +827,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].PeerInfo().Addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].CachedPeerInfo.Addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,

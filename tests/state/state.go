@@ -169,6 +169,9 @@ type NodeState struct {
 	Collections []client.Collection
 	// indicates if the node is Closed.
 	Closed bool
+	// CachedPeerInfo holds the node's PeerInfo so that the node can be
+	// restarded with the same address configuration.
+	CachedPeerInfo client.PeerInfo
 }
 
 // State contains all testing State.
