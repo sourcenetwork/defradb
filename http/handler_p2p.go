@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -234,7 +235,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	peerInfo.Responses.Set("400", errorResponse)
 
 	connect := openapi3.NewOperation()
-	connect.OperationID = "peer_info"
+	connect.OperationID = "connect"
 	connect.Tags = []string{"p2p"}
 	connect.Responses = openapi3.NewResponses()
 	connect.Responses.Set("200", successResponse)
@@ -384,7 +385,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncDocuments.Responses.Set("500", errorResponse)
 
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
-	router.AddRoute("/p2p/connet", http.MethodGet, connect, h.Connect)
+	router.AddRoute("/p2p/connect", http.MethodGet, connect, h.Connect)
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)
 	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)

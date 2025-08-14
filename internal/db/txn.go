@@ -314,7 +314,6 @@ func (txn *Txn) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error 
 func (txn *Txn) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetAllP2PDocuments(ctx)
-
 }
 
 func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {

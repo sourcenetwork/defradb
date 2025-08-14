@@ -72,5 +72,5 @@ func newGoClientWrapper(n *node.Node) *goClientWrapper {
 }
 
 func (w *goClientWrapper) Close() {
-	w.node.Close(context.Background())
+	_ = w.node.Close(context.Background())
 }

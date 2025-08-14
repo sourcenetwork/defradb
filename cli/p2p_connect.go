@@ -13,8 +13,9 @@ package cli
 import (
 	"encoding/json"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PConnectCommand() *cobra.Command {

@@ -477,10 +477,9 @@
             },
             "peer_info": {
                 "properties": {
-                    "Addrs": {
+                    "Addresses": {
                         "items": {
-                            "items": {},
-                            "type": "array"
+                            "type": "string"
                         },
                         "type": "array"
                     },
@@ -500,10 +499,9 @@
                     },
                     "Info": {
                         "properties": {
-                            "Addrs": {
+                            "Addresses": {
                                 "items": {
-                                    "items": {},
-                                    "type": "array"
+                                    "type": "string"
                                 },
                                 "type": "array"
                             },
@@ -535,10 +533,9 @@
                     },
                     "Info": {
                         "properties": {
-                            "Addrs": {
+                            "Addresses": {
                                 "items": {
-                                    "items": {},
-                                    "type": "array"
+                                    "type": "string"
                                 },
                                 "type": "array"
                             },
@@ -2021,6 +2018,25 @@
                     },
                     "required": true
                 },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/connect": {
+            "get": {
+                "operationId": "connect",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
