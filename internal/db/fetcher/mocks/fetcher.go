@@ -130,14 +130,20 @@ type Fetcher_FetchNext_Call struct {
 }
 
 // FetchNext is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *Fetcher_Expecter) FetchNext(ctx interface{}) *Fetcher_FetchNext_Call {
 	return &Fetcher_FetchNext_Call{Call: _e.mock.On("FetchNext", ctx)}
 }
 
 func (_c *Fetcher_FetchNext_Call) Run(run func(ctx context.Context)) *Fetcher_FetchNext_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -153,7 +159,7 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(ctx context.Context) (fe
 }
 
 // Init provides a mock function for the type Fetcher
-func (_mock *Fetcher) Init(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error {
+func (_mock *Fetcher) Init(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error {
 	ret := _mock.Called(ctx, identity1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
 
 	if len(ret) == 0 {
@@ -161,7 +167,7 @@ func (_mock *Fetcher) Init(ctx context.Context, identity1 immutable.Option[ident
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[dac.DocumentACP], immutable.Option[client.IndexDescription], client.Collection, []client.FieldDefinition, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[dac.DocumentACP], immutable.Option[client.IndexDescription], client.Collection, []client.CollectionFieldDescription, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error); ok {
 		r0 = returnFunc(ctx, identity1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
 	} else {
 		r0 = ret.Error(0)
@@ -175,24 +181,80 @@ type Fetcher_Init_Call struct {
 }
 
 // Init is a helper method to define mock.On call
-//   - ctx
-//   - identity1
-//   - txn
-//   - documentACP
-//   - index
-//   - col
-//   - fields
-//   - filter
-//   - ordering
-//   - docmapper
-//   - showDeleted
+//   - ctx context.Context
+//   - identity1 immutable.Option[identity.Identity]
+//   - txn datastore.Txn
+//   - documentACP immutable.Option[dac.DocumentACP]
+//   - index immutable.Option[client.IndexDescription]
+//   - col client.Collection
+//   - fields []client.CollectionFieldDescription
+//   - filter *mapper.Filter
+//   - ordering []mapper.OrderCondition
+//   - docmapper *core.DocumentMapping
+//   - showDeleted bool
 func (_e *Fetcher_Expecter) Init(ctx interface{}, identity1 interface{}, txn interface{}, documentACP interface{}, index interface{}, col interface{}, fields interface{}, filter interface{}, ordering interface{}, docmapper interface{}, showDeleted interface{}) *Fetcher_Init_Call {
 	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, identity1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(immutable.Option[identity.Identity]), args[2].(datastore.Txn), args[3].(immutable.Option[dac.DocumentACP]), args[4].(immutable.Option[client.IndexDescription]), args[5].(client.Collection), args[6].([]client.FieldDefinition), args[7].(*mapper.Filter), args[8].([]mapper.OrderCondition), args[9].(*core.DocumentMapping), args[10].(bool))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 immutable.Option[identity.Identity]
+		if args[1] != nil {
+			arg1 = args[1].(immutable.Option[identity.Identity])
+		}
+		var arg2 datastore.Txn
+		if args[2] != nil {
+			arg2 = args[2].(datastore.Txn)
+		}
+		var arg3 immutable.Option[dac.DocumentACP]
+		if args[3] != nil {
+			arg3 = args[3].(immutable.Option[dac.DocumentACP])
+		}
+		var arg4 immutable.Option[client.IndexDescription]
+		if args[4] != nil {
+			arg4 = args[4].(immutable.Option[client.IndexDescription])
+		}
+		var arg5 client.Collection
+		if args[5] != nil {
+			arg5 = args[5].(client.Collection)
+		}
+		var arg6 []client.CollectionFieldDescription
+		if args[6] != nil {
+			arg6 = args[6].([]client.CollectionFieldDescription)
+		}
+		var arg7 *mapper.Filter
+		if args[7] != nil {
+			arg7 = args[7].(*mapper.Filter)
+		}
+		var arg8 []mapper.OrderCondition
+		if args[8] != nil {
+			arg8 = args[8].([]mapper.OrderCondition)
+		}
+		var arg9 *core.DocumentMapping
+		if args[9] != nil {
+			arg9 = args[9].(*core.DocumentMapping)
+		}
+		var arg10 bool
+		if args[10] != nil {
+			arg10 = args[10].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+			arg6,
+			arg7,
+			arg8,
+			arg9,
+			arg10,
+		)
 	})
 	return _c
 }
@@ -202,7 +264,7 @@ func (_c *Fetcher_Init_Call) Return(err error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.FieldDefinition, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -236,8 +298,8 @@ type Fetcher_Start_Call struct {
 }
 
 // Start is a helper method to define mock.On call
-//   - ctx
-//   - prefixes
+//   - ctx context.Context
+//   - prefixes ...keys.Walkable
 func (_e *Fetcher_Expecter) Start(ctx interface{}, prefixes ...interface{}) *Fetcher_Start_Call {
 	return &Fetcher_Start_Call{Call: _e.mock.On("Start",
 		append([]interface{}{ctx}, prefixes...)...)}
@@ -245,8 +307,20 @@ func (_e *Fetcher_Expecter) Start(ctx interface{}, prefixes ...interface{}) *Fet
 
 func (_c *Fetcher_Start_Call) Run(run func(ctx context.Context, prefixes ...keys.Walkable)) *Fetcher_Start_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := args[1].([]keys.Walkable)
-		run(args[0].(context.Context), variadicArgs...)
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []keys.Walkable
+		var variadicArgs []keys.Walkable
+		if len(args) > 1 {
+			variadicArgs = args[1].([]keys.Walkable)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
 	})
 	return _c
 }

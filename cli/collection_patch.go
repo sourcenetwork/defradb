@@ -11,24 +11,29 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/spf13/cobra"
 )
 
 func MakeCollectionPatchCommand() *cobra.Command {
 	var patchFile string
+	var lensFile string
 	var cmd = &cobra.Command{
-		Use:   "patch [patch]",
+		Use:   "patch [patch] [migration]",
 		Short: "Patch existing collection versions",
 		Long: `Patch existing collection versions.
 
 Uses JSON Patch to modify collection versions.
 
 Example: patch from an argument string:
-  defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]'
+  defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'
 
 Example: patch from file:
   defradb client collection patch -p patch.json
@@ -37,7 +42,7 @@ Example: patch from stdin:
   cat patch.json | defradb client collection patch -
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
-		Args: cobra.RangeArgs(0, 1),
+		Args: cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
@@ -55,15 +60,40 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 					return err
 				}
 				patch = string(data)
-			case len(args) == 1:
+			case len(args) >= 1:
 				patch = args[0]
 			default:
 				return fmt.Errorf("patch cannot be empty")
 			}
 
-			return cliClient.PatchCollection(cmd.Context(), patch)
+			var lensCfgJson string
+			switch {
+			case lensFile != "":
+				data, err := os.ReadFile(lensFile)
+				if err != nil {
+					return err
+				}
+				patch = string(data)
+			case len(args) == 2:
+				lensCfgJson = args[1]
+			}
+
+			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
+			decoder.DisallowUnknownFields()
+
+			var migration immutable.Option[model.Lens]
+			if lensCfgJson != "" {
+				var lensCfg model.Lens
+				if err := decoder.Decode(&lensCfg); err != nil {
+					return NewErrInvalidLensConfig(err)
+				}
+				migration = immutable.Some(lensCfg)
+			}
+
+			return cliClient.PatchCollection(cmd.Context(), patch, migration)
 		},
 	}
 	cmd.Flags().StringVarP(&patchFile, "patch-file", "p", "", "File to load a patch from")
+	cmd.Flags().StringVarP(&lensFile, "lens-file", "t", "", "File to load a lens config from")
 	return cmd
 }

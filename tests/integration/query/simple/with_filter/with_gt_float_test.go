@@ -106,10 +106,10 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},

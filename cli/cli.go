@@ -74,9 +74,6 @@ func NewDefraCommand() *cobra.Command {
 	schema := MakeSchemaCommand()
 	schema.AddCommand(
 		MakeSchemaAddCommand(),
-		MakeSchemaPatchCommand(),
-		MakeSchemaSetActiveCommand(),
-		MakeSchemaDescribeCommand(),
 	)
 
 	acp_node_relationship := MakeNodeACPRelationshipCommand()
@@ -151,6 +148,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeCollectionCreateCommand(),
 		MakeCollectionDescribeCommand(),
 		MakeCollectionPatchCommand(),
+		MakeCollectionSetActiveCommand(),
 	)
 
 	block := MakeBlockCommand()

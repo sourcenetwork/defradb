@@ -116,7 +116,7 @@ func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, e
 	return p.schemaManager.ParseSDL(sdl)
 }
 
-func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionDefinition) error {
+func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionVersion) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

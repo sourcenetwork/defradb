@@ -40,7 +40,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 
 	var source planNode
 	if col.Version().IsMaterialized {
-		source = p.newCachedViewFetcher(col.Definition(), query.DocumentMapping)
+		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
 	} else {
 		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &querySource.Query)
 		if err != nil {
@@ -174,7 +174,7 @@ type cachedViewFetcher struct {
 	docMapper
 	documentIterator
 
-	def client.CollectionDefinition
+	def client.CollectionVersion
 	p   *Planner
 
 	queryResults corekv.Iterator
@@ -183,7 +183,7 @@ type cachedViewFetcher struct {
 var _ planNode = (*cachedViewFetcher)(nil)
 
 func (p *Planner) newCachedViewFetcher(
-	def client.CollectionDefinition,
+	def client.CollectionVersion,
 	mapping *core.DocumentMapping,
 ) *cachedViewFetcher {
 	return &cachedViewFetcher{
@@ -202,7 +202,7 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	shortID, err := id.GetShortCollectionID(n.p.ctx, n.def.Version.CollectionID)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.def.CollectionID)
 	if err != nil {
 		return err
 	}

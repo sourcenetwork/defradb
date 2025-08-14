@@ -460,7 +460,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 		return crdt.NewDocComposite(
 			txn.Datastore(),
-			mp.col.Schema().VersionID,
+			mp.col.Version().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
 				DocID:             docID,
@@ -469,7 +469,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 	case crdtUnion.IsCollection():
 		return crdt.NewCollection(
-			mp.col.Schema().VersionID,
+			mp.col.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		), nil
 
@@ -478,20 +478,20 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		mp.docIDs[docID] = struct{}{}
 
 		field := crdtUnion.GetFieldName()
-		fd, ok := mp.col.Definition().GetFieldByName(field)
+		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.
 			return nil, nil
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.Name)
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
 		if err != nil {
 			return nil, err
 		}
 
 		return crdt.FieldLevelCRDTWithStore(
 			txn.Datastore(),
-			mp.col.Schema().VersionID,
+			mp.col.Version().VersionID,
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{

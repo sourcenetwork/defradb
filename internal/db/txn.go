@@ -192,24 +192,18 @@ func (txn *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionV
 	return txn.db.AddSchema(ctx, sdl)
 }
 
-func (txn *Txn) PatchSchema(
+func (txn *Txn) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setDefault bool,
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.PatchSchema(ctx, patch, migration, setDefault)
+	return txn.db.PatchCollection(ctx, patch, migration)
 }
 
-func (txn *Txn) PatchCollection(ctx context.Context, patch string) error {
+func (txn *Txn) SetActiveCollectionVersion(ctx context.Context, version string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.PatchCollection(ctx, patch)
-}
-
-func (txn *Txn) SetActiveSchemaVersion(ctx context.Context, version string) error {
-	ctx = InitContext(ctx, txn)
-	return txn.db.SetActiveSchemaVersion(ctx, version)
+	return txn.db.SetActiveCollectionVersion(ctx, version)
 }
 
 func (txn *Txn) AddView(
@@ -217,7 +211,7 @@ func (txn *Txn) AddView(
 	gqlQuery string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddView(ctx, gqlQuery, sdl, transform)
 }
@@ -247,16 +241,6 @@ func (txn *Txn) GetCollections(
 ) ([]client.Collection, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetCollections(ctx, options)
-}
-
-func (txn *Txn) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx = InitContext(ctx, txn)
-	return txn.db.GetSchemaByVersionID(ctx, versionID)
-}
-
-func (txn *Txn) GetSchemas(ctx context.Context, options client.SchemaFetchOptions) ([]client.SchemaDescription, error) {
-	ctx = InitContext(ctx, txn)
-	return txn.db.GetSchemas(ctx, options)
 }
 
 func (txn *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

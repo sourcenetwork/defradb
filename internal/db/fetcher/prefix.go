@@ -39,7 +39,7 @@ type prefixFetcher struct {
 	// child fetcher instance.
 	ctx        context.Context
 	txn        datastore.Txn
-	fieldsByID map[uint32]client.FieldDefinition
+	fieldsByID map[uint32]client.CollectionFieldDescription
 	status     client.DocumentStatus
 	execInfo   *ExecInfo
 }
@@ -51,7 +51,7 @@ func newPrefixFetcher(
 	txn datastore.Txn,
 	prefixes []keys.DataStoreKey,
 	col client.Collection,
-	fieldsByID map[uint32]client.FieldDefinition,
+	fieldsByID map[uint32]client.CollectionFieldDescription,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
 ) (*prefixFetcher, error) {

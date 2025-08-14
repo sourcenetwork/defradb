@@ -21,7 +21,7 @@ type CollectionID struct {
 	CollectionID string
 }
 
-var _ Key = (*SchemaRootKey)(nil)
+var _ Key = (*CollectionVersionKey)(nil)
 
 func NewCollectionID(collectionID string) CollectionID {
 	return CollectionID{

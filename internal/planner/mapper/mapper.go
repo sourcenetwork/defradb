@@ -167,7 +167,7 @@ func toSelect(
 		return nil, err
 	}
 
-	if len(definition.Schema.Fields) != 0 {
+	if len(definition.Fields) != 0 {
 		fields, err = resolveSecondaryRelationIDs(
 			ctx,
 			store,
@@ -213,6 +213,7 @@ func toSelect(
 	if err != nil {
 		return nil, err
 	}
+
 	return &Select{
 		Targetable:      targetable,
 		DocumentMapping: mapping,
@@ -363,13 +364,13 @@ func resolveAggregates(
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
 	collectionName string,
-	def client.CollectionDefinition,
+	def client.CollectionVersion,
 	store client.TxnStore,
 ) ([]Requestable, error) {
 	var collectionShortID uint32
-	if def.Version.CollectionID != "" {
+	if def.CollectionID != "" {
 		var err error
-		collectionShortID, err = id.GetShortCollectionID(ctx, def.Version.CollectionID)
+		collectionShortID, err = id.GetShortCollectionID(ctx, def.CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -407,7 +408,7 @@ func resolveAggregates(
 						}
 					}
 
-					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.Name)
+					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.FieldID)
 					if err != nil {
 						return nil, err
 					}
@@ -897,16 +898,16 @@ func getCollectionName(
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentCollection.Definition().GetFieldByName(selectRequest.Name)
+		hostFieldDesc, parentHasField := parentCollection.Version().GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.Kind.IsObject() {
-			def, found, err := client.GetDefinitionFromStore(ctx, store, parentCollection.Definition(), hostFieldDesc.Kind)
+			def, found, err := client.GetCollectionFromStore(ctx, store, parentCollection.Version(), hostFieldDesc.Kind)
 			if !found {
 				return "", NewErrTypeNotFound(hostFieldDesc.Kind.String())
 			}
 
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
-			return def.GetName(), err
+			return def.Name, err
 		}
 	}
 
@@ -920,44 +921,32 @@ func getTopLevelInfo(
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	collectionName string,
-) (*core.DocumentMapping, client.CollectionDefinition, error) {
+) (*core.DocumentMapping, client.CollectionVersion, error) {
 	mapping := core.NewDocumentMapping()
 
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
-		return mapping, client.CollectionDefinition{}, nil
+		return mapping, client.CollectionVersion{}, nil
 	}
 
 	if rootSelectType == ObjectSelection {
-		var definition client.CollectionDefinition
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			return nil, client.CollectionDefinition{}, err
+			return nil, client.CollectionVersion{}, err
 		}
 
 		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
-		definition = collection.Definition()
-
-		collectionShortID, err := id.GetShortCollectionID(ctx, definition.Version.CollectionID)
-		if err != nil {
-			return nil, client.CollectionDefinition{}, err
-		}
 
 		// Map all fields from schema into the map as they are fetched automatically
-		for _, f := range definition.GetFields() {
-			if f.Kind.IsObject() {
+		for _, f := range collection.Version().Fields {
+			if f.RelationName.HasValue() && f.Kind.IsObject() {
 				// Objects are skipped, as they are not fetched by default and
 				// have to be requested via selects.
 				continue
 			}
 
-			fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, f.Name)
-			if err != nil {
-				return nil, client.CollectionDefinition{}, err
-			}
-
-			mapping.Add(int(fieldShortID), f.Name)
+			mapping.Add(mapping.GetNextIndex(), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as
@@ -966,7 +955,7 @@ func getTopLevelInfo(
 
 		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
-		return mapping, definition, nil
+		return mapping, collection.Version(), nil
 	}
 
 	if selectRequest.Name == request.LinksFieldName {
@@ -995,7 +984,7 @@ func getTopLevelInfo(
 		mapping.SetTypeName(request.CommitTypeName)
 	}
 
-	return mapping, client.CollectionDefinition{}, nil
+	return mapping, client.CollectionVersion{}, nil
 }
 
 func resolveFilterDependencies(
@@ -1213,7 +1202,7 @@ func resolveSecondaryRelationIDs(
 	store client.TxnStore,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.CollectionDefinition,
+	schema client.CollectionVersion,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {

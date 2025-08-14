@@ -22,28 +22,28 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 			testUtils.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-8e8b2923-e167-5fd9-aee6-98267dd0ab40
+				// bae-8e7dbfc4-03f7-5718-a971-deb5da272254
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-9c689bec-071e-5650-9378-bc11d5d3325c"
+						"publisher_id": "bae-641d6c38-6677-585a-80c5-5061bda0d06b"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48
+				// bae-8ea935d7-d69e-566e-87a3-aec0559bdab7
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-8e8b2923-e167-5fd9-aee6-98267dd0ab40"
+						"wrote_id": "bae-8e7dbfc4-03f7-5718-a971-deb5da272254"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Publishers
 				CollectionID: 2,
-				// bae-9c689bec-071e-5650-9378-bc11d5d3325c
+				// bae-641d6c38-6677-585a-80c5-5061bda0d06b
 				Doc: `{
 						"name": "Manning Early Access Program (MEAP)",
 						"address": "Online"
@@ -51,14 +51,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48") {
+						delete_Author(docID: "bae-8ea935d7-d69e-566e-87a3-aec0559bdab7") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"_docID": "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48",
+							"_docID": "bae-8ea935d7-d69e-566e-87a3-aec0559bdab7",
 						},
 					},
 				},
@@ -75,28 +75,28 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 			testUtils.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-8e8b2923-e167-5fd9-aee6-98267dd0ab40
+				// bae-8e7dbfc4-03f7-5718-a971-deb5da272254
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-9c689bec-071e-5650-9378-bc11d5d3325c"
+						"publisher_id": "bae-641d6c38-6677-585a-80c5-5061bda0d06b"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48
+				// bae-8ea935d7-d69e-566e-87a3-aec0559bdab7
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-8e8b2923-e167-5fd9-aee6-98267dd0ab40"
+						"wrote_id": "bae-8e7dbfc4-03f7-5718-a971-deb5da272254"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Publishers
 				CollectionID: 2,
-				// bae-9c689bec-071e-5650-9378-bc11d5d3325c
+				// bae-641d6c38-6677-585a-80c5-5061bda0d06b
 				Doc: `{
 						"name": "Manning Early Access Program (MEAP)",
 						"address": "Online"
@@ -104,14 +104,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48") {
+						delete_Author(docID: "bae-8ea935d7-d69e-566e-87a3-aec0559bdab7") {
 							AliasOfKey: _docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"AliasOfKey": "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48",
+							"AliasOfKey": "bae-8ea935d7-d69e-566e-87a3-aec0559bdab7",
 						},
 					},
 				},
@@ -128,28 +128,28 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 			testUtils.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-8e8b2923-e167-5fd9-aee6-98267dd0ab40
+				// bae-8e7dbfc4-03f7-5718-a971-deb5da272254
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-9c689bec-071e-5650-9378-bc11d5d3325c"
+						"publisher_id": "bae-641d6c38-6677-585a-80c5-5061bda0d06b"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48
+				// bae-8ea935d7-d69e-566e-87a3-aec0559bdab7
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-8e8b2923-e167-5fd9-aee6-98267dd0ab40"
+						"wrote_id": "bae-8e7dbfc4-03f7-5718-a971-deb5da272254"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Publishers
 				CollectionID: 2,
-				// bae-9c689bec-071e-5650-9378-bc11d5d3325c
+				// bae-641d6c38-6677-585a-80c5-5061bda0d06b
 				Doc: `{
 						"name": "Manning Early Access Program (MEAP)",
 						"address": "Online"
@@ -174,14 +174,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48") {
+						delete_Author(docID: "bae-8ea935d7-d69e-566e-87a3-aec0559bdab7") {
 							Key: _docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"Key": "bae-b4f1fb22-52f2-5e3d-950c-f6a4033d8f48",
+							"Key": "bae-8ea935d7-d69e-566e-87a3-aec0559bdab7",
 						},
 					},
 				},

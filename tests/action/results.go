@@ -57,6 +57,13 @@ func assertCollectionVersions(
 
 	for i, expected := range expected {
 		actual := actual[i]
+		require.Equal(s.T, expected.Name, actual.Name)
+
+		if expected.CollectionSet.HasValue() {
+			require.Equal(s.T, expected.CollectionSet.Value().CollectionSetID, actual.CollectionSet.Value().CollectionSetID)
+			require.Equal(s.T, expected.CollectionSet.Value().RelativeID, actual.CollectionSet.Value().RelativeID)
+		}
+
 		if expected.VersionID != "" {
 			require.Equal(s.T, expected.VersionID, actual.VersionID)
 		}
@@ -64,7 +71,6 @@ func assertCollectionVersions(
 			require.Equal(s.T, expected.CollectionID, actual.CollectionID)
 		}
 
-		require.Equal(s.T, expected.Name, actual.Name)
 		require.Equal(s.T, expected.IsMaterialized, actual.IsMaterialized)
 		require.Equal(s.T, expected.IsBranchable, actual.IsBranchable)
 		require.Equal(s.T, expected.IsActive, actual.IsActive)
@@ -82,7 +88,22 @@ func assertCollectionVersions(
 		}
 
 		if expected.Fields != nil {
-			require.Equal(s.T, expected.Fields, actual.Fields)
+			require.Equal(s.T, len(expected.Fields), len(actual.Fields))
+			for i := range expected.Fields {
+				expectedField := expected.Fields[i]
+				actualField := actual.Fields[i]
+
+				require.Equal(s.T, expectedField.Name, actualField.Name)
+				if expectedField.FieldID != "" {
+					require.Equal(s.T, expectedField.FieldID, actualField.FieldID)
+				}
+				require.Equal(s.T, expectedField.IsPrimary, actualField.IsPrimary)
+				require.Equal(s.T, expectedField.Kind, actualField.Kind)
+				require.Equal(s.T, expectedField.Typ, actualField.Typ)
+				require.Equal(s.T, expectedField.DefaultValue, actualField.DefaultValue)
+				require.Equal(s.T, expectedField.RelationName, actualField.RelationName)
+				require.Equal(s.T, expectedField.Size, actualField.Size)
+			}
 		}
 
 		if expected.VectorEmbeddings != nil {

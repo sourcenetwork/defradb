@@ -58,7 +58,7 @@ type Fetcher interface {
 		documentACP immutable.Option[dac.DocumentACP],
 		index immutable.Option[client.IndexDescription],
 		col client.Collection,
-		fields []client.FieldDefinition,
+		fields []client.CollectionFieldDescription,
 		filter *mapper.Filter,
 		ordering []mapper.OrderCondition,
 		docmapper *core.DocumentMapping,

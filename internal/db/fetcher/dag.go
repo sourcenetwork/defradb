@@ -71,6 +71,13 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		return nil, err
 	}
 
+	// This needs to be handled more efficiently - these keys should not be scanned in the first place
+	// https://github.com/sourcenetwork/defradb/issues/3846
+	switch headStoreKey.(type) {
+	case keys.HeadstoreFieldDefinition, keys.HeadstoreCollectionDefinition, keys.HeadstoreCollectionSetDefinition:
+		return hf.FetchNext()
+	}
+
 	cid := headStoreKey.GetCid()
 	return &cid, nil
 }

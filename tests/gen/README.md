@@ -7,7 +7,7 @@
 The function generates documents adhering to a defined collection and it's configuration.
 It interprets the types and relationships within the collection to create realistic, interconnected data structures.
 
-`AutoGenerate` creates documents based on the provider collections' definitions (`[]client.CollectionDefinition`)
+`AutoGenerate` creates documents based on the provider collections (`[]client.CollectionVersion`)
 
 ### Demand Calculation:
 

@@ -163,7 +163,7 @@ func (c *collection) applyDelete(
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
-		c.Schema().VersionID,
+		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
@@ -183,14 +183,14 @@ func (c *collection) applyDelete(
 		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
 	})
 
-	if c.def.Version.IsBranchable {
+	if c.def.IsBranchable {
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 
 		collectionCRDT := crdt.NewCollection(
-			c.Schema().VersionID,
+			c.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 

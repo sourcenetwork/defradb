@@ -98,7 +98,7 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 func DecodeIndexDataStoreKey(
 	data []byte,
 	indexDesc *client.IndexDescription,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 ) (IndexDataStoreKey, error) {
 	if len(data) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey

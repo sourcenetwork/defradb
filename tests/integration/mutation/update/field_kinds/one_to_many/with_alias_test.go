@@ -20,7 +20,7 @@ import (
 )
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_CollectionApi(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
@@ -69,7 +69,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_Collectio
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
@@ -119,7 +119,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromSingleSide_GQL(t *te
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
@@ -158,7 +158,7 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_GQL(
 }
 
 func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Collection(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
@@ -197,8 +197,8 @@ func TestMutationUpdateOneToMany_InvalidAliasRelationNameToLinkFromManySide_Coll
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
-	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
+	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
+	author2ID := "bae-f9db208d-b31f-5688-b3da-04546546fd69"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
@@ -249,8 +249,8 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySideWithWrongFie
 }
 
 func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
-	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
+	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
+	author2ID := "bae-f9db208d-b31f-5688-b3da-04546546fd69"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -298,16 +298,16 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
+							"name":      "John Grisham",
+							"published": []map[string]any{},
+						},
+						{
 							"name": "New Shahzad",
 							"published": []map[string]any{
 								{
 									"name": "Painted House",
 								},
 							},
-						},
-						{
-							"name":      "John Grisham",
-							"published": []map[string]any{},
 						},
 					},
 				},

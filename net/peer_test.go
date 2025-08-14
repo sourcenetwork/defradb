@@ -190,10 +190,10 @@ func TestHandleLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Version())
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-7fca96a2-5f01-5558-a81f-09b47587f26d", true)
+	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-a911f9cc-217a-58a3-a2f4-96548197403e", true)
 	require.NoError(t, err)
 
 	err = p.handleLog(event.Update{
@@ -218,13 +218,13 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Version())
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)
 	require.NoError(t, err)
 
-	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bafkreia7ljiy5oief4dp5xsk7t7zlgfjzqh3537hw7rtttjzchybfxtn4u", true)
+	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bafyreib6hugraqnvqu25yamseuzztgnq24kepo7ysvjkpbh2eaag6jj3mm", true)
 	require.NoError(t, err)
 
 	err = p.handleLog(event.Update{

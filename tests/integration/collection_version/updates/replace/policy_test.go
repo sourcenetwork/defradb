@@ -30,7 +30,7 @@ func TestColVersionUpdateReplacePolicy_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Policy",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Policy",
 							"value": {}
 						}
 					]
@@ -56,7 +56,7 @@ func TestColVersionUpdateReplacePolicyID_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Policy",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Policy",
 							"value": {"ID": "dfe202ffb4f0fe9b46157c313213a383"}
 						}
 					]
@@ -82,7 +82,7 @@ func TestColVersionUpdateReplacePolicyResource_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Policy",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Policy",
 							"value": {"ResourceName": "mutatingResource"}
 						}
 					]

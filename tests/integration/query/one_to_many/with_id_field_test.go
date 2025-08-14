@@ -15,19 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-
-	"github.com/sourcenetwork/immutable"
 )
 
-// This documents unwanted behaviour, see https://github.com/sourcenetwork/defradb/issues/1520
 func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GQL mutation will return a different error
-			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -42,7 +33,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 						published: [Book]
 					}
 				`,
-				ExpectedError: "relational id field of invalid kind. Field: author_id, Expected: ID, Actual: Int",
+				ExpectedError: "duplicate field. Name: author_id",
 			},
 		},
 	}
