@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // AddSchema is an action that will add the given GQL schema to the Defra nodes.
@@ -24,6 +25,11 @@ type AddSchema struct {
 	//
 	// If a value is not provided the update will be applied to all nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The schema to add.
 	Schema string
@@ -54,7 +60,9 @@ func (a *AddSchema) Execute() {
 
 		schema := replace(a.s, nodeID, a.Schema)
 
+		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		results, err := node.AddSchema(a.s.Ctx, schema)
+		resetStateContext(a.s)
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
