@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -45,7 +44,7 @@ func (db *DB) Connect(ctx context.Context, info client.PeerInfo) error {
 // schemas if the replicator already exists.
 func (db *DB) SetReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -65,7 +64,7 @@ func (db *DB) SetReplicator(ctx context.Context, info client.PeerInfo, collectio
 // or specific schemas if they are specified.
 func (db *DB) DeleteReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -85,7 +84,7 @@ func (db *DB) DeleteReplicator(ctx context.Context, info client.PeerInfo, collec
 // subscribed schemas.
 func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	if db.p2p == nil {
-		return nil, errors.New("no p2p system comfigured")
+		return nil, ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
@@ -100,7 +99,7 @@ func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 // collection names are invalid.
 func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -121,7 +120,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 // collection names are invalid.
 func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -141,7 +140,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 // the P2P system subscribes to.
 func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	if db.p2p == nil {
-		return nil, errors.New("no p2p system comfigured")
+		return nil, ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
@@ -157,7 +156,7 @@ func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 // docIDs are invalid.
 func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -178,7 +177,7 @@ func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 // docIDs are invalid.
 func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -198,7 +197,7 @@ func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 // the P2P system subscribes to.
 func (db *DB) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	if db.p2p == nil {
-		return nil, errors.New("no p2p system comfigured")
+		return nil, ErrNoP2P
 	}
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
@@ -217,7 +216,7 @@ func (db *DB) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 // WARNING: This function does not respect transactions.
 func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	if db.p2p == nil {
-		return errors.New("no p2p system comfigured")
+		return ErrNoP2P
 	}
 	return db.p2p.SyncDocuments(ctx, collectionName, docIDs)
 }

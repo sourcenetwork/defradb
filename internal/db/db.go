@@ -96,6 +96,8 @@ type DB struct {
 	colMergeQueue *mergeQueue
 
 	p2p *p2p.P2P
+	// Retry intervals when a replicator failure occurs.
+	retryIntervals []time.Duration
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -125,7 +127,7 @@ func newDB(
 		return nil, err
 	}
 
-	opts := &dbOptions{}
+	opts := defaultDBOptions()
 	for _, opt := range options {
 		opt(opts)
 	}
@@ -133,16 +135,17 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:     rootstore,
-		nodeACP:       nodeACP,
-		documentACP:   documentACP,
-		lensRegistry:  lens,
-		parser:        parser,
-		options:       options,
-		events:        event.NewChannelBus(commandBufferSize, eventBufferSize),
-		ctxCancel:     cancel,
-		docMergeQueue: newMergeQueue(),
-		colMergeQueue: newMergeQueue(),
+		rootstore:      rootstore,
+		nodeACP:        nodeACP,
+		documentACP:    documentACP,
+		lensRegistry:   lens,
+		parser:         parser,
+		options:        options,
+		events:         event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctxCancel:      cancel,
+		docMergeQueue:  newMergeQueue(),
+		colMergeQueue:  newMergeQueue(),
+		retryIntervals: opts.retryIntervals,
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -455,6 +458,11 @@ func (db *DB) MaxTxnRetries() int {
 		return db.maxTxnRetries.Value()
 	}
 	return defaultMaxTxnRetries
+}
+
+// RetryIntervals returns the replicator retry configuration.
+func (db *DB) RetryIntervals() []time.Duration {
+	return db.retryIntervals
 }
 
 // PrintDump prints the entire database to console.

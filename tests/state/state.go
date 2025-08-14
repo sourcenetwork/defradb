@@ -169,8 +169,6 @@ type NodeState struct {
 	Collections []client.Collection
 	// indicates if the node is Closed.
 	Closed bool
-	// AddrInfo contains the peer information for the node.
-	AddrInfo client.PeerInfo
 }
 
 // State contains all testing State.

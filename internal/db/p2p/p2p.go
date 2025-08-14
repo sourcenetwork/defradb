@@ -41,14 +41,21 @@ var (
 
 const networkRequestTimeout = 10 * time.Second
 
-// DB hold the database related methods that are required by Peer.
-type db interface {
+// DB hold the database related methods that are required by P2P.
+type DB interface {
+	// NewTxn returns a new transaction on the root store that may be managed externally.
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	// GetCollections returns all collections and their descriptions matching the given options
+	// that currently exist within this [Store].
 	GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)
+	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
+	// Events returns the event bus for the database.
 	Events() event.Bus
+	// RetryIntervals returns the replicator retry configuration.
+	RetryIntervals() []time.Duration
 }
 
 type P2P struct {
@@ -56,7 +63,7 @@ type P2P struct {
 	replicatorProtocol *protocol.ReplicatorProtocol
 
 	ctx         context.Context
-	db          db
+	db          DB
 	host        client.Host
 	documentACP immutable.Option[dac.DocumentACP]
 
@@ -73,8 +80,8 @@ type P2P struct {
 	handleRetryMutex sync.Mutex
 }
 
-// New returns a new P2P.
-func New(ctx context.Context, db db, host client.Host) (*P2P, error) {
+// New returns a new configured P2P instance.
+func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	p := P2P{
 		ctx:              ctx,
 		db:               db,
@@ -82,16 +89,7 @@ func New(ctx context.Context, db db, host client.Host) (*P2P, error) {
 		identityProtocol: protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
 		replicators:      make(map[string]map[string]client.PeerInfo),
 		peerIdentities:   make(map[string]identity.Identity),
-		retryIntervals: []time.Duration{
-			// exponential backoff retry intervals
-			time.Second * 30,
-			time.Minute,
-			time.Minute * 2,
-			time.Minute * 4,
-			time.Minute * 8,
-			time.Minute * 16,
-			time.Minute * 32,
-		},
+		retryIntervals:   db.RetryIntervals(),
 	}
 	p.replicatorProtocol = protocol.NewReplicatorProtocol(host, p.processPushlogRequest, p.handleReplicatorFailure)
 

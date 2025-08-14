@@ -169,6 +169,9 @@ func (p *Peer) Close() {
 	}
 }
 
+// hasAccess checks if the requesting peer has access to the given cid.
+//
+// This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
 func (p *Peer) hasAccess(pid peer.ID, c cid.Cid) bool {
 	p.accessFuncMu.Lock()
 	defer p.accessFuncMu.Unlock()

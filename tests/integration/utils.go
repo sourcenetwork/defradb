@@ -827,7 +827,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].AddrInfo.Addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].PeerInfo().Addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -955,7 +955,7 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{netConfig.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
+	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
