@@ -14,6 +14,15 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
+extern Result* CollectionCreate(uintptr_t nodePtr, char* json, int isEncrypted, char* encryptedFields, CollectionOptions options);
+extern Result* CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions options);
+extern Result* CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
+extern Result* CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options);
+extern Result* CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions options);
+extern Result* CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr, char* updaterStr, CollectionOptions options);
+extern Result* IndexCreate(uintptr_t nodePtr, char* collectionName, char* indexName, char* fieldsStr, int isUnique);
+extern Result* IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result* IndexDrop(uintptr_t nodePtr, char* collectionName, char* indexName);
 */
 import "C"
 
@@ -87,7 +96,7 @@ func (c *Collection) Create(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(CollectionCreate(
+	res := ConvertAndFreeCResult(C.CollectionCreate(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		isEncrypted,
@@ -143,7 +152,7 @@ func (c *Collection) CreateMany(
 	cJSON := C.CString(string(docJSONbytes))
 	defer C.free(unsafe.Pointer(cJSON))
 
-	res := ConvertAndFreeCResult(CollectionCreate(
+	res := ConvertAndFreeCResult(C.CollectionCreate(
 		C.uintptr_t(c.w.handle),
 		cJSON,
 		isEncrypted,
@@ -190,7 +199,7 @@ func (c *Collection) Update(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionUpdate(
+	res := ConvertAndFreeCResult(C.CollectionUpdate(
 		C.uintptr_t(c.w.handle),
 		docID,
 		filter,
@@ -245,7 +254,7 @@ func (c *Collection) Delete(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionDelete(
+	res := ConvertAndFreeCResult(C.CollectionDelete(
 		C.uintptr_t(c.w.handle),
 		docIDStr,
 		filter,
@@ -282,7 +291,7 @@ func (c *Collection) Exists(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionGet(
+	res := ConvertAndFreeCResult(C.CollectionGet(
 		C.uintptr_t(c.w.handle),
 		docIDStr,
 		cShowDeleted,
@@ -326,7 +335,7 @@ func (c *Collection) UpdateWithFilter(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionUpdate(
+	res := ConvertAndFreeCResult(C.CollectionUpdate(
 		C.uintptr_t(c.w.handle),
 		docID,
 		filterStr,
@@ -375,7 +384,7 @@ func (c *Collection) DeleteWithFilter(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionDelete(
+	res := ConvertAndFreeCResult(C.CollectionDelete(
 		C.uintptr_t(c.w.handle),
 		docID,
 		filterStr,
@@ -423,7 +432,7 @@ func (c *Collection) Get(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionGet(
+	res := ConvertAndFreeCResult(C.CollectionGet(
 		C.uintptr_t(c.w.handle),
 		docIDStr,
 		cShowDeleted,
@@ -467,7 +476,7 @@ func (c *Collection) GetAllDocIDs(
 	copts.identity = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(CollectionListDocIDs(C.uintptr_t(c.w.handle), copts))
+	res := ConvertAndFreeCResult(C.CollectionListDocIDs(C.uintptr_t(c.w.handle), copts))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -532,7 +541,7 @@ func (c *Collection) CreateIndex(
 		cUnique = 1
 	}
 
-	res := ConvertAndFreeCResult(IndexCreate(
+	res := ConvertAndFreeCResult(C.IndexCreate(
 		C.uintptr_t(c.w.handle),
 		name,
 		cIndexDescName,
@@ -557,7 +566,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(cIndexName))
 
-	res := ConvertAndFreeCResult(IndexDrop(
+	res := ConvertAndFreeCResult(C.IndexDrop(
 		C.uintptr_t(c.w.handle),
 		name,
 		cIndexName,
@@ -573,7 +582,7 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	name := C.CString(c.def.GetName())
 	defer C.free(unsafe.Pointer(name))
 
-	res := ConvertAndFreeCResult(IndexList(C.uintptr_t(c.w.handle), name))
+	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), name))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)

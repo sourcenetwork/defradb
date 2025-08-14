@@ -14,6 +14,9 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
+extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
+extern Result* TransactionCommit(uintptr_t txnPtr);
+extern void TransactionDiscard(uintptr_t txnPtr);
 */
 import "C"
 
@@ -44,7 +47,7 @@ func (txn *Transaction) ID() uint64 {
 }
 
 func (txn *Transaction) Commit(ctx context.Context) error {
-	res := ConvertAndFreeCResult(TransactionCommit(C.uintptr_t(txn.handle)))
+	res := ConvertAndFreeCResult(C.TransactionCommit(C.uintptr_t(txn.handle)))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
@@ -52,7 +55,7 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 }
 
 func (txn *Transaction) Discard(ctx context.Context) {
-	TransactionDiscard(C.uintptr_t(txn.handle))
+	C.TransactionDiscard(C.uintptr_t(txn.handle))
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {

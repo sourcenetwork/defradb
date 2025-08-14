@@ -14,6 +14,10 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
+extern Result* LensDown(uintptr_t nodePtr, char* collectionID, char* documents);
+extern Result* LensUp(uintptr_t nodePtr, char* collectionID, char* documents);
+extern Result* LensReload(uintptr_t nodePtr);
+extern Result* LensSetRegistry(uintptr_t nodePtr, char* collectionID, char* cfg);
 */
 import "C"
 
@@ -47,7 +51,7 @@ func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, co
 	defer C.free(unsafe.Pointer(lens))
 	defer C.free(unsafe.Pointer(cCollectionID))
 
-	res := ConvertAndFreeCResult(LensSetRegistry(C.uintptr_t(w.handle), cCollectionID, lens))
+	res := ConvertAndFreeCResult(C.LensSetRegistry(C.uintptr_t(w.handle), cCollectionID, lens))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -56,7 +60,7 @@ func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, co
 }
 
 func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
-	res := ConvertAndFreeCResult(LensReload(C.uintptr_t(w.handle)))
+	res := ConvertAndFreeCResult(C.LensReload(C.uintptr_t(w.handle)))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -81,7 +85,7 @@ func (w *LensRegistry) MigrateUp(
 	cCollectionID := C.CString(collectionID)
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(docStr))
-	res := ConvertAndFreeCResult(LensUp(C.uintptr_t(w.handle), cCollectionID, docStr))
+	res := ConvertAndFreeCResult(C.LensUp(C.uintptr_t(w.handle), cCollectionID, docStr))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -111,7 +115,7 @@ func (w *LensRegistry) MigrateDown(
 	cCollectionID := C.CString(collectionID)
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(docStr))
-	res := ConvertAndFreeCResult(LensDown(C.uintptr_t(w.handle), cCollectionID, docStr))
+	res := ConvertAndFreeCResult(C.LensDown(C.uintptr_t(w.handle), cCollectionID, docStr))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
