@@ -39,10 +39,10 @@ func setupNode(
 	opts = append(opts, node.WithBadgerInMemory(true))
 
 	switch documentACPType {
-	case LocalDocumentACPType:
+	case state.LocalDocumentACPType:
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
-	case SourceHubDocumentACPType:
+	case state.SourceHubDocumentACPType:
 		if len(s.DocumentACPOptions) == 0 {
 			var err error
 			s.DocumentACPOptions, err = setupSourceHub(s)

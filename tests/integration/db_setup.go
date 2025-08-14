@@ -66,11 +66,11 @@ func setupNode(
 		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	}
 
-	switch documentACPType {
-	case LocalDocumentACPType:
+	switch s.DocumentACPType {
+	case state.LocalDocumentACPType:
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
-	case SourceHubDocumentACPType:
+	case state.SourceHubDocumentACPType:
 		if len(s.DocumentACPOptions) == 0 {
 			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.T, err)

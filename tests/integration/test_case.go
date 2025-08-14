@@ -51,7 +51,7 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between acp types, or we need to temporarily document a bug.
-	SupportedDocumentACPTypes immutable.Option[[]DocumentACPType]
+	SupportedDocumentACPTypes immutable.Option[[]state.DocumentACPType]
 
 	// If provided a value, SupportedACPTypes will cause this test to be skipped
 	// if the active view type is not within the given set.

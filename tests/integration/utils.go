@@ -230,7 +230,16 @@ func ExecuteTestCase(
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
-				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
+				executeTestCase(
+					ctx,
+					t,
+					collectionNames,
+					testCase,
+					kms,
+					dbt,
+					ct,
+					documentACPType,
+				)
 			}
 		}
 	}
@@ -244,6 +253,7 @@ func executeTestCase(
 	kms state.KMSType,
 	dbt state.DatabaseType,
 	clientType state.ClientType,
+	documentACPType state.DocumentACPType,
 ) {
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
@@ -267,7 +277,16 @@ func executeTestCase(
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := state.NewState(ctx, t, testCase.IdentityTypes, kms, dbt, clientType, collectionNames)
+	s := state.NewState(
+		ctx,
+		t,
+		testCase.IdentityTypes,
+		kms,
+		dbt,
+		clientType,
+		documentACPType,
+		collectionNames,
+	)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -867,9 +886,9 @@ func refreshTokens(
 		if fullIdentityToUpdate, ok := identityToUpdate.(acpIdentity.FullIdentity); ok {
 			nodeTokensToUpdate := identHolder.NodeTokens
 			for nodeKey := range identHolder.NodeTokens {
-				if audience := getNodeAudience(s, nodeKey); audience.HasValue() {
+				if audience := state.GetNodeAudience(s, nodeKey); audience.HasValue() {
 					err := fullIdentityToUpdate.UpdateToken(
-						authTokenExpiration,
+						action.AuthTokenExpiration,
 						audience,
 						immutable.Some(s.SourcehubAddress),
 					)
@@ -2311,7 +2330,7 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]DocumentACPType]) {
+func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]state.DocumentACPType]) {
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
