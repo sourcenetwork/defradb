@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 var _ client.Txn = (*Transaction)(nil)
@@ -51,26 +52,17 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 }
 
 func (txn *Transaction) Discard(ctx context.Context) {
-	return
-	/*
-		cbindings.TransactionDiscard(txn.nodeNum, txn.tx.ID())
-	*/
+	TransactionDiscard(C.uintptr_t(txn.handle))
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.PrintDump(ctx)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.PrintDump(ctx)
 }
 
 func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	return client.AddPolicyResult{}, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.AddDACPolicy(ctx, policy)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.AddDACPolicy(ctx, policy)
 }
 
 func (txn *Transaction) AddDACActorRelationship(
@@ -80,11 +72,8 @@ func (txn *Transaction) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	return client.AddActorRelationshipResult{}, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
 func (txn *Transaction) DeleteDACActorRelationship(
@@ -94,35 +83,23 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	return client.DeleteActorRelationshipResult{}, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	return immutable.Option[identity.PublicRawIdentity]{}, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.GetNodeIdentity(ctx)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.GetNodeIdentity(ctx)
 }
 
 func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
 func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	return nil, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.AddSchema(ctx, sdl)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.AddSchema(ctx, sdl)
 }
 
 func (txn *Transaction) PatchCollection(
@@ -130,19 +107,13 @@ func (txn *Transaction) PatchCollection(
 	patch string,
 	migration immutable.Option[model.Lens],
 ) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.PatchCollection(ctx, patch, migration)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.PatchCollection(ctx, patch, migration)
 }
 
 func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.SetActiveCollectionVersion(ctx, version)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.SetActiveCollectionVersion(ctx, version)
 }
 
 func (txn *Transaction) AddView(
@@ -151,66 +122,45 @@ func (txn *Transaction) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionDefinition, error) {
-	return nil, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transform)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transform)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.RefreshViews(ctx, options)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.RefreshViews(ctx, options)
 }
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.SetMigration(ctx, config)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.SetMigration(ctx, config)
 }
 
 func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return nil
-	/*
-		return txn.CWrapper.LensRegistry()
-	*/
+	return txn.CWrapper.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
 ) (client.Collection, error) {
-	return nil, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.GetCollectionByName(ctx, name)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.GetCollectionByName(ctx, name)
 }
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	return nil, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.GetCollections(ctx, options)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.GetCollections(ctx, options)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return nil, nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.GetAllIndexes(ctx)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.GetAllIndexes(ctx)
 }
 
 func (txn *Transaction) ExecRequest(
@@ -218,25 +168,16 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.ExecRequest(ctx, request, opts...)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
 
 func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.BasicImport(ctx, filepath)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.BasicImport(ctx, filepath)
 }
 
 func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	return nil
-	/*
-		ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-		return txn.CWrapper.BasicExport(ctx, config)
-	*/
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.CWrapper.BasicExport(ctx, config)
 }
