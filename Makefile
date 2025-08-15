@@ -194,7 +194,8 @@ deps:
 
 .PHONY: mocks
 mocks:
-	@$(MAKE) deps:mocks
+	@$(MAKE) deps:mocks && \
+	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: ollama
