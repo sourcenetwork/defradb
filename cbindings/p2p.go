@@ -133,7 +133,7 @@ func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.AddP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -147,7 +147,7 @@ func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.RemoveP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -160,7 +160,7 @@ func P2PdocumentGetAll(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	cols, err := node.Peer.GetAllP2PDocuments(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -190,7 +190,7 @@ func P2PdocumentSync(nodePtr C.uintptr_t, collection *C.char, docIDs *C.char, ti
 	}
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.SyncDocuments(ctx, C.GoString(collection), docArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

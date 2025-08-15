@@ -15,8 +15,10 @@ package cbindings
 #include <stdint.h>
 #include "defra_structs.h"
 extern Result* ACPAddDACPolicy(uintptr_t nodePtr, char* identity, char* policy);
-extern Result* ACPAddDACActorRelationship(uintptr_t nodePtr, char* identity, char* collection, char* docID, char* relation, char* actor);
-extern Result* ACPDeleteDACActorRelationship(uintptr_t nodePtr, char* identity, char* collection, char* docID, char* relation, char* actor);
+extern Result* ACPAddDACActorRelationship(uintptr_t nodePtr, char* identity,
+char* collection, char* docID, char* relation, char* actor);
+extern Result* ACPDeleteDACActorRelationship(uintptr_t nodePtr, char* identity,
+char* collection, char* docID, char* relation, char* actor);
 extern Result* ACPDisableNAC(uintptr_t nodePtr, char* identity);
 extern Result* ACPReEnableNAC(uintptr_t nodePtr, char* identity);
 extern Result* ACPAddNACActorRelationship(uintptr_t nodePtr, char* identity, char* relation, char* actor);
@@ -50,7 +52,8 @@ extern Result* SetActiveCollection(uintptr_t nodePtr, char* version);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result* VersionGet(int flagFull, int flagJSON);
 extern Result* ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
-extern Result* ViewRefresh(uintptr_t nodePtr, char* viewNameStr, char* collectionIDStr, char* versionIDStr, int getInactive);
+extern Result* ViewRefresh(uintptr_t nodePtr, char* viewNameStr,
+char* collectionIDStr, char* versionIDStr, int getInactive);
 */
 import "C"
 
@@ -104,7 +107,6 @@ func (w *CWrapper) PeerInfo() peer.AddrInfo {
 		return peer.AddrInfo{}
 	}
 	return addrInfo
-
 }
 
 func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
@@ -315,7 +317,14 @@ func (w *CWrapper) AddDACActorRelationship(
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
 
-	res := ConvertAndFreeCResult(C.ACPAddDACActorRelationship(C.uintptr_t(w.handle), cIdentity, cCollectionName, cDocID, cRelation, cTargetActor))
+	res := ConvertAndFreeCResult(C.ACPAddDACActorRelationship(
+		C.uintptr_t(w.handle),
+		cIdentity,
+		cCollectionName,
+		cDocID,
+		cRelation,
+		cTargetActor,
+	))
 
 	if res.Status != 0 {
 		return client.AddActorRelationshipResult{}, errors.New(res.Error)
@@ -336,7 +345,6 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-
 	identity := identityFromContext(ctx)
 	cIdentity := C.CString(identity)
 	cCollectionName := C.CString(collectionName)
@@ -453,7 +461,6 @@ func (w *CWrapper) PatchCollection(
 	patch string,
 	migration immutable.Option[model.Lens],
 ) error {
-
 	cPatch := C.CString(patch)
 	cIdentity := C.CString(identityFromContext(ctx))
 	cVersion := C.CString("")
@@ -488,7 +495,6 @@ func (w *CWrapper) PatchCollection(
 }
 
 func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-
 	cSchemaVersionID := C.CString(schemaVersionID)
 	defer C.free(unsafe.Pointer(cSchemaVersionID))
 
@@ -506,7 +512,6 @@ func (w *CWrapper) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionVersion, error) {
-
 	transformStr, err := stringFromLensOption(transform)
 	cTransform := C.CString(transformStr)
 	cQuery := C.CString(query)
@@ -739,7 +744,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 		return nil, errors.New(errText)
 	}
 
-	clientTxn := cgo.Handle(res.txnPtr).Value().(client.Txn)
+	clientTxn := cgo.Handle(res.txnPtr).Value().(client.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, clientTxn, cgo.Handle(res.txnPtr)}
 
 	return retTxn, nil
@@ -760,7 +765,7 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 		return nil, errors.New(errText)
 	}
 
-	clientTxn := cgo.Handle(res.txnPtr).Value().(client.Txn)
+	clientTxn := cgo.Handle(res.txnPtr).Value().(client.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, clientTxn, cgo.Handle(res.txnPtr)}
 
 	return retTxn, nil
