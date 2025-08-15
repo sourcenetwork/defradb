@@ -27,12 +27,10 @@ func TestSchemaAdd(t *testing.T) {
 				`,
 			},
 			&action.CollectionDescribe{
-				Expected: []client.CollectionDefinition{
+				Expected: []client.CollectionVersion{
 					{
-						Version: client.CollectionVersion{
-							Name:           "User",
-							IsMaterialized: true,
-						},
+						Name:           "User",
+						IsMaterialized: true,
 					},
 				},
 			},

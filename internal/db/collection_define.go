@@ -31,22 +31,17 @@ import (
 func (db *DB) createCollections(
 	ctx context.Context,
 	parseResults []core.Collection,
-) ([]client.CollectionDefinition, error) {
-	returnDescriptions := make([]client.CollectionDefinition, 0, len(parseResults))
+) ([]client.CollectionVersion, error) {
+	returnDescriptions := make([]client.CollectionVersion, 0, len(parseResults))
 
-	existingDefinitions, err := db.getAllActiveDefinitions(ctx)
+	existingVersions, err := description.GetActiveCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	existingDefinitionsByID := make(map[string]client.CollectionDefinition, len(existingDefinitions))
-	for _, col := range existingDefinitions {
-		existingDefinitionsByID[col.Version.CollectionID] = col
-	}
-
 	newCollections := make([]client.CollectionVersion, len(parseResults))
 	for i, def := range parseResults {
-		newCollections[i] = def.Definition.Version
+		newCollections[i] = def.Definition
 	}
 
 	err = setCollectionIDs(ctx, newCollections, immutable.None[model.Lens]())
@@ -57,56 +52,50 @@ func (db *DB) createCollections(
 	for i := range parseResults {
 		// The secondary index code requires the useage of core.Collection which means we need to
 		// map the CollectionVersion back on to the input param.
-		parseResults[i].Definition.Version = newCollections[i]
-	}
-
-	newDefinitions := make([]client.CollectionDefinition, len(parseResults))
-	for i, def := range parseResults {
-		newDefinitions[i] = def.Definition
-		newDefinitions[i].Version = newCollections[i]
+		parseResults[i].Definition = newCollections[i]
 	}
 
 	err = db.validateNewCollection(
 		ctx,
-		slices.Concat(newDefinitions, existingDefinitions),
-		existingDefinitions,
+		slices.Concat(newCollections, existingVersions),
+		existingVersions,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, def := range parseResults {
-		def.Definition.Version.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
+		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.CreateIndexes))
 		for _, createIndex := range def.CreateIndexes {
 			desc, err := processCreateIndexRequest(ctx, def.Definition, createIndex)
 			if err != nil {
 				return nil, err
 			}
-			def.Definition.Version.Indexes = append(def.Definition.Version.Indexes, desc)
+			def.Definition.Indexes = append(def.Definition.Indexes, desc)
 		}
 
-		err = description.SaveCollection(ctx, def.Definition.Version)
+		err = description.SaveCollection(ctx, def.Definition)
 		if err != nil {
 			return nil, err
 		}
 
-		col, err := db.newCollection(def.Definition.Version)
+		col, err := db.newCollection(def.Definition)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, index := range def.Definition.Version.Indexes {
+		for _, index := range def.Definition.Indexes {
 			if _, err := col.addNewIndex(ctx, index); err != nil {
 				return nil, err
 			}
 		}
 
-		result, err := db.getCollectionByID(ctx, def.Definition.Version.VersionID)
+		result, err := description.GetCollectionByID(ctx, def.Definition.VersionID)
 		if err != nil {
 			return nil, err
 		}
 
-		returnDescriptions = append(returnDescriptions, result.Definition())
+		returnDescriptions = append(returnDescriptions, result)
 	}
 
 	return returnDescriptions, nil
@@ -141,23 +130,18 @@ func (db *DB) patchCollection(
 	if err != nil {
 		return err
 	}
-	existingCols, err := db.getCollections(
-		ctx,
-		client.CollectionFetchOptions{IncludeInactive: immutable.Some(true)},
-	)
+	existingCols, err := description.GetCollections(ctx)
 	if err != nil {
 		return err
 	}
 
 	existingColsByName := map[string]client.CollectionVersion{}
 	existingColsByID := map[string]client.CollectionVersion{}
-	existingDefinitions := make([]client.CollectionDefinition, 0, len(existingCols))
 	for _, col := range existingCols {
-		if col.Version().IsActive {
-			existingColsByName[col.Version().Name] = col.Version()
+		if col.IsActive {
+			existingColsByName[col.Name] = col
 		}
-		existingColsByID[col.Version().VersionID] = col.Version()
-		existingDefinitions = append(existingDefinitions, col.Definition())
+		existingColsByID[col.VersionID] = col
 	}
 
 	// Here we swap out any string representations of enums for their integer values
@@ -182,13 +166,6 @@ func (db *DB) patchCollection(
 	err = decoder.Decode(&newColsByID)
 	if err != nil {
 		return err
-	}
-
-	newDefinitions := make([]client.CollectionDefinition, len(existingCols))
-	updatedColsByID := make(map[string]struct{})
-	for i, col := range existingCols {
-		newDefinitions[i].Version = newColsByID[col.Version().VersionID]
-		updatedColsByID[col.Version().VersionID] = struct{}{}
 	}
 
 	for _, col := range newColsByID {
@@ -282,12 +259,7 @@ func (db *DB) patchCollection(
 		}
 	}
 
-	newDefinitions = make([]client.CollectionDefinition, 0, len(newCollections))
-	for _, col := range newCollections {
-		newDefinitions = append(newDefinitions, client.CollectionDefinition{Version: col})
-	}
-
-	err = db.validateCollectionChanges(ctx, existingDefinitions, newDefinitions)
+	err = db.validateCollectionChanges(ctx, existingCols, newCollections)
 	if err != nil {
 		return err
 	}
@@ -308,9 +280,7 @@ func (db *DB) patchCollection(
 				// If the collection is being de-materialized - delete any cached values.
 				// Leaving them around will not break anything, but it would be a waste of
 				// storage space.
-				err := db.clearViewCache(ctx, client.CollectionDefinition{
-					Version: col,
-				})
+				err := db.clearViewCache(ctx, col)
 				if err != nil {
 					return err
 				}

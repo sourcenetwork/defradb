@@ -65,7 +65,7 @@ func (c *collection) Get(
 func (c *collection) get(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
@@ -123,7 +123,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Definition())
+	doc, err := fetcher.Decode(encodedDoc, c.Version())
 	if err != nil {
 		return nil, err
 	}

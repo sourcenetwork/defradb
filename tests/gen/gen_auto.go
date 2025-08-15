@@ -38,29 +38,29 @@ func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, erro
 	if err != nil {
 		return nil, err
 	}
-	typeDefs, err := ParseSDL(gqlSDL)
+	cols, err := ParseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
-	generator := newRandomDocGenerator(typeDefs, genConfigs)
+	generator := newRandomDocGenerator(cols, genConfigs)
 	return generator.generateDocs(options...)
 }
 
 // AutoGenerate generates random documents from collection definitions.
-func AutoGenerate(definitions []client.CollectionDefinition, options ...Option) ([]GeneratedDoc, error) {
+func AutoGenerate(definitions []client.CollectionVersion, options ...Option) ([]GeneratedDoc, error) {
 	err := validateDefinitions(definitions)
 	if err != nil {
 		return nil, err
 	}
-	typeDefs := make(map[string]client.CollectionDefinition)
+	typeDefs := make(map[string]client.CollectionVersion)
 	for _, def := range definitions {
-		typeDefs[def.Version.Name] = def
+		typeDefs[def.Name] = def
 	}
 	generator := newRandomDocGenerator(typeDefs, nil)
 	return generator.generateDocs(options...)
 }
 
-func newRandomDocGenerator(types map[string]client.CollectionDefinition, config configsMap) *randomDocGenerator {
+func newRandomDocGenerator(types map[string]client.CollectionVersion, config configsMap) *randomDocGenerator {
 	if config == nil {
 		config = make(configsMap)
 	}
@@ -120,14 +120,14 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
 func (g *randomDocGenerator) getNextPrimaryDocID(
-	host client.CollectionDefinition,
+	host client.CollectionVersion,
 	secondaryType string,
-	field *client.FieldDefinition,
+	field *client.CollectionFieldDescription,
 ) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	otherDef, _ := client.GetDefinition(g.configurator.definitionCache, host, field.Kind)
+	otherDef, _ := client.GetCollection(g.configurator.definitionCache, host, field.Kind)
 
-	return g.generatedDocs[otherDef.GetName()][ind].docID
+	return g.generatedDocs[otherDef.Name][ind].docID
 }
 
 func (g *randomDocGenerator) generateRandomDocs(order []string) error {
@@ -140,12 +140,12 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 		totalDemand := currentTypeDemand.getAverage()
 		for i := 0; i < totalDemand; i++ {
 			newDoc := make(map[string]any)
-			for _, field := range typeDef.GetFields() {
+			for _, field := range typeDef.Fields {
 				if field.Name == request.DocIDFieldName {
 					continue
 				}
-				if field.IsRelation() {
-					if field.IsPrimaryRelation && field.Kind.IsObject() {
+				if field.RelationName.HasValue() {
+					if field.IsPrimary && field.Kind.IsObject() {
 						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
 							newDoc[field.Name] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						} else {
@@ -216,28 +216,28 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 	panic("Can not generate random value for unknown type: " + fieldKind.String())
 }
 
-func validateDefinitions(definitions []client.CollectionDefinition) error {
+func validateDefinitions(definitions []client.CollectionVersion) error {
 	colIDs := make(map[string]struct{})
 	colNames := make(map[string]struct{})
-	defCache := client.NewDefinitionCache(definitions)
+	defCache := client.NewCollectionCache(definitions)
 
 	for _, def := range definitions {
-		if def.Version.Name == "" {
+		if def.Name == "" {
 			return NewErrIncompleteColDefinition("description name is empty")
 		}
-		for _, field := range def.GetFields() {
+		for _, field := range def.Fields {
 			if field.Name == "" {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
 			if field.Kind.IsObject() {
-				_, found := client.GetDefinition(defCache, def, field.Kind)
+				_, found := client.GetCollection(defCache, def, field.Kind)
 				if !found {
 					return NewErrIncompleteColDefinition("field schema references unknown collection")
 				}
 			}
 		}
-		colNames[def.Version.Name] = struct{}{}
-		colIDs[def.Version.VersionID] = struct{}{}
+		colNames[def.Name] = struct{}{}
+		colIDs[def.VersionID] = struct{}{}
 	}
 
 	if len(colIDs) != len(definitions) {

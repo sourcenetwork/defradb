@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 // addSchema takes the provided schema in SDL format, and applies it to the database,
@@ -27,14 +28,9 @@ func (db *DB) addSchema(
 		return nil, err
 	}
 
-	returnDefinitions, err := db.createCollections(ctx, newDefinitions)
+	result, err := db.createCollections(ctx, newDefinitions)
 	if err != nil {
 		return nil, err
-	}
-
-	returnDescriptions := make([]client.CollectionVersion, len(returnDefinitions))
-	for i, def := range returnDefinitions {
-		returnDescriptions[i] = def.Version
 	}
 
 	err = db.loadSchema(ctx)
@@ -42,11 +38,11 @@ func (db *DB) addSchema(
 		return nil, err
 	}
 
-	return returnDescriptions, nil
+	return result, nil
 }
 
 func (db *DB) loadSchema(ctx context.Context) error {
-	definitions, err := db.getAllActiveDefinitions(ctx)
+	definitions, err := description.GetActiveCollections(ctx)
 	if err != nil {
 		return err
 	}

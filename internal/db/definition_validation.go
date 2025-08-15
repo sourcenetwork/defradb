@@ -32,27 +32,24 @@ type definitionState struct {
 	collectionsByID         map[string]client.CollectionVersion
 	activeCollectionsByName map[string]client.CollectionVersion
 
-	definitionCache client.DefinitionCache
+	definitionCache client.CollectionCache
 }
 
 // newDefinitionState creates a new definitionState object given the provided
 // definitions.
 func newDefinitionState(
-	definitions []client.CollectionDefinition,
+	collections []client.CollectionVersion,
 ) *definitionState {
 	collectionsByID := map[string]client.CollectionVersion{}
-	collections := []client.CollectionVersion{}
 	activeCollectionsByName := map[string]client.CollectionVersion{}
 
-	for _, def := range definitions {
-		collections = append(collections, def.Version)
-
-		if def.Version.IsActive {
-			activeCollectionsByName[def.Version.Name] = def.Version
+	for _, col := range collections {
+		if col.IsActive {
+			activeCollectionsByName[col.Name] = col
 		}
 
-		if def.Version.VersionID != "" {
-			collectionsByID[def.Version.VersionID] = def.Version
+		if col.VersionID != "" {
+			collectionsByID[col.VersionID] = col
 		}
 	}
 
@@ -60,7 +57,7 @@ func newDefinitionState(
 		collections:             collections,
 		collectionsByID:         collectionsByID,
 		activeCollectionsByName: activeCollectionsByName,
-		definitionCache:         client.NewDefinitionCache(definitions),
+		definitionCache:         client.NewCollectionCache(collections),
 	}
 }
 
@@ -138,11 +135,11 @@ var createValidators = append(
 
 func (db *DB) validateCollectionChanges(
 	ctx context.Context,
-	oldDefinitions []client.CollectionDefinition,
-	newDefinitions []client.CollectionDefinition,
+	oldCollections []client.CollectionVersion,
+	newCollections []client.CollectionVersion,
 ) error {
-	newState := newDefinitionState(newDefinitions)
-	oldState := newDefinitionState(oldDefinitions)
+	newState := newDefinitionState(newCollections)
+	oldState := newDefinitionState(oldCollections)
 	var errs []error
 	for _, validator := range collectionUpdateValidators {
 		err := validator(ctx, db, newState, oldState)
@@ -156,11 +153,11 @@ func (db *DB) validateCollectionChanges(
 
 func (db *DB) validateNewCollection(
 	ctx context.Context,
-	newDefinitions []client.CollectionDefinition,
-	oldDefinitions []client.CollectionDefinition,
+	newCollections []client.CollectionVersion,
+	oldCollections []client.CollectionVersion,
 ) error {
-	newState := newDefinitionState(newDefinitions)
-	oldState := newDefinitionState(oldDefinitions)
+	newState := newDefinitionState(newCollections)
+	oldState := newDefinitionState(oldCollections)
 	var errs []error
 	for _, validator := range createValidators {
 		err := validator(ctx, db, newState, oldState)
@@ -185,7 +182,7 @@ func validateRelationPointsToValidKind(
 				continue
 			}
 
-			_, ok := client.GetDefinition(newState.definitionCache, client.CollectionDefinition{Version: col}, field.Kind)
+			_, ok := client.GetCollection(newState.definitionCache, col, field.Kind)
 			if !ok {
 				errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.String()))
 			}
@@ -230,10 +227,6 @@ func validateSecondaryFieldsPairUp(
 			continue
 		}
 
-		definition := client.CollectionDefinition{
-			Version: newCollection,
-		}
-
 		for _, field := range newCollection.Fields {
 			if !field.Kind.IsObject() {
 				continue
@@ -247,27 +240,27 @@ func validateSecondaryFieldsPairUp(
 				continue
 			}
 
-			otherDef, ok := client.GetDefinition(newState.definitionCache, definition, field.Kind)
+			otherDef, ok := client.GetCollection(newState.definitionCache, newCollection, field.Kind)
 			if !ok {
 				continue
 			}
 
-			if otherDef.Version.IsEmbeddedOnly {
+			if otherDef.IsEmbeddedOnly {
 				// Embedded objects do not require both sides of the relation to be defined.
 				continue
 			}
 
-			otherField, ok := otherDef.Version.GetFieldByRelation(
+			otherField, ok := otherDef.GetFieldByRelation(
 				field.RelationName.Value(),
-				definition.GetName(),
+				newCollection.Name,
 				field.Name,
 			)
 			if !ok {
-				errs = append(errs, NewErrRelationMissingField(otherDef.GetName(), field.RelationName.Value()))
+				errs = append(errs, NewErrRelationMissingField(otherDef.Name, field.RelationName.Value()))
 			}
 
 			if !otherField.IsPrimary {
-				errs = append(errs, NewErrRelationMissingField(otherDef.GetName(), field.RelationName.Value()))
+				errs = append(errs, NewErrRelationMissingField(otherDef.Name, field.RelationName.Value()))
 			}
 		}
 	}
@@ -283,30 +276,27 @@ func validateSingleSidePrimary(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		definition := client.CollectionDefinition{
-			Version: newCollection,
-		}
-		for _, field := range definition.GetFields() {
+		for _, field := range newCollection.Fields {
 			if field.Kind == nil {
 				continue
 			}
 			if !field.Kind.IsObject() {
 				continue
 			}
-			if field.RelationName == "" {
+			if !field.RelationName.HasValue() {
 				continue
 			}
-			if !field.IsPrimaryRelation {
+			if !field.IsPrimary {
 				// This is a secondary field and thus passes this rule
 				continue
 			}
-			otherDef, ok := client.GetDefinition(newState.definitionCache, definition, field.Kind)
+			otherDef, ok := client.GetCollection(newState.definitionCache, newCollection, field.Kind)
 			if !ok {
 				continue
 			}
-			otherField, ok := otherDef.Version.GetFieldByRelation(
-				field.RelationName,
-				definition.GetName(),
+			otherField, ok := otherDef.GetFieldByRelation(
+				field.RelationName.Value(),
+				newCollection.Name,
 				field.Name,
 			)
 			if !ok {
@@ -873,16 +863,16 @@ func validateSelfReferences(
 				continue
 			}
 
-			otherDef, ok := client.GetDefinition(
+			otherDef, ok := client.GetCollection(
 				newState.definitionCache,
-				client.CollectionDefinition{Version: col},
+				col,
 				field.Kind,
 			)
 			if !ok {
 				continue
 			}
 
-			if otherDef.Version.CollectionID == col.CollectionID {
+			if otherDef.CollectionID == col.CollectionID {
 				errs = append(errs, NewErrSelfReferenceWithoutSelf(field.Name))
 			}
 		}
@@ -895,16 +885,16 @@ func validateSelfReferences(
 			}
 
 			activeCol := newState.activeCollectionsByName[col.Name]
-			otherDef, ok := client.GetDefinition(
+			otherDef, ok := client.GetCollection(
 				newState.definitionCache,
-				client.CollectionDefinition{Version: activeCol},
+				activeCol,
 				field.Kind,
 			)
 			if !ok {
 				continue
 			}
 
-			if otherDef.Version.CollectionID == newState.collectionsByID[col.VersionID].VersionID {
+			if otherDef.CollectionID == newState.collectionsByID[col.VersionID].VersionID {
 				errs = append(errs, NewErrSelfReferenceWithoutSelf(field.Name))
 			}
 		}
@@ -1061,7 +1051,7 @@ func validateCollectionFieldDefaultValue(
 	var errs []error
 	for name, col := range newState.activeCollectionsByName {
 		// default values are set when a doc is first created
-		_, err := client.NewDocFromMap(map[string]any{}, client.CollectionDefinition{Version: col})
+		_, err := client.NewDocFromMap(map[string]any{}, col)
 		if err != nil {
 			errs = append(errs, NewErrDefaultFieldValueInvalid(name, err))
 		}

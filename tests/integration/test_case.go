@@ -200,16 +200,16 @@ type GetCollections struct {
 	ExpectedError string
 }
 
-// SetActiveCollectionVersion is an action that will set the active schema version to the
+// SetActiveCollectionVersion is an action that will set the active collection version to the
 // given value.
 type SetActiveCollectionVersion struct {
-	// NodeID may hold the ID (index) of a node to set the default schema version on.
+	// NodeID may hold the ID (index) of a node to set the collection version on.
 	//
-	// If a value is not provided the default will be set on all nodes.
+	// If a value is not provided the version will be set on all nodes.
 	NodeID immutable.Option[int]
 
-	SchemaVersionID string
-	ExpectedError   string
+	VersionID     string
+	ExpectedError string
 }
 
 // CreateView is an action that will create a new View.

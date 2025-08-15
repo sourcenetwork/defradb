@@ -59,7 +59,7 @@ func (m *SchemaManager) NewGenerator() *Generator {
 
 // Generate generates the query-op and mutation-op type definitions from
 // the given CollectionVersions.
-func (g *Generator) Generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
+func (g *Generator) Generate(ctx context.Context, collections []client.CollectionVersion) ([]*gql.Object, error) {
 	typeMapBeforeMutation := g.manager.schema.TypeMap()
 	typesBeforeMutation := make(map[string]any, len(typeMapBeforeMutation))
 
@@ -91,7 +91,7 @@ func (g *Generator) Generate(ctx context.Context, collections []client.Collectio
 
 // generate generates the query-op and mutation-op type definitions from
 // the given CollectionVersions.
-func (g *Generator) generate(ctx context.Context, collections []client.CollectionDefinition) ([]*gql.Object, error) {
+func (g *Generator) generate(ctx context.Context, collections []client.CollectionVersion) ([]*gql.Object, error) {
 	// build base types
 	defs, err := g.buildTypes(collections)
 	if err != nil {
@@ -120,7 +120,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		var isEmbedded bool
 		for _, definition := range collections {
-			if t.Name() == definition.Version.Name && definition.Version.IsEmbeddedOnly {
+			if t.Name() == definition.Name && definition.IsEmbeddedOnly {
 				isEmbedded = true
 				break
 			}
@@ -217,8 +217,8 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var isReadOnly bool
 		var collectionFound bool
 		for _, definition := range collections {
-			if t.Name() == definition.Version.Name {
-				isReadOnly = len(definition.Version.QuerySources()) > 0
+			if t.Name() == definition.Name {
+				isReadOnly = len(definition.QuerySources()) > 0
 				collectionFound = true
 				break
 			}
@@ -226,7 +226,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		if !collectionFound {
 			// If we did not find a collection with this name, check for matching schemas (embedded objects)
 			for _, definition := range collections {
-				if t.Name() == definition.Version.Name {
+				if t.Name() == definition.Name {
 					// All embedded objects are readonly
 					isReadOnly = true
 					collectionFound = true
@@ -425,26 +425,26 @@ func (g *Generator) createExpandedFieldList(
 // Given a set of developer defined collection types
 // extract and return the correct gql.Object type(s)
 func (g *Generator) buildTypes(
-	collections []client.CollectionDefinition,
+	collections []client.CollectionVersion,
 ) ([]*gql.Object, error) {
-	definitionCache := client.NewDefinitionCache(collections)
+	definitionCache := client.NewCollectionCache(collections)
 
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
 
 	for _, collection := range collections {
-		fieldDescriptions := collection.GetFields()
-		isQuerySource := len(collection.Version.QuerySources()) > 0
-		isViewObject := collection.Version.IsEmbeddedOnly || isQuerySource
+		fieldDescriptions := collection.Fields
+		isQuerySource := len(collection.QuerySources()) > 0
+		isViewObject := collection.IsEmbeddedOnly || isQuerySource
 
 		// check if type exists
-		if _, ok := g.manager.schema.TypeMap()[collection.Version.Name]; ok {
-			return nil, NewErrSchemaTypeAlreadyExist(collection.Version.Name)
+		if _, ok := g.manager.schema.TypeMap()[collection.Name]; ok {
+			return nil, NewErrSchemaTypeAlreadyExist(collection.Name)
 		}
 
 		objconf := gql.ObjectConfig{
-			Name: collection.Version.Name,
+			Name: collection.Name,
 		}
 
 		// Wrap field definition in a thunk so we can
@@ -471,8 +471,8 @@ func (g *Generator) buildTypes(
 				}
 
 				var ttype gql.Type
-				if otherDef, ok := client.GetDefinition(definitionCache, collection, field.Kind); ok {
-					ttype, ok = g.manager.schema.TypeMap()[otherDef.GetName()]
+				if otherDef, ok := client.GetCollection(definitionCache, collection, field.Kind); ok {
+					ttype, ok = g.manager.schema.TypeMap()[otherDef.Name]
 					if !ok {
 						return nil, NewErrTypeNotFound(field.Kind.String())
 					}
@@ -493,9 +493,9 @@ func (g *Generator) buildTypes(
 				}
 			}
 
-			gqlType, ok := g.manager.schema.TypeMap()[collection.Version.Name]
+			gqlType, ok := g.manager.schema.TypeMap()[collection.Name]
 			if !ok {
-				return nil, NewErrObjectNotFoundDuringThunk(collection.Version.Name)
+				return nil, NewErrObjectNotFoundDuringThunk(collection.Name)
 			}
 
 			fields[request.GroupFieldName] = &gql.Field{
@@ -534,15 +534,15 @@ func (g *Generator) buildTypes(
 
 // buildMutationInputTypes creates the input object types
 // for collection create and update mutation operations.
-func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefinition) error {
+func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersion) error {
 	for _, collection := range collections {
-		if collection.Version.IsEmbeddedOnly {
+		if collection.IsEmbeddedOnly {
 			// Users cannot mutate documents through embedded collections, so we
 			// have no need to build mutation input types for this collection.
 			continue
 		}
 
-		mutationInputName := collection.Version.Name + mutationInputNameSuffix
+		mutationInputName := collection.Name + mutationInputNameSuffix
 
 		// check if mutation input type exists
 		if _, ok := g.manager.schema.TypeMap()[mutationInputName]; ok {
@@ -559,7 +559,7 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 		mutationObjConf.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
 			fields := make(gql.InputObjectConfigFieldMap)
 
-			for _, field := range collection.GetFields() {
+			for _, field := range collection.Fields {
 				if strings.HasPrefix(field.Name, "_") {
 					// ignore system defined args as the
 					// user cannot override their values
@@ -569,12 +569,12 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionDefin
 				if field.Kind == client.FieldKind_DocID && strings.HasSuffix(field.Name, request.RelatedObjectID) {
 					objFieldName := strings.TrimSuffix(field.Name, request.RelatedObjectID)
 					ofd, exists := collection.GetFieldByName(objFieldName)
-					if exists && !ofd.IsPrimaryRelation {
+					if exists && !ofd.IsPrimary {
 						// We do not allow the mutation of relations from the secondary side,
 						// they must not be included in the input type(s)
 						continue
 					}
-				} else if field.Kind.IsObject() && !field.IsPrimaryRelation {
+				} else if field.Kind.IsObject() && !field.IsPrimary {
 					// We do not allow the mutation of relations from the secondary side,
 					// they must not be included in the input type(s)
 					continue

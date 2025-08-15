@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/integration/schema"
+	"github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
 func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
@@ -70,8 +70,8 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "AuthorView",
-						"fields": schema.DefaultViewObjFields.Append(
-							schema.Field{
+						"fields": collection_version.DefaultViewObjFields.Append(
+							collection_version.Field{
 								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",
@@ -79,7 +79,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 								},
 							},
 						).Append(
-							schema.Field{
+							collection_version.Field{
 								"name": "books",
 								"type": map[string]any{
 									"kind": "LIST",
@@ -112,8 +112,8 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 						// although aggregates and `_group` should be.
 						// There should also be no `Author` field - the relationship field
 						// should only exist on the parent.
-						"fields": schema.DefaultViewObjFields.Append(
-							schema.Field{
+						"fields": collection_version.DefaultViewObjFields.Append(
+							collection_version.Field{
 								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",

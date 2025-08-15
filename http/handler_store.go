@@ -172,9 +172,9 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	colDesc := make([]client.CollectionDefinition, len(cols))
+	colDesc := make([]client.CollectionVersion, len(cols))
 	for i, col := range cols {
-		colDesc[i] = col.Definition()
+		colDesc[i] = col.Version()
 	}
 	responseJSON(rw, http.StatusOK, colDesc)
 }
@@ -336,9 +336,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/collection",
 	}
-	collectionDefinitionSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/collection_definition",
-	}
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
@@ -491,13 +488,10 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	patchCollection.Responses.Set("200", successResponse)
 	patchCollection.Responses.Set("400", errorResponse)
 
-	collectionDefinitionsSchema := openapi3.NewArraySchema()
-	collectionDefinitionsSchema.Items = collectionDefinitionSchema
-
 	addViewResponseSchema := openapi3.NewOneOfSchema()
 	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
-		collectionDefinitionSchema,
-		openapi3.NewSchemaRef("", collectionDefinitionsSchema),
+		collectionSchema,
+		openapi3.NewSchemaRef("", collectionsSchema),
 	}
 
 	addViewResponse := openapi3.NewResponse().

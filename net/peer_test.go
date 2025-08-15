@@ -190,7 +190,7 @@ func TestHandleLog_WithExistingTopic_TopicExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Version())
 	require.NoError(t, err)
 
 	_, err = rpc.NewTopic(ctx, p.ps, p.host.ID(), "bae-a911f9cc-217a-58a3-a2f4-96548197403e", true)
@@ -218,7 +218,7 @@ func TestHandleLog_WithExistingSchemaTopic_TopicExistsError(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Definition())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "John", "age": 30}`), col.Version())
 	require.NoError(t, err)
 
 	cid, err := createCID(doc)

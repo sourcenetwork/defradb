@@ -84,7 +84,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap, col.Definition())
+			doc, err := client.NewDocFromMap(docMap, col.Version())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
@@ -135,11 +135,11 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 		}
 	}
 
-	definitions := make([]client.CollectionDefinition, 0, len(cols))
+	definitions := make([]client.CollectionVersion, 0, len(cols))
 	for _, col := range cols {
-		definitions = append(definitions, col.Definition())
+		definitions = append(definitions, col.Version())
 	}
-	definitionCache := client.NewDefinitionCache(definitions)
+	definitionCache := client.NewCollectionCache(definitions)
 
 	tempFile := config.Filepath + ".temp"
 	f, err := os.Create(tempFile)
@@ -226,13 +226,13 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignDef, ok := client.GetDefinition(definitionCache, col.Definition(), field.Kind)
+							foreignDef, ok := client.GetCollection(definitionCache, col.Version(), field.Kind)
 							if !ok {
 								// If the collection is not in the cache the backup was not configured to
 								// handle this collection.
 								continue
 							}
-							foreignCol, err := db.newCollection(foreignDef.Version)
+							foreignCol, err := db.newCollection(foreignDef)
 							if err != nil {
 								return err
 							}
@@ -263,7 +263,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Definition())
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Version())
 								if err != nil {
 									return err
 								}
@@ -294,7 +294,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM, col.Definition())
+			newDoc, err := client.NewDocFromMap(docM, col.Version())
 			if err != nil {
 				return err
 			}

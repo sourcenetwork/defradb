@@ -39,7 +39,7 @@ type wrappingFetcher struct {
 	documentACP immutable.Option[dac.DocumentACP]
 	index       immutable.Option[client.IndexDescription]
 	col         client.Collection
-	fields      []client.FieldDefinition
+	fields      []client.CollectionFieldDescription
 	filter      *mapper.Filter
 	ordering    []mapper.OrderCondition
 	docMapper   *core.DocumentMapping
@@ -59,7 +59,7 @@ func (f *wrappingFetcher) Init(
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
 	docMapper *core.DocumentMapping,
@@ -97,7 +97,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 
 	if f.filter != nil && len(f.fields) > 0 {
 		conditions := f.filter.ToMap(f.docMapper)
-		parsedFilterFields, err := parser.ParseFilterFieldsForDescription(conditions, f.col.Definition())
+		parsedFilterFields, err := parser.ParseFilterFieldsForDescription(conditions, f.col.Version())
 		if err != nil {
 			return err
 		}
@@ -115,16 +115,16 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 		}
 	}
 
-	colShortID, err := id.GetShortCollectionID(ctx, f.col.Definition().Version.CollectionID)
+	colShortID, err := id.GetShortCollectionID(ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 
 	if len(f.fields) == 0 {
-		f.fields = f.col.Definition().GetFields()
+		f.fields = f.col.Version().Fields
 	}
 
-	fieldsByID := make(map[uint32]client.FieldDefinition, len(f.fields))
+	fieldsByID := make(map[uint32]client.CollectionFieldDescription, len(f.fields))
 	for _, field := range f.fields {
 		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, field.FieldID)
 		if err != nil {

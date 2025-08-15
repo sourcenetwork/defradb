@@ -235,17 +235,15 @@ func fromAstDefinition(
 	}
 
 	return core.Collection{
-		Definition: client.CollectionDefinition{
-			Version: client.CollectionVersion{
-				Name:             def.Name.Value,
-				Policy:           policyDescription,
-				Fields:           collectionFieldDescriptions,
-				IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
-				IsBranchable:     isBranchable,
-				IsEmbeddedOnly:   def.IsInterface,
-				IsActive:         true,
-				VectorEmbeddings: vectorEmbeddings,
-			},
+		Definition: client.CollectionVersion{
+			Name:             def.Name.Value,
+			Policy:           policyDescription,
+			Fields:           collectionFieldDescriptions,
+			IsMaterialized:   !isMaterialized.HasValue() || isMaterialized.Value(),
+			IsBranchable:     isBranchable,
+			IsEmbeddedOnly:   def.IsInterface,
+			IsActive:         true,
+			VectorEmbeddings: vectorEmbeddings,
 		},
 		CreateIndexes: indexes,
 	}, nil
@@ -769,12 +767,12 @@ func finalizeRelations(
 	results []core.Collection,
 ) error {
 	for i, result := range results {
-		if result.Definition.Version.IsEmbeddedOnly {
+		if result.Definition.IsEmbeddedOnly {
 			// Embedded objects are simpler and require no addition work
 			continue
 		}
 
-		for fieldIndex, field := range result.Definition.Version.Fields {
+		for fieldIndex, field := range result.Definition.Fields {
 			namedKind, ok := field.Kind.(*client.NamedKind)
 			if !ok || namedKind.IsArray() {
 				// We only need to process the primary side of a relation here, if the field is not a relation
@@ -782,10 +780,10 @@ func finalizeRelations(
 				continue
 			}
 
-			var otherColDefinition immutable.Option[client.CollectionDefinition]
+			var otherColDefinition immutable.Option[client.CollectionVersion]
 			for _, otherDef := range results {
 				// Check the 'other' schema name, there can only be a one-one mapping in an SDL.
-				if otherDef.Definition.Version.Name == namedKind.Name {
+				if otherDef.Definition.Name == namedKind.Name {
 					otherColDefinition = immutable.Some(otherDef.Definition)
 					break
 				}
@@ -797,45 +795,45 @@ func finalizeRelations(
 				continue
 			}
 
-			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().Version.GetFieldByRelation(
+			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().GetFieldByRelation(
 				field.RelationName.Value(),
-				result.Definition.GetName(),
+				result.Definition.Name,
 				field.Name,
 			)
 
 			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.IsArray() {
 				field.IsPrimary = true
-				result.Definition.Version.Fields[fieldIndex] = field
+				result.Definition.Fields[fieldIndex] = field
 
 				idFieldName := fmt.Sprintf("%s_id", field.Name)
 
-				idField, idFieldExists := result.Definition.Version.GetFieldByName(idFieldName)
+				idField, idFieldExists := result.Definition.GetFieldByName(idFieldName)
 				if !idFieldExists {
-					existingFields := result.Definition.Version.Fields
-					result.Definition.Version.Fields = make(
+					existingFields := result.Definition.Fields
+					result.Definition.Fields = make(
 						[]client.CollectionFieldDescription,
-						len(result.Definition.Version.Fields)+1,
+						len(result.Definition.Fields)+1,
 					)
-					copy(result.Definition.Version.Fields, existingFields[:fieldIndex+1])
-					copy(result.Definition.Version.Fields[fieldIndex+2:], existingFields[fieldIndex+1:])
+					copy(result.Definition.Fields, existingFields[:fieldIndex+1])
+					copy(result.Definition.Fields[fieldIndex+2:], existingFields[fieldIndex+1:])
 
 					// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
 					// does not point to an embedded object.
 					//
 					// It is inserted immediately after the object field to make things nicer for the user.
-					result.Definition.Version.Fields[fieldIndex+1] = client.CollectionFieldDescription{
+					result.Definition.Fields[fieldIndex+1] = client.CollectionFieldDescription{
 						Name:      idFieldName,
 						Kind:      client.FieldKind_DocID,
 						Typ:       defaultCRDTForFieldKind[client.FieldKind_DocID],
 						IsPrimary: true,
 					}
 				} else {
-					for i, field := range result.Definition.Version.Fields {
+					for i, field := range result.Definition.Fields {
 						if field.Name != idField.Name {
 							continue
 						}
 
-						result.Definition.Version.Fields[i].IsPrimary = true
+						result.Definition.Fields[i].IsPrimary = true
 					}
 				}
 			}

@@ -33,8 +33,6 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 						image: Blob @default(blob: "ff0099")
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

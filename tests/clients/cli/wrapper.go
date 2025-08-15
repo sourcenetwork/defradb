@@ -274,7 +274,7 @@ func (w *Wrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
@@ -291,7 +291,7 @@ func (w *Wrapper) AddView(
 	if err != nil {
 		return nil, err
 	}
-	var defs []client.CollectionDefinition
+	var defs []client.CollectionVersion
 	if err := json.Unmarshal(data, &defs); err != nil {
 		return nil, err
 	}
@@ -368,7 +368,7 @@ func (w *Wrapper) GetCollections(
 	if err != nil {
 		return nil, err
 	}
-	var colDesc []client.CollectionDefinition
+	var colDesc []client.CollectionVersion
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}

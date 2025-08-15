@@ -58,7 +58,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 			for colName, numDocs := range demandMap {
 				opts = append(opts, gen.WithTypeDemand(colName, numDocs))
 			}
-			docs, err := gen.AutoGenerate(colsToDefs(collections), opts...)
+			docs, err := gen.AutoGenerate(colsToVersions(collections), opts...)
 			if err != nil {
 				return err
 			}
@@ -135,15 +135,15 @@ func saveBatchToCollections(
 func groupDocsByCollection(docs []gen.GeneratedDoc) map[string][]*client.Document {
 	result := make(map[string][]*client.Document)
 	for _, doc := range docs {
-		result[doc.Col.Version.Name] = append(result[doc.Col.Version.Name], doc.Doc)
+		result[doc.Col.Name] = append(result[doc.Col.Name], doc.Doc)
 	}
 	return result
 }
 
-func colsToDefs(cols []client.Collection) []client.CollectionDefinition {
-	var colDefs []client.CollectionDefinition
+func colsToVersions(cols []client.Collection) []client.CollectionVersion {
+	var colDefs []client.CollectionVersion
 	for _, col := range cols {
-		colDefs = append(colDefs, col.Definition())
+		colDefs = append(colDefs, col.Version())
 	}
 	return colDefs
 }

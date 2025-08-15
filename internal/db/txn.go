@@ -211,7 +211,7 @@ func (txn *Txn) AddView(
 	gqlQuery string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddView(ctx, gqlQuery, sdl, transform)
 }

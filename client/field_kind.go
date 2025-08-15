@@ -50,13 +50,13 @@ type CollectionKind struct {
 }
 
 // NamedKind represents a temporary declaration of a relationship to another
-// [CollectionDefinition].
+// [Collection].
 //
 // This is used only to temporarily describe a relationship, this kind will
 // never be persisted in the store and instead will be converted to one of
 // [CollectionKind], [CollectionKind] or [SelfKind] first.
 type NamedKind struct {
-	// The current name of the related [CollectionDefinition].
+	// The current name of the related [Collection].
 	Name string
 
 	// If true, this side of the relationship points to many related records.

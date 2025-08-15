@@ -32,7 +32,7 @@ type SchemaDefinition struct {
 }
 
 type Collection struct {
-	Definition    client.CollectionDefinition
+	Definition    client.CollectionVersion
 	CreateIndexes []client.IndexCreateRequest
 }
 
@@ -64,5 +64,5 @@ type Parser interface {
 	// Adds the given schema to this parser's model.
 	//
 	// All collections should be provided, not just new/updated ones.
-	SetSchema(ctx context.Context, collections []client.CollectionDefinition) error
+	SetSchema(ctx context.Context, collections []client.CollectionVersion) error
 }

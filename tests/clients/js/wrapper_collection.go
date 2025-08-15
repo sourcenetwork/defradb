@@ -67,19 +67,6 @@ func (c *Collection) CollectionID() string {
 	return res[0].String()
 }
 
-func (c *Collection) Definition() client.CollectionDefinition {
-	promise := c.client.Call("definition")
-	res, err := goji.Await(goji.PromiseValue(promise))
-	if err != nil {
-		panic(err)
-	}
-	var out client.CollectionDefinition
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		panic(err)
-	}
-	return out
-}
-
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
@@ -225,7 +212,7 @@ func (c *Collection) Get(
 	if err := goji.UnmarshalJS(res[0], &docMap); err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Definition())
+	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err
 	}

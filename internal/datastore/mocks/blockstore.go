@@ -74,14 +74,20 @@ type Blockstore_AllKeysChan_Call struct {
 }
 
 // AllKeysChan is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *Blockstore_Expecter) AllKeysChan(ctx interface{}) *Blockstore_AllKeysChan_Call {
 	return &Blockstore_AllKeysChan_Call{Call: _e.mock.On("AllKeysChan", ctx)}
 }
 
 func (_c *Blockstore_AllKeysChan_Call) Run(run func(ctx context.Context)) *Blockstore_AllKeysChan_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -165,15 +171,26 @@ type Blockstore_DeleteBlock_Call struct {
 }
 
 // DeleteBlock is a helper method to define mock.On call
-//   - context1
-//   - cid1
+//   - context1 context.Context
+//   - cid1 cid.Cid
 func (_e *Blockstore_Expecter) DeleteBlock(context1 interface{}, cid1 interface{}) *Blockstore_DeleteBlock_Call {
 	return &Blockstore_DeleteBlock_Call{Call: _e.mock.On("DeleteBlock", context1, cid1)}
 }
 
 func (_c *Blockstore_DeleteBlock_Call) Run(run func(context1 context.Context, cid1 cid.Cid)) *Blockstore_DeleteBlock_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(cid.Cid))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].(cid.Cid)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -222,15 +239,26 @@ type Blockstore_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - context1
-//   - cid1
+//   - context1 context.Context
+//   - cid1 cid.Cid
 func (_e *Blockstore_Expecter) Get(context1 interface{}, cid1 interface{}) *Blockstore_Get_Call {
 	return &Blockstore_Get_Call{Call: _e.mock.On("Get", context1, cid1)}
 }
 
 func (_c *Blockstore_Get_Call) Run(run func(context1 context.Context, cid1 cid.Cid)) *Blockstore_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(cid.Cid))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].(cid.Cid)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -277,15 +305,26 @@ type Blockstore_GetSize_Call struct {
 }
 
 // GetSize is a helper method to define mock.On call
-//   - context1
-//   - cid1
+//   - context1 context.Context
+//   - cid1 cid.Cid
 func (_e *Blockstore_Expecter) GetSize(context1 interface{}, cid1 interface{}) *Blockstore_GetSize_Call {
 	return &Blockstore_GetSize_Call{Call: _e.mock.On("GetSize", context1, cid1)}
 }
 
 func (_c *Blockstore_GetSize_Call) Run(run func(context1 context.Context, cid1 cid.Cid)) *Blockstore_GetSize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(cid.Cid))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].(cid.Cid)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -332,15 +371,26 @@ type Blockstore_Has_Call struct {
 }
 
 // Has is a helper method to define mock.On call
-//   - context1
-//   - cid1
+//   - context1 context.Context
+//   - cid1 cid.Cid
 func (_e *Blockstore_Expecter) Has(context1 interface{}, cid1 interface{}) *Blockstore_Has_Call {
 	return &Blockstore_Has_Call{Call: _e.mock.On("Has", context1, cid1)}
 }
 
 func (_c *Blockstore_Has_Call) Run(run func(context1 context.Context, cid1 cid.Cid)) *Blockstore_Has_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(cid.Cid))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].(cid.Cid)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -367,14 +417,20 @@ type Blockstore_HashOnRead_Call struct {
 }
 
 // HashOnRead is a helper method to define mock.On call
-//   - enabled
+//   - enabled bool
 func (_e *Blockstore_Expecter) HashOnRead(enabled interface{}) *Blockstore_HashOnRead_Call {
 	return &Blockstore_HashOnRead_Call{Call: _e.mock.On("HashOnRead", enabled)}
 }
 
 func (_c *Blockstore_HashOnRead_Call) Run(run func(enabled bool)) *Blockstore_HashOnRead_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bool))
+		var arg0 bool
+		if args[0] != nil {
+			arg0 = args[0].(bool)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -412,15 +468,26 @@ type Blockstore_Put_Call struct {
 }
 
 // Put is a helper method to define mock.On call
-//   - context1
-//   - block
+//   - context1 context.Context
+//   - block blocks.Block
 func (_e *Blockstore_Expecter) Put(context1 interface{}, block interface{}) *Blockstore_Put_Call {
 	return &Blockstore_Put_Call{Call: _e.mock.On("Put", context1, block)}
 }
 
 func (_c *Blockstore_Put_Call) Run(run func(context1 context.Context, block blocks.Block)) *Blockstore_Put_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(blocks.Block))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 blocks.Block
+		if args[1] != nil {
+			arg1 = args[1].(blocks.Block)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -458,15 +525,26 @@ type Blockstore_PutMany_Call struct {
 }
 
 // PutMany is a helper method to define mock.On call
-//   - context1
-//   - blocks1
+//   - context1 context.Context
+//   - blocks1 []blocks.Block
 func (_e *Blockstore_Expecter) PutMany(context1 interface{}, blocks1 interface{}) *Blockstore_PutMany_Call {
 	return &Blockstore_PutMany_Call{Call: _e.mock.On("PutMany", context1, blocks1)}
 }
 
 func (_c *Blockstore_PutMany_Call) Run(run func(context1 context.Context, blocks1 []blocks.Block)) *Blockstore_PutMany_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]blocks.Block))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []blocks.Block
+		if args[1] != nil {
+			arg1 = args[1].([]blocks.Block)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

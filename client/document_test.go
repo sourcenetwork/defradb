@@ -27,25 +27,23 @@ var (
 
 	pref = ccid.NewDefaultSHA256PrefixV1()
 
-	def = CollectionDefinition{
-		Version: CollectionVersion{
-			Name: "User",
-			Fields: []CollectionFieldDescription{
-				{
-					Name: "Name",
-					Typ:  LWW_REGISTER,
-					Kind: FieldKind_NILLABLE_STRING,
-				},
-				{
-					Name: "Age",
-					Typ:  LWW_REGISTER,
-					Kind: FieldKind_NILLABLE_INT,
-				},
-				{
-					Name: "Custom",
-					Typ:  LWW_REGISTER,
-					Kind: FieldKind_NILLABLE_JSON,
-				},
+	def = CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "Name",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_STRING,
+			},
+			{
+				Name: "Age",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_INT,
+			},
+			{
+				Name: "Custom",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_JSON,
 			},
 		},
 	}

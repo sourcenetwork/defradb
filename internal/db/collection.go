@@ -45,7 +45,7 @@ var _ client.Collection = (*collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
 	db             *DB
-	def            client.CollectionDefinition
+	def            client.CollectionVersion
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
 }
@@ -60,7 +60,7 @@ type collection struct {
 func (db *DB) newCollection(desc client.CollectionVersion) (*collection, error) {
 	col := &collection{
 		db:  db,
-		def: client.CollectionDefinition{Version: desc},
+		def: desc,
 	}
 	for _, index := range desc.Indexes {
 		colIndex, err := NewCollectionIndex(col, index)
@@ -85,20 +85,6 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	}
 
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
-}
-
-func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
-	col, err := description.GetCollectionByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	collection, err := db.newCollection(col)
-	if err != nil {
-		return nil, err
-	}
-
-	return collection, nil
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -214,25 +200,6 @@ func (db *DB) getCollections(
 	return collections, nil
 }
 
-// getAllActiveDefinitions returns all queryable collection/views.
-func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
-	cols, err := description.GetActiveCollections(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	definitions := make([]client.CollectionDefinition, len(cols))
-	for i, col := range cols {
-		collection, err := db.newCollection(col)
-		if err != nil {
-			return nil, err
-		}
-		definitions[i] = collection.Definition()
-	}
-
-	return definitions, nil
-}
-
 // GetAllDocIDs returns all the document IDs that exist in the collection.
 //
 // @todo: We probably need a lock on the collection for this kind of op since
@@ -342,7 +309,7 @@ func (c *collection) getAllDocIDsChan(
 
 // Version returns the client.CollectionVersion.
 func (c *collection) Version() client.CollectionVersion {
-	return c.Definition().Version
+	return c.def
 }
 
 // Name returns the collection name.
@@ -357,10 +324,6 @@ func (c *collection) VersionID() string {
 
 func (c *collection) CollectionID() string {
 	return c.Version().CollectionID
-}
-
-func (c *collection) Definition() client.CollectionDefinition {
-	return c.def
 }
 
 // Create a new document.
@@ -714,7 +677,7 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldDescription, valid := c.Definition().GetFieldByName(k)
+			fieldDescription, valid := c.Version().GetFieldByName(k)
 			if !valid {
 				return client.NewErrFieldNotExist(k)
 			}
@@ -795,7 +758,7 @@ func (c *collection) save(
 		doc.SetHead(link.Cid)
 	})
 
-	if c.def.Version.IsBranchable {
+	if c.def.IsBranchable {
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
@@ -832,7 +795,7 @@ func (c *collection) save(
 func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	ctx context.Context,
 	docID string,
-	fieldDescription client.FieldDefinition,
+	fieldDescription client.CollectionFieldDescription,
 	value any,
 ) error {
 	if fieldDescription.Kind != client.FieldKind_DocID {
@@ -843,7 +806,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	objFieldDescription, ok := c.Definition().GetFieldByName(
+	objFieldDescription, ok := c.Version().GetFieldByName(
 		strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID),
 	)
 	if !ok {
@@ -853,13 +816,13 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, _, err := client.GetDefinitionFromStore(ctx, c.db, c.Definition(), objFieldDescription.Kind)
+	otherCol, _, err := client.GetCollectionFromStore(ctx, c.db, c.Version(), objFieldDescription.Kind)
 	if err != nil {
 		return err
 	}
 
-	otherObjFieldDescription, otherFieldExists := otherCol.Version.GetFieldByRelation(
-		fieldDescription.RelationName,
+	otherObjFieldDescription, otherFieldExists := otherCol.GetFieldByRelation(
+		fieldDescription.RelationName.Value(),
 		c.Name(),
 		objFieldDescription.Name,
 	)
@@ -919,7 +882,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		if err != nil {
 			return err
 		}
-		return NewErrOneOneAlreadyLinked(docID, existingDocument.GetID(), objFieldDescription.RelationName)
+		return NewErrOneOneAlreadyLinked(docID, existingDocument.GetID(), objFieldDescription.RelationName.Value())
 	}
 
 	err = selectionPlan.Close()

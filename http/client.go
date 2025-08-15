@@ -176,7 +176,7 @@ func (c *Client) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	methodURL := c.http.apiURL.JoinPath("view")
 
 	body, err := json.Marshal(addViewRequest{query, sdl, transform})
@@ -189,7 +189,7 @@ func (c *Client) AddView(
 		return nil, err
 	}
 
-	var descriptions []client.CollectionDefinition
+	var descriptions []client.CollectionVersion
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (c *Client) GetCollections(
 	if err != nil {
 		return nil, err
 	}
-	var descriptions []client.CollectionDefinition
+	var descriptions []client.CollectionVersion
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
