@@ -50,6 +50,7 @@ func TransactionCommit(txnPtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
 	h := cgo.Handle(txnPtr)
+	defer h.Delete()
 	txn := h.Value().(client.Txn) //nolint:forcetypeassert
 
 	err := txn.Commit(ctx)
@@ -64,6 +65,7 @@ func TransactionCommit(txnPtr C.uintptr_t) *C.Result {
 func TransactionDiscard(txnPtr C.uintptr_t) {
 	ctx := context.Background()
 	h := cgo.Handle(txnPtr)
+	defer h.Delete()
 	txn := h.Value().(client.Txn) //nolint:forcetypeassert
 	txn.Discard(ctx)
 }

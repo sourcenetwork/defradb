@@ -100,7 +100,8 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) GoNod
 
 func getStoreFromPointer(nodePtr C.uintptr_t) client.Store {
 	h := cgo.Handle(nodePtr)
-	switch v := h.Value().(type) {
+	v := h.Value()
+	switch v := v.(type) {
 	case *node.Node:
 		return v.DB
 	case client.Txn:

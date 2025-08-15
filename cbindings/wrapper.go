@@ -64,6 +64,7 @@ import (
 	"fmt"
 	"runtime/cgo"
 	"strings"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -79,6 +80,8 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
+var txnHandleMap = sync.Map{} // map[uint64]cgo.Handle
+
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
 
@@ -88,9 +91,10 @@ type CWrapper struct {
 }
 
 func NewCWrapper(node *node.Node) (*CWrapper, error) {
+	handle := cgo.NewHandle(node)
 	return &CWrapper{
 		node,
-		cgo.NewHandle(node),
+		handle,
 	}, nil
 }
 
@@ -261,7 +265,8 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 }
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	res := ConvertAndFreeCResult(C.AddSchema(C.uintptr_t(w.handle), C.CString(schema)))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.AddSchema(callHandle, C.CString(schema)))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -284,7 +289,8 @@ func (w *CWrapper) AddDACPolicy(
 	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(cPolicy))
 
-	res := ConvertAndFreeCResult(C.ACPAddDACPolicy(C.uintptr_t(w.handle), cIdentity, cPolicy))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ACPAddDACPolicy(callHandle, cIdentity, cPolicy))
 
 	if res.Status != 0 {
 		return client.AddPolicyResult{}, errors.New(res.Error)
@@ -316,8 +322,9 @@ func (w *CWrapper) AddDACActorRelationship(
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
 
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPAddDACActorRelationship(
-		C.uintptr_t(w.handle),
+		callHandle,
 		cIdentity,
 		cCollectionName,
 		cDocID,
@@ -356,8 +363,9 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
 
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDeleteDACActorRelationship(
-		C.uintptr_t(w.handle),
+		callHandle,
 		cIdentity,
 		cCollectionName,
 		cDocID,
@@ -485,7 +493,8 @@ func (w *CWrapper) PatchCollection(
 	cMigration := C.CString(migrationStr)
 	defer C.free(unsafe.Pointer(cMigration))
 
-	res := ConvertAndFreeCResult(C.CollectionPatch(C.uintptr_t(w.handle), cPatch, cMigration, opts))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.CollectionPatch(callHandle, cPatch, cMigration, opts))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -523,7 +532,8 @@ func (w *CWrapper) AddView(
 		return []client.CollectionVersion{}, err
 	}
 
-	res := ConvertAndFreeCResult(C.ViewAdd(C.uintptr_t(w.handle), cQuery, cSDL, cTransform))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransform))
 
 	if res.Status != 0 {
 		return []client.CollectionVersion{}, errors.New(res.Error)
@@ -550,7 +560,8 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	defer C.free(unsafe.Pointer(collectionID))
 	defer C.free(unsafe.Pointer(name))
 
-	res := ConvertAndFreeCResult(C.ViewRefresh(C.uintptr_t(w.handle), name, collectionID, versionID, cGetInactive))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, name, collectionID, versionID, cGetInactive))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -570,7 +581,8 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) e
 	defer C.free(unsafe.Pointer(dst))
 	defer C.free(unsafe.Pointer(lens))
 
-	res := ConvertAndFreeCResult(C.LensSet(C.uintptr_t(w.handle), src, dst, lens))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.LensSet(callHandle, src, dst, lens))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -601,7 +613,6 @@ func (w *CWrapper) GetCollections(
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	identity := identityFromContext(ctx)
-
 	var name string
 	if options.Name.HasValue() {
 		name = options.Name.Value()
@@ -646,7 +657,8 @@ func (w *CWrapper) GetCollections(
 	opts.identity = cIdentity
 	opts.getInactive = C.int(includeInactive)
 
-	res := ConvertAndFreeCResult(C.CollectionDescribe(C.uintptr_t(w.handle), opts))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, opts))
 
 	if res.Status != 0 {
 		return []client.Collection{}, errors.New(res.Error) //nolint:goerr113
@@ -668,7 +680,8 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 	colName := C.CString("")
 	defer C.free(unsafe.Pointer(colName))
 
-	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(w.handle), colName))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.IndexList(callHandle, colName))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -706,7 +719,8 @@ func (w *CWrapper) ExecRequest(
 	defer C.free(unsafe.Pointer(cOperation))
 	defer C.free(unsafe.Pointer(cVariables))
 
-	result := C.ExecuteQuery(C.uintptr_t(w.handle), cQuery, cIdentity, cOperation, cVariables)
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	result := C.ExecuteQuery(callHandle, cQuery, cIdentity, cOperation, cVariables)
 	res := ConvertAndFreeCResult(result)
 
 	if res.Status == 2 {
@@ -743,8 +757,11 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 		return nil, errors.New(errText)
 	}
 
-	clientTxn := cgo.Handle(res.txnPtr).Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, cgo.Handle(res.txnPtr)}
+	handle := cgo.Handle(res.txnPtr)
+	clientTxn := handle.Value().(client.Txn)
+
+	retTxn := &Transaction{w, clientTxn, handle}
+	txnHandleMap.Store(retTxn.ID(), handle)
 
 	return retTxn, nil
 }
@@ -764,8 +781,11 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 		return nil, errors.New(errText)
 	}
 
-	clientTxn := cgo.Handle(res.txnPtr).Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, cgo.Handle(res.txnPtr)}
+	handle := cgo.Handle(res.txnPtr)
+	clientTxn := handle.Value().(client.Txn)
+
+	retTxn := &Transaction{w, clientTxn, handle}
+	txnHandleMap.Store(retTxn.ID(), handle)
 
 	return retTxn, nil
 }
@@ -791,7 +811,8 @@ func (w *CWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
 }
 
 func (w *CWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	res := ConvertAndFreeCResult(C.NodeIdentity(C.uintptr_t(w.handle)))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.NodeIdentity(callHandle))
 
 	if res.Status != 0 {
 		return immutable.None[identity.PublicRawIdentity](), errors.New(res.Error)
@@ -817,7 +838,8 @@ func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey 
 	defer C.free(unsafe.Pointer(cKeyType))
 	defer C.free(unsafe.Pointer(cBlockCid))
 
-	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.BlockVerifySignature(callHandle, cKeyType, cPubKey, cBlockCid))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

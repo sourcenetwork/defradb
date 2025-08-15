@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime/cgo"
 	"strings"
 	"unsafe"
 
@@ -30,6 +31,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 // unmarshalResult is a helper function that unmarshals JSON string into another type
@@ -143,6 +145,10 @@ func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]an
 	return result, err
 }
 
+// getTxnHandleOrNodeHandle is a helper function that looks at a context to see if a txn
+// is present. If so,
+func getTxnHandleOrNodeHandle()
+
 // convertGoCResultToGQLResult is a helper function that make a GQLResult from a GoCResult
 func convertGoCResultToGQLResult(res GoCResult) (client.GQLResult, error) {
 	var gql client.GQLResult
@@ -184,4 +190,14 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 		}
 	}()
 	return ch
+}
+
+func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
+	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
+		txnID := txn.ID()
+		if h, ok := txnHandleMap.Load(txnID); ok {
+			return C.uintptr_t(h.(cgo.Handle))
+		}
+	}
+	return C.uintptr_t(h)
 }

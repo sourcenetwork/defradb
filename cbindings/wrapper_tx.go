@@ -14,7 +14,6 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result* TransactionCommit(uintptr_t txnPtr);
 extern void TransactionDiscard(uintptr_t txnPtr);
 */
@@ -25,6 +24,7 @@ import (
 	"errors"
 	"runtime/cgo"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -59,12 +59,12 @@ func (txn *Transaction) Discard(ctx context.Context) {
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.PrintDump(ctx)
 }
 
 func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.AddDACPolicy(ctx, policy)
 }
 
@@ -75,7 +75,7 @@ func (txn *Transaction) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
@@ -86,22 +86,22 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.GetNodeIdentity(ctx)
 }
 
 func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
 func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.AddSchema(ctx, sdl)
 }
 
@@ -110,12 +110,12 @@ func (txn *Transaction) PatchCollection(
 	patch string,
 	migration immutable.Option[model.Lens],
 ) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.PatchCollection(ctx, patch, migration)
 }
 
 func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.SetActiveCollectionVersion(ctx, version)
 }
 
@@ -125,17 +125,17 @@ func (txn *Transaction) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionVersion, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transform)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.RefreshViews(ctx, options)
 }
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.SetMigration(ctx, config)
 }
 
@@ -147,7 +147,7 @@ func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
 ) (client.Collection, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.GetCollectionByName(ctx, name)
 }
 
@@ -155,14 +155,14 @@ func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.GetCollections(ctx, options)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.GetAllIndexes(ctx)
 }
 
@@ -171,16 +171,68 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
 
 func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.BasicImport(ctx, filepath)
 }
 
 func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.BasicExport(ctx, config)
+}
+
+func (txn *Transaction) Blockstore() datastore.Blockstore {
+	return txn.tx.(datastore.Txn).Blockstore()
+}
+
+func (txn *Transaction) Datastore() corekv.ReaderWriter {
+	return txn.tx.(datastore.Txn).Datastore()
+}
+
+func (txn *Transaction) Encstore() datastore.Blockstore {
+	return txn.tx.(datastore.Txn).Encstore()
+}
+
+func (txn *Transaction) Headstore() corekv.ReaderWriter {
+	return txn.tx.(datastore.Txn).Headstore()
+}
+
+func (txn *Transaction) Peerstore() corekv.ReaderWriter {
+	return txn.tx.(datastore.Txn).Peerstore()
+}
+
+func (txn *Transaction) Rootstore() corekv.ReaderWriter {
+	return txn.tx.(datastore.Txn).Rootstore()
+}
+
+func (txn *Transaction) Systemstore() corekv.ReaderWriter {
+	return txn.tx.(datastore.Txn).Systemstore()
+}
+
+func (txn *Transaction) OnSuccess(fn func()) {
+	txn.tx.(datastore.Txn).OnSuccess(fn)
+}
+
+func (txn *Transaction) OnError(fn func()) {
+	txn.tx.(datastore.Txn).OnError(fn)
+}
+
+func (txn *Transaction) OnDiscard(fn func()) {
+	txn.tx.(datastore.Txn).OnDiscard(fn)
+}
+
+func (txn *Transaction) OnSuccessAsync(fn func()) {
+	txn.tx.(datastore.Txn).OnSuccessAsync(fn)
+}
+
+func (txn *Transaction) OnErrorAsync(fn func()) {
+	txn.tx.(datastore.Txn).OnErrorAsync(fn)
+}
+
+func (txn *Transaction) OnDiscardAsync(fn func()) {
+	txn.tx.(datastore.Txn).OnDiscardAsync(fn)
 }
