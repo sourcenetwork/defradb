@@ -72,9 +72,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/node"
 
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
@@ -95,7 +95,6 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 }
 
 func (w *CWrapper) PeerInfo() peer.AddrInfo {
-
 	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle)))
 
 	if res.Status != 0 {

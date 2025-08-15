@@ -65,11 +65,10 @@ func returnNewTxnResultC(status int, error string, n client.Txn) C.NewTxnResult 
 		result.error = nil
 	}
 	if n != nil {
-		result.txnPtr = C.uintptr_t(0)
-	} else {
 		result.txnPtr = C.uintptr_t(cgo.NewHandle(n))
+	} else {
+		result.txnPtr = C.uintptr_t(0)
 	}
-
 	return result
 }
 
