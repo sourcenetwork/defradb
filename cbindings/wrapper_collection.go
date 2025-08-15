@@ -440,7 +440,7 @@ func (c *Collection) Get(
 	}
 
 	jsonStr := res.Value
-	doc, err := client.NewDocWithID(docID, c.Definition())
+	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
