@@ -30,7 +30,7 @@ import (
 //export P2PInfo
 func P2PInfo(nodePtr C.uintptr_t) *C.Result {
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	info := node.Peer.PeerInfo()
 	return returnC(marshalJSONToGoCResult(info))
 }
@@ -39,7 +39,7 @@ func P2PInfo(nodePtr C.uintptr_t) *C.Result {
 func P2PgetAllReplicators(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	reps, err := node.Peer.GetAllReplicators(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -58,7 +58,7 @@ func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.char
 	}
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.SetReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -77,7 +77,7 @@ func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.c
 	}
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.DeleteReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -91,7 +91,7 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.AddP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -105,7 +105,7 @@ func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.Peer.RemoveP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -118,7 +118,7 @@ func P2PcollectionGetAll(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
 	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	cols, err := node.Peer.GetAllP2PCollections(ctx)
 
 	if err != nil {

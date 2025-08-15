@@ -121,7 +121,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 //export NodeClose
 func NodeClose(nodePtr C.uintptr_t) *C.Result {
 	h := cgo.Handle(nodePtr)
-	n := h.Value().(*node.Node)
+	n := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := n.Close(context.Background())
 	if err != nil {
 		return returnC(GoCResult{1, fmt.Sprintf(errStoppingNode, err), ""})

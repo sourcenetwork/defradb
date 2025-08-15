@@ -44,10 +44,6 @@ const (
 	errInvalidSubscriptionID string = "error: invalid subscription ID"
 	errGEttingSubscription   string = "error: could not retrieve subscription"
 
-	// Txn
-	errCreatingTxn     string = "error creating transaction: %v"
-	errTxnDoesNotExist string = "error: transaction with ID %v does not exist"
-
 	// Generic
 	errInvalidLensConfig string = "invalid lens configuration: %v"
 	errMarshallingJSON   string = "error marshalling JSON: %v"
