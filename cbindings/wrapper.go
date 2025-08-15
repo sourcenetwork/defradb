@@ -505,7 +505,7 @@ func (w *CWrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 
 	transformStr, err := stringFromLensOption(transform)
 	cTransform := C.CString(transformStr)
@@ -516,18 +516,18 @@ func (w *CWrapper) AddView(
 	defer C.free(unsafe.Pointer(cSDL))
 
 	if err != nil {
-		return []client.CollectionDefinition{}, err
+		return []client.CollectionVersion{}, err
 	}
 
 	res := ConvertAndFreeCResult(C.ViewAdd(C.uintptr_t(w.handle), cQuery, cSDL, cTransform))
 
 	if res.Status != 0 {
-		return []client.CollectionDefinition{}, errors.New(res.Error)
+		return []client.CollectionVersion{}, errors.New(res.Error)
 	}
 
-	colDefRes, err := unmarshalResult[[]client.CollectionDefinition](res.Value)
+	colDefRes, err := unmarshalResult[[]client.CollectionVersion](res.Value)
 	if err != nil {
-		return []client.CollectionDefinition{}, err
+		return []client.CollectionVersion{}, err
 	}
 	return colDefRes, nil
 }
@@ -648,7 +648,7 @@ func (w *CWrapper) GetCollections(
 		return []client.Collection{}, errors.New(res.Error) //nolint:goerr113
 	}
 
-	defs, err := unmarshalResult[[]client.CollectionDefinition](res.Value)
+	defs, err := unmarshalResult[[]client.CollectionVersion](res.Value)
 	if err != nil {
 		return nil, err
 	}

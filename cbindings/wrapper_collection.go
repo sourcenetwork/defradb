@@ -40,12 +40,12 @@ import (
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
-	def client.CollectionDefinition
+	def client.CollectionVersion
 	w   *CWrapper
 }
 
 func (c *Collection) Version() client.CollectionVersion {
-	return c.def.Version
+	return c.def
 }
 
 func (c *Collection) Name() string {
@@ -58,10 +58,6 @@ func (c *Collection) VersionID() string {
 
 func (c *Collection) CollectionID() string {
 	return c.Version().CollectionID
-}
-
-func (c *Collection) Definition() client.CollectionDefinition {
-	return c.def
 }
 
 func (c *Collection) Create(

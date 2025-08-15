@@ -119,7 +119,7 @@ func CollectionCreate(
 	jsonString := strings.TrimSpace(C.GoString(json))
 	if strings.HasPrefix(jsonString, "[") {
 		// Multiple documents
-		docs, err := client.NewDocsFromJSON([]byte(jsonString), col.Definition())
+		docs, err := client.NewDocsFromJSON([]byte(jsonString), col.Version())
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -129,7 +129,7 @@ func CollectionCreate(
 		}
 	} else {
 		// Single document
-		doc, err := client.NewDocFromJSON([]byte(jsonString), col.Definition())
+		doc, err := client.NewDocFromJSON([]byte(jsonString), col.Version())
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
