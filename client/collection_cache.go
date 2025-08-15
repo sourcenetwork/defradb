@@ -11,10 +11,7 @@
 package client
 
 import (
-	"context"
 	"fmt"
-
-	"github.com/sourcenetwork/immutable"
 )
 
 // CollectionCache is an object providing easy access to cached collections.
@@ -87,71 +84,4 @@ func GetCollection(
 	}
 
 	return CollectionVersion{}, false
-}
-
-// GetCollectionFromStore returns the definition that the given [FieldKind] points to, if it is found
-// in the given store.
-//
-// If the related definition is not found, or an error occurs, default and false will be returned.
-func GetCollectionFromStore(
-	ctx context.Context,
-	store TxnStore,
-	host CollectionVersion,
-	kind FieldKind,
-) (CollectionVersion, bool, error) {
-	switch typedKind := kind.(type) {
-	case *NamedKind:
-		col, err := store.GetCollectionByName(ctx, typedKind.Name)
-		if err != nil {
-			return CollectionVersion{}, false, err
-		}
-
-		return col.Version(), true, nil
-
-	case *CollectionKind:
-		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			CollectionID: immutable.Some(typedKind.CollectionID),
-		})
-
-		if len(cols) == 0 {
-			return CollectionVersion{}, false, ErrNotFound
-		}
-
-		if err != nil {
-			return CollectionVersion{}, false, err
-		}
-
-		return cols[0].Version(), true, nil
-
-	case *SelfKind:
-		if typedKind.RelativeID == "" {
-			return host, true, nil
-		}
-
-		cols, err := store.GetCollections(ctx, CollectionFetchOptions{
-			CollectionSetID: immutable.Some(host.CollectionSet.Value().CollectionSetID),
-		})
-		if err != nil {
-			return CollectionVersion{}, false, err
-		}
-
-		for _, col := range cols {
-			if col.Version().CollectionID == host.CollectionID {
-				continue
-			}
-
-			if col.Version().CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
-				continue
-			}
-
-			if fmt.Sprint(col.Version().CollectionSet.Value().RelativeID) == typedKind.RelativeID {
-				return col.Version(), true, nil
-			}
-		}
-
-	default:
-		// no-op
-	}
-
-	return CollectionVersion{}, false, nil
 }

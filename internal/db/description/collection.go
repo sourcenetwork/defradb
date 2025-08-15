@@ -13,6 +13,7 @@ package description
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 
 	"github.com/sourcenetwork/corekv"
@@ -150,6 +151,30 @@ func GetCollectionByName(
 	cache.Add(col)
 
 	return col, err
+}
+
+func GetActiveCollectionByCollectionID(
+	ctx context.Context,
+	collectionID string,
+) (client.CollectionVersion, error) {
+	cache := getCollectionCache(ctx)
+	col, ok := cache.ActiveCollectionsByID[collectionID]
+	if ok {
+		return col, nil
+	}
+
+	cols, err := GetCollectionsByCollectionID(ctx, collectionID)
+	if err != nil {
+		return client.CollectionVersion{}, err
+	}
+
+	for _, col := range cols {
+		if col.IsActive {
+			return col, nil
+		}
+	}
+
+	return client.CollectionVersion{}, corekv.ErrNotFound
 }
 
 // GetCollectionsByCollectionID returns all collection versions for the given id.
@@ -370,4 +395,61 @@ func GetCollectionVersionIDs(
 	}
 
 	return collectionIDs, iter.Close()
+}
+
+// GetRelatedCollection returns the collection that the given [FieldKind] points to, if it is found in the
+// given [CollectionCache].
+//
+// If the related collection is not found, default and false will be returned.
+func GetRelatedCollection(
+	ctx context.Context,
+	host client.CollectionVersion,
+	kind client.FieldKind,
+) (client.CollectionVersion, bool, error) {
+	switch typedKind := kind.(type) {
+	case *client.NamedKind:
+		col, err := GetCollectionByName(ctx, typedKind.Name)
+		if errors.Is(err, corekv.ErrNotFound) {
+			return client.CollectionVersion{}, false, nil
+		}
+
+		return col, true, err
+
+	case *client.CollectionKind:
+		col, err := GetActiveCollectionByCollectionID(ctx, typedKind.CollectionID)
+		if errors.Is(err, corekv.ErrNotFound) {
+			return client.CollectionVersion{}, false, nil
+		}
+
+		return col, true, err
+
+	case *client.SelfKind:
+		if typedKind.RelativeID == "" {
+			return host, true, nil
+		}
+
+		cols, err := GetActiveCollections(ctx)
+		if err != nil {
+			return client.CollectionVersion{}, false, err
+		}
+
+		for _, col := range cols {
+			if col.CollectionID == host.CollectionID {
+				continue
+			}
+
+			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
+				continue
+			}
+
+			if fmt.Sprint(col.CollectionSet.Value().RelativeID) == typedKind.RelativeID {
+				return col, true, nil
+			}
+		}
+
+	default:
+		// no-op
+	}
+
+	return client.CollectionVersion{}, false, nil
 }

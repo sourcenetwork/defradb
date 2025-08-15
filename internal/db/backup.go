@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
@@ -135,12 +136,6 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 		}
 	}
 
-	definitions := make([]client.CollectionVersion, 0, len(cols))
-	for _, col := range cols {
-		definitions = append(definitions, col.Version())
-	}
-	definitionCache := client.NewCollectionCache(definitions)
-
 	tempFile := config.Filepath + ".temp"
 	f, err := os.Create(tempFile)
 	if err != nil {
@@ -226,12 +221,11 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignDef, ok := client.GetCollection(definitionCache, col.Version(), field.Kind)
-							if !ok {
-								// If the collection is not in the cache the backup was not configured to
-								// handle this collection.
-								continue
+							foreignDef, _, err := description.GetRelatedCollection(ctx, col.Version(), field.Kind)
+							if err != nil {
+								return err
 							}
+
 							foreignCol, err := db.newCollection(foreignDef)
 							if err != nil {
 								return err
