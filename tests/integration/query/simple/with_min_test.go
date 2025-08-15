@@ -100,9 +100,9 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JavaScript does not support 64 bit int
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
 		}),
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GraphQL does not support 64 bit int

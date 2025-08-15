@@ -40,8 +40,6 @@ type DatabaseType string
 // KMSType is the type of KMS to use.
 type KMSType string
 
-type ClientType string
-
 // DocumentACPType is the type of document acp to use.
 type DocumentACPType string
 

@@ -71,7 +71,7 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 		return false, err
 	}
 
-	if matcher.s.GetClientType() == testUtils.GoClientType {
+	if matcher.s.GetClientType() == state.GoClientType {
 		actualSigBytes, ok := actual.([]byte)
 		if !ok {
 			matcher.castFailed = true
@@ -140,7 +140,7 @@ func (matcher *identityMatcher) Match(actual any) (bool, error) {
 	ident := matcher.s.GetIdentity(matcher.identity)
 
 	actualString := ""
-	if matcher.s.GetClientType() == testUtils.GoClientType {
+	if matcher.s.GetClientType() == state.GoClientType {
 		actualBytes, ok := actual.([]byte)
 		if !ok {
 			return false, fmt.Errorf("expected actual to be a byte slice, but got %T", actual)

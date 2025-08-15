@@ -25,7 +25,7 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
-						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
+						created: DateTime @default(dateTime: "2000-07-23T03:00:00.000Z")
 						name: String @default(string: "Bob")
 						age: Int @default(int: 10)
 						points: Float @default(float: 30)

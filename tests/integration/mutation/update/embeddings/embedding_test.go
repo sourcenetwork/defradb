@@ -29,7 +29,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 			// the HTTP and CLI clients don't receive that updated docID. This causes the waitForUpdateEvents
 			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
 			// and update the test accordingly.
-			testUtils.GoClientType,
+			state.GoClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -107,7 +107,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 			// the HTTP and CLI clients don't receive that updated docID. This causes the waitForUpdateEvents
 			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
 			// and update the test accordingly.
-			testUtils.GoClientType,
+			state.GoClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -162,7 +162,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 			// the HTTP and CLI clients don't receive that updated docID. This causes the waitForUpdateEvents
 			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
 			// and update the test accordingly.
-			testUtils.GoClientType,
+			state.GoClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

@@ -29,7 +29,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
-				testUtils.GoClientType,
+				state.GoClientType,
 			},
 		),
 		Actions: []any{
@@ -137,7 +137,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
-				testUtils.GoClientType,
+				state.GoClientType,
 			},
 		),
 		Actions: []any{

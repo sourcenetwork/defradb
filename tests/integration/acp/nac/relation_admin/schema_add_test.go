@@ -26,10 +26,10 @@ func TestNAC_AdminRelation_CanAddSchema(t *testing.T) {
 			[]state.ClientType{
 				// TODO: C binding test harness must be reworked to support this test
 				// See: https://github.com/sourcenetwork/defradb/issues/3919
-				testUtils.GoClientType,
-				testUtils.CLIClientType,
-				testUtils.HTTPClientType,
-				testUtils.JSClientType,
+				state.GoClientType,
+				state.CLIClientType,
+				state.HTTPClientType,
+				state.JSClientType,
 			},
 		),
 

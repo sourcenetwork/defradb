@@ -28,10 +28,10 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// TODO: C binding test harness must be reworked to support this test
 			// See: https://github.com/sourcenetwork/defradb/issues/3919
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -80,10 +80,10 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// TODO: C binding test harness must be reworked to support this test
 			// See: https://github.com/sourcenetwork/defradb/issues/3919
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -115,10 +115,10 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// TODO: C binding test harness must be reworked to support this test
 			// See: https://github.com/sourcenetwork/defradb/issues/3919
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

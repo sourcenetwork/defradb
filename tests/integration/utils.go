@@ -181,19 +181,19 @@ func ExecuteTestCase(
 
 	var clients []state.ClientType
 	if httpClient {
-		clients = append(clients, HTTPClientType)
+		clients = append(clients, state.HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, GoClientType)
+		clients = append(clients, state.GoClientType)
 	}
 	if cliClient {
-		clients = append(clients, CLIClientType)
+		clients = append(clients, state.CLIClientType)
 	}
 	if jsClient {
-		clients = append(clients, JSClientType)
+		clients = append(clients, state.JSClientType)
 	}
 	if cClient {
-		clients = append(clients, CClientType)
+		clients = append(clients, state.CClientType)
 	}
 
 	var databases []state.DatabaseType
