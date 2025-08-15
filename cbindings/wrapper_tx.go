@@ -22,6 +22,7 @@ import "C"
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime/cgo"
 
 	"github.com/sourcenetwork/corekv"
@@ -55,7 +56,9 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 }
 
 func (txn *Transaction) Discard(ctx context.Context) {
+	fmt.Println("TX-Discard")
 	C.TransactionDiscard(C.uintptr_t(txn.handle))
+	fmt.Println("TX-Discard done")
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
@@ -171,6 +174,7 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
+	fmt.Println("TX-ExecRequest")
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }

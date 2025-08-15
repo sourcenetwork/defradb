@@ -64,8 +64,16 @@ func TransactionCommit(txnPtr C.uintptr_t) *C.Result {
 //export TransactionDiscard
 func TransactionDiscard(txnPtr C.uintptr_t) {
 	ctx := context.Background()
+
+	// Avoid panic in the case of a double discard
+	defer func() {
+		if r := recover(); r != nil {
+			return
+		}
+	}()
+
 	h := cgo.Handle(txnPtr)
-	defer h.Delete()
-	txn := h.Value().(client.Txn) //nolint:forcetypeassert
+	txn := h.Value().(client.Txn)
 	txn.Discard(ctx)
+	h.Delete()
 }
