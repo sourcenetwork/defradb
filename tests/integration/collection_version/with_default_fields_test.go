@@ -12,6 +12,7 @@ package collection_version
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -53,13 +54,13 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 								Name:         "age",
 								Kind:         client.FieldKind_NILLABLE_INT,
 								Typ:          client.LWW_REGISTER,
-								DefaultValue: float64(10),
+								DefaultValue: int32(10),
 							},
 							{
 								Name:         "created",
 								Kind:         client.FieldKind_NILLABLE_DATETIME,
 								Typ:          client.LWW_REGISTER,
-								DefaultValue: "2000-07-23T03:00:00Z",
+								DefaultValue: time.Date(2000, time.July, 23, 3, 0, 0, 0, time.UTC),
 							},
 							{
 								Name:         "image",

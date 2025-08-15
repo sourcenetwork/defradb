@@ -87,6 +87,9 @@ func SaveCollection(
 		}
 	}
 
+	cache := getCollectionCache(ctx)
+	cache.Add(desc)
+
 	return nil
 }
 
@@ -94,6 +97,12 @@ func GetCollectionByID(
 	ctx context.Context,
 	id string,
 ) (client.CollectionVersion, error) {
+	cache := getCollectionCache(ctx)
+	col, ok := cache.CollectionsByVersionID[id]
+	if ok {
+		return col, nil
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	key := keys.NewCollectionKey(id)
@@ -102,11 +111,12 @@ func GetCollectionByID(
 		return client.CollectionVersion{}, err
 	}
 
-	var col client.CollectionVersion
 	err = json.Unmarshal(buf, &col)
 	if err != nil {
 		return client.CollectionVersion{}, err
 	}
+
+	cache.Add(col)
 
 	return col, nil
 }
@@ -118,6 +128,12 @@ func GetCollectionByName(
 	ctx context.Context,
 	name string,
 ) (client.CollectionVersion, error) {
+	cache := getCollectionCache(ctx)
+	col, ok := cache.ActiveCollectionsByName[name]
+	if ok {
+		return col, nil
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	nameKey := keys.NewCollectionNameKey(name)
@@ -126,7 +142,14 @@ func GetCollectionByName(
 		return client.CollectionVersion{}, err
 	}
 
-	return GetCollectionByID(ctx, string(idBuf))
+	col, err = GetCollectionByID(ctx, string(idBuf))
+	if err != nil {
+		return client.CollectionVersion{}, err
+	}
+
+	cache.Add(col)
+
+	return col, err
 }
 
 // GetCollectionsByCollectionID returns all collection versions for the given id.
@@ -136,6 +159,15 @@ func GetCollectionsByCollectionID(
 	ctx context.Context,
 	collectionID string,
 ) ([]client.CollectionVersion, error) {
+	cache := getCollectionCache(ctx)
+	if cache.IsFullyPopulated {
+		return cache.CollectionsByID[collectionID], nil // todo - handle panic?
+	}
+	// It is not practical to cache a sub set of collections at the moment as figuring
+	// out whether the set is complete or not if not possible without fetching the versionIDs
+	// anyway.  So we do not cache collections by CollectionID and instead use the cache one-by-one
+	// in the GetCollectionByID call.
+
 	versionIDs, err := GetCollectionVersionIDs(ctx, collectionID)
 	if err != nil {
 		return nil, err
@@ -163,6 +195,11 @@ func GetCollectionsByCollectionID(
 func GetCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
+	cache := getCollectionCache(ctx)
+	if cache.IsFullyPopulated {
+		return cache.Collections, nil
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -206,6 +243,8 @@ func GetCollections(
 		cols = append(cols, col)
 	}
 
+	cache.AddAll(cols)
+
 	return cols, iter.Close()
 }
 
@@ -213,6 +252,11 @@ func GetCollections(
 func GetActiveCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
+	cache := getCollectionCache(ctx)
+	if cache.IsActiveCollectionsPopulated {
+		return cache.ActiveCollections, nil
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -255,6 +299,8 @@ func GetActiveCollections(
 	// Sort the results by ID, so that the order matches that of [GetCollections].
 	sort.Slice(cols, func(i, j int) bool { return cols[i].VersionID < cols[j].VersionID })
 
+	cache.AddAllActive(cols)
+
 	return cols, iter.Close()
 }
 
@@ -264,6 +310,11 @@ func HasCollectionByName(
 	ctx context.Context,
 	name string,
 ) (bool, error) {
+	cache := getCollectionCache(ctx)
+	if cache.IsActiveCollectionsPopulated {
+		_, ok := cache.ActiveCollectionsByName[name]
+		return ok, nil
+	}
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	nameKey := keys.NewCollectionNameKey(name)
@@ -274,6 +325,15 @@ func GetCollectionVersionIDs(
 	ctx context.Context,
 	collectionID string,
 ) ([]string, error) {
+	cache := getCollectionCache(ctx)
+	if cache.IsFullyPopulated {
+		result := []string{}
+		for _, col := range cache.CollectionsByID[collectionID] { // todo - handle panic?
+			result = append(result, col.VersionID)
+		}
+		return result, nil
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	// Add the collection id as the first version here.
