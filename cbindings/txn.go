@@ -29,7 +29,7 @@ func TransactionCreate(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int
 	ctx := context.Background()
 
 	h := cgo.Handle(nodePtr)
-	n := h.Value().(*node.Node)
+	n := h.Value().(*node.Node) //nolint:forcetypeassert
 
 	var tx client.Txn
 	var err error
