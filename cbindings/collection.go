@@ -206,9 +206,9 @@ func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Res
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	colDesc := make([]client.CollectionDefinition, len(cols))
+	colDesc := make([]client.CollectionVersion, len(cols))
 	for i, col := range cols {
-		colDesc[i] = col.Definition()
+		colDesc[i] = col.Version()
 	}
 
 	return returnC(marshalJSONToGoCResult(colDesc))
