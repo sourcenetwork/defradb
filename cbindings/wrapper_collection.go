@@ -70,7 +70,7 @@ func (c *Collection) Create(
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
+	cName := C.CString(c.def.Name)
 	cIdentity := C.CString(identityFromContext(ctx))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -118,7 +118,7 @@ func (c *Collection) CreateMany(
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
+	cName := C.CString(c.def.Name)
 	cIdentity := C.CString(identityFromContext(ctx))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -234,7 +234,7 @@ func (c *Collection) Delete(
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
+	cName := C.CString(c.def.Name)
 	cIdentity := C.CString(identityFromContext(ctx))
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(filter))
@@ -314,7 +314,7 @@ func (c *Collection) UpdateWithFilter(
 	cUpdater := C.CString(updater)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
+	cName := C.CString(c.def.Name)
 	cIdentity := C.CString(identityFromContext(ctx))
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
@@ -364,7 +364,7 @@ func (c *Collection) DeleteWithFilter(
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cName := C.CString(c.def.GetName())
+	cName := C.CString(c.def.Name)
 	cIdentity := C.CString(identityFromContext(ctx))
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
@@ -516,7 +516,7 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
 
-	name := C.CString(c.def.GetName())
+	name := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(cIndexDescName))
@@ -557,7 +557,7 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	name := C.CString(c.def.GetName())
+	name := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(cIndexName))
@@ -575,7 +575,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	name := C.CString(c.def.GetName())
+	name := C.CString(c.def.Name)
 	defer C.free(unsafe.Pointer(name))
 
 	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), name))
