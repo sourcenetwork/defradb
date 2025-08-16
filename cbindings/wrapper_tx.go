@@ -22,7 +22,6 @@ import "C"
 import (
 	"context"
 	"errors"
-	"fmt"
 	"runtime/cgo"
 
 	"github.com/sourcenetwork/corekv"
@@ -56,9 +55,7 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 }
 
 func (txn *Transaction) Discard(ctx context.Context) {
-	fmt.Println("TX-Discard")
 	C.TransactionDiscard(C.uintptr_t(txn.handle))
-	fmt.Println("TX-Discard done")
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
@@ -174,7 +171,6 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	fmt.Println("TX-ExecRequest")
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn.tx)
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
@@ -190,53 +186,53 @@ func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupCo
 }
 
 func (txn *Transaction) Blockstore() datastore.Blockstore {
-	return txn.tx.(datastore.Txn).Blockstore()
+	return txn.tx.(datastore.Txn).Blockstore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) Datastore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Datastore()
+	return txn.tx.(datastore.Txn).Datastore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) Encstore() datastore.Blockstore {
-	return txn.tx.(datastore.Txn).Encstore()
+	return txn.tx.(datastore.Txn).Encstore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) Headstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Headstore()
+	return txn.tx.(datastore.Txn).Headstore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) Peerstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Peerstore()
+	return txn.tx.(datastore.Txn).Peerstore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) Rootstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Rootstore()
+	return txn.tx.(datastore.Txn).Rootstore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) Systemstore() corekv.ReaderWriter {
-	return txn.tx.(datastore.Txn).Systemstore()
+	return txn.tx.(datastore.Txn).Systemstore() //nolint:forcetypeassert
 }
 
 func (txn *Transaction) OnSuccess(fn func()) {
-	txn.tx.(datastore.Txn).OnSuccess(fn)
+	txn.tx.(datastore.Txn).OnSuccess(fn) //nolint:forcetypeassert
 }
 
 func (txn *Transaction) OnError(fn func()) {
-	txn.tx.(datastore.Txn).OnError(fn)
+	txn.tx.(datastore.Txn).OnError(fn) //nolint:forcetypeassert
 }
 
 func (txn *Transaction) OnDiscard(fn func()) {
-	txn.tx.(datastore.Txn).OnDiscard(fn)
+	txn.tx.(datastore.Txn).OnDiscard(fn) //nolint:forcetypeassert
 }
 
 func (txn *Transaction) OnSuccessAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnSuccessAsync(fn)
+	txn.tx.(datastore.Txn).OnSuccessAsync(fn) //nolint:forcetypeassert
 }
 
 func (txn *Transaction) OnErrorAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnErrorAsync(fn)
+	txn.tx.(datastore.Txn).OnErrorAsync(fn) //nolint:forcetypeassert
 }
 
 func (txn *Transaction) OnDiscardAsync(fn func()) {
-	txn.tx.(datastore.Txn).OnDiscardAsync(fn)
+	txn.tx.(datastore.Txn).OnDiscardAsync(fn) //nolint:forcetypeassert
 }

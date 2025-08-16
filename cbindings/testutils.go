@@ -196,7 +196,7 @@ func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
 	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
 		txnID := txn.ID()
 		if h, ok := txnHandleMap.Load(txnID); ok {
-			return C.uintptr_t(h.(cgo.Handle))
+			return C.uintptr_t(h.(cgo.Handle)) //nolint:forcetypeassert
 		}
 	}
 	return C.uintptr_t(h)

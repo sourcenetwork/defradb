@@ -73,7 +73,7 @@ func TransactionDiscard(txnPtr C.uintptr_t) {
 	}()
 
 	h := cgo.Handle(txnPtr)
-	txn := h.Value().(client.Txn)
+	txn := h.Value().(client.Txn) //nolint:forcetypeassert
 	txn.Discard(ctx)
 	h.Delete()
 }
