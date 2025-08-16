@@ -274,7 +274,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 //
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
-// ensuring that the recipient has accesp.
+// ensuring that the recipient has access.
 func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
@@ -289,7 +289,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block) (boo
 	cols, err := clientTxn.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(block.Delta.GetSchemaVersionID()),
+			VersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
 		},
 	)
 	if err != nil {
