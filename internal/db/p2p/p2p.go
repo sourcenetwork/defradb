@@ -56,16 +56,17 @@ type DB interface {
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
 	RetryIntervals() []time.Duration
+	// DocumentACP returns the DocumentACP implementation configured on the database.
+	DocumentACP() immutable.Option[dac.DocumentACP]
 }
 
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
 	replicatorProtocol *protocol.ReplicatorProtocol
 
-	ctx         context.Context
-	db          DB
-	host        client.Host
-	documentACP immutable.Option[dac.DocumentACP]
+	ctx  context.Context
+	db   DB
+	host client.Host
 
 	// replicators is a map from collection CollectionID => peerId
 	replicators map[string]map[string]client.PeerInfo
@@ -163,7 +164,7 @@ func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collec
 //
 // This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
 func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
-	if !p.documentACP.HasValue() {
+	if !p.db.DocumentACP().HasValue() {
 		return true
 	}
 
@@ -256,7 +257,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
 		ctx,
 		identFunc,
-		p.documentACP.Value(),
+		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
 		string(block.Delta.GetDocID()),
@@ -275,7 +276,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has accesp.
 func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block) (bool, error) {
-	if !p.documentACP.HasValue() {
+	if !p.db.DocumentACP().HasValue() {
 		return true, nil
 	}
 
@@ -310,7 +311,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block) (boo
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
-		p.documentACP.Value(),
+		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
 		string(block.Delta.GetDocID()),
