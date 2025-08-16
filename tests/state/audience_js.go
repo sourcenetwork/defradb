@@ -8,13 +8,12 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package tests
+package state
 
 import (
-	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
-func setupSourceHub(s *state.State) ([]node.DocumentACPOpt, error) {
-	return s.DocumentACPOptions, nil
+func GetNodeAudience(s *State, nodeIndex int) immutable.Option[string] {
+	return immutable.None[string]()
 }

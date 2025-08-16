@@ -43,6 +43,14 @@ type KMSType string
 
 type ClientType string
 
+// DocumentACPType is the type of document acp to use.
+type DocumentACPType string
+
+const (
+	SourceHubDocumentACPType DocumentACPType = "source-hub"
+	LocalDocumentACPType     DocumentACPType = "local"
+)
+
 type ColDocIndex struct {
 	Col int
 	Doc int
@@ -183,6 +191,12 @@ type State struct {
 	// The type of client currently being tested.
 	ClientType ClientType
 
+	// The type of Document ACP
+	DocumentACPType DocumentACPType
+
+	// The Document ACP options to share between each node (currently only used for sourcehub).
+	DocumentACPOptions []node.DocumentACPOpt
+
 	// Any explicit transactions active in this test.
 	//
 	// This is order dependent and the property is accessed by index.
@@ -215,9 +229,6 @@ type State struct {
 
 	// The Nodes active in this test.
 	Nodes []*NodeState
-
-	// The ACP options to share between each node.
-	DocumentACPOptions []node.DocumentACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
@@ -275,6 +286,7 @@ func NewState(
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
+	documentACPType DocumentACPType,
 	collectionNames []string,
 ) *State {
 	s := &State{
@@ -283,6 +295,8 @@ func NewState(
 		KMS:                             kms,
 		DbType:                          dbt,
 		ClientType:                      clientType,
+		DocumentACPType:                 documentACPType,
+		DocumentACPOptions:              []node.DocumentACPOpt{},
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,
 		Identities:                      map[Identity]*IdentityHolder{},
@@ -290,7 +304,6 @@ func NewState(
 		AllActionsDone:                  make(chan struct{}),
 		SubscriptionResultsChans:        []chan func(){},
 		Nodes:                           []*NodeState{},
-		DocumentACPOptions:              []node.DocumentACPOpt{},
 		CollectionNames:                 collectionNames,
 		CollectionIndexesByCollectionID: map[string]int{},
 		DocIDs:                          [][]client.DocID{},

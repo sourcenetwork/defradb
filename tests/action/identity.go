@@ -8,66 +8,23 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package tests
+package action
 
 import (
 	"context"
-	"strconv"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// NoIdentity returns an reference to an identity that represents no identity.
-func NoIdentity() immutable.Option[state.Identity] {
-	return immutable.None[state.Identity]()
-}
-
-// AllClientIdentities returns user identity selector specified with the "*".
-func AllClientIdentities() immutable.Option[state.Identity] {
-	return immutable.Some(
-		state.Identity{
-			Kind:     state.ClientIdentityType,
-			Selector: "*",
-		},
-	)
-}
-
-// ClientIdentity returns a user identity at the given index.
-func ClientIdentity(indexSelector int) immutable.Option[state.Identity] {
-	return immutable.Some(
-		state.Identity{
-			Kind:     state.ClientIdentityType,
-			Selector: strconv.Itoa(indexSelector),
-		},
-	)
-}
-
-// ClientIdentity returns a node identity at the given index.
-func NodeIdentity(indexSelector int) immutable.Option[state.Identity] {
-	return immutable.Some(
-		state.Identity{
-			Kind:     state.NodeIdentityType,
-			Selector: strconv.Itoa(indexSelector),
-		},
-	)
-}
-
-// getIdentityOption returns the identity similar to [getIdentity] but in immutable.Option.
-func getIdentityOption(
-	s *state.State,
-	identity immutable.Option[state.Identity],
-) immutable.Option[acpIdentity.Identity] {
-	ident := state.GetIdentity(s, identity)
-	if ident == nil {
-		return acpIdentity.None
-	}
-	return immutable.Some(ident)
-}
+const (
+	// AuthTokenExpiration is the expiration time for auth tokens.
+	AuthTokenExpiration = time.Minute * 1
+)
 
 // getIdentityForRequest returns the identity for the given reference and node index.
 // It prepares the identity for a request by generating a token if needed, i.e. it will
@@ -84,7 +41,7 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 			audience := state.GetNodeAudience(s, nodeIndex)
 			if s.DocumentACPType == state.SourceHubDocumentACPType || audience.HasValue() {
 				err := fullIdent.UpdateToken(
-					action.AuthTokenExpiration,
+					AuthTokenExpiration,
 					audience,
 					immutable.Some(s.SourcehubAddress),
 				)
@@ -118,16 +75,6 @@ func getContextWithIdentity(
 	nodeIndex int,
 ) context.Context {
 	return acpIdentity.WithContext(ctx, getIdentityForRequestSpecificToNode(s, identity, nodeIndex))
-}
-
-func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) string {
-	if identity.HasValue() {
-		if identity.Value().Selector == "*" {
-			return identity.Value().Selector
-		}
-		return state.GetIdentity(s, identity).DID()
-	}
-	return ""
 }
 
 // resetContextWithNoIdentity resets identity for the ctx to avoid, leaving it there and having the ctx
