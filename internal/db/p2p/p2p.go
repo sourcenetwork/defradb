@@ -275,7 +275,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
-func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block) (bool, error) {
+func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, collectionID string) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
 	}
@@ -289,7 +289,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block) (boo
 	cols, err := clientTxn.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			VersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {
@@ -337,7 +337,7 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	req.SenderID = from
 
 	if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
-		return nil, errors.Wrap(fmt.Sprintf("Failed pushing log for doc %s", topic), err)
+		return nil, errors.Wrap(fmt.Sprintf("Failed to process pushlog request %s", topic), err)
 	}
 
 	return nil, nil
@@ -357,7 +357,7 @@ func (p *P2P) processPushlogRequest(
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block)
+		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
 		if err != nil {
 			return err
 		}
