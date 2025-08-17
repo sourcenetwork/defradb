@@ -68,7 +68,7 @@ endif
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
 JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
-JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
+JS_TEST_FLAGS=-exec="$$(go env GOROOT)/misc/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
@@ -167,7 +167,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v3@v3.5.2
+	go install github.com/vektra/mockery/v3@v3.2
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -362,6 +362,13 @@ test\:coverage-js:
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
+.PHONY: test\:coverage-c
+test\:coverage-c:
+    @$(MAKE) clean:coverage
+    mkdir $(COVERAGE_DIRECTORY)
+    DEFRA_CLIENT_C=true gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS) $(COVERAGE_FLAGS)
+    go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
+
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
@@ -454,7 +461,9 @@ build-c-shared-linux:
 	  find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
 	      -exec sed -i "s/$$search_escaped/$$replace_escaped/g" {} +; \
 	  \
+	  echo "Removing existing .so and .h files"; \
 	  rm -f build/libdefradb.so build/libdefradb.h; \
+	  echo "Building shared object"; \
 	  CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
 	      -buildmode=c-shared -o build/libdefradb.so ./cbindings; \
 	  cp ./cbindings/defra_structs.h ./build/; \

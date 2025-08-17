@@ -816,7 +816,6 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for i := len(nodes) - 1; i >= 0; i-- {
-		fmt.Println("Starting node", i)
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.Nodes[nodeIndex].DbPath
