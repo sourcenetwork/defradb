@@ -47,7 +47,7 @@ extern Result* P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs
 extern Result* PollSubscription(char* id);
 extern Result* CloseSubscription(char* id);
 extern Result* ExecuteQuery(uintptr_t nodePtr, char* query, char* identity, char* operationName, char* variables);
-extern Result* AddSchema(uintptr_t nodePtr, char* schema);
+extern Result* AddSchema(uintptr_t nodePtr, char* schema, char* identity);
 extern Result* SetActiveCollection(uintptr_t nodePtr, char* version);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result* VersionGet(int flagFull, int flagJSON);
@@ -266,7 +266,13 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.AddSchema(callHandle, C.CString(schema)))
+
+	cIdentity := C.CString(identityFromContext(ctx))
+	cSchema := C.CString(schema)
+	defer C.free(unsafe.Pointer(cSchema))
+	defer C.free(unsafe.Pointer(cIdentity))
+
+	res := ConvertAndFreeCResult(C.AddSchema(callHandle, cSchema, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
