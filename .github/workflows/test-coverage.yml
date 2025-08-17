@@ -140,7 +140,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client-type: [go, http, cli, c]
+        client-type: [go, http, cli]
         document-acp-type: [source-hub]
 
     runs-on: ubuntu-latest
@@ -150,7 +150,6 @@ jobs:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
-      DEFRA_CLIENT_C: ${{ matrix.client-type == 'c' }}
 
     steps:
       - name: Checkout code into the directory
@@ -300,7 +299,7 @@ jobs:
         with:
           coverage-artifact-name: "coverage_js"
           coverage-path: coverage.txt
-          
+
   test-c:
     name: Test C Bindings job
 

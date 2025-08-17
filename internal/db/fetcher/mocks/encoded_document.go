@@ -116,20 +116,14 @@ type EncodedDocument_Properties_Call struct {
 }
 
 // Properties is a helper method to define mock.On call
-//   - onlyFilterProps bool
+//   - onlyFilterProps
 func (_e *EncodedDocument_Expecter) Properties(onlyFilterProps interface{}) *EncodedDocument_Properties_Call {
 	return &EncodedDocument_Properties_Call{Call: _e.mock.On("Properties", onlyFilterProps)}
 }
 
 func (_c *EncodedDocument_Properties_Call) Run(run func(onlyFilterProps bool)) *EncodedDocument_Properties_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 bool
-		if args[0] != nil {
-			arg0 = args[0].(bool)
-		}
-		run(
-			arg0,
-		)
+		run(args[0].(bool))
 	})
 	return _c
 }
