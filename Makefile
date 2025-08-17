@@ -361,7 +361,7 @@ test\:coverage-js:
 	mkdir $(COVERAGE_DIRECTORY)
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
-
+	
 .PHONY: test\:coverage-c
 test\:coverage-c:
     @$(MAKE) clean:coverage
