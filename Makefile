@@ -364,10 +364,10 @@ test\:coverage-js:
 	
 .PHONY: test\:coverage-c
 test\:coverage-c:
-    @$(MAKE) clean:coverage
-    mkdir $(COVERAGE_DIRECTORY)
-    DEFRA_CLIENT_C=true gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS) $(COVERAGE_FLAGS)
-    go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	DEFRA_CLIENT_C=true gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:changes
 test\:changes:
