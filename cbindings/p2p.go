@@ -158,7 +158,6 @@ func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 //export P2PdocumentGetAll
 func P2PdocumentGetAll(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
-
 	h := cgo.Handle(nodePtr)
 	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	cols, err := node.DB.GetAllP2PDocuments(ctx)
@@ -192,6 +191,21 @@ func P2PdocumentSync(nodePtr C.uintptr_t, collection *C.char, docIDs *C.char, ti
 	h := cgo.Handle(nodePtr)
 	node := h.Value().(*node.Node) //nolint:forcetypeassert
 	err := node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", ""))
+}
+
+//export P2Pconnect
+func P2Pconnect(nodePtr C.uintptr_t, peerID *C.char, peerAddresses *C.char) *C.Result {
+	ctx := context.Background()
+	h := cgo.Handle(nodePtr)
+	node := h.Value().(*node.Node) //nolint:forcetypeassert
+	var info client.PeerInfo
+	info.ID = C.GoString(peerID)
+	info.Addresses = splitCommaSeparatedString(C.GoString(peerAddresses))
+	err := node.DB.Connect(ctx, info)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

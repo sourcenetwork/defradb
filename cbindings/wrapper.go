@@ -40,6 +40,7 @@ extern Result* P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* p
 extern Result* P2PcollectionAdd(uintptr_t nodePtr, char* collections);
 extern Result* P2PcollectionRemove(uintptr_t nodePtr, char* collections);
 extern Result* P2PcollectionGetAll(uintptr_t nodePtr);
+extern Result* P2Pconnect(uintptr_t nodePtr, char* peerID, char* peerAddresses);
 extern Result* P2PdocumentAdd(uintptr_t nodePtr, char* collections);
 extern Result* P2PdocumentRemove(uintptr_t nodePtr, char* collections);
 extern Result* P2PdocumentGetAll(uintptr_t nodePtr);
@@ -800,7 +801,16 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 }
 
 func (w *CWrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
-	panic("not implemented")
+
+	cPeerID := C.CString(addr.ID)
+	cPeerAddresses := C.CString(strings.Join(addr.Addresses, ","))
+	defer C.free(unsafe.Pointer(cPeerID))
+	defer C.free(unsafe.Pointer(cPeerAddresses))
+	res := ConvertAndFreeCResult(C.P2Pconnect(C.uintptr_t(w.handle), cPeerID, cPeerAddresses))
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
 }
 
 func (w *CWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
