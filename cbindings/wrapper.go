@@ -770,10 +770,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	wrapper := *w
-	wrapper.handle = handle
-
-	retTxn := &Transaction{&wrapper, clientTxn, handle}
+	retTxn := &Transaction{w, clientTxn, handle}
 	txnHandleMap.Store(retTxn.ID(), handle)
 
 	return retTxn, nil
@@ -796,10 +793,8 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	wrapper := *w
-	wrapper.handle = handle
 
-	retTxn := &Transaction{&wrapper, clientTxn, handle}
+	retTxn := &Transaction{w, clientTxn, handle}
 	txnHandleMap.Store(retTxn.ID(), handle)
 
 	return retTxn, nil
