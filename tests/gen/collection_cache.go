@@ -8,24 +8,26 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package client
+package gen
 
 import (
 	"fmt"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // CollectionCache is an object providing easy access to cached collections.
 type CollectionCache struct {
 	// The full set of [CollectionVersion]s within this cache
-	Collections []CollectionVersion
+	Collections []client.CollectionVersion
 
 	// The cached collection versions mapped by their CollectionID
-	CollectionsByID map[string]CollectionVersion
+	CollectionsByID map[string]client.CollectionVersion
 }
 
 // NewCollectionCache creates a new [CollectionCache] populated with the given [CollectionVersion]s.
-func NewCollectionCache(collections []CollectionVersion) CollectionCache {
-	collectionsByID := make(map[string]CollectionVersion, len(collections))
+func NewCollectionCache(collections []client.CollectionVersion) CollectionCache {
+	collectionsByID := make(map[string]client.CollectionVersion, len(collections))
 
 	for _, col := range collections {
 		collectionsByID[col.CollectionID] = col
@@ -43,24 +45,24 @@ func NewCollectionCache(collections []CollectionVersion) CollectionCache {
 // If the related collection is not found, default and false will be returned.
 func GetCollection(
 	cache CollectionCache,
-	host CollectionVersion,
-	kind FieldKind,
-) (CollectionVersion, bool) {
+	host client.CollectionVersion,
+	kind client.FieldKind,
+) (client.CollectionVersion, bool) {
 	switch typedKind := kind.(type) {
-	case *NamedKind:
+	case *client.NamedKind:
 		for _, col := range cache.Collections {
 			if col.Name == typedKind.Name {
 				return col, true
 			}
 		}
 
-		return CollectionVersion{}, false
+		return client.CollectionVersion{}, false
 
-	case *CollectionKind:
+	case *client.CollectionKind:
 		def, ok := cache.CollectionsByID[typedKind.CollectionID]
 		return def, ok
 
-	case *SelfKind:
+	case *client.SelfKind:
 		if typedKind.RelativeID == "" {
 			return host, true
 		}
@@ -83,5 +85,5 @@ func GetCollection(
 		// no-op
 	}
 
-	return CollectionVersion{}, false
+	return client.CollectionVersion{}, false
 }

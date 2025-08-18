@@ -38,7 +38,7 @@ func (d typeDemand) getAverage() int {
 // the random seed.
 type docsGenConfigurator struct {
 	types           map[string]client.CollectionVersion
-	definitionCache client.CollectionCache
+	definitionCache CollectionCache
 
 	config       configsMap
 	primaryGraph map[string][]string
@@ -183,7 +183,7 @@ func newDocGenConfigurator(types map[string]client.CollectionVersion, config con
 
 	return docsGenConfigurator{
 		types:           types,
-		definitionCache: client.NewCollectionCache(cols),
+		definitionCache: NewCollectionCache(cols),
 		config:          config,
 		docsDemand:      make(map[string]typeDemand),
 	}
@@ -381,7 +381,7 @@ func (g *docsGenConfigurator) calculateDemandForSecondaryTypes(
 			newSecDemand := typeDemand{min: primaryDocDemand.min, max: primaryDocDemand.max}
 			minPerDoc, maxPerDoc := 1, 1
 
-			otherType, _ := client.GetCollection(g.definitionCache, typeDef, field.Kind)
+			otherType, _ := GetCollection(g.definitionCache, typeDef, field.Kind)
 			curSecDemand, hasSecDemand := g.docsDemand[otherType.Name]
 
 			if field.Kind.IsArray() {
@@ -469,7 +469,7 @@ func (g *docsGenConfigurator) getRelationGraph(types map[string]client.Collectio
 	for typeName, typeDef := range types {
 		for _, field := range typeDef.Fields {
 			if field.Kind.IsObject() {
-				otherDef, _ := client.GetCollection(g.definitionCache, typeDef, field.Kind)
+				otherDef, _ := GetCollection(g.definitionCache, typeDef, field.Kind)
 
 				if field.IsPrimary {
 					primaryGraph[typeName] = appendUnique(primaryGraph[typeName], otherDef.Name)
