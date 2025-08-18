@@ -264,7 +264,6 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 }
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	fmt.Println("AddSchema")
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 
 	cIdentity := C.CString(identityFromContext(ctx))
@@ -597,7 +596,6 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) e
 }
 
 func (w *CWrapper) LensRegistry() client.LensRegistry {
-	fmt.Println("LensRegistry")
 	return &LensRegistry{CWrapper: w}
 }
 
