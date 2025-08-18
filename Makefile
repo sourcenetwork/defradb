@@ -68,7 +68,7 @@ endif
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
 JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
-JS_TEST_FLAGS=-exec="$$(go env GOROOT)/misc/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
+JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
@@ -167,7 +167,7 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v3@v3.2
+	go install github.com/vektra/mockery/v3@v3.5.2
 
 .PHONY: deps\:playground
 deps\:playground:
@@ -361,7 +361,7 @@ test\:coverage-js:
 	mkdir $(COVERAGE_DIRECTORY)
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
-	
+
 .PHONY: test\:coverage-c
 test\:coverage-c:
 	@$(MAKE) clean:coverage
@@ -470,6 +470,3 @@ build-c-shared-linux:
 	  \
 	  echo "Build complete: build/libdefradb.so" \
 	)
-
-
-
