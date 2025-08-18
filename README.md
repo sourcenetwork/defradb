@@ -35,8 +35,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
-   * [Playground](#playground)
    * [Community](#community)
+   * [Playground](#playground)
    * [Licensing](#licensing)
    * [Contributors](#contributors)
 <!--te-->
