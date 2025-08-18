@@ -11,72 +11,25 @@
 package net
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-const (
-	errPushLog                   = "failed to push log"
-	errFailedToGetDocID          = "failed to get DocID from broadcast message"
-	errPublishingToDocIDTopic    = "can't publish log %s for docID %s"
-	errPublishingToSchemaTopic   = "can't publish log %s for schema %s"
-	errCheckingForExistingBlock  = "failed to check for existing block"
-	errRequestingEncryptionKeys  = "failed to request encryption keys with %v"
-	errTopicAlreadyExist         = "topic with name \"%s\" already exists"
-	errTopicDoesNotExist         = "topic with name \"%s\" does not exists"
-	errFailedToGetIdentity       = "failed to get identity"
-	errReplicatorCollections     = "failed to get collections for replicator"
-	errFailedToCreateTransaction = "failed to create transaction"
-)
-
 var (
-	ErrPeerConnectionWaitTimeout = errors.New("waiting for peer connection timed out")
-	ErrPubSubWaitTimeout         = errors.New("waiting for pubsub timed out")
-	ErrPushLogWaitTimeout        = errors.New("waiting for pushlog timed out")
-	ErrNilDB                     = errors.New("database object can't be nil")
-	ErrNilUpdateChannel          = errors.New("tried to subscribe to update channel, but update channel is nil")
-	ErrCheckingForExistingBlock  = errors.New(errCheckingForExistingBlock)
+	ErrPushLog                   = errors.New("failed to push log")
+	ErrTopicAlreadyExist         = errors.New("topic already exists")
+	ErrTopicDoesNotExist         = errors.New("topic does not exists")
 	ErrTimeoutWaitingForPeerInfo = errors.New("timeout waiting for peer info")
-	ErrSelfTargetForReplicator   = errors.New("can't target ourselves as a replicator")
-	ErrReplicatorNotFound        = errors.New("replicator not found")
 	ErrContextDone               = errors.New("context done")
-	ErrTimeoutDocSync            = errors.New("timeout while syncing doc")
-	ErrReplicatorCollections     = errors.New(errReplicatorCollections)
 )
 
 func NewErrPushLog(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errPushLog, inner, kv...)
-}
-
-func NewErrFailedToGetDocID(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errFailedToGetDocID, inner, kv...)
-}
-
-func NewErrPublishingToDocIDTopic(inner error, cid, docID string, kv ...errors.KV) error {
-	return errors.Wrap(fmt.Sprintf(errPublishingToDocIDTopic, cid, docID), inner, kv...)
-}
-
-func NewErrPublishingToSchemaTopic(inner error, cid, docID string, kv ...errors.KV) error {
-	return errors.Wrap(fmt.Sprintf(errPublishingToSchemaTopic, cid, docID), inner, kv...)
+	return errors.WithStack(errors.Join(inner, ErrPushLog), kv...)
 }
 
 func NewErrTopicAlreadyExist(topic string) error {
-	return errors.New(fmt.Sprintf(errTopicAlreadyExist, topic))
+	return errors.WithStack(ErrTopicAlreadyExist, errors.NewKV("topic", topic))
 }
 
 func NewErrTopicDoesNotExist(topic string) error {
-	return errors.New(fmt.Sprintf(errTopicDoesNotExist, topic))
-}
-
-func NewErrFailedToGetIdentity(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errFailedToGetIdentity, inner, kv...)
-}
-
-func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errReplicatorCollections, inner, kv...)
-}
-
-func NewErrFailedToCreateTransaction(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errFailedToCreateTransaction, inner, kv...)
+	return errors.WithStack(ErrTopicDoesNotExist, errors.NewKV("topic", topic))
 }

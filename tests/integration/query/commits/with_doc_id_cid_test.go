@@ -69,7 +69,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 				Request: ` {
 						commits(
 							docID: "bae-not-this-doc",
-							cid: "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4"
+							cid: "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy"
 						) {
 							cid
 						}
@@ -106,8 +106,8 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: ` {
 						commits(
-							docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							cid: "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4"
+							docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							cid: "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy"
 						) {
 							cid
 						}
@@ -115,7 +115,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid": "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
 						},
 					},
 				},
@@ -149,8 +149,8 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 			testUtils.Request{
 				Request: ` {
 						commits(
-							docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							cid: "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							cid: "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
 							depth: 5
 						) {
 							cid
@@ -159,10 +159,10 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid": "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 						},
 					},
 				},

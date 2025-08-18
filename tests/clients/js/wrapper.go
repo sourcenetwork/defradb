@@ -16,7 +16,6 @@ import (
 	"context"
 	sysjs "syscall/js"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -48,15 +47,15 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() client.PeerInfo {
+	return client.PeerInfo{}
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
-	panic("not implemented")
-}
-
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -221,30 +220,22 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) PatchSchema(
+func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
 ) error {
 	migrationVal, err := goji.MarshalJS(migration)
 	if err != nil {
 		return err
 	}
-	_, err = execute(ctx, w.value, "patchSchema", patch, migrationVal, setAsDefaultVersion)
+
+	_, err = execute(ctx, w.value, "patchCollection", patch, migrationVal)
 	return err
 }
 
-func (w *Wrapper) PatchCollection(
-	ctx context.Context,
-	patch string,
-) error {
-	_, err := execute(ctx, w.value, "patchCollection", patch)
-	return err
-}
-
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	_, err := execute(ctx, w.value, "setActiveSchemaVersion", schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	_, err := execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID)
 	return err
 }
 
@@ -253,7 +244,7 @@ func (w *Wrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	transformVal, err := goji.MarshalJS(transform)
 	if err != nil {
 		return nil, err
@@ -262,7 +253,7 @@ func (w *Wrapper) AddView(
 	if err != nil {
 		return nil, err
 	}
-	var out []client.CollectionDefinition
+	var out []client.CollectionVersion
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
 		return nil, err
 	}
@@ -324,37 +315,6 @@ func (w *Wrapper) GetCollections(
 		out[i] = &Collection{
 			client: res[0].Index(i),
 		}
-	}
-	return out, nil
-}
-
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	res, err := execute(ctx, w.value, "getSchemaByVersionID", versionID)
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-	var out client.SchemaDescription
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return out, nil
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	optionsVal, err := goji.MarshalJS(options)
-	if err != nil {
-		return nil, err
-	}
-	res, err := execute(ctx, w.value, "getSchemas", optionsVal)
-	if err != nil {
-		return nil, err
-	}
-	var out []client.SchemaDescription
-	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return nil, err
 	}
 	return out, nil
 }
@@ -466,8 +426,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
+func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+	return w.node.DB.Connect(ctx, addr)
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {

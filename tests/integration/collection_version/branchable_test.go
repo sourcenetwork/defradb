@@ -25,8 +25,6 @@ func TestColVersion_Branchable(t *testing.T) {
 				Schema: `
 					type Users @branchable {}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -49,8 +47,6 @@ func TestColVersion_BranchableIfTrue(t *testing.T) {
 				Schema: `
 					type Users @branchable(if: true) {}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -73,8 +69,6 @@ func TestColVersion_BranchableIfFalse(t *testing.T) {
 				Schema: `
 					type Users @branchable(if: false) {}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

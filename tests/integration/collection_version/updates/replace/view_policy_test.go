@@ -87,7 +87,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreibdmvzu7gv4iecgms5odn4t7g66jrrgphjqsnnv666ptmx4xgk5my/IsMaterialized",
+							"path": "/UserView/IsMaterialized",
 							"value": true
 						}
 					]

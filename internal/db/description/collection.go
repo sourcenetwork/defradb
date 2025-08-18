@@ -31,15 +31,12 @@ func SaveCollection(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	if desc.CollectionID != "" {
-		// Set the collection short id
-		err := id.SetShortCollectionID(ctx, desc.CollectionID)
-		if err != nil {
-			return err
-		}
+	err := id.SetShortCollectionID(ctx, desc.CollectionID)
+	if err != nil {
+		return err
 	}
 
-	err := id.SetShortFieldIDs(ctx, desc)
+	err = id.SetShortFieldIDs(ctx, desc)
 	if err != nil {
 		return err
 	}
@@ -75,6 +72,16 @@ func SaveCollection(
 	if desc.IsActive {
 		nameKey := keys.NewCollectionNameKey(desc.Name)
 		err = txn.Systemstore().Set(ctx, nameKey.Bytes(), []byte(desc.VersionID))
+		if err != nil {
+			return err
+		}
+	}
+
+	isNew := desc.CollectionID == desc.VersionID
+	if !isNew {
+		// We don't need to index the version by collection id, if the version id is the collection id
+		collectionVersionKey := keys.NewCollectionVersionKey(desc.CollectionID, desc.VersionID)
+		err = txn.Systemstore().Set(ctx, collectionVersionKey.Bytes(), []byte{})
 		if err != nil {
 			return err
 		}
@@ -128,44 +135,15 @@ func GetCollectionByName(
 func GetCollectionsByCollectionID(
 	ctx context.Context,
 	collectionID string,
-) ([]client.CollectionVersion, error) { //todo - this should not be dependent on matching to schema root?
-	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, collectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	cols := []client.CollectionVersion{}
-	for _, schemaVersionID := range schemaVersionIDs {
-		versionCol, err := GetCollectionByID(ctx, schemaVersionID)
-		if err != nil {
-			if errors.Is(err, corekv.ErrNotFound) {
-				continue
-			}
-			return nil, err
-		}
-
-		cols = append(cols, versionCol)
-	}
-
-	return cols, nil
-}
-
-// GetCollectionsBySchemaRoot returns all collections that use the given
-// schema root.
-//
-// If no collections are found an empty set will be returned.
-func GetCollectionsBySchemaRoot(
-	ctx context.Context,
-	schemaRoot string,
 ) ([]client.CollectionVersion, error) {
-	schemaVersionIDs, err := GetSchemaVersionIDs(ctx, schemaRoot)
+	versionIDs, err := GetCollectionVersionIDs(ctx, collectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	cols := []client.CollectionVersion{}
-	for _, schemaVersionID := range schemaVersionIDs {
-		versionCol, err := GetCollectionByID(ctx, schemaVersionID)
+	for _, versionID := range versionIDs {
+		versionCol, err := GetCollectionByID(ctx, versionID)
 		if err != nil {
 			if errors.Is(err, corekv.ErrNotFound) {
 				continue
@@ -290,4 +268,46 @@ func HasCollectionByName(
 
 	nameKey := keys.NewCollectionNameKey(name)
 	return txn.Systemstore().Has(ctx, nameKey.Bytes())
+}
+
+func GetCollectionVersionIDs(
+	ctx context.Context,
+	collectionID string,
+) ([]string, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	// Add the collection id as the first version here.
+	// It is not present in the history prefix.
+	collectionIDs := []string{collectionID}
+
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   keys.NewCollectionVersionKey(collectionID, "").Bytes(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		hasValue, err := iter.Next()
+		if err != nil {
+			if err := iter.Close(); err != nil {
+				return nil, NewErrFailedToCloseCollectionQuery(err)
+			}
+			return nil, err
+		}
+
+		if !hasValue {
+			break
+		}
+
+		key, err := keys.NewCollectionVersionKeyFromString(string(iter.Key()))
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		collectionIDs = append(collectionIDs, key.VersionID)
+	}
+
+	return collectionIDs, iter.Close()
 }

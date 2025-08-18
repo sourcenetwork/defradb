@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 type EncodedDocument interface {
@@ -34,7 +33,7 @@ type EncodedDocument interface {
 
 	// Properties returns a copy of the decoded property values mapped by their field
 	// description.
-	Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error)
+	Properties(onlyFilterProps bool) (map[client.CollectionFieldDescription]any, error)
 
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
@@ -44,7 +43,7 @@ type EPTuple []encProperty
 
 // EncProperty is an encoded property of a EncodedDocument
 type encProperty struct {
-	Desc client.FieldDefinition
+	Desc client.CollectionFieldDescription
 	Raw  []byte
 
 	// Filter flag to determine if this flag
@@ -71,8 +70,8 @@ type encodedDocument struct {
 	id                   []byte
 	schemaVersionID      string
 	status               client.DocumentStatus
-	properties           map[client.FieldDefinition]*encProperty
-	decodedPropertyCache map[client.FieldDefinition]any
+	properties           map[client.CollectionFieldDescription]*encProperty
+	decodedPropertyCache map[client.CollectionFieldDescription]any
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -99,7 +98,7 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.properties = make(map[client.FieldDefinition]*encProperty, 0)
+	encdoc.properties = make(map[client.CollectionFieldDescription]*encProperty, 0)
 	encdoc.id = nil
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
@@ -109,13 +108,13 @@ func (encdoc *encodedDocument) Reset() {
 }
 
 // Decode returns a properly decoded document object
-func Decode(encdoc EncodedDocument, collectionDefinition client.CollectionDefinition) (*client.Document, error) {
+func Decode(encdoc EncodedDocument, collection client.CollectionVersion) (*client.Document, error) {
 	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
 	}
 
-	doc, err := client.NewDocWithID(docID, collectionDefinition)
+	doc, err := client.NewDocWithID(docID, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -175,12 +174,8 @@ func DecodeToDoc(
 	}
 
 	for desc, value := range properties {
-		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, desc.Name)
-		if err != nil {
-			return core.Doc{}, err
-		}
-
-		doc.Fields[fieldShortID] = value
+		index := mapping.FirstIndexOfName(desc.Name)
+		doc.Fields[index] = value
 	}
 
 	doc.SchemaVersionID = encdoc.SchemaVersionID()
@@ -189,10 +184,10 @@ func DecodeToDoc(
 	return doc, nil
 }
 
-func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
-	result := map[client.FieldDefinition]any{}
+func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.CollectionFieldDescription]any, error) {
+	result := map[client.CollectionFieldDescription]any{}
 	if encdoc.decodedPropertyCache == nil {
-		encdoc.decodedPropertyCache = map[client.FieldDefinition]any{}
+		encdoc.decodedPropertyCache = map[client.CollectionFieldDescription]any{}
 	}
 
 	for _, prop := range encdoc.properties {

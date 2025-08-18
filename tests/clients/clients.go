@@ -11,10 +11,6 @@
 package clients
 
 import (
-	"context"
-
-	"github.com/libp2p/go-libp2p/core/peer"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 )
@@ -23,8 +19,6 @@ import (
 // required for testing.
 type Client interface {
 	client.TxnStore
-	client.P2P
-	Connect(ctx context.Context, addr peer.AddrInfo) error
 	Close()
 	MaxTxnRetries() int
 	Events() event.Bus

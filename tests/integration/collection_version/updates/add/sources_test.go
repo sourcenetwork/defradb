@@ -30,8 +30,8 @@ func TestColVersionUpdateAddSources_Errors(t *testing.T) {
 					[
 						{
 							"op": "add",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Sources/-",
-							"value": {"SourceCollectionID": "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"}
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Sources/-",
+							"value": {"SourceCollectionID": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"}
 						}
 					]
 				`,

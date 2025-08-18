@@ -14,7 +14,6 @@ import (
 	"context"
 	"net/http/httptest"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
@@ -40,7 +39,7 @@ type Wrapper struct {
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, node.Peer)
+	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +58,19 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() client.PeerInfo {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+	return w.client.Connect(ctx, addr)
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	return w.client.SetReplicator(ctx, info, collections...)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	return w.client.DeleteReplicator(ctx, info, collections...)
 }
 
@@ -194,24 +197,16 @@ func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, err
 	return w.client.GetNACStatus(ctx)
 }
 
-func (w *Wrapper) PatchSchema(
-	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
-}
-
 func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
-	return w.client.PatchCollection(ctx, patch)
+	return w.client.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	return w.client.SetActiveCollectionVersion(ctx, schemaVersionID)
 }
 
 func (w *Wrapper) AddView(
@@ -219,7 +214,7 @@ func (w *Wrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	return w.client.AddView(ctx, query, sdl, transform)
 }
 
@@ -244,17 +239,6 @@ func (w *Wrapper) GetCollections(
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	return w.client.GetCollections(ctx, options)
-}
-
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	return w.client.GetSchemaByVersionID(ctx, versionID)
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemas(ctx, options)
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -309,10 +293,6 @@ func (w *Wrapper) MaxTxnRetries() int {
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
-}
-
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

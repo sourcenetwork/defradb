@@ -31,7 +31,7 @@ func TestColVersionUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 						{ "op": "add", "path": "/hgfgsagasga", "value": {"Name": "Dogs"} }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "adding collections via patch is not supported",
 			},
 		},
 	}
@@ -53,7 +53,7 @@ func TestColVersionUpdateAddCollections_WithEmptyID_Errors(t *testing.T) {
 						{ "op": "add", "path": "/hgfgsagasga", "value": {"VersionID": "", "Name": "Dogs"} }
 					]
 				`,
-				ExpectedError: "schema name can't be empty",
+				ExpectedError: "adding collections via patch is not supported",
 			},
 		},
 	}
@@ -99,10 +99,8 @@ func TestColVersionUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 					[
 						{ "op": "add", "path": "/-", "value": {"Name": "Dogs"} }
 					]
-				`, // todo - doc properly
-				// We get this error because we are marshalling into a map[uint32]CollectionVersion,
-				// we will need to handle `-` when we allow adding collections via patches.
-				ExpectedError: "schema name can't be empty",
+				`,
+				ExpectedError: "adding collections via patch is not supported.",
 			},
 		},
 	}

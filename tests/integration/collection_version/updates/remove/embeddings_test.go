@@ -35,7 +35,7 @@ func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0"
+							"path": "/Users/VectorEmbeddings/0"
 						}
 					]
 				`,

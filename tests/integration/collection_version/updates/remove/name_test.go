@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColVersionUpdateRemoveName(t *testing.T) {
+func TestColVersionUpdateRemoveNameByVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -32,7 +32,7 @@ func TestColVersionUpdateRemoveName(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name"
+							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i/Name"
 						}
 					]
 				`,
@@ -41,5 +41,29 @@ func TestColVersionUpdateRemoveName(t *testing.T) {
 		},
 	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColVersionUpdateRemoveName(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						email: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Users/Name" }
+					]
+				`,
+				ExpectedError: "collection name can't be empty",
+			},
+		},
+	}
 	testUtils.ExecuteTestCase(t, test)
 }

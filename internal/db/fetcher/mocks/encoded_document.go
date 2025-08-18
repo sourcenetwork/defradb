@@ -83,23 +83,23 @@ func (_c *EncodedDocument_ID_Call) RunAndReturn(run func() []byte) *EncodedDocum
 }
 
 // Properties provides a mock function for the type EncodedDocument
-func (_mock *EncodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
+func (_mock *EncodedDocument) Properties(onlyFilterProps bool) (map[client.CollectionFieldDescription]any, error) {
 	ret := _mock.Called(onlyFilterProps)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Properties")
 	}
 
-	var r0 map[client.FieldDefinition]any
+	var r0 map[client.CollectionFieldDescription]any
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bool) (map[client.FieldDefinition]any, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(bool) (map[client.CollectionFieldDescription]any, error)); ok {
 		return returnFunc(onlyFilterProps)
 	}
-	if returnFunc, ok := ret.Get(0).(func(bool) map[client.FieldDefinition]any); ok {
+	if returnFunc, ok := ret.Get(0).(func(bool) map[client.CollectionFieldDescription]any); ok {
 		r0 = returnFunc(onlyFilterProps)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[client.FieldDefinition]any)
+			r0 = ret.Get(0).(map[client.CollectionFieldDescription]any)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(bool) error); ok {
@@ -116,24 +116,30 @@ type EncodedDocument_Properties_Call struct {
 }
 
 // Properties is a helper method to define mock.On call
-//   - onlyFilterProps
+//   - onlyFilterProps bool
 func (_e *EncodedDocument_Expecter) Properties(onlyFilterProps interface{}) *EncodedDocument_Properties_Call {
 	return &EncodedDocument_Properties_Call{Call: _e.mock.On("Properties", onlyFilterProps)}
 }
 
 func (_c *EncodedDocument_Properties_Call) Run(run func(onlyFilterProps bool)) *EncodedDocument_Properties_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bool))
+		var arg0 bool
+		if args[0] != nil {
+			arg0 = args[0].(bool)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
 
-func (_c *EncodedDocument_Properties_Call) Return(fieldDefinitionToV map[client.FieldDefinition]any, err error) *EncodedDocument_Properties_Call {
-	_c.Call.Return(fieldDefinitionToV, err)
+func (_c *EncodedDocument_Properties_Call) Return(collectionFieldDescriptionToV map[client.CollectionFieldDescription]any, err error) *EncodedDocument_Properties_Call {
+	_c.Call.Return(collectionFieldDescriptionToV, err)
 	return _c
 }
 
-func (_c *EncodedDocument_Properties_Call) RunAndReturn(run func(onlyFilterProps bool) (map[client.FieldDefinition]any, error)) *EncodedDocument_Properties_Call {
+func (_c *EncodedDocument_Properties_Call) RunAndReturn(run func(onlyFilterProps bool) (map[client.CollectionFieldDescription]any, error)) *EncodedDocument_Properties_Call {
 	_c.Call.Return(run)
 	return _c
 }

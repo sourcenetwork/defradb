@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
@@ -46,21 +45,21 @@ func NewCWrapper(ctx context.Context, enableNAC bool) *CWrapper {
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 
-func (w *CWrapper) PeerInfo() peer.AddrInfo {
+func (w *CWrapper) PeerInfo() client.PeerInfo {
 	result := cbindings.P2PInfo(w.nodeNum)
 
 	if result.Status != 0 {
-		return peer.AddrInfo{}
+		return client.PeerInfo{}
 	}
 
-	addrInfo, err := unmarshalResult[peer.AddrInfo](result.Value)
+	addrInfo, err := unmarshalResult[client.PeerInfo](result.Value)
 	if err != nil {
-		return peer.AddrInfo{}
+		return client.PeerInfo{}
 	}
 	return addrInfo
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *CWrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	txnID := txnIDFromContext(ctx)
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
@@ -73,7 +72,7 @@ func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collec
 	return nil
 }
 
-func (w *CWrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *CWrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	txnID := txnIDFromContext(ctx)
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
@@ -361,30 +360,10 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	return unmarshalResult[client.DeleteActorRelationshipResult](result.Value)
 }
 
-func (w *CWrapper) PatchSchema(
-	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	txnID := txnIDFromContext(ctx)
-	cMigration, migrationErr := optionToString(migration)
-
-	if migrationErr != nil {
-		return migrationErr
-	}
-
-	result := cbindings.PatchSchema(w.nodeNum, patch, cMigration, setAsDefaultVersion, txnID)
-
-	if result.Status != 0 {
-		return errors.New(result.Error)
-	}
-	return nil
-}
-
 func (w *CWrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
 	var opts cbindings.GoCOptions
 	opts.TxID = txnIDFromContext(ctx)
@@ -394,7 +373,12 @@ func (w *CWrapper) PatchCollection(
 	opts.Name = ""
 	opts.GetInactive = 0
 
-	result := cbindings.CollectionPatch(w.nodeNum, patch, opts)
+	cMigration, migrationErr := optionToString(migration)
+	if migrationErr != nil {
+		return migrationErr
+	}
+
+	result := cbindings.CollectionPatch(w.nodeNum, patch, cMigration, opts)
 
 	if result.Status != 0 {
 		return errors.New(result.Error)
@@ -402,9 +386,9 @@ func (w *CWrapper) PatchCollection(
 	return nil
 }
 
-func (w *CWrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
 	txnID := txnIDFromContext(ctx)
-	result := cbindings.SetActiveSchema(w.nodeNum, schemaVersionID, txnID)
+	result := cbindings.SetActiveCollection(w.nodeNum, schemaVersionID, txnID)
 	if result.Status != 0 {
 		return errors.New(result.Error)
 	}
@@ -416,23 +400,23 @@ func (w *CWrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	txnID := txnIDFromContext(ctx)
 	cTransform, err := stringFromLensOption(transform)
 
 	if err != nil {
-		return []client.CollectionDefinition{}, err
+		return []client.CollectionVersion{}, err
 	}
 
 	result := cbindings.ViewAdd(w.nodeNum, query, sdl, cTransform, txnID)
 
 	if result.Status != 0 {
-		return []client.CollectionDefinition{}, errors.New(result.Error)
+		return []client.CollectionVersion{}, errors.New(result.Error)
 	}
 
-	colDefRes, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
+	colDefRes, err := unmarshalResult[[]client.CollectionVersion](result.Value)
 	if err != nil {
-		return []client.CollectionDefinition{}, err
+		return []client.CollectionVersion{}, err
 	}
 	return colDefRes, nil
 }
@@ -542,7 +526,7 @@ func (w *CWrapper) GetCollections(
 		return []client.Collection{}, errors.New(result.Error)
 	}
 
-	defs, err := unmarshalResult[[]client.CollectionDefinition](result.Value)
+	defs, err := unmarshalResult[[]client.CollectionVersion](result.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -552,36 +536,6 @@ func (w *CWrapper) GetCollections(
 		cols[i] = &Collection{def: def, nodeNum: w.nodeNum}
 	}
 	return cols, nil
-}
-
-func (w *CWrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-	return schemas[0], nil
-}
-
-func (w *CWrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	txnID := txnIDFromContext(ctx)
-	root := stringFromImmutableOptionString(options.Root)
-	version := stringFromImmutableOptionString(options.ID)
-	name := stringFromImmutableOptionString(options.Name)
-
-	result := cbindings.DescribeSchema(w.nodeNum, name, root, version, txnID)
-
-	if result.Status != 0 {
-		return []client.SchemaDescription{}, errors.New(result.Error)
-	}
-
-	res, err := unmarshalResult[[]client.SchemaDescription](result.Value)
-	if err != nil {
-		return []client.SchemaDescription{}, errors.New(result.Error)
-	}
-	return res, nil
 }
 
 func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -699,7 +653,7 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
+func (w *CWrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
 	panic("not implemented")
 }
 

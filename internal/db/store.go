@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -82,41 +83,6 @@ func (db *DB) GetCollections(
 	return db.getCollections(ctx, options)
 }
 
-// GetSchemaByVersionID returns the schema description for the schema version of the
-// ID provided.
-//
-// Will return an error if it is not found.
-func (db *DB) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getSchemaByVersionID(ctx, versionID)
-}
-
-// GetSchemas returns all schema versions that currently exist within
-// this [Store].
-func (db *DB) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
-	if err != nil {
-		return nil, err
-	}
-	defer txn.Discard(ctx)
-
-	return db.getSchemas(ctx, options)
-}
-
 // GetAllIndexes gets all the indexes in the database.
 func (db *DB) GetAllIndexes(
 	ctx context.Context,
@@ -141,6 +107,10 @@ func (db *DB) GetAllIndexes(
 func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeSchemaAddPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -170,32 +140,11 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 // The collections (including the schema version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-func (db *DB) PatchSchema(
-	ctx context.Context,
-	patchString string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard(ctx)
-
-	err = db.patchSchema(ctx, patchString, migration, setAsDefaultVersion)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit(ctx)
-}
 
 func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
+	migration immutable.Option[model.Lens],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -206,7 +155,7 @@ func (db *DB) PatchCollection(
 	}
 	defer txn.Discard(ctx)
 
-	err = db.patchCollection(ctx, patchString)
+	err = db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
@@ -214,7 +163,7 @@ func (db *DB) PatchCollection(
 	return txn.Commit(ctx)
 }
 
-func (db *DB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
+func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -224,7 +173,7 @@ func (db *DB) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string
 	}
 	defer txn.Discard(ctx)
 
-	err = db.setActiveSchemaVersion(ctx, schemaVersionID)
+	err = db.setActiveCollectionVersion(ctx, schemaVersionID)
 	if err != nil {
 		return err
 	}
@@ -255,7 +204,7 @@ func (db *DB) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

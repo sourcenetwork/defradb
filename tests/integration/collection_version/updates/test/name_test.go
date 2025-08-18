@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColVersionUpdateTestName(t *testing.T) {
+func TestColVersionUpdateTestNameByVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -30,7 +30,7 @@ func TestColVersionUpdateTestName(t *testing.T) {
 					[
 						{
 							"op": "test",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Name",
 							"value": "Users"
 						}
 					]
@@ -42,7 +42,7 @@ func TestColVersionUpdateTestName(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColVersionUpdateTestName_Fails(t *testing.T) {
+func TestColVersionUpdateTestNameByVersionID_Fails(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -55,15 +55,60 @@ func TestColVersionUpdateTestName_Fails(t *testing.T) {
 					[
 						{
 							"op": "test",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Name",
 							"value": "Dogs"
 						}
 					]
 				`,
-				ExpectedError: "testing value /bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name failed: test failed",
+				ExpectedError: "testing value /bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Name failed: test failed",
 			},
 		},
 	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColVersionUpdateTestName(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Name", "value": "Users" }
+					]
+				`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColVersionUpdateTestName_Fails(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Name", "value": "Book" }
+					]
+				`,
+				ExpectedError: "failed: test failed",
+			},
+		},
+	}
 	testUtils.ExecuteTestCase(t, test)
 }

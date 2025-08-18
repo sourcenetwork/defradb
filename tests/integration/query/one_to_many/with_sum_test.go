@@ -70,12 +70,12 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":        "Cornelia Funke",
-							"totalRating": 4.8,
-						},
-						{
 							"name":        "John Grisham",
 							"totalRating": 9.4,
+						},
+						{
+							"name":        "Cornelia Funke",
+							"totalRating": 4.8,
 						},
 					},
 				},

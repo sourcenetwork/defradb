@@ -85,7 +85,7 @@ func (n *createNode) Start() error {
 	n.docs = make([]*client.Document, len(n.input))
 
 	for i, input := range n.input {
-		doc, err := client.NewDocFromMap(input, n.collection.Definition())
+		doc, err := client.NewDocFromMap(input, n.collection.Version())
 		if err != nil {
 			return err
 		}

@@ -45,7 +45,7 @@ var _ client.Collection = (*collection)(nil)
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
 	db             *DB
-	def            client.CollectionDefinition
+	def            client.CollectionVersion
 	indexes        []CollectionIndex
 	fetcherFactory func() fetcher.Fetcher
 }
@@ -57,10 +57,10 @@ type collection struct {
 // CollectionOptions object.
 
 // newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion, schema client.SchemaDescription) (*collection, error) {
+func (db *DB) newCollection(desc client.CollectionVersion) (*collection, error) {
 	col := &collection{
 		db:  db,
-		def: client.CollectionDefinition{Version: desc, Schema: schema},
+		def: desc,
 	}
 	for _, index := range desc.Indexes {
 		colIndex, err := NewCollectionIndex(col, index)
@@ -85,25 +85,6 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 	}
 
 	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
-}
-
-func (db *DB) getCollectionByID(ctx context.Context, id string) (client.Collection, error) {
-	col, err := description.GetCollectionByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	schema, err := description.GetSchemaVersion(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	collection, err := db.newCollection(col, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	return collection, nil
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -136,7 +117,7 @@ func (db *DB) getCollections(
 ) ([]client.Collection, error) {
 	var cols []client.CollectionVersion
 	switch {
-	case options.Name.HasValue():
+	case options.Name.HasValue() && !options.IncludeInactive.Value():
 		col, err := description.GetCollectionByName(ctx, options.Name.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
@@ -156,6 +137,13 @@ func (db *DB) getCollections(
 		if err != nil {
 			return nil, err
 		}
+
+	// Multi-collection self-referencing relations are the only time the collection set id option
+	// will be provided by internal code - it is expected that very few user collections will result
+	// in this being called, and so for now we tolerate a full scan plus filter instead of maintaining
+	// and index. The commented out case below, highlights its omission - if we want to index it in the
+	// future it should be uncommented and handled.
+	// case options.CollectionSetID.HasValue():
 
 	default:
 		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
@@ -181,21 +169,28 @@ func (db *DB) getCollections(
 			}
 		}
 
+		if options.Name.HasValue() {
+			if col.Name != options.Name.Value() {
+				continue
+			}
+		}
+
 		// By default, we don't return inactive collections unless a specific version is requested.
 		if !options.IncludeInactive.Value() && !col.IsActive && !options.VersionID.HasValue() {
 			continue
 		}
 
-		schema, err := description.GetSchemaVersion(ctx, col.VersionID)
-		if err != nil {
-			// If the schema is not found we leave it as empty and carry on. This can happen when
-			// a migration is registered before the schema is declared locally.
-			if !errors.Is(err, corekv.ErrNotFound) {
-				return nil, err
+		if options.CollectionSetID.HasValue() {
+			if !col.CollectionSet.HasValue() {
+				continue
+			}
+
+			if col.CollectionSet.Value().CollectionSetID != options.CollectionSetID.Value() {
+				continue
 			}
 		}
 
-		collection, err := db.newCollection(col, schema)
+		collection, err := db.newCollection(col)
 		if err != nil {
 			return nil, err
 		}
@@ -203,44 +198,6 @@ func (db *DB) getCollections(
 	}
 
 	return collections, nil
-}
-
-// getAllActiveDefinitions returns all queryable collection/views and any embedded schema used by them.
-func (db *DB) getAllActiveDefinitions(ctx context.Context) ([]client.CollectionDefinition, error) {
-	cols, err := description.GetActiveCollections(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	definitions := make([]client.CollectionDefinition, len(cols))
-	for i, col := range cols {
-		schema, err := description.GetSchemaVersion(ctx, col.VersionID)
-		if err != nil {
-			return nil, err
-		}
-
-		collection, err := db.newCollection(col, schema)
-		if err != nil {
-			return nil, err
-		}
-		definitions[i] = collection.Definition()
-	}
-
-	schemas, err := description.GetCollectionlessSchemas(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, schema := range schemas {
-		definitions = append(
-			definitions,
-			client.CollectionDefinition{
-				Schema: schema,
-			},
-		)
-	}
-
-	return definitions, nil
 }
 
 // GetAllDocIDs returns all the document IDs that exist in the collection.
@@ -352,7 +309,7 @@ func (c *collection) getAllDocIDsChan(
 
 // Version returns the client.CollectionVersion.
 func (c *collection) Version() client.CollectionVersion {
-	return c.Definition().Version
+	return c.def
 }
 
 // Name returns the collection name.
@@ -360,22 +317,13 @@ func (c *collection) Name() string {
 	return c.Version().Name
 }
 
-// Schema returns the Schema of the collection.
-func (c *collection) Schema() client.SchemaDescription {
-	return c.Definition().Schema
-}
-
 // VersionID returns the VersionID of the collection.
 func (c *collection) VersionID() string {
 	return c.Version().VersionID
 }
 
-func (c *collection) SchemaRoot() string {
-	return c.Schema().Root
-}
-
-func (c *collection) Definition() client.CollectionDefinition {
-	return c.def
+func (c *collection) CollectionID() string {
+	return c.Version().CollectionID
 }
 
 // Create a new document.
@@ -658,7 +606,7 @@ func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	}
 
 	for _, field := range fields {
-		if _, exists := c.Schema().GetFieldByName(field); !exists {
+		if _, exists := c.Version().GetFieldByName(field); !exists {
 			return client.NewErrFieldNotExist(field)
 		}
 		if strings.HasPrefix(field, "_") {
@@ -729,7 +677,12 @@ func (c *collection) save(
 		}
 
 		if val.IsDirty() {
-			fieldID, err := id.GetShortFieldID(ctx, shortID, k)
+			fieldDescription, valid := c.Version().GetFieldByName(k)
+			if !valid {
+				return client.NewErrFieldNotExist(k)
+			}
+
+			fieldID, err := id.GetShortFieldID(ctx, shortID, fieldDescription.FieldID)
 			if err != nil {
 				return err
 			}
@@ -737,11 +690,6 @@ func (c *collection) save(
 				CollectionShortID: shortID,
 				DocID:             primaryKey.DocID,
 				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
-			}
-
-			fieldDescription, valid := c.Definition().GetFieldByName(k)
-			if !valid {
-				return client.NewErrFieldNotExist(k)
 			}
 
 			// by default the type will have been set to LWW_REGISTER. We need to ensure
@@ -760,7 +708,7 @@ func (c *collection) save(
 
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
 				txn.Datastore(),
-				c.Schema().VersionID,
+				c.VersionID(),
 				val.Type(),
 				fieldDescription.Kind,
 				fieldKey,
@@ -786,7 +734,7 @@ func (c *collection) save(
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
-		c.Schema().VersionID,
+		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
@@ -803,20 +751,20 @@ func (c *collection) save(
 		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		c.db.sendUpdate(updateEvent)
 	})
 
 	txn.OnSuccess(func() {
 		doc.SetHead(link.Cid)
 	})
 
-	if c.def.Version.IsBranchable {
+	if c.def.IsBranchable {
 		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 		collectionCRDT := crdt.NewCollection(
-			c.Schema().VersionID,
+			c.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		)
 
@@ -837,7 +785,7 @@ func (c *collection) save(
 		}
 
 		txn.OnSuccess(func() {
-			c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+			c.db.sendUpdate(updateEvent)
 		})
 	}
 
@@ -847,7 +795,7 @@ func (c *collection) save(
 func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 	ctx context.Context,
 	docID string,
-	fieldDescription client.FieldDefinition,
+	fieldDescription client.CollectionFieldDescription,
 	value any,
 ) error {
 	if fieldDescription.Kind != client.FieldKind_DocID {
@@ -858,7 +806,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	objFieldDescription, ok := c.Definition().GetFieldByName(
+	objFieldDescription, ok := c.Version().GetFieldByName(
 		strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID),
 	)
 	if !ok {
@@ -868,19 +816,24 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, _, err := client.GetDefinitionFromStore(ctx, c.db, c.Definition(), objFieldDescription.Kind)
+	otherCol, _, err := client.GetCollectionFromStore(ctx, c.db, c.Version(), objFieldDescription.Kind)
 	if err != nil {
 		return err
 	}
 
-	otherObjFieldDescription, _ := otherCol.Version.GetFieldByRelation(
-		fieldDescription.RelationName,
+	otherObjFieldDescription, otherFieldExists := otherCol.GetFieldByRelation(
+		fieldDescription.RelationName.Value(),
 		c.Name(),
 		objFieldDescription.Name,
 	)
-	if !(otherObjFieldDescription.Kind.HasValue() &&
-		otherObjFieldDescription.Kind.Value().IsObject() &&
-		!otherObjFieldDescription.Kind.Value().IsArray()) {
+
+	if !otherFieldExists {
+		// This is a uni-directional field and so is effectively one-many
+		return nil
+	}
+
+	if !(otherObjFieldDescription.Kind.IsObject() &&
+		!otherObjFieldDescription.Kind.IsArray()) {
 		// If the other field is not an object field then this is not a one to one relation and we can continue
 		return nil
 	}
@@ -929,7 +882,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		if err != nil {
 			return err
 		}
-		return NewErrOneOneAlreadyLinked(docID, existingDocument.GetID(), objFieldDescription.RelationName)
+		return NewErrOneOneAlreadyLinked(docID, existingDocument.GetID(), objFieldDescription.RelationName.Value())
 	}
 
 	err = selectionPlan.Close()

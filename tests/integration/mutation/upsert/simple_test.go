@@ -64,11 +64,11 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Bob",
+							"name": "Alice",
 							"age":  int64(40),
 						},
 						{
-							"name": "Alice",
+							"name": "Bob",
 							"age":  int64(40),
 						},
 					},
@@ -133,11 +133,11 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Alice",
+							"name": "Bob",
 							"age":  int64(40),
 						},
 						{
-							"name": "Bob",
+							"name": "Alice",
 							"age":  int64(40),
 						},
 					},

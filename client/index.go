@@ -63,10 +63,10 @@ type CollectionIndex interface {
 }
 
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
-func (d CollectionDefinition) CollectIndexedFields() []FieldDefinition {
+func (d CollectionVersion) CollectIndexedFields() []CollectionFieldDescription {
 	fieldsMap := make(map[string]bool)
-	fields := make([]FieldDefinition, 0, len(d.Version.Indexes))
-	for _, index := range d.Version.Indexes {
+	fields := make([]CollectionFieldDescription, 0, len(d.Indexes))
+	for _, index := range d.Indexes {
 		for _, field := range index.Fields {
 			if fieldsMap[field.Name] {
 				// If the FieldDescription has already been added to the result do not add it a second time

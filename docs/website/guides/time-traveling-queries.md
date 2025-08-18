@@ -21,7 +21,7 @@ A powerful feature of a time-traveling query is that very little work is require
 query {
   User (
     cid: "bafybeieqnthjlvr64aodivtvtwgqelpjjvkmceyz4aqerkk5h23kjoivmu",
-    dockey: "bae-d4303725-7db9-53d2-b324-f3ee44020e52"
+    dockey: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c"
   ) {
     name
     age

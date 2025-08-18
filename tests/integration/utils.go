@@ -230,7 +230,16 @@ func ExecuteTestCase(
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
-				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
+				executeTestCase(
+					ctx,
+					t,
+					collectionNames,
+					testCase,
+					kms,
+					dbt,
+					ct,
+					documentACPType,
+				)
 			}
 		}
 	}
@@ -244,6 +253,7 @@ func executeTestCase(
 	kms state.KMSType,
 	dbt state.DatabaseType,
 	clientType state.ClientType,
+	documentACPType state.DocumentACPType,
 ) {
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
@@ -267,7 +277,16 @@ func executeTestCase(
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := state.NewState(ctx, t, testCase.IdentityTypes, kms, dbt, clientType, collectionNames)
+	s := state.NewState(
+		ctx,
+		t,
+		testCase.IdentityTypes,
+		kms,
+		dbt,
+		clientType,
+		documentACPType,
+		collectionNames,
+	)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -358,20 +377,14 @@ func performAction(
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
 
-	case SchemaPatch:
-		patchSchema(s, action)
-
 	case PatchCollection:
 		patchCollection(s, action)
-
-	case GetSchema:
-		getSchema(s, action)
 
 	case GetCollections:
 		getCollections(s, action)
 
-	case SetActiveSchemaVersion:
-		setActiveSchemaVersion(s, action)
+	case SetActiveCollectionVersion:
+		setActiveCollectionVersion(s, action)
 
 	case CreateView:
 		createView(s, action)
@@ -493,7 +506,7 @@ func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutabl
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Version.Name], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -501,10 +514,10 @@ func generateDocs(s *state.State, action GenerateDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
-	defs := make([]client.CollectionDefinition, 0, len(collections))
+	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, collection := range collections {
 		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
-			defs = append(defs, collection.Definition())
+			defs = append(defs, collection.Version())
 		}
 	}
 	docs, err := gen.AutoGenerate(defs, action.Options...)
@@ -518,9 +531,9 @@ func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
-	defs := make([]client.CollectionDefinition, 0, len(collections))
+	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, col := range collections {
-		defs = append(defs, col.Definition())
+		defs = append(defs, col.Version())
 	}
 	docs, err := predefined.Create(defs, action.Docs)
 	if err != nil {
@@ -814,11 +827,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		var addresses []string
-		for _, addr := range s.Nodes[nodeIndex].AddrInfo.Addrs {
-			addresses = append(addresses, addr.String())
-		}
-		opts = append(opts, netConfig.WithListenAddresses(addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].CachedPeerInfo.Addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -873,9 +882,9 @@ func refreshTokens(
 		if fullIdentityToUpdate, ok := identityToUpdate.(acpIdentity.FullIdentity); ok {
 			nodeTokensToUpdate := identHolder.NodeTokens
 			for nodeKey := range identHolder.NodeTokens {
-				if audience := getNodeAudience(s, nodeKey); audience.HasValue() {
+				if audience := state.GetNodeAudience(s, nodeKey); audience.HasValue() {
 					err := fullIdentityToUpdate.UpdateToken(
-						authTokenExpiration,
+						action.AuthTokenExpiration,
 						audience,
 						immutable.Some(s.SourcehubAddress),
 					)
@@ -946,7 +955,7 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{netConfig.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
+	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
@@ -1100,36 +1109,13 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t te
 	}
 }
 
-func patchSchema(
-	s *state.State,
-	action SchemaPatch,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		var setAsDefaultVersion bool
-		if action.SetAsDefaultVersion.HasValue() {
-			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
-		} else {
-			setAsDefaultVersion = true
-		}
-
-		err := node.PatchSchema(s.Ctx, action.Patch, action.Lens, setAsDefaultVersion)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
-}
-
 func patchCollection(
 	s *state.State,
 	action PatchCollection,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.PatchCollection(s.Ctx, action.Patch)
+		err := node.PatchCollection(s.Ctx, action.Patch, action.Lens)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1137,38 +1123,6 @@ func patchCollection(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-}
-
-func getSchema(
-	s *state.State,
-	action GetSchema,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		var results []client.SchemaDescription
-		var err error
-		switch {
-		case action.VersionID.HasValue():
-			result, e := node.GetSchemaByVersionID(s.Ctx, action.VersionID.Value())
-			err = e
-			results = []client.SchemaDescription{result}
-		default:
-			results, err = node.GetSchemas(
-				s.Ctx,
-				client.SchemaFetchOptions{
-					Root: action.Root,
-					Name: action.Name,
-				},
-			)
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if !expectedErrorRaised {
-			require.Equal(s.T, action.ExpectedResults, results)
-		}
-	}
 }
 
 func getCollections(
@@ -1194,13 +1148,13 @@ func getCollections(
 	}
 }
 
-func setActiveSchemaVersion(
+func setActiveCollectionVersion(
 	s *state.State,
-	action SetActiveSchemaVersion,
+	action SetActiveCollectionVersion,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.SetActiveSchemaVersion(s.Ctx, action.SchemaVersionID)
+		err := node.SetActiveCollectionVersion(s.Ctx, action.VersionID)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -2372,7 +2326,7 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]DocumentACPType]) {
+func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]state.DocumentACPType]) {
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
@@ -2480,17 +2434,17 @@ func CBORValue(value any) []byte {
 func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
-		val, err := client.NewDocFromMap(action.DocMap, collection.Definition())
+		val, err := client.NewDocFromMap(action.DocMap, collection.Version())
 		if err != nil {
 			return nil, err
 		}
 		return []*client.Document{val}, nil
 
 	case client.IsJSONArray([]byte(action.Doc)):
-		return client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
+		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version())
 
 	default:
-		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version())
 		if err != nil {
 			return nil, err
 		}

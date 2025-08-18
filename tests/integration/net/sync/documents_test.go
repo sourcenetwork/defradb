@@ -68,12 +68,12 @@ func TestDocSync_WithDocsAvailableOnSingleNode_ShouldSync(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Andy",
-							"Age":  int64(25),
-						},
-						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Andy",
+							"Age":  int64(25),
 						},
 					},
 				},
@@ -137,12 +137,12 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Andy",
-							"Age":  int64(25),
-						},
-						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Andy",
+							"Age":  int64(25),
 						},
 					},
 				},

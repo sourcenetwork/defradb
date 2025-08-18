@@ -32,8 +32,6 @@ var (
 	txsContextKey = contextKey("txs")
 	// dbContextKey is the context key for the client.TxnStore
 	dbContextKey = contextKey("db")
-	// p2pContextKey is the context key for the client.P2P
-	p2pContextKey = contextKey("p2p")
 	// colContextKey is the context key for the client.Collection
 	//
 	// If a transaction exists, all operations will be executed
@@ -67,18 +65,6 @@ func mustGetContextClientDB(req *http.Request) DB {
 // This should only be called from functions within the http package.
 func mustGetDataStoreTxn(tx any) client.Txn {
 	return tx.(client.Txn) //nolint:forcetypeassert
-}
-
-// tryGetContextClientP2P returns the P2P client from the http request context and a boolean
-// indicating if p2p was enabled.
-//
-// This should only be called from functions within the http package.
-func tryGetContextClientP2P(req *http.Request) (client.P2P, bool) {
-	p2p, ok := req.Context().Value(p2pContextKey).(client.P2P)
-	if !ok {
-		return nil, false
-	}
-	return p2p, ok
 }
 
 func requestJSON(req *http.Request, out any) error {

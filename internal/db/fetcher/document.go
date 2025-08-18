@@ -28,7 +28,7 @@ import (
 // It does not filter the data in any way.
 type documentFetcher struct {
 	// The set of fields to fetch, mapped by field ID.
-	fieldsByID map[uint32]client.FieldDefinition
+	fieldsByID map[uint32]client.CollectionFieldDescription
 	// The status to assign fetched documents.
 	status client.DocumentStatus
 	// Statistics on the actions of this instance.
@@ -51,7 +51,7 @@ var _ fetcher = (*documentFetcher)(nil)
 func newDocumentFetcher(
 	ctx context.Context,
 	txn datastore.Txn,
-	fieldsByID map[uint32]client.FieldDefinition,
+	fieldsByID map[uint32]client.CollectionFieldDescription,
 	prefix keys.DataStoreKey,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
@@ -131,7 +131,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	doc := encodedDocument{}
 	doc.id = []byte(f.currentKV.Key.DocID)
 	doc.status = f.status
-	doc.properties = map[client.FieldDefinition]*encProperty{}
+	doc.properties = map[client.CollectionFieldDescription]*encProperty{}
 
 	err := f.appendKV(&doc, f.currentKV)
 	if err != nil {

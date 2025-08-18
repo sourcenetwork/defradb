@@ -51,10 +51,10 @@ func (m configsMap) AddForField(typeStr, fieldName string, conf genConfig) {
 	m[typeStr] = typeConfig
 }
 
-func validateConfig(types map[string]client.CollectionDefinition, configsMap configsMap) error {
+func validateConfig(types map[string]client.CollectionVersion, configsMap configsMap) error {
 	for typeName, typeConfigs := range configsMap {
 		typeDef := types[typeName]
-		if typeDef.Version.Name == "" {
+		if typeDef.Name == "" {
 			return newNotDefinedTypeErr(typeName)
 		}
 		for fieldName, fieldConfig := range typeConfigs {
@@ -83,7 +83,7 @@ func validateConfig(types map[string]client.CollectionDefinition, configsMap con
 	return nil
 }
 
-func checkAndValidateMinMax(field *client.FieldDefinition, conf *genConfig) error {
+func checkAndValidateMinMax(field *client.CollectionFieldDescription, conf *genConfig) error {
 	_, hasMin := conf.props["min"]
 	if hasMin {
 		var err error
@@ -103,7 +103,7 @@ func checkAndValidateMinMax(field *client.FieldDefinition, conf *genConfig) erro
 	return nil
 }
 
-func checkAndValidateLen(field *client.FieldDefinition, conf *genConfig) error {
+func checkAndValidateLen(field *client.CollectionFieldDescription, conf *genConfig) error {
 	lenConf, hasLen := conf.props["len"]
 	if hasLen {
 		if field.Kind != client.FieldKind_NILLABLE_STRING {
@@ -120,7 +120,7 @@ func checkAndValidateLen(field *client.FieldDefinition, conf *genConfig) error {
 	return nil
 }
 
-func checkAndValidateRatio(field *client.FieldDefinition, conf *genConfig) error {
+func checkAndValidateRatio(field *client.CollectionFieldDescription, conf *genConfig) error {
 	ratioConf, hasRatio := conf.props["ratio"]
 	if hasRatio {
 		if field.Kind != client.FieldKind_NILLABLE_BOOL {

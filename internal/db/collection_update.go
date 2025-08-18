@@ -108,7 +108,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap, c.Definition())
+		doc, err := client.NewDocFromMap(docAsMap, c.Version())
 		if err != nil {
 			return nil, err
 		}
@@ -191,7 +191,7 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 		},
 	}
 
-	for _, fd := range c.Schema().Fields {
+	for _, fd := range c.Version().Fields {
 		if fd.Kind.IsObject() {
 			continue
 		}

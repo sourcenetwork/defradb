@@ -13,6 +13,8 @@ package event
 import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 // Bus handles routing and publishing of messages to subscribers.
@@ -97,10 +99,10 @@ type Merge struct {
 	DocID string
 
 	// ByPeer is the id of the peer that created the push log request.
-	ByPeer peer.ID
+	ByPeer string
 
 	// FromPeer is the id of the peer that received the push log request.
-	FromPeer peer.ID
+	FromPeer string
 
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
@@ -134,13 +136,13 @@ func NewMessage(name Name, data any) Message {
 
 // PeerInfo is an event that is published when the node has updated its peer info.
 type PeerInfo struct {
-	Info peer.AddrInfo
+	Info client.PeerInfo
 }
 
 // Replicator is an event that is published when a replicator is added or updated.
 type Replicator struct {
 	// The peer info for the replicator instance.
-	Info peer.AddrInfo
+	Info client.PeerInfo
 	// The map of schema roots that the replicator will receive updates for.
 	Schemas map[string]struct{}
 	// Docs will receive Updates if new collections have been added to the replicator

@@ -21,6 +21,8 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -34,6 +36,45 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
+	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
+	if err != nil {
+		log.ErrorContextE(
+			ctx,
+			"Failed to execute merge",
+			err,
+			corelog.Any("Event", evt))
+		return err
+	}
+
+	if col.Version().IsBranchable {
+		// As collection commits link to document composite commits, all events
+		// recieved for branchable collections must be processed serially else
+		// they may otherwise cause a transaction conflict.
+		db.colMergeQueue.add(evt.CollectionID)
+		defer db.colMergeQueue.done(evt.CollectionID)
+	} else {
+		// ensure only one merge per docID
+		db.docMergeQueue.add(evt.DocID)
+		defer db.docMergeQueue.done(evt.DocID)
+	}
+
+	// retry the merge process if a conflict occurs
+	//
+	// conficts occur when a user updates a document
+	// while a merge is in progress.
+	for i := 0; i < db.MaxTxnRetries(); i++ {
+		err = db.executeMerge(ctx, col, evt)
+		if errors.Is(err, corekv.ErrTxnConflict) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
@@ -460,7 +501,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 		return crdt.NewDocComposite(
 			txn.Datastore(),
-			mp.col.Schema().VersionID,
+			mp.col.Version().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
 				DocID:             docID,
@@ -469,7 +510,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 	case crdtUnion.IsCollection():
 		return crdt.NewCollection(
-			mp.col.Schema().VersionID,
+			mp.col.Version().VersionID,
 			keys.NewHeadstoreColKey(shortID),
 		), nil
 
@@ -478,20 +519,20 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		mp.docIDs[docID] = struct{}{}
 
 		field := crdtUnion.GetFieldName()
-		fd, ok := mp.col.Definition().GetFieldByName(field)
+		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.
 			return nil, nil
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.Name)
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
 		if err != nil {
 			return nil, err
 		}
 
 		return crdt.FieldLevelCRDTWithStore(
 			txn.Datastore(),
-			mp.col.Schema().VersionID,
+			mp.col.Version().VersionID,
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{

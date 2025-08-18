@@ -13,6 +13,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/node"
@@ -60,19 +61,16 @@ func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Cl
 
 type goClientWrapper struct {
 	node.DB
-	node.Peer
+	node *node.Node
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		Peer: n.Peer,
+		node: n,
 	}
 }
 
 func (w *goClientWrapper) Close() {
-	if w.Peer != nil {
-		w.Peer.Close()
-	}
-	w.DB.Close()
+	_ = w.node.Close(context.Background())
 }

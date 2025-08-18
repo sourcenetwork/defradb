@@ -60,6 +60,7 @@ func NewDefraCommand() *cobra.Command {
 		p2p_collection,
 		p2p_document,
 		MakeP2PInfoCommand(),
+		MakeP2PConnectCommand(),
 	)
 
 	lens := MakeLensCommand()
@@ -74,9 +75,6 @@ func NewDefraCommand() *cobra.Command {
 	schema := MakeSchemaCommand()
 	schema.AddCommand(
 		MakeSchemaAddCommand(),
-		MakeSchemaPatchCommand(),
-		MakeSchemaSetActiveCommand(),
-		MakeSchemaDescribeCommand(),
 	)
 
 	acp_node_relationship := MakeNodeACPRelationshipCommand()
@@ -151,6 +149,7 @@ func NewDefraCommand() *cobra.Command {
 		MakeCollectionCreateCommand(),
 		MakeCollectionDescribeCommand(),
 		MakeCollectionPatchCommand(),
+		MakeCollectionSetActiveCommand(),
 	)
 
 	block := MakeBlockCommand()

@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
@@ -49,7 +48,7 @@ type Wrapper struct {
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
 func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, node.Peer)
+	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -65,21 +64,34 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() client.PeerInfo {
 	args := []string{"client", "p2p", "info"}
 
 	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get peer info: %v", err))
 	}
-	var info peer.AddrInfo
+	var info client.PeerInfo
 	if err := json.Unmarshal(data, &info); err != nil {
 		panic(fmt.Sprintf("failed to get peer info: %v", err))
 	}
 	return info
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+	args := []string{"client", "p2p", "connect"}
+
+	infoBytes, err := json.Marshal(addr)
+	if err != nil {
+		return err
+	}
+	args = append(args, string(infoBytes))
+
+	_, err = w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "set"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
@@ -93,7 +105,7 @@ func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collect
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
@@ -241,16 +253,12 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	return cols, nil
 }
 
-func (w *Wrapper) PatchSchema(
+func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setDefault bool,
 ) error {
-	args := []string{"client", "schema", "patch"}
-	if setDefault {
-		args = append(args, "--set-active")
-	}
+	args := []string{"client", "collection", "patch"}
 	args = append(args, patch)
 
 	if migration.HasValue() {
@@ -265,18 +273,8 @@ func (w *Wrapper) PatchSchema(
 	return err
 }
 
-func (w *Wrapper) PatchCollection(
-	ctx context.Context,
-	patch string,
-) error {
-	args := []string{"client", "collection", "patch"}
-	args = append(args, patch)
-	_, err := w.cmd.execute(ctx, args)
-	return err
-}
-
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	args := []string{"client", "schema", "set-active"}
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+	args := []string{"client", "collection", "set-active"}
 	args = append(args, schemaVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
@@ -288,7 +286,7 @@ func (w *Wrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
@@ -305,7 +303,7 @@ func (w *Wrapper) AddView(
 	if err != nil {
 		return nil, err
 	}
-	var defs []client.CollectionDefinition
+	var defs []client.CollectionVersion
 	if err := json.Unmarshal(data, &defs); err != nil {
 		return nil, err
 	}
@@ -382,7 +380,7 @@ func (w *Wrapper) GetCollections(
 	if err != nil {
 		return nil, err
 	}
-	var colDesc []client.CollectionDefinition
+	var colDesc []client.CollectionVersion
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
@@ -391,42 +389,6 @@ func (w *Wrapper) GetCollections(
 		cols[i] = &Collection{w.cmd, v}
 	}
 	return cols, err
-}
-
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-
-	// schemas will always have length == 1 here
-	return schemas[0], nil
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	if options.ID.HasValue() {
-		args = append(args, "--version", options.ID.Value())
-	}
-	if options.Root.HasValue() {
-		args = append(args, "--root", options.Root.Value())
-	}
-	if options.Name.HasValue() {
-		args = append(args, "--name", options.Name.Value())
-	}
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
-	}
-	return schema, err
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -585,10 +547,6 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
-}
-
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

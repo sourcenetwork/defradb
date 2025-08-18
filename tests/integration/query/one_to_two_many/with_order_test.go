@@ -98,20 +98,6 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"reviewed": []map[string]any{
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
-							},
-							"written": []map[string]any{
-								{
-									"name": "Theif Lord",
-								},
-							},
-						},
-						{
 							"name": "John Grisham",
 							"reviewed": []map[string]any{
 								{
@@ -129,6 +115,20 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 								},
 								{
 									"name": "Painted House",
+								},
+							},
+						},
+						{
+							"name": "Cornelia Funke",
+							"reviewed": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+							},
+							"written": []map[string]any{
+								{
+									"name": "Theif Lord",
 								},
 							},
 						},

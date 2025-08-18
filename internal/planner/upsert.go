@@ -66,7 +66,7 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 		} else {
-			doc, err := client.NewDocFromMap(n.createInput, n.collection.Definition())
+			doc, err := client.NewDocFromMap(n.createInput, n.collection.Version())
 			if err != nil {
 				return false, err
 			}

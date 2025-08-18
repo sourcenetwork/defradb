@@ -98,8 +98,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "A Time for Mercy",
-							"rating": 4.5,
+							"name":   "Painted House",
+							"rating": 4.9,
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
@@ -120,8 +120,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 							},
 						},
 						{
-							"name":   "Painted House",
-							"rating": 4.9,
+							"name":   "A Time for Mercy",
+							"rating": 4.5,
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
@@ -220,25 +220,6 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"age":  int64(62),
-							"reviewed": []map[string]any{
-								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
-								},
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
-							},
-							"written": []map[string]any{
-								{
-									"name": "Theif Lord",
-								},
-							},
-						},
-						{
 							"name": "John Grisham",
 							"age":  int64(65),
 							"reviewed": []map[string]any{
@@ -249,10 +230,29 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 							},
 							"written": []map[string]any{
 								{
-									"name": "A Time for Mercy",
+									"name": "Painted House",
 								},
 								{
-									"name": "Painted House",
+									"name": "A Time for Mercy",
+								},
+							},
+						},
+						{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+							"reviewed": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
+							},
+							"written": []map[string]any{
+								{
+									"name": "Theif Lord",
 								},
 							},
 						},
@@ -535,28 +535,6 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"age":  int64(62),
-							"reviewed": []map[string]any{
-								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
-								},
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
-							},
-							"written": []map[string]any{
-								{
-									"name": "Theif Lord",
-									"price": map[string]any{
-										"value": 12.99,
-									},
-								},
-							},
-						},
-						{
 							"name": "John Grisham",
 							"age":  int64(65),
 							"reviewed": []map[string]any{
@@ -574,6 +552,28 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 								},
 								{
 									"name": "Painted House",
+									"price": map[string]any{
+										"value": 12.99,
+									},
+								},
+							},
+						},
+						{
+							"name": "Cornelia Funke",
+							"age":  int64(62),
+							"reviewed": []map[string]any{
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+								},
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+								},
+							},
+							"written": []map[string]any{
+								{
+									"name": "Theif Lord",
 									"price": map[string]any{
 										"value": 12.99,
 									},
