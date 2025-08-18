@@ -186,7 +186,10 @@ func GetCollectionsByCollectionID(
 ) ([]client.CollectionVersion, error) {
 	cache := getCollectionCache(ctx)
 	if cache.IsFullyPopulated {
-		return cache.CollectionsByID[collectionID], nil // todo - handle panic?
+		if col, ok := cache.CollectionsByID[collectionID]; ok {
+			return col, nil
+		}
+		return nil, corekv.ErrNotFound
 	}
 	// It is not practical to cache a sub set of collections at the moment as figuring
 	// out whether the set is complete or not if not possible without fetching the versionIDs
@@ -353,10 +356,13 @@ func GetCollectionVersionIDs(
 	cache := getCollectionCache(ctx)
 	if cache.IsFullyPopulated {
 		result := []string{}
-		for _, col := range cache.CollectionsByID[collectionID] { // todo - handle panic?
-			result = append(result, col.VersionID)
+		if cols, ok := cache.CollectionsByID[collectionID]; ok {
+			for _, col := range cols {
+				result = append(result, col.VersionID)
+			}
+			return result, nil
 		}
-		return result, nil
+		return nil, corekv.ErrNotFound
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
