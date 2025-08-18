@@ -25,7 +25,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -41,7 +40,6 @@ type LensRegistry struct {
 }
 
 func (w *LensRegistry) Init(txnSource client.TxnSource) {
-	fmt.Println("LensRegistry Init")
 }
 
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
