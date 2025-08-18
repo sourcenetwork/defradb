@@ -39,13 +39,13 @@ func init() {
 // select the client implementation to use.
 func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	switch s.ClientType {
-	case HTTPClientType:
+	case state.HTTPClientType:
 		return http.NewWrapper(nodeObj)
 
-	case CLIClientType:
+	case state.CLIClientType:
 		return cli.NewWrapper(nodeObj, s.SourcehubAddress)
 
-	case GoClientType:
+	case state.GoClientType:
 		return newGoClientWrapper(nodeObj), nil
 
 	case CClientType:

@@ -70,7 +70,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						}
 					}`,
 				},
-				FocusClients: []state.ClientType{testUtils.GoClientType},
+				FocusClients: []state.ClientType{state.GoClientType},
 				Factor:       2,
 			},
 		},
@@ -130,7 +130,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 						}
 					}`,
 				},
-				FocusClients: []state.ClientType{testUtils.GoClientType},
+				FocusClients: []state.ClientType{state.GoClientType},
 				Factor:       2,
 			},
 		},

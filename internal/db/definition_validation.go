@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/ipfs/go-cid"
@@ -31,8 +32,6 @@ type definitionState struct {
 
 	collectionsByID         map[string]client.CollectionVersion
 	activeCollectionsByName map[string]client.CollectionVersion
-
-	definitionCache client.CollectionCache
 }
 
 // newDefinitionState creates a new definitionState object given the provided
@@ -57,8 +56,55 @@ func newDefinitionState(
 		collections:             collections,
 		collectionsByID:         collectionsByID,
 		activeCollectionsByName: activeCollectionsByName,
-		definitionCache:         client.NewCollectionCache(collections),
 	}
+}
+
+// getCollection returns the collection that the given [FieldKind] points to, if it is found in the
+// given [definitionState].
+//
+// If the related collection is not found, default and false will be returned.
+func (s *definitionState) getCollection(
+	host client.CollectionVersion,
+	kind client.FieldKind,
+) (client.CollectionVersion, bool) {
+	switch typedKind := kind.(type) {
+	case *client.NamedKind:
+		for _, col := range s.collections {
+			if col.Name == typedKind.Name {
+				return col, true
+			}
+		}
+
+		return client.CollectionVersion{}, false
+
+	case *client.CollectionKind:
+		def, ok := s.collectionsByID[typedKind.CollectionID]
+		return def, ok
+
+	case *client.SelfKind:
+		if typedKind.RelativeID == "" {
+			return host, true
+		}
+
+		for _, col := range s.collections {
+			if col.CollectionID == host.CollectionID {
+				continue
+			}
+
+			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
+				continue
+			}
+
+			if fmt.Sprint(col.CollectionSet.Value().RelativeID) == typedKind.RelativeID {
+				return col, true
+			}
+		}
+
+	default:
+		// no-op
+	}
+
+	return client.CollectionVersion{}, false
 }
 
 // definitionValidator aliases the signature that all schema and collection
@@ -182,7 +228,7 @@ func validateRelationPointsToValidKind(
 				continue
 			}
 
-			_, ok := client.GetCollection(newState.definitionCache, col, field.Kind)
+			_, ok := newState.getCollection(col, field.Kind)
 			if !ok {
 				errs = append(errs, NewErrFieldKindNotFound(field.Name, field.Kind.String()))
 			}
@@ -240,7 +286,7 @@ func validateSecondaryFieldsPairUp(
 				continue
 			}
 
-			otherDef, ok := client.GetCollection(newState.definitionCache, newCollection, field.Kind)
+			otherDef, ok := newState.getCollection(newCollection, field.Kind)
 			if !ok {
 				continue
 			}
@@ -290,7 +336,7 @@ func validateSingleSidePrimary(
 				// This is a secondary field and thus passes this rule
 				continue
 			}
-			otherDef, ok := client.GetCollection(newState.definitionCache, newCollection, field.Kind)
+			otherDef, ok := newState.getCollection(newCollection, field.Kind)
 			if !ok {
 				continue
 			}
@@ -863,8 +909,7 @@ func validateSelfReferences(
 				continue
 			}
 
-			otherDef, ok := client.GetCollection(
-				newState.definitionCache,
+			otherDef, ok := newState.getCollection(
 				col,
 				field.Kind,
 			)
@@ -885,8 +930,7 @@ func validateSelfReferences(
 			}
 
 			activeCol := newState.activeCollectionsByName[col.Name]
-			otherDef, ok := client.GetCollection(
-				newState.definitionCache,
+			otherDef, ok := newState.getCollection(
 				activeCol,
 				field.Kind,
 			)

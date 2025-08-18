@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
@@ -93,7 +94,7 @@ func (g *Generator) Generate(ctx context.Context, collections []client.Collectio
 // the given CollectionVersions.
 func (g *Generator) generate(ctx context.Context, collections []client.CollectionVersion) ([]*gql.Object, error) {
 	// build base types
-	defs, err := g.buildTypes(collections)
+	defs, err := g.buildTypes(ctx, collections)
 	if err != nil {
 		return nil, err
 	}
@@ -425,10 +426,9 @@ func (g *Generator) createExpandedFieldList(
 // Given a set of developer defined collection types
 // extract and return the correct gql.Object type(s)
 func (g *Generator) buildTypes(
+	ctx context.Context,
 	collections []client.CollectionVersion,
 ) ([]*gql.Object, error) {
-	definitionCache := client.NewCollectionCache(collections)
-
 	// @todo: Check for duplicate named defined types in the TypeMap
 	// get all the defined types from the AST
 	objs := make([]*gql.Object, 0)
@@ -470,8 +470,13 @@ func (g *Generator) buildTypes(
 					continue
 				}
 
+				otherDef, ok, err := description.GetRelatedCollection(ctx, collection, field.Kind)
+				if err != nil {
+					return nil, err
+				}
+
 				var ttype gql.Type
-				if otherDef, ok := client.GetCollection(definitionCache, collection, field.Kind); ok {
+				if ok {
 					ttype, ok = g.manager.schema.TypeMap()[otherDef.Name]
 					if !ok {
 						return nil, NewErrTypeNotFound(field.Kind.String())

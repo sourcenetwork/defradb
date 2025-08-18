@@ -816,7 +816,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, _, err := client.GetCollectionFromStore(ctx, c.db, c.Version(), objFieldDescription.Kind)
+	otherCol, _, err := description.GetRelatedCollection(ctx, c.Version(), objFieldDescription.Kind)
 	if err != nil {
 		return err
 	}
