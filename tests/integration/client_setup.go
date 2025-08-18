@@ -48,7 +48,7 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	case state.GoClientType:
 		return newGoClientWrapper(nodeObj), nil
 
-	case CClientType:
+	case state.CClientType:
 		return cbindings.NewCWrapper(nodeObj)
 
 	default:
