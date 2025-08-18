@@ -64,7 +64,6 @@ import (
 	"fmt"
 	"runtime/cgo"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 
@@ -78,8 +77,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
-
-var txnHandleMap = sync.Map{} // map[uint64]cgo.Handle
 
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
@@ -764,9 +761,10 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
+	wrapper := *w
+	wrapper.handle = handle
 
-	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn.ID(), handle)
+	retTxn := &Transaction{&wrapper, clientTxn, handle}
 
 	return retTxn, nil
 }
@@ -788,9 +786,10 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
+	wrapper := *w
+	wrapper.handle = handle
 
-	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn.ID(), handle)
+	retTxn := &Transaction{&wrapper, clientTxn, handle}
 
 	return retTxn, nil
 }

@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime/cgo"
 	"strings"
 	"unsafe"
 
@@ -31,7 +30,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 // unmarshalResult is a helper function that unmarshals JSON string into another type
@@ -190,14 +188,4 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 		}
 	}()
 	return ch
-}
-
-func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
-	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
-		txnID := txn.ID()
-		if h, ok := txnHandleMap.Load(txnID); ok {
-			return C.uintptr_t(h.(cgo.Handle)) //nolint:forcetypeassert
-		}
-	}
-	return C.uintptr_t(h)
 }
