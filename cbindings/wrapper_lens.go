@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"unsafe"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -39,7 +40,9 @@ type LensRegistry struct {
 	*CWrapper
 }
 
-func (w *LensRegistry) Init(txnSource client.TxnSource) {}
+func (w *LensRegistry) Init(txnSource client.TxnSource) {
+	fmt.Println("LensRegistry Init")
+}
 
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
 	cfgBytes, err := json.Marshal(config)
