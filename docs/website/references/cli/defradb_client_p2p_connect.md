@@ -1,15 +1,22 @@
-## defradb client p2p
+## defradb client p2p connect
 
-Interact with the DefraDB P2P system
+Connect to a peer
 
 ### Synopsis
 
-Interact with the DefraDB P2P system
+Connect to a peer with the given ID and addresses
+Example: 
+  defradb client p2p connect '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
+  		
+
+```
+defradb client p2p connect <peerInfo> [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for p2p
+  -h, --help   help for connect
 ```
 
 ### Options inherited from parent commands
@@ -36,10 +43,5 @@ Interact with the DefraDB P2P system
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
-* [defradb client p2p connect](defradb_client_p2p_connect.md)	 - Connect to a peer
-* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
-* [defradb client p2p info](defradb_client_p2p_info.md)	 - Get peer info from a DefraDB node
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
+* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 

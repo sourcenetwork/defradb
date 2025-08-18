@@ -16,7 +16,6 @@ import (
 	"context"
 	sysjs "syscall/js"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -48,15 +47,15 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() client.PeerInfo {
+	return client.PeerInfo{}
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
-	panic("not implemented")
-}
-
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -427,8 +426,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
+func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+	return w.node.DB.Connect(ctx, addr)
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {

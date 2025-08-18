@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,17 +18,14 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeP2PReplicatorSetCommand() *cobra.Command {
-	var collections []string
+func MakeP2PConnectCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "set [-c, --collection] <peer>",
-		Short: "Add replicator(s) and start synchronization",
-		Long: `Add replicator(s) and start synchronization.
-A replicator synchronizes one or all collection(s) from this node to another.
-
-Example:
-  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
-`,
+		Use:   "connect <peerInfo>",
+		Short: "Connect to a peer",
+		Long: `Connect to a peer with the given ID and addresses
+Example: 
+  defradb client p2p connect '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
+  		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -37,11 +34,8 @@ Example:
 			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
 				return err
 			}
-			return cliClient.SetReplicator(cmd.Context(), info, collections...)
+			return cliClient.Connect(cmd.Context(), info)
 		},
 	}
-
-	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
-		[]string{}, "Collection(s) to replicate")
 	return cmd
 }

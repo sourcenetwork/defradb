@@ -262,3 +262,61 @@ func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) er
 	ctx = InitContext(ctx, txn)
 	return txn.db.BasicExport(ctx, config)
 }
+
+func (txn *Txn) PeerInfo() client.PeerInfo {
+	return txn.db.PeerInfo()
+}
+
+func (txn *Txn) Connect(ctx context.Context, info client.PeerInfo) error {
+	return txn.db.Connect(ctx, info)
+}
+
+func (txn *Txn) SetReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SetReplicator(ctx, info, collectionNames...)
+}
+
+func (txn *Txn) DeleteReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DeleteReplicator(ctx, info, collectionNames...)
+}
+
+func (txn *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetAllReplicators(ctx)
+}
+
+func (txn *Txn) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddP2PCollections(ctx, collectionNames...)
+}
+
+func (txn *Txn) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.RemoveP2PCollections(ctx, collectionNames...)
+}
+
+func (txn *Txn) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetAllP2PCollections(ctx)
+}
+
+func (txn *Txn) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.AddP2PDocuments(ctx, docIDs...)
+}
+
+func (txn *Txn) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.RemoveP2PDocuments(ctx, docIDs...)
+}
+
+func (txn *Txn) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.GetAllP2PDocuments(ctx)
+}
+
+func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SyncDocuments(ctx, collectionName, docIDs)
+}

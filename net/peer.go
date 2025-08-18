@@ -22,43 +22,23 @@ import (
 	"github.com/ipfs/boxo/bitswap/network/bsnet"
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/boxo/bootstrap"
-	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-cid"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	libp2pevent "github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/routing"
-	"github.com/multiformats/go-multiaddr"
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/net/config"
-	"github.com/sourcenetwork/defradb/net/protocol"
 )
-
-var tracer = telemetry.NewTracer()
-
-// DB hold the database related methods that are required by Peer.
-type DB interface {
-	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
-	// GetNodeIndentityToken returns an identity token for the given audience.
-	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
-	// Rootstore returns the instance's root store.
-	Rootstore() corekv.TxnStore
-}
 
 // Peer is a DefraDB Peer node which exposes all the LibP2P host/peer functionality
 // to the underlying DefraDB instance.
 type Peer struct {
-	bus       event.Bus
-	updateSub event.Subscription
-
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -66,30 +46,22 @@ type Peer struct {
 	dht  routing.Routing
 	ps   *pubsub.PubSub
 
-	server *server
+	topics  map[string]pubsubTopic
+	topicMu sync.Mutex
 
 	// peer DAG service
 	blockService blockservice.BlockService
 
-	documentACP immutable.Option[dac.DocumentACP]
-	db          DB
-
 	bootCloser io.Closer
 
-	// The intervals at which to retry replicator failures.
-	// For example, this can define an exponential backoff strategy.
-	retryIntervals   []time.Duration
-	handleRetryMutex *sync.Mutex
+	blockAccessFunc immutable.Option[client.BlockAccessFunc]
+	accessFuncMu    sync.Mutex
 }
-
-var _ client.P2P = (*Peer)(nil)
 
 // NewPeer creates a new instance of the DefraDB server as a peer-to-peer node.
 func NewPeer(
 	ctx context.Context,
-	bus event.Bus,
-	documentACP immutable.Option[dac.DocumentACP],
-	db DB,
+	blockstore datastore.Blockstore,
 	opts ...config.NodeOpt,
 ) (p *Peer, err error) {
 	ctx, cancel := context.WithCancel(ctx)
@@ -100,10 +72,6 @@ func NewPeer(
 			p.Close()
 		}
 	}()
-
-	if db == nil {
-		return nil, ErrNilDB
-	}
 
 	options := config.DefaultOptions()
 	for _, opt := range opts {
@@ -132,15 +100,11 @@ func NewPeer(
 	)
 
 	p = &Peer{
-		host:             h,
-		dht:              ddht,
-		ctx:              ctx,
-		cancel:           cancel,
-		bus:              bus,
-		documentACP:      documentACP,
-		db:               db,
-		retryIntervals:   options.RetryIntervals,
-		handleRetryMutex: &sync.Mutex{},
+		host:   h,
+		dht:    ddht,
+		ctx:    ctx,
+		cancel: cancel,
+		topics: make(map[string]pubsubTopic),
 	}
 
 	if options.EnablePubSub {
@@ -153,25 +117,13 @@ func NewPeer(
 		if err != nil {
 			return nil, err
 		}
-		p.updateSub, err = p.bus.Subscribe(event.UpdateName, event.ReplicatorName)
-		if err != nil {
-			return nil, err
-		}
-		log.Info("Starting internal broadcaster for pubsub network")
-		go p.handleMessageLoop()
 	}
 
-	p.server, err = newServer(p)
-	if err != nil {
-		return nil, err
-	}
-
-	bs := datastore.BlockstoreFrom(db.Rootstore())
 	bswapnet := bsnet.NewFromIpfsHost(h)
-	bswap := bitswap.New(ctx, bswapnet, ddht, bs, bitswap.WithPeerBlockRequestFilter(p.server.hasAccess))
-	p.blockService = blockservice.New(bs, bswap)
+	bswap := bitswap.New(ctx, bswapnet, ddht, blockstore, bitswap.WithPeerBlockRequestFilter(p.hasAccess))
+	p.blockService = blockservice.New(blockstore, bswap)
 
-	p.bootCloser, err = bootstrap.Bootstrap(p.PeerID(), h, ddht, bootstrap.BootstrapConfigWithPeers(peers))
+	p.bootCloser, err = bootstrap.Bootstrap(h.ID(), h, ddht, bootstrap.BootstrapConfigWithPeers(peers))
 	if err != nil {
 		return nil, err
 	}
@@ -190,24 +142,6 @@ func NewPeer(
 		return nil, ErrTimeoutWaitingForPeerInfo
 	}
 
-	bus.Publish(event.NewMessage(event.PeerInfoName, event.PeerInfo{Info: p.PeerInfo()}))
-
-	go p.handleReplicatorRetries(ctx)
-
-	err = p.loadAndPublishReplicators(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.loadAndPublishP2PCollections(ctx)
-	if err != nil {
-		return nil, err
-	}
-	err = p.loadAndPublishP2PDocuments(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return p, nil
 }
 
@@ -222,24 +156,8 @@ func (p *Peer) Close() {
 		}
 	}
 
-	if p.server != nil {
-		// close topics
-		if err := p.server.removeAllPubsubTopics(); err != nil {
-			log.ErrorE("Error closing pubsub topics", err)
-		}
-
-		// stop gRPC server
-		p.server.connMu.Lock()
-		for _, c := range p.server.conns {
-			if err := c.Close(); err != nil {
-				log.ErrorE("Failed closing server RPC connections", err)
-			}
-		}
-		p.server.connMu.Unlock()
-	}
-
-	if p.updateSub != nil {
-		p.bus.Unsubscribe(p.updateSub)
+	if err := p.removeAllPubsubTopics(); err != nil {
+		log.ErrorE("Error closing pubsub topics", err)
 	}
 
 	if err := p.blockService.Close(); err != nil {
@@ -251,114 +169,15 @@ func (p *Peer) Close() {
 	}
 }
 
-// handleMessage loop manages the transition of messages
-// from the internal broadcaster to the external pubsub network
-func (p *Peer) handleMessageLoop() {
-	for {
-		msg, isOpen := <-p.updateSub.Message()
-		if !isOpen {
-			return
-		}
-
-		switch evt := msg.Data.(type) {
-		case event.Update:
-			err := p.handleLog(evt)
-			if err != nil {
-				log.ErrorE("Error while handling broadcast log", err)
-			}
-
-		default:
-			// ignore other events
-			continue
-		}
+// hasAccess checks if the requesting peer has access to the given cid.
+//
+// This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
+func (p *Peer) hasAccess(pid peer.ID, c cid.Cid) bool {
+	p.accessFuncMu.Lock()
+	defer p.accessFuncMu.Unlock()
+	if p.blockAccessFunc.HasValue() {
+		return p.blockAccessFunc.Value()(p.ctx, pid.String(), c)
 	}
-}
-
-func (p *Peer) handleLog(evt event.Update) error {
-	if evt.DocID != "" {
-		_, err := client.NewDocIDFromString(evt.DocID)
-		if err != nil {
-			return NewErrFailedToGetDocID(err)
-		}
-	}
-
-	// push to each peer (replicator)
-	p.pushLogToReplicators(evt)
-
-	// Retries are for replicators only and should not pollute the pubsub network.
-	if !evt.IsRetry {
-		req := &protocol.PushLogRequest{
-			DocID:        evt.DocID,
-			CID:          evt.Cid.Bytes(),
-			CollectionID: evt.CollectionID,
-			Creator:      p.host.ID().String(),
-			Block:        evt.Block,
-		}
-
-		if evt.DocID != "" {
-			if err := p.server.publishLog(p.ctx, evt.DocID, req); err != nil {
-				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
-			}
-		}
-
-		if err := p.server.publishLog(p.ctx, evt.CollectionID, req); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
-		}
-	}
-
-	return nil
-}
-
-func (p *Peer) pushLogToReplicators(lg event.Update) {
-	// let the exchange know we have this block
-	// this should speed up the dag sync process
-	err := p.blockService.Exchange().NotifyNewBlocks(context.Background(), blocks.NewBlock(lg.Block))
-	if err != nil {
-		log.ErrorE("Failed to notify new blocks", err)
-	}
-
-	p.server.mu.Lock()
-	reps, exists := p.server.replicators[lg.CollectionID]
-	p.server.mu.Unlock()
-
-	if exists {
-		for pid := range reps {
-			go func(peerID peer.ID) {
-				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
-				defer cancel()
-				if _, err := p.server.replicatorProtocol.PushToReplicator(ctx, lg, peerID); err != nil {
-					log.ErrorE(
-						"Failed pushing log",
-						err,
-						corelog.String("DocID", lg.DocID),
-						corelog.Any("CID", lg.Cid),
-						corelog.Any("PeerID", peerID))
-				}
-			}(pid)
-		}
-	}
-}
-
-// Connect initiates a connection to the peer with the given address.
-func (p *Peer) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return p.host.Connect(ctx, addr)
-}
-
-func (p *Peer) PeerID() peer.ID {
-	return p.host.ID()
-}
-
-func (p *Peer) ListenAddrs() []multiaddr.Multiaddr {
-	return p.host.Network().ListenAddresses()
-}
-
-func (p *Peer) PeerInfo() peer.AddrInfo {
-	return peer.AddrInfo{
-		ID:    p.host.ID(),
-		Addrs: p.host.Network().ListenAddresses(),
-	}
-}
-
-func (p *Peer) Server() *server {
-	return p.server
+	// if no blockAccessFunc has been defined we allow all block exchanges.
+	return true
 }

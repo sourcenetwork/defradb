@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
@@ -49,7 +48,7 @@ type Wrapper struct {
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
 func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, node.Peer)
+	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -65,21 +64,34 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() client.PeerInfo {
 	args := []string{"client", "p2p", "info"}
 
 	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get peer info: %v", err))
 	}
-	var info peer.AddrInfo
+	var info client.PeerInfo
 	if err := json.Unmarshal(data, &info); err != nil {
 		panic(fmt.Sprintf("failed to get peer info: %v", err))
 	}
 	return info
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+	args := []string{"client", "p2p", "connect"}
+
+	infoBytes, err := json.Marshal(addr)
+	if err != nil {
+		return err
+	}
+	args = append(args, string(infoBytes))
+
+	_, err = w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "set"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
@@ -93,7 +105,7 @@ func (w *Wrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collect
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
@@ -535,10 +547,6 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
-}
-
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {

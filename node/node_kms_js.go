@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,18 +8,15 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package clients
+package node
 
 import (
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/event"
+	"context"
 )
 
-// Client implements the DB interface along with a few other methods
-// required for testing.
-type Client interface {
-	client.TxnStore
-	Close()
-	MaxTxnRetries() int
-	Events() event.Bus
+func (n *Node) startKMS(ctx context.Context) error {
+	if n.config.disableP2P {
+		return nil
+	}
+	return ErrP2PNotSupported
 }

@@ -12,10 +12,6 @@
 
 package config
 
-import (
-	"time"
-)
-
 // Options is the node options.
 type Options struct {
 	ListenAddresses []string
@@ -23,7 +19,6 @@ type Options struct {
 	EnablePubSub    bool
 	EnableRelay     bool
 	BootstrapPeers  []string
-	RetryIntervals  []time.Duration
 }
 
 // DefaultOptions returns the default net options.
@@ -32,16 +27,6 @@ func DefaultOptions() *Options {
 		ListenAddresses: []string{"/ip4/0.0.0.0/tcp/9171"},
 		EnablePubSub:    true,
 		EnableRelay:     false,
-		RetryIntervals: []time.Duration{
-			// exponential backoff retry intervals
-			time.Second * 30,
-			time.Minute,
-			time.Minute * 2,
-			time.Minute * 4,
-			time.Minute * 8,
-			time.Minute * 16,
-			time.Minute * 32,
-		},
 	}
 }
 
@@ -79,13 +64,5 @@ func WithListenAddresses(addresses ...string) NodeOpt {
 func WithBootstrapPeers(peers ...string) NodeOpt {
 	return func(opt *Options) {
 		opt.BootstrapPeers = peers
-	}
-}
-
-func WithRetryInterval(interval []time.Duration) NodeOpt {
-	return func(opt *Options) {
-		if len(interval) > 0 {
-			opt.RetryIntervals = interval
-		}
 	}
 }

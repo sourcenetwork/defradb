@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package net
+package p2p
 
 import (
 	"context"
@@ -24,15 +24,11 @@ import (
 
 const marker = byte(0xff)
 
-func (p *Peer) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard(ctx)
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
@@ -65,25 +61,21 @@ func (p *Peer) AddP2PCollections(ctx context.Context, collectionNames ...string)
 
 	txn.OnSuccess(func() {
 		for _, col := range storeCollections {
-			_, err := p.server.addPubSubTopic(col.CollectionID(), true, nil)
+			err := p.host.AddPubSubTopic(col.CollectionID(), true, p.pubSubMessageHandler)
 			if err != nil {
 				log.ErrorE("Failed to add pubsub topic.", err)
 			}
 		}
 	})
 
-	return txn.Commit(ctx)
+	return nil
 }
 
-func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard(ctx)
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
@@ -116,25 +108,21 @@ func (p *Peer) RemoveP2PCollections(ctx context.Context, collectionNames ...stri
 
 	txn.OnSuccess(func() {
 		for _, col := range storeCollections {
-			err := p.server.removePubSubTopic(col.CollectionID())
+			err := p.host.RemovePubSubTopic(col.CollectionID())
 			if err != nil {
 				log.ErrorE("Failed to remove pubsub topic.", err)
 			}
 		}
 	})
 
-	return txn.Commit(ctx)
+	return nil
 }
 
-func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer clientTxn.Discard(ctx)
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
@@ -178,16 +166,11 @@ func (p *Peer) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return collectionNames, iter.Close()
 }
 
-func (p *Peer) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
+func (p *P2P) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-	defer clientTxn.Discard(ctx)
-	txn := datastore.MustGetFromClientTxn(clientTxn)
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
@@ -217,13 +200,20 @@ func (p *Peer) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
 	return collectionIDs, iter.Close()
 }
 
-func (p *Peer) loadAndPublishP2PCollections(ctx context.Context) error {
+func (p *P2P) loadAndPublishP2PCollections(ctx context.Context) error {
+	clientTxn, err := p.db.NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
+
 	collectionIDs, err := p.getAllP2PCollectionIDs(ctx)
 	if err != nil {
 		return err
 	}
 	for _, id := range collectionIDs {
-		_, err := p.server.addPubSubTopic(id, true, nil)
+		err := p.host.AddPubSubTopic(id, true, p.pubSubMessageHandler)
 		if err != nil {
 			return err
 		}

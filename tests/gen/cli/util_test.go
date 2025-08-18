@@ -61,7 +61,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 		return nil, errors.Wrap("failed to create a database", err)
 	}
 
-	handler, err := httpapi.NewHandler(db, nil)
+	handler, err := httpapi.NewHandler(db)
 	if err != nil {
 		return nil, errors.Wrap("failed to create http handler", err)
 	}

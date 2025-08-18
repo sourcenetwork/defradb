@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/onsi/gomega/types"
 
 	"github.com/sourcenetwork/immutable"
@@ -170,8 +169,9 @@ type NodeState struct {
 	Collections []client.Collection
 	// indicates if the node is Closed.
 	Closed bool
-	// AddrInfo contains the peer information for the node.
-	AddrInfo peer.AddrInfo
+	// CachedPeerInfo holds the node's PeerInfo so that the node can be
+	// restarded with the same address configuration.
+	CachedPeerInfo client.PeerInfo
 }
 
 // State contains all testing State.

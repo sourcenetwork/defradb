@@ -13,26 +13,25 @@ package protocol
 import (
 	"sync"
 
-	"github.com/libp2p/go-libp2p/core/host"
-
-	"github.com/sourcenetwork/defradb/net/message"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
 // baseProto contains the minimum fields that protocols should contain.
 type baseProto struct {
-	host          host.Host
+	host          client.Host
 	mu            sync.Mutex
 	responseChans map[string]chan message.Message
 }
 
-func newBaseProto(h host.Host) *baseProto {
+func newBaseProto(h client.Host) *baseProto {
 	return &baseProto{
 		host:          h,
 		responseChans: make(map[string]chan message.Message),
 	}
 }
 
-func (proto *baseProto) Host() host.Host {
+func (proto *baseProto) Host() client.Host {
 	return proto.host
 }
 

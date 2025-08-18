@@ -17,11 +17,9 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/gofrs/uuid/v5"
 	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/protocol"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -76,20 +74,15 @@ type Message interface {
 // proto is the minum set of methods that protocols should implement to handle
 // sending and receiving messages adequately.
 type proto interface {
-	Host() host.Host
+	Host() client.Host
 	SetResponseChan(messageID string, message chan Message)
 	DeleteResponseChan(messageID string)
 	GetResponseChan(messageID string) (chan Message, bool)
 }
 
 // Reveive takes in a network stream and store the unmarshalled message in the provided [Message]
-func Receive(s network.Stream, proto proto, m Message) error {
-	b, err := io.ReadAll(s)
-	if err != nil {
-		resetErr := s.Reset()
-		return errors.Join(err, resetErr)
-	}
-	err = s.Close()
+func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
+	b, err := io.ReadAll(stream)
 	if err != nil {
 		return err
 	}
@@ -98,6 +91,8 @@ func Receive(s network.Stream, proto proto, m Message) error {
 	if err != nil {
 		return err
 	}
+
+	m.SetSenderID(peerID)
 
 	err = verifyMessage(m)
 	if err != nil {
@@ -121,14 +116,14 @@ func SendAndForget(
 	ctx context.Context,
 	proto proto,
 	m Message,
-	pid peer.ID,
-	protoID protocol.ID,
+	peerID string,
+	protoID string,
 ) (err error) {
 	err = signAndSetMetaData(proto.Host(), m)
 	if err != nil {
 		return err
 	}
-	return send(ctx, proto, m, pid, protoID)
+	return send(ctx, proto, m, peerID, protoID)
 }
 
 // Send creates a new network stream with the provided peer, signs and set the appropriate meta data
@@ -139,8 +134,8 @@ func Send[ResponseType Message](
 	ctx context.Context,
 	proto proto,
 	m Message,
-	pid peer.ID,
-	protoID protocol.ID,
+	peerID string,
+	protoID string,
 ) (resp ResponseType, err error) {
 	err = signAndSetMetaData(proto.Host(), m)
 	if err != nil {
@@ -150,7 +145,7 @@ func Send[ResponseType Message](
 	responseChan := make(chan Message, 1)
 	proto.SetResponseChan(m.GetMessageID(), responseChan)
 
-	err = send(ctx, proto, m, pid, protoID)
+	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
 		close(responseChan)
@@ -185,8 +180,8 @@ func SendAsync[ResponseType Message](
 	ctx context.Context,
 	proto proto,
 	m Message,
-	pid peer.ID,
-	protoID protocol.ID,
+	peerID string,
+	protoID string,
 ) (resp <-chan ResponseType, err error) {
 	err = signAndSetMetaData(proto.Host(), m)
 	if err != nil {
@@ -196,7 +191,7 @@ func SendAsync[ResponseType Message](
 	responseChan := make(chan Message, 1)
 	proto.SetResponseChan(m.GetMessageID(), responseChan)
 
-	err = send(ctx, proto, m, pid, protoID)
+	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
 		close(responseChan)
@@ -228,29 +223,15 @@ func send(
 	ctx context.Context,
 	proto proto,
 	m Message,
-	pid peer.ID,
-	protoID protocol.ID,
+	peerID string,
+	protoID string,
 ) (err error) {
 	data, err := cbor.Marshal(m)
 	if err != nil {
 		return err
 	}
 
-	s, err := proto.Host().NewStream(ctx, pid, protoID)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		closeErr := s.Close()
-		err = errors.Join(err, closeErr)
-	}()
-
-	_, err = s.Write(data)
-	if err != nil {
-		resetErr := s.Reset()
-		return errors.Join(err, resetErr)
-	}
-	return s.Close()
+	return proto.Host().Send(ctx, data, peerID, protoID)
 }
 
 func verifyMessage(m Message) error {
@@ -288,7 +269,7 @@ func verifyMessage(m Message) error {
 	return nil
 }
 
-func signAndSetMetaData(h host.Host, m Message) error {
+func signAndSetMetaData(h client.Host, m Message) error {
 	// if the message ID is already set, its because the message is a response message.
 	if m.GetMessageID() == "" {
 		messageID, err := uuid.NewV4()
@@ -298,27 +279,23 @@ func signAndSetMetaData(h host.Host, m Message) error {
 		m.SetMessageID(messageID.String())
 	}
 
-	nodePubKey, err := crypto.MarshalPublicKey(h.Peerstore().PubKey(h.ID()))
+	nodePubKey, err := h.Pubkey()
 	if err != nil {
 		return err
 	}
 	m.SetVersion()
 	m.SetPubkey(nodePubKey)
-	m.SetSenderID(h.ID().String())
+	m.SetSenderID(h.ID())
 
-	signature, err := signMessage(h, m)
+	forSigning, err := cbor.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	signature, err := h.Sign(forSigning)
 	if err != nil {
 		return err
 	}
 	m.SetSignature(signature)
 	return nil
-}
-
-func signMessage(h host.Host, m Message) ([]byte, error) {
-	b, err := cbor.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	key := h.Peerstore().PrivKey(h.ID())
-	return key.Sign(b)
 }

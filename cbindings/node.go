@@ -46,6 +46,8 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	ctx := context.Background()
 
 	// // Create the directory if it doesn't exist, and inMemory flag is not set
+	// For now this is not done, but we leave it here because we might need it in
+	// the future, when running on mobile platforms.
 	// if !inMemoryFlag {
 	// 	if _, err = os.Stat(gocOptions.DbPath); os.IsNotExist(err) {
 	// 		err := os.MkdirAll(gocOptions.DbPath, 0755)
@@ -104,7 +106,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
 	if len(replicatorRetryIntervals) > 0 {
-		opts = append(opts, netConfig.WithRetryInterval(replicatorRetryIntervals))
+		opts = append(opts, db.WithRetryInterval(replicatorRetryIntervals))
 	}
 
 	n, err := node.New(ctx, opts...)

@@ -12,13 +12,12 @@ package protocol
 
 import (
 	"context"
+	"io"
 
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/net/message"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
 const (
@@ -53,7 +52,7 @@ type IdentityProtocol struct {
 
 // NewIdentityProtocol returns and a new [IdentityProtocol] struct and registers the protocol
 // on the stream handler.
-func NewIdentityProtocol(h host.Host, getIdentityFunc getIdentityFunc) *IdentityProtocol {
+func NewIdentityProtocol(h client.Host, getIdentityFunc getIdentityFunc) *IdentityProtocol {
 	proto := &IdentityProtocol{
 		baseProto:       newBaseProto(h),
 		getIdentityFunc: getIdentityFunc,
@@ -66,17 +65,17 @@ func NewIdentityProtocol(h host.Host, getIdentityFunc getIdentityFunc) *Identity
 // GetIdentity sends the identity request to the provided peer node.
 //
 // Callers should set an appropriate context timeout.
-func (proto *IdentityProtocol) GetIdentity(ctx context.Context, pid peer.ID) (*IdentityResponse, error) {
+func (proto *IdentityProtocol) GetIdentity(ctx context.Context, pid string) (*IdentityResponse, error) {
 	req := IdentityRequest{
-		PeerID: proto.host.ID().String(),
+		PeerID: proto.host.ID(),
 	}
 	return message.Send[*IdentityResponse](ctx, proto, &req, pid, identityProtocolRequest)
 }
 
-func (proto *IdentityProtocol) onRequest(s network.Stream) {
+func (proto *IdentityProtocol) onRequest(stream io.Reader, peerID string) {
 	ctx := context.Background()
 	req := IdentityRequest{}
-	err := message.Receive(s, proto, &req)
+	err := message.Receive(stream, peerID, proto, &req)
 	if err != nil {
 		return
 	}
@@ -86,7 +85,7 @@ func (proto *IdentityProtocol) onRequest(s network.Stream) {
 			resp := IdentityResponse{}
 			resp.SetMessageID(req.MessageID)
 			resp.SetErrMessage(err.Error())
-			_ = message.SendAndForget(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse)
+			_ = message.SendAndForget(ctx, proto, &resp, peerID, identityProtocolResponse)
 		}
 	}()
 	token, err := proto.getIdentityFunc(ctx, immutable.Some(req.PeerID))
@@ -95,9 +94,9 @@ func (proto *IdentityProtocol) onRequest(s network.Stream) {
 	}
 	resp := IdentityResponse{IdentityToken: token}
 	resp.SetMessageID(req.MessageID)
-	err = message.SendAndForget(ctx, proto, &resp, s.Conn().RemotePeer(), identityProtocolResponse)
+	err = message.SendAndForget(ctx, proto, &resp, peerID, identityProtocolResponse)
 }
 
-func (proto *IdentityProtocol) onResponse(s network.Stream) {
-	_ = message.Receive(s, proto, &IdentityResponse{})
+func (proto *IdentityProtocol) onResponse(stream io.Reader, peerID string) {
+	_ = message.Receive(stream, peerID, proto, &IdentityResponse{})
 }
