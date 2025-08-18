@@ -22,6 +22,7 @@ import "C"
 import (
 	"context"
 	"errors"
+	"fmt"
 	"runtime/cgo"
 
 	"github.com/sourcenetwork/corekv"
@@ -47,6 +48,7 @@ func (txn *Transaction) ID() uint64 {
 }
 
 func (txn *Transaction) Commit(ctx context.Context) error {
+	fmt.Println("Commit")
 	res := ConvertAndFreeCResult(C.TransactionCommit(C.uintptr_t(txn.handle)))
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -156,6 +158,7 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
+	fmt.Println("ExecRequest")
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
 
