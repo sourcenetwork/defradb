@@ -74,7 +74,6 @@ COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
-PLAYGROUND_DIRECTORY=playground
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=./...
 
@@ -171,7 +170,7 @@ deps\:mocks:
 
 .PHONY: deps\:playground
 deps\:playground:
-	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
+	go generate -tags playground ./playground/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -363,13 +362,6 @@ test\:coverage-js:
 	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
-.PHONY: test\:coverage-c
-test\:coverage-c:
-	@$(MAKE) clean:coverage
-	mkdir $(COVERAGE_DIRECTORY)
-	DEFRA_CLIENT_C=true gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS) $(COVERAGE_FLAGS)
-	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
-
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
@@ -435,7 +427,6 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
-	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
 fix:
