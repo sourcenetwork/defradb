@@ -64,6 +64,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/cgo"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -711,6 +712,7 @@ func (w *CWrapper) ExecRequest(
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
+	fmt.Println("ExecRequest", w.handle)
 	identity := identityFromContext(ctx)
 	operation, variables, err := extractStringsFromRequestOptions(opts)
 	if err != nil {
@@ -771,7 +773,9 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn.ID(), handle)
+
+	keyStr := strconv.FormatInt(int64(w.handle), 10) + "_" + strconv.FormatUint(retTxn.ID(), 10)
+	txnHandleMap.Store(keyStr, handle)
 
 	return retTxn, nil
 }
@@ -795,7 +799,9 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
 
 	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn.ID(), handle)
+
+	keyStr := strconv.FormatInt(int64(w.handle), 10) + "_" + strconv.FormatUint(retTxn.ID(), 10)
+	txnHandleMap.Store(keyStr, handle)
 
 	return retTxn, nil
 }

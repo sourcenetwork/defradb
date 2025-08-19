@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/cgo"
+	"strconv"
 	"strings"
 	"unsafe"
 
@@ -195,7 +196,8 @@ func wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.
 func getNodeOrTxnHandle(h cgo.Handle, ctx context.Context) C.uintptr_t {
 	if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
 		txnID := txn.ID()
-		if h, ok := txnHandleMap.Load(txnID); ok {
+		keyStr := strconv.FormatInt(int64(h), 10) + "_" + strconv.FormatUint(txnID, 10)
+		if h, ok := txnHandleMap.Load(keyStr); ok {
 			return C.uintptr_t(h.(cgo.Handle)) //nolint:forcetypeassert
 		}
 	}
