@@ -410,6 +410,7 @@ func (w *Wrapper) ExecRequest(
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
+	fmt.Println("ExecRequest from wrapper")
 	args := []string{"client", "query"}
 	args = append(args, query)
 
