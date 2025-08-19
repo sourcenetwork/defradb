@@ -80,7 +80,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
-var txnHandleMap = sync.Map{} // map[uint64]cgo.Handle
+var txnHandleMap = sync.Map{} // map[client.Txn]cgo.Handle
 
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
@@ -771,7 +771,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn.ID(), handle)
+	txnHandleMap.Store(retTxn, handle)
 
 	return retTxn, nil
 }
@@ -794,7 +794,7 @@ func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.
 	handle := cgo.Handle(res.txnPtr)
 	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
 	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn.ID(), handle)
+	txnHandleMap.Store(retTxn, handle)
 
 	return retTxn, nil
 }
