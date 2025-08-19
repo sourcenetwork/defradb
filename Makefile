@@ -74,6 +74,7 @@ COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
+PLAYGROUND_DIRECTORY=playground
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=./...
 
@@ -170,7 +171,7 @@ deps\:mocks:
 
 .PHONY: deps\:playground
 deps\:playground:
-	go generate -tags playground ./playground/...
+	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -194,8 +195,7 @@ deps:
 
 .PHONY: mocks
 mocks:
-	@$(MAKE) deps:mocks && \
-	find . -type d -name "mocks" -exec rm -r {} + && \
+	@$(MAKE) deps:mocks
 	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: ollama
@@ -434,6 +434,7 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
+	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
 fix:
@@ -443,29 +444,5 @@ fix:
 	@$(MAKE) mocks
 	@$(MAKE) docs
 	
-build-c-shared-linux: SHELL := /bin/bash
 build-c-shared-linux:
-	@echo "Building c-shared library for Linux..."
-	@( \
-	  search="package cbindings"; \
-	  replace="package main"; \
-	  search_escaped=$$(echo $$search | sed 's/[\/&]/\\&/g'); \
-	  replace_escaped=$$(echo $$replace | sed 's/[\/&]/\\&/g'); \
-	  \
-	  trap 'echo "Restoring package names..."; \
-	        find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
-	            -exec sed -i "s/$$replace_escaped/$$search_escaped/g" {} +' EXIT; \
-	  \
-	  echo "Temporarily replacing '$$search' with '$$replace'..."; \
-	  find ./cbindings -type f -name "*.go" ! -path "*/.git/*" ! -path "*/vendor/*" \
-	      -exec sed -i "s/$$search_escaped/$$replace_escaped/g" {} +; \
-	  \
-	  echo "Removing existing .so and .h files"; \
-	  rm -f build/libdefradb.so build/libdefradb.h; \
-	  echo "Building shared object"; \
-	  CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go build -tags cshared $(BUILD_FLAGS) \
-	      -buildmode=c-shared -o build/libdefradb.so ./cbindings; \
-	  cp ./cbindings/defra_structs.h ./build/; \
-	  \
-	  echo "Build complete: build/libdefradb.so" \
-	)
+	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
