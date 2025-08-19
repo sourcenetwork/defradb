@@ -141,7 +141,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        client-type: [go, http, cli]
+        client-type: [go, http, cli, c]
         document-acp-type: [source-hub]
 
     runs-on: ubuntu-latest
@@ -151,6 +151,7 @@ jobs:
       DEFRA_CLIENT_GO: ${{ matrix.client-type == 'go' }}
       DEFRA_CLIENT_HTTP: ${{ matrix.client-type == 'http' }}
       DEFRA_CLIENT_CLI: ${{ matrix.client-type == 'cli' }}
+      DEFRA_CLIENT_C: ${{ matrix.client-type == 'c' }}
 
     steps:
       - name: Checkout code into the directory
