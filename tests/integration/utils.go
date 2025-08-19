@@ -1839,14 +1839,7 @@ nodeLoop:
 			}
 		}
 
-		var result *client.RequestResult
-		if txn != nil {
-			fmt.Println("With transaction")
-			result = txn.ExecRequest(ctx, action.Request, options...)
-		} else {
-			fmt.Println("Without transaction")
-			result = node.ExecRequest(ctx, action.Request, options...)
-		}
+		result := node.ExecRequest(ctx, action.Request, options...)
 
 		expectedErrorRaised = assertRequestResults(
 			s,

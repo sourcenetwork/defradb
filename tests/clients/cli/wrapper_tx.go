@@ -162,7 +162,6 @@ func (txn *Transaction) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	fmt.Println("ExecRequest from txn")
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.ExecRequest(ctx, request, opts...)
 }

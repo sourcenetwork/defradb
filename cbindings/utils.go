@@ -75,7 +75,7 @@ func marshalJSONToGoCResult(value any) GoCResult {
 // contextWithIdentity is a helper function that attaches identity to a context
 func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Context, error) {
 	if privateKeyHex == "" {
-		return ctx, nil
+		return identity.WithContext(ctx, immutable.None[identity.Identity]()), nil
 	}
 	data, err := hex.DecodeString(privateKeyHex)
 	if err != nil {
@@ -87,8 +87,7 @@ func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Con
 		return ctx, err
 	}
 	immutableIdentity := immutable.Some[identity.Identity](newIdentity)
-	newctx := identity.WithContext(ctx, immutableIdentity)
-	return newctx, nil
+	return identity.WithContext(ctx, immutableIdentity), nil
 }
 
 // splitCommaSeparatedString is a helper function that turns a single string into an array
