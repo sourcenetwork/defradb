@@ -14,16 +14,18 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result* ACPAddDACPolicy(uintptr_t nodePtr, char* identity, char* policy);
+extern Result* ACPAddDACPolicy(uintptr_t nodePtr, char* identity, char* policy, char* bearerToken);
 extern Result* ACPAddDACActorRelationship(uintptr_t nodePtr, char* identity,
-char* collection, char* docID, char* relation, char* actor);
+char* collection, char* docID, char* relation, char* actor, char* bearerToken);
 extern Result* ACPDeleteDACActorRelationship(uintptr_t nodePtr, char* identity,
-char* collection, char* docID, char* relation, char* actor);
-extern Result* ACPDisableNAC(uintptr_t nodePtr, char* identity);
-extern Result* ACPReEnableNAC(uintptr_t nodePtr, char* identity);
-extern Result* ACPAddNACActorRelationship(uintptr_t nodePtr, char* identity, char* relation, char* actor);
-extern Result* ACPDeleteNACActorRelationship(uintptr_t nodePtr, char* identity, char* relation, char* actor);
-extern Result* ACPGetNACStatus(uintptr_t nodePtr, char* identity);
+char* collection, char* docID, char* relation, char* actor, char* bearerToken);
+extern Result* ACPDisableNAC(uintptr_t nodePtr, char* identity, char* bearerToken);
+extern Result* ACPReEnableNAC(uintptr_t nodePtr, char* identity, char* bearerToken);
+extern Result* ACPAddNACActorRelationship(uintptr_t nodePtr, char* identity,
+char* relation, char* actor, char* bearerToken);
+extern Result* ACPDeleteNACActorRelationship(uintptr_t nodePtr, char* identity,
+char* relation, char* actor, char* bearerToken);
+extern Result* ACPGetNACStatus(uintptr_t nodePtr, char* identity, char* bearerToken);
 extern Result* BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid);
 extern Result* CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
 extern Result* CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
@@ -47,8 +49,9 @@ extern Result* P2PdocumentGetAll(uintptr_t nodePtr);
 extern Result* P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr);
 extern Result* PollSubscription(char* id);
 extern Result* CloseSubscription(char* id);
-extern Result* ExecuteQuery(uintptr_t nodePtr, char* query, char* identity, char* operationName, char* variables);
-extern Result* AddSchema(uintptr_t nodePtr, char* schema, char* identity);
+extern Result* ExecuteQuery(uintptr_t nodePtr, char* query, char* identity,
+char* operationName, char* variables, char* bearerToken);
+extern Result* AddSchema(uintptr_t nodePtr, char* schema, char* identity, char* bearerToken);
 extern Result* SetActiveCollection(uintptr_t nodePtr, char* version);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result* VersionGet(int flagFull, int flagJSON);
@@ -266,12 +269,14 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	cSchema := C.CString(schema)
 	defer C.free(unsafe.Pointer(cSchema))
 	defer C.free(unsafe.Pointer(cIdentity))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.AddSchema(callHandle, cSchema, cIdentity))
+	res := ConvertAndFreeCResult(C.AddSchema(callHandle, cSchema, cIdentity, cBearerToken))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -288,14 +293,14 @@ func (w *CWrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	identity := identityFromContext(ctx)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	cPolicy := C.CString(policy)
 	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(cPolicy))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPAddDACPolicy(callHandle, cIdentity, cPolicy))
+	res := ConvertAndFreeCResult(C.ACPAddDACPolicy(callHandle, cIdentity, cPolicy, cBearerToken))
 
 	if res.Status != 0 {
 		return client.AddPolicyResult{}, errors.New(res.Error)
@@ -315,8 +320,8 @@ func (w *CWrapper) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	identity := identityFromContext(ctx)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	cCollectionName := C.CString(collectionName)
 	cDocID := C.CString(docID)
 	cRelation := C.CString(relation)
@@ -326,6 +331,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	defer C.free(unsafe.Pointer(cDocID))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPAddDACActorRelationship(
@@ -335,6 +341,7 @@ func (w *CWrapper) AddDACActorRelationship(
 		cDocID,
 		cRelation,
 		cTargetActor,
+		cBearerToken,
 	))
 
 	if res.Status != 0 {
@@ -356,8 +363,8 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	identity := identityFromContext(ctx)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	cCollectionName := C.CString(collectionName)
 	cDocID := C.CString(docID)
 	cRelation := C.CString(relation)
@@ -367,6 +374,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	defer C.free(unsafe.Pointer(cDocID))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDeleteDACActorRelationship(
@@ -376,6 +384,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 		cDocID,
 		cRelation,
 		cTargetActor,
+		cBearerToken,
 	))
 
 	if res.Status != 0 {
@@ -390,12 +399,13 @@ func (w *CWrapper) DeleteDACActorRelationship(
 }
 
 func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	identity := identityFromContext(ctx)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	defer C.free(unsafe.Pointer(cIdentity))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPGetNACStatus(callHandle, cIdentity))
+	res := ConvertAndFreeCResult(C.ACPGetNACStatus(callHandle, cIdentity, cBearerToken))
 
 	if res.Status != 0 {
 		return client.NACStatusResult{}, errors.New(res.Error)
@@ -404,12 +414,13 @@ func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, er
 }
 
 func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
-	identity := identityFromContext(ctx)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	defer C.free(unsafe.Pointer(cIdentity))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPReEnableNAC(callHandle, cIdentity))
+	res := ConvertAndFreeCResult(C.ACPReEnableNAC(callHandle, cIdentity, cBearerToken))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -418,12 +429,13 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
 }
 
 func (w *CWrapper) DisableNAC(ctx context.Context) error {
-	identity := identityFromContext(ctx)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	defer C.free(unsafe.Pointer(cIdentity))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPDisableNAC(callHandle, cIdentity))
+	res := ConvertAndFreeCResult(C.ACPDisableNAC(callHandle, cIdentity, cBearerToken))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -437,14 +449,16 @@ func (w *CWrapper) AddNACActorRelationship(
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
 	identity := C.CString(identityFromContext(ctx))
+	bearerToken := C.CString(bearerTokenFromContext(ctx))
 	cRelation := C.CString(relation)
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(identity))
+	defer C.free(unsafe.Pointer(bearerToken))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPAddNACActorRelationship(callHandle, identity, cRelation, cTargetActor))
+	res := ConvertAndFreeCResult(C.ACPAddNACActorRelationship(callHandle, identity, cRelation, cTargetActor, bearerToken))
 
 	if res.Status != 0 {
 		return client.AddActorRelationshipResult{}, errors.New(res.Error)
@@ -459,14 +473,16 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
 	identity := C.CString(identityFromContext(ctx))
+	bearerToken := C.CString(bearerTokenFromContext(ctx))
 	cRelation := C.CString(relation)
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(identity))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.free(unsafe.Pointer(bearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPDeleteNACActorRelationship(callHandle, identity, cRelation, cTargetActor))
+	res := ConvertAndFreeCResult(C.ACPDeleteNACActorRelationship(callHandle, identity, cRelation, cTargetActor, bearerToken))
 	if res.Status != 0 {
 		return client.DeleteActorRelationshipResult{}, errors.New(res.Error)
 	}
@@ -483,17 +499,20 @@ func (w *CWrapper) PatchCollection(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	defer C.free(unsafe.Pointer(cPatch))
 	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var opts C.CollectionOptions
 	opts.identity = cIdentity
 	opts.version = cVersion
 	opts.collectionID = cCollectionID
 	opts.name = cName
+	opts.bearerToken = cBearerToken
 	opts.getInactive = 0
 
 	migrationStr, migrationErr := optionToString(migration)
@@ -623,7 +642,6 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	identity := identityFromContext(ctx)
 	var name string
 	if options.Name.HasValue() {
 		name = options.Name.Value()
@@ -655,11 +673,13 @@ func (w *CWrapper) GetCollections(
 	cVersion := C.CString(version)
 	cCollectionID := C.CString(collectionID)
 	cName := C.CString(name)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cIdentity))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var opts C.CollectionOptions
 	opts.version = cVersion
@@ -667,6 +687,7 @@ func (w *CWrapper) GetCollections(
 	opts.name = cName
 	opts.identity = cIdentity
 	opts.getInactive = C.int(includeInactive)
+	opts.bearerToken = cBearerToken
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, opts))
@@ -711,7 +732,7 @@ func (w *CWrapper) ExecRequest(
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	identity := identityFromContext(ctx)
+
 	operation, variables, err := extractStringsFromRequestOptions(opts)
 	if err != nil {
 		return &client.RequestResult{
@@ -722,16 +743,18 @@ func (w *CWrapper) ExecRequest(
 	}
 
 	cQuery := C.CString(query)
-	cIdentity := C.CString(identity)
+	cIdentity := C.CString(identityFromContext(ctx))
 	cOperation := C.CString(operation)
 	cVariables := C.CString(variables)
+	cBearerToken := C.CString(bearerTokenFromContext(ctx))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(cOperation))
 	defer C.free(unsafe.Pointer(cVariables))
+	defer C.free(unsafe.Pointer(cBearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	result := C.ExecuteQuery(callHandle, cQuery, cIdentity, cOperation, cVariables)
+	result := C.ExecuteQuery(callHandle, cQuery, cIdentity, cOperation, cVariables, cBearerToken)
 	res := ConvertAndFreeCResult(result)
 
 	if res.Status == 2 {

@@ -12,12 +12,10 @@ package cbindings
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -37,6 +35,7 @@ type GoCOptions struct {
 	CollectionID string
 	Name         string
 	Identity     string
+	BearerToken  string
 	GetInactive  int
 }
 
@@ -73,20 +72,20 @@ func marshalJSONToGoCResult(value any) GoCResult {
 }
 
 // contextWithIdentity is a helper function that attaches identity to a context
-func contextWithIdentity(ctx context.Context, privateKeyHex string) (context.Context, error) {
+func contextWithIdentity(ctx context.Context, privateKeyHex string, bearerToken string) (context.Context, error) {
+
 	if privateKeyHex == "" {
 		return identity.WithContext(ctx, immutable.None[identity.Identity]()), nil
 	}
-	data, err := hex.DecodeString(privateKeyHex)
+
+	idf, err := identityFromKey("secp256k1", privateKeyHex)
 	if err != nil {
 		return ctx, err
 	}
-	privKey := secp256k1.PrivKeyFromBytes(data)
-	newIdentity, err := identity.FromPrivateKey(crypto.NewPrivateKey(privKey))
-	if err != nil {
-		return ctx, err
+	if bearerToken != "" {
+		idf.SetBearerToken(bearerToken)
 	}
-	immutableIdentity := immutable.Some[identity.Identity](newIdentity)
+	immutableIdentity := immutable.Some[identity.Identity](idf)
 	return identity.WithContext(ctx, immutableIdentity), nil
 }
 
@@ -143,6 +142,5 @@ func identityFromKey(goKeyType string, goPrivKeyStr string) (identity.FullIdenti
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity from private key: %w", err)
 	}
-
 	return id, nil
 }

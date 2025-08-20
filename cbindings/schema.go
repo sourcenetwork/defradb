@@ -22,10 +22,10 @@ import (
 )
 
 //export AddSchema
-func AddSchema(nodePtr C.uintptr_t, schema *C.char, identity *C.char) *C.Result {
+func AddSchema(nodePtr C.uintptr_t, schema *C.char, identity *C.char, bearerToken *C.char) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity))
+	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

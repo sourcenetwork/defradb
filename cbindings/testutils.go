@@ -54,6 +54,15 @@ func identityFromContext(ctx context.Context) string {
 	return idf.Value().PrivateKey().String()
 }
 
+// bearerTokenFromContext is a helper function that extracts bearer token (or blank string) from a context
+func bearerTokenFromContext(ctx context.Context) string {
+	idf := identity.FullFromContext(ctx)
+	if !idf.HasValue() {
+		return ""
+	}
+	return idf.Value().BearerToken()
+}
+
 // isEncryptedFromDocCreateOption is a helper function that extracts as a C.int
 func isEncryptedFromDocCreateOption(opts []client.DocCreateOption) C.int {
 	createDocOpts := client.DocCreateOptions{}
@@ -144,10 +153,6 @@ func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]an
 	})
 	return result, err
 }
-
-// getTxnHandleOrNodeHandle is a helper function that looks at a context to see if a txn
-// is present. If so,
-func getTxnHandleOrNodeHandle()
 
 // convertGoCResultToGQLResult is a helper function that make a GQLResult from a GoCResult
 func convertGoCResultToGQLResult(res GoCResult) (client.GQLResult, error) {

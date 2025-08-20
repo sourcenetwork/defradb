@@ -78,6 +78,7 @@ func convertCOptionsToGoCOptions(cOptions C.CollectionOptions) GoCOptions {
 		CollectionID: C.GoString(cOptions.collectionID),
 		Name:         C.GoString(cOptions.name),
 		Identity:     C.GoString(cOptions.identity),
+		BearerToken:  C.GoString(cOptions.bearerToken),
 		GetInactive:  int(cOptions.getInactive),
 	}
 }

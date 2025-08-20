@@ -26,6 +26,7 @@ typedef struct {
     const char* collectionID;
     const char* name;
     const char* identity;
+    const char* bearerToken;
     int getInactive;
 } CollectionOptions;
 
