@@ -30,6 +30,9 @@ func init() {
 		goClient = true
 	}
 	if cClient {
+		// todo: Network test support for C client
+		// See: https://github.com/sourcenetwork/defradb/issues/3920
+		skipNetworkTests = true
 		skipBackupTests = true
 	}
 }
