@@ -35,8 +35,7 @@ func IdentityNew(keyType *C.char) C.NewIdentityResult {
 	if err != nil {
 		return returnNewIdentityResultC(1, err.Error(), nil)
 	}
-	var identityInterface identity.Identity = newIdentity
-	return returnNewIdentityResultC(0, "", &identityInterface)
+	return returnNewIdentityResultC(0, "", newIdentity)
 }
 
 //export NodeIdentity

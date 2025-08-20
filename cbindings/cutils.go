@@ -51,10 +51,11 @@ func returnNewNodeResultC(status int, error string, n *node.Node) C.NewNodeResul
 	} else {
 		result.error = nil
 	}
+
 	if n != nil {
-		result.nodePtr = C.uintptr_t(0)
-	} else {
 		result.nodePtr = C.uintptr_t(cgo.NewHandle(n))
+	} else {
+		result.nodePtr = C.uintptr_t(0)
 	}
 
 	return result
@@ -76,7 +77,7 @@ func returnNewTxnResultC(status int, error string, n client.Txn) C.NewTxnResult 
 	return result
 }
 
-func returnNewIdentityResultC(status int, error string, n *identity.Identity) C.NewIdentityResult {
+func returnNewIdentityResultC(status int, error string, n identity.Identity) C.NewIdentityResult {
 	result := C.NewIdentityResult{}
 	result.status = C.int(status)
 	if error != "" {
