@@ -290,7 +290,6 @@ func (w *CWrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	fmt.Println("Wrapper - AddDACPolicy")
 	cIdentity := identityFromContext(ctx)
 	cPolicy := C.CString(policy)
 	defer C.free(unsafe.Pointer(cPolicy))

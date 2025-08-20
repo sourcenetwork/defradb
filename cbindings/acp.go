@@ -18,14 +18,12 @@ import "C"
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
 //export ACPAddDACPolicy
 func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.char) *C.Result {
-	fmt.Println("C - AddDACPolicy")
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
