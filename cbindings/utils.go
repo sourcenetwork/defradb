@@ -73,7 +73,6 @@ func marshalJSONToGoCResult(value any) GoCResult {
 
 // contextWithIdentity is a helper function that attaches identity to a context
 func contextWithIdentity(ctx context.Context, privateKeyHex string, bearerToken string) (context.Context, error) {
-
 	if privateKeyHex == "" {
 		return identity.WithContext(ctx, immutable.None[identity.Identity]()), nil
 	}

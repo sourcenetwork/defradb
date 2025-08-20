@@ -482,7 +482,8 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	defer C.free(unsafe.Pointer(bearerToken))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ACPDeleteNACActorRelationship(callHandle, identity, cRelation, cTargetActor, bearerToken))
+	res := ConvertAndFreeCResult(C.ACPDeleteNACActorRelationship(callHandle, identity,
+		cRelation, cTargetActor, bearerToken))
 	if res.Status != 0 {
 		return client.DeleteActorRelationshipResult{}, errors.New(res.Error)
 	}
@@ -732,7 +733,6 @@ func (w *CWrapper) ExecRequest(
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-
 	operation, variables, err := extractStringsFromRequestOptions(opts)
 	if err != nil {
 		return &client.RequestResult{
