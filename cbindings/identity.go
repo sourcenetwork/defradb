@@ -24,7 +24,7 @@ import (
 )
 
 //export IdentityNew
-func IdentityNew(keyType *C.char) *C.Result {
+func IdentityNew(keyType *C.char) C.NewIdentityResult {
 	// Default key type, if left blank, is Secp256k1
 	cryptoKeyType := crypto.KeyTypeSecp256k1
 	keyTypeStr := C.GoString(keyType)
@@ -33,10 +33,10 @@ func IdentityNew(keyType *C.char) *C.Result {
 	}
 	newIdentity, err := identity.Generate(crypto.KeyType(cryptoKeyType))
 	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
+		return returnNewIdentityResultC(1, err.Error(), nil)
 	}
-
-	return returnC(marshalJSONToGoCResult(newIdentity.IntoRawIdentity()))
+	var identityInterface identity.Identity = newIdentity
+	return returnNewIdentityResultC(0, "", &identityInterface)
 }
 
 //export NodeIdentity

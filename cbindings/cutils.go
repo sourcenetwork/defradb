@@ -21,11 +21,15 @@ package cbindings
 */
 import "C"
 import (
+	"context"
 	"runtime/cgo"
 	"unsafe"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // Helper function which builds a return struct from Go to C
@@ -72,15 +76,20 @@ func returnNewTxnResultC(status int, error string, n client.Txn) C.NewTxnResult 
 	return result
 }
 
-func convertCOptionsToGoCOptions(cOptions C.CollectionOptions) GoCOptions {
-	return GoCOptions{
-		Version:      C.GoString(cOptions.version),
-		CollectionID: C.GoString(cOptions.collectionID),
-		Name:         C.GoString(cOptions.name),
-		Identity:     C.GoString(cOptions.identity),
-		BearerToken:  C.GoString(cOptions.bearerToken),
-		GetInactive:  int(cOptions.getInactive),
+func returnNewIdentityResultC(status int, error string, n *identity.Identity) C.NewIdentityResult {
+	result := C.NewIdentityResult{}
+	result.status = C.int(status)
+	if error != "" {
+		result.error = C.CString(error)
+	} else {
+		result.error = nil
 	}
+	if n != nil {
+		result.identityPtr = C.uintptr_t(cgo.NewHandle(n))
+	} else {
+		result.identityPtr = C.uintptr_t(0)
+	}
+	return result
 }
 
 func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) GoNodeInitOptions {
@@ -89,8 +98,7 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) GoNod
 		ListeningAddresses:       C.GoString(cOptions.listeningAddresses),
 		ReplicatorRetryIntervals: C.GoString(cOptions.replicatorRetryIntervals),
 		Peers:                    C.GoString(cOptions.peers),
-		IdentityKeyType:          C.GoString(cOptions.identityKeyType),
-		IdentityPrivateKey:       C.GoString(cOptions.identityPrivateKey),
+		Identity:                 getIdentityFromPointer(cOptions.identityPtr),
 		InMemory:                 int(cOptions.inMemory),
 		DisableP2P:               int(cOptions.disableP2P),
 		DisableAPI:               int(cOptions.disableAPI),
@@ -110,6 +118,31 @@ func getStoreFromPointer(nodePtr C.uintptr_t) client.Store {
 	default:
 		return nil
 	}
+}
+
+func getIdentityFromPointer(identityPtr C.uintptr_t) identity.Identity {
+	if identityPtr == 0 {
+		return nil
+	}
+	h := cgo.Handle(identityPtr)
+	v := h.Value()
+	switch v := v.(type) {
+	case identity.Identity:
+		return v
+	case *identity.Identity:
+		return *v
+	default:
+		return nil
+	}
+}
+
+// contextWithIdentity is a helper function that attaches identity to a context
+func contextWithIdentity(ctx context.Context, identityPtr C.uintptr_t) (context.Context, error) {
+	ident := getIdentityFromPointer(identityPtr)
+	if ident == nil {
+		return ctx, nil
+	}
+	return identity.WithContext(ctx, immutable.Some[identity.Identity](ident)), nil
 }
 
 // ConvertAndFreeCResult exists to convert C.Result to GoCResult for use in integration tests

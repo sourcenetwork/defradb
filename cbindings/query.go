@@ -99,10 +99,9 @@ func CloseSubscription(id *C.char) *C.Result {
 func ExecuteQuery(
 	nodePtr C.uintptr_t,
 	query *C.char,
-	identity *C.char,
+	identityPtr C.uintptr_t,
 	operationName *C.char,
 	variables *C.char,
-	bearerToken *C.char,
 ) *C.Result {
 	ctx := context.Background()
 	opts, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
@@ -110,7 +109,7 @@ func ExecuteQuery(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx, err = contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err = contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

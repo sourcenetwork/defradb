@@ -11,16 +11,12 @@
 package cbindings
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
 )
 
 type GoCResult struct {
@@ -30,12 +26,10 @@ type GoCResult struct {
 }
 
 type GoCOptions struct {
-	TxID         uint64
 	Version      string
 	CollectionID string
 	Name         string
 	Identity     string
-	BearerToken  string
 	GetInactive  int
 }
 
@@ -44,8 +38,7 @@ type GoNodeInitOptions struct {
 	ListeningAddresses       string
 	ReplicatorRetryIntervals string
 	Peers                    string
-	IdentityKeyType          string
-	IdentityPrivateKey       string
+	Identity                 identity.Identity
 	InMemory                 int
 	DisableP2P               int
 	DisableAPI               int
@@ -69,23 +62,6 @@ func marshalJSONToGoCResult(value any) GoCResult {
 		return returnGoC(1, fmt.Sprintf(errMarshallingJSON, err), "")
 	}
 	return returnGoC(0, "", string(dataJSON))
-}
-
-// contextWithIdentity is a helper function that attaches identity to a context
-func contextWithIdentity(ctx context.Context, privateKeyHex string, bearerToken string) (context.Context, error) {
-	if privateKeyHex == "" {
-		return identity.WithContext(ctx, immutable.None[identity.Identity]()), nil
-	}
-
-	idf, err := identityFromKey("secp256k1", privateKeyHex)
-	if err != nil {
-		return ctx, err
-	}
-	if bearerToken != "" {
-		idf.SetBearerToken(bearerToken)
-	}
-	immutableIdentity := immutable.Some[identity.Identity](idf)
-	return identity.WithContext(ctx, immutableIdentity), nil
 }
 
 // splitCommaSeparatedString is a helper function that turns a single string into an array
@@ -114,32 +90,4 @@ func buildRequestOptions(opName string, vars string) ([]client.RequestOption, er
 		opts = append(opts, client.WithVariables(variables))
 	}
 	return opts, nil
-}
-
-// identityFromKey is a helper function that takes a key type/private key pair, and returns Identity
-func identityFromKey(goKeyType string, goPrivKeyStr string) (identity.FullIdentity, error) {
-	if goKeyType == "" || goPrivKeyStr == "" {
-		return nil, nil
-	}
-
-	var keyType crypto.KeyType
-	switch goKeyType {
-	case string(crypto.KeyTypeEd25519):
-		keyType = crypto.KeyTypeEd25519
-	case string(crypto.KeyTypeSecp256k1):
-		keyType = crypto.KeyTypeSecp256k1
-	default:
-		return nil, fmt.Errorf("invalid key type: %s", goKeyType)
-	}
-
-	privKey, err := crypto.PrivateKeyFromString(keyType, goPrivKeyStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to construct private key: %w", err)
-	}
-
-	id, err := identity.FromPrivateKey(privKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create identity from private key: %w", err)
-	}
-	return id, nil
 }

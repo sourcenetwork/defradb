@@ -22,11 +22,16 @@ typedef struct {
 } NewTxnResult;
 
 typedef struct {
+    int status;
+    char* error;
+    uintptr_t identityPtr;
+} NewIdentityResult;
+
+typedef struct {
     const char* version;
     const char* collectionID;
     const char* name;
-    const char* identity;
-    const char* bearerToken;
+    uintptr_t identityPtr;
     int getInactive;
 } CollectionOptions;
 
@@ -35,8 +40,7 @@ typedef struct {
     const char* listeningAddresses;
     const char* replicatorRetryIntervals;
     const char* peers;
-    const char* identityKeyType;
-    const char* identityPrivateKey;
+    uintptr_t identityPtr;
     int inMemory;
     int disableP2P;
     int disableAPI;

@@ -73,22 +73,18 @@ func (c *Collection) Create(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(encryptedFields))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	docJSONbytes, err := doc.MarshalJSON()
 	if err != nil {
@@ -124,22 +120,18 @@ func (c *Collection) CreateMany(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(encryptedFields))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	var jsonDocs []json.RawMessage
 	for _, doc := range docs {
@@ -188,23 +180,19 @@ func (c *Collection) Update(
 	cVersion := C.CString("")
 	cCollectionID := C.CString(c.CollectionID())
 	cName := C.CString("")
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(updater))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionUpdate(
 		C.uintptr_t(c.w.handle),
@@ -246,23 +234,19 @@ func (c *Collection) Delete(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(filter))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionDelete(
 		C.uintptr_t(c.w.handle),
@@ -287,22 +271,18 @@ func (c *Collection) Exists(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionGet(
 		C.uintptr_t(c.w.handle),
@@ -332,24 +312,20 @@ func (c *Collection) UpdateWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
 	defer C.free(unsafe.Pointer(cUpdater))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionUpdate(
 		C.uintptr_t(c.w.handle),
@@ -385,23 +361,19 @@ func (c *Collection) DeleteWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionDelete(
 		C.uintptr_t(c.w.handle),
@@ -436,23 +408,19 @@ func (c *Collection) Get(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.Version().Name)
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionGet(
 		C.uintptr_t(c.w.handle),
@@ -484,22 +452,18 @@ func (c *Collection) GetAllDocIDs(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := C.CString(identityFromContext(ctx))
-	cBearerToken := C.CString(bearerTokenFromContext(ctx))
+	cIdentity := identityFromContext(ctx)
 
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cIdentity))
-	defer C.free(unsafe.Pointer(cBearerToken))
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identity = cIdentity
+	copts.identityPtr = cIdentity
 	copts.getInactive = 0
-	copts.bearerToken = cBearerToken
 
 	res := ConvertAndFreeCResult(C.CollectionListDocIDs(C.uintptr_t(c.w.handle), copts))
 

@@ -36,13 +36,6 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	inMemoryFlag := gocOptions.InMemory != 0
 	listeningAddresses := splitCommaSeparatedString(gocOptions.ListeningAddresses)
 
-	identityPrivateKeyString := gocOptions.IdentityPrivateKey
-	identityKeyType := gocOptions.IdentityKeyType
-
-	nodeIdentity, err := identityFromKey(identityKeyType, identityPrivateKeyString)
-	if err != nil {
-		return returnNewNodeResultC(1, err.Error(), nil)
-	}
 	ctx := context.Background()
 
 	// // Create the directory if it doesn't exist, and inMemory flag is not set
@@ -83,8 +76,8 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	if len(peers) > 0 {
 		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
 	}
-	if gocOptions.IdentityPrivateKey != "" {
-		opts = append(opts, db.WithNodeIdentity(nodeIdentity))
+	if gocOptions.Identity != nil {
+		opts = append(opts, db.WithNodeIdentity(gocOptions.Identity))
 	}
 	if gocOptions.EnableNodeACP != 0 {
 		opts = append(opts, node.WithEnableNodeACP(true))

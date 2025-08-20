@@ -45,22 +45,15 @@ func unmarshalResult[T any](value string) (T, error) {
 	return result, nil
 }
 
-// identityFromContext is a helper function that extracts identity (or blank string) from a context
-func identityFromContext(ctx context.Context) string {
+// identityFromContext creates a cgo handle, wrapped as a pointer, from a context
+func identityFromContext(ctx context.Context) C.uintptr_t {
 	idf := identity.FullFromContext(ctx)
 	if !idf.HasValue() {
-		return ""
+		return C.uintptr_t(0)
 	}
-	return idf.Value().PrivateKey().String()
-}
-
-// bearerTokenFromContext is a helper function that extracts bearer token (or blank string) from a context
-func bearerTokenFromContext(ctx context.Context) string {
-	idf := identity.FullFromContext(ctx)
-	if !idf.HasValue() {
-		return ""
-	}
-	return idf.Value().BearerToken()
+	val := idf.Value()
+	handle := cgo.NewHandle(val)
+	return C.uintptr_t(handle)
 }
 
 // isEncryptedFromDocCreateOption is a helper function that extracts as a C.int

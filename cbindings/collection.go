@@ -35,14 +35,13 @@ type docIDResult struct {
 	Error string `json:"error"`
 }
 
-// parseCollectionOptions is a helper function that converts a GoCOptions struct into
-// a client.CollectionFetchOptions struct disregarding the transaction and identity
-// inside the GoCOptions struct
-func parseCollectionOptions(goColOptions GoCOptions) client.CollectionFetchOptions {
-	versionID := goColOptions.Version
-	collectionID := goColOptions.CollectionID
-	name := goColOptions.Name
-	getInactive := goColOptions.GetInactive != 0
+// parseCollectionOptions is a helper function that converts a C.CollectionOptions
+// struct into a client.CollectionFetchOptions struct disregarding the identity
+func parseCollectionOptions(opts C.CollectionOptions) client.CollectionFetchOptions {
+	versionID := C.GoString(opts.version)
+	collectionID := C.GoString(opts.collectionID)
+	name := C.GoString(opts.name)
+	getInactive := opts.getInactive != 0
 	options := client.CollectionFetchOptions{}
 	if versionID != "" {
 		options.VersionID = immutable.Some(versionID)
@@ -90,10 +89,9 @@ func CollectionCreate(
 	options C.CollectionOptions,
 ) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
-	colOptions := parseCollectionOptions(goColOptions)
+	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -144,10 +142,9 @@ func CollectionCreate(
 //export CollectionDelete
 func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, options C.CollectionOptions) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
-	colOptions := parseCollectionOptions(goColOptions)
+	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -192,10 +189,9 @@ func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, 
 //export CollectionDescribe
 func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
-	colOptions := parseCollectionOptions(goColOptions)
+	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -217,10 +213,9 @@ func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Res
 //export CollectionListDocIDs
 func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
-	colOptions := parseCollectionOptions(goColOptions)
+	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -260,10 +255,9 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) *C.R
 //export CollectionGet
 func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, options C.CollectionOptions) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
-	colOptions := parseCollectionOptions(goColOptions)
+	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -293,9 +287,8 @@ func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, opt
 //export CollectionPatch
 func CollectionPatch(nodePtr C.uintptr_t, patch *C.char, lensConfig *C.char, options C.CollectionOptions) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -333,10 +326,9 @@ func CollectionUpdate(
 	options C.CollectionOptions,
 ) *C.Result {
 	ctx := context.Background()
-	goColOptions := convertCOptionsToGoCOptions(options)
-	colOptions := parseCollectionOptions(goColOptions)
+	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, goColOptions.Identity, goColOptions.BearerToken)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

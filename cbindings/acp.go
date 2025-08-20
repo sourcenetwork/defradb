@@ -18,15 +18,17 @@ import "C"
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
 //export ACPAddDACPolicy
-func ACPAddDACPolicy(nodePtr C.uintptr_t, identity *C.char, policy *C.char, bearerToken *C.char) *C.Result {
+func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.char) *C.Result {
+	fmt.Println("C - AddDACPolicy")
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -43,16 +45,15 @@ func ACPAddDACPolicy(nodePtr C.uintptr_t, identity *C.char, policy *C.char, bear
 //export ACPAddDACActorRelationship
 func ACPAddDACActorRelationship(
 	nodePtr C.uintptr_t,
-	identity *C.char,
+	identityPtr C.uintptr_t,
 	collection *C.char,
 	docID *C.char,
 	relation *C.char,
 	actor *C.char,
-	bearerToken *C.char,
 ) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -75,16 +76,15 @@ func ACPAddDACActorRelationship(
 //export ACPDeleteDACActorRelationship
 func ACPDeleteDACActorRelationship(
 	nodePtr C.uintptr_t,
-	identity *C.char,
+	identityPtr C.uintptr_t,
 	collection *C.char,
 	docID *C.char,
 	relation *C.char,
 	actor *C.char,
-	bearerToken *C.char,
 ) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -105,10 +105,10 @@ func ACPDeleteDACActorRelationship(
 }
 
 //export ACPDisableNAC
-func ACPDisableNAC(nodePtr C.uintptr_t, identity *C.char, bearerToken *C.char) *C.Result {
+func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -122,10 +122,10 @@ func ACPDisableNAC(nodePtr C.uintptr_t, identity *C.char, bearerToken *C.char) *
 }
 
 //export ACPReEnableNAC
-func ACPReEnableNAC(nodePtr C.uintptr_t, identity *C.char, bearerToken *C.char) *C.Result {
+func ACPReEnableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -141,14 +141,13 @@ func ACPReEnableNAC(nodePtr C.uintptr_t, identity *C.char, bearerToken *C.char) 
 //export ACPAddNACActorRelationship
 func ACPAddNACActorRelationship(
 	nodePtr C.uintptr_t,
-	identity *C.char,
+	identityPtr C.uintptr_t,
 	relation *C.char,
 	actor *C.char,
-	bearerToken *C.char,
 ) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -169,14 +168,13 @@ func ACPAddNACActorRelationship(
 //export ACPDeleteNACActorRelationship
 func ACPDeleteNACActorRelationship(
 	nodePtr C.uintptr_t,
-	identity *C.char,
+	identityPtr C.uintptr_t,
 	relation *C.char,
 	actor *C.char,
-	bearerToken *C.char,
 ) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -195,10 +193,10 @@ func ACPDeleteNACActorRelationship(
 }
 
 //export ACPGetNACStatus
-func ACPGetNACStatus(nodePtr C.uintptr_t, identity *C.char, bearerToken *C.char) *C.Result {
+func ACPGetNACStatus(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, C.GoString(identity), C.GoString(bearerToken))
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
