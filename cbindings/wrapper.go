@@ -268,6 +268,7 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 }
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
+	fmt.Println("AddSchema")
 	cIdentity := identityFromContext(ctx)
 	cSchema := C.CString(schema)
 	defer C.free(unsafe.Pointer(cSchema))

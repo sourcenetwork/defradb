@@ -1742,7 +1742,9 @@ func withRetryOnNode(
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
 		err := action()
-		if errors.Is(err, corekv.ErrTxnConflict) {
+		// Check the contents of the error instead of the type, because it may have
+		// lost its type while passing through the C binding layer.
+		if err != nil && strings.Contains(err.Error(), corekv.ErrTxnConflict.Error()) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}

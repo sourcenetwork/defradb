@@ -169,6 +169,7 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	fmt.Println("Update")
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
 	document, err := doc.ToJSONPatch()
