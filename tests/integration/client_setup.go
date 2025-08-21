@@ -30,7 +30,7 @@ func init() {
 		goClient = true
 	}
 	if cClient {
-		skipNetworkTests = true
+		skipNetworkTests = false
 		skipBackupTests = true
 	}
 }
