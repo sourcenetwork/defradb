@@ -15,6 +15,7 @@ import (
 	"crypto/rand"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -73,12 +74,7 @@ func shouldEncryptIndividualField(conf immutable.Option[DocEncConfig], fieldName
 	if !conf.HasValue() || !fieldName.HasValue() {
 		return false
 	}
-	for _, field := range conf.Value().EncryptedFields {
-		if field == fieldName.Value() {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(conf.Value().EncryptedFields, fieldName.Value())
 }
 
 func shouldEncryptDocField(conf immutable.Option[DocEncConfig], fieldName immutable.Option[string]) bool {
@@ -91,12 +87,7 @@ func shouldEncryptDocField(conf immutable.Option[DocEncConfig], fieldName immuta
 	if !fieldName.HasValue() {
 		return false
 	}
-	for _, field := range conf.Value().EncryptedFields {
-		if field == fieldName.Value() {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(conf.Value().EncryptedFields, fieldName.Value())
 }
 
 // Encrypt encrypts the given plainText with the encryption key that is associated with the given docID,

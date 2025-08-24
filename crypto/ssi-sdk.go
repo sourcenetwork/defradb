@@ -6,6 +6,7 @@ package crypto
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multicodec"
@@ -79,12 +80,7 @@ func createDIDKey(kt KeyType, publicKey []byte) (*DIDKey, error) {
 
 func isSupportedDIDKeyType(kt KeyType) bool {
 	keyTypes := getSupportedDIDKeyTypes()
-	for _, t := range keyTypes {
-		if t == kt {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(keyTypes, kt)
 }
 
 func getSupportedDIDKeyTypes() []KeyType {
