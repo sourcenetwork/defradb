@@ -31,7 +31,11 @@ func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.cha
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	policyResult, err := store.AddDACPolicy(ctx, C.GoString(policy))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -56,7 +60,11 @@ func ACPAddDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	result, err := store.AddDACActorRelationship(
 		ctx,
 		C.GoString(collection),
@@ -87,7 +95,11 @@ func ACPDeleteDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	result, err := store.DeleteDACActorRelationship(
 		ctx,
 		C.GoString(collection),
@@ -111,7 +123,11 @@ func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	if err := store.DisableNAC(ctx); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -128,7 +144,11 @@ func ACPReEnableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	if err := store.ReEnableNAC(ctx); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -150,7 +170,11 @@ func ACPAddNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	addNACActorRelationshipResult, err := store.AddNACActorRelationship(
 		ctx,
 		C.GoString(relation),
@@ -177,7 +201,11 @@ func ACPDeleteNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	deleteNACActorRelationshipResult, err := store.DeleteNACActorRelationship(
 		ctx,
 		C.GoString(relation),
@@ -199,7 +227,11 @@ func ACPGetNACStatus(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	status, err := store.GetNACStatus(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

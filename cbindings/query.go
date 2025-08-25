@@ -115,7 +115,11 @@ func ExecuteQuery(
 	}
 
 	ctx, cancelFunc := context.WithCancel(ctx)
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	res := store.ExecRequest(ctx, C.GoString(query), opts...)
 	sub := &Subscription{
 		ctxCancel:  cancelFunc,

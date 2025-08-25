@@ -19,18 +19,17 @@ import "C"
 import (
 	"context"
 	"encoding/json"
-	"runtime/cgo"
 	"time"
 
 	"github.com/sourcenetwork/defradb/client"
-
-	"github.com/sourcenetwork/defradb/node"
 )
 
 //export P2PInfo
 func P2PInfo(nodePtr C.uintptr_t) *C.Result {
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	info := node.DB.PeerInfo()
 	return returnC(marshalJSONToGoCResult(info))
 }
@@ -38,8 +37,10 @@ func P2PInfo(nodePtr C.uintptr_t) *C.Result {
 //export P2PgetAllReplicators
 func P2PgetAllReplicators(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	reps, err := node.DB.GetAllReplicators(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -57,9 +58,11 @@ func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.char
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.SetReplicator(ctx, info, colArgs...)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.SetReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -76,9 +79,11 @@ func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.c
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.DeleteReplicator(ctx, info, colArgs...)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.DeleteReplicator(ctx, info, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -90,9 +95,11 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.AddP2PCollections(ctx, colArgs...)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.AddP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -104,9 +111,11 @@ func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.RemoveP2PCollections(ctx, colArgs...)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.RemoveP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -117,8 +126,10 @@ func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 func P2PcollectionGetAll(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	cols, err := node.DB.GetAllP2PCollections(ctx)
 
 	if err != nil {
@@ -132,9 +143,11 @@ func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.AddP2PDocuments(ctx, colArgs...)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.AddP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -146,9 +159,11 @@ func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.RemoveP2PDocuments(ctx, colArgs...)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.RemoveP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -158,8 +173,10 @@ func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char) *C.Result {
 //export P2PdocumentGetAll
 func P2PdocumentGetAll(nodePtr C.uintptr_t) *C.Result {
 	ctx := context.Background()
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	cols, err := node.DB.GetAllP2PDocuments(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -188,9 +205,11 @@ func P2PdocumentSync(nodePtr C.uintptr_t, collection *C.char, docIDs *C.char, ti
 		defer cancel()
 	}
 
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs)
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -200,12 +219,14 @@ func P2PdocumentSync(nodePtr C.uintptr_t, collection *C.char, docIDs *C.char, ti
 //export P2Pconnect
 func P2Pconnect(nodePtr C.uintptr_t, peerID *C.char, peerAddresses *C.char) *C.Result {
 	ctx := context.Background()
-	h := cgo.Handle(nodePtr)
-	node := h.Value().(*node.Node) //nolint:forcetypeassert
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	var info client.PeerInfo
 	info.ID = C.GoString(peerID)
 	info.Addresses = splitCommaSeparatedString(C.GoString(peerAddresses))
-	err := node.DB.Connect(ctx, info)
+	err = node.DB.Connect(ctx, info)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

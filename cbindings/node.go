@@ -19,7 +19,6 @@ import "C"
 import (
 	"context"
 	"fmt"
-	"runtime/cgo"
 	"strconv"
 	"time"
 
@@ -30,8 +29,10 @@ import (
 
 //export NewNode
 func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
-	gocOptions := convertNodeInitOptionsToGoNodeInitOptions(cOptions)
-	var err error
+	gocOptions, err := convertNodeInitOptionsToGoNodeInitOptions(cOptions)
+	if err != nil {
+		return returnNewNodeResultC(1, err.Error(), nil)
+	}
 
 	inMemoryFlag := gocOptions.InMemory != 0
 	listeningAddresses := splitCommaSeparatedString(gocOptions.ListeningAddresses)
@@ -115,12 +116,13 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 //export NodeClose
 func NodeClose(nodePtr C.uintptr_t) *C.Result {
-	h := cgo.Handle(nodePtr)
-	n := h.Value().(*node.Node) //nolint:forcetypeassert
-	err := n.Close(context.Background())
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.Close(context.Background())
 	if err != nil {
 		return returnC(GoCResult{1, fmt.Sprintf(errStoppingNode, err), ""})
 	}
-
 	return returnC(GoCResult{0, "", ""})
 }

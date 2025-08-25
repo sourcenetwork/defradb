@@ -63,7 +63,11 @@ func IndexCreate(
 		Fields: fields,
 		Unique: isUnique != 0,
 	}
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -79,7 +83,10 @@ func IndexCreate(
 //export IndexList
 func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 	ctx := context.Background()
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	colName := C.GoString(collectionName)
 	switch {
@@ -108,7 +115,11 @@ func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 func IndexDrop(nodePtr C.uintptr_t, collectionName *C.char, indexName *C.char) *C.Result {
 	ctx := context.Background()
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

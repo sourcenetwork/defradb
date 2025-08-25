@@ -22,6 +22,7 @@ package cbindings
 import "C"
 import (
 	"context"
+	"fmt"
 	"runtime/cgo"
 	"unsafe"
 
@@ -93,53 +94,96 @@ func returnNewIdentityResultC(status int, error string, n identity.Identity) C.N
 	return result
 }
 
-func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) GoNodeInitOptions {
+func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNodeInitOptions, error) {
+	ident, err := getIdentityFromPointer(cOptions.identityPtr)
+	if err != nil {
+		return GoNodeInitOptions{}, err
+	}
 	return GoNodeInitOptions{
 		DbPath:                   C.GoString(cOptions.dbPath),
 		ListeningAddresses:       C.GoString(cOptions.listeningAddresses),
 		ReplicatorRetryIntervals: C.GoString(cOptions.replicatorRetryIntervals),
 		Peers:                    C.GoString(cOptions.peers),
-		Identity:                 getIdentityFromPointer(cOptions.identityPtr),
+		Identity:                 ident,
 		InMemory:                 int(cOptions.inMemory),
 		DisableP2P:               int(cOptions.disableP2P),
 		DisableAPI:               int(cOptions.disableAPI),
 		MaxTransactionRetries:    int(cOptions.maxTransactionRetries),
 		EnableNodeACP:            int(cOptions.enableNodeACP),
-	}
+	}, nil
 }
 
-func getStoreFromPointer(nodePtr C.uintptr_t) client.Store {
+// getStoreFromPointer should be used by functions that can work on a node pointer or
+// on a transaction pointer.
+func getStoreFromPointer(nodePtr C.uintptr_t) (store client.Store, err error) {
+
+	// Protect against invalid handles
+	defer func() {
+		if r := recover(); r != nil {
+			store, err = nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
+		}
+	}()
+
 	h := cgo.Handle(nodePtr)
 	v := h.Value()
 	switch v := v.(type) {
 	case *node.Node:
-		return v.DB
+		return v.DB, nil
 	case client.Txn:
-		return v
+		return v, nil
 	default:
-		return nil
+		return nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
 	}
 }
 
-func getIdentityFromPointer(identityPtr C.uintptr_t) identity.Identity {
-	if identityPtr == 0 {
-		return nil
+// getNodeFromPointer should be used by functions that can only work on anode pointer.
+func getNodeFromPointer(nodePtr C.uintptr_t) (n *node.Node, err error) {
+	// Protect against invalid handles
+	defer func() {
+		if r := recover(); r != nil {
+			n, err = nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
+		}
+	}()
+
+	h := cgo.Handle(nodePtr)
+	v := h.Value()
+	n, ok := v.(*node.Node)
+	if !ok || n == nil {
+		return nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
 	}
+	return n, nil
+}
+
+func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, err error) {
+	if identityPtr == 0 {
+		return nil, nil
+	}
+
+	// Protect against invalid handles
+	defer func() {
+		if r := recover(); r != nil {
+			ident, err = nil, fmt.Errorf(errInvalidTxnPointer, uintptr(identityPtr))
+		}
+	}()
+
 	h := cgo.Handle(identityPtr)
 	v := h.Value()
 	switch v := v.(type) {
 	case identity.Identity:
-		return v
+		return v, nil
 	case *identity.Identity:
-		return *v
+		return *v, nil
 	default:
-		return nil
+		return nil, fmt.Errorf(errInvalidTxnPointer, uintptr(identityPtr))
 	}
 }
 
 // contextWithIdentity is a helper function that attaches identity to a context
 func contextWithIdentity(ctx context.Context, identityPtr C.uintptr_t) (context.Context, error) {
-	ident := getIdentityFromPointer(identityPtr)
+	ident, err := getIdentityFromPointer(identityPtr)
+	if err != nil {
+		return ctx, err
+	}
 	if ident == nil {
 		return ctx, nil
 	}

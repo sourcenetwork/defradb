@@ -44,7 +44,11 @@ func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.ch
 		transform = immutable.Some(lensCfg)
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transform)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -80,8 +84,12 @@ func ViewRefresh(
 		options.IncludeInactive = immutable.Some(getInactive != 0)
 	}
 
-	store := getStoreFromPointer(nodePtr)
-	err := store.RefreshViews(ctx, options)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	err = store.RefreshViews(ctx, options)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

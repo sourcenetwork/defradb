@@ -36,7 +36,11 @@ func BlockVerifySignature(nodePtr C.uintptr_t, keyType *C.char, publicKey *C.cha
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	store := getStoreFromPointer(nodePtr)
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	err = store.VerifySignature(ctx, C.GoString(cid), pubKey)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
