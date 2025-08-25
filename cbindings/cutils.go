@@ -166,8 +166,6 @@ func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, e
 	switch v := v.(type) {
 	case identity.Identity:
 		return v, nil
-	case *identity.Identity:
-		return *v, nil
 	default:
 		return nil, fmt.Errorf(errInvalidTxnPointer, uintptr(identityPtr))
 	}
