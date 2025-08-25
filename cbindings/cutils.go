@@ -116,7 +116,6 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 // getStoreFromPointer should be used by functions that can work on a node pointer or
 // on a transaction pointer.
 func getStoreFromPointer(nodePtr C.uintptr_t) (store client.Store, err error) {
-
 	// Protect against invalid handles
 	defer func() {
 		if r := recover(); r != nil {
