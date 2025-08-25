@@ -50,4 +50,5 @@ const (
 	errInvalidKeyType      string = "invalid key type: %v"
 	errInvalidStorePointer string = "invalid store pointer: %v"
 	errInvalidTxnPointer   string = "invalid transaction pointer: %v"
+	errInvalidCGOHandle    string = "invalid CGO handle: %v"
 )

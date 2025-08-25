@@ -113,18 +113,25 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 	}, nil
 }
 
+// recoverHandleValue is a helper function that recovers a handle's value from a pointer,
+// and recovers from a panic if the handle is invalid
+func recoverHandleValue(ptr C.uintptr_t) (v any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			v, err = nil, fmt.Errorf(errInvalidCGOHandle, uintptr(ptr))
+		}
+	}()
+	h := cgo.Handle(ptr)
+	return h.Value(), nil
+}
+
 // getStoreFromPointer should be used by functions that can work on a node pointer or
 // on a transaction pointer.
 func getStoreFromPointer(nodePtr C.uintptr_t) (store client.Store, err error) {
-	// Protect against invalid handles
-	defer func() {
-		if r := recover(); r != nil {
-			store, err = nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
-		}
-	}()
-
-	h := cgo.Handle(nodePtr)
-	v := h.Value()
+	v, err := recoverHandleValue(nodePtr)
+	if err != nil {
+		return nil, err
+	}
 	switch v := v.(type) {
 	case *node.Node:
 		return v.DB, nil
@@ -135,17 +142,12 @@ func getStoreFromPointer(nodePtr C.uintptr_t) (store client.Store, err error) {
 	}
 }
 
-// getNodeFromPointer should be used by functions that can only work on anode pointer.
+// getNodeFromPointer should be used by functions that can only work on a node pointer.
 func getNodeFromPointer(nodePtr C.uintptr_t) (n *node.Node, err error) {
-	// Protect against invalid handles
-	defer func() {
-		if r := recover(); r != nil {
-			n, err = nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
-		}
-	}()
-
-	h := cgo.Handle(nodePtr)
-	v := h.Value()
+	v, err := recoverHandleValue(nodePtr)
+	if err != nil {
+		return nil, err
+	}
 	n, ok := v.(*node.Node)
 	if !ok || n == nil {
 		return nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
@@ -157,16 +159,10 @@ func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, e
 	if identityPtr == 0 {
 		return nil, nil
 	}
-
-	// Protect against invalid handles
-	defer func() {
-		if r := recover(); r != nil {
-			ident, err = nil, fmt.Errorf(errInvalidTxnPointer, uintptr(identityPtr))
-		}
-	}()
-
-	h := cgo.Handle(identityPtr)
-	v := h.Value()
+	v, err := recoverHandleValue(identityPtr)
+	if err != nil {
+		return nil, err
+	}
 	switch v := v.(type) {
 	case identity.Identity:
 		return v, nil
