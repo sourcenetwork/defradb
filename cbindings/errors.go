@@ -10,43 +10,46 @@
 
 package cbindings
 
-const (
-	// Node
-	errClosingNode            string = "error closing node: %v"
-	errCreatingStoreDirectory string = "error creating the store directory: %v"
-	errCreatingNode           string = "error creating node: %v"
-	errUninitializedNode      string = "error: node is not initialized. Call initNode() first"
-	errStoppedNode            string = "error stopping node: node is not initialized, or was already stopped"
-	errStoppingNode           string = "error stopping node: %v"
-	errParsingReplicatorTimes string = "error parsing replicator retry time intervals: %v"
-	errNegativeReplicatorTime string = "error: negative time intervals are not allowed for replicator retries"
-	errUnreadyStart           string = "Node is still starting (timeout waiting for readiness)"
-	errNACWithoutIdentity     string = "can not start nac without identity"
-
-	// Schema
-	errAddingSchema    string = "error adding schema: %v"
-	errGettingSchema   string = "error getting schema: %v"
-	errPatchingSchema  string = "error patching schema: %v"
-	errSetActiveSchema string = "error setting active version of schema: %v"
-	errEmptyPatch      string = "patch cannot be empty"
-
-	// Collection
-	errGettingCollection    string = "error getting collection: %v"
-	errAmbiguousCollection  string = "error: more than one collection matches the given criteria, could not set context"
-	errNoMatchingCollection string = "error: no collection matches the given criteria, could not set context"
-	errNoDocIDOrFilter      string = "error: performing the operation requires a DocID or filter"
-
-	// Index
-	errInvalidAscensionOrder        string = "invalid ascension order: expected ASC or DESC"
-	errInvalidIndexFieldDescription string = "invalid or malformed field descriptiona"
-
-	// Subscription
-	errInvalidSubscriptionID string = "error: invalid subscription ID"
-	errGEttingSubscription   string = "error: could not retrieve subscription"
-
-	// Generic
-	errInvalidLensConfig string = "invalid lens configuration: %v"
-	errMarshallingJSON   string = "error marshalling JSON: %v"
-	errInvalidKeyType    string = "invalid key type: %v"
-	errInvalidCGOHandle  string = "invalid handle: %v"
+import (
+	"github.com/sourcenetwork/defradb/errors"
 )
+
+const (
+	errNegativeReplicatorTime       = "negative time intervals are not allowed for replicator retries"
+	errAmbiguousCollection          = "more than one collection matches the given criteria"
+	errNoMatchingCollection         = "no collection matches the given criteria"
+	errNoDocIDOrFilter              = "operation requires a DocID or filter"
+	errInvalidAscensionOrder        = "invalid ascension order: expected ASC or DESC"
+	errInvalidIndexFieldDescription = "invalid or malformed field description"
+	errInvalidSubscriptionID        = "invalid subscription ID"
+	errGettingSubscription          = "could not retrieve subscription"
+	errInvalidCGOHandle             = "invalid handle"
+)
+
+func NewErrNegativeReplicatorTime() error {
+	return errors.New(errNegativeReplicatorTime)
+}
+
+func NewErrAmbiguousCollection() error {
+	return errors.New(errAmbiguousCollection)
+}
+
+func NewErrNoMatchingCollection() error {
+	return errors.New(errNoMatchingCollection)
+}
+
+func NewErrNoDocIDOrFilter() error {
+	return errors.New(errNoDocIDOrFilter)
+}
+
+func NewErrInvalidIndexFieldDescription(field string) error {
+	return errors.New(errInvalidIndexFieldDescription, errors.NewKV("Field", field))
+}
+
+func NewErrInvalidSubscriptionID(id string) error {
+	return errors.New(errInvalidSubscriptionID, errors.NewKV("SubscriptionID", id))
+}
+
+func NewErrInvalidCGOHandle(inner error) error {
+	return errors.Wrap(errInvalidCGOHandle, inner)
+}

@@ -19,8 +19,6 @@ import "C"
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -67,15 +65,15 @@ func getCollection(
 ) (client.Collection, error) {
 	cols, err := store.GetCollections(ctx, options)
 	if err != nil {
-		return nil, fmt.Errorf(errGettingCollection, err)
+		return nil, err
 	}
 
 	// Only one collection should match the criteria
 	if len(cols) == 0 {
-		return nil, errors.New(errNoMatchingCollection)
+		return nil, NewErrNoMatchingCollection()
 	}
 	if len(cols) > 1 {
-		return nil, errors.New(errAmbiguousCollection)
+		return nil, NewErrAmbiguousCollection()
 	}
 	return cols[0], nil
 }
@@ -320,7 +318,7 @@ func CollectionPatch(nodePtr C.uintptr_t, patch *C.char, lensConfig *C.char, opt
 		decoder := json.NewDecoder(strings.NewReader(lensString))
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnC(returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), ""))
+			return returnC(returnGoC(1, err.Error(), ""))
 		}
 
 		// Length being greater than 0 also means it is not nil, so no need to check

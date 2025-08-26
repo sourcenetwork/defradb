@@ -75,13 +75,13 @@ func PollSubscription(id *C.char) *C.Result {
 	subID := C.GoString(id)
 	sub, ok := getSubscription(subID)
 	if !ok {
-		return returnC(returnGoC(1, errInvalidSubscriptionID, ""))
+		return returnC(returnGoC(1, NewErrInvalidSubscriptionID(subID).Error(), ""))
 	}
 	select {
 	case msg, ok := <-sub.resultChan:
 		if !ok {
 			removeSubscription(subID)
-			return returnC(returnGoC(1, errGEttingSubscription, ""))
+			return returnC(returnGoC(1, errGettingSubscription, ""))
 		}
 		return returnC(marshalJSONToGoCResult(msg))
 	default:

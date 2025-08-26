@@ -18,7 +18,6 @@ import "C"
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -46,7 +45,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	// 	if _, err = os.Stat(gocOptions.DbPath); os.IsNotExist(err) {
 	// 		err := os.MkdirAll(gocOptions.DbPath, 0755)
 	// 		if err != nil {
-	// 			return returnGoC(1, fmt.Sprintf(errCreatingStoreDirectory, err), "")
+	// 			return returnGoC(1, err.Error(), "")
 	// 		}
 	// 	}
 	// }
@@ -122,7 +121,7 @@ func NodeClose(nodePtr C.uintptr_t) *C.Result {
 	}
 	err = node.Close(context.Background())
 	if err != nil {
-		return returnC(GoCResult{1, fmt.Sprintf(errStoppingNode, err), ""})
+		return returnC(GoCResult{1, err.Error(), ""})
 	}
 	return returnC(GoCResult{0, "", ""})
 }

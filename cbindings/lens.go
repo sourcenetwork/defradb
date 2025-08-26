@@ -19,7 +19,6 @@ import "C"
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -36,7 +35,7 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) *C.Resu
 	decoder.DisallowUnknownFields()
 	var lensCfg model.Lens
 	if err := decoder.Decode(&lensCfg); err != nil {
-		return returnC(returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), ""))
+		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	migrationCfg := client.LensConfig{
 		SourceSchemaVersionID:      C.GoString(src),
@@ -142,7 +141,7 @@ func LensSetRegistry(nodePtr C.uintptr_t, collectionID *C.char, cfg *C.char) *C.
 	decoder.DisallowUnknownFields()
 	var lensCfg model.Lens
 	if err := decoder.Decode(&lensCfg); err != nil {
-		return returnC(returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), ""))
+		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
 	store, err := getStoreFromPointer(nodePtr)

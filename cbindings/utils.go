@@ -59,7 +59,7 @@ func returnGoC(status int, errortext string, valuetext string) GoCResult {
 func marshalJSONToGoCResult(value any) GoCResult {
 	dataJSON, err := json.Marshal(value)
 	if err != nil {
-		return returnGoC(1, fmt.Sprintf(errMarshallingJSON, err), "")
+		return returnGoC(1, err.Error(), "")
 	}
 	return returnGoC(0, "", string(dataJSON))
 }

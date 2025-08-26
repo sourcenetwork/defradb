@@ -19,7 +19,6 @@ import "C"
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -39,7 +38,7 @@ func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.ch
 		decoder.DisallowUnknownFields()
 		var lensCfg model.Lens
 		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnC(returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), ""))
+			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		transform = immutable.Some(lensCfg)
 	}

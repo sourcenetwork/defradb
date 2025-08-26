@@ -50,7 +50,7 @@ func IndexCreate(
 				return returnC(returnGoC(1, errInvalidAscensionOrder, ""))
 			}
 		} else if len(parts) > 2 {
-			return returnC(returnGoC(1, errInvalidIndexFieldDescription, ""))
+			return returnC(returnGoC(1, NewErrInvalidIndexFieldDescription(field).Error(), ""))
 		}
 		fields = append(fields, client.IndexedFieldDescription{
 			Name:       fieldName,
