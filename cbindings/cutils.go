@@ -138,7 +138,7 @@ func getStoreFromPointer(nodePtr C.uintptr_t) (store client.Store, err error) {
 	case client.Txn:
 		return v, nil
 	default:
-		return nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
+		return nil, fmt.Errorf(errInvalidCGOHandle, uintptr(nodePtr))
 	}
 }
 
@@ -150,7 +150,7 @@ func getNodeFromPointer(nodePtr C.uintptr_t) (n *node.Node, err error) {
 	}
 	n, ok := v.(*node.Node)
 	if !ok || n == nil {
-		return nil, fmt.Errorf(errInvalidStorePointer, uintptr(nodePtr))
+		return nil, fmt.Errorf(errInvalidCGOHandle, uintptr(nodePtr))
 	}
 	return n, nil
 }
@@ -167,7 +167,7 @@ func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, e
 	case identity.Identity:
 		return v, nil
 	default:
-		return nil, fmt.Errorf(errInvalidTxnPointer, uintptr(identityPtr))
+		return nil, fmt.Errorf(errInvalidCGOHandle, uintptr(identityPtr))
 	}
 }
 

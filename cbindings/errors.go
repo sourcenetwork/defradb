@@ -45,10 +45,8 @@ const (
 	errGEttingSubscription   string = "error: could not retrieve subscription"
 
 	// Generic
-	errInvalidLensConfig   string = "invalid lens configuration: %v"
-	errMarshallingJSON     string = "error marshalling JSON: %v"
-	errInvalidKeyType      string = "invalid key type: %v"
-	errInvalidStorePointer string = "invalid store pointer: %v"
-	errInvalidTxnPointer   string = "invalid transaction pointer: %v"
-	errInvalidCGOHandle    string = "invalid CGO handle: %v"
+	errInvalidLensConfig string = "invalid lens configuration: %v"
+	errMarshallingJSON   string = "error marshalling JSON: %v"
+	errInvalidKeyType    string = "invalid key type: %v"
+	errInvalidCGOHandle  string = "invalid handle: %v"
 )
