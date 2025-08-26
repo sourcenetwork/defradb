@@ -22,7 +22,6 @@ package cbindings
 import "C"
 import (
 	"context"
-	"fmt"
 	"runtime/cgo"
 	"unsafe"
 
@@ -118,7 +117,7 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 func recoverHandleValue(ptr C.uintptr_t) (v any, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			v, err = nil, fmt.Errorf(errInvalidCGOHandle, uintptr(ptr))
+			v, err = nil, NewErrInvalidCGOHandle(uintptr(ptr))
 		}
 	}()
 	h := cgo.Handle(ptr)
@@ -138,7 +137,7 @@ func getStoreFromPointer(nodePtr C.uintptr_t) (store client.Store, err error) {
 	case client.Txn:
 		return v, nil
 	default:
-		return nil, fmt.Errorf(errInvalidCGOHandle, uintptr(nodePtr))
+		return nil, NewErrInvalidCGOHandle(uintptr(nodePtr))
 	}
 }
 
@@ -150,7 +149,7 @@ func getNodeFromPointer(nodePtr C.uintptr_t) (n *node.Node, err error) {
 	}
 	n, ok := v.(*node.Node)
 	if !ok || n == nil {
-		return nil, fmt.Errorf(errInvalidCGOHandle, uintptr(nodePtr))
+		return nil, NewErrInvalidCGOHandle(uintptr(nodePtr))
 	}
 	return n, nil
 }
@@ -167,7 +166,7 @@ func getIdentityFromPointer(identityPtr C.uintptr_t) (ident identity.Identity, e
 	case identity.Identity:
 		return v, nil
 	default:
-		return nil, fmt.Errorf(errInvalidCGOHandle, uintptr(identityPtr))
+		return nil, NewErrInvalidCGOHandle(uintptr(identityPtr))
 	}
 }
 

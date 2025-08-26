@@ -42,6 +42,6 @@ func NewErrInvalidSubscriptionID(id string) error {
 	return errors.New(errInvalidSubscriptionID, errors.NewKV("SubscriptionID", id))
 }
 
-func NewErrInvalidCGOHandle(inner error) error {
-	return errors.Wrap(errInvalidCGOHandle, inner)
+func NewErrInvalidCGOHandle(id uintptr) error {
+	return errors.New(errInvalidCGOHandle, errors.NewKV("Handle", id))
 }
