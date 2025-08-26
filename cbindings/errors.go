@@ -26,20 +26,12 @@ const (
 	errInvalidCGOHandle             = "invalid handle"
 )
 
-func NewErrNegativeReplicatorTime() error {
-	return errors.New(errNegativeReplicatorTime)
-}
-
 func NewErrAmbiguousCollection() error {
 	return errors.New(errAmbiguousCollection)
 }
 
 func NewErrNoMatchingCollection() error {
 	return errors.New(errNoMatchingCollection)
-}
-
-func NewErrNoDocIDOrFilter() error {
-	return errors.New(errNoDocIDOrFilter)
 }
 
 func NewErrInvalidIndexFieldDescription(field string) error {
