@@ -289,6 +289,10 @@ type Store interface {
 
 	// BasicExport exports the current data or subset of data to file in json format.
 	BasicExport(ctx context.Context, config *BackupConfig) error
+
+	// P2P holds the methods that are related to P2P operations.
+	// Calling them when no networking stack has been configured should return an error.
+	P2P
 }
 
 // Txn is a Store instance that has been wrapped by a transaction.

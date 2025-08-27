@@ -13,6 +13,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/node"
@@ -41,16 +42,16 @@ func init() {
 // select the client implementation to use.
 func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Client, error) {
 	switch s.ClientType {
-	case HTTPClientType:
+	case state.HTTPClientType:
 		return http.NewWrapper(nodeObj)
 
-	case CLIClientType:
+	case state.CLIClientType:
 		return cli.NewWrapper(nodeObj, s.SourcehubAddress)
 
-	case GoClientType:
+	case state.GoClientType:
 		return newGoClientWrapper(nodeObj), nil
 
-	case CClientType:
+	case state.CClientType:
 		return cwrap.NewCWrapper(s.Ctx, enableNAC), nil
 
 	default:
@@ -60,19 +61,16 @@ func setupClient(s *state.State, nodeObj *node.Node, enableNAC bool) (clients.Cl
 
 type goClientWrapper struct {
 	node.DB
-	node.Peer
+	node *node.Node
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		Peer: n.Peer,
+		node: n,
 	}
 }
 
 func (w *goClientWrapper) Close() {
-	if w.Peer != nil {
-		w.Peer.Close()
-	}
-	w.DB.Close()
+	_ = w.node.Close(context.Background())
 }

@@ -29,8 +29,8 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		Actions: []any{
@@ -74,8 +74,8 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		Actions: []any{
@@ -119,8 +119,8 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		SupportedMutationTypes: immutable.Some(

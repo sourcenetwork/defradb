@@ -25,7 +25,7 @@ func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 		// http and cli clients will pass the serialize filter into json which will result in
 		// the payload deserialized into map[string]any. With Go client the filter is passed as is.
 		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{testUtils.HTTPClientType, testUtils.CLIClientType}),
+			[]state.ClientType{state.HTTPClientType, state.CLIClientType}),
 		Actions: []any{
 			testUtils.UpdateWithFilter{
 				CollectionID:  0,
@@ -42,7 +42,7 @@ func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidFilterType_WithGoClient_ReturnsError(t *testing.T) {
 	type invalidFilterType struct{ Number int }
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some([]state.ClientType{testUtils.GoClientType}),
+		SupportedClientTypes: immutable.Some([]state.ClientType{state.GoClientType}),
 		Actions: []any{
 			testUtils.UpdateWithFilter{
 				CollectionID:  0,

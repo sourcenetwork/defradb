@@ -11,10 +11,14 @@
 package action
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -100,7 +104,7 @@ func assertCollectionVersions(
 				require.Equal(s.T, expectedField.IsPrimary, actualField.IsPrimary)
 				require.Equal(s.T, expectedField.Kind, actualField.Kind)
 				require.Equal(s.T, expectedField.Typ, actualField.Typ)
-				require.Equal(s.T, expectedField.DefaultValue, actualField.DefaultValue)
+				assertResultsEqual(s.T, s.ClientType, expectedField.DefaultValue, actualField.DefaultValue)
 				require.Equal(s.T, expectedField.RelationName, actualField.RelationName)
 				require.Equal(s.T, expectedField.Size, actualField.Size)
 			}
@@ -110,4 +114,154 @@ func assertCollectionVersions(
 			require.Equal(s.T, expected.VectorEmbeddings, actual.VectorEmbeddings)
 		}
 	}
+}
+
+// assertResultsEqual asserts that actual result is equal to the expected result.
+//
+// The comparison is relaxed when using client types other than goClientType.
+func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
+	switch client {
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+		if !areResultsEqual(expected, actual) {
+			assert.EqualValues(t, expected, actual, msgAndArgs...)
+		}
+	default:
+		assert.EqualValues(t, expected, actual, msgAndArgs...)
+	}
+}
+
+// areResultsEqual returns true if the expected and actual results are of equal value.
+//
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
+func areResultsEqual(expected any, actual any) bool {
+	switch expectedVal := expected.(type) {
+	case map[string]any:
+		if len(expectedVal) == 0 && actual == nil {
+			return true
+		}
+		actualVal, ok := actual.(map[string]any)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		if len(expectedVal) != len(actualVal) {
+			return false
+		}
+		for k, v := range expectedVal {
+			if !areResultsEqual(v, actualVal[k]) {
+				return false
+			}
+		}
+		return true
+	case uint64, uint32, uint16, uint8, uint, int64, int32, int16, int8, int:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		actualVal, err := jsonNum.Int64()
+		if err != nil {
+			return false
+		}
+		return assert.ObjectsAreEqualValues(expected, actualVal)
+	case float32:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		actualVal, err := jsonNum.Float64()
+		if err != nil {
+			return false
+		}
+		return assert.ObjectsAreEqualValues(expected, float32(actualVal))
+	case float64:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		actualVal, err := jsonNum.Float64()
+		if err != nil {
+			return false
+		}
+		return assert.ObjectsAreEqualValues(expected, actualVal)
+	case immutable.Option[float32]:
+		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[float64]:
+		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[uint64]:
+		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[int64]:
+		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[bool]:
+		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[string]:
+		return areResultOptionsEqual(expectedVal, actual)
+	case []uint8:
+		return areResultsEqual(base64.StdEncoding.EncodeToString(expectedVal), actual)
+	case []int64:
+		return areResultArraysEqual(expectedVal, actual)
+	case []uint64:
+		return areResultArraysEqual(expectedVal, actual)
+	case []float32:
+		return areResultArraysEqual(expectedVal, actual)
+	case []float64:
+		return areResultArraysEqual(expectedVal, actual)
+	case []string:
+		return areResultArraysEqual(expectedVal, actual)
+	case []bool:
+		return areResultArraysEqual(expectedVal, actual)
+	case []any:
+		return areResultArraysEqual(expectedVal, actual)
+	case []map[string]any:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[float32]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[float64]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[uint64]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[int64]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[bool]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[string]:
+		return areResultArraysEqual(expectedVal, actual)
+	case time.Time:
+		return areResultsEqual(expectedVal.Format(time.RFC3339Nano), actual)
+	default:
+		return assert.ObjectsAreEqualValues(expected, actual)
+	}
+}
+
+// areResultOptionsEqual returns true if the value of the expected immutable.Option
+// and actual result are of equal value.
+//
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
+func areResultOptionsEqual[S any](expected immutable.Option[S], actual any) bool {
+	var expectedVal any
+	if expected.HasValue() {
+		expectedVal = expected.Value()
+	}
+	return areResultsEqual(expectedVal, actual)
+}
+
+// areResultArraysEqual returns true if the array of expected results and actual results
+// are of equal value.
+//
+// Values of type json.Number and immutable.Option will be reduced to their underlying types.
+func areResultArraysEqual[S any](expected []S, actual any) bool {
+	if len(expected) == 0 && actual == nil {
+		return true
+	}
+	actualVal, ok := actual.([]any)
+	if !ok {
+		return assert.ObjectsAreEqualValues(expected, actual)
+	}
+	if len(expected) != len(actualVal) {
+		return false
+	}
+	for i, v := range expected {
+		if !areResultsEqual(v, actualVal[i]) {
+			return false
+		}
+	}
+	return true
 }

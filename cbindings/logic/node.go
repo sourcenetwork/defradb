@@ -147,7 +147,7 @@ func NodeInit(n int, cOptions GoNodeInitOptions) GoCResult {
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
 	if len(replicatorRetryIntervals) > 0 {
-		opts = append(opts, netConfig.WithRetryInterval(replicatorRetryIntervals))
+		opts = append(opts, db.WithRetryInterval(replicatorRetryIntervals))
 	}
 
 	globalNodes[n], err = node.New(ctx, opts...)

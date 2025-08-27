@@ -60,6 +60,7 @@ func NewDefraCommand() *cobra.Command {
 		p2p_collection,
 		p2p_document,
 		MakeP2PInfoCommand(),
+		MakeP2PConnectCommand(),
 	)
 
 	lens := MakeLensCommand()

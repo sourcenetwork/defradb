@@ -17,13 +17,14 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
-			[]testUtils.DocumentACPType{
-				testUtils.LocalDocumentACPType,
+			[]state.DocumentACPType{
+				state.LocalDocumentACPType,
 			},
 		),
 		Actions: []any{
@@ -86,8 +87,8 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
 func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
-			[]testUtils.DocumentACPType{
-				testUtils.SourceHubDocumentACPType,
+			[]state.DocumentACPType{
+				state.SourceHubDocumentACPType,
 			},
 		),
 		Actions: []any{

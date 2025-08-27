@@ -125,7 +125,7 @@ func (g *randomDocGenerator) getNextPrimaryDocID(
 	field *client.CollectionFieldDescription,
 ) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	otherDef, _ := client.GetCollection(g.configurator.definitionCache, host, field.Kind)
+	otherDef, _ := GetCollection(g.configurator.definitionCache, host, field.Kind)
 
 	return g.generatedDocs[otherDef.Name][ind].docID
 }
@@ -219,7 +219,7 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 func validateDefinitions(definitions []client.CollectionVersion) error {
 	colIDs := make(map[string]struct{})
 	colNames := make(map[string]struct{})
-	defCache := client.NewCollectionCache(definitions)
+	defCache := NewCollectionCache(definitions)
 
 	for _, def := range definitions {
 		if def.Name == "" {
@@ -230,7 +230,7 @@ func validateDefinitions(definitions []client.CollectionVersion) error {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
 			if field.Kind.IsObject() {
-				_, found := client.GetCollection(defCache, def, field.Kind)
+				_, found := GetCollection(defCache, def, field.Kind)
 				if !found {
 					return NewErrIncompleteColDefinition("field schema references unknown collection")
 				}

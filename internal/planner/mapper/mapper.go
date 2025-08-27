@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
@@ -121,7 +122,7 @@ func toSelect(
 		rootSelectType = CommitSelection
 	}
 
-	collectionName, err := getCollectionName(ctx, store, rootSelectType, selectRequest, parentCollectionName)
+	collectionName, err := getCollectionName(ctx, rootSelectType, selectRequest, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -458,7 +459,7 @@ func resolveAggregates(
 					collectionName = ""
 				}
 
-				childCollectionName, err := getCollectionName(ctx, store, rootSelectType, hostSelectRequest, collectionName)
+				childCollectionName, err := getCollectionName(ctx, rootSelectType, hostSelectRequest, collectionName)
 				if err != nil {
 					return nil, err
 				}
@@ -877,7 +878,6 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 // if this is a commit request.
 func getCollectionName(
 	ctx context.Context,
-	store client.TxnStore,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	parentCollectionName string,
@@ -893,14 +893,14 @@ func getCollectionName(
 	}
 
 	if parentCollectionName != "" {
-		parentCollection, err := store.GetCollectionByName(ctx, parentCollectionName)
+		parentCollection, err := description.GetCollectionByName(ctx, parentCollectionName)
 		if err != nil {
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentCollection.Version().GetFieldByName(selectRequest.Name)
+		hostFieldDesc, parentHasField := parentCollection.GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.Kind.IsObject() {
-			def, found, err := client.GetCollectionFromStore(ctx, store, parentCollection.Version(), hostFieldDesc.Kind)
+			def, found, err := description.GetRelatedCollection(ctx, parentCollection, hostFieldDesc.Kind)
 			if !found {
 				return "", NewErrTypeNotFound(hostFieldDesc.Kind.String())
 			}
@@ -1124,7 +1124,7 @@ func resolveInnerFilterDependencies(
 		}
 
 		dummyParsed := &request.Select{Field: request.Field{Name: key}}
-		childCollectionName, err := getCollectionName(ctx, store, rootSelectType, dummyParsed, parentCollectionName)
+		childCollectionName, err := getCollectionName(ctx, rootSelectType, dummyParsed, parentCollectionName)
 		if err != nil {
 			return nil, err
 		}
@@ -1166,7 +1166,7 @@ func constructEmptyJoin(
 		},
 	}
 
-	childCollectionName, err := getCollectionName(ctx, store, rootSelectType, dummyParsed, parentCollectionName)
+	childCollectionName, err := getCollectionName(ctx, rootSelectType, dummyParsed, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}

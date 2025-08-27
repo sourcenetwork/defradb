@@ -79,9 +79,9 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JS client does not support 64 bit integers
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#number_encoding
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
 		}),
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a type error in this case
@@ -295,7 +295,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
-				testUtils.GoClientType,
+				state.GoClientType,
 			},
 		),
 		Actions: []any{
@@ -348,7 +348,7 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
-				testUtils.GoClientType,
+				state.GoClientType,
 			},
 		),
 		Actions: []any{

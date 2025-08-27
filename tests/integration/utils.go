@@ -181,19 +181,19 @@ func ExecuteTestCase(
 
 	var clients []state.ClientType
 	if httpClient {
-		clients = append(clients, HTTPClientType)
+		clients = append(clients, state.HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, GoClientType)
+		clients = append(clients, state.GoClientType)
 	}
 	if cliClient {
-		clients = append(clients, CLIClientType)
+		clients = append(clients, state.CLIClientType)
 	}
 	if jsClient {
-		clients = append(clients, JSClientType)
+		clients = append(clients, state.JSClientType)
 	}
 	if cClient {
-		clients = append(clients, CClientType)
+		clients = append(clients, state.CClientType)
 	}
 
 	var databases []state.DatabaseType
@@ -230,7 +230,16 @@ func ExecuteTestCase(
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
-				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
+				executeTestCase(
+					ctx,
+					t,
+					collectionNames,
+					testCase,
+					kms,
+					dbt,
+					ct,
+					documentACPType,
+				)
 			}
 		}
 	}
@@ -244,6 +253,7 @@ func executeTestCase(
 	kms state.KMSType,
 	dbt state.DatabaseType,
 	clientType state.ClientType,
+	documentACPType state.DocumentACPType,
 ) {
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
@@ -267,7 +277,16 @@ func executeTestCase(
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := state.NewState(ctx, t, testCase.IdentityTypes, kms, dbt, clientType, collectionNames)
+	s := state.NewState(
+		ctx,
+		t,
+		testCase.IdentityTypes,
+		kms,
+		dbt,
+		clientType,
+		documentACPType,
+		collectionNames,
+	)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -808,11 +827,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		var addresses []string
-		for _, addr := range s.Nodes[nodeIndex].AddrInfo.Addrs {
-			addresses = append(addresses, addr.String())
-		}
-		opts = append(opts, netConfig.WithListenAddresses(addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].CachedPeerInfo.Addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -867,9 +882,9 @@ func refreshTokens(
 		if fullIdentityToUpdate, ok := identityToUpdate.(acpIdentity.FullIdentity); ok {
 			nodeTokensToUpdate := identHolder.NodeTokens
 			for nodeKey := range identHolder.NodeTokens {
-				if audience := getNodeAudience(s, nodeKey); audience.HasValue() {
+				if audience := state.GetNodeAudience(s, nodeKey); audience.HasValue() {
 					err := fullIdentityToUpdate.UpdateToken(
-						authTokenExpiration,
+						action.AuthTokenExpiration,
 						audience,
 						immutable.Some(s.SourcehubAddress),
 					)
@@ -940,7 +955,7 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{netConfig.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
+	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
@@ -2311,7 +2326,7 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]DocumentACPType]) {
+func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]state.DocumentACPType]) {
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {

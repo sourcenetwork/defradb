@@ -12,9 +12,11 @@ package node
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/corekv"
 )
 
-func (n *Node) startP2P(ctx context.Context) error {
+func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
 	if n.config.disableP2P {
 		return nil
 	}

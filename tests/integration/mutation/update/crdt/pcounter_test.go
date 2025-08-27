@@ -125,9 +125,9 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JS client does not support 64 bit integers
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#number_encoding
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
 		}),
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a type error in this case

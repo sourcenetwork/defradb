@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
@@ -46,21 +45,21 @@ func NewCWrapper(ctx context.Context, enableNAC bool) *CWrapper {
 	return &CWrapper{nodeNum: int(nodeNum)}
 }
 
-func (w *CWrapper) PeerInfo() peer.AddrInfo {
+func (w *CWrapper) PeerInfo() client.PeerInfo {
 	result := cbindings.P2PInfo(w.nodeNum)
 
 	if result.Status != 0 {
-		return peer.AddrInfo{}
+		return client.PeerInfo{}
 	}
 
-	addrInfo, err := unmarshalResult[peer.AddrInfo](result.Value)
+	addrInfo, err := unmarshalResult[client.PeerInfo](result.Value)
 	if err != nil {
-		return peer.AddrInfo{}
+		return client.PeerInfo{}
 	}
 	return addrInfo
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *CWrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	txnID := txnIDFromContext(ctx)
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
@@ -73,7 +72,7 @@ func (w *CWrapper) SetReplicator(ctx context.Context, info peer.AddrInfo, collec
 	return nil
 }
 
-func (w *CWrapper) DeleteReplicator(ctx context.Context, info peer.AddrInfo, collections ...string) error {
+func (w *CWrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
 	txnID := txnIDFromContext(ctx)
 	peerStr := info.String()
 	colStr := strings.Join(collections, ",")
@@ -654,7 +653,7 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
+func (w *CWrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
 	panic("not implemented")
 }
 

@@ -72,6 +72,7 @@ func NewApiRouter() (*Router, error) {
 
 type DB interface {
 	client.TxnStore
+	client.P2P
 	// Events returns the database event queue.
 	//
 	// It may be used to monitor database events - a new event will be yielded for each mutation.
@@ -84,7 +85,7 @@ type Handler struct {
 	txs *sync.Map
 }
 
-func NewHandler(db DB, p2p client.P2P) (*Handler, error) {
+func NewHandler(db DB) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
@@ -93,7 +94,7 @@ func NewHandler(db DB, p2p client.P2P) (*Handler, error) {
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, p2p, txs),
+			ApiMiddleware(db, txs),
 			TransactionMiddleware,
 			AuthMiddleware,
 		)

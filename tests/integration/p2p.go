@@ -70,6 +70,16 @@ type DeleteReplicator struct {
 	TargetNodeID int
 }
 
+// GetAllReplicators gets the configured replicators for the given node and compares them against the
+// expected results.
+type GetAllReplicators struct {
+	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+	NodeID int
+
+	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
+	ExpectedTargetNodeIDs []int
+}
+
 const (
 	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
 	// for a non-existent collection ID when used in actions that support this.

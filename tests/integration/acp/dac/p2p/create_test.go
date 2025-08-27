@@ -17,14 +17,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedDocumentACPTypes: immutable.Some(
-			[]testUtils.DocumentACPType{
-				testUtils.SourceHubDocumentACPType,
+			[]state.DocumentACPType{
+				state.SourceHubDocumentACPType,
 			},
 		),
 
@@ -133,8 +134,8 @@ func TestACP_P2PCreatePrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T
 func TestACP_P2PCreatePrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
-			[]testUtils.DocumentACPType{
-				testUtils.SourceHubDocumentACPType,
+			[]state.DocumentACPType{
+				state.SourceHubDocumentACPType,
 			},
 		),
 		Actions: []any{

@@ -751,7 +751,7 @@ func (c *collection) save(
 		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		c.db.sendUpdate(updateEvent)
 	})
 
 	txn.OnSuccess(func() {
@@ -785,7 +785,7 @@ func (c *collection) save(
 		}
 
 		txn.OnSuccess(func() {
-			c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+			c.db.sendUpdate(updateEvent)
 		})
 	}
 
@@ -816,7 +816,7 @@ func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
 		return nil
 	}
 
-	otherCol, _, err := client.GetCollectionFromStore(ctx, c.db, c.Version(), objFieldDescription.Kind)
+	otherCol, _, err := description.GetRelatedCollection(ctx, c.Version(), objFieldDescription.Kind)
 	if err != nil {
 		return err
 	}

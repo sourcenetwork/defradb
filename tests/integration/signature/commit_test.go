@@ -53,10 +53,10 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// C bindings do not support calling functions with non-Secp256k key yet
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -132,10 +132,10 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// C bindings do not support calling functions with non-Secp256k key yet
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -237,10 +237,10 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// C bindings do not support calling functions with non-Secp256k key yet
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -306,10 +306,10 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 		},
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// C bindings do not support calling functions with non-Secp256k key yet
-			testUtils.GoClientType,
-			testUtils.CLIClientType,
-			testUtils.HTTPClientType,
-			testUtils.JSClientType,
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

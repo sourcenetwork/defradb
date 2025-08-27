@@ -284,7 +284,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	childRequests := []request.Selection{}
 	for _, field := range col.Fields {
 		if field.RelationName.HasValue() && field.Kind.IsObject() {
-			relatedCol, _, err := client.GetCollectionFromStore(ctx, db, col, field.Kind)
+			relatedCol, _, err := description.GetRelatedCollection(ctx, col, field.Kind)
 			if err != nil {
 				return nil, err
 			}

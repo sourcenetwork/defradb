@@ -11,9 +11,12 @@
 package db
 
 import (
+	"time"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 const (
@@ -25,6 +28,24 @@ type dbOptions struct {
 	maxTxnRetries  immutable.Option[int]
 	identity       immutable.Option[identity.Identity]
 	disableSigning bool
+	p2p            immutable.Option[client.Host]
+	retryIntervals []time.Duration
+}
+
+func defaultDBOptions() *dbOptions {
+	return &dbOptions{
+		maxTxnRetries: immutable.Some(defaultMaxTxnRetries),
+		retryIntervals: []time.Duration{
+			// exponential backoff retry intervals
+			time.Second * 30,
+			time.Minute,
+			time.Minute * 2,
+			time.Minute * 4,
+			time.Minute * 8,
+			time.Minute * 16,
+			time.Minute * 32,
+		},
+	}
 }
 
 // Option is a funtion that sets a config value on the db.
@@ -48,5 +69,19 @@ func WithNodeIdentity(ident identity.Identity) Option {
 func WithEnabledSigning(value bool) Option {
 	return func(opts *dbOptions) {
 		opts.disableSigning = !value
+	}
+}
+
+func WithRetryInterval(interval []time.Duration) Option {
+	return func(opt *dbOptions) {
+		if len(interval) > 0 {
+			opt.retryIntervals = interval
+		}
+	}
+}
+
+func WithP2P(host client.Host) Option {
+	return func(opts *dbOptions) {
+		opts.p2p = immutable.Some(host)
 	}
 }
