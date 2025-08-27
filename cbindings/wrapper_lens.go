@@ -8,14 +8,25 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cwrap
+package cbindings
+
+/*
+#include <stdlib.h>
+#include <stdint.h>
+#include "defra_structs.h"
+extern Result* LensDown(uintptr_t nodePtr, char* collectionID, char* documents);
+extern Result* LensUp(uintptr_t nodePtr, char* collectionID, char* documents);
+extern Result* LensReload(uintptr_t nodePtr);
+extern Result* LensSetRegistry(uintptr_t nodePtr, char* collectionID, char* cfg);
+*/
+import "C"
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
+	"unsafe"
 
-	cbindings "github.com/sourcenetwork/defradb/cbindings/logic"
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -28,31 +39,32 @@ type LensRegistry struct {
 	*CWrapper
 }
 
-func (w *LensRegistry) Init(txnSource client.TxnSource) {}
+func (w *LensRegistry) Init(txnSource client.TxnSource) {
+}
 
 func (w *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
-	txnID := txnIDFromContext(ctx)
 	cfgBytes, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
-	lens := string(cfgBytes)
+	lens := C.CString(string(cfgBytes))
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(lens))
+	defer C.free(unsafe.Pointer(cCollectionID))
 
-	result := cbindings.LensSetRegistry(w.nodeNum, collectionID, lens, txnID)
+	res := ConvertAndFreeCResult(C.LensSetRegistry(C.uintptr_t(w.handle), cCollectionID, lens))
 
-	if result.Status != 0 {
-		return errors.New(result.Error)
+	if res.Status != 0 {
+		return errors.New(res.Error)
 	}
 	return nil
 }
 
 func (w *LensRegistry) ReloadLenses(ctx context.Context) error {
-	txnID := txnIDFromContext(ctx)
+	res := ConvertAndFreeCResult(C.LensReload(C.uintptr_t(w.handle)))
 
-	result := cbindings.LensReload(w.nodeNum, txnID)
-
-	if result.Status != 0 {
-		return errors.New(result.Error)
+	if res.Status != 0 {
+		return errors.New(res.Error)
 	}
 	return nil
 }
@@ -62,7 +74,6 @@ func (w *LensRegistry) MigrateUp(
 	src enumerable.Enumerable[map[string]any],
 	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	txnID := txnIDFromContext(ctx)
 	docs, err := collectEnumerable(src)
 	if err != nil {
 		return nil, err
@@ -71,16 +82,18 @@ func (w *LensRegistry) MigrateUp(
 	if err != nil {
 		return nil, err
 	}
-	docStr := string(docBytes)
+	docStr := C.CString(string(docBytes))
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(docStr))
+	res := ConvertAndFreeCResult(C.LensUp(C.uintptr_t(w.handle), cCollectionID, docStr))
 
-	result := cbindings.LensUp(w.nodeNum, collectionID, docStr, txnID)
-
-	if result.Status != 0 {
-		return nil, errors.New(result.Error)
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
 	}
 
 	var out []map[string]any
-	if err := json.Unmarshal([]byte(result.Value), &out); err != nil {
+	if err := json.Unmarshal([]byte(res.Value), &out); err != nil {
 		return nil, err
 	}
 	return enumerable.New(out), nil
@@ -91,27 +104,26 @@ func (w *LensRegistry) MigrateDown(
 	src enumerable.Enumerable[map[string]any],
 	collectionID string,
 ) (enumerable.Enumerable[map[string]any], error) {
-	txnID := txnIDFromContext(ctx)
 	docs, err := collectEnumerable(src)
 	if err != nil {
 		return nil, err
 	}
-
 	docBytes, err := json.Marshal(docs)
 	if err != nil {
 		return nil, err
 	}
+	docStr := C.CString(string(docBytes))
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(docStr))
+	res := ConvertAndFreeCResult(C.LensDown(C.uintptr_t(w.handle), cCollectionID, docStr))
 
-	docStr := string(docBytes)
-
-	result := cbindings.LensDown(w.nodeNum, collectionID, docStr, txnID)
-
-	if result.Status != 0 {
-		return nil, errors.New(result.Error)
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
 	}
 
 	var out []map[string]any
-	if err := json.Unmarshal([]byte(result.Value), &out); err != nil {
+	if err := json.Unmarshal([]byte(res.Value), &out); err != nil {
 		return nil, err
 	}
 	return enumerable.New(out), nil

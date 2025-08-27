@@ -10,12 +10,15 @@
 
 package cbindings
 
+/*
+#include <stdlib.h>
+#include "defra_structs.h"
+*/
 import "C"
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -24,48 +27,48 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func ViewAdd(n int, query string, sdl string, lensCfgJson string, txnID uint64) GoCResult {
+//export ViewAdd
+func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.char) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(n, ctx, txnID)
-	if err != nil {
-		return returnGoC(1, err.Error(), "")
-	}
-
 	var transform immutable.Option[model.Lens]
+	lensCfgJson := C.GoString(transformStr)
 	if lensCfgJson != "" {
 		decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 		decoder.DisallowUnknownFields()
 		var lensCfg model.Lens
 		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnGoC(1, fmt.Sprintf(errInvalidLensConfig, err), "")
+			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		transform = immutable.Some(lensCfg)
 	}
 
-	defs, err := GetNode(n).DB.AddView(ctx, query, sdl, transform)
+	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
-		return returnGoC(1, err.Error(), "")
+		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	return marshalJSONToGoCResult(defs)
+	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transform)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	return returnC(marshalJSONToGoCResult(defs))
 }
 
+//export ViewRefresh
 func ViewRefresh(
-	n int,
-	name string,
-	collectionID string,
-	versionID string,
-	getInactive bool,
-	txnID uint64,
-) GoCResult {
+	nodePtr C.uintptr_t,
+	viewNameStr *C.char,
+	collectionIDStr *C.char,
+	versionIDStr *C.char,
+	getInactive C.int,
+) *C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithTransaction(n, ctx, txnID)
-	if err != nil {
-		return returnGoC(1, err.Error(), "")
-	}
-
+	viewName := C.GoString(viewNameStr)
+	collectionID := C.GoString(collectionIDStr)
+	versionID := C.GoString(versionIDStr)
 	options := client.CollectionFetchOptions{}
 	if versionID != "" {
 		options.VersionID = immutable.Some(versionID)
@@ -73,16 +76,21 @@ func ViewRefresh(
 	if collectionID != "" {
 		options.CollectionID = immutable.Some(collectionID)
 	}
-	if name != "" {
-		options.Name = immutable.Some(name)
+	if viewName != "" {
+		options.Name = immutable.Some(viewName)
 	}
-	if getInactive {
-		options.IncludeInactive = immutable.Some(getInactive)
+	if getInactive != 0 {
+		options.IncludeInactive = immutable.Some(getInactive != 0)
 	}
 
-	err = GetNode(n).DB.RefreshViews(ctx, options)
+	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
-		return returnGoC(1, err.Error(), "")
+		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	return returnGoC(0, "", "")
+
+	err = store.RefreshViews(ctx, options)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", ""))
 }

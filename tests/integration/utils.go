@@ -805,7 +805,6 @@ func setStartingNodes(
 			s,
 			acpIdentity.None,
 			testCase,
-			false,
 			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
 		)
 		require.Nil(s.T, err)
@@ -833,7 +832,6 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			s,
 			getIdentityOption(s, action.Identity),
 			testCase,
-			action.EnableNAC,
 			opts...,
 		)
 		databaseDir = originalPath
@@ -961,7 +959,7 @@ func configureNode(
 	}
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
-	node, err := setupNode(s, acpIdentity.None, testCase, false, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)
@@ -1744,7 +1742,9 @@ func withRetryOnNode(
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
 		err := action()
-		if errors.Is(err, corekv.ErrTxnConflict) {
+		// Check the contents of the error instead of the type, because it may have
+		// lost its type while passing through the C binding layer.
+		if err != nil && strings.Contains(err.Error(), corekv.ErrTxnConflict.Error()) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}

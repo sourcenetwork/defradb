@@ -13,26 +13,12 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestNAC_AdminRelation_CanAddSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				// TODO: C binding test harness must be reworked to support this test
-				// See: https://github.com/sourcenetwork/defradb/issues/3919
-				state.GoClientType,
-				state.CLIClientType,
-				state.HTTPClientType,
-				state.JSClientType,
-			},
-		),
-
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

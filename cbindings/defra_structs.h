@@ -1,6 +1,7 @@
 // defra_structs.h
 #ifndef DEFRA_STRUCTS_H
 #define DEFRA_STRUCTS_H
+#include <stdint.h>
 
 typedef struct {
     int status;
@@ -9,11 +10,28 @@ typedef struct {
 } Result;
 
 typedef struct {
-    unsigned long long tx;
+    int status;
+    char* error;
+    uintptr_t nodePtr;
+} NewNodeResult;
+
+typedef struct {
+    int status;
+    char* error;
+    uintptr_t txnPtr;
+} NewTxnResult;
+
+typedef struct {
+    int status;
+    char* error;
+    uintptr_t identityPtr;
+} NewIdentityResult;
+
+typedef struct {
     const char* version;
     const char* collectionID;
     const char* name;
-    const char* identity;
+    uintptr_t identityPtr;
     int getInactive;
 } CollectionOptions;
 
@@ -22,8 +40,7 @@ typedef struct {
     const char* listeningAddresses;
     const char* replicatorRetryIntervals;
     const char* peers;
-    const char* identityKeyType;
-    const char* identityPrivateKey;
+    uintptr_t identityPtr;
     int inMemory;
     int disableP2P;
     int disableAPI;
