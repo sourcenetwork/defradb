@@ -306,6 +306,12 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				return
 			}
+			// For compatibility with SSE, the payload should have
+			// a line defining the `event`.
+			_, err = fmt.Fprintf(rw, "event: next\n")
+			if err != nil {
+				return
+			}
 			_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
 			if err != nil {
 				return
