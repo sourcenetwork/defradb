@@ -38,10 +38,11 @@ var _ client.TxnStore = (*Wrapper)(nil)
 var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {
-	node       *node.Node
-	cmd        *cliWrapper
-	handler    *http.Handler
-	httpServer *httptest.Server
+	node         *node.Node
+	cmd          *cliWrapper
+	handler      *http.Handler
+	httpServer   *httptest.Server
+	serverCancel context.CancelFunc
 }
 
 // NewWrapper takes a Node, and a SourceHub address used to pay for SourceHub transactions.
@@ -53,14 +54,17 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 		return nil, err
 	}
 
-	httpServer := httptest.NewServer(handler)
+	ctx, cancel := context.WithCancel(context.Background())
+	handlerWithCtx := http.InjectServerContext(ctx)(handler)
+	httpServer := httptest.NewServer(handlerWithCtx)
 	cmd := newCliWrapper(httpServer.URL, sourceHubAddress)
 
 	return &Wrapper{
-		node:       node,
-		cmd:        cmd,
-		httpServer: httpServer,
-		handler:    handler,
+		node:         node,
+		cmd:          cmd,
+		httpServer:   httpServer,
+		handler:      handler,
+		serverCancel: cancel,
 	}, nil
 }
 
@@ -529,7 +533,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.T
 }
 
 func (w *Wrapper) Close() {
-	w.httpServer.CloseClientConnections()
+	w.serverCancel()
 	w.httpServer.Close()
 	_ = w.node.Close(context.Background())
 }

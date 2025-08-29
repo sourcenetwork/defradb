@@ -1879,18 +1879,9 @@ func executeSubscriptionRequest(
 
 		go func() {
 			var results []*client.GQLResult
-			allActionsAreDone := false
-			for !allActionsAreDone || len(results) < len(action.Results) {
-				select {
-				case s := <-result.Subscription:
-					results = append(results, &s)
-				case <-time.After(100 * time.Millisecond):
-				}
-				select {
-				case <-s.AllActionsDone:
-					allActionsAreDone = true
-				case <-time.After(100 * time.Millisecond):
-				}
+			for len(results) < len(action.Results) {
+				s := <-result.Subscription
+				results = append(results, &s)
 			}
 
 			subscriptionAssert <- func() {

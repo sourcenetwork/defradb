@@ -344,3 +344,22 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 
 	execute(t, test)
 }
+
+func TestSubscription_WithClose_WontBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User{
+						name
+						age
+					}
+				}`,
+				Results: nil,
+			},
+			testUtils.Close{},
+		},
+	}
+
+	execute(t, test)
+}

@@ -294,9 +294,28 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
+	serverCtx, hasServerCtx := tryGetContexCtx(req)
+	var serverDone <-chan struct{}
+	if hasServerCtx {
+		serverDone = serverCtx.Done()
+	}
 	for {
 		select {
 		case <-req.Context().Done():
+			return
+		case <-serverDone:
+			// We need to check for closure of the server context
+			// otherwise the server won't gracefully shutdown until all
+			// connections are closed.
+			_, err := fmt.Fprintf(rw, "event: complete\n")
+			if err != nil {
+				return
+			}
+			_, err = fmt.Fprintf(rw, "data: {}\n\n")
+			if err != nil {
+				return
+			}
+			flusher.Flush()
 			return
 		case item, open := <-result.Subscription:
 			if !open {

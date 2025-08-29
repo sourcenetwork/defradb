@@ -32,10 +32,11 @@ var _ client.P2P = (*Wrapper)(nil)
 // Wrapper combines an HTTP client and server into a
 // single struct that implements the client.TxnStore interface.
 type Wrapper struct {
-	node       *node.Node
-	handler    *http.Handler
-	client     *http.Client
-	httpServer *httptest.Server
+	node         *node.Node
+	handler      *http.Handler
+	client       *http.Client
+	httpServer   *httptest.Server
+	serverCancel context.CancelFunc
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
@@ -43,10 +44,12 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	httpServer := httptest.NewServer(handler)
+	ctx, cancel := context.WithCancel(context.Background())
+	handlerWithCtx := http.InjectServerContext(ctx)(handler)
+	httpServer := httptest.NewServer(handlerWithCtx)
 	client, err := http.NewClient(httpServer.URL)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
@@ -55,6 +58,7 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 		handler,
 		client,
 		httpServer,
+		cancel,
 	}, nil
 }
 
@@ -278,7 +282,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.T
 }
 
 func (w *Wrapper) Close() {
-	w.httpServer.CloseClientConnections()
+	w.serverCancel()
 	w.httpServer.Close()
 	_ = w.node.Close(context.Background())
 }
