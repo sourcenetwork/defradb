@@ -226,10 +226,13 @@ func ExecuteTestCase(
 	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
 
-	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
+				// Some goroutine depend on the context to be cancelled in order to exit.
+				// Cancelling the context after each text case should limit the chances of
+				// having leaking goroutines.
+				ctx, cancel := context.WithCancel(context.Background())
 				executeTestCase(
 					ctx,
 					t,
@@ -240,6 +243,7 @@ func ExecuteTestCase(
 					ct,
 					documentACPType,
 				)
+				cancel()
 			}
 		}
 	}
