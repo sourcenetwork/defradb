@@ -1884,8 +1884,11 @@ func executeSubscriptionRequest(
 		go func() {
 			var results []*client.GQLResult
 			for len(results) < len(action.Results) {
-				s := <-result.Subscription
-				results = append(results, &s)
+				select {
+				case s := <-result.Subscription:
+					results = append(results, &s)
+				case <-time.After(subscriptionTimeout):
+				}
 			}
 
 			subscriptionAssert <- func() {
