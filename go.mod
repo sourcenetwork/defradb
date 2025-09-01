@@ -56,7 +56,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/valyala/fastjson v1.6.4
-	github.com/vito/go-sse v1.1.2
+	github.com/vito/go-sse v1.1.3
 	github.com/zalando/go-keyring v0.2.6
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.60.0
 	go.opentelemetry.io/otel v1.37.0
