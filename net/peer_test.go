@@ -14,8 +14,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/memory"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/net/config"

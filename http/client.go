@@ -20,8 +20,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sourcenetwork/lens/host-go/config/model"
 	sse "github.com/vito/go-sse/sse"
+
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 

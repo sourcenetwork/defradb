@@ -32,8 +32,9 @@ import (
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {

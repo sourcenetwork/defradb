@@ -15,8 +15,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"

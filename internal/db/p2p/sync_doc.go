@@ -19,6 +19,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 

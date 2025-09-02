@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+
 	"github.com/sourcenetwork/corekv/badger"
 	"github.com/sourcenetwork/corekv/memory"
 

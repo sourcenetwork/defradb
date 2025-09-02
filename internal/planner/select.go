@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	cid "github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"

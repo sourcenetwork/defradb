@@ -23,9 +23,10 @@ import (
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
-	"github.com/sourcenetwork/corekv/badger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 

@@ -16,9 +16,10 @@ import (
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/tests/state"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corelog"
 )
 
 // ConnectPeers connects two nodes together as peers.

@@ -15,8 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 )

@@ -14,6 +14,7 @@ import (
 	"context"
 
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/internal/encryption"

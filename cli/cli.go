@@ -16,8 +16,9 @@ package cli
 import (
 	"context"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 )

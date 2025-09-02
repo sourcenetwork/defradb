@@ -21,6 +21,7 @@ import (
 	dsq "github.com/ipfs/go-datastore/query"
 	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
+
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/errors"

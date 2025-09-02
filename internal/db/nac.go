@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"

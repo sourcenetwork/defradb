@@ -17,9 +17,10 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/sourcenetwork/corelog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/sourcenetwork/corelog"
 )
 
 const (

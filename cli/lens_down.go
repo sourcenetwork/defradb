@@ -15,8 +15,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/sourcenetwork/immutable/enumerable"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 func MakeLensDownCommand() *cobra.Command {

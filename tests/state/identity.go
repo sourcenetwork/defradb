@@ -15,8 +15,9 @@ import (
 	"math/rand"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"

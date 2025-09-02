@@ -22,6 +22,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/multiformats/go-multicodec"
+
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/internal/core"

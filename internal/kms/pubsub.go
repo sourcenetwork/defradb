@@ -18,8 +18,9 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/sourcenetwork/immutable"
 	grpcpeer "google.golang.org/grpc/peer"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"

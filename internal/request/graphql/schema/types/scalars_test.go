@@ -14,8 +14,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
 func TestBlobScalarTypeSerialize(t *testing.T) {

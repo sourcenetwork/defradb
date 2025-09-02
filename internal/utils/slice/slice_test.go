@@ -12,8 +12,9 @@ package slice_test
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )

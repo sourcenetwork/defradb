@@ -18,6 +18,7 @@ import (
 	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
+
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 

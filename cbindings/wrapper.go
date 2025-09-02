@@ -657,7 +657,7 @@ func (w *CWrapper) GetCollections(
 	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, opts))
 
 	if res.Status != 0 {
-		return []client.Collection{}, errors.New(res.Error) //nolint:goerr113
+		return []client.Collection{}, errors.New(res.Error)
 	}
 
 	defs, err := unmarshalResult[[]client.CollectionVersion](res.Value)
