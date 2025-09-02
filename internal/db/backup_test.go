@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -67,7 +66,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -132,7 +131,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -197,7 +196,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -274,7 +273,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -339,7 +338,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -387,7 +386,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	txn, err := db.NewTxn(ctx, false)
 	require.NoError(t, err)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	filepath := t.TempDir() + "/test.json"
@@ -407,7 +406,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	txn, err = db.NewTxn(ctx, true)
 	require.NoError(t, err)
 
-	ctx = identity.WithContext(ctx, acpIdentity.None)
+	ctx = identity.WithContext(ctx, identity.None)
 	ctx = InitContext(ctx, txn)
 
 	col1, err := db.getCollectionByName(ctx, "Address")

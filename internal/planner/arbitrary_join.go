@@ -40,38 +40,20 @@ func newDataSource(childIndex int) *dataSource {
 	}
 }
 
-func (n *dataSource) Init() error {
+func (s *dataSource) Init() error {
 	// A docIndex of minus -1 indicated that nothing has been read yet
-	n.lastChildDocIndex = -1
-	n.lastParentDocIndex = -1
+	s.lastChildDocIndex = -1
+	s.lastParentDocIndex = -1
 
-	if n.parentSource != nil {
-		err := n.parentSource.Init()
+	if s.parentSource != nil {
+		err := s.parentSource.Init()
 		if err != nil {
 			return err
 		}
 	}
 
-	if n.childSource != nil {
-		err := n.childSource.Init()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (n *dataSource) Start() error {
-	if n.parentSource != nil {
-		err := n.parentSource.Start()
-		if err != nil {
-			return err
-		}
-	}
-
-	if n.childSource != nil {
-		err := n.childSource.Start()
+	if s.childSource != nil {
+		err := s.childSource.Init()
 		if err != nil {
 			return err
 		}
@@ -80,27 +62,45 @@ func (n *dataSource) Start() error {
 	return nil
 }
 
-func (n *dataSource) Prefixes(prefixes []keys.Walkable) {
-	if n.parentSource != nil {
-		n.parentSource.Prefixes(prefixes)
+func (s *dataSource) Start() error {
+	if s.parentSource != nil {
+		err := s.parentSource.Start()
+		if err != nil {
+			return err
+		}
 	}
 
-	if n.childSource != nil {
-		n.childSource.Prefixes(prefixes)
+	if s.childSource != nil {
+		err := s.childSource.Start()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *dataSource) Prefixes(prefixes []keys.Walkable) {
+	if s.parentSource != nil {
+		s.parentSource.Prefixes(prefixes)
+	}
+
+	if s.childSource != nil {
+		s.childSource.Prefixes(prefixes)
 	}
 }
 
-func (n *dataSource) Close() error {
+func (s *dataSource) Close() error {
 	var err error
-	if n.parentSource != nil {
-		err = n.parentSource.Close()
+	if s.parentSource != nil {
+		err = s.parentSource.Close()
 		if err != nil {
 			return err
 		}
 	}
 
-	if n.childSource != nil {
-		err = n.childSource.Close()
+	if s.childSource != nil {
+		err = s.childSource.Close()
 		if err != nil {
 			return err
 		}
@@ -108,11 +108,11 @@ func (n *dataSource) Close() error {
 	return nil
 }
 
-func (n *dataSource) Source() planNode {
-	return n.parentSource
+func (s *dataSource) Source() planNode {
+	return s.parentSource
 }
 
-func (source *dataSource) mergeParent(
+func (s *dataSource) mergeParent(
 	keyFields []mapper.Field,
 	destination *orderedMap,
 	childIndexes []int,
@@ -120,12 +120,12 @@ func (source *dataSource) mergeParent(
 	// This needs to be set manually for each item, in case other nodes
 	// aggregate items from the pipe progressing the docIndex beyond the first item
 	// for example, if the child is sorted.
-	source.pipeNode.docIndex = source.lastParentDocIndex
+	s.pipeNode.docIndex = s.lastParentDocIndex
 	defer func() {
-		source.lastParentDocIndex = source.pipeNode.docIndex
+		s.lastParentDocIndex = s.pipeNode.docIndex
 	}()
 
-	hasNext, err := source.parentSource.Next()
+	hasNext, err := s.parentSource.Next()
 	if err != nil {
 		return false, err
 	}
@@ -133,7 +133,7 @@ func (source *dataSource) mergeParent(
 		return false, nil
 	}
 
-	value := source.parentSource.Value()
+	value := s.parentSource.Value()
 	key := generateKey(value, keyFields)
 
 	destination.mergeParent(key, childIndexes, value)
@@ -141,7 +141,7 @@ func (source *dataSource) mergeParent(
 	return true, nil
 }
 
-func (source *dataSource) appendChild(
+func (s *dataSource) appendChild(
 	keyFields []mapper.Field,
 	valuesByKey *orderedMap,
 	mapping *core.DocumentMapping,
@@ -150,12 +150,12 @@ func (source *dataSource) appendChild(
 	// however if the child group is sorted it will be different, the child may also be missing
 	// if it is filtered out by a child filter.  The parent will always exist, but may be
 	// processed after the child if inner sorts shift the order.
-	source.pipeNode.docIndex = source.lastChildDocIndex
+	s.pipeNode.docIndex = s.lastChildDocIndex
 	defer func() {
-		source.lastChildDocIndex = source.pipeNode.docIndex
+		s.lastChildDocIndex = s.pipeNode.docIndex
 	}()
 
-	hasNext, err := source.childSource.Next()
+	hasNext, err := s.childSource.Next()
 	if err != nil {
 		return false, err
 	}
@@ -166,10 +166,10 @@ func (source *dataSource) appendChild(
 	// Note that even if the source yields both parent and child items, they may not be yielded in
 	// the same order - we need to treat it as a new item, regenerating the key and potentially caching
 	// it without yet receiving the parent-level details
-	value := source.childSource.Value()
+	value := s.childSource.Value()
 	key := generateKey(value, keyFields)
 
-	valuesByKey.appendChild(key, source.childIndex, value, mapping)
+	valuesByKey.appendChild(key, s.childIndex, value, mapping)
 
 	return true, nil
 }
@@ -217,8 +217,8 @@ func join(
 func generateKey(doc core.Doc, keyFields []mapper.Field) string {
 	keyBuilder := strings.Builder{}
 	for _, keyField := range keyFields {
-		keyBuilder.WriteString(fmt.Sprint(keyField.Index))
-		keyBuilder.WriteString(fmt.Sprintf("_%v_", doc.Fields[keyField.Index]))
+		_, _ = keyBuilder.WriteString(fmt.Sprint(keyField.Index))
+		_, _ = keyBuilder.WriteString(fmt.Sprintf("_%v_", doc.Fields[keyField.Index]))
 	}
 	return keyBuilder.String()
 }

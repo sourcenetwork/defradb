@@ -56,9 +56,10 @@ func newDocumentFetcher(
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
 ) (*documentFetcher, error) {
-	if status == client.Active {
+	switch status {
+	case client.Active:
 		prefix = prefix.WithValueFlag()
-	} else if status == client.Deleted {
+	case client.Deleted:
 		prefix = prefix.WithDeletedFlag()
 	}
 

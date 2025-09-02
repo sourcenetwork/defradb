@@ -422,7 +422,11 @@ func generateIndexNameIfNeeded(
 	if indexName == "" {
 		nameIncrement := 1
 		for {
-			indexName = generateIndexName(colVersion.Name, createReq.Fields, nameIncrement)
+			var err error
+			indexName, err = generateIndexName(colVersion.Name, createReq.Fields, nameIncrement)
+			if err != nil {
+				return "", err
+			}
 
 			isUnique := true
 			for _, index := range colVersion.Indexes {
@@ -464,21 +468,49 @@ func validateIndexDescription(desc client.IndexCreateRequest) error {
 	return nil
 }
 
-func generateIndexName(colName string, fields []client.IndexedFieldDescription, inc int) string {
+func generateIndexName(colName string, fields []client.IndexedFieldDescription, inc int) (string, error) {
 	sb := strings.Builder{}
 	// at the moment we support only single field indexes that can be stored only in
 	// ascending order. This will change once we introduce composite indexes.
 	direction := "ASC"
-	sb.WriteString(colName)
-	sb.WriteByte('_')
+	_, err := sb.WriteString(colName)
+	if err != nil {
+		return "", err
+	}
+
+	err = sb.WriteByte('_')
+	if err != nil {
+		return "", err
+	}
+
 	// we can safely assume that there is at least one field in the slice
 	// because we validate it before calling this function
-	sb.WriteString(fields[0].Name)
-	sb.WriteByte('_')
-	sb.WriteString(direction)
-	if inc > 1 {
-		sb.WriteByte('_')
-		sb.WriteString(strconv.Itoa(inc))
+	_, err = sb.WriteString(fields[0].Name)
+	if err != nil {
+		return "", err
 	}
-	return sb.String()
+
+	err = sb.WriteByte('_')
+	if err != nil {
+		return "", err
+	}
+
+	_, err = sb.WriteString(direction)
+	if err != nil {
+		return "", err
+	}
+
+	if inc > 1 {
+		err = sb.WriteByte('_')
+		if err != nil {
+			return "", err
+		}
+
+		_, err = sb.WriteString(strconv.Itoa(inc))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return sb.String(), nil
 }

@@ -36,7 +36,7 @@ type FieldDefinitionDelta struct {
 
 var _ core.Delta = (*FieldDefinitionDelta)(nil)
 
-func (delta *FieldDefinitionDelta) IPLDSchemaBytes() []byte {
+func (d *FieldDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type FieldDefinitionDelta struct {
 		priority  		Int
@@ -81,11 +81,11 @@ func NewFieldDefinition(
 	}
 }
 
-func (m *FieldDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return m.headstorePrefix
+func (f *FieldDefinition) HeadstorePrefix() keys.HeadstoreKey {
+	return f.headstorePrefix
 }
 
-func (m *FieldDefinition) Delta(
+func (f *FieldDefinition) Delta(
 	new client.CollectionFieldDescription,
 	old client.CollectionFieldDescription,
 ) (*FieldDefinitionDelta, bool, error) {
@@ -129,7 +129,7 @@ func (m *FieldDefinition) Delta(
 	}, true, nil
 }
 
-func (c *FieldDefinition) Merge(ctx context.Context, other core.Delta) error {
+func (f *FieldDefinition) Merge(ctx context.Context, other core.Delta) error {
 	// WARNING: This is okay for now, as we dont (yet) support the merging of divergant heads,
 	// (this is not *really* a CRDT) however, if we do want to support that at somepoint, this function
 	// will need to be implemented.

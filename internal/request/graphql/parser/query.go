@@ -121,7 +121,7 @@ func parseSelect(
 			}
 			slct.DocIDs = immutable.Some(docIDs)
 
-		case request.Cid: // parse single CID query field
+		case request.CidFieldName: // parse single CID query field
 			if v, ok := value.(string); ok {
 				slct.CID = immutable.Some(v)
 			}

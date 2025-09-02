@@ -95,15 +95,16 @@ func generateIdentity(s *State, keyType crypto.KeyType) acpIdentity.Identity {
 	r := rand.New(source)
 
 	var privateKey crypto.PrivateKey
-	if keyType == crypto.KeyTypeSecp256k1 {
+	switch keyType {
+	case crypto.KeyTypeSecp256k1:
 		privKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
 		require.NoError(s.T, err)
 		privateKey = crypto.NewPrivateKey(privKey)
-	} else if keyType == crypto.KeyTypeEd25519 {
+	case crypto.KeyTypeEd25519:
 		_, privKey, err := ed25519.GenerateKey(r)
 		require.NoError(s.T, err)
 		privateKey = crypto.NewPrivateKey(privKey)
-	} else {
+	default:
 		require.Fail(s.T, "Unsupported signing algorithm")
 	}
 

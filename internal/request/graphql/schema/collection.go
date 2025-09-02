@@ -39,7 +39,7 @@ const (
 	typeJSON     string = "JSON"
 )
 
-// this mapping is used to check that the default prop value
+// TypeToDefaultPropName mapping is used to check that the default prop value
 // matches the field type
 var TypeToDefaultPropName = map[string]string{
 	typeString:   types.DefaultDirectivePropString,

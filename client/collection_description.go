@@ -267,27 +267,27 @@ type collectionVersion struct {
 	Sources []map[string]json.RawMessage
 }
 
-func (c *CollectionVersion) UnmarshalJSON(bytes []byte) error {
+func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 	var descMap collectionVersion
 	err := json.Unmarshal(bytes, &descMap)
 	if err != nil {
 		return err
 	}
 
-	c.Name = descMap.Name
-	c.VersionID = descMap.VersionID
-	c.CollectionID = descMap.CollectionID
-	c.CollectionSet = descMap.CollectionSet
-	c.IsMaterialized = descMap.IsMaterialized
-	c.IsBranchable = descMap.IsBranchable
-	c.IsEmbeddedOnly = descMap.IsEmbeddedOnly
-	c.IsActive = descMap.IsActive
-	c.IsPlaceholder = descMap.IsPlaceholder
-	c.Indexes = descMap.Indexes
-	c.Fields = descMap.Fields
-	c.Sources = make([]any, len(descMap.Sources))
-	c.Policy = descMap.Policy
-	c.VectorEmbeddings = descMap.VectorEmbeddings
+	col.Name = descMap.Name
+	col.VersionID = descMap.VersionID
+	col.CollectionID = descMap.CollectionID
+	col.CollectionSet = descMap.CollectionSet
+	col.IsMaterialized = descMap.IsMaterialized
+	col.IsBranchable = descMap.IsBranchable
+	col.IsEmbeddedOnly = descMap.IsEmbeddedOnly
+	col.IsActive = descMap.IsActive
+	col.IsPlaceholder = descMap.IsPlaceholder
+	col.Indexes = descMap.Indexes
+	col.Fields = descMap.Fields
+	col.Sources = make([]any, len(descMap.Sources))
+	col.Policy = descMap.Policy
+	col.VectorEmbeddings = descMap.VectorEmbeddings
 
 	for i, source := range descMap.Sources {
 		sourceJson, err := json.Marshal(source)
@@ -321,7 +321,7 @@ func (c *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 			return ErrFailedToUnmarshalCollection
 		}
 
-		c.Sources[i] = sourceValue
+		col.Sources[i] = sourceValue
 	}
 
 	return nil

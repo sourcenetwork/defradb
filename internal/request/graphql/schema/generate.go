@@ -50,12 +50,12 @@ type Generator struct {
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
-func (m *SchemaManager) NewGenerator() *Generator {
-	m.Generator = &Generator{
-		manager:        m,
+func (s *SchemaManager) NewGenerator() *Generator {
+	s.Generator = &Generator{
+		manager:        s,
 		expandedFields: make(map[string]bool),
 	}
-	return m.Generator
+	return s.Generator
 }
 
 // Generate generates the query-op and mutation-op type definitions from

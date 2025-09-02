@@ -958,7 +958,8 @@ func getTopLevelInfo(
 		return mapping, collection.Version(), nil
 	}
 
-	if selectRequest.Name == request.LinksFieldName {
+	switch selectRequest.Name {
+	case request.LinksFieldName:
 		for i, f := range request.LinksFields {
 			mapping.Add(i, f)
 		}
@@ -966,7 +967,7 @@ func getTopLevelInfo(
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(request.LinksFieldName)
-	} else if selectRequest.Name == request.SignatureFieldName {
+	case request.SignatureFieldName:
 		for i, f := range request.SignatureFields {
 			mapping.Add(i, f)
 		}
@@ -974,7 +975,7 @@ func getTopLevelInfo(
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
 		mapping.SetTypeName(request.SignatureFieldName)
-	} else {
+	default:
 		for i, f := range request.VersionFields {
 			mapping.Add(i, f)
 		}
@@ -1582,21 +1583,21 @@ func RunFilter(doc any, filter *Filter) (bool, error) {
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.
-func (s Targetable) equal(other Targetable) bool {
-	if s.Index != other.Index &&
-		s.Name != other.Name {
+func (t Targetable) equal(other Targetable) bool {
+	if t.Index != other.Index &&
+		t.Name != other.Name {
 		return false
 	}
 
-	if !s.Filter.equal(other.Filter) {
+	if !t.Filter.equal(other.Filter) {
 		return false
 	}
 
-	if !s.Limit.equal(other.Limit) {
+	if !t.Limit.equal(other.Limit) {
 		return false
 	}
 
-	if !s.OrderBy.equal(other.OrderBy) {
+	if !t.OrderBy.equal(other.OrderBy) {
 		return false
 	}
 

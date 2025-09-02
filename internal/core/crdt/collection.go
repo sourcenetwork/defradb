@@ -24,7 +24,7 @@ type CollectionDelta struct {
 
 var _ core.Delta = (*CollectionDelta)(nil)
 
-func (delta *CollectionDelta) IPLDSchemaBytes() []byte {
+func (d *CollectionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CollectionDelta struct {
 		priority  		Int
@@ -57,13 +57,13 @@ func NewCollection(
 	}
 }
 
-func (m *Collection) HeadstorePrefix() keys.HeadstoreKey {
-	return m.headstorePrefix
+func (c *Collection) HeadstorePrefix() keys.HeadstoreKey {
+	return c.headstorePrefix
 }
 
-func (m *Collection) Delta() *CollectionDelta {
+func (c *Collection) Delta() *CollectionDelta {
 	return &CollectionDelta{
-		SchemaVersionID: m.schemaVersionID,
+		SchemaVersionID: c.schemaVersionID,
 	}
 }
 

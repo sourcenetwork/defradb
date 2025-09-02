@@ -46,9 +46,9 @@ const (
 	DocumentDeletePerm
 )
 
-// List of all valid resource interface permissions for document access control, the order of
-// permissions in this list must match the above defined ordering such that iota matches the
-// index position within the list.
+// RequiredResourcePermissionsForDocument lists all valid resource interface permissions for
+// document access control, the order of permissions in this list must match the above defined
+// ordering such that iota matches the index position within the list.
 var RequiredResourcePermissionsForDocument = []string{
 	"read",
 	"update",
@@ -91,9 +91,9 @@ const (
 	NodeSchemaAddPerm
 )
 
-// List of all valid resource interface permissions for node access control, the order of
-// permissions in this list must match the above defined ordering such that iota matches the
-// index position within the list.
+// RequiredResourcePermissionsForNode lists all valid resource interface permissions for
+// node access control, the order of permissions in this list must match the above defined
+// ordering such that iota matches the index position within the list.
 var RequiredResourcePermissionsForNode = []string{
 	"dac-bypass",
 	"dac-enable",

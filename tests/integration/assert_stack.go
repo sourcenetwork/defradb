@@ -44,13 +44,13 @@ func (a *assertStack) String() string {
 	for i, key := range a.stack {
 		if a.isMap[i] {
 			if i > 0 {
-				b.WriteString(".")
+				_, _ = b.WriteString(".")
 			}
-			b.WriteString(key)
+			_, _ = b.WriteString(key)
 		} else {
-			b.WriteString("[")
-			b.WriteString(key)
-			b.WriteString("]")
+			_, _ = b.WriteString("[")
+			_, _ = b.WriteString(key)
+			_, _ = b.WriteString("]")
 		}
 	}
 	return b.String()

@@ -43,7 +43,7 @@ func parseCommitSelect(
 				commit.DocID = immutable.Some(v)
 			}
 
-		case request.Cid:
+		case request.CidFieldName:
 			if v, ok := value.(string); ok {
 				commit.CID = immutable.Some(v)
 			}

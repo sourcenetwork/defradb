@@ -35,7 +35,7 @@ type setMigrationRequest struct {
 	Config       model.Lens
 }
 
-func (w *LensRegistry) Init(txnSource client.TxnSource) {}
+func (c *LensRegistry) Init(txnSource client.TxnSource) {}
 
 func (c *LensRegistry) SetMigration(ctx context.Context, collectionID string, config model.Lens) error {
 	methodURL := c.http.apiURL.JoinPath("lens", "registry")

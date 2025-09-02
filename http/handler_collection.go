@@ -39,7 +39,7 @@ type CollectionUpdateRequest struct {
 	Updater string `json:"updater"`
 }
 
-func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	data, err := io.ReadAll(req.Body)
@@ -90,7 +90,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	var request CollectionDeleteRequest
@@ -107,7 +107,7 @@ func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, result)
 }
 
-func (s *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	var request CollectionUpdateRequest
@@ -124,7 +124,7 @@ func (s *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, result)
 }
 
-func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -161,7 +161,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -178,7 +178,7 @@ func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
 
@@ -212,7 +212,7 @@ type DocIDResult struct {
 	Error string `json:"error"`
 }
 
-func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	flusher, ok := rw.(http.Flusher)
@@ -253,7 +253,7 @@ func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 	}
 }
 
-func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	var indexDesc client.IndexDescription
@@ -274,7 +274,7 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 	responseJSON(rw, http.StatusOK, index)
 }
 
-func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	name := chi.URLParam(req, "name")
 	col, err := db.GetCollectionByName(req.Context(), name)
@@ -290,7 +290,7 @@ func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
-func (s *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	err := col.DropIndex(req.Context(), chi.URLParam(req, "index"))

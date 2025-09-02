@@ -41,7 +41,7 @@ var _ core.Delta = (*LWWDelta)(nil)
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
 // This needs to match the [LWWDelta] struct or [coreblock.mustSetSchema] will panic on init.
-func (delta LWWDelta) IPLDSchemaBytes() []byte {
+func (d LWWDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type LWWDelta struct {
 		docID     		Bytes
@@ -53,13 +53,13 @@ func (delta LWWDelta) IPLDSchemaBytes() []byte {
 }
 
 // GetPriority gets the current priority for this delta.
-func (delta *LWWDelta) GetPriority() uint64 {
-	return delta.Priority
+func (d *LWWDelta) GetPriority() uint64 {
+	return d.Priority
 }
 
 // SetPriority will set the priority for this delta.
-func (delta *LWWDelta) SetPriority(prio uint64) {
-	delta.Priority = prio
+func (d *LWWDelta) SetPriority(prio uint64) {
+	d.Priority = prio
 }
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
@@ -89,12 +89,12 @@ func NewLWW(
 	}
 }
 
-func (m *LWW) HeadstorePrefix() keys.HeadstoreKey {
-	return m.key.ToHeadStoreKey()
+func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
+	return l.key.ToHeadStoreKey()
 }
 
 // Save the value of the register to the DAG.
-func (m *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
+func (l *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
@@ -102,9 +102,9 @@ func (m *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 
 	return &LWWDelta{
 		Data:            bytes,
-		DocID:           []byte(m.key.DocID),
-		FieldName:       m.fieldName,
-		SchemaVersionID: m.schemaVersionID,
+		DocID:           []byte(l.key.DocID),
+		FieldName:       l.fieldName,
+		SchemaVersionID: l.schemaVersionID,
 	}, nil
 }
 
@@ -112,17 +112,17 @@ func (m *LWW) Delta(ctx context.Context, data *DocField) (core.Delta, error) {
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (reg *LWW) Merge(ctx context.Context, delta core.Delta) error {
+func (l *LWW) Merge(ctx context.Context, delta core.Delta) error {
 	d, ok := delta.(*LWWDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return reg.setValue(ctx, d.Data, d.GetPriority())
+	return l.setValue(ctx, d.Data, d.GetPriority())
 }
 
-func (reg *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := getPriority(ctx, reg.store, reg.key)
+func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
+	curPrio, err := getPriority(ctx, l.store, l.key)
 	if err != nil {
 		return NewErrFailedToGetPriority(err)
 	}
@@ -130,8 +130,8 @@ func (reg *LWW) setValue(ctx context.Context, val []byte, priority uint64) error
 	// if the current priority is higher ignore put
 	// else if the current value is lexicographically
 	// greater than the new then ignore
-	key := reg.key.WithValueFlag()
-	marker, err := reg.store.Get(ctx, reg.key.ToPrimaryDataStoreKey().Bytes())
+	key := l.key.WithValueFlag()
+	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey().Bytes())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
@@ -141,7 +141,7 @@ func (reg *LWW) setValue(ctx context.Context, val []byte, priority uint64) error
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, err := reg.store.Get(ctx, key.Bytes())
+		curValue, err := l.store.Get(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
@@ -156,16 +156,16 @@ func (reg *LWW) setValue(ctx context.Context, val []byte, priority uint64) error
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = reg.store.Delete(ctx, key.Bytes())
+		err = l.store.Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
 	} else {
-		err = reg.store.Set(ctx, key.Bytes(), val)
+		err = l.store.Set(ctx, key.Bytes(), val)
 		if err != nil {
 			return NewErrFailedToStoreValue(err)
 		}
 	}
 
-	return setPriority(ctx, reg.store, reg.key, priority)
+	return setPriority(ctx, l.store, l.key, priority)
 }

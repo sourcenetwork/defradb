@@ -159,16 +159,16 @@ func (n *scanNode) addField(field client.CollectionFieldDescription) {
 	}
 }
 
-func (scan *scanNode) initFetcher(cid immutable.Option[string]) {
+func (n *scanNode) initFetcher(cid immutable.Option[string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = fetcher.NewDocumentFetcher()
 
-		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
+		f = lens.NewFetcher(f, n.p.db.LensRegistry())
 	}
-	scan.fetcher = f
+	n.fetcher = f
 }
 
 // Start starts the internal logic of the scanner

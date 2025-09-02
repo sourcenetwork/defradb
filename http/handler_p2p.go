@@ -22,12 +22,12 @@ import (
 
 type p2pHandler struct{}
 
-func (s *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	responseJSON(rw, http.StatusOK, db.PeerInfo())
 }
 
-func (s *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var resp client.PeerInfo
@@ -43,7 +43,7 @@ func (s *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var rep ReplicatorParams
@@ -59,7 +59,7 @@ func (s *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var rep ReplicatorParams
@@ -75,7 +75,7 @@ func (s *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	reps, err := db.GetAllReplicators(req.Context())
@@ -86,7 +86,7 @@ func (s *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 	responseJSON(rw, http.StatusOK, reps)
 }
 
-func (s *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var collectionIDs []string
@@ -102,7 +102,7 @@ func (s *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var collectionIDs []string
@@ -118,7 +118,7 @@ func (s *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Requ
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	cols, err := db.GetAllP2PCollections(req.Context())
@@ -129,7 +129,7 @@ func (s *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (s *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var docIDs []string
@@ -145,7 +145,7 @@ func (s *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) 
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var docIDs []string
@@ -161,7 +161,7 @@ func (s *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	docIDs, err := db.GetAllP2PDocuments(req.Context())
@@ -172,7 +172,7 @@ func (s *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	responseJSON(rw, http.StatusOK, docIDs)
 }
 
-func (s *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var reqBody struct {

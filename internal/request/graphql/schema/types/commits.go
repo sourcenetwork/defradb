@@ -59,7 +59,7 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitSchemaVersionIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.FieldNameFieldName: &gql.Field{
+			request.FieldNameName: &gql.Field{
 				Description: commitFieldNameFieldDescription,
 				Type:        gql.String,
 			},

@@ -17,7 +17,9 @@ import (
 	"errors"
 )
 
-// todo: make this configurable:
+// MaxStackDepth is the max stack trace buffer depth.
+//
+// TODO: make this configurable:
 // https://github.com/sourcenetwork/defradb/issues/733
 const MaxStackDepth int = 50
 

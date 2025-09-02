@@ -135,21 +135,21 @@ func NewDocumentMapping() *DocumentMapping {
 }
 
 // CloneWithoutRender deep copies the source mapping skipping over the RenderKeys.
-func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
+func (m *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 	result := DocumentMapping{
-		typeInfo:      source.typeInfo,
-		IndexesByName: make(map[string][]int, len(source.IndexesByName)),
-		nextIndex:     source.nextIndex,
-		ChildMappings: make([]*DocumentMapping, len(source.ChildMappings)),
+		typeInfo:      m.typeInfo,
+		IndexesByName: make(map[string][]int, len(m.IndexesByName)),
+		nextIndex:     m.nextIndex,
+		ChildMappings: make([]*DocumentMapping, len(m.ChildMappings)),
 	}
 
-	for externalName, sourceIndexes := range source.IndexesByName {
+	for externalName, sourceIndexes := range m.IndexesByName {
 		indexes := make([]int, len(sourceIndexes))
 		copy(indexes, sourceIndexes)
 		result.IndexesByName[externalName] = indexes
 	}
 
-	for i, childMapping := range source.ChildMappings {
+	for i, childMapping := range m.ChildMappings {
 		if childMapping != nil {
 			result.ChildMappings[i] = childMapping.CloneWithoutRender()
 		}
@@ -161,30 +161,30 @@ func (source *DocumentMapping) CloneWithoutRender() *DocumentMapping {
 // GetNextIndex returns the next index available for use.
 //
 // Also useful for identifying how many fields a document should have.
-func (mapping *DocumentMapping) GetNextIndex() int {
-	return mapping.nextIndex
+func (m *DocumentMapping) GetNextIndex() int {
+	return m.nextIndex
 }
 
 // NewDoc instantiates a new Doc from this mapping, ensuring that the Fields
 // collection is constructed with the required length/indexes.
-func (mapping *DocumentMapping) NewDoc() Doc {
+func (m *DocumentMapping) NewDoc() Doc {
 	return Doc{
-		Fields: make(DocFields, mapping.nextIndex),
+		Fields: make(DocFields, m.nextIndex),
 	}
 }
 
 // SetFirstOfName overwrites the first field of this name with the given value.
 //
 // Will panic if the field does not exist.
-func (mapping *DocumentMapping) SetFirstOfName(d *Doc, name string, value any) {
-	d.Fields[mapping.IndexesByName[name][0]] = value
+func (m *DocumentMapping) SetFirstOfName(d *Doc, name string, value any) {
+	d.Fields[m.IndexesByName[name][0]] = value
 }
 
 // TrySetFirstOfName overwrites the first field of this name with the given value.
 //
 // Will return false if the field does not exist, otherwise will return true.
-func (mapping *DocumentMapping) TrySetFirstOfName(d *Doc, name string, value any) bool {
-	if indexes, ok := mapping.IndexesByName[name]; ok && len(indexes) > 0 {
+func (m *DocumentMapping) TrySetFirstOfName(d *Doc, name string, value any) bool {
+	if indexes, ok := m.IndexesByName[name]; ok && len(indexes) > 0 {
 		index := indexes[0]
 		// Panicing here should be impossible unless there is something very wrong in
 		// the mapper code.
@@ -198,15 +198,15 @@ func (mapping *DocumentMapping) TrySetFirstOfName(d *Doc, name string, value any
 // FirstOfName returns the value of the first field of the given name.
 //
 // Will panic if the field does not exist (but not if it's value is default).
-func (mapping *DocumentMapping) FirstOfName(d Doc, name string) any {
-	return d.Fields[mapping.FirstIndexOfName(name)]
+func (m *DocumentMapping) FirstOfName(d Doc, name string) any {
+	return d.Fields[m.FirstIndexOfName(name)]
 }
 
 // FirstIndexOfName returns the first field index of the given name.
 //
 // Will panic if the field does not exist.
-func (mapping *DocumentMapping) FirstIndexOfName(name string) int {
-	return mapping.IndexesByName[name][0]
+func (m *DocumentMapping) FirstIndexOfName(name string) int {
+	return m.IndexesByName[name][0]
 }
 
 // ToMap renders the given document to map[string]any format using
@@ -214,14 +214,14 @@ func (mapping *DocumentMapping) FirstIndexOfName(name string) int {
 //
 // Will not return fields without a render key, or any child documents
 // marked as Hidden.
-func (mapping *DocumentMapping) ToMap(doc Doc) map[string]any {
-	mappedDoc := make(map[string]any, len(mapping.RenderKeys))
-	for _, renderKey := range mapping.RenderKeys {
+func (m *DocumentMapping) ToMap(doc Doc) map[string]any {
+	mappedDoc := make(map[string]any, len(m.RenderKeys))
+	for _, renderKey := range m.RenderKeys {
 		value := doc.Fields[renderKey.Index]
 		var renderValue any
 		switch innerV := value.(type) {
 		case []Doc:
-			innerMapping := mapping.ChildMappings[renderKey.Index]
+			innerMapping := m.ChildMappings[renderKey.Index]
 			innerArray := []map[string]any{}
 			for _, innerDoc := range innerV {
 				if innerDoc.Hidden {
@@ -231,11 +231,11 @@ func (mapping *DocumentMapping) ToMap(doc Doc) map[string]any {
 			}
 			renderValue = innerArray
 		case Doc:
-			innerMapping := mapping.ChildMappings[renderKey.Index]
+			innerMapping := m.ChildMappings[renderKey.Index]
 			renderValue = innerMapping.ToMap(innerV)
 		default:
-			if mapping.typeInfo.HasValue() && renderKey.Index == mapping.typeInfo.Value().Index {
-				renderValue = mapping.typeInfo.Value().Name
+			if m.typeInfo.HasValue() && renderKey.Index == m.typeInfo.Value().Index {
+				renderValue = m.typeInfo.Value().Name
 			} else {
 				renderValue = innerV
 			}
@@ -246,21 +246,21 @@ func (mapping *DocumentMapping) ToMap(doc Doc) map[string]any {
 }
 
 // Add appends the given index and name to the mapping.
-func (mapping *DocumentMapping) Add(index int, name string) {
-	inner := mapping.IndexesByName[name]
+func (m *DocumentMapping) Add(index int, name string) {
+	inner := m.IndexesByName[name]
 	inner = append(inner, index)
-	mapping.IndexesByName[name] = inner
+	m.IndexesByName[name] = inner
 
-	if index >= mapping.nextIndex {
-		mapping.nextIndex = index + 1
+	if index >= m.nextIndex {
+		m.nextIndex = index + 1
 	}
 }
 
 // SetTypeName sets the type name for this mapping.
-func (mapping *DocumentMapping) SetTypeName(typeName string) {
-	index := mapping.GetNextIndex()
-	mapping.Add(index, request.TypeNameFieldName)
-	mapping.typeInfo = immutable.Some(mappingTypeInfo{
+func (m *DocumentMapping) SetTypeName(typeName string) {
+	index := m.GetNextIndex()
+	m.Add(index, request.TypeNameFieldName)
+	m.typeInfo = immutable.Some(mappingTypeInfo{
 		Index: index,
 		Name:  typeName,
 	})
@@ -286,9 +286,9 @@ func (m *DocumentMapping) SetChildAt(index int, childMapping *DocumentMapping) {
 // TryToFindNameFromIndex returns the corresponding name of the given index.
 //
 // Additionally, will also return true if the index was found, and false otherwise.
-func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string, bool) {
+func (m *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string, bool) {
 	// Try to find the name of this index in the IndexesByName.
-	for name, indexes := range mapping.IndexesByName {
+	for name, indexes := range m.IndexesByName {
 		for _, index := range indexes {
 			if index == targetIndex {
 				return name, true
@@ -302,8 +302,8 @@ func (mapping *DocumentMapping) TryToFindNameFromIndex(targetIndex int) (string,
 // TryToFindIndexFromRenderKey returns the corresponding index of the given render key.
 //
 // Additionally, will also return true if the render key was found, and false otherwise.
-func (mapping *DocumentMapping) TryToFindIndexFromRenderKey(key string) (int, bool) {
-	for _, renderKey := range mapping.RenderKeys {
+func (m *DocumentMapping) TryToFindIndexFromRenderKey(key string) (int, bool) {
+	for _, renderKey := range m.RenderKeys {
 		if renderKey.Key == key {
 			return renderKey.Index, true
 		}
