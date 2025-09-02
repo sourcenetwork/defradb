@@ -788,7 +788,7 @@ func (doc *Document) Values() map[Field]*FieldValue {
 // Bytes returns the document as a serialzed byte array using CBOR encoding.
 func (doc *Document) Bytes() ([]byte, error) {
 	// We want to ommit properties with nil values from the map, as setting a
-	// propery to nil should result in the same serialized value as ommiting the
+	// propery to nil should result in the same serialized value as ommiting
 	// the property from the document.
 	//
 	// This is particularly important for docID generation.

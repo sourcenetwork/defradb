@@ -31,7 +31,7 @@ func IdentityNew(keyType *C.char) C.NewIdentityResult {
 	if keyTypeStr != "" {
 		cryptoKeyType = crypto.KeyType(keyTypeStr)
 	}
-	newIdentity, err := identity.Generate(crypto.KeyType(cryptoKeyType))
+	newIdentity, err := identity.Generate(cryptoKeyType)
 	if err != nil {
 		return returnNewIdentityResultC(1, err.Error(), nil)
 	}

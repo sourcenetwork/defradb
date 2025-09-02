@@ -54,7 +54,7 @@ func (c *Collection) Create(
 	if err != nil {
 		return err
 	}
-	args = append(args, string(document))
+	args = append(args, document)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {

@@ -57,7 +57,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, netConfig.WithListenAddresses(listeningAddresses...))
 	}
-	maxTxnRetries := int(gocOptions.MaxTransactionRetries)
+	maxTxnRetries := gocOptions.MaxTransactionRetries
 	if maxTxnRetries > 0 {
 		opts = append(opts, db.WithMaxRetries(maxTxnRetries))
 	}

@@ -128,7 +128,7 @@ func (n *similarityNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			similarity = float64(result)
+			similarity = result
 		}
 
 		n.currentValue.Fields[n.virtualFieldIndex] = similarity

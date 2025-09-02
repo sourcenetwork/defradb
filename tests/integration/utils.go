@@ -1402,7 +1402,7 @@ func createDocViaGQL(
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
-// it will substitute the [DocIndex] for the the corresponding document ID found in the state.
+// it will substitute the [DocIndex] for the corresponding document ID found in the state.
 //
 // If a document at that index is not found it will panic.
 func substituteRelations(

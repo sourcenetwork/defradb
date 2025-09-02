@@ -67,7 +67,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				}
 				request = string(data)
 			case len(args) > 0:
-				request = string(args[0])
+				request = args[0]
 			}
 
 			if request == "" {

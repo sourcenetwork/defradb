@@ -16,7 +16,7 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
-// CollectionKey points to the json serialized description of the
+// CollectionKey points to the json serialized description of
 // the collection of the given ID.
 type CollectionKey struct {
 	CollectionID string
