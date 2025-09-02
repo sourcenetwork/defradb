@@ -696,7 +696,9 @@ linters:
       # The placeholder '${config-path}' is substituted with a path relative to the configuration file.
       # Example: "/path/to/my/template.tmpl"
       # Default: ""
-      template-path: ""
+      # Note that if the line below is not commented out, the following verify command will fail:
+      # `golangci-lint config verify --config=tools/configs/golangci.yaml`
+      # template-path: ""
 
 
     govet:
