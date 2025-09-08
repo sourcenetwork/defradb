@@ -18,6 +18,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -58,11 +59,14 @@ type DB interface {
 	RetryIntervals() []time.Duration
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
+	// Rootstore returns the rootstore
+	Rootstore() corekv.ReaderWriter
 }
 
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
 	replicatorProtocol *protocol.ReplicatorProtocol
+	//replicatorSEProtocol *protocol.ReplicatorSEProtocol
 
 	ctx  context.Context
 	db   DB
@@ -93,6 +97,7 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 		retryIntervals:   db.RetryIntervals(),
 	}
 	p.replicatorProtocol = protocol.NewReplicatorProtocol(host, p.processPushlogRequest, p.handleReplicatorFailure)
+	//p.replicatorSEProtocol = protocol.NewSEReplicatorProtocol(host, p.processPushSEArtifactsRequest, p.handleSEReplicatorFailure)
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
@@ -116,6 +121,10 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	}
 
 	return &p, nil
+}
+
+func (p *P2P) Host() client.Host {
+	return p.host
 }
 
 func (p *P2P) PeerInfo() client.PeerInfo {
@@ -430,3 +439,70 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 
 	return nil
 }
+
+/*func (p *P2P) processPushSEArtifactsRequest(
+	ctx context.Context,
+	req *protocol.PushSEArtifactsRequest,
+	isReplicator bool,
+) error {
+	sb := strings.Builder{}
+	for i, netArtifact := range req.Artifacts {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(netArtifact.DocID)
+	}
+	log.InfoContext(ctx, "Handle push SE artifacts", corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.Creator))
+
+	//_, err := peerIDFromContext(ctx)
+	//if err != nil {
+		//return err
+	//}
+
+	artifacts := make([]secore.Artifact, len(req.Artifacts))
+	for i, netArtifact := range req.Artifacts {
+		artifacts[i] = secore.Artifact{
+			DocID:        netArtifact.DocID,
+			IndexID:      netArtifact.IndexID,
+			SearchTag:    netArtifact.SearchTag,
+			CollectionID: req.CollectionID,
+		}
+	}
+
+	if err := se.StoreArtifacts(ctx, datastore.DatastoreFrom(p.db.Rootstore()), artifacts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *P2P) handleSEReplicatorFailure(ctx context.Context, peerID string, req *protocol.PushSEArtifactsRequest) error {
+
+	defer func() {
+		if err != nil && !evt.IsRetry {
+			// Collect unique field names from artifacts
+			fieldNamesMap := make(map[string]struct{})
+			for _, artifact := range evt.Artifacts {
+				fieldNamesMap[artifact.FieldName] = struct{}{}
+			}
+
+			var fieldNames []string
+			for fieldName := range fieldNamesMap {
+				fieldNames = append(fieldNames, fieldName)
+			}
+
+			s.peer.bus.Publish(event.NewMessage(se.ReplicationFailureEventName, se.ReplicationFailureEvent{
+				DocID:        evt.DocID,
+				CollectionID: evt.CollectionID,
+				PeerID:       pid,
+				FieldNames:   fieldNames,
+				Identity:     evt.Identity,
+			}))
+		}
+		if evt.Success != nil {
+			evt.Success <- err == nil
+		}
+	}()
+	return nil
+}
+*/

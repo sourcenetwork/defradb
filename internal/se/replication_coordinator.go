@@ -30,6 +30,8 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -48,10 +50,12 @@ var log = corelog.NewLogger("defra.se.replication")
 type ReplicationCoordinator struct {
 	db             DB
 	eventBus       event.Bus
-	failureSub     event.Subscription
-	updateSub      event.Subscription
+	sub            event.Subscription
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
+	p2p            *p2p.P2P
+	replStoreProto *protocol.ReplicatorSEProtocol
+	replQueryProto *protocol.SEQueryProtocol
 }
 
 // DB interface required by ReplicationCoordinator
@@ -75,7 +79,7 @@ type SERetryInfo struct {
 }
 
 // NewReplicationCoordinator creates a new coordinator
-func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, error) {
+func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*ReplicationCoordinator, error) {
 	rc := &ReplicationCoordinator{
 		db:             db,
 		eventBus:       db.Events(),
@@ -83,20 +87,18 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 		encKey:         encKey,
 	}
 
-	failureSub, err := db.Events().Subscribe(ReplicationFailureEventName)
+	//rc.replProto = protocol.NewSEReplicatorProtocol(p2p.Host(), rc.processPushSEArtifactsRequest, rc.handleSEReplicatorFailure)
+	rc.replStoreProto = protocol.NewSEReplicatorProtocol(p2p.Host(), rc.processPushSEArtifactsRequest, nil)
+	rc.replQueryProto = protocol.NewSEQueryProtocol(p2p.Host(), rc.processQuerySEArtifactsRequest, nil)
+
+	var err error
+	//rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName, ReplicationFailureEventName)
+	rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName)
 	if err != nil {
 		return nil, err
 	}
-	rc.failureSub = failureSub
 
-	updateSub, err := db.Events().Subscribe(event.UpdateName)
-	if err != nil {
-		return nil, err
-	}
-	rc.updateSub = updateSub
-
-	go rc.processFailureEvents()
-	go rc.processUpdateEvents()
+	go rc.processEvents()
 
 	go rc.retrySEReplicators(context.Background())
 
@@ -104,8 +106,7 @@ func NewReplicationCoordinator(db DB, encKey []byte) (*ReplicationCoordinator, e
 }
 
 func (rc *ReplicationCoordinator) Close() {
-	rc.eventBus.Unsubscribe(rc.failureSub)
-	rc.eventBus.Unsubscribe(rc.updateSub)
+	rc.eventBus.Unsubscribe(rc.sub)
 }
 
 // reconstructIdentity reconstructs an Identity from stored public key information
@@ -137,43 +138,96 @@ func defaultRetryIntervals(maxRetries int) []time.Duration {
 	return intervals
 }
 
-// processFailureEvents handles replication failures
-func (rc *ReplicationCoordinator) processFailureEvents() {
-	for {
-		msg, isOpen := <-rc.failureSub.Message()
-		if !isOpen {
-			return
-		}
-
-		if evt, ok := msg.Data.(ReplicationFailureEvent); ok {
-			if err := rc.handleReplicationFailure(context.Background(), evt); err != nil {
-				log.ErrorE("Failed to handle SE replication failure", err,
-					corelog.String("DocID", evt.DocID))
-			}
-		}
-	}
-}
-
 // processUpdateEvents handles updates to SE artifacts
-func (rc *ReplicationCoordinator) processUpdateEvents() {
+func (rc *ReplicationCoordinator) processEvents() {
 	for {
-		msg, isOpen := <-rc.updateSub.Message()
+		msg, isOpen := <-rc.sub.Message()
 		if !isOpen {
 			return
 		}
 
-		if evt, ok := msg.Data.(event.Update); ok {
+		switch evt := msg.Data.(type) {
+		case event.Update:
 			if err := rc.handleUpdateEvent(context.Background(), evt); err != nil {
 				log.ErrorE("Failed to handle SE update event", err,
 					corelog.String("DocID", evt.DocID))
 			}
+
+		case QuerySEArtifactsRequest:
+			go rc.handleQuerySEArtifactsEvent(evt)
+
+		/*case ReplicationFailureEvent:
+		if err := rc.handleReplicationFailure(context.Background(), evt); err != nil {
+			log.ErrorE("Failed to handle SE replication failure", err,
+				corelog.String("DocID", evt.DocID))
+		}*/
+
+		default:
+			// ignore other events
+			continue
 		}
+	}
+}
+
+func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt QuerySEArtifactsRequest) {
+	grpcQueries := make([]protocol.SEFieldQuery, len(evt.Queries))
+	for i, q := range evt.Queries {
+		grpcQueries[i] = protocol.SEFieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	grpcReq := protocol.QuerySEArtifactsRequest{
+		CollectionID: evt.CollectionID,
+		Queries:      grpcQueries,
+	}
+
+	docIDSet := make(map[string]struct{})
+	var queryErr error
+
+	peerIDs := rc.p2p.GetReplicatorsIDs(evt.CollectionID)
+
+	if len(peerIDs) == 0 {
+		evt.Response <- QuerySEArtifactsResponse{
+			DocIDs: []string{},
+			Error:  nil,
+		}
+		return
+	}
+
+	for _, pid := range peerIDs {
+		reply, err := rc.replQueryProto.PushToReplicator(context.Background(), grpcReq, pid, false)
+		if err != nil {
+			log.ErrorE(
+				"Failed querying SE artifacts from replicator",
+				err,
+				corelog.String("CollectionID", evt.CollectionID),
+				corelog.Any("PeerID", pid))
+			queryErr = err
+			continue
+		}
+
+		for _, docID := range reply.DocIDs {
+			docIDSet[docID] = struct{}{}
+		}
+	}
+
+	docIDs := make([]string, 0, len(docIDSet))
+	for docID := range docIDSet {
+		docIDs = append(docIDs, docID)
+	}
+
+	evt.Response <- QuerySEArtifactsResponse{
+		DocIDs: docIDs,
+		Error:  queryErr,
 	}
 }
 
 // handleReplicationFailure stores failed SE replication attempt for retry
 func (rc *ReplicationCoordinator) handleReplicationFailure(ctx context.Context, evt ReplicationFailureEvent) error {
-	retryKey := keys.NewPeerstoreSERetry(evt.PeerID.String(), evt.CollectionID, evt.DocID)
+	retryKey := keys.NewPeerstoreSERetry(evt.PeerID, evt.CollectionID, evt.DocID)
 
 	// TODO: think if such scenario is possible: "age" field is updated but failed to replicate and while being retried
 	// another "name" field is updated. In this case we should not overwrite the retry info.
@@ -233,19 +287,65 @@ func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt eve
 		ctx = acpIdentity.WithContext(ctx, evt.Identity)
 	}
 
-	artifacts, err := rc.generateSEArtifacts(ctx, evt.DocID, evt.CollectionID, updatedFields)
+	return rc.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
+}
+
+func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
+	ctx context.Context,
+	docID, collectionID string,
+	fields []string,
+	identity immutable.Option[acpIdentity.Identity],
+	isRetry bool,
+) error {
+	artifacts, err := rc.generateSEArtifacts(ctx, docID, collectionID, fields)
 	if err != nil {
 		return fmt.Errorf("failed to generate SE artifacts: %w", err)
 	}
+	if len(artifacts) == 0 {
+		return nil
+	}
 
-	if len(artifacts) > 0 {
+	protoArtifacts := make([]protocol.SEArtifact, len(artifacts))
+	for i, artifact := range artifacts {
+		protoArtifacts[i] = protocol.SEArtifact{
+			DocID:     artifact.DocID,
+			IndexID:   artifact.IndexID,
+			SearchTag: artifact.SearchTag,
+		}
+	}
+
+	req := protocol.PushSEArtifactsRequest{
+		CollectionID: collectionID,
+		Artifacts:    protoArtifacts,
+	}
+
+	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
+	for _, pid := range peerIDs {
+		_, err = rc.replStoreProto.PushToReplicator(ctx, req, pid, false)
+		if err != nil {
+			if isRetry {
+				return err
+			}
+			handleErr := rc.handleReplicationFailure(ctx, ReplicationFailureEvent{
+				DocID:        docID,
+				CollectionID: collectionID,
+				PeerID:       pid,
+				FieldNames:   fields,
+				Identity:     identity,
+			})
+			if handleErr != nil {
+				return errors.Join(err, handleErr)
+			}
+		}
+	}
+	/*if len(artifacts) > 0 {
 		rc.eventBus.Publish(event.NewMessage(ReplicateEventName, ReplicateEvent{
 			DocID:        evt.DocID,
 			CollectionID: evt.CollectionID,
 			Artifacts:    artifacts,
 			Identity:     evt.Identity,
 		}))
-	}
+	}*/
 
 	return nil
 }
@@ -335,8 +435,8 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
 	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
 
-	successChan := make(chan bool)
-	defer close(successChan)
+	//successChan := make(chan bool)
+	//defer close(successChan)
 
 	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
 	if err != nil {
@@ -346,7 +446,14 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 		ctx = acpIdentity.WithContext(ctx, identity)
 	}
 
-	artifacts, err := rc.generateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
+	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
+			corelog.String("DocID", retryInfo.DocID))
+	}
+
+	rc.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
+	/*artifacts, err := rc.generateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to regenerate SE artifacts for retry", err,
 			corelog.String("DocID", retryInfo.DocID))
@@ -371,7 +478,7 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 			corelog.String("PeerID", peerID),
 			corelog.String("DocID", retryInfo.DocID))
 		rc.updateRetryStatus(ctx, peerID, retryInfo, false)
-	}
+	}*/
 }
 
 // updateRetryStatus updates the retry status after an attempt
@@ -487,4 +594,73 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 	}
 
 	return GenerateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
+}
+
+func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
+	ctx context.Context,
+	req *protocol.PushSEArtifactsRequest,
+	isReplicator bool,
+) error {
+	sb := strings.Builder{}
+	for i, netArtifact := range req.Artifacts {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(netArtifact.DocID)
+	}
+	log.InfoContext(ctx, "Handle push SE artifacts", corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.SenderID))
+
+	/*_, err := peerIDFromContext(ctx)
+	if err != nil {
+		return err
+	}*/
+
+	artifacts := make([]secore.Artifact, len(req.Artifacts))
+	for i, netArtifact := range req.Artifacts {
+		artifacts[i] = secore.Artifact{
+			DocID:        netArtifact.DocID,
+			IndexID:      netArtifact.IndexID,
+			SearchTag:    netArtifact.SearchTag,
+			CollectionID: req.CollectionID,
+		}
+	}
+
+	if err := StoreArtifacts(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), artifacts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rc *ReplicationCoordinator) processQuerySEArtifactsRequest(
+	ctx context.Context,
+	req *protocol.QuerySEArtifactsRequest,
+	isReplicator bool,
+) (protocol.QuerySEArtifactsReply, error) {
+	matchingDocIDs, err := rc.querySEArtifactsFromDatastore(ctx, req)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
+		return protocol.QuerySEArtifactsReply{}, err
+	}
+
+	log.InfoContext(ctx, "Handle SE artifacts query", corelog.String("DocIDs", strings.Join(matchingDocIDs, ", ")),
+		corelog.String("Sender", req.SenderID))
+
+	return protocol.QuerySEArtifactsReply{
+		DocIDs: matchingDocIDs,
+	}, nil
+}
+
+// querySEArtifactsFromDatastore queries SE artifacts from the local datastore
+func (rc *ReplicationCoordinator) querySEArtifactsFromDatastore(ctx context.Context, req *protocol.QuerySEArtifactsRequest) ([]string, error) {
+	queries := make([]FieldQuery, len(req.Queries))
+	for i, q := range req.Queries {
+		queries[i] = FieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	return FetchDocIDs(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), req.CollectionID, queries)
 }

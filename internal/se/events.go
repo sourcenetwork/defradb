@@ -11,9 +11,8 @@
 package se
 
 import (
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sourcenetwork/immutable"
-	
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/event"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
@@ -40,7 +39,8 @@ type ReplicateEvent struct {
 type ReplicationFailureEvent struct {
 	DocID        string
 	CollectionID string
-	PeerID       peer.ID
+	//PeerID       peer.ID
+	PeerID       string
 	FieldNames   []string
 	Identity     immutable.Option[acpIdentity.Identity]
 }

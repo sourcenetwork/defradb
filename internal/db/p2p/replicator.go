@@ -30,7 +30,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	//"github.com/sourcenetwork/defradb/internal/se"
 )
 
 const (
@@ -183,9 +185,17 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 			CollectionID: collectionID,
 			Block:        rawblock,
 		}
+
+		/*req := protocol.PushLogRequest{
+			DocID:        docID,
+			CID:          head.cid.Bytes(),
+			CollectionID: collectionID,
+			Block:        rawblock,
+		}*/
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		if _, err := p.replicatorProtocol.PushToReplicator(ctx, update, peerID); err != nil {
+			//if _, err := p.replicatorProtocol.PushToReplicator(ctx, req, peerID, false); err != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
 				err,
@@ -198,6 +208,15 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 		}
 	}
 	return nil
+}
+
+func updateEventToPushLog(evt event.Update) protocol.PushLogRequest {
+	return protocol.PushLogRequest{
+		DocID:        evt.DocID,
+		CID:          evt.Cid.Bytes(),
+		CollectionID: evt.CollectionID,
+		Block:        evt.Block,
+	}
 }
 
 func (p *P2P) DeleteReplicator(ctx context.Context, repInfo client.PeerInfo, collectionNames ...string) error {
@@ -303,6 +322,7 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
 				if _, err := p.replicatorProtocol.PushToReplicator(ctx, lg, peerID); err != nil {
+					//if _, err := p.replicatorProtocol.PushToReplicator(ctx, updateEventToPushLog(lg), peerID, lg.IsRetry); err != nil {
 					log.ErrorE(
 						"Failed pushing log",
 						err,
@@ -792,11 +812,17 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			Cid:          head.cid,
 			CollectionID: head.block.Delta.GetSchemaVersionID(),
 			Block:        rawblock,
-			IsRetry:      true,
 		}
+		/*req := protocol.PushLogRequest{
+			DocID:        docID,
+			CID:          head.cid.Bytes(),
+			CollectionID: head.block.Delta.GetSchemaVersionID(),
+			Block:        rawblock,
+		}*/
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		if _, err := p.replicatorProtocol.PushToReplicator(ctx, updateEvent, peerID); err != nil {
+			//if _, err := p.replicatorProtocol.PushToReplicator(ctx, req, peerID, true); err != nil {
 			return err
 		}
 	}
@@ -878,3 +904,120 @@ func closeQueryResults(iter corekv.Iterator) {
 		log.ErrorE("Failed to close query results", err)
 	}
 }
+
+func (p *P2P) GetReplicatorsIDs(collectionID string) []string {
+	p.repMu.Lock()
+	defer p.repMu.Unlock()
+	colReplicators := p.replicators[collectionID]
+	ids := make([]string, 0, len(colReplicators))
+	for id := range colReplicators {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+/*func (p *P2P) handleSEQuery(req QuerySEArtifactsRequest) {
+	p.server.mu.Lock()
+	reps, exists := p.server.replicators[req.CollectionID]
+	p.server.mu.Unlock()
+
+	if !exists || len(reps) == 0 {
+		req.Response <- se.QuerySEArtifactsResponse{
+			DocIDs: []string{},
+			Error:  nil,
+		}
+		return
+	}
+
+	grpcQueries := make([]seFieldQuery, len(req.Queries))
+	for i, q := range req.Queries {
+		grpcQueries[i] = seFieldQuery{
+			FieldName: q.FieldName,
+			IndexID:   q.IndexID,
+			SearchTag: q.SearchTag,
+		}
+	}
+
+	grpcReq := querySEArtifactsRequest{
+		CollectionID: req.CollectionID,
+		Queries:      grpcQueries,
+	}
+
+	docIDSet := make(map[string]struct{})
+	var queryErr error
+
+	// TODO: ask replicators one-by-one.
+	for pid := range reps {
+		reply, err := p.server.querySEArtifacts(p.ctx, pid, grpcReq)
+		if err != nil {
+			log.ErrorE(
+				"Failed querying SE artifacts from replicator",
+				err,
+				corelog.String("CollectionID", req.CollectionID),
+				corelog.Any("PeerID", pid))
+			queryErr = err
+			continue
+		}
+
+		for _, docID := range reply.DocIDs {
+			docIDSet[docID] = struct{}{}
+		}
+	}
+
+	docIDs := make([]string, 0, len(docIDSet))
+	for docID := range docIDSet {
+		docIDs = append(docIDs, docID)
+	}
+
+	req.Response <- se.QuerySEArtifactsResponse{
+		DocIDs: docIDs,
+		Error:  queryErr,
+	}
+}
+
+func (p *P2P) pushSEArtifactsToReplicators(
+	docID string,
+	collectionID string,
+	artifacts []secore.Artifact,
+	isRetry bool,
+	identity immutable.Option[identity.Identity],
+) {
+	p.repMu.Lock()
+	reps, exists := p.replicators[collectionID]
+	p.repMu.Unlock()
+
+	newArtifacts := make([]protocol.SEArtifact, len(artifacts))
+	for i, artifact := range artifacts {
+		newArtifacts[i] = protocol.SEArtifact{
+			DocID:     artifact.DocID,
+			IndexID:   artifact.IndexID,
+			SearchTag: artifact.SearchTag,
+		}
+	}
+
+	req := protocol.PushSEArtifactsRequest{
+		CollectionID: collectionID,
+		Artifacts:    newArtifacts,
+		Creator:      p.host.ID(),
+	}
+
+	if exists {
+		for peerID := range reps {
+
+			go func() {
+				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
+				defer cancel()
+
+				if _, err := p.replicatorSEProtocol.PushToReplicator(ctx, req, peerID, isRetry); err != nil {
+					log.ErrorE(
+						"Failed pushing SE artifacts",
+						err,
+						corelog.String("DocID", docID),
+						corelog.String("CollectionID", collectionID),
+						corelog.Any("PeerID", peerID))
+				}
+			}()
+		}
+	}
+}
+*/
