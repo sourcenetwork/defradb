@@ -14,13 +14,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, with owner missing required read permission, reject schema",
 
 		Actions: []any{
 
@@ -55,7 +54,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -65,10 +64,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
@@ -105,8 +100,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionOnDRI_SchemaRejected(t
 func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, with owner missing required read permission label, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -138,7 +131,7 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejec
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -148,10 +141,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejec
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: "resource is missing required permission on policy.",
 			},
@@ -183,8 +172,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredReadPermissionLabelOnDRI_SchemaRejec
 
 func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, owner specified incorrectly on read permission expression, reject schema",
 
 		Actions: []any{
 
@@ -219,7 +206,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_Schem
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -229,10 +216,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_Schem
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
@@ -269,8 +252,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionExprOnDRI_Schem
 func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner specified incorrectly on read permission expression (no space), reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -304,7 +285,7 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDR
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -314,10 +295,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDR
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
@@ -354,8 +331,6 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnReadPermissionNoSpaceExprOnDR
 func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, malicious owner specified on read permission expression, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -389,7 +364,7 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_SchemaR
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -399,10 +374,6 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_SchemaR
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",

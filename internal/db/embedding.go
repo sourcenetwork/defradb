@@ -71,7 +71,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		}
 		fieldsVal := make(map[string]client.NormalValue)
 		needsGeneration := false
-		missingFieldsForGeneration := []client.FieldDefinition{}
+		missingFieldsForGeneration := []client.CollectionFieldDescription{}
 
 		// Get the new values of the fields used for embedding generation. We keep track
 		// of the fields that aren't defined to lookup their previous values later.

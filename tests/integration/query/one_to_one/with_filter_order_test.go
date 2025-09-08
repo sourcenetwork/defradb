@@ -18,7 +18,6 @@ import (
 
 func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one subtype descending order query with filter, no subtype child fields selected.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -40,7 +39,7 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -49,7 +48,7 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
+					"published_id": "bae-c4517e4e-e43c-5795-a30f-372a58e9e943"
 				}`,
 			},
 			testUtils.Request{
@@ -83,7 +82,6 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 
 func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one subtype ascending order query with filter, no subtype child fields selected.",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -105,7 +103,7 @@ func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -114,7 +112,7 @@ func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
+					"published_id": "bae-c4517e4e-e43c-5795-a30f-372a58e9e943"
 				}`,
 			},
 			testUtils.Request{

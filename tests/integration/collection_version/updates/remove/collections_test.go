@@ -13,13 +13,15 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateRemoveCollections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -31,11 +33,20 @@ func TestColVersionUpdateRemoveCollections(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe"
+							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
 						}
 					]
 				`,
-				ExpectedError: `collections cannot be deleted.`,
+			},
+			testUtils.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						// Collection has not been removed, and is still active
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+					},
+				},
 			},
 		},
 	}

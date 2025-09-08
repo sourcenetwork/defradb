@@ -14,16 +14,14 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If combination of fields is not unique, creating of unique index fails",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -51,13 +49,10 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 					}`,
 			},
 			testUtils.CreateIndex{
-				CollectionID: 0,
-				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
-				Unique:       true,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-c20024f0-bd72-56c2-85d5-865d3aa270b7",
-					errors.NewKV("name", "John"), errors.NewKV("age", 21),
-				).Error(),
+				CollectionID:  0,
+				Fields:        []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
+				Unique:        true,
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 			testUtils.GetIndexes{
 				CollectionID:    0,
@@ -71,9 +66,8 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 
 func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "adding a new doc with existing field combination for composite index should fail",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(unique: true, includes: [{field: "name"}, {field: "age"}]) {
 						name: String 
@@ -99,9 +93,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 						"age":	21,
 						"email": "another@gmail.com"
 					}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-4da27b71-f735-59f6-b6b8-ea0fa181e3e3",
-					errors.NewKV("name", "John"), errors.NewKV("age", 21)).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 		},
 	}
@@ -111,9 +103,8 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 
 func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique composite index if all docs have unique fields combinations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -181,9 +172,8 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 
 func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "create unique composite index if all docs have unique fields combinations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -57,14 +58,14 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
 			// requires a private key which we do not pass over HTTP.
-			testUtils.GoClientType,
+			state.GoClientType,
 		}),
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
  					type Users @policy(
 						id: "{{.Policy0}}",
@@ -74,9 +75,6 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
  						age: Int
  					}
  				`,
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
@@ -88,7 +86,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NodeIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreiaqqaqoe73ioolf6lofprgekb4lnrcteanpbjgjegkn6ug77ghmri",
+				Cid:            "bafyreibghvvhikn37fj2jhshvomcyaxlf5rj3watzcxlaajxawwkqgczqa",
 				ExpectedError:  db.ErrMissingPermission.Error(),
 			},
 		},
@@ -103,14 +101,14 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// Creating of signed documents over HTTP is not supported yet, because signing
 			// requires a private key which we do not pass over HTTP.
-			testUtils.GoClientType,
+			state.GoClientType,
 		}),
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
  					type Users @policy(
 						id: "{{.Policy0}}",
@@ -120,9 +118,6 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
  						age: Int
  					}
  				`,
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
@@ -134,7 +129,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreiaqqaqoe73ioolf6lofprgekb4lnrcteanpbjgjegkn6ug77ghmri",
+				Cid:            "bafyreibghvvhikn37fj2jhshvomcyaxlf5rj3watzcxlaajxawwkqgczqa",
 			},
 		},
 	}

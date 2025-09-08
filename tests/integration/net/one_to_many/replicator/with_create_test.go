@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,7 +25,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						Name: String
@@ -54,7 +55,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"Name": "Gulistan",
-					"Author_id": "bae-6a4c24c0-7b0b-5f51-a274-132d7ca90499"
+					"Author_id": "bae-f687490b-e27f-59c2-b2a4-6ab19ca12f34"
 				}`,
 			},
 			testUtils.WaitForSync{},

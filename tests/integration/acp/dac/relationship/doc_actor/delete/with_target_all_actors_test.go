@@ -13,13 +13,12 @@ package test_acp_dac_relationship_doc_actor_delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner revokes read access from actors that were given read access implicitly",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -78,7 +77,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -88,10 +87,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -137,7 +132,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -161,7 +156,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -227,8 +222,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ActorsCanNotReadAnymore(
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRead(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, owner revokes read access from actors that were given read access implicitly",
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -286,7 +279,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -296,10 +289,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -373,7 +362,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -397,7 +386,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -421,7 +410,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -445,7 +434,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -519,7 +508,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -543,7 +532,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -558,8 +547,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_ExplicitActorsCanStillRe
 
 func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNotReadAnymore(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner revokes read access from actors that were given read access implicitly, non-identity actors can't read anymore",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -618,7 +605,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNo
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -628,10 +615,6 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNo
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.CreateDoc{
@@ -677,7 +660,7 @@ func TestACP_OwnerRevokesAccessFromAllNonExplicitActors_NonIdentityRequestsCanNo
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9d443d0c-52f6-568b-8f74-e8ff0825697b",
+							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},

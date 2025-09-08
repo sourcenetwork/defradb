@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, offsetted limited sum on non-rendered group integer value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithL
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": int64(70),
+							"_sum": int64(60),
 						},
 						{
 							"Name": "Alice",

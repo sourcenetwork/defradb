@@ -15,18 +15,20 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
-	const docID = "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3"
-	const schemaVersionID = "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq"
+	const docID = "bae-f895da58-3326-510a-87f3-d043ff5424ea"
+	const schemaVersionID = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
 
 	fieldVal, err := cbor.Marshal(value)
 	if err != nil {
@@ -50,8 +52,15 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// C bindings do not support calling functions with non-Secp256k key yet
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -122,8 +131,15 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// C bindings do not support calling functions with non-Secp256k key yet
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -220,8 +236,15 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// C bindings do not support calling functions with non-Secp256k key yet
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -282,8 +305,15 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// C bindings do not support calling functions with non-Secp256k key yet
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+			state.JSClientType,
+		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -355,7 +385,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.NodeIdentity(0).Value():   crypto.KeyTypeSecp256k1,
 		},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

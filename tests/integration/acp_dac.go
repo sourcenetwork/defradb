@@ -13,7 +13,6 @@ package tests
 import (
 	"os"
 	"slices"
-	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
@@ -21,24 +20,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-type DocumentACPType string
-
 const (
 	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
 )
 
-const (
-	SourceHubDocumentACPType DocumentACPType = "source-hub"
-	LocalDocumentACPType     DocumentACPType = "local"
-)
-
-const (
-	// authTokenExpiration is the expiration time for auth tokens.
-	authTokenExpiration = time.Minute * 1
-)
-
 var (
-	documentACPType DocumentACPType
+	documentACPType state.DocumentACPType
 )
 
 const (
@@ -53,9 +40,9 @@ func getKMSTypes() []state.KMSType {
 }
 
 func init() {
-	documentACPType = DocumentACPType(os.Getenv(documentACPTypeEnvName))
+	documentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
 	if documentACPType == "" {
-		documentACPType = LocalDocumentACPType
+		documentACPType = state.LocalDocumentACPType
 	}
 }
 
@@ -129,7 +116,7 @@ func addDACPolicy(
 
 		// The policy should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if documentACPType == SourceHubDocumentACPType {
+		if s.DocumentACPType == state.SourceHubDocumentACPType {
 			// Note: If we break here the state will only preserve the policyIDs result on the
 			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
 			// on all the nodes, so we don't have to handle all the edge cases later in actions.
@@ -218,7 +205,7 @@ func addDACActorRelationship(
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if documentACPType == SourceHubDocumentACPType {
+		if s.DocumentACPType == state.SourceHubDocumentACPType {
 			actionNodeID = immutable.Some(0)
 			break
 		}
@@ -308,7 +295,7 @@ func deleteDACActorRelationship(
 
 		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
 		// the nodes.
-		if documentACPType == SourceHubDocumentACPType {
+		if s.DocumentACPType == state.SourceHubDocumentACPType {
 			break
 		}
 	}

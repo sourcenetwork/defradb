@@ -18,14 +18,13 @@ import (
 
 func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with limit",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -33,7 +32,7 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -41,7 +40,7 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"author_id": "bae-f62bb529-3508-529d-8098-f97f9b67824c"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -73,20 +72,20 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"published": []map[string]any{
-								{
-									"name":   "Theif Lord",
-									"rating": 4.8,
-								},
-							},
-						},
-						{
 							"name": "John Grisham",
 							"published": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
+								},
+							},
+						},
+						{
+							"name": "Cornelia Funke",
+							"published": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
 								},
 							},
 						},
@@ -101,14 +100,13 @@ func TestQueryOneToManyWithSingleChildLimit(t *testing.T) {
 
 func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with limit",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -116,7 +114,7 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -124,7 +122,7 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"author_id": "bae-f62bb529-3508-529d-8098-f97f9b67824c"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -160,21 +158,6 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"p1": []map[string]any{
-								{
-									"name":   "Theif Lord",
-									"rating": 4.8,
-								},
-							},
-							"p2": []map[string]any{
-								{
-									"name":   "Theif Lord",
-									"rating": 4.8,
-								},
-							},
-						},
-						{
 							"name": "John Grisham",
 							"p1": []map[string]any{
 								{
@@ -190,6 +173,21 @@ func TestQueryOneToManyWithMultipleChildLimits(t *testing.T) {
 								{
 									"name":   "A Time for Mercy",
 									"rating": 4.5,
+								},
+							},
+						},
+						{
+							"name": "Cornelia Funke",
+							"p1": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
+								},
+							},
+							"p2": []map[string]any{
+								{
+									"name":   "Theif Lord",
+									"rating": 4.8,
 								},
 							},
 						},

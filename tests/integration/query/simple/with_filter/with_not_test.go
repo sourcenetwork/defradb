@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (not)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,16 +53,16 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},
@@ -76,7 +75,6 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with _not filter with _gt condition)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -126,7 +124,6 @@ func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (not)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -162,12 +159,12 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},
@@ -180,7 +177,6 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with empty logical compound filter (not) returns empty result set",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -225,7 +221,6 @@ func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 
 func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (not)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -267,20 +262,20 @@ func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},

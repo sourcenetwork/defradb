@@ -13,15 +13,14 @@ package replace
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -38,7 +37,7 @@ func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name",
+							"path": "/Users/Name",
 							"value": "Actors"
 						}
 					]
@@ -54,77 +53,32 @@ func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 func TestColVersionUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "String"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "String"} },
+						{ "op": "replace", "path": "/Users/IsActive", "value": false }
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
 			testUtils.PatchCollection{
 				Patch: `
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreigtjpibdyrvmwvu7wbzatqpgavczrauj4huog2cvskwrgak6m7qgi/Name",
+							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i/Name",
 							"value": "Actors"
 						}
 					]
 				`,
 				ExpectedError: "collection name cannot be mutated.",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestColVersionUpdateReplaceName_RemoveExistingName(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "String"} }
-					]
-				`,
-				SetAsDefaultVersion: immutable.Some(false),
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{
-							"op": "remove",
-							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Name"
-						},
-						{
-							"op": "replace",
-							"path": "/bafkreigtjpibdyrvmwvu7wbzatqpgavczrauj4huog2cvskwrgak6m7qgi/Name",
-							"value": "Actors"
-						}
-					]
-				`,
-				ExpectedError: "collection name can't be empty",
 			},
 		},
 	}

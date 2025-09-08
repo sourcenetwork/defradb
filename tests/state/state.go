@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/onsi/gomega/types"
 
 	"github.com/sourcenetwork/immutable"
@@ -41,7 +40,13 @@ type DatabaseType string
 // KMSType is the type of KMS to use.
 type KMSType string
 
-type ClientType string
+// DocumentACPType is the type of document acp to use.
+type DocumentACPType string
+
+const (
+	SourceHubDocumentACPType DocumentACPType = "source-hub"
+	LocalDocumentACPType     DocumentACPType = "local"
+)
 
 type ColDocIndex struct {
 	Col int
@@ -162,8 +167,9 @@ type NodeState struct {
 	Collections []client.Collection
 	// indicates if the node is Closed.
 	Closed bool
-	// AddrInfo contains the peer information for the node.
-	AddrInfo peer.AddrInfo
+	// CachedPeerInfo holds the node's PeerInfo so that the node can be
+	// restarded with the same address configuration.
+	CachedPeerInfo client.PeerInfo
 }
 
 // State contains all testing State.
@@ -182,6 +188,12 @@ type State struct {
 
 	// The type of client currently being tested.
 	ClientType ClientType
+
+	// The type of Document ACP
+	DocumentACPType DocumentACPType
+
+	// The Document ACP options to share between each node (currently only used for sourcehub).
+	DocumentACPOptions []node.DocumentACPOpt
 
 	// Any explicit transactions active in this test.
 	//
@@ -218,9 +230,6 @@ type State struct {
 
 	// The Nodes active in this test.
 	Nodes []*NodeState
-
-	// The ACP options to share between each node.
-	DocumentACPOptions []node.DocumentACPOpt
 
 	// The names of the collections active in this test.
 	// Indexes matches that of initial collections.
@@ -283,6 +292,7 @@ func NewState(
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
+	documentACPType DocumentACPType,
 	collectionNames []string,
 ) *State {
 	s := &State{
@@ -291,6 +301,8 @@ func NewState(
 		KMS:                             kms,
 		DbType:                          dbt,
 		ClientType:                      clientType,
+		DocumentACPType:                 documentACPType,
+		DocumentACPOptions:              []node.DocumentACPOpt{},
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,
 		EnableSearchableEncryption:      enableSearchableEncryption,
@@ -299,7 +311,6 @@ func NewState(
 		AllActionsDone:                  make(chan struct{}),
 		SubscriptionResultsChans:        []chan func(){},
 		Nodes:                           []*NodeState{},
-		DocumentACPOptions:              []node.DocumentACPOpt{},
 		CollectionNames:                 collectionNames,
 		CollectionIndexesByCollectionID: map[string]int{},
 		DocIDs:                          [][]client.DocID{},

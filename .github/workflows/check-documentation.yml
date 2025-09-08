@@ -103,4 +103,3 @@ jobs:
           fail-if-changed: true
           files: |
              README.md
-             playground/README.md

@@ -13,14 +13,13 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with string equal (_eq) filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -41,7 +40,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -64,8 +63,6 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with integer equal (_eq) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -85,7 +82,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -108,8 +105,6 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with greater than (_gt) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -129,7 +124,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -152,8 +147,6 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with logical compound (_and) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -173,7 +166,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_and": []any{
@@ -205,8 +198,6 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with logical compound (_or) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -226,7 +217,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_or": []any{
@@ -258,8 +249,6 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request filtering values that match within (_in) a list.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -279,7 +268,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -305,9 +294,8 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 
 func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) request with JSON equal (_eq) filter.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON
@@ -325,7 +313,7 @@ func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreih4zeq3ac4dh2iz3i53ka2hpfu3jbia4ntonwm7qlthzz2gytzo6e",
+							"collectionID":   "bafyreig6o7dcdhoi72geb3k2j4zjrzfjj5b6qbbjhwu6ykorohmbrve2mq",
 							"collectionName": "Users",
 							"filter": dataMap{
 								"custom": dataMap{

@@ -22,11 +22,10 @@ import (
 func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 	type invalidFilterType struct{ Number int }
 	test := testUtils.TestCase{
-		Description: "Test update users with invalid filter type",
 		// http and cli clients will pass the serialize filter into json which will result in
 		// the payload deserialized into map[string]any. With Go client the filter is passed as is.
 		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{testUtils.HTTPClientType, testUtils.CLIClientType}),
+			[]state.ClientType{state.HTTPClientType, state.CLIClientType}),
 		Actions: []any{
 			testUtils.UpdateWithFilter{
 				CollectionID:  0,
@@ -43,8 +42,7 @@ func TestUpdateWithInvalidFilterType_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidFilterType_WithGoClient_ReturnsError(t *testing.T) {
 	type invalidFilterType struct{ Number int }
 	test := testUtils.TestCase{
-		Description:          "Test update users with invalid filter type (go client)",
-		SupportedClientTypes: immutable.Some([]state.ClientType{testUtils.GoClientType}),
+		SupportedClientTypes: immutable.Some([]state.ClientType{state.GoClientType}),
 		Actions: []any{
 			testUtils.UpdateWithFilter{
 				CollectionID:  0,
@@ -60,7 +58,6 @@ func TestUpdateWithInvalidFilterType_WithGoClient_ReturnsError(t *testing.T) {
 
 func TestUpdateWithEmptyFilter_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test update users with empty filter",
 		Actions: []any{
 			testUtils.UpdateWithFilter{
 				CollectionID:  0,
@@ -76,7 +73,6 @@ func TestUpdateWithEmptyFilter_ReturnsError(t *testing.T) {
 
 func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test update users with filter and invalid JSON",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -99,7 +95,6 @@ func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
 
 func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test update users with filter and invalid updator",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -122,7 +117,6 @@ func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
 
 func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test update users with filter and patch updator (not implemented so no change)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -157,7 +151,6 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 
 func TestUpdateWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test update users with filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

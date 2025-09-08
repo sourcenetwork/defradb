@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and min of count",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -83,21 +82,21 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeed
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_min": int64(1),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_count":   int(1),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_min": int64(1),
 							"_group": []map[string]any{
 								{
 									"Verified": false,
+									"_count":   int(1),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_min": int64(1),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
 									"_count":   int(1),
 								},
 							},

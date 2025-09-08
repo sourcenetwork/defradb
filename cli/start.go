@@ -99,12 +99,12 @@ func MakeStartCommand() *cobra.Command {
 				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
+				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
 				netConfig.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				netConfig.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
 				netConfig.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
 				netConfig.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
-				netConfig.WithRetryInterval(replicatorRetryIntervals),
 
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
@@ -332,11 +332,11 @@ func MakeStartCommand() *cobra.Command {
 		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().String(
 		"node-acp-enable",
-		cfg.GetString(configFlags["acp.node.enable"]),
+		cfg.GetString(configFlags["node-acp-enable"]),
 		"Enable the node access control system. Defaults to `false`.")
 	cmd.PersistentFlags().String(
 		"document-acp-type",
-		cfg.GetString(configFlags["acp.document.type"]),
+		cfg.GetString(configFlags["document-acp-type"]),
 		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",

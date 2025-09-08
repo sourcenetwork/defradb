@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -40,9 +41,8 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 	require.NoError(t, err)
 
 	test := testUtils.TestCase{
-		Description: "Simple view with transform",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						firstName: String
@@ -81,7 +81,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 						[
 							{
 								"op": "replace",
-								"path": "/bafkreigz4kfik46hfu7zs4l762vjrlowt6qe3kajq2pz6u7ggyyzkrrjeu/Sources/0/Transform",
+								"path": "/UserView/Sources/0/Transform",
 								"value": %s
 							}
 						]

@@ -18,7 +18,6 @@ import (
 
 func TestQueryCommitsWithCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -38,7 +37,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						commits(
-							cid: "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy"
+							cid: "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm"
 						) {
 							cid
 						}
@@ -46,7 +45,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 						},
 					},
 				},
@@ -60,7 +59,6 @@ func TestQueryCommitsWithCid(t *testing.T) {
 func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -78,7 +76,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						commits(
-							cid: "bafyreiexx65zeu6rln4yiw7lav4up5bnfnbkti4kguw3vdencwddqhv45e"
+							cid: "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q"
 						) {
 							cid
 						}
@@ -86,7 +84,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{
 						{
-							"cid": "bafyreiexx65zeu6rln4yiw7lav4up5bnfnbkti4kguw3vdencwddqhv45e",
+							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
 						},
 					},
 				},
@@ -99,7 +97,6 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by invalid CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -130,7 +127,6 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by invalid, short CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{
@@ -161,7 +157,6 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by unknown CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
 			testUtils.CreateDoc{

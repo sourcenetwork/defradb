@@ -73,11 +73,11 @@ func setupNode(
 		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
 	}
 
-	switch documentACPType {
-	case LocalDocumentACPType:
+	switch s.DocumentACPType {
+	case state.LocalDocumentACPType:
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
-	case SourceHubDocumentACPType:
+	case state.SourceHubDocumentACPType:
 		if len(s.DocumentACPOptions) == 0 {
 			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.T, err)
@@ -141,20 +141,21 @@ func setupNode(
 		opts = append(opts, node.WithDisableP2P(false))
 	}
 
-	node, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = node.Start(s.Ctx)
-	resetStateContext(s)
+	err = nodeObj.Start(s.Ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := setupClient(s, node)
+	c, err := setupClient(s, nodeObj)
+
+	resetStateContext(s)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
@@ -168,9 +169,7 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	if node.Peer != nil {
-		st.AddrInfo = node.Peer.PeerInfo()
-	}
+	st.CachedPeerInfo = nodeObj.DB.PeerInfo()
 
 	return st, nil
 }

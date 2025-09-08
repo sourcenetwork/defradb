@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
@@ -118,7 +119,7 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
@@ -180,25 +181,6 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 							},
 						},
 						{
-							"cid":   gomega.And(doc1NameCid, uniqueCid),
-							"links": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc1AgeCid, uniqueCid),
-							"links": []map[string]any{},
-						},
-						{
-							"cid": gomega.And(doc1CreateCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc1NameCid,
-								},
-								{
-									"cid": doc1AgeCid,
-								},
-							},
-						},
-						{
 							"cid":   gomega.And(doc2NameCid, uniqueCid),
 							"links": []map[string]any{},
 						},
@@ -214,6 +196,25 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 								},
 								{
 									"cid": doc2AgeCid,
+								},
+							},
+						},
+						{
+							"cid":   gomega.And(doc1NameCid, uniqueCid),
+							"links": []map[string]any{},
+						},
+						{
+							"cid":   gomega.And(doc1AgeCid, uniqueCid),
+							"links": []map[string]any{},
+						},
+						{
+							"cid": gomega.And(doc1CreateCid, uniqueCid),
+							"links": []map[string]any{
+								{
+									"cid": doc1NameCid,
+								},
+								{
+									"cid": doc1AgeCid,
 								},
 							},
 						},

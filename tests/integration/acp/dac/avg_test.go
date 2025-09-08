@@ -18,7 +18,6 @@ import (
 
 func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query average without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -42,7 +41,6 @@ func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryAverageWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query average with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -67,7 +65,6 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 
 func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query average without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),

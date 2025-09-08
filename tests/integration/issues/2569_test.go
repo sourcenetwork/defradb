@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -28,12 +29,12 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -73,12 +74,12 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -118,8 +119,8 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		SupportedMutationTypes: immutable.Some(
@@ -132,7 +133,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String

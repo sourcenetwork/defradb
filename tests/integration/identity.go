@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -80,9 +81,13 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 		if ok {
 			fullIdent.SetBearerToken(token)
 		} else {
-			audience := getNodeAudience(s, nodeIndex)
-			if documentACPType == SourceHubDocumentACPType || audience.HasValue() {
-				err := fullIdent.UpdateToken(authTokenExpiration, audience, immutable.Some(s.SourcehubAddress))
+			audience := state.GetNodeAudience(s, nodeIndex)
+			if s.DocumentACPType == state.SourceHubDocumentACPType || audience.HasValue() {
+				err := fullIdent.UpdateToken(
+					action.AuthTokenExpiration,
+					audience,
+					immutable.Some(s.SourcehubAddress),
+				)
 				require.NoError(s.T, err)
 				identHolder.NodeTokens[nodeIndex] = fullIdent.BearerToken()
 			}
@@ -91,7 +96,7 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 	return ident
 }
 
-// getIdentity returns an identity for the request specific to the node.
+// getIdentityForRequestSpecificToNode returns an identity for the request specific to the node.
 func getIdentityForRequestSpecificToNode(
 	s *state.State,
 	identity immutable.Option[state.Identity],

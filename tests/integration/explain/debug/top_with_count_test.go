@@ -41,8 +41,6 @@ var topLevelCountPattern = dataMap{
 func TestDebugExplainTopLevelCountRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) top-level count request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -62,8 +60,6 @@ func TestDebugExplainTopLevelCountRequest(t *testing.T) {
 
 func TestDebugExplainTopLevelCountRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) top-level count request with filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

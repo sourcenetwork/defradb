@@ -16,15 +16,15 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
 func TestView_SimpleWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with transform",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -95,9 +95,8 @@ func TestView_SimpleWithTransform(t *testing.T) {
 
 func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with multiple transforms",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -180,9 +179,8 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 
 func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with transform returning more docs than input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -253,9 +251,8 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 
 func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with transform returning fewer docs than input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
@@ -70,7 +71,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 
 			// check if self referencing and remove from docMap for key creation
 			resetMap := map[string]any{}
-			for _, field := range col.Schema().Fields {
+			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
 						if docMap[request.NewDocIDFieldName] == val {
@@ -84,7 +85,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap, col.Definition())
+			doc, err := client.NewDocFromMap(docMap, col.Version())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
@@ -134,12 +135,6 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			cols = append(cols, col)
 		}
 	}
-
-	definitions := make([]client.CollectionDefinition, 0, len(cols))
-	for _, col := range cols {
-		definitions = append(definitions, col.Definition())
-	}
-	definitionCache := client.NewDefinitionCache(definitions)
 
 	tempFile := config.Filepath + ".temp"
 	f, err := os.Create(tempFile)
@@ -213,7 +208,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			isSelfReference := false
 			refFieldName := ""
 			// replace any foreign key if it needs to be changed
-			for _, field := range col.Schema().Fields {
+			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
@@ -226,13 +221,12 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								refFieldName = field.Name + request.RelatedObjectID
 							}
 						} else {
-							foreignDef, ok := client.GetDefinition(definitionCache, col.Definition(), field.Kind)
-							if !ok {
-								// If the collection is not in the cache the backup was not configured to
-								// handle this collection.
-								continue
+							foreignDef, _, err := description.GetRelatedCollection(ctx, col.Version(), field.Kind)
+							if err != nil {
+								return err
 							}
-							foreignCol, err := db.newCollection(foreignDef.Version, foreignDef.Schema)
+
+							foreignCol, err := db.newCollection(foreignDef)
 							if err != nil {
 								return err
 							}
@@ -263,7 +257,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Definition())
+								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Version())
 								if err != nil {
 									return err
 								}
@@ -294,7 +288,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM, col.Definition())
+			newDoc, err := client.NewDocFromMap(docM, col.Version())
 			if err != nil {
 				return err
 			}

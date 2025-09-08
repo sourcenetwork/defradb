@@ -20,7 +20,6 @@ import (
 
 func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, with an invalid field.",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
@@ -32,7 +31,7 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -45,13 +44,12 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToOneNoChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, from the wrong side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 				}`,
 			},
 			testUtils.Request{
@@ -75,7 +73,6 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 
 func TestMutationCreateOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -140,7 +137,6 @@ func TestMutationCreateOneToOne(t *testing.T) {
 
 func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.CollectionSaveMutationType,
 			testUtils.CollectionNamedMutationType,
@@ -168,7 +164,6 @@ func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 
 func TestMutationCreateOneToOneSecondarySide_GQL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side",
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
 			testUtils.GQLRequestMutationType,
 		}),
@@ -195,7 +190,6 @@ func TestMutationCreateOneToOneSecondarySide_GQL(t *testing.T) {
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, errors due to link already existing, primary side",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,

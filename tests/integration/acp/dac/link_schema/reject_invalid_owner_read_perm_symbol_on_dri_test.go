@@ -14,13 +14,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, owner relation with difference (-) set operation on read permission expression, reject schema",
 
 		Actions: []any{
 
@@ -55,7 +54,7 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDR
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -65,10 +64,6 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDR
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
@@ -106,8 +101,6 @@ func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnReadPermissionExprOnDR
 func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner relation with intersection (&) set operation on read permission expression, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -141,7 +134,7 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOn
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -151,10 +144,6 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOn
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
@@ -192,8 +181,6 @@ func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOn
 func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Test acp, link schema, owner relation with invalid set operation on read permission expression, reject schema",
-
 		Actions: []any{
 
 			testUtils.AddDACPolicy{
@@ -227,7 +214,7 @@ func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDRI_S
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -237,10 +224,6 @@ func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDRI_S
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",

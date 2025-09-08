@@ -13,14 +13,14 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithIDs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete multiple documents that exist, when given multiple IDs.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -39,17 +39,17 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c", "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"]) {
+					delete_User(docID: ["bae-9287a692-50a2-5724-98ae-c1a944e29ef1", "bae-0879efe9-8717-5e4c-a77f-c81a453dc952"]) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+							"_docID": "bae-0879efe9-8717-5e4c-a77f-c81a453dc952",
 						},
 						{
-							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+							"_docID": "bae-9287a692-50a2-5724-98ae-c1a944e29ef1",
 						},
 					},
 				},
@@ -62,9 +62,8 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 
 func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using ids, empty ids set.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -117,9 +116,8 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 
 func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using ids, single unknown item.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -144,9 +142,8 @@ func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 
 func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using ids, single unknown item.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -171,9 +168,8 @@ func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 
 func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using ids, known and unknown items.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -187,14 +183,14 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c", "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"]) {
+					delete_User(docID: ["bae-9287a692-50a2-5724-98ae-c1a944e29ef1", "bae-0879efe9-8717-5e4c-a77f-c81a453dc952"]) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+							"_docID": "bae-9287a692-50a2-5724-98ae-c1a944e29ef1",
 						},
 					},
 				},

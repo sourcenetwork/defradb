@@ -12,19 +12,21 @@ package collection_version
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: true)
-						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
+						created: DateTime @default(dateTime: "2000-07-23T03:00:00.000Z")
 						name: String @default(string: "Bob")
 						age: Int @default(int: 10)
 						points: Float @default(float: 30)
@@ -32,8 +34,6 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 						image: Blob @default(blob: "ff0099")
 					}
 				`,
-			},
-			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -42,33 +42,48 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 							{
 								Name:         "active",
+								Kind:         client.FieldKind_NILLABLE_BOOL,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: true,
 							},
 							{
 								Name:         "age",
-								DefaultValue: float64(10),
+								Kind:         client.FieldKind_NILLABLE_INT,
+								Typ:          client.LWW_REGISTER,
+								DefaultValue: int32(10),
 							},
 							{
 								Name:         "created",
-								DefaultValue: "2000-07-23T03:00:00Z",
+								Kind:         client.FieldKind_NILLABLE_DATETIME,
+								Typ:          client.LWW_REGISTER,
+								DefaultValue: time.Date(2000, time.July, 23, 3, 0, 0, 0, time.UTC),
 							},
 							{
 								Name:         "image",
+								Kind:         client.FieldKind_NILLABLE_BLOB,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "ff0099",
 							},
 							{
 								Name:         "metadata",
+								Kind:         client.FieldKind_NILLABLE_JSON,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "{\"value\":1}",
 							},
 							{
 								Name:         "name",
+								Kind:         client.FieldKind_NILLABLE_STRING,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: "Bob",
 							},
 							{
 								Name:         "points",
+								Kind:         client.FieldKind_NILLABLE_FLOAT64,
+								Typ:          client.LWW_REGISTER,
 								DefaultValue: float64(30),
 							},
 						},
@@ -84,7 +99,7 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						active: Boolean @default(bool: invalid)
@@ -101,7 +116,7 @@ func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *test
 func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						active: Boolean @default(int: 10)
@@ -118,7 +133,7 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
@@ -135,7 +150,7 @@ func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *te
 func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						friend: User @default(string: "Bob")
@@ -152,7 +167,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testi
 func TestCollectionVersion_WithDefaultFieldValueOnList_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						names: [String] @default(string: "Bob")

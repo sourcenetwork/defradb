@@ -36,8 +36,6 @@ var countPattern = dataMap{
 func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with count on an inline array field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -70,7 +68,7 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "bafkreictgwjdhpmwh6a7uu65oggzcgolwiq5vb53x2ehhijh2yqzgwzjwu",
+							"collectionID":   "bafyreia2gcspqdssazilfdtwdccyb6rc6y2r4ryxeujojcdr46f77xwjwu",
 							"collectionName": "Book",
 							"prefixes": []string{
 								"/2",

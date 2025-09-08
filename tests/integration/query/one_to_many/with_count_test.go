@@ -16,97 +16,98 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToManyWithCount(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-many relation query from many side with count, no child records",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Author {
 							name
 							_count(published: {})
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"name":   "John Grisham",
-								"_count": 0,
-							},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":   "John Grisham",
+							"_count": 0,
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "One-to-many relation query from many side with count",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Theif Lord",
 						"rating": 4.8,
-						"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+						"author_id": "bae-f62bb529-3508-529d-8098-f97f9b67824c"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Cornelia Funke",
 						"age": 62,
 						"verified": false
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Author {
 							name
 							_count(published: {})
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"name":   "Cornelia Funke",
-								"_count": 1,
-							},
-							{
-								"name":   "John Grisham",
-								"_count": 2,
-							},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name":   "John Grisham",
+							"_count": 2,
+						},
+						{
+							"name":   "Cornelia Funke",
+							"_count": 1,
 						},
 					},
 				},
@@ -114,14 +115,11 @@ func TestQueryOneToManyWithCount(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -173,12 +171,12 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":           "Cornelia Funke",
-							"publishedCount": 1,
-						},
-						{
 							"name":           "John Grisham",
 							"publishedCount": 2,
+						},
+						{
+							"name":           "Cornelia Funke",
+							"publishedCount": 1,
 						},
 					},
 				},
@@ -191,7 +189,6 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

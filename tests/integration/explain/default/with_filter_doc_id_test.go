@@ -20,8 +20,6 @@ import (
 func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docID filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -50,7 +48,7 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -68,8 +66,6 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 
 func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with docIDs filter using one ID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -99,7 +95,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -117,8 +113,6 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 
 func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with docIDs filter using multiple but duplicate IDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -154,7 +148,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -173,8 +167,6 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 
 func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with docIDs filter using multiple unique IDs.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -210,7 +202,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -229,8 +221,6 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 
 func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) request with a filter to match ID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -264,7 +254,7 @@ func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_docID": dataMap{

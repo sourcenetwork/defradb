@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with both limit and offset on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -73,8 +71,6 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with both limit and offset on parent and limit on child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -116,8 +112,8 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 												},
 												"subTypeScanNode": dataMap{
 													"iterations":   uint64(2),
-													"docFetches":   uint64(3),
-													"fieldFetches": uint64(9),
+													"docFetches":   uint64(4),
+													"fieldFetches": uint64(12),
 													"indexFetches": uint64(0),
 												},
 											},

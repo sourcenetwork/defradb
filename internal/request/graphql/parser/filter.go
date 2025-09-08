@@ -81,16 +81,16 @@ func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any
 // from the filter conditions“
 func ParseFilterFieldsForDescription(
 	conditions map[string]any,
-	col client.CollectionDefinition,
-) ([]client.FieldDefinition, error) {
+	col client.CollectionVersion,
+) ([]client.CollectionFieldDescription, error) {
 	return parseFilterFieldsForDescriptionMap(conditions, col)
 }
 
 func parseFilterFieldsForDescriptionMap(
 	conditions map[string]any,
-	col client.CollectionDefinition,
-) ([]client.FieldDefinition, error) {
-	fields := make([]client.FieldDefinition, 0)
+	col client.CollectionVersion,
+) ([]client.CollectionFieldDescription, error) {
+	fields := make([]client.CollectionFieldDescription, 0)
 	for k, v := range conditions {
 		switch k {
 		case request.FilterOpOr, request.FilterOpAnd:
@@ -120,9 +120,9 @@ func parseFilterFieldsForDescriptionMap(
 
 func parseFilterFieldsForDescriptionSlice(
 	conditions []any,
-	schema client.CollectionDefinition,
-) ([]client.FieldDefinition, error) {
-	fields := make([]client.FieldDefinition, 0)
+	schema client.CollectionVersion,
+) ([]client.CollectionFieldDescription, error) {
+	fields := make([]client.CollectionFieldDescription, 0)
 	for _, v := range conditions {
 		switch cond := v.(type) {
 		case map[string]any:

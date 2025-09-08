@@ -18,84 +18,27 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineArrayWithBooleans(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "Simple inline array with no filter, nil boolean array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQueryInlineArrayWithBooleans_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John",
 						"likedIndexes": null
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 			 			Users {
 			 				name
 			 				likedIndexes
 			 			}
 			 		}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":         "John",
-								"likedIndexes": nil,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Description: "Simple inline array with no filter, empty boolean array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"name": "John",
-						"likedIndexes": []
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users {
-							name
-							likedIndexes
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":         "John",
-								"likedIndexes": []bool{},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Description: "Simple inline array with no filter, booleans",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"name": "John", 
-						"likedIndexes": [true, true, false, true]
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users {
-							name
-							likedIndexes
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":         "John",
-								"likedIndexes": []bool{true, true, false, true},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":         "John",
+							"likedIndexes": nil,
 						},
 					},
 				},
@@ -103,14 +46,71 @@ func TestQueryInlineArrayWithBooleans(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	executeTestCase(t, test)
+}
+func TestQueryInlineArrayWithBooleans_EmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John",
+						"likedIndexes": []
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users {
+							name
+							likedIndexes
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":         "John",
+							"likedIndexes": []bool{},
+						},
+					},
+				},
+			},
+		},
 	}
+
+	executeTestCase(t, test)
+}
+func TestQueryInlineArrayWithBooleans_NotEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John", 
+						"likedIndexes": [true, true, false, true]
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users {
+							name
+							likedIndexes
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":         "John",
+							"likedIndexes": []bool{true, true, false, true},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, booleans",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -145,164 +145,181 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithIntegers(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "Simple inline array with no filter, default integer array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQueryInlineArrayWithIntegers_Missing(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteIntegers
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":              "John",
-								"favouriteIntegers": nil,
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":              "John",
+							"favouriteIntegers": nil,
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "Simple inline array with no filter, nil integer array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John",
 						"favouriteIntegers": null
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteIntegers
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":              "John",
-								"favouriteIntegers": nil,
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":              "John",
+							"favouriteIntegers": nil,
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "Simple inline array with no filter, empty integer array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithIntegers_EmplyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John",
 						"favouriteIntegers": []
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteIntegers
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":              "John",
-								"favouriteIntegers": []int64{},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":              "John",
+							"favouriteIntegers": []int64{},
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "Simple inline array with no filter, positive integers",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithIntegers_NotEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John",
 						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteIntegers
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":              "John",
-								"favouriteIntegers": []int64{1, 2, 3, 5, 8},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":              "John",
+							"favouriteIntegers": []int64{1, 2, 3, 5, 8},
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "Simple inline array with no filter, negative integers",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithNegativeIntegers_NotEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "Andy",
 						"favouriteIntegers": [-1, -2, -3, -5, -8]
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteIntegers
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":              "Andy",
-								"favouriteIntegers": []int64{-1, -2, -3, -5, -8},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":              "Andy",
+							"favouriteIntegers": []int64{-1, -2, -3, -5, -8},
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "Simple inline array with no filter, mixed integers",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithMixIntegers_NotEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "Shahzad",
 						"favouriteIntegers": [-1, 2, -1, 1, 0]
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteIntegers
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":              "Shahzad",
-								"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":              "Shahzad",
+							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 						},
 					},
 				},
@@ -310,14 +327,10 @@ func TestQueryInlineArrayWithIntegers(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
-
 func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable ints",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -353,84 +366,27 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithFloats(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "Simple inline array with no filter, nil float array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQueryInlineArrayWithFloats_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John",
 						"favouriteFloats": null
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users {
-							name
-							favouriteFloats
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":            "John",
-								"favouriteFloats": nil,
-							},
-						},
-					},
-				},
 			},
-		},
-		{
-			Description: "Simple inline array with no filter, empty float array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"name": "John",
-						"favouriteFloats": []
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							favouriteFloats
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":            "John",
-								"favouriteFloats": []float64{},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Description: "Simple inline array with no filter, positive floats",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"name": "John",
-						"favouriteFloats": [3.1425, 0.00000000001, 10]
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users {
-							name
-							favouriteFloats
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":            "John",
-								"favouriteFloats": []float64{3.1425, 0.00000000001, 10},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":            "John",
+							"favouriteFloats": nil,
 						},
 					},
 				},
@@ -438,14 +394,73 @@ func TestQueryInlineArrayWithFloats(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithFloats_EmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John",
+						"favouriteFloats": []
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users {
+							name
+							favouriteFloats
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":            "John",
+							"favouriteFloats": []float64{},
+						},
+					},
+				},
+			},
+		},
 	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithFloats_NotEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John",
+						"favouriteFloats": [3.1425, 0.00000000001, 10]
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users {
+							name
+							favouriteFloats
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":            "John",
+							"favouriteFloats": []float64{3.1425, 0.00000000001, 10},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable floats",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -480,84 +495,27 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithStrings(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "Simple inline array with no filter, nil string array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQueryInlineArrayWithStrings_Null(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
 						"name": "John",
 						"preferredStrings": null
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users {
-							name
-							preferredStrings
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":             "John",
-								"preferredStrings": nil,
-							},
-						},
-					},
-				},
 			},
-		},
-		{
-			Description: "Simple inline array with no filter, empty string array",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"name": "John",
-						"preferredStrings": []
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			testUtils.Request{
+				Request: `query {
 						Users {
 							name
 							preferredStrings
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":             "John",
-								"preferredStrings": []string{},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			Description: "Simple inline array with no filter, strings",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
-						"name": "John",
-						"preferredStrings": ["", "the previous", "the first", "empty string"]
-					}`,
-				},
-				testUtils.Request{
-					Request: `query {
-						Users {
-							name
-							preferredStrings
-						}
-					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"name":             "John",
-								"preferredStrings": []string{"", "the previous", "the first", "empty string"},
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":             "John",
+							"preferredStrings": nil,
 						},
 					},
 				},
@@ -565,14 +523,73 @@ func TestQueryInlineArrayWithStrings(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithStrings_EmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John",
+						"preferredStrings": []
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users {
+							name
+							preferredStrings
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":             "John",
+							"preferredStrings": []string{},
+						},
+					},
+				},
+			},
+		},
 	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineArrayWithStrings_NotEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+						"name": "John",
+						"preferredStrings": ["", "the previous", "the first", "empty string"]
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						Users {
+							name
+							preferredStrings
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":             "John",
+							"preferredStrings": []string{"", "the previous", "the first", "empty string"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
 }
 
 func TestQueryInlineArrayWithNillableString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable strings",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

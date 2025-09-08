@@ -13,7 +13,6 @@ package http
 import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
-	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -25,12 +24,10 @@ var openApiSchemas = map[string]any{
 	"create_tx":                                &CreateTxResponse{},
 	"collection_update":                        &CollectionUpdateRequest{},
 	"collection_delete":                        &CollectionDeleteRequest{},
-	"peer_info":                                &peer.AddrInfo{},
+	"peer_info":                                &client.PeerInfo{},
 	"graphql_request":                          &GraphQLRequest{},
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
-	"schema":                                   &client.SchemaDescription{},
-	"collection_definition":                    &client.CollectionDefinition{},
 	"index":                                    &client.IndexDescription{},
 	"index_create_request":                     &client.IndexCreateRequest{},
 	"encrypted_index":                          &client.EncryptedIndexDescription{},
@@ -42,7 +39,7 @@ var openApiSchemas = map[string]any{
 	"replicator_params":                        &ReplicatorParams{},
 	"ccip_request":                             &CCIPRequest{},
 	"ccip_response":                            &CCIPResponse{},
-	"patch_schema_request":                     &patchSchemaRequest{},
+	"patch_collection_request":                 &patchCollectionRequest{},
 	"add_view_request":                         &addViewRequest{},
 	"migrate_request":                          &migrateRequest{},
 	"set_migration_request":                    &setMigrationRequest{},
@@ -133,7 +130,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Tags: openapi3.Tags{
 			&openapi3.Tag{
 				Name:        "schema",
-				Description: "Add or update schema definitions",
+				Description: "Upload GQL schemas to create collections",
 			},
 			&openapi3.Tag{
 				Name:        "collection",
@@ -149,7 +146,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "lens",
-				Description: "Migrate documents to and from schema versions",
+				Description: "Migrate documents to and from collection versions",
 			},
 			&openapi3.Tag{
 				Name:        "p2p",

@@ -15,14 +15,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create followed by delete in same transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -40,7 +40,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 				Results: map[string]any{
 					"create_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 						},
 					},
 				},
@@ -48,14 +48,14 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 			testUtils.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					delete_User(docID: "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9") {
+					delete_User(docID: "bae-866ffd9a-6067-5514-85dc-98d0c779436c") {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 						},
 					},
 				},
@@ -68,9 +68,8 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 
 func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create followed by delete on 2nd transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -88,7 +87,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 				Results: map[string]any{
 					"create_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 						},
 					},
 				},
@@ -96,7 +95,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 			testUtils.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					delete_User(docID: "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9") {
+					delete_User(docID: "bae-866ffd9a-6067-5514-85dc-98d0c779436c") {
 						_docID
 					}
 				}`,
@@ -116,7 +115,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(27),
 						},
@@ -144,9 +143,8 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Update followed by read in same transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -170,7 +168,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 						},
 					},
 				},
@@ -187,7 +185,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(28),
 						},
@@ -202,9 +200,8 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Update followed by read in different transaction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -230,7 +227,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(28),
 						},
@@ -249,7 +246,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(27),
 						},
@@ -264,9 +261,8 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Update by two different transactions",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -293,7 +289,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(28),
 						},
@@ -312,7 +308,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(29),
 						},
@@ -338,7 +334,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"_docID": "bae-948fc3eb-9b68-5a8d-9c3c-8f76157002a9",
+							"_docID": "bae-866ffd9a-6067-5514-85dc-98d0c779436c",
 							"name":   "John",
 							"age":    int64(28),
 						},

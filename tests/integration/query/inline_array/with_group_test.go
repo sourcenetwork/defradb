@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, mixed integers, group by string",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -47,10 +46,10 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 							"name": "Shahzad",
 							"_group": []map[string]any{
 								{
-									"favouriteIntegers": []int64{1, -2, 1, -1, 0},
+									"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 								},
 								{
-									"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+									"favouriteIntegers": []int64{1, -2, 1, -1, 0},
 								},
 							},
 						},
@@ -65,7 +64,6 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 
 func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, mixed integers, group by array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -97,22 +95,22 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"favouriteIntegers": []int64{1, 2, 3},
+							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 							"_group": []map[string]any{
 								{
-									"name": "John",
+
+									"name": "Shahzad",
+								},
+								{
+									"name": "Andy",
 								},
 							},
 						},
 						{
-							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+							"favouriteIntegers": []int64{1, 2, 3},
 							"_group": []map[string]any{
 								{
-									"name": "Andy",
-								},
-								{
-
-									"name": "Shahzad",
+									"name": "John",
 								},
 							},
 						},

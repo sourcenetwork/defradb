@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -25,7 +26,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -71,7 +72,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -118,7 +119,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -162,7 +163,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -213,7 +214,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -265,7 +266,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			// Node[2] will not be configured
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -339,7 +340,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -397,7 +398,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -458,7 +459,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -467,7 +468,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				// Add the same schema to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
@@ -507,12 +508,12 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"_docID": "bae-f895da58-3326-510a-87f3-d043ff5424ea",
 							"age":    int64(21),
 							"name":   "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+									"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
 								},
 							},
 						},
@@ -530,7 +531,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -539,7 +540,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				// Add the same schema to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
@@ -571,10 +572,10 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"_docID": "bae-f895da58-3326-510a-87f3-d043ff5424ea",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+									"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
 								},
 							},
 						},
@@ -599,7 +600,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String

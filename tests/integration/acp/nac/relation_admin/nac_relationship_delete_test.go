@@ -18,7 +18,6 @@ import (
 
 func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Grant admin relation, gain ability to add nac relationship",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},

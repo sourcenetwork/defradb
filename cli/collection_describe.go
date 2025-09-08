@@ -63,9 +63,9 @@ Example: view collection by version id. This will also return inactive collectio
 			if err != nil {
 				return err
 			}
-			colDesc := make([]client.CollectionDefinition, len(cols))
+			colDesc := make([]client.CollectionVersion, len(cols))
 			for i, col := range cols {
-				colDesc[i] = col.Definition()
+				colDesc[i] = col.Version()
 			}
 			return writeJSON(cmd, colDesc)
 		},

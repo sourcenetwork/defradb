@@ -13,14 +13,14 @@ package one_to_many_multiple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String
@@ -118,14 +118,14 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":             "Cornelia Funke",
-							"numberOfBooks":    1,
-							"numberOfArticles": 2,
-						},
-						{
 							"name":             "John Grisham",
 							"numberOfBooks":    2,
 							"numberOfArticles": 1,
+						},
+						{
+							"name":             "Cornelia Funke",
+							"numberOfBooks":    1,
+							"numberOfArticles": 2,
 						},
 					},
 				},
@@ -138,9 +138,8 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 
 func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String
@@ -245,12 +244,12 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "Cornelia Funke",
-							"_count": 3,
-						},
-						{
 							"name":   "John Grisham",
 							"_count": 4,
+						},
+						{
+							"name":   "Cornelia Funke",
+							"_count": 3,
 						},
 					},
 				},

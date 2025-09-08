@@ -36,8 +36,6 @@ var deletePattern = dataMap{
 func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with delete using filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -69,7 +67,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -91,8 +89,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using filter to match everything.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -121,7 +117,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -139,8 +135,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *
 
 func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using document id.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -171,7 +165,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -189,8 +183,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -225,7 +217,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -244,8 +236,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using no ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -274,7 +264,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -292,8 +282,6 @@ func TestDefaultExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 
 func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) mutation request with delete using filter and ids.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -346,7 +334,7 @@ func TestDefaultExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) 
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafkreig3ohatunyfbhmfgkvs5u7tn36dhaqfufajt5h47s6hi56cw2xm4a",
+							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_and": []any{

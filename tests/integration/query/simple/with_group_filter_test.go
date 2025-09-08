@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with child filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,18 +55,18 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"_group": []map[string]any{
-								{
-									"Age": int64(55),
-								},
-							},
-						},
-						{
 							"Name": "John",
 							"_group": []map[string]any{
 								{
 									"Age": int64(32),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
 								},
 							},
 						},
@@ -86,7 +85,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with number filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -150,7 +148,6 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 
 func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with number filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -203,7 +200,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child number filter that excludes all records",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -268,19 +264,19 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 							},
 						},
 						{
-							"Name": "Carlo",
+							"Name": "Alice",
 							"_group": []map[string]any{
 								{
-									"Verified": true,
+									"Verified": false,
 									"_group":   []map[string]any{},
 								},
 							},
 						},
 						{
-							"Name": "Alice",
+							"Name": "Carlo",
 							"_group": []map[string]any{
 								{
-									"Verified": false,
+									"Verified": true,
 									"_group":   []map[string]any{},
 								},
 							},
@@ -296,7 +292,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 
 func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with child filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -337,15 +332,6 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"G1": []map[string]any{
-								{
-									"Age": int64(55),
-								},
-							},
-							"G2": []map[string]any{},
-						},
-						{
 							"Name": "John",
 							"G1": []map[string]any{
 								{
@@ -357,6 +343,15 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 									"Age": int64(25),
 								},
 							},
+						},
+						{
+							"Name": "Carlo",
+							"G1": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+							"G2": []map[string]any{},
 						},
 						{
 							"Name": "Alice",

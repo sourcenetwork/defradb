@@ -13,14 +13,14 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion using document id that doesn't exist, where the collection is empty.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -29,7 +29,7 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"]) {
+					delete_User(docID: ["bae-9287a692-50a2-5724-98ae-c1a944e29ef1"]) {
 						_docID
 					}
 				}`,
@@ -45,9 +45,8 @@ func TestMutationDeletion_WithIDUnknownValue(t *testing.T) {
 
 func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion using document id that doesn't exist, where the collection is non-empty.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -61,7 +60,7 @@ func TestMutationDeletion_WithIDUnknownValueAndUnrelatedRecordInCollection(t *te
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"]) {
+					delete_User(docID: ["bae-9287a692-50a2-5724-98ae-c1a944e29ef1"]) {
 						_docID
 					}
 				}`,

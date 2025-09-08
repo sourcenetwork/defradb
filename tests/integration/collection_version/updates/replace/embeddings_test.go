@@ -14,13 +14,14 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -34,7 +35,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0/FieldName",
+							"path": "/Users/VectorEmbeddings/0/FieldName",
 							"value": "foo"
 						}
 					]
@@ -49,7 +50,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationField_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -63,7 +64,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0/Fields",
+							"path": "/Users/VectorEmbeddings/0/Fields",
 							"value": ["name", "foo"]
 						}
 					]
@@ -78,7 +79,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFieldKind_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -92,7 +93,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreidjpk55vtz3l5ouzkgfbxv2rnt3xekjb5aide7i246ngsqtgcbroa/VectorEmbeddings/0/Fields",
+							"path": "/Users/VectorEmbeddings/0/Fields",
 							"value": ["name", "custom"]
 						}
 					]
@@ -107,7 +108,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -121,22 +122,22 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0/Fields",
+							"path": "/Users/VectorEmbeddings/0/Fields",
 							"value": ["about"]
 						},
 						{
 							"op": "replace",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0/Provider",
+							"path": "/Users/VectorEmbeddings/0/Provider",
 							"value": "ollama"
 						},
 						{
 							"op": "replace",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0/Model",
+							"path": "/Users/VectorEmbeddings/0/Model",
 							"value": "nomic-embed-text"
 						},
 						{
 							"op": "replace",
-							"path": "/bafkreigf66gyhrju7qebw6wxe7qrnzqfegcqxizp5jsk3qnnpv3ronrcza/VectorEmbeddings/0/URL",
+							"path": "/Users/VectorEmbeddings/0/URL",
 							"value": "http://localhost:11434/api"
 						}
 					]

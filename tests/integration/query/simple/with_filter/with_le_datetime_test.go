@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic le DateTime filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -56,7 +55,6 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic le DateTime filter with greater value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -94,7 +92,6 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic le DateTime filter with null value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -131,7 +128,6 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter with nil value and non-nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
@@ -164,14 +160,14 @@ func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *test
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":      "Bob",
-							"Age":       int64(32),
-							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
-						},
-						{
 							"Name":      "John",
 							"Age":       int64(21),
 							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+						},
+						{
+							"Name":      "Bob",
+							"Age":       int64(32),
+							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
 						},
 					},
 				},

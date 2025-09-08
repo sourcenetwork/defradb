@@ -13,14 +13,14 @@ package one_to_one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String

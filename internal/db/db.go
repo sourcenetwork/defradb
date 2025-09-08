@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -97,6 +98,13 @@ type DB struct {
 
 	// SE replication coordinator
 	seCoordinator *se.ReplicationCoordinator
+
+	docMergeQueue *mergeQueue
+	colMergeQueue *mergeQueue
+
+	p2p *p2p.P2P
+	// Retry intervals when a replicator failure occurs.
+	retryIntervals []time.Duration
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -121,7 +129,7 @@ func newDB(
 	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	opts := &dbOptions{}
+	opts := defaultDBOptions()
 	for _, opt := range options {
 		opt(opts)
 	}
@@ -134,14 +142,17 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:    rootstore,
-		nodeACP:      nodeACP,
-		documentACP:  documentACP,
-		lensRegistry: lens,
-		parser:       parser,
-		options:      options,
-		events:       event.NewChannelBus(commandBufferSize, eventBufferSize),
-		ctxCancel:    cancel,
+		rootstore:      rootstore,
+		nodeACP:        nodeACP,
+		documentACP:    documentACP,
+		lensRegistry:   lens,
+		parser:         parser,
+		options:        options,
+		events:         event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctxCancel:      cancel,
+		docMergeQueue:  newMergeQueue(),
+		colMergeQueue:  newMergeQueue(),
+		retryIntervals: opts.retryIntervals,
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -156,12 +167,19 @@ func newDB(
 		lens.Init(db)
 	}
 
+	if opts.p2p.HasValue() {
+		p, err := p2p.New(ctx, db, opts.p2p.Value())
+		if err != nil {
+			return nil, err
+		}
+		db.p2p = p
+	}
+
 	err = db.initialize(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Initialize SE replication coordinator
 	if len(db.searchableEncryptionKey) > 0 {
 		coord, err := se.NewReplicationCoordinator(db, db.searchableEncryptionKey)
 		if err != nil {
@@ -169,12 +187,6 @@ func newDB(
 		}
 		db.seCoordinator = coord
 	}
-
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName)
-	if err != nil {
-		return nil, err
-	}
-	go db.handleMessages(ctx, sub)
 
 	return db, nil
 }
@@ -276,7 +288,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 			CollectionID: collection.Version().CollectionID,
 			Block:        headsIterator.CurrentRawBlock(),
 		}
-		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		db.sendUpdate(updateEvent)
 	}
 	return nil
 }
@@ -462,6 +474,11 @@ func (db *DB) MaxTxnRetries() int {
 		return db.maxTxnRetries.Value()
 	}
 	return defaultMaxTxnRetries
+}
+
+// RetryIntervals returns the replicator retry configuration.
+func (db *DB) RetryIntervals() []time.Duration {
+	return db.retryIntervals
 }
 
 // PrintDump prints the entire database to console.

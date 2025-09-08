@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdate_ReplaceFieldSizeContraint_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						foo: [Int] @constraints(size: 2)
@@ -31,12 +32,12 @@ func TestColVersionUpdate_ReplaceFieldSizeContraint_ShouldError(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreiegxruspmodnptoor6w5z6h42wjcao6souorcd2e5q3xtxxryxchu/Fields/1/Size",
+							"path": "/Users/Fields/1/Size",
 							"value": 3
 						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated.",
+				ExpectedError: "mutating an existing field is not supported.",
 			},
 		},
 	}

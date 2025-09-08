@@ -34,15 +34,13 @@ var dagScanPattern = dataMap{
 func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) commits query-op.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldName: "name") {
+					commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", fieldName: "name") {
 						links {
 							cid
 						}
@@ -59,7 +57,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 							"cid":       nil,
 							"fieldName": "name",
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+								"/d/bae-9e70648f-c722-5875-97f5-574ec6f703e9",
 							},
 						},
 					},
@@ -74,15 +72,13 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) commits query-op with only docID (no field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
+					commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
 						links {
 							cid
 						}
@@ -99,7 +95,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 							"cid":       nil,
 							"fieldName": nil,
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+								"/d/bae-9e70648f-c722-5875-97f5-574ec6f703e9",
 							},
 						},
 					},
@@ -114,15 +110,13 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) latestCommits query-op.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldName: "name") {
+					latestCommits(docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", fieldName: "name") {
 						cid
 						links {
 							cid
@@ -140,7 +134,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 							"cid":       nil,
 							"fieldName": "name",
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+								"/d/bae-9e70648f-c722-5875-97f5-574ec6f703e9",
 							},
 						},
 					},
@@ -155,15 +149,13 @@ func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) latestCommits query-op with only docID (no field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			testUtils.ExplainRequest{
 
 				Request: `query @explain {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
+					latestCommits(docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
 						cid
 						links {
 							cid
@@ -181,7 +173,7 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 							"cid":       nil,
 							"fieldName": "_C",
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
+								"/d/bae-9e70648f-c722-5875-97f5-574ec6f703e9/C",
 							},
 						},
 					},
@@ -195,8 +187,6 @@ func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 
 func TestDefaultExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) latestCommits query without docID.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -222,8 +212,6 @@ func TestDefaultExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 
 func TestDefaultExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (default) latestCommits query without any arguments.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

@@ -13,8 +13,10 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 
+	cbindings "github.com/sourcenetwork/defradb/cbindings"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -23,25 +25,32 @@ import (
 )
 
 func init() {
-	if !goClient && !httpClient && !cliClient {
+	if !goClient && !httpClient && !cliClient && !cClient {
 		// Default is to test go client type.
 		goClient = true
+	}
+	if cClient {
+		skipNetworkTests = false
+		skipBackupTests = true
 	}
 }
 
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state.State, node *node.Node) (clients.Client, error) {
+func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	switch s.ClientType {
-	case HTTPClientType:
-		return http.NewWrapper(node)
+	case state.HTTPClientType:
+		return http.NewWrapper(nodeObj)
 
-	case CLIClientType:
-		return cli.NewWrapper(node, s.SourcehubAddress)
+	case state.CLIClientType:
+		return cli.NewWrapper(nodeObj, s.SourcehubAddress)
 
-	case GoClientType:
-		return newGoClientWrapper(node), nil
+	case state.GoClientType:
+		return newGoClientWrapper(nodeObj), nil
+
+	case state.CClientType:
+		return cbindings.NewCWrapper(nodeObj)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
@@ -50,19 +59,16 @@ func setupClient(s *state.State, node *node.Node) (clients.Client, error) {
 
 type goClientWrapper struct {
 	node.DB
-	node.Peer
+	node *node.Node
 }
 
 func newGoClientWrapper(n *node.Node) *goClientWrapper {
 	return &goClientWrapper{
 		DB:   n.DB,
-		Peer: n.Peer,
+		node: n,
 	}
 }
 
 func (w *goClientWrapper) Close() {
-	if w.Peer != nil {
-		w.Peer.Close()
-	}
-	w.DB.Close()
+	_ = w.node.Close(context.Background())
 }

@@ -68,13 +68,12 @@ endif
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
 JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
-JS_TEST_FLAGS=-exec="$$(go env GOROOT)/misc/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
+JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
-PLAYGROUND_DIRECTORY=playground
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=./...
 
@@ -167,11 +166,11 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v3@v3.2
+	go install github.com/vektra/mockery/v3@v3.5.2
 
 .PHONY: deps\:playground
 deps\:playground:
-	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
+	go generate -tags playground ./playground/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -195,7 +194,8 @@ deps:
 
 .PHONY: mocks
 mocks:
-	@$(MAKE) deps:mocks
+	@$(MAKE) deps:mocks && \
+	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: ollama
@@ -300,6 +300,10 @@ test\:http:
 .PHONY: test\:cli
 test\:cli:
 	DEFRA_CLIENT_CLI=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+	
+.PHONY: test\:c
+test\:c:
+	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -423,7 +427,6 @@ docs\:godoc:
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
-	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header playground/README.md
 
 .PHONY: fix
 fix:
@@ -432,3 +435,6 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
+	
+build-c-shared-linux:
+	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)

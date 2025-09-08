@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -29,12 +30,12 @@ func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Fields",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Fields",
 							"value": [{}]
 						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated.",
+				ExpectedError: "no type found for given name. Type: 0",
 			},
 		},
 	}
@@ -44,7 +45,7 @@ func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String @default(string: "Bob")
@@ -56,12 +57,12 @@ func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe/Fields/1/DefaultValue",
+							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i/Fields/1/DefaultValue",
 							"value": "Alice"
 						}
 					]
 				`,
-				ExpectedError: "collection fields cannot be mutated.",
+				ExpectedError: "mutating an existing field is not supported",
 			},
 		},
 	}

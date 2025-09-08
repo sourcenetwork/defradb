@@ -13,13 +13,12 @@ package test_acp_dac_relationship_doc_actor_delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, owner revokes delete access from another actor, they can not delete anymore",
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -78,7 +77,7 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 						type Users @policy(
 							id: "{{.Policy0}}",
@@ -88,10 +87,6 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 							age: Int
 						}
 					`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			// Creating two documents because need one to do the test on after one is deleted.
@@ -164,11 +159,11 @@ func TestACP_OwnerRevokesDeleteAccess_OtherActorCanNoLongerDelete(t *testing.T) 
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Shahzad",
+							"name": "Shahzad Lone",
 							"age":  int64(28),
 						},
 						{
-							"name": "Shahzad Lone",
+							"name": "Shahzad",
 							"age":  int64(28),
 						},
 					},

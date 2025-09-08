@@ -13,8 +13,7 @@ package index
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +25,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -50,9 +49,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 					"name": "Islam",
 					"custom": {"height": 168}
 				}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-0b423e0b-2c5d-566f-8266-91211353ab66",
-					errors.NewKV("custom", map[string]any{"height": float64(168)})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 			testUtils.CreateDoc{
 				Doc: `{
@@ -71,9 +68,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 					"name": "Keenan",
 					"custom": 30
 				}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-67dd014b-4a26-55ab-a71d-fbd14a3fcecc",
-					errors.NewKV("custom", 30)).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 			testUtils.Request{
 				Request: req,
@@ -106,7 +101,7 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 

@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, average with filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 
 func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, average with datetime filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, average on undefined object",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -34,7 +33,6 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, average on undefined field",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -50,7 +48,6 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, average on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {
@@ -68,7 +65,6 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithAverage(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, average",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -98,7 +94,6 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 
 func TestQuerySimple_WithAliasedAverage_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, aliased average on empty",
 		Actions: []any{
 			testUtils.Request{
 				Request: `query {

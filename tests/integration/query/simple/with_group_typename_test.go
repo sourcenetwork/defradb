@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query group by and parent typename",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -49,7 +48,6 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query group by and child typename",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

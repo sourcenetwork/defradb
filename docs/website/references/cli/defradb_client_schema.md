@@ -38,7 +38,4 @@ Make changes, updates, or look for existing schema types.
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client schema add](defradb_client_schema_add.md)	 - Add new schema
-* [defradb client schema describe](defradb_client_schema_describe.md)	 - View schema descriptions.
-* [defradb client schema patch](defradb_client_schema_patch.md)	 - Patch an existing schema type
-* [defradb client schema set-active](defradb_client_schema_set-active.md)	 - Set the active collection version
 

@@ -20,8 +20,6 @@ import (
 func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with update using document IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -32,8 +30,8 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						docID: [
-							"bae-14f20db7-3654-58de-9156-596ef2cfd790",
-							"bae-49f715e7-7f01-5509-a213-ed98cb81583f"
+							"bae-b7bb2486-6364-58c0-bf60-91ff90ee72be",
+							"bae-0d4eb5f3-499d-553d-9fb9-80a19463ec9a"
 						],
 						input: {country: "USA"}
 					) {
@@ -78,8 +76,6 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 
 func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) mutation request with update using filter.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

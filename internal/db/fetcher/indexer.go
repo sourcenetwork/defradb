@@ -33,8 +33,8 @@ type indexFetcher struct {
 	col           client.Collection
 	indexFilter   *mapper.Filter
 	mapping       *core.DocumentMapping
-	indexedFields []client.FieldDefinition
-	fieldsByID    map[uint32]client.FieldDefinition
+	indexedFields []client.CollectionFieldDescription
+	fieldsByID    map[uint32]client.CollectionFieldDescription
 	indexDesc     client.IndexDescription
 	indexIter     indexIterator
 	currentDocID  immutable.Option[string]
@@ -49,7 +49,7 @@ var _ fetcher = (*indexFetcher)(nil)
 func newIndexFetcher(
 	ctx context.Context,
 	txn datastore.Txn,
-	fieldsByID map[uint32]client.FieldDefinition,
+	fieldsByID map[uint32]client.CollectionFieldDescription,
 	indexDesc client.IndexDescription,
 	docFilter *mapper.Filter,
 	col client.Collection,
@@ -79,7 +79,7 @@ func newIndexFetcher(
 	}
 
 	for _, indexedField := range f.indexDesc.Fields {
-		field, ok := f.col.Definition().GetFieldByName(indexedField.Name)
+		field, ok := f.col.Version().GetFieldByName(indexedField.Name)
 		if ok {
 			f.indexedFields = append(f.indexedFields, field)
 		}

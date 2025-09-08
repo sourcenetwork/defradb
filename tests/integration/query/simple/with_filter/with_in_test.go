@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithIntInFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with special filter (or)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -72,7 +71,6 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 
 func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with _in filter on float",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -107,10 +105,10 @@ func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
+							"Name": "John",
 						},
 						{
-							"Name": "John",
+							"Name": "Carlo",
 						},
 					},
 				},
@@ -123,7 +121,6 @@ func TestQuerySimpleWithIntInFilterOnFloat(t *testing.T) {
 
 func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with special filter (or)",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -164,16 +161,16 @@ func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Fred",
-							"Age":  nil,
-						},
-						{
 							"Name": "Carlo",
 							"Age":  int64(55),
 						},
 						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "Fred",
+							"Age":  nil,
 						},
 					},
 				},

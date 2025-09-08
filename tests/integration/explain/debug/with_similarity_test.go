@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,10 +37,8 @@ var similarityPattern = dataMap{
 func TestDebugExplainRequestWith_WithSimilarity(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with similarity.",
-
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type User {
 					name: String
 					pointsList: [Float64!]

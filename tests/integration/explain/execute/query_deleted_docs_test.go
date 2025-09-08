@@ -19,20 +19,19 @@ import (
 
 func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (execute) query with deleted documents.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 			create2AddressDocuments(),
 			testUtils.Request{
 				Request: `mutation  {
-					delete_ContactAddress(docID: ["bae-49f715e7-7f01-5509-a213-ed98cb81583f"]) {
+					delete_ContactAddress(docID: ["bae-0d4eb5f3-499d-553d-9fb9-80a19463ec9a"]) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_ContactAddress": []map[string]any{
-						{"_docID": "bae-49f715e7-7f01-5509-a213-ed98cb81583f"},
+						{"_docID": "bae-0d4eb5f3-499d-553d-9fb9-80a19463ec9a"},
 					},
 				},
 			},

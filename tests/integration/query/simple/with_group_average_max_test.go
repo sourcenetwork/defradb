@@ -18,7 +18,6 @@ import (
 
 func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and max of average on int",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -83,22 +82,22 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_max": float64(55),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_avg":     float64(55),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_max": float64(19),
 							"_group": []map[string]any{
 								{
 									"Verified": false,
 									"_avg":     float64(19),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_max": float64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(55),
 								},
 							},
 						},
@@ -113,7 +112,6 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, average and max on non-rendered group integer value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

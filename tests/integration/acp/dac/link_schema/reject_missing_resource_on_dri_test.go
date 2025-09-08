@@ -13,13 +13,12 @@ package test_acp_dac_link_schema
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, but specified resource does not exist, reject schema",
 
 		Actions: []any{
 
@@ -54,7 +53,7 @@ func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *tes
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -64,10 +63,6 @@ func TestACP_LinkSchema_SpecifiedResourceDoesNotExistOnDRI_SchemaRejected(t *tes
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: "resource does not exist on the specified policy",
 			},

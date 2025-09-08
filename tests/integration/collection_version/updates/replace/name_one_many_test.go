@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceNameOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -49,7 +50,7 @@ func TestColVersionUpdateReplaceNameOneToMany(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreifusksmaa5pzrz3s7l5empvmixh6vgekpbztuqc2jwpmvsagwy75a/Name",
+							"path": "/Author/Name",
 							"value": "Writer"
 						}
 					]

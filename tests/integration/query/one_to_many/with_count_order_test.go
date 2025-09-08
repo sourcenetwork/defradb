@@ -18,7 +18,6 @@ import (
 
 func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with order alias",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,

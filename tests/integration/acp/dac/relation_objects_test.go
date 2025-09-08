@@ -18,7 +18,6 @@ import (
 
 func TestACP_QueryManyToOneRelationObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query employees with their companies without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -55,7 +54,6 @@ func TestACP_QueryManyToOneRelationObjectsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryOneToManyRelationObjectsWithoutIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query companies with their employees without identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -90,7 +88,6 @@ func TestACP_QueryOneToManyRelationObjectsWithoutIdentity(t *testing.T) {
 
 func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query employees with their companies with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -110,16 +107,16 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 				Results: map[string]any{
 					"Employee": []map[string]any{
 						{
+							"name":    "PubEmp in PubCompany",
+							"company": map[string]any{"name": "Public Company"},
+						},
+						{
 							"name":    "PrivateEmp in PubCompany",
 							"company": map[string]any{"name": "Public Company"},
 						},
 						{
 							"name":    "PrivateEmp in PrivateCompany",
 							"company": map[string]any{"name": "Private Company"},
-						},
-						{
-							"name":    "PubEmp in PubCompany",
-							"company": map[string]any{"name": "Public Company"},
 						},
 						{
 							"name":    "PubEmp in PrivateCompany",
@@ -136,7 +133,6 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 
 func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query companies with their employees with identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -158,8 +154,8 @@ func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 						{
 							"name": "Public Company",
 							"employees": []map[string]any{
-								{"name": "PrivateEmp in PubCompany"},
 								{"name": "PubEmp in PubCompany"},
+								{"name": "PrivateEmp in PubCompany"},
 							},
 						},
 						{
@@ -180,7 +176,6 @@ func TestACP_QueryOneToManyRelationObjectsWithIdentity(t *testing.T) {
 
 func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query employees with their companies with wrong identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
@@ -218,7 +213,6 @@ func TestACP_QueryManyToOneRelationObjectsWithWrongIdentity(t *testing.T) {
 
 func TestACP_QueryOneToManyRelationObjectsWithWrongIdentity(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test acp, query companies with their employees with wrong identity",
 
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),

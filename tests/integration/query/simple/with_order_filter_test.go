@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with order & filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

@@ -59,3 +59,7 @@ func NewNodeACP(ctx context.Context, opts ...NodeACPOpt) (db.NACInfo, error) {
 
 	return db.NewNACInfo(ctx, options.path, options.isEnabled)
 }
+
+func (o *NodeACPOptions) IsEnabled() bool {
+	return o.isEnabled
+}

@@ -13,6 +13,7 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -55,7 +56,7 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -65,10 +66,6 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 
 			testUtils.PatchCollection{
@@ -76,7 +73,7 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq/Policy"
+							"path": "/bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma/Policy"
 						}
 					]
 				`,

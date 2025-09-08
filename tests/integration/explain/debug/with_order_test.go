@@ -36,8 +36,6 @@ var orderPattern = dataMap{
 func TestDebugExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with ascending order on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -60,8 +58,6 @@ func TestDebugExplainRequestWithAscendingOrderOnParent(t *testing.T) {
 
 func TestDebugExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (debug) request with multiple order fields on parent.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,

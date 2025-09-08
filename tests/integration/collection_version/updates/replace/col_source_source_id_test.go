@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -31,7 +32,7 @@ func TestColVersionUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *tes
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -43,7 +44,7 @@ func TestColVersionUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *tes
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe/Sources/0/SourceCollectionID",
+							"path": "/Users/Sources/0/SourceCollectionID",
 							"value": "gfddsfaa"
 						}
 					]

@@ -51,6 +51,9 @@ func init() {
 		&crdt.DocCompositeDelta{},
 		&crdt.CounterDelta{},
 		&crdt.CollectionDelta{},
+		&crdt.CollectionSetDelta{},
+		&crdt.CollectionDefinitionDelta{},
+		&crdt.FieldDefinitionDelta{},
 	)
 
 	EncryptionSchema, EncryptionSchemaPrototype = mustSetSchema(

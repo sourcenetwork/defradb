@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithNotInFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with not-in filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -58,10 +57,10 @@ func TestQuerySimpleWithNotInFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},

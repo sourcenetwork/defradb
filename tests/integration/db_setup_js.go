@@ -38,10 +38,10 @@ func setupNode(
 	opts = append(opts, node.WithBadgerInMemory(true))
 
 	switch documentACPType {
-	case LocalDocumentACPType:
+	case state.LocalDocumentACPType:
 		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
-	case SourceHubDocumentACPType:
+	case state.SourceHubDocumentACPType:
 		if len(s.DocumentACPOptions) == 0 {
 			var err error
 			s.DocumentACPOptions, err = setupSourceHub(s)
@@ -57,17 +57,17 @@ func setupNode(
 		// no-op, use the `node` package default
 	}
 
-	node, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = node.Start(s.Ctx)
+	err = nodeObj.Start(s.Ctx)
 	resetStateContext(s)
 	if err != nil {
 		return nil, err
 	}
-	c, err := setupClient(s, node)
+	c, err := setupClient(s, nodeObj)
 	if err != nil {
 		return nil, err
 	}

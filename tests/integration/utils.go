@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -43,6 +41,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -182,16 +181,19 @@ func ExecuteTestCase(
 
 	var clients []state.ClientType
 	if httpClient {
-		clients = append(clients, HTTPClientType)
+		clients = append(clients, state.HTTPClientType)
 	}
 	if goClient {
-		clients = append(clients, GoClientType)
+		clients = append(clients, state.GoClientType)
 	}
 	if cliClient {
-		clients = append(clients, CLIClientType)
+		clients = append(clients, state.CLIClientType)
 	}
 	if jsClient {
-		clients = append(clients, JSClientType)
+		clients = append(clients, state.JSClientType)
+	}
+	if cClient {
+		clients = append(clients, state.CClientType)
 	}
 
 	var databases []state.DatabaseType
@@ -224,11 +226,24 @@ func ExecuteTestCase(
 	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
 
-	ctx := context.Background()
 	for _, ct := range clients {
 		for _, dbt := range databases {
 			for _, kms := range kmsList {
-				executeTestCase(ctx, t, collectionNames, testCase, kms, dbt, ct)
+				// Some goroutine depend on the context to be cancelled in order to exit.
+				// Cancelling the context after each text case should limit the chances of
+				// having leaking goroutines.
+				ctx, cancel := context.WithCancel(context.Background())
+				executeTestCase(
+					ctx,
+					t,
+					collectionNames,
+					testCase,
+					kms,
+					dbt,
+					ct,
+					documentACPType,
+				)
+				cancel()
 			}
 		}
 	}
@@ -242,6 +257,7 @@ func executeTestCase(
 	kms state.KMSType,
 	dbt state.DatabaseType,
 	clientType state.ClientType,
+	documentACPType state.DocumentACPType,
 ) {
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
@@ -261,12 +277,21 @@ func executeTestCase(
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
-	log.InfoContext(ctx, testCase.Description, logAttrs...)
+	log.InfoContext(ctx, t.Name(), logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
 
-	s := state.NewState(ctx, t, testCase.IdentityTypes, testCase.EnableSearchableEncryption,kms, dbt, 
-		clientType, collectionNames)
+	s := state.NewState(
+		ctx,
+		t,
+		testCase.IdentityTypes,
+		testCase.EnableSearchableEncryption,
+		kms,
+		dbt,
+		clientType,
+		documentACPType,
+		collectionNames,
+	)
 	setStartingNodes(s, testCase)
 
 	// It is very important that the databases are always closed, otherwise resources will leak
@@ -299,7 +324,7 @@ func executeTestCase(
 
 		// a safety in case the stream hangs - we don't want the tests to run forever.
 		case <-time.After(subscriptionTimeout):
-			assert.Fail(t, "timeout occurred while waiting for data stream", testCase.Description)
+			assert.Fail(t, "timeout occurred while waiting for data stream")
 		}
 	}
 }
@@ -310,7 +335,14 @@ func performAction(
 	actionIndex int,
 	act any,
 ) {
+	if stateful, ok := act.(action.Stateful); ok {
+		stateful.SetState(s)
+	}
+
 	switch action := act.(type) {
+	case action.Action:
+		action.Execute()
+
 	case ConfigureNode:
 		configureNode(s, testCase, action)
 
@@ -350,23 +382,14 @@ func performAction(
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
 
-	case SchemaUpdate:
-		updateSchema(s, action)
-
-	case SchemaPatch:
-		patchSchema(s, action)
-
 	case PatchCollection:
 		patchCollection(s, action)
-
-	case GetSchema:
-		getSchema(s, action)
 
 	case GetCollections:
 		getCollections(s, action)
 
-	case SetActiveSchemaVersion:
-		setActiveSchemaVersion(s, action)
+	case SetActiveCollectionVersion:
+		setActiveCollectionVersion(s, action)
 
 	case CreateView:
 		createView(s, action)
@@ -497,7 +520,7 @@ func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutabl
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Version.Name], Doc: docJSON, NodeID: nodeID})
+		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID})
 	}
 }
 
@@ -505,10 +528,10 @@ func generateDocs(s *state.State, action GenerateDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
-	defs := make([]client.CollectionDefinition, 0, len(collections))
+	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, collection := range collections {
 		if len(action.ForCollections) == 0 || slices.Contains(action.ForCollections, collection.Name()) {
-			defs = append(defs, collection.Definition())
+			defs = append(defs, collection.Version())
 		}
 	}
 	docs, err := gen.AutoGenerate(defs, action.Options...)
@@ -522,9 +545,9 @@ func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	firstNodesID := nodeIDs[0]
 	collections := s.Nodes[firstNodesID].Collections
-	defs := make([]client.CollectionDefinition, 0, len(collections))
+	defs := make([]client.CollectionVersion, 0, len(collections))
 	for _, col := range collections {
-		defs = append(defs, col.Definition())
+		defs = append(defs, col.Version())
 	}
 	docs, err := predefined.Create(defs, action.Docs)
 	if err != nil {
@@ -592,7 +615,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 	for _, a := range testCase.Actions {
 		switch action := a.(type) {
-		case SchemaUpdate:
+		case *action.AddSchema:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
@@ -741,7 +764,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case SchemaUpdate, CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -817,11 +840,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		var addresses []string
-		for _, addr := range s.Nodes[nodeIndex].AddrInfo.Addrs {
-			addresses = append(addresses, addr.String())
-		}
-		opts = append(opts, netConfig.WithListenAddresses(addresses...))
+		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].CachedPeerInfo.Addresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -875,9 +894,9 @@ func refreshTokens(
 		if fullIdentityToUpdate, ok := identityToUpdate.(acpIdentity.FullIdentity); ok {
 			nodeTokensToUpdate := identHolder.NodeTokens
 			for nodeKey := range identHolder.NodeTokens {
-				if audience := getNodeAudience(s, nodeKey); audience.HasValue() {
+				if audience := state.GetNodeAudience(s, nodeKey); audience.HasValue() {
 					err := fullIdentityToUpdate.UpdateToken(
-						authTokenExpiration,
+						action.AuthTokenExpiration,
 						audience,
 						immutable.Some(s.SourcehubAddress),
 					)
@@ -948,7 +967,7 @@ func configureNode(
 	netNodeOpts := action()
 	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
 
-	nodeOpts := []node.Option{netConfig.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
+	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {
 		nodeOpts = append(nodeOpts, opt)
 	}
@@ -1102,100 +1121,13 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t te
 	}
 }
 
-// updateSchema updates the schema using the given details.
-func updateSchema(
-	s *state.State,
-	action SchemaUpdate,
-) {
-	// Do some sanitation checks if PolicyIDs are to be substituted, and error out early if invalid usage.
-	if len(action.Replace) > 0 {
-		for substituteLabel := range action.Replace {
-			if substituteLabel == "" {
-				require.Fail(s.T, "Empty substitution label.")
-			}
-
-			howManyLabelsToSub := strings.Count(action.Schema, substituteLabel)
-			if howManyLabelsToSub == 0 {
-				require.Fail(
-					s.T,
-					"Can't do substitution because no label: "+substituteLabel,
-				)
-			}
-		}
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		// This schema might be modified if the caller needs some substitution magic done.
-		var modifiedSchema = action.Schema
-
-		// We need to substitute the policyIDs into the `%policyID% place holders.
-		if len(action.Replace) > 0 {
-			nodeID := nodeIDs[index]
-			nodesPolicyIDs := s.PolicyIDs[nodeID]
-			templateData := map[string]string{}
-			// Build template with the replacing values.
-			for substituteLabel, replaceWith := range action.Replace {
-				replacer, err := replaceWith.Replacer(nodesPolicyIDs)
-				require.NoError(s.T, err)
-				templateData[substituteLabel] = replacer
-			}
-
-			// Template should be built now, so execute it.
-			tmpl := template.Must(template.New("schema").Parse(modifiedSchema))
-			var renderedSchema bytes.Buffer
-			err := tmpl.Execute(&renderedSchema, templateData)
-			if err != nil {
-				require.Fail(s.T, "Template execution for schema update failed.")
-			}
-
-			modifiedSchema = renderedSchema.String()
-		}
-
-		results, err := node.AddSchema(s.Ctx, modifiedSchema)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if action.ExpectedResults != nil {
-			assertCollectionVersions(s, action.ExpectedResults, results)
-		}
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
-}
-
-func patchSchema(
-	s *state.State,
-	action SchemaPatch,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		var setAsDefaultVersion bool
-		if action.SetAsDefaultVersion.HasValue() {
-			setAsDefaultVersion = action.SetAsDefaultVersion.Value()
-		} else {
-			setAsDefaultVersion = true
-		}
-
-		err := node.PatchSchema(s.Ctx, action.Patch, action.Lens, setAsDefaultVersion)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
-}
-
 func patchCollection(
 	s *state.State,
 	action PatchCollection,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.PatchCollection(s.Ctx, action.Patch)
+		err := node.PatchCollection(s.Ctx, action.Patch, action.Lens)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1203,38 +1135,6 @@ func patchCollection(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-}
-
-func getSchema(
-	s *state.State,
-	action GetSchema,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		var results []client.SchemaDescription
-		var err error
-		switch {
-		case action.VersionID.HasValue():
-			result, e := node.GetSchemaByVersionID(s.Ctx, action.VersionID.Value())
-			err = e
-			results = []client.SchemaDescription{result}
-		default:
-			results, err = node.GetSchemas(
-				s.Ctx,
-				client.SchemaFetchOptions{
-					Root: action.Root,
-					Name: action.Name,
-				},
-			)
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if !expectedErrorRaised {
-			require.Equal(s.T, action.ExpectedResults, results)
-		}
-	}
 }
 
 func getCollections(
@@ -1260,13 +1160,13 @@ func getCollections(
 	}
 }
 
-func setActiveSchemaVersion(
+func setActiveCollectionVersion(
 	s *state.State,
-	action SetActiveSchemaVersion,
+	action SetActiveCollectionVersion,
 ) {
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		err := node.SetActiveSchemaVersion(s.Ctx, action.SchemaVersionID)
+		err := node.SetActiveCollectionVersion(s.Ctx, action.VersionID)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1948,7 +1848,9 @@ func withRetryOnNode(
 ) error {
 	for i := 0; i < node.MaxTxnRetries(); i++ {
 		err := action()
-		if errors.Is(err, corekv.ErrTxnConflict) {
+		// Check the contents of the error instead of the type, because it may have
+		// lost its type while passing through the C binding layer.
+		if err != nil && strings.Contains(err.Error(), corekv.ErrTxnConflict.Error()) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -2083,17 +1985,11 @@ func executeSubscriptionRequest(
 
 		go func() {
 			var results []*client.GQLResult
-			allActionsAreDone := false
-			for !allActionsAreDone || len(results) < len(action.Results) {
+			for len(results) < len(action.Results) {
 				select {
 				case s := <-result.Subscription:
 					results = append(results, &s)
-				case <-time.After(100 * time.Millisecond):
-				}
-				select {
-				case <-s.AllActionsDone:
-					allActionsAreDone = true
-				case <-time.After(100 * time.Millisecond):
+				case <-time.After(subscriptionTimeout):
 				}
 			}
 
@@ -2530,7 +2426,7 @@ func skipIfClientTypeUnsupported(
 	return filteredClients
 }
 
-func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]DocumentACPType]) {
+func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.Option[[]state.DocumentACPType]) {
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
@@ -2609,7 +2505,7 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	hasVectorEmbedding := false
 	for _, act := range actions {
 		switch a := act.(type) {
-		case SchemaUpdate:
+		case *action.AddSchema:
 			hasVectorEmbedding = strings.Contains(a.Schema, "@embedding")
 		}
 	}
@@ -2638,17 +2534,17 @@ func CBORValue(value any) []byte {
 func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
-		val, err := client.NewDocFromMap(action.DocMap, collection.Definition())
+		val, err := client.NewDocFromMap(action.DocMap, collection.Version())
 		if err != nil {
 			return nil, err
 		}
 		return []*client.Document{val}, nil
 
 	case client.IsJSONArray([]byte(action.Doc)):
-		return client.NewDocsFromJSON([]byte(action.Doc), collection.Definition())
+		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version())
 
 	default:
-		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Definition())
+		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version())
 		if err != nil {
 			return nil, err
 		}

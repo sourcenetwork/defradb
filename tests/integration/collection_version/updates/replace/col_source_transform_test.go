@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -40,7 +41,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -52,7 +53,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -64,7 +65,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 						[
 							{
 								"op": "replace",
-								"path": "/bafkreidt4i22v4bzga3aezlcxsrfbvuhzcbqo5bnfe2x2dgkpz3eds2afe/Sources/0/Transform",
+								"path": "/Users/Sources/0/Transform",
 								"value": %s
 							}
 						]

@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +27,7 @@ func TestDocEncryptionField_IfFieldDoesNotExistInGQLSchema_ReturnError(t *testin
 			testUtils.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         name: String
@@ -50,7 +51,7 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinFieldInGQLSchema_ReturnErro
 			testUtils.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         name: String
@@ -80,7 +81,7 @@ func TestDocEncryptionField_IfFieldDoesNotExist_ReturnError(t *testing.T) {
 			testUtils.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         name: String
@@ -105,7 +106,7 @@ func TestDocEncryptionField_IfAttemptToEncryptBuiltinField_ReturnError(t *testin
 			testUtils.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         name: String

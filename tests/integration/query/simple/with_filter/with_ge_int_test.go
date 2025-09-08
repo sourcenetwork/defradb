@@ -18,7 +18,6 @@ import (
 
 func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with equal value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,7 +53,6 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 
 func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge int filter with greater value",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -90,7 +88,6 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic ge nil filter",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -112,10 +109,10 @@ func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 						{
-							"Name": "John",
+							"Name": "Bob",
 						},
 					},
 				},

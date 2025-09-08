@@ -22,7 +22,6 @@ import (
 
 func TestNAC_DisableNotConfiguredBefore_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable when nac is not configured before, return an error",
 		Actions: []any{
 			testUtils.DisableNAC{
 				ExpectedError: "node acp is not configured",
@@ -35,7 +34,6 @@ func TestNAC_DisableNotConfiguredBefore_Error(t *testing.T) {
 
 func TestNAC_DisableNotConfiguredBeforeWithIdentity_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable with identity, when nac is not configured before, return an error",
 		Actions: []any{
 			testUtils.DisableNAC{
 				Identity:      testUtils.ClientIdentity(1),
@@ -49,7 +47,6 @@ func TestNAC_DisableNotConfiguredBeforeWithIdentity_Error(t *testing.T) {
 
 func TestNAC_DisableWithoutIdentityOnNodeThatHasConfigured_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable without identity, when nac is configured and started before, return an error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -73,7 +70,6 @@ func TestNAC_DisableWithoutIdentityOnNodeThatHasConfigured_Error(t *testing.T) {
 
 func TestNAC_DisableWithWrongIdentityOnNodeThatHasConfigured_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable with wrong identity, when nac is configured and started before, return an error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -98,7 +94,6 @@ func TestNAC_DisableWithWrongIdentityOnNodeThatHasConfigured_Error(t *testing.T)
 
 func TestNAC_DisableWithIdentityOnNodeThatHasNACConfiguredAndEnabled_Successful(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable with identity, when nac is configured and started before, successful",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -138,7 +133,6 @@ func TestNAC_DisableWithIdentityOnNodeThatHasNACConfiguredAndEnabled_Successful(
 
 func TestNAC_DisableNoIdentityWhenConfiguredAndAlreadyDisabledBefore_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable (no identity), when nac is configured but temporarily disabled already, return error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -165,7 +159,6 @@ func TestNAC_DisableNoIdentityWhenConfiguredAndAlreadyDisabledBefore_Error(t *te
 
 func TestNAC_DisableWithIdentityWhenConfiguredAndAlreadyDisabledBefore_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Try to disable (with identity), when nac is configured but temporarily disabled already, return error",
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -201,8 +194,6 @@ func TestNAC_DisableSuccessfullyThenRestartWithNoArgs_RemainsDisabled(t *testing
 				testUtils.BadgerFileType,
 			},
 		),
-
-		Description: "Restart when nac is temporarily disabled, then restarting with no args it should remain disabled",
 
 		Actions: []any{
 			testUtils.Close{},
@@ -243,8 +234,6 @@ func TestNAC_DisableSuccessfullyThenRestartWithStartArgs_RemainsDisabled(t *test
 				testUtils.BadgerFileType,
 			},
 		),
-
-		Description: "Restart when nac is temporarily disabled with args specified on start again, it should remain disabled",
 
 		Actions: []any{
 			testUtils.Close{},

@@ -68,22 +68,22 @@ outer:
 	return ""
 }
 
-func mustGetDocIDFromDocMap(docMap map[string]any, collectionDefinition client.CollectionDefinition) string {
-	doc, err := client.NewDocFromMap(docMap, collectionDefinition)
+func mustGetDocIDFromDocMap(docMap map[string]any, collection client.CollectionVersion) string {
+	doc, err := client.NewDocFromMap(docMap, collection)
 	if err != nil {
 		panic("can not get doc from map" + err.Error())
 	}
 	return doc.ID().String()
 }
 
-func mustAddDocIDToDoc(doc map[string]any, collectionDefinition client.CollectionDefinition) map[string]any {
-	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(doc, collectionDefinition)
+func mustAddDocIDToDoc(doc map[string]any, collection client.CollectionVersion) map[string]any {
+	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(doc, collection)
 	return doc
 }
 
-func mustAddDocIDsToDocs(docs []map[string]any, collectionDefinition client.CollectionDefinition) []map[string]any {
+func mustAddDocIDsToDocs(docs []map[string]any, collection client.CollectionVersion) []map[string]any {
 	for i := range docs {
-		mustAddDocIDToDoc(docs[i], collectionDefinition)
+		mustAddDocIDToDoc(docs[i], collection)
 	}
 	return docs
 }

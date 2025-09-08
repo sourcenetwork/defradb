@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -26,7 +27,7 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -92,7 +93,7 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -140,14 +141,14 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(43),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
+						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(43),
 						},
 					},
 				},
@@ -163,7 +164,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -219,14 +220,14 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(60),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
+						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(60),
 						},
 					},
 				},
@@ -242,7 +243,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -306,14 +307,14 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(62),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
+						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(62),
 						},
 					},
 				},
@@ -329,7 +330,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -402,14 +403,14 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(62),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
+						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(62),
 						},
 					},
 				},
@@ -429,13 +430,13 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					"Users": []map[string]any{
 						{
 							"_deleted": false,
-							"Name":     "John",
-							"Age":      int64(66),
+							"Name":     "Andy",
+							"Age":      int64(74),
 						},
 						{
 							"_deleted": false,
-							"Name":     "Andy",
-							"Age":      int64(74),
+							"Name":     "John",
+							"Age":      int64(66),
 						},
 					},
 				},

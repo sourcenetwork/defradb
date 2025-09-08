@@ -76,26 +76,26 @@ func (m *Multistore) Systemstore() corekv.ReaderWriter {
 	return m.system
 }
 
-func DatastoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
+func DatastoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return prefix(rootstore, dataStoreKey.Bytes())
 }
 
-func EncstoreFrom(rootstore corekv.Store) Blockstore {
+func EncstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
 	return newBlockstore(prefix(rootstore, encStoreKey.Bytes()))
 }
 
-func HeadstoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
+func HeadstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return prefix(rootstore, headStoreKey.Bytes())
 }
 
-func BlockstoreFrom(rootstore corekv.Store) Blockstore {
+func BlockstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
 	return newBlockstore(prefix(rootstore, blockStoreKey.Bytes()))
 }
 
-func SystemstoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
+func SystemstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return prefix(rootstore, systemStoreKey.Bytes())
 }
 
-func PeerstoreFrom(rootstore corekv.Store) corekv.ReaderWriter {
+func PeerstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return prefix(rootstore, peerStoreKey.Bytes())
 }

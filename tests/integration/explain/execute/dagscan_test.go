@@ -20,18 +20,14 @@ import (
 func TestExecuteExplainCommitsDagScan(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) commits request - dagScan.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					commits (docID: "bae-333455ca-1563-54c3-85a4-1db7ea4e9c59") {
+					commits (docID: "bae-b7bb2486-6364-58c0-bf60-91ff90ee72be") {
 						links {
 							cid
 						}
@@ -47,10 +43,10 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 							{
 								"selectTopNode": dataMap{
 									"selectNode": dataMap{
-										"iterations":    uint64(6),
-										"filterMatches": uint64(5),
+										"iterations":    uint64(4),
+										"filterMatches": uint64(3),
 										"dagScanNode": dataMap{
-											"iterations": uint64(6),
+											"iterations": uint64(4),
 										},
 									},
 								},
@@ -68,8 +64,6 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) latest commits request - dagScan.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -79,7 +73,7 @@ func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
 
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					latestCommits(docID: "bae-333455ca-1563-54c3-85a4-1db7ea4e9c59") {
+					latestCommits(docID: "bae-b7bb2486-6364-58c0-bf60-91ff90ee72be") {
 						cid
 						links {
 							cid

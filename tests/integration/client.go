@@ -13,29 +13,13 @@ package tests
 import (
 	"os"
 	"strconv"
-
-	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
 	clientGoEnvName   = "DEFRA_CLIENT_GO"
 	clientHttpEnvName = "DEFRA_CLIENT_HTTP"
 	clientCliEnvName  = "DEFRA_CLIENT_CLI"
-)
-
-const (
-	// goClientType enables running the test suite using
-	// the go implementation of the client.TxnStore interface.
-	GoClientType state.ClientType = "go"
-	// httpClientType enables running the test suite using
-	// the http implementation of the client.TxnStore interface.
-	HTTPClientType state.ClientType = "http"
-	// cliClientType enables running the test suite using
-	// the cli implementation of the client.TxnStore interface.
-	CLIClientType state.ClientType = "cli"
-	// JSClientType enables running the test suite using
-	// the JS implementation of the client.TxnStore interface.
-	JSClientType state.ClientType = "js"
+	clientCEnvName    = "DEFRA_CLIENT_C"
 )
 
 var (
@@ -43,6 +27,7 @@ var (
 	goClient   bool
 	cliClient  bool
 	jsClient   bool
+	cClient    bool
 )
 
 func init() {
@@ -51,8 +36,9 @@ func init() {
 	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
 	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
 	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
+	cClient, _ = strconv.ParseBool(os.Getenv(clientCEnvName))
 
-	if !goClient && !httpClient && !cliClient {
+	if !goClient && !httpClient && !cliClient && !cClient {
 		// Default is to test go client type.
 		goClient = true
 	}

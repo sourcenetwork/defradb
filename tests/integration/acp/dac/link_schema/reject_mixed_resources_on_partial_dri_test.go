@@ -14,13 +14,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Test acp, link schema, has both valid & invalid resources, but use invalid resource, schema rejected",
 
 		Actions: []any{
 
@@ -72,7 +71,7 @@ func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
                 `,
 			},
 
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
@@ -82,10 +81,6 @@ func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
 						age: Int
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 
 				ExpectedError: fmt.Sprintf(
 					"expr of required permission must start with required relation. Permission: %s, Relation: %s",

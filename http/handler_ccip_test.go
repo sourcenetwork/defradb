@@ -22,7 +22,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sourcenetwork/corekv/memory"
+	badgerds "github.com/dgraph-io/badger/v4"
+	"github.com/sourcenetwork/corekv/badger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -51,7 +52,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb, nil)
+	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -90,7 +91,7 @@ func TestCCIPGet_WithSubscription(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb, nil)
+	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -108,7 +109,7 @@ func TestCCIPGet_WithInvalidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb, nil)
+	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -137,7 +138,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb, nil)
+	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -169,7 +170,7 @@ func TestCCIPPost_WithInvalidGraphQLRequest(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", bytes.NewBuffer(body))
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb, nil)
+	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -183,7 +184,7 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/ccip", nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb, nil)
+	handler, err := NewHandler(cdb)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -193,11 +194,13 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 
 func setupDatabase(t *testing.T) DB {
 	ctx := context.Background()
+	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
 
 	adminInfo, err := db.NewNACInfo(ctx, "", false)
 	require.NoError(t, err)
 
-	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), adminInfo, dac.NoDocumentACP, nil)
+	cdb, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {
@@ -208,13 +211,13 @@ func setupDatabase(t *testing.T) DB {
 	col, err := cdb.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "bob"}`), col.Definition())
+	doc, err := client.NewDocFromJSON([]byte(`{"name": "bob"}`), col.Version())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "adam"}`), col.Definition())
+	doc2, err := client.NewDocFromJSON([]byte(`{"name": "adam"}`), col.Version())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc2)

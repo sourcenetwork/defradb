@@ -13,32 +13,31 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryOneToOne(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-one relation query with no filter",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+						"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Book {
 							name
 							rating
@@ -48,42 +47,46 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Book": []map[string]any{
-							{
-								"name":   "Painted House",
-								"rating": 4.9,
-								"author": map[string]any{
-									"name": "John Grisham",
-									"age":  int64(65),
-								},
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":   "Painted House",
+							"rating": 4.9,
+							"author": map[string]any{
+								"name": "John Grisham",
+								"age":  int64(65),
 							},
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "One-to-one relation secondary direction, no filter",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+						"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			testUtils.Request{
+				Request: `query {
 						Author {
 							name
 							age
@@ -93,15 +96,14 @@ func TestQueryOneToOne(t *testing.T) {
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"name": "John Grisham",
-								"age":  int64(65),
-								"published": map[string]any{
-									"name":   "Painted House",
-									"rating": 4.9,
-								},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"age":  int64(65),
+							"published": map[string]any{
+								"name":   "Painted House",
+								"rating": 4.9,
 							},
 						},
 					},
@@ -110,16 +112,13 @@ func TestQueryOneToOne(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, multiple records",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -179,15 +178,15 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name": "Go Guide for Rust developers",
-							"author": map[string]any{
-								"name": "Andrew Lone",
-							},
-						},
-						{
 							"name": "Painted House",
 							"author": map[string]any{
 								"name": "John Grisham",
+							},
+						},
+						{
+							"name": "Go Guide for Rust developers",
+							"author": map[string]any{
+								"name": "Andrew Lone",
 							},
 						},
 					},
@@ -201,9 +200,8 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 
 func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one-to-one relation secondary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -279,7 +277,6 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, nil child",
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -313,7 +310,6 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 
 func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, nil parent",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -346,9 +342,8 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation primary direction, relation ID field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -385,7 +380,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"name":         "John Grisham",
-							"published_id": "bae-514f04b1-b218-5b8c-89ee-538f150a32b5",
+							"published_id": "bae-131c8f1b-2f61-599e-824f-afc313812c58",
 						},
 					},
 				},
@@ -398,9 +393,8 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 
 func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation secondary direction, relation ID field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -437,7 +431,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
+							"author_id": "bae-0362a1da-4a34-5c53-97a3-f5bdcea5d78f",
 						},
 					},
 				},

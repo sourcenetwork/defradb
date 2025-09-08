@@ -13,13 +13,14 @@ package replace
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -29,12 +30,12 @@ func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/VersionID",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
 							"value": ""
 						}
 					]
 				`,
-				ExpectedError: "collections cannot be deleted.",
+				ExpectedError: "collection ID cannot be empty",
 			},
 		},
 	}
@@ -45,14 +46,9 @@ func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
-				`,
-			},
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Books {}
 				`,
 			},
 			testUtils.PatchCollection{
@@ -60,12 +56,12 @@ func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/VersionID",
-							"value": "fdsahasgsag"
+							"path": "/Users/VersionID",
+							"value": "invalid cid"
 						}
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported",
+				ExpectedError: "invalid cid: selected encoding not supported. VersionID: invalid cid",
 			},
 		},
 	}
@@ -76,12 +72,12 @@ func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
 			},
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
@@ -93,13 +89,13 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/VersionID",
-							"value": "bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce"
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
+							"value": "bafyreidfzu2x6i4akqlmt5lloaeflwep4ykq2f4unwm2utkmrkgpfyf7bi"
 						},
 						{
 							"op": "replace",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/VersionID",
-							"value": "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+							"path": "/bafyreidfzu2x6i4akqlmt5lloaeflwep4ykq2f4unwm2utkmrkgpfyf7bi/VersionID",
+							"value": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
 						}
 					]
 				`,
@@ -114,12 +110,12 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Dogs {}
 				`,
@@ -129,17 +125,17 @@ func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/VersionID",
-							"value": "bafkreibifvyfr6qvb6wx4v4cogvcdksb3v7vniaon7hdzzqb62cotpmlc4"
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
+							"value": "bafyreidfam5wyt7bsaz6p3z3va2pcqns7dac34u53x2yj5dlq4nkrvylxm"
 						},
 						{
 							"op": "replace",
-							"path": "/bafkreibifvyfr6qvb6wx4v4cogvcdksb3v7vniaon7hdzzqb62cotpmlc4/VersionID",
-							"value": "bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai"
+							"path": "/bafyreidfam5wyt7bsaz6p3z3va2pcqns7dac34u53x2yj5dlq4nkrvylxm/VersionID",
+							"value": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
 						}
 					]
 				`,
-				ExpectedError: "collection ID cannot be mutated.",
+				ExpectedError: "collection source must belong to host collection.",
 			},
 		},
 	}
@@ -150,7 +146,7 @@ func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T
 func TestColVersionUpdateReplaceID_WithNew_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
 				`,
@@ -160,12 +156,12 @@ func TestColVersionUpdateReplaceID_WithNew_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/VersionID",
+							"path": "/Users/VersionID",
 							"value": "bafkreibifvyfr6qvb6wx4v4cogvcdksb3v7vniaon7hdzzqb62cotpmlc4"
 						}
 					]
 				`,
-				ExpectedError: "adding collections via patch is not supported.",
+				ExpectedError: "unknown CID, collection ids cannot be manually defined",
 			},
 		},
 	}

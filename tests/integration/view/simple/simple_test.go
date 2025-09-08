@@ -13,14 +13,14 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestView_Simple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -66,9 +66,8 @@ func TestView_Simple(t *testing.T) {
 
 func TestView_SimpleMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view, multiple docs",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -122,9 +121,8 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 
 func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with field subset errors selecting excluded field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -167,9 +165,8 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 
 func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with extra field in SDL",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -218,9 +215,8 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 
 func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view with extra field in view query",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -271,9 +267,8 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 
 func TestView_SimpleViewOfView(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view of view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String

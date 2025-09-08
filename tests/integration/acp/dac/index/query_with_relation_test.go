@@ -13,6 +13,7 @@ package test_acp_dac_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			Identity: testUtils.ClientIdentity(1),
 			Policy:   bookAuthorPolicy,
 		},
-		testUtils.SchemaUpdate{
+		&action.AddSchema{
 			Schema: `
 				type Author @policy(
 					id: "{{.Policy0}}",
@@ -42,14 +43,10 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					rating: Float @index
 					author: Author
 				}`,
-
-			Replace: map[string]testUtils.ReplaceType{
-				"Policy0": testUtils.NewPolicyIndex(0),
-			},
 		},
 		testUtils.CreateDoc{
 			CollectionID: 0,
-			// bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84
+			// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 			Doc: `{
 				"name": "John Grisham",
 				"age": 65,
@@ -97,7 +94,6 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 
 func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test ACP with index: upon querying private (one-to-many) related doc without identity should not fetch",
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
@@ -133,7 +129,6 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_Shou
 
 func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test ACP with index: upon querying private (one-to-many) related doc with identity should fetch",
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
@@ -181,7 +176,6 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 
 func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test ACP with index: upon querying private (one-to-many) related doc with wrong identity should not fetch",
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
@@ -218,7 +212,6 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_Sh
 
 func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test ACP with index: upon querying private (many-to-one) related doc without identity should not fetch",
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
@@ -252,7 +245,6 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_Shou
 
 func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test ACP with index: upon querying private (many-to-one) related doc with identity should fetch",
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{
@@ -299,7 +291,6 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 
 func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithWrongIdentity_ShouldNotFetch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Test ACP with index: upon querying private (many-to-one) related doc without identity should not fetch",
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
 			testUtils.Request{

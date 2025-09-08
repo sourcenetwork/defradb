@@ -11,7 +11,7 @@
 package commits
 
 import (
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/action"
 )
 
 const userCollectionGQLSchema = (`
@@ -22,8 +22,8 @@ const userCollectionGQLSchema = (`
 	}
 `)
 
-func updateUserCollectionSchema() testUtils.SchemaUpdate {
-	return testUtils.SchemaUpdate{
+func updateUserCollectionSchema() *action.AddSchema {
+	return &action.AddSchema{
 		Schema: userCollectionGQLSchema,
 	}
 }

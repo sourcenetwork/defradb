@@ -18,9 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
@@ -49,6 +47,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			VersionID:      cfg.SourceSchemaVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
+			IsPlaceholder:  true,
 		}
 
 		err = description.SaveCollection(ctx, desc)
@@ -83,6 +82,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			Name:           sourceCol.Name,
 			VersionID:      cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
+			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
 			Sources: []any{
 				&client.CollectionSource{
@@ -96,35 +96,6 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		err = description.SaveCollection(ctx, dstCol)
 		if err != nil {
 			return err
-		}
-
-		if dstCol.CollectionID != "" { // todo- this makes no sense
-			var schemaFound bool
-			// If the root schema id is known, we need to add it to the index, even if the schema is not known locally
-			schema, err := description.GetSchemaVersion(ctx, cfg.SourceSchemaVersionID)
-			if err != nil {
-				if !errors.Is(err, corekv.ErrNotFound) {
-					return err
-				}
-			} else {
-				schemaFound = true
-			}
-
-			if schemaFound {
-				txn := datastore.CtxMustGetTxn(ctx)
-				schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
-				err = txn.Systemstore().Set(ctx, schemaRootKey.Bytes(), []byte{})
-				if err != nil {
-					return err
-				}
-
-				dstCol.CollectionID = schema.Root
-
-				err = description.SaveCollection(ctx, dstCol)
-				if err != nil {
-					return err
-				}
-			}
 		}
 	}
 

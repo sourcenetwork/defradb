@@ -18,7 +18,6 @@ import (
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, offsetted limited sum of integer array",
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{

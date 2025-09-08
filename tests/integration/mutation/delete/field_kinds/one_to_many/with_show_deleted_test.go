@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,9 +32,8 @@ type Author {
 
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: schemas,
 			},
 			testUtils.CreateDoc{
@@ -61,14 +61,14 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_Book(docID: "bae-39db1d4b-72c0-5b7b-b6f2-c20870982128") {
+					delete_Book(docID: "bae-2b5aef1d-f2b7-5e8d-8b99-5ee568917696") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-39db1d4b-72c0-5b7b-b6f2-c20870982128",
+							"_docID": "bae-2b5aef1d-f2b7-5e8d-8b99-5ee568917696",
 						},
 					},
 				},

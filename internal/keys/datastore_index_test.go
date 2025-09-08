@@ -435,7 +435,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 		},
 	}
 
-	fieldDefs := []client.FieldDefinition{
+	fieldDefs := []client.CollectionFieldDescription{
 		{Kind: client.FieldKind_NILLABLE_STRING},
 		{Kind: client.FieldKind_NILLABLE_INT},
 	}
@@ -537,7 +537,7 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 		},
 	}
 
-	fieldDefs := []client.FieldDefinition{
+	fieldDefs := []client.CollectionFieldDescription{
 		{Kind: client.FieldKind_NILLABLE_STRING},
 	}
 
