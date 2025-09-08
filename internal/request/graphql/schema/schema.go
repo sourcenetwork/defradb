@@ -136,16 +136,13 @@ func defaultTypes(
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 ) []gql.Type {
-	blobScalarType := types.BlobScalarType()
-	jsonScalarType := types.JSONScalarType()
-
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
 	float64OpBlock := types.Float64OperatorBlock()
 	float32OpBlock := types.Float32OperatorBlock()
 	booleanOpBlock := types.BooleanOperatorBlock()
 	stringOpBlock := types.StringOperatorBlock()
-	blobOpBlock := types.BlobOperatorBlock(blobScalarType)
+	blobOpBlock := types.BlobOperatorBlock(types.Blob)
 	dateTimeOpBlock := types.DateTimeOperatorBlock()
 
 	notNullIntOpBlock := types.NotNullIntOperatorBlock()
@@ -153,7 +150,7 @@ func defaultTypes(
 	notNullFloat32OpBlock := types.NotNullFloat32OperatorBlock()
 	notNullBooleanOpBlock := types.NotNullBooleanOperatorBlock()
 	notNullStringOpBlock := types.NotNullStringOperatorBlock()
-	notNullBlobOpBlock := types.NotNullBlobOperatorBlock(blobScalarType)
+	notNullBlobOpBlock := types.NotNullBlobOperatorBlock(types.Blob)
 
 	return []gql.Type{
 		// Base Scalar types
@@ -167,8 +164,8 @@ func defaultTypes(
 		gql.String,
 
 		// Custom Scalar types
-		blobScalarType,
-		jsonScalarType,
+		types.Blob,
+		types.JSON,
 
 		// Base Query types
 

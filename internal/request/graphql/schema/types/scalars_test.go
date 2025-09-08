@@ -36,7 +36,7 @@ func TestBlobScalarTypeSerialize(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType().Serialize(c.input)
+		result := Blob.Serialize(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -62,7 +62,7 @@ func TestBlobScalarTypeParseValue(t *testing.T) {
 		{false, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType().ParseValue(c.input)
+		result := Blob.ParseValue(c.input)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -84,7 +84,7 @@ func TestBlobScalarTypeParseLiteral(t *testing.T) {
 		{&ast.ObjectValue{}, nil},
 	}
 	for _, c := range cases {
-		result := BlobScalarType().ParseLiteral(c.input, nil)
+		result := Blob.ParseLiteral(c.input, nil)
 		assert.Equal(t, c.expect, result)
 	}
 }
@@ -126,7 +126,7 @@ func TestJSONScalarTypeParseLiteral(t *testing.T) {
 		"message": "hello",
 	}
 	for _, c := range cases {
-		result := JSONScalarType().ParseLiteral(c.input, variables)
+		result := JSON.ParseLiteral(c.input, variables)
 		assert.Equal(t, c.expect, result)
 	}
 }
