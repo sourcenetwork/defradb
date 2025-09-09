@@ -32,6 +32,9 @@ extern Result* CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig,
 extern Result* IdentityNew(char* keyType);
 extern Result* NodeIdentity(uintptr_t nodePtr);
 extern Result* IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result* EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result* EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
+extern Result* EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result* LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result* NodeClose(uintptr_t nodePtr);
@@ -684,6 +687,25 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 	}
 
 	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
+	if err != nil {
+		return nil, errors.New(res.Error)
+	}
+
+	return resValue, nil
+}
+
+func (w *CWrapper) GetAllEncryptedIndexes(ctx context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	colName := C.CString("")
+	defer C.free(unsafe.Pointer(colName))
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	resValue, err := unmarshalResult[map[client.CollectionName][]client.EncryptedIndexDescription](res.Value)
 	if err != nil {
 		return nil, errors.New(res.Error)
 	}
