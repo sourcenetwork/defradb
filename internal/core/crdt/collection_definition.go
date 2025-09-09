@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -24,7 +23,7 @@ type CollectionDefinitionDelta struct {
 	Name string
 }
 
-var _ core.Delta = (*CollectionDefinitionDelta)(nil)
+var _ Delta = (*CollectionDefinitionDelta)(nil)
 
 func (delta *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
@@ -46,7 +45,7 @@ type CollectionDefinition struct {
 	headstorePrefix keys.HeadstoreCollectionDefinition
 }
 
-var _ core.ReplicatedData = (*Collection)(nil)
+var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollectionDefinition(
 	name string,
@@ -77,6 +76,6 @@ func (m *CollectionDefinition) Delta(
 	}, true
 }
 
-func (c *CollectionDefinition) Merge(ctx context.Context, other core.Delta) error {
+func (c *CollectionDefinition) Merge(ctx context.Context, other Delta) error {
 	return nil
 }

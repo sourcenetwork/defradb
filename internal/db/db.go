@@ -181,7 +181,7 @@ func newDB(
 	}
 
 	if len(db.searchableEncryptionKey) > 0 {
-		coord, err := se.NewReplicationCoordinator(db, db.searchableEncryptionKey)
+		coord, err := se.NewReplicationCoordinator(db, db.p2p, db.searchableEncryptionKey)
 		if err != nil {
 			return nil, err
 		}

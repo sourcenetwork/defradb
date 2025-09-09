@@ -15,7 +15,6 @@ import (
 	"strconv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -34,7 +33,7 @@ type FieldDefinitionDelta struct {
 	IsArray      *bool
 }
 
-var _ core.Delta = (*FieldDefinitionDelta)(nil)
+var _ Delta = (*FieldDefinitionDelta)(nil)
 
 func (delta *FieldDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
@@ -61,7 +60,7 @@ type FieldDefinition struct {
 	headstorePrefix keys.HeadstoreFieldDefinition
 }
 
-var _ core.ReplicatedData = (*Collection)(nil)
+var _ ReplicatedData = (*Collection)(nil)
 
 func NewFieldDefinition(
 	collectionName string,
@@ -129,7 +128,7 @@ func (m *FieldDefinition) Delta(
 	}, true, nil
 }
 
-func (c *FieldDefinition) Merge(ctx context.Context, other core.Delta) error {
+func (c *FieldDefinition) Merge(ctx context.Context, other Delta) error {
 	// WARNING: This is okay for now, as we dont (yet) support the merging of divergant heads,
 	// (this is not *really* a CRDT) however, if we do want to support that at somepoint, this function
 	// will need to be implemented.

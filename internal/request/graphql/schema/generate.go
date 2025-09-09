@@ -1148,22 +1148,22 @@ func (g *Generator) GenerateQueryInputForGQLType(
 func (g *Generator) GenerateEncryptedQueryInputForGQLType(
 	ctx context.Context,
 	obj *gql.Object,
-	collections []client.CollectionDefinition,
+	collections []client.CollectionVersion,
 ) (*gql.Field, error) {
-	var collection *client.CollectionDefinition
+	var collection *client.CollectionVersion
 	for _, col := range collections {
-		if col.Version.Name == obj.Name() {
+		if col.Name == obj.Name() {
 			collection = &col
 			break
 		}
 	}
 
-	if collection == nil || len(collection.Version.EncryptedIndexes) == 0 {
+	if collection == nil || len(collection.EncryptedIndexes) == 0 {
 		return nil, nil
 	}
 
 	filterName := obj.Name() + encryptedFilterInputNameSuffix
-	filterInput := g.genEncryptedFilterArgInput(obj, collection.Version.EncryptedIndexes)
+	filterInput := g.genEncryptedFilterArgInput(obj, collection.EncryptedIndexes)
 	g.manager.schema.TypeMap()[filterName] = filterInput
 
 	encryptedResultType := g.manager.schema.TypeMap()[request.EncryptedSearchResultName]

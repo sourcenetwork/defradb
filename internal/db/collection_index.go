@@ -421,16 +421,16 @@ func (c *collection) createEncryptedIndex(
 	ctx context.Context,
 	createRequest client.EncryptedIndexCreateRequest,
 ) (client.EncryptedIndexDescription, error) {
-	desc, err := processCreateEncryptedIndexRequest(c.Definition(), createRequest)
+	desc, err := processCreateEncryptedIndexRequest(c.Version(), createRequest)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 
-	c.def.Version.EncryptedIndexes = append(c.def.Version.EncryptedIndexes, desc)
+	c.def.EncryptedIndexes = append(c.def.EncryptedIndexes, desc)
 
-	err = description.SaveCollection(ctx, c.def.Version)
+	err = description.SaveCollection(ctx, c.def)
 	if err != nil {
-		c.def.Version.EncryptedIndexes = c.def.Version.EncryptedIndexes[:len(c.def.Version.EncryptedIndexes)-1]
+		c.def.EncryptedIndexes = c.def.EncryptedIndexes[:len(c.def.EncryptedIndexes)-1]
 		return client.EncryptedIndexDescription{}, err
 	}
 
@@ -439,7 +439,7 @@ func (c *collection) createEncryptedIndex(
 		return client.EncryptedIndexDescription{}, err
 	}
 
-	return c.def.Version.EncryptedIndexes[len(c.def.Version.EncryptedIndexes)-1], nil
+	return c.def.EncryptedIndexes[len(c.def.EncryptedIndexes)-1], nil
 }
 
 // GetEncryptedIndexes returns all the encrypted indexes that exist on the collection.
@@ -484,14 +484,14 @@ func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string)
 	oldEncryptedIndexes := make([]client.EncryptedIndexDescription, len(c.Version().EncryptedIndexes))
 	copy(oldEncryptedIndexes, c.Version().EncryptedIndexes)
 
-	c.def.Version.EncryptedIndexes = append(
-		c.def.Version.EncryptedIndexes[:indexToRemove],
-		c.def.Version.EncryptedIndexes[indexToRemove+1:]...,
+	c.def.EncryptedIndexes = append(
+		c.def.EncryptedIndexes[:indexToRemove],
+		c.def.EncryptedIndexes[indexToRemove+1:]...,
 	)
 
-	err := description.SaveCollection(ctx, c.def.Version)
+	err := description.SaveCollection(ctx, c.def)
 	if err != nil {
-		c.def.Version.EncryptedIndexes = oldEncryptedIndexes
+		c.def.EncryptedIndexes = oldEncryptedIndexes
 		return err
 	}
 
@@ -525,14 +525,14 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 // checkExistingEncryptedFields validates, if encrypted index can be created on the field.
 // It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
 func checkExistingEncryptedFields(
-	definition client.CollectionDefinition,
+	definition client.CollectionVersion,
 	createEncryptedIndex client.EncryptedIndexCreateRequest,
 ) error {
 	_, found := definition.GetFieldByName(createEncryptedIndex.FieldName)
 	if !found {
 		return NewErrEncryptedIndexOnNonExistentField(createEncryptedIndex.FieldName)
 	}
-	for _, encryptedIndex := range definition.Version.EncryptedIndexes {
+	for _, encryptedIndex := range definition.EncryptedIndexes {
 		if encryptedIndex.FieldName == createEncryptedIndex.FieldName {
 			return NewErrEncryptedIndexAlreadyExists(createEncryptedIndex.FieldName)
 		}

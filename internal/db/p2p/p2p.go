@@ -46,7 +46,7 @@ const networkRequestTimeout = 10 * time.Second
 type DB interface {
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
-	// GetNodeIndentityToken returns an identity token for the given audience.
+	// GetNodeIdentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
@@ -60,7 +60,7 @@ type DB interface {
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	// Rootstore returns the rootstore
-	Rootstore() corekv.ReaderWriter
+	Rootstore() corekv.TxnStore
 }
 
 type P2P struct {

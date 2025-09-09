@@ -17,7 +17,9 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const policy = `
@@ -75,8 +77,8 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
-			[]testUtils.DocumentACPType{
-				testUtils.LocalDocumentACPType,
+			[]state.DocumentACPType{
+				state.LocalDocumentACPType,
 			},
 		),
 		EnableSearchableEncryption: true,
@@ -87,7 +89,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   policy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @policy(
 						id: "{{.Policy0}}",
@@ -97,10 +99,6 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 						age: Int @encryptedIndex
 					}
 				`,
-
-				Replace: map[string]testUtils.ReplaceType{
-					"Policy0": testUtils.NewPolicyIndex(0),
-				},
 			},
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,

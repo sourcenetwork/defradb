@@ -27,22 +27,17 @@ func TestGenerateEncryptedQueryField(t *testing.T) {
 	manager, err := NewSchemaManager(true)
 	require.NoError(t, err)
 
-	collections := []client.CollectionDefinition{
+	collections := []client.CollectionVersion{
 		{
-			Version: client.CollectionVersion{
-				Name: "User",
-				EncryptedIndexes: []client.EncryptedIndexDescription{
-					{FieldName: "email", Type: client.EncryptedIndexTypeEquality},
-					{FieldName: "ssn", Type: client.EncryptedIndexTypeEquality},
-				},
+			Name: "User",
+			EncryptedIndexes: []client.EncryptedIndexDescription{
+				{FieldName: "email", Type: client.EncryptedIndexTypeEquality},
+				{FieldName: "ssn", Type: client.EncryptedIndexTypeEquality},
 			},
-			Schema: client.SchemaDescription{
-				Name: "User",
-				Fields: []client.SchemaFieldDescription{
-					{Name: "email", Kind: client.FieldKind_NILLABLE_STRING},
-					{Name: "ssn", Kind: client.FieldKind_NILLABLE_STRING},
-					{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
-				},
+			Fields: []client.CollectionFieldDescription{
+				{Name: "email", Kind: client.FieldKind_NILLABLE_STRING},
+				{Name: "ssn", Kind: client.FieldKind_NILLABLE_STRING},
+				{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
 			},
 		},
 	}
@@ -102,17 +97,12 @@ func TestNoEncryptedQueryFieldWithoutIndexes(t *testing.T) {
 	manager, err := NewSchemaManager(true)
 	require.NoError(t, err)
 
-	collections := []client.CollectionDefinition{
+	collections := []client.CollectionVersion{
 		{
-			Version: client.CollectionVersion{
-				Name: "Product",
-			},
-			Schema: client.SchemaDescription{
-				Name: "Product",
-				Fields: []client.SchemaFieldDescription{
-					{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
-					{Name: "price", Kind: client.FieldKind_NILLABLE_FLOAT64},
-				},
+			Name: "Product",
+			Fields: []client.CollectionFieldDescription{
+				{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
+				{Name: "price", Kind: client.FieldKind_NILLABLE_FLOAT64},
 			},
 		},
 	}
