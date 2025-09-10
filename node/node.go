@@ -90,11 +90,6 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	dbOpts := filterOptions[db.Option](n.options)
-	if n.config.disableP2P {
-		dbOpts = append(dbOpts, db.WithSearchableEncryptionKey(nil))
-	}
-
 	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
 	if err != nil {
 		return err
@@ -103,6 +98,11 @@ func (n *Node) Start(ctx context.Context) error {
 	err = n.startP2P(ctx, rootstore)
 	if err != nil {
 		return err
+	}
+
+	dbOpts := filterOptions[db.Option](n.options)
+	if n.config.disableP2P {
+		dbOpts = append(dbOpts, db.WithSearchableEncryptionKey(nil))
 	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, lens, dbOpts...)

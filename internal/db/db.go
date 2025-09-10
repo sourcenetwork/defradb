@@ -173,19 +173,19 @@ func newDB(
 			return nil, err
 		}
 		db.p2p = p
+
+		if len(db.searchableEncryptionKey) > 0 {
+			coord, err := se.NewReplicationCoordinator(db, db.p2p, db.searchableEncryptionKey)
+			if err != nil {
+				return nil, err
+			}
+			db.seCoordinator = coord
+		}
 	}
 
 	err = db.initialize(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(db.searchableEncryptionKey) > 0 {
-		coord, err := se.NewReplicationCoordinator(db, db.p2p, db.searchableEncryptionKey)
-		if err != nil {
-			return nil, err
-		}
-		db.seCoordinator = coord
 	}
 
 	return db, nil
