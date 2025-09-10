@@ -39,7 +39,7 @@ func IdentityNew(keyType *C.char) C.NewIdentityResult {
 }
 
 //export NodeIdentity
-func NodeIdentity(nodePtr C.uintptr_t) *C.Result {
+func NodeIdentity(nodePtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {

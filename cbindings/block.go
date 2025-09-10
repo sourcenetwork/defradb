@@ -23,7 +23,7 @@ import (
 )
 
 //export BlockVerifySignature
-func BlockVerifySignature(nodePtr C.uintptr_t, keyType *C.char, publicKey *C.char, cid *C.char) *C.Result {
+func BlockVerifySignature(nodePtr C.uintptr_t, keyType *C.char, publicKey *C.char, cid *C.char) C.Result {
 	ctx := context.Background()
 	keyTypeStr := C.GoString(keyType)
 	pubKeyStr := C.GoString(publicKey)

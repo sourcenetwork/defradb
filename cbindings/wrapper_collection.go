@@ -14,17 +14,17 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result* CollectionCreate(uintptr_t nodePtr, char* json, int isEncrypted,
+extern Result CollectionCreate(uintptr_t nodePtr, char* json, int isEncrypted,
 char* encryptedFields, CollectionOptions options);
-extern Result* CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions options);
-extern Result* CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
-extern Result* CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options);
-extern Result* CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions options);
-extern Result* CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
+extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions options);
+extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
+extern Result CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options);
+extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions options);
+extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options);
-extern Result* IndexCreate(uintptr_t nodePtr, char* collectionName, char* indexName, char* fieldsStr, int isUnique);
-extern Result* IndexList(uintptr_t nodePtr, char* collectionName);
-extern Result* IndexDrop(uintptr_t nodePtr, char* collectionName, char* indexName);
+extern Result IndexCreate(uintptr_t nodePtr, char* collectionName, char* indexName, char* fieldsStr, int isUnique);
+extern Result IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result IndexDrop(uintptr_t nodePtr, char* collectionName, char* indexName);
 */
 import "C"
 

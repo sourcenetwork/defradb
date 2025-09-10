@@ -14,49 +14,49 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result* ACPAddDACPolicy(uintptr_t nodePtr, uintptr_t identity, char* policy);
-extern Result* ACPAddDACActorRelationship(uintptr_t nodePtr, uintptr_t identityPtr,
+extern Result ACPAddDACPolicy(uintptr_t nodePtr, uintptr_t identity, char* policy);
+extern Result ACPAddDACActorRelationship(uintptr_t nodePtr, uintptr_t identityPtr,
 char* collection, char* docID, char* relation, char* actor);
-extern Result* ACPDeleteDACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
+extern Result ACPDeleteDACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
 char* collection, char* docID, char* relation, char* actor);
-extern Result* ACPDisableNAC(uintptr_t nodePtr, uintptr_t identityPtr);
-extern Result* ACPReEnableNAC(uintptr_t nodePtr, uintptr_t identity);
-extern Result* ACPAddNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
+extern Result ACPDisableNAC(uintptr_t nodePtr, uintptr_t identityPtr);
+extern Result ACPReEnableNAC(uintptr_t nodePtr, uintptr_t identity);
+extern Result ACPAddNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
 char* relation, char* actor);
-extern Result* ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
+extern Result ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
 char* relation, char* actor);
-extern Result* ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
-extern Result* BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid);
-extern Result* CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
-extern Result* CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
-extern Result* IdentityNew(char* keyType);
-extern Result* NodeIdentity(uintptr_t nodePtr);
-extern Result* IndexList(uintptr_t nodePtr, char* collectionName);
-extern Result* LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
+extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
+extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid);
+extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
+extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
+extern Result IdentityNew(char* keyType);
+extern Result NodeIdentity(uintptr_t nodePtr);
+extern Result IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
-extern Result* NodeClose(uintptr_t nodePtr);
-extern Result* P2PInfo(uintptr_t nodePtr);
-extern Result* P2PgetAllReplicators(uintptr_t nodePtr);
-extern Result* P2PsetReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
-extern Result* P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
-extern Result* P2PcollectionAdd(uintptr_t nodePtr, char* collections);
-extern Result* P2PcollectionRemove(uintptr_t nodePtr, char* collections);
-extern Result* P2PcollectionGetAll(uintptr_t nodePtr);
-extern Result* P2Pconnect(uintptr_t nodePtr, char* peerID, char* peerAddresses);
-extern Result* P2PdocumentAdd(uintptr_t nodePtr, char* collections);
-extern Result* P2PdocumentRemove(uintptr_t nodePtr, char* collections);
-extern Result* P2PdocumentGetAll(uintptr_t nodePtr);
-extern Result* P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr);
-extern Result* PollSubscription(char* id);
-extern Result* CloseSubscription(char* id);
-extern Result* ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
+extern Result NodeClose(uintptr_t nodePtr);
+extern Result P2PInfo(uintptr_t nodePtr);
+extern Result P2PgetAllReplicators(uintptr_t nodePtr);
+extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
+extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
+extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections);
+extern Result P2PcollectionRemove(uintptr_t nodePtr, char* collections);
+extern Result P2PcollectionGetAll(uintptr_t nodePtr);
+extern Result P2Pconnect(uintptr_t nodePtr, char* peerID, char* peerAddresses);
+extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections);
+extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections);
+extern Result P2PdocumentGetAll(uintptr_t nodePtr);
+extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr);
+extern Result PollSubscription(char* id);
+extern Result CloseSubscription(char* id);
+extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
-extern Result* AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
-extern Result* SetActiveCollection(uintptr_t nodePtr, char* version);
+extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
+extern Result SetActiveCollection(uintptr_t nodePtr, char* version);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
-extern Result* VersionGet(int flagFull, int flagJSON);
-extern Result* ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
-extern Result* ViewRefresh(uintptr_t nodePtr, char* viewNameStr,
+extern Result VersionGet(int flagFull, int flagJSON);
+extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
+extern Result ViewRefresh(uintptr_t nodePtr, char* viewNameStr,
 char* collectionIDStr, char* versionIDStr, int getInactive);
 */
 import "C"

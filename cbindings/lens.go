@@ -28,7 +28,7 @@ import (
 )
 
 //export LensSet
-func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) *C.Result {
+func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
 	ctx := context.Background()
 
 	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))
@@ -56,7 +56,7 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) *C.Resu
 }
 
 //export LensDown
-func LensDown(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.Result {
+func LensDown(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) C.Result {
 	ctx := context.Background()
 	srcData := []byte(C.GoString(documents))
 
@@ -87,7 +87,7 @@ func LensDown(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.R
 }
 
 //export LensUp
-func LensUp(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.Result {
+func LensUp(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) C.Result {
 	ctx := context.Background()
 	srcData := []byte(C.GoString(documents))
 
@@ -118,7 +118,7 @@ func LensUp(nodePtr C.uintptr_t, collectionID *C.char, documents *C.char) *C.Res
 }
 
 //export LensReload
-func LensReload(nodePtr C.uintptr_t) *C.Result {
+func LensReload(nodePtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -134,7 +134,7 @@ func LensReload(nodePtr C.uintptr_t) *C.Result {
 }
 
 //export LensSetRegistry
-func LensSetRegistry(nodePtr C.uintptr_t, collectionID *C.char, cfg *C.char) *C.Result {
+func LensSetRegistry(nodePtr C.uintptr_t, collectionID *C.char, cfg *C.char) C.Result {
 	ctx := context.Background()
 
 	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))

@@ -114,7 +114,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 }
 
 //export NodeClose
-func NodeClose(nodePtr C.uintptr_t) *C.Result {
+func NodeClose(nodePtr C.uintptr_t) C.Result {
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

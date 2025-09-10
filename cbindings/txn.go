@@ -46,7 +46,7 @@ func TransactionCreate(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int
 }
 
 //export TransactionCommit
-func TransactionCommit(txnPtr C.uintptr_t) *C.Result {
+func TransactionCommit(txnPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	h := cgo.Handle(txnPtr)
