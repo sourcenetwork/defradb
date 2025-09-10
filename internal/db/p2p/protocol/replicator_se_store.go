@@ -76,7 +76,7 @@ func NewSEReplicatorProtocol(
 	return proto
 }
 
-// PushToReplicator sends the pushseartifacts request to the provided peer node.
+// PushToReplicator sends the push SE artifacts request to the provided peer node.
 //
 // Callers should set an appropriate context timeout.
 func (proto *ReplicatorSEProtocol) PushToReplicator(
@@ -98,7 +98,7 @@ func (proto *ReplicatorSEProtocol) PushToReplicator(
 		}()
 	}
 
-	return message.Send[*PushSEArtifactsReply](ctx, proto, &req, pid, replicatorProtocolRequest)
+	return message.Send[*PushSEArtifactsReply](ctx, proto, &req, pid, replicatorSeProtocolRequest)
 }
 
 func (proto *ReplicatorSEProtocol) onRequest(stream io.Reader, peerID string) {
@@ -126,10 +126,9 @@ func (proto *ReplicatorSEProtocol) onRequest(stream io.Reader, peerID string) {
 
 	resp := PushSEArtifactsReply{}
 	resp.SetMessageID(req.MessageID)
-	err = message.SendAndForget(ctx, proto, &resp, peerID, replicatorProtocolResponse)
+	err = message.SendAndForget(ctx, proto, &resp, peerID, replicatorSeProtocolResponse)
 }
 
 func (proto *ReplicatorSEProtocol) onResponse(stream io.Reader, peerID string) {
 	_ = message.Receive(stream, peerID, proto, &PushSEArtifactsReply{})
 }
-

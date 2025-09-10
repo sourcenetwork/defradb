@@ -85,14 +85,13 @@ func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*Replication
 		eventBus:       db.Events(),
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
+		p2p:            p2p,
 	}
 
-	//rc.replProto = protocol.NewSEReplicatorProtocol(p2p.Host(), rc.processPushSEArtifactsRequest, rc.handleSEReplicatorFailure)
 	rc.replStoreProto = protocol.NewSEReplicatorProtocol(p2p.Host(), rc.processPushSEArtifactsRequest, nil)
 	rc.replQueryProto = protocol.NewSEQueryProtocol(p2p.Host(), rc.processQuerySEArtifactsRequest, nil)
 
 	var err error
-	//rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName, ReplicationFailureEventName)
 	rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName)
 	if err != nil {
 		return nil, err
@@ -100,6 +99,7 @@ func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*Replication
 
 	go rc.processEvents()
 
+	// TODO store context and use it for shutdown
 	go rc.retrySEReplicators(context.Background())
 
 	return rc, nil
@@ -156,14 +156,7 @@ func (rc *ReplicationCoordinator) processEvents() {
 		case QuerySEArtifactsRequest:
 			go rc.handleQuerySEArtifactsEvent(evt)
 
-		/*case ReplicationFailureEvent:
-		if err := rc.handleReplicationFailure(context.Background(), evt); err != nil {
-			log.ErrorE("Failed to handle SE replication failure", err,
-				corelog.String("DocID", evt.DocID))
-		}*/
-
 		default:
-			// ignore other events
 			continue
 		}
 	}
@@ -338,14 +331,6 @@ func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
 			}
 		}
 	}
-	/*if len(artifacts) > 0 {
-		rc.eventBus.Publish(event.NewMessage(ReplicateEventName, ReplicateEvent{
-			DocID:        evt.DocID,
-			CollectionID: evt.CollectionID,
-			Artifacts:    artifacts,
-			Identity:     evt.Identity,
-		}))
-	}*/
 
 	return nil
 }
@@ -453,32 +438,6 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 	}
 
 	rc.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
-	/*artifacts, err := rc.generateSEArtifacts(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to regenerate SE artifacts for retry", err,
-			corelog.String("DocID", retryInfo.DocID))
-		rc.updateRetryStatus(ctx, peerID, retryInfo, false)
-		return
-	}
-
-	rc.eventBus.Publish(event.NewMessage(ReplicateEventName, ReplicateEvent{
-		DocID:        retryInfo.DocID,
-		CollectionID: retryInfo.CollectionID,
-		Artifacts:    artifacts,
-		IsRetry:      true,
-		Success:      successChan,
-		Identity:     identity,
-	}))
-
-	select {
-	case success := <-successChan:
-		rc.updateRetryStatus(ctx, peerID, retryInfo, success)
-	case <-time.After(retryTimeout):
-		log.ErrorContext(ctx, "SE artifact retry timeout",
-			corelog.String("PeerID", peerID),
-			corelog.String("DocID", retryInfo.DocID))
-		rc.updateRetryStatus(ctx, peerID, retryInfo, false)
-	}*/
 }
 
 // updateRetryStatus updates the retry status after an attempt
