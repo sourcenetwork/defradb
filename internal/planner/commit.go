@@ -380,7 +380,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.DeltaFieldName, nil)
 	}
 
-	if block.Signature != nil {
+	if block.Signature != nil &&
+		n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName] != nil {
 		err := n.addSignatureFieldToDoc(*block.Signature, &commit)
 		if err != nil {
 			return core.Doc{}, err
@@ -446,8 +447,11 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	if err != nil {
 		return err
 	}
-	sigFieldIndex := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName][0]
-	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndex]
+	sigFieldIndexes, exists := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName]
+	if !exists {
+		return NewErrMissingFieldSelection(request.SignatureFieldName)
+	}
+	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndexes[0]]
 
 	sigDoc := sigMapping.NewDoc()
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)

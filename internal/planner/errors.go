@@ -17,6 +17,7 @@ const (
 	errFailedToClosePlan              string = "failed to close the plan"
 	errFailedToCollectExecExplainInfo string = "failed to collect execution explain information"
 	errSubTypeInit                    string = "sub-type initialization error at scan node reset"
+	errMissingFieldSelection          string = "missing field selection"
 )
 
 var (
@@ -62,4 +63,8 @@ func NewErrMismatchLengthOnSimilarity(source, vector int) error {
 		errors.NewKV("Source", source),
 		errors.NewKV("Vector", vector),
 	)
+}
+
+func NewErrMissingFieldSelection(field string) error {
+	return errors.New(errMissingFieldSelection, errors.NewKV("Field", field))
 }
