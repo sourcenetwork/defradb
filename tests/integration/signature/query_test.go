@@ -58,3 +58,54 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestDocSignature_WithEnabledSigning_ShouldQueryCommitsWithoutSignature(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        name: String
+                        age: Int
+                    }
+                `},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
+			},
+			testUtils.Request{
+				Request: `
+                    query {
+                        Users {
+                            _docID
+                            name
+                            age
+
+							_version {
+								height
+							}
+                        }
+                    }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"_docID": testUtils.NewDocIndex(0, 0),
+							"name":   "John",
+							"age":    int64(21),
+							"_version": []map[string]any{
+								{
+									"height": 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
