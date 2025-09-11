@@ -54,8 +54,8 @@ type ReplicationCoordinator struct {
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            *p2p.P2P
-	replStoreProto *protocol.ReplicatorSEProtocol
-	replQueryProto *protocol.SEQueryProtocol
+	replStoreProto *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply, *PushSEArtifactsRequest, *PushSEArtifactsReply]
+	replQueryProto *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply, *QuerySEArtifactsRequest, *QuerySEArtifactsReply]
 }
 
 // DB interface required by ReplicationCoordinator
@@ -78,6 +78,41 @@ type SERetryInfo struct {
 	KeyType      string // Key type (secp256k1, ed25519, etc.)
 }
 
+// seStoreProcessor implements CommProcessor for SE artifact storage
+type seStoreProcessor struct {
+	coordinator *ReplicationCoordinator
+}
+
+func (proc *seStoreProcessor) ProcessRequest(ctx context.Context, req PushSEArtifactsRequest, isReplicator bool) (PushSEArtifactsReply, error) {
+	err := proc.coordinator.processPushSEArtifactsRequest(ctx, &req, isReplicator)
+	return PushSEArtifactsReply{}, err
+}
+
+func (proc *seStoreProcessor) HandleFailure(ctx context.Context, peerID string, req PushSEArtifactsRequest) error {
+	// SE store failures could be logged but don't need special handling like doc replication
+	log.Info(">>> replication_coordinator.seStoreProcessor.HandleFailure: SE store failure", corelog.Any("PeerID", peerID))
+	return nil
+}
+
+// seQueryProcessor implements CommProcessor for SE artifact queries
+type seQueryProcessor struct {
+	coordinator *ReplicationCoordinator
+}
+
+func (proc *seQueryProcessor) ProcessRequest(ctx context.Context, req QuerySEArtifactsRequest, isReplicator bool) (QuerySEArtifactsReply, error) {
+	reply, err := proc.coordinator.processQuerySEArtifactsRequest(ctx, &req, isReplicator)
+	if err != nil {
+		return QuerySEArtifactsReply{}, err
+	}
+	return reply, nil
+}
+
+func (proc *seQueryProcessor) HandleFailure(ctx context.Context, peerID string, req QuerySEArtifactsRequest) error {
+	// SE query failures could be logged but don't need special handling
+	log.Info(">>> replication_coordinator.seQueryProcessor.HandleFailure: SE query failure", corelog.Any("PeerID", peerID))
+	return nil
+}
+
 // NewReplicationCoordinator creates a new coordinator
 func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*ReplicationCoordinator, error) {
 	rc := &ReplicationCoordinator{
@@ -88,8 +123,17 @@ func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*Replication
 		p2p:            p2p,
 	}
 
-	rc.replStoreProto = protocol.NewSEReplicatorProtocol(p2p.Host(), rc.processPushSEArtifactsRequest, nil)
-	rc.replQueryProto = protocol.NewSEQueryProtocol(p2p.Host(), rc.processQuerySEArtifactsRequest, nil)
+	// Create unified CommChannels for SE protocols
+	rc.replStoreProto = protocol.NewCommChannel(
+		p2p.Host(),
+		"rep_se",
+		&seStoreProcessor{coordinator: rc},
+	)
+	rc.replQueryProto = protocol.NewCommChannel(
+		p2p.Host(),
+		"rep_se_query",
+		&seQueryProcessor{coordinator: rc},
+	)
 
 	var err error
 	rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName)
@@ -153,7 +197,7 @@ func (rc *ReplicationCoordinator) processEvents() {
 					corelog.String("DocID", evt.DocID))
 			}
 
-		case QuerySEArtifactsRequest:
+		case RequestSEArtifactsEvent:
 			go rc.handleQuerySEArtifactsEvent(evt)
 
 		default:
@@ -162,17 +206,17 @@ func (rc *ReplicationCoordinator) processEvents() {
 	}
 }
 
-func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt QuerySEArtifactsRequest) {
-	grpcQueries := make([]protocol.SEFieldQuery, len(evt.Queries))
+func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtifactsEvent) {
+	grpcQueries := make([]SEFieldQuery, len(evt.Queries))
 	for i, q := range evt.Queries {
-		grpcQueries[i] = protocol.SEFieldQuery{
+		grpcQueries[i] = SEFieldQuery{
 			FieldName: q.FieldName,
 			IndexID:   q.IndexID,
 			SearchTag: q.SearchTag,
 		}
 	}
 
-	grpcReq := protocol.QuerySEArtifactsRequest{
+	grpcReq := QuerySEArtifactsRequest{
 		CollectionID: evt.CollectionID,
 		Queries:      grpcQueries,
 	}
@@ -183,7 +227,7 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt QuerySEArtifac
 	peerIDs := rc.p2p.GetReplicatorsIDs(evt.CollectionID)
 
 	if len(peerIDs) == 0 {
-		evt.Response <- QuerySEArtifactsResponse{
+		evt.Response <- SEArtifactsResult{
 			DocIDs: []string{},
 			Error:  nil,
 		}
@@ -191,7 +235,7 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt QuerySEArtifac
 	}
 
 	for _, pid := range peerIDs {
-		reply, err := rc.replQueryProto.PushToReplicator(context.Background(), grpcReq, pid, false)
+		reply, err := rc.replQueryProto.SendRequest(context.Background(), grpcReq, pid, false)
 		if err != nil {
 			log.ErrorE(
 				"Failed querying SE artifacts from replicator",
@@ -212,7 +256,7 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt QuerySEArtifac
 		docIDs = append(docIDs, docID)
 	}
 
-	evt.Response <- QuerySEArtifactsResponse{
+	evt.Response <- SEArtifactsResult{
 		DocIDs: docIDs,
 		Error:  queryErr,
 	}
@@ -298,23 +342,23 @@ func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
 		return nil
 	}
 
-	protoArtifacts := make([]protocol.SEArtifact, len(artifacts))
+	protoArtifacts := make([]SEArtifact, len(artifacts))
 	for i, artifact := range artifacts {
-		protoArtifacts[i] = protocol.SEArtifact{
+		protoArtifacts[i] = SEArtifact{
 			DocID:     artifact.DocID,
 			IndexID:   artifact.IndexID,
 			SearchTag: artifact.SearchTag,
 		}
 	}
 
-	req := protocol.PushSEArtifactsRequest{
+	req := PushSEArtifactsRequest{
 		CollectionID: collectionID,
 		Artifacts:    protoArtifacts,
 	}
 
 	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
 	for _, pid := range peerIDs {
-		_, err = rc.replStoreProto.PushToReplicator(ctx, req, pid, false)
+		_, err = rc.replStoreProto.SendRequest(ctx, req, pid, false)
 		if err != nil {
 			if isRetry {
 				return err
@@ -557,7 +601,7 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 
 func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
-	req *protocol.PushSEArtifactsRequest,
+	req *PushSEArtifactsRequest,
 	isReplicator bool,
 ) error {
 	sb := strings.Builder{}
@@ -593,25 +637,25 @@ func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 
 func (rc *ReplicationCoordinator) processQuerySEArtifactsRequest(
 	ctx context.Context,
-	req *protocol.QuerySEArtifactsRequest,
+	req *QuerySEArtifactsRequest,
 	isReplicator bool,
-) (protocol.QuerySEArtifactsReply, error) {
+) (QuerySEArtifactsReply, error) {
 	matchingDocIDs, err := rc.querySEArtifactsFromDatastore(ctx, req)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
-		return protocol.QuerySEArtifactsReply{}, err
+		return QuerySEArtifactsReply{}, err
 	}
 
 	log.InfoContext(ctx, "Handle SE artifacts query", corelog.String("DocIDs", strings.Join(matchingDocIDs, ", ")),
 		corelog.String("Sender", req.SenderID))
 
-	return protocol.QuerySEArtifactsReply{
+	return QuerySEArtifactsReply{
 		DocIDs: matchingDocIDs,
 	}, nil
 }
 
 // querySEArtifactsFromDatastore queries SE artifacts from the local datastore
-func (rc *ReplicationCoordinator) querySEArtifactsFromDatastore(ctx context.Context, req *protocol.QuerySEArtifactsRequest) ([]string, error) {
+func (rc *ReplicationCoordinator) querySEArtifactsFromDatastore(ctx context.Context, req *QuerySEArtifactsRequest) ([]string, error) {
 	queries := make([]FieldQuery, len(req.Queries))
 	for i, q := range req.Queries {
 		queries[i] = FieldQuery{

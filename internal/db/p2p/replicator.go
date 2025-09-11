@@ -194,7 +194,15 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 		}*/
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
-		if _, err := p.replicatorProtocol.PushToReplicator(ctx, update, peerID); err != nil {
+		// Convert event.Update to PushLogRequest to remove event dependency from protocol
+		pushLogReq := protocol.PushLogRequest{
+			DocID:        update.DocID,
+			CID:          update.Cid.Bytes(),
+			CollectionID: update.CollectionID,
+			Creator:      p.host.ID(),
+			Block:        update.Block,
+		}
+		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, false); err != nil {
 			//if _, err := p.replicatorProtocol.PushToReplicator(ctx, req, peerID, false); err != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
@@ -321,7 +329,15 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 			go func() {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
-				if _, err := p.replicatorProtocol.PushToReplicator(ctx, lg, peerID); err != nil {
+				// Convert event.Update to PushLogRequest
+				pushLogReq := protocol.PushLogRequest{
+					DocID:        lg.DocID,
+					CID:          lg.Cid.Bytes(),
+					CollectionID: lg.CollectionID,
+					Creator:      p.host.ID(),
+					Block:        lg.Block,
+				}
+				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, lg.IsRetry); err != nil {
 					//if _, err := p.replicatorProtocol.PushToReplicator(ctx, updateEventToPushLog(lg), peerID, lg.IsRetry); err != nil {
 					log.ErrorE(
 						"Failed pushing log",
@@ -821,7 +837,15 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		}*/
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
-		if _, err := p.replicatorProtocol.PushToReplicator(ctx, updateEvent, peerID); err != nil {
+		// Convert event.Update to PushLogRequest
+		pushLogReq := protocol.PushLogRequest{
+			DocID:        updateEvent.DocID,
+			CID:          updateEvent.Cid.Bytes(),
+			CollectionID: updateEvent.CollectionID,
+			Creator:      p.host.ID(),
+			Block:        updateEvent.Block,
+		}
+		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, true); err != nil {
 			//if _, err := p.replicatorProtocol.PushToReplicator(ctx, req, peerID, true); err != nil {
 			return err
 		}

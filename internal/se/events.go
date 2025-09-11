@@ -40,28 +40,28 @@ type ReplicationFailureEvent struct {
 	DocID        string
 	CollectionID string
 	//PeerID       peer.ID
-	PeerID       string
-	FieldNames   []string
-	Identity     immutable.Option[acpIdentity.Identity]
+	PeerID     string
+	FieldNames []string
+	Identity   immutable.Option[acpIdentity.Identity]
 }
 
-// QuerySEArtifactsRequest - Request to query SE artifacts from replicators
-type QuerySEArtifactsRequest struct {
+// RequestSEArtifactsEvent - Request to query SE artifacts from replicators
+type RequestSEArtifactsEvent struct {
 	CollectionID string
 	Queries      []FieldQuery
-	Response     chan QuerySEArtifactsResponse
+	Response     chan SEArtifactsResult
 }
 
-// QuerySEArtifactsResponse - Response containing matching document IDs
-type QuerySEArtifactsResponse struct {
+// SEArtifactsResult - Response containing matching document IDs
+type SEArtifactsResult struct {
 	DocIDs []string
 	Error  error
 }
 
 // NewQuerySEArtifactsMessage creates a new SE query message with response channel
-func NewQuerySEArtifactsMessage(collectionID string, queries []FieldQuery) (event.Message, chan QuerySEArtifactsResponse) {
-	response := make(chan QuerySEArtifactsResponse, 1)
-	request := QuerySEArtifactsRequest{
+func NewQuerySEArtifactsMessage(collectionID string, queries []FieldQuery) (event.Message, chan SEArtifactsResult) {
+	response := make(chan SEArtifactsResult, 1)
+	request := RequestSEArtifactsEvent{
 		CollectionID: collectionID,
 		Queries:      queries,
 		Response:     response,

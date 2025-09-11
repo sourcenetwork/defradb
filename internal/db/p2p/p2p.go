@@ -64,8 +64,9 @@ type DB interface {
 }
 
 type P2P struct {
-	identityProtocol   *protocol.IdentityProtocol
-	replicatorProtocol *protocol.ReplicatorProtocol
+	identityProtocol *protocol.IdentityProtocol
+	//replicatorProtocol *protocol.Channel
+	replicatorProtocol *protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply, *protocol.PushLogRequest, *protocol.PushLogReply]
 	//replicatorSEProtocol *protocol.ReplicatorSEProtocol
 
 	ctx  context.Context
@@ -85,6 +86,19 @@ type P2P struct {
 	handleRetryMutex sync.Mutex
 }
 
+// pushLogCommProcessor implements CommProcessor for push log functionality
+type pushLogCommProcessor struct {
+	p2p *P2P
+}
+
+func (proc *pushLogCommProcessor) ProcessRequest(ctx context.Context, req protocol.PushLogRequest, isReplicator bool) (protocol.PushLogReply, error) {
+	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, isReplicator)
+}
+
+func (proc *pushLogCommProcessor) HandleFailure(ctx context.Context, peerID string, req protocol.PushLogRequest) error {
+	return proc.p2p.handleReplicatorFailure(ctx, peerID, req.DocID)
+}
+
 // New returns a new configured P2P instance.
 func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	p := P2P{
@@ -96,8 +110,8 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 		peerIdentities:   make(map[string]identity.Identity),
 		retryIntervals:   db.RetryIntervals(),
 	}
-	p.replicatorProtocol = protocol.NewReplicatorProtocol(host, p.processPushlogRequest, p.handleReplicatorFailure)
-	//p.replicatorSEProtocol = protocol.NewSEReplicatorProtocol(host, p.processPushSEArtifactsRequest, p.handleSEReplicatorFailure)
+	// Create adapter for push log processing using unified CommChannel with dual type parameters
+	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
