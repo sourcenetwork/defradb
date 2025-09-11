@@ -15,13 +15,16 @@ import (
 	"errors"
 	"io"
 
-	"github.com/sourcenetwork/corelog"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
-var logCommChannel = corelog.NewLogger("protocol.comm_channel")
+const (
+	protocolVersion        = "0.0.1"
+	protocolBase           = "/defradb/"
+	protocolRequestSuffix  = "_req/" + protocolVersion
+	protocolResponseSuffix = "_resp/" + protocolVersion
+)
 
 // CommProcessor defines the interface for processing requests
 // All processor functions must return (reply, error) - this unifies the signatures
@@ -54,11 +57,6 @@ type CommChannel[Req any, Reply any, ReqP interface {
 	responseEndpoint string
 }
 
-const protocolVersion = "0.0.1"
-const protocolBase = "/defradb/"
-const protocolRequestSuffix = "_req/" + protocolVersion
-const protocolResponseSuffix = "_resp/" + protocolVersion
-
 // NewCommChannel creates a new communication channel
 // This replaces NewReplicatorProtocol, NewSEReplicatorProtocol, and NewSEQueryProtocol
 func NewCommChannel[Req any, Reply any, ReqP interface {
@@ -72,11 +70,7 @@ func NewCommChannel[Req any, Reply any, ReqP interface {
 	name string,
 	processor CommProcessor[Req, Reply, ReqP, ReplyP],
 ) *CommChannel[Req, Reply, ReqP, ReplyP] {
-	logCommChannel.Info(">>> comm_channel.NewCommChannel: Creating communication channel",
-		corelog.String("RequestEndpoint", protocolBase+name+protocolRequestSuffix),
-		corelog.String("ResponseEndpoint", protocolBase+name+protocolResponseSuffix))
-
-		channel := &CommChannel[Req, Reply, ReqP, ReplyP]{
+	channel := &CommChannel[Req, Reply, ReqP, ReplyP]{
 		baseProto:        newBaseProto(h),
 		processor:        processor,
 		requestEndpoint:  protocolBase + name + protocolRequestSuffix,
@@ -86,7 +80,6 @@ func NewCommChannel[Req any, Reply any, ReqP interface {
 	h.SetStreamHandler(channel.requestEndpoint, channel.onRequest)
 	h.SetStreamHandler(channel.responseEndpoint, channel.onResponse)
 
-	logCommChannel.Info(">>> comm_channel.NewCommChannel: Channel created and handlers registered")
 	return channel
 }
 
@@ -98,41 +91,29 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 	peerID string,
 	isRetry bool,
 ) (Reply, error) {
-	logCommChannel.Info(">>> comm_channel.SendRequest: Starting",
-		corelog.Any("PeerID", peerID),
-		corelog.String("RequestEndpoint", c.requestEndpoint))
-
 	var err error
 	defer func() {
 		if err != nil && !isRetry {
-			logCommChannel.Info(">>> comm_channel.SendRequest: Handling failure", corelog.Any("PeerID", peerID))
 			if handleErr := c.processor.HandleFailure(ctx, peerID, req); handleErr != nil {
 				err = errors.Join(err, handleErr)
 			}
 		}
 	}()
 
-	logCommChannel.Info(">>> comm_channel.SendRequest: Sending message to peer", corelog.Any("PeerID", peerID))
-
 	reqPtr := ReqP(&req) // Convert to pointer type for message interface
 	replyPtr, err := message.Send[ReplyP](ctx, c, reqPtr, peerID, c.requestEndpoint)
 	if err != nil {
-		logCommChannel.ErrorE(">>> comm_channel.SendRequest: Send failed", err, corelog.Any("PeerID", peerID))
 		var nilReply Reply
 		return nilReply, err
 	}
 
-	logCommChannel.Info(">>> comm_channel.SendRequest: Got reply", corelog.Any("PeerID", peerID))
-
 	// Dereference the pointer to get the value type
 	reply := *replyPtr
-	logCommChannel.Info(">>> comm_channel.SendRequest: Successfully returning reply", corelog.Any("PeerID", peerID))
 
 	return reply, nil
 }
 
 func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peerID string) {
-	logCommChannel.Info(">>> comm_channel.onRequest: Received request", corelog.Any("PeerID", peerID))
 	ctx := context.Background()
 
 	// Create stack-allocated request and convert to pointer that satisfies interface
@@ -140,15 +121,11 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 	reqPtr := ReqP(&req) // Convert to pointer type that implements message.Message
 	err := message.Receive(stream, peerID, c, reqPtr)
 	if err != nil {
-		logCommChannel.ErrorE(">>> comm_channel.onRequest: Failed to receive message", err, corelog.Any("PeerID", peerID))
 		return
 	}
 
-	logCommChannel.Info(">>> comm_channel.onRequest: Processing request", corelog.Any("PeerID", peerID))
-
 	defer func() {
 		if err != nil {
-			logCommChannel.ErrorE(">>> comm_channel.onRequest: Processing failed, sending error response", err, corelog.Any("PeerID", peerID))
 			var resp Reply
 			respPtr := ReplyP(&resp) // Convert to pointer type that implements message.Message
 			respPtr.SetMessageID(reqPtr.GetMessageID())
@@ -162,23 +139,14 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 		return
 	}
 
-	logCommChannel.Info(">>> comm_channel.onRequest: Got reply from processor", corelog.Any("PeerID", peerID))
-
 	// Set message ID and send response
 	replyPtr := ReplyP(&reply) // Convert to pointer type for message interface
 	replyPtr.SetMessageID(reqPtr.GetMessageID())
 	err = message.SendAndForget(ctx, c, replyPtr, peerID, c.responseEndpoint)
-	logCommChannel.Info(">>> comm_channel.onRequest: Sent reply", corelog.Any("PeerID", peerID), corelog.Any("Error", err))
 }
 
 func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onResponse(stream io.Reader, peerID string) {
-	logCommChannel.Info(">>> comm_channel.onResponse: Receiving response", corelog.Any("PeerID", peerID))
 	var reply Reply
 	replyPtr := ReplyP(&reply) // Convert to pointer type for message interface
-	err := message.Receive(stream, peerID, c, replyPtr)
-	if err != nil {
-		logCommChannel.ErrorE(">>> comm_channel.onResponse: Failed to receive response", err, corelog.Any("PeerID", peerID))
-	} else {
-		logCommChannel.Info(">>> comm_channel.onResponse: Successfully received response", corelog.Any("PeerID", peerID))
-	}
+	_ = message.Receive(stream, peerID, c, replyPtr)
 }
