@@ -242,46 +242,28 @@ type GraphQLRequest struct {
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var request GraphQLRequest
-	switch {
-	case req.URL.Query().Get("query") != "":
-
-		request.Query = req.URL.Query().Get("query")
-
-		request.OperationName = req.URL.Query().Get("operationName")
-
-		variablesFromQuery := req.URL.Query().Get("variables")
-		if variablesFromQuery != "" {
-			var variables map[string]any
-			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
-			}
-			request.Variables = variables
-		}
-
-	case req.Body != nil:
-		if err := requestJSON(req, &request); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
+	// handle different request transports
+	if req.Header.Get("Accept") == "text/event-stream" {
+		s.ExecSSESubscription(rw, req)
 		return
 	}
-	var options []client.RequestOption
-	if request.OperationName != "" {
-		options = append(options, client.WithOperationName(request.OperationName))
+
+	request, options, err := extractGraphQLRequest(rw, req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
 	}
-	if len(request.Variables) > 0 {
-		options = append(options, client.WithVariables(request.Variables))
-	}
+
 	result := db.ExecRequest(req.Context(), request.Query, options...)
 
 	if result.Subscription == nil {
 		responseJSON(rw, http.StatusOK, result.GQL)
 		return
 	}
+}
+
+func (s *storeHandler) ExecSSESubscription(rw http.ResponseWriter, req *http.Request) {
+	// upgrade to SSE connection
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
@@ -341,7 +323,42 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
+func extractGraphQLRequest(rw http.ResponseWriter, req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
+	var request GraphQLRequest
+	switch {
+	case req.URL.Query().Get("query") != "":
+
+		request.Query = req.URL.Query().Get("query")
+
+		request.OperationName = req.URL.Query().Get("operationName")
+
+		variablesFromQuery := req.URL.Query().Get("variables")
+		if variablesFromQuery != "" {
+			var variables map[string]any
+			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+				// responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+				return GraphQLRequest{}, nil, err
+			}
+			request.Variables = variables
+		}
+
+	case req.Body != nil:
+		if err := requestJSON(req, &request); err != nil {
+			return GraphQLRequest{}, nil, err
+		}
+	default:
+		return GraphQLRequest{}, nil, ErrMissingRequest
+	}
+	var options []client.RequestOption
+	if request.OperationName != "" {
+		options = append(options, client.WithOperationName(request.OperationName))
+	}
+	if len(request.Variables) > 0 {
+		options = append(options, client.WithVariables(request.Variables))
+	}
+}
+
+func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	identity, err := db.GetNodeIdentity(req.Context())
