@@ -54,8 +54,8 @@ type ReplicationCoordinator struct {
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            *p2p.P2P
-	replStoreProto *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply, *PushSEArtifactsRequest, *PushSEArtifactsReply]
-	replQueryProto *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply, *QuerySEArtifactsRequest, *QuerySEArtifactsReply]
+	storeSEProto   *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply, *PushSEArtifactsRequest, *PushSEArtifactsReply]
+	querySEProto   *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply, *QuerySEArtifactsRequest, *QuerySEArtifactsReply]
 }
 
 // DB interface required by ReplicationCoordinator
@@ -84,8 +84,7 @@ type seStoreProcessor struct {
 }
 
 func (proc *seStoreProcessor) ProcessRequest(ctx context.Context, req PushSEArtifactsRequest, isReplicator bool) (PushSEArtifactsReply, error) {
-	err := proc.coordinator.processPushSEArtifactsRequest(ctx, &req, isReplicator)
-	return PushSEArtifactsReply{}, err
+	return PushSEArtifactsReply{}, proc.coordinator.processPushSEArtifactsRequest(ctx, &req, isReplicator)
 }
 
 func (proc *seStoreProcessor) HandleFailure(ctx context.Context, peerID string, req PushSEArtifactsRequest) error {
@@ -100,11 +99,7 @@ type seQueryProcessor struct {
 }
 
 func (proc *seQueryProcessor) ProcessRequest(ctx context.Context, req QuerySEArtifactsRequest, isReplicator bool) (QuerySEArtifactsReply, error) {
-	reply, err := proc.coordinator.processQuerySEArtifactsRequest(ctx, &req, isReplicator)
-	if err != nil {
-		return QuerySEArtifactsReply{}, err
-	}
-	return reply, nil
+	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req, isReplicator)
 }
 
 func (proc *seQueryProcessor) HandleFailure(ctx context.Context, peerID string, req QuerySEArtifactsRequest) error {
@@ -124,14 +119,14 @@ func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*Replication
 	}
 
 	// Create unified CommChannels for SE protocols
-	rc.replStoreProto = protocol.NewCommChannel(
+	rc.storeSEProto = protocol.NewCommChannel(
 		p2p.Host(),
 		"rep_se",
 		&seStoreProcessor{coordinator: rc},
 	)
-	rc.replQueryProto = protocol.NewCommChannel(
+	rc.querySEProto = protocol.NewCommChannel(
 		p2p.Host(),
-		"rep_se_query",
+		"se_query",
 		&seQueryProcessor{coordinator: rc},
 	)
 
@@ -235,7 +230,7 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtif
 	}
 
 	for _, pid := range peerIDs {
-		reply, err := rc.replQueryProto.SendRequest(context.Background(), grpcReq, pid, false)
+		reply, err := rc.querySEProto.SendRequest(context.Background(), grpcReq, pid, false)
 		if err != nil {
 			log.ErrorE(
 				"Failed querying SE artifacts from replicator",
@@ -358,7 +353,7 @@ func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
 
 	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
 	for _, pid := range peerIDs {
-		_, err = rc.replStoreProto.SendRequest(ctx, req, pid, false)
+		_, err = rc.storeSEProto.SendRequest(ctx, req, pid, false)
 		if err != nil {
 			if isRetry {
 				return err
