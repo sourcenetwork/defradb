@@ -91,6 +91,7 @@ func (n *dagScanNode) Init() error {
 	if !n.commitSelect.Cid.HasValue() {
 		return n.fetcher.Start(n.planner.ctx, n.prefix)
 	}
+
 	return nil
 }
 
@@ -236,6 +237,14 @@ func (n *dagScanNode) Next() (bool, error) {
 	}
 
 	if n.commitSelect.FieldName.HasValue() {
+
+		// early catch for CID based filtering
+		// since we are only concerned about this one CID lookup
+		if n.commitSelect.Cid.HasValue() &&
+			n.commitSelect.FieldName.Value() != dagBlock.Delta.GetFieldName() {
+			return false, nil
+		}
+
 		if n.commitSelect.FieldName.Value() == request.CompositeFieldName {
 			if dagBlock.Delta.IsComposite() {
 				// no-op, block passes the filter and should continue in this func
