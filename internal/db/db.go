@@ -98,6 +98,8 @@ type DB struct {
 	p2p *p2p.P2P
 	// Retry intervals when a replicator failure occurs.
 	retryIntervals []time.Duration
+	// timeout duration for syncing block links.
+	p2pBlockSyncTimeout time.Duration
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -135,17 +137,18 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:      rootstore,
-		nodeACP:        nodeACP,
-		documentACP:    documentACP,
-		lensRegistry:   lens,
-		parser:         parser,
-		options:        options,
-		events:         event.NewChannelBus(commandBufferSize, eventBufferSize),
-		ctxCancel:      cancel,
-		docMergeQueue:  newMergeQueue(),
-		colMergeQueue:  newMergeQueue(),
-		retryIntervals: opts.retryIntervals,
+		rootstore:           rootstore,
+		nodeACP:             nodeACP,
+		documentACP:         documentACP,
+		lensRegistry:        lens,
+		parser:              parser,
+		options:             options,
+		events:              event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctxCancel:           cancel,
+		docMergeQueue:       newMergeQueue(),
+		colMergeQueue:       newMergeQueue(),
+		retryIntervals:      opts.retryIntervals,
+		p2pBlockSyncTimeout: opts.p2pBlockSyncTimeout,
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -463,6 +466,11 @@ func (db *DB) MaxTxnRetries() int {
 // RetryIntervals returns the replicator retry configuration.
 func (db *DB) RetryIntervals() []time.Duration {
 	return db.retryIntervals
+}
+
+// P2PBlockSyncTimeout is the timeout duration for syncing block links.
+func (db *DB) P2PBlockSyncTimeout() time.Duration {
+	return db.p2pBlockSyncTimeout
 }
 
 // PrintDump prints the entire database to console.

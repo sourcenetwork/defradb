@@ -226,11 +226,21 @@ func updateHeads(
 		}
 	}
 
+	err := txn.Blockstore().MarkAsMerged(ctx, blockLink.Cid)
+	if err != nil {
+		return NewErrMarkingAsMerged(blockLink.Cid, err)
+	}
+
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
 		isHead, err := headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return NewErrCheckingHead(linkCid, err)
+		}
+
+		err = txn.Blockstore().MarkAsMerged(ctx, blockLink.Cid)
+		if err != nil {
+			return NewErrMarkingAsMerged(blockLink.Cid, err)
 		}
 
 		if isHead {

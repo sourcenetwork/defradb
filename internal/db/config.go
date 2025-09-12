@@ -30,6 +30,8 @@ type dbOptions struct {
 	disableSigning bool
 	p2p            immutable.Option[client.Host]
 	retryIntervals []time.Duration
+	// timeout duration for syncing block links.
+	p2pBlockSyncTimeout time.Duration
 }
 
 func defaultDBOptions() *dbOptions {
@@ -45,6 +47,7 @@ func defaultDBOptions() *dbOptions {
 			time.Minute * 16,
 			time.Minute * 32,
 		},
+		p2pBlockSyncTimeout: time.Second * 5,
 	}
 }
 
@@ -83,5 +86,11 @@ func WithRetryInterval(interval []time.Duration) Option {
 func WithP2P(host client.Host) Option {
 	return func(opts *dbOptions) {
 		opts.p2p = immutable.Some(host)
+	}
+}
+
+func WithP2PBlockSyncTimeout(timeout time.Duration) Option {
+	return func(opt *dbOptions) {
+		opt.p2pBlockSyncTimeout = timeout
 	}
 }

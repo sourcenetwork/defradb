@@ -225,7 +225,7 @@ func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
 		return err
 	}
 
-	return syncDAG(ctx, p.host.BlockService(), linkBlock)
+	return p.syncDAG(ctx, p.host.BlockService(), linkBlock)
 }
 
 // docSyncMessageHandler handles incoming document sync requests from the pubsub network.

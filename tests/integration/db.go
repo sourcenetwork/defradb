@@ -15,7 +15,9 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -75,6 +77,7 @@ func defaultNodeOpts() []node.Option {
 		// to keep the tests as lightweight as possible.
 		node.WithDisableP2P(true),
 		node.WithLensRuntime(lensType),
+		db.WithP2PBlockSyncTimeout(1 * time.Second),
 	}
 }
 

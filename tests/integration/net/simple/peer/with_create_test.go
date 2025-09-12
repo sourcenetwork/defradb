@@ -202,6 +202,8 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
 			&action.AddSchema{
 				Schema: `
                     type Users {
@@ -218,12 +220,28 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 				SourceNodeID: 2,
 				TargetNodeID: 1,
 			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 3,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 4,
+				TargetNodeID: 3,
+			},
 			testUtils.SubscribeToCollection{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 			testUtils.SubscribeToCollection{
 				NodeID:        2,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        3,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        4,
 				CollectionIDs: []int{0},
 			},
 			testUtils.CreateDoc{

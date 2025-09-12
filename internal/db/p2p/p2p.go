@@ -59,6 +59,8 @@ type DB interface {
 	RetryIntervals() []time.Duration
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
+	// P2PBlockSyncTimeout is the timeout duration for syncing block links.
+	P2PBlockSyncTimeout() time.Duration
 }
 
 type P2P struct {
@@ -83,19 +85,23 @@ type P2P struct {
 
 	// a cid queue for the processing of Pushlogs
 	processQueue *processQueue
+
+	// timeout duration for syncing block links.
+	syncBlockLinkTimeout time.Duration
 }
 
 // New returns a new configured P2P instance.
 func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	p := P2P{
-		ctx:              ctx,
-		db:               db,
-		host:             host,
-		identityProtocol: protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
-		replicators:      make(map[string]map[string]client.PeerInfo),
-		peerIdentities:   make(map[string]identity.Identity),
-		retryIntervals:   db.RetryIntervals(),
-		processQueue:     newProcessQueue(),
+		ctx:                  ctx,
+		db:                   db,
+		host:                 host,
+		identityProtocol:     protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
+		replicators:          make(map[string]map[string]client.PeerInfo),
+		peerIdentities:       make(map[string]identity.Identity),
+		retryIntervals:       db.RetryIntervals(),
+		processQueue:         newProcessQueue(),
+		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 	}
 	p.replicatorProtocol = protocol.NewReplicatorProtocol(host, p.processPushlogRequest, p.handleReplicatorFailure)
 
@@ -377,14 +383,28 @@ func (p *P2P) processPushlogRequest(
 		return err
 	}
 
+	// Check if we've already merged this block. If so, skip the sink process.
+	txn, err := p.db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard(ctx)
+	clientTxn := datastore.MustGetFromClientTxn(txn)
+	merged, err := clientTxn.Blockstore().IsMerged(ctx, headCID)
+	if err != nil {
+		return err
+	}
+	if merged {
+		return nil
+	}
+
 	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
 	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
 	// if this initial sync call had a negative response for a given link, the subsequent calls will
 	// assume a negative response for that same link without retrying.
 	p.processQueue.add(headCID.String())
-	defer p.processQueue.done(headCID.String())
-
-	err = syncDAG(ctx, p.host.BlockService(), block)
+	err = p.syncDAG(ctx, p.host.BlockService(), block)
+	p.processQueue.done(headCID.String())
 	if err != nil {
 		return err
 	}
@@ -475,15 +495,16 @@ func newProcessQueue() *processQueue {
 // be called to remove the cid from the queue. Otherwise, subsequent add calls will
 // block forever.
 func (m *processQueue) add(cid string) {
-	m.mutex.Lock()
-	done, ok := m.cids[cid]
-	if !ok {
-		m.cids[cid] = make(chan struct{})
-	}
-	m.mutex.Unlock()
-	if ok {
+	for {
+		m.mutex.Lock()
+		done, ok := m.cids[cid]
+		if !ok {
+			m.cids[cid] = make(chan struct{})
+			m.mutex.Unlock()
+			return
+		}
+		m.mutex.Unlock()
 		<-done
-		m.add(cid)
 	}
 }
 
