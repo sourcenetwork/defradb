@@ -77,6 +77,8 @@ func defaultNodeOpts() []node.Option {
 		// to keep the tests as lightweight as possible.
 		node.WithDisableP2P(true),
 		node.WithLensRuntime(lensType),
+		// The default is 5 and that is never going to be needed in a testing scenario where all the
+		// nodes are on the same machine with no network latency.
 		db.WithP2PBlockSyncTimeout(1 * time.Second),
 	}
 }
