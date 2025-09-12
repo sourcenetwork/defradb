@@ -445,6 +445,129 @@ func (_c *Blockstore_HashOnRead_Call) RunAndReturn(run func(enabled bool)) *Bloc
 	return _c
 }
 
+// IsMerged provides a mock function for the type Blockstore
+func (_mock *Blockstore) IsMerged(ctx context.Context, k cid.Cid) (bool, error) {
+	ret := _mock.Called(ctx, k)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsMerged")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, cid.Cid) (bool, error)); ok {
+		return returnFunc(ctx, k)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, cid.Cid) bool); ok {
+		r0 = returnFunc(ctx, k)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, cid.Cid) error); ok {
+		r1 = returnFunc(ctx, k)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Blockstore_IsMerged_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsMerged'
+type Blockstore_IsMerged_Call struct {
+	*mock.Call
+}
+
+// IsMerged is a helper method to define mock.On call
+//   - ctx context.Context
+//   - k cid.Cid
+func (_e *Blockstore_Expecter) IsMerged(ctx interface{}, k interface{}) *Blockstore_IsMerged_Call {
+	return &Blockstore_IsMerged_Call{Call: _e.mock.On("IsMerged", ctx, k)}
+}
+
+func (_c *Blockstore_IsMerged_Call) Run(run func(ctx context.Context, k cid.Cid)) *Blockstore_IsMerged_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].(cid.Cid)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Blockstore_IsMerged_Call) Return(b bool, err error) *Blockstore_IsMerged_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *Blockstore_IsMerged_Call) RunAndReturn(run func(ctx context.Context, k cid.Cid) (bool, error)) *Blockstore_IsMerged_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkAsMerged provides a mock function for the type Blockstore
+func (_mock *Blockstore) MarkAsMerged(ctx context.Context, k cid.Cid) error {
+	ret := _mock.Called(ctx, k)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkAsMerged")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, cid.Cid) error); ok {
+		r0 = returnFunc(ctx, k)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Blockstore_MarkAsMerged_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkAsMerged'
+type Blockstore_MarkAsMerged_Call struct {
+	*mock.Call
+}
+
+// MarkAsMerged is a helper method to define mock.On call
+//   - ctx context.Context
+//   - k cid.Cid
+func (_e *Blockstore_Expecter) MarkAsMerged(ctx interface{}, k interface{}) *Blockstore_MarkAsMerged_Call {
+	return &Blockstore_MarkAsMerged_Call{Call: _e.mock.On("MarkAsMerged", ctx, k)}
+}
+
+func (_c *Blockstore_MarkAsMerged_Call) Run(run func(ctx context.Context, k cid.Cid)) *Blockstore_MarkAsMerged_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].(cid.Cid)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Blockstore_MarkAsMerged_Call) Return(err error) *Blockstore_MarkAsMerged_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Blockstore_MarkAsMerged_Call) RunAndReturn(run func(ctx context.Context, k cid.Cid) error) *Blockstore_MarkAsMerged_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Put provides a mock function for the type Blockstore
 func (_mock *Blockstore) Put(context1 context.Context, block blocks.Block) error {
 	ret := _mock.Called(context1, block)
