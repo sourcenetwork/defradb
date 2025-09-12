@@ -124,8 +124,8 @@ func (p *P2P) PeerInfo() client.PeerInfo {
 }
 
 // Connect initiates a connection to the peer with the given addresp.
-func (p *P2P) Connect(ctx context.Context, info client.PeerInfo) error {
-	return p.host.Connect(ctx, info)
+func (p *P2P) Connect(ctx context.Context, id string, addresses []string) error {
+	return p.host.Connect(ctx, id, addresses)
 }
 
 func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collectionIDs map[string]struct{}) {
@@ -135,7 +135,7 @@ func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collec
 			log.ErrorE("Failed to disconnect from replicator peer", err)
 		}
 	} else {
-		if err := p.host.Connect(ctx, rep); err != nil {
+		if err := p.host.Connect(ctx, rep.ID, rep.Addresses); err != nil {
 			log.ErrorE("Failed to connect to replicator peer", err)
 		}
 	}
