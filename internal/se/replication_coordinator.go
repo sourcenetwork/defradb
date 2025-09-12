@@ -87,12 +87,6 @@ func (proc *seStoreProcessor) ProcessRequest(ctx context.Context, req PushSEArti
 	return PushSEArtifactsReply{}, proc.coordinator.processPushSEArtifactsRequest(ctx, &req, isReplicator)
 }
 
-func (proc *seStoreProcessor) HandleFailure(ctx context.Context, peerID string, req PushSEArtifactsRequest) error {
-	// SE store failures could be logged but don't need special handling like doc replication
-	log.Info(">>> replication_coordinator.seStoreProcessor.HandleFailure: SE store failure", corelog.Any("PeerID", peerID))
-	return nil
-}
-
 // seQueryProcessor implements CommProcessor for SE artifact queries
 type seQueryProcessor struct {
 	coordinator *ReplicationCoordinator
@@ -100,12 +94,6 @@ type seQueryProcessor struct {
 
 func (proc *seQueryProcessor) ProcessRequest(ctx context.Context, req QuerySEArtifactsRequest, isReplicator bool) (QuerySEArtifactsReply, error) {
 	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req, isReplicator)
-}
-
-func (proc *seQueryProcessor) HandleFailure(ctx context.Context, peerID string, req QuerySEArtifactsRequest) error {
-	// SE query failures could be logged but don't need special handling
-	log.Info(">>> replication_coordinator.seQueryProcessor.HandleFailure: SE query failure", corelog.Any("PeerID", peerID))
-	return nil
 }
 
 // NewReplicationCoordinator creates a new coordinator

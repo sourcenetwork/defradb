@@ -12,7 +12,6 @@ package protocol
 
 import (
 	"context"
-	"errors"
 	"io"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -36,7 +35,6 @@ type CommProcessor[Req any, Reply any, ReqP interface {
 	message.Message
 }] interface {
 	ProcessRequest(ctx context.Context, req Req, isReplicator bool) (Reply, error)
-	HandleFailure(ctx context.Context, peerID string, req Req) error
 }
 
 // CommChannel is the unified communication channel that replaces all three protocols
@@ -91,15 +89,6 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 	peerID string,
 	isRetry bool,
 ) (Reply, error) {
-	var err error
-	defer func() {
-		if err != nil && !isRetry {
-			if handleErr := c.processor.HandleFailure(ctx, peerID, req); handleErr != nil {
-				err = errors.Join(err, handleErr)
-			}
-		}
-	}()
-
 	reqPtr := ReqP(&req) // Convert to pointer type for message interface
 	replyPtr, err := message.Send[ReplyP](ctx, c, reqPtr, peerID, c.requestEndpoint)
 	if err != nil {

@@ -179,31 +179,18 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 		if err != nil {
 			return err
 		}
-		update := event.Update{
-			DocID:        docID,
-			Cid:          head.cid,
-			CollectionID: collectionID,
-			Block:        rawblock,
-		}
 
-		/*req := protocol.PushLogRequest{
+		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
+		defer cancel()
+		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
 			CollectionID: collectionID,
-			Block:        rawblock,
-		}*/
-		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-		defer cancel()
-		// Convert event.Update to PushLogRequest to remove event dependency from protocol
-		pushLogReq := protocol.PushLogRequest{
-			DocID:        update.DocID,
-			CID:          update.Cid.Bytes(),
-			CollectionID: update.CollectionID,
 			Creator:      p.host.ID(),
-			Block:        update.Block,
+			Block:        rawblock,
 		}
+
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, false); err != nil {
-			//if _, err := p.replicatorProtocol.PushToReplicator(ctx, req, peerID, false); err != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
 				err,
@@ -216,15 +203,6 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 		}
 	}
 	return nil
-}
-
-func updateEventToPushLog(evt event.Update) protocol.PushLogRequest {
-	return protocol.PushLogRequest{
-		DocID:        evt.DocID,
-		CID:          evt.Cid.Bytes(),
-		CollectionID: evt.CollectionID,
-		Block:        evt.Block,
-	}
 }
 
 func (p *P2P) DeleteReplicator(ctx context.Context, repInfo client.PeerInfo, collectionNames ...string) error {
@@ -329,7 +307,6 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 			go func() {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
-				// Convert event.Update to PushLogRequest
 				pushLogReq := protocol.PushLogRequest{
 					DocID:        lg.DocID,
 					CID:          lg.Cid.Bytes(),
@@ -338,13 +315,13 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 					Block:        lg.Block,
 				}
 				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, lg.IsRetry); err != nil {
-					//if _, err := p.replicatorProtocol.PushToReplicator(ctx, updateEventToPushLog(lg), peerID, lg.IsRetry); err != nil {
 					log.ErrorE(
 						"Failed pushing log",
 						err,
 						corelog.String("DocID", lg.DocID),
 						corelog.Any("CID", lg.Cid),
 						corelog.Any("PeerID", peerID))
+					p.handleReplicatorFailure(ctx, peerID, lg.DocID)
 				}
 			}()
 		}
@@ -823,30 +800,18 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		if err != nil {
 			return err
 		}
-		updateEvent := event.Update{
-			DocID:        docID,
-			Cid:          head.cid,
-			CollectionID: head.block.Delta.GetSchemaVersionID(),
-			Block:        rawblock,
-		}
-		/*req := protocol.PushLogRequest{
+
+		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
+		defer cancel()
+		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
 			CollectionID: head.block.Delta.GetSchemaVersionID(),
-			Block:        rawblock,
-		}*/
-		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-		defer cancel()
-		// Convert event.Update to PushLogRequest
-		pushLogReq := protocol.PushLogRequest{
-			DocID:        updateEvent.DocID,
-			CID:          updateEvent.Cid.Bytes(),
-			CollectionID: updateEvent.CollectionID,
 			Creator:      p.host.ID(),
-			Block:        updateEvent.Block,
+			Block:        rawblock,
 		}
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, true); err != nil {
-			//if _, err := p.replicatorProtocol.PushToReplicator(ctx, req, peerID, true); err != nil {
+			p.handleReplicatorFailure(ctx, peerID, docID)
 			return err
 		}
 	}

@@ -95,10 +95,6 @@ func (proc *pushLogCommProcessor) ProcessRequest(ctx context.Context, req protoc
 	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, isReplicator)
 }
 
-func (proc *pushLogCommProcessor) HandleFailure(ctx context.Context, peerID string, req protocol.PushLogRequest) error {
-	return proc.p2p.handleReplicatorFailure(ctx, peerID, req.DocID)
-}
-
 // New returns a new configured P2P instance.
 func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	p := P2P{
