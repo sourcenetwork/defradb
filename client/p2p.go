@@ -72,9 +72,9 @@ type P2P interface {
 	SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error
 }
 
-type StreamHandler func(stream io.Reader, peerID string)
-type PubsubMessageHandler func(from string, topic string, msg []byte) ([]byte, error)
-type BlockAccessFunc func(ctx context.Context, peerID string, c cid.Cid) bool
+type StreamHandler = func(stream io.Reader, peerID string)
+type PubsubMessageHandler = func(from string, topic string, msg []byte) ([]byte, error)
+type BlockAccessFunc = func(ctx context.Context, peerID string, c cid.Cid) bool
 
 type PeerInfo struct {
 	ID        string
