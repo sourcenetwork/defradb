@@ -280,8 +280,27 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 	}
 
-	// update the expected document heads of connected nodes
-	for id := range node.P2P.Connections {
+	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
+}
+
+// updateConnectedNodes updates the expected document heads of connected nodes
+func updateConnectedNodes(
+	s *state.State,
+	nodeID int,
+	nodesCovered map[int]struct{},
+	ident immutable.Option[state.Identity],
+	collectionID int,
+	docIndex int,
+	evt event.Update,
+) {
+	if _, ok := nodesCovered[nodeID]; ok {
+		return
+	}
+	nodesCovered[nodeID] = struct{}{}
+	for id := range s.Nodes[nodeID].P2P.Connections {
+		if _, ok := nodesCovered[id]; ok {
+			continue
+		}
 		if ident.HasValue() && ident.Value().Selector != strconv.Itoa(id) {
 			// If the document is created by a specific identity, only the node with the
 			// same index as the identity can initially access it.
@@ -297,6 +316,8 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
+
+		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)
 	}
 }
 

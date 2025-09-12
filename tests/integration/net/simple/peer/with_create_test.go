@@ -195,3 +195,113 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        Name: String
+                        Age: Int
+                    }
+                `,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        2,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+                    "Name": "John",
+                    "Age": 21
+                }`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+                    Users {
+                        Age
+                    }
+                }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        Name: String
+                        Age: Int
+                    }
+                `,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscriptionRequest{
+				NodeID: immutable.Some(1),
+				Request: `subscription {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Users": []map[string]any{
+							{
+								"Age": int64(21),
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+                    "Name": "John",
+                    "Age": 21
+                }`,
+			},
+			testUtils.WaitForSync{},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

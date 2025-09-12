@@ -80,6 +80,9 @@ type P2P struct {
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals   []time.Duration
 	handleRetryMutex sync.Mutex
+
+	// a cid queue for the processing of Pushlogs
+	processQueue *processQueue
 }
 
 // New returns a new configured P2P instance.
@@ -92,6 +95,7 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 		replicators:      make(map[string]map[string]client.PeerInfo),
 		peerIdentities:   make(map[string]identity.Identity),
 		retryIntervals:   db.RetryIntervals(),
+		processQueue:     newProcessQueue(),
 	}
 	p.replicatorProtocol = protocol.NewReplicatorProtocol(host, p.processPushlogRequest, p.handleReplicatorFailure)
 
@@ -368,12 +372,19 @@ func (p *P2P) processPushlogRequest(
 		}
 	}
 
-	err = syncDAG(ctx, p.host.BlockService(), block)
+	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return err
 	}
 
-	headCID, err := cid.Cast(req.CID)
+	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
+	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
+	// if this initial sync call had a negative response for a given link, the subsequent calls will
+	// assume a negative response for that same link without retrying.
+	p.processQueue.add(headCID.String())
+	defer p.processQueue.done(headCID.String())
+
+	err = syncDAG(ctx, p.host.BlockService(), block)
 	if err != nil {
 		return err
 	}
@@ -395,6 +406,20 @@ func (p *P2P) processPushlogRequest(
 				corelog.Any("Event", evt))
 		}
 	}()
+
+	// Notify bus subscribers and the network of peers that we have a new document available.
+	evt := event.Update{
+		DocID:        req.DocID,
+		Cid:          headCID,
+		CollectionID: req.CollectionID,
+		Block:        req.Block,
+	}
+	p.db.Events().Publish(event.NewMessage(event.UpdateName, evt))
+	if err := p.SendUpdate(evt); err != nil {
+		// We don't need to return the error for this side-effect-function call.
+		// It's a bonus action that shouldn't affect the caller of `processPuslogRequest`.
+		log.ErrorE("Failed to send update after sync", err)
+	}
 
 	return nil
 }
@@ -430,4 +455,44 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 	}
 
 	return nil
+}
+
+// processQueue is synchronization source to ensure that concurrent
+// document merges do not cause transaction conflicts.
+type processQueue struct {
+	cids  map[string]chan struct{}
+	mutex sync.Mutex
+}
+
+func newProcessQueue() *processQueue {
+	return &processQueue{
+		cids: make(map[string]chan struct{}),
+	}
+}
+
+// add adds a cid to the queue. If the cid is already in the queue, it will
+// wait for the cid to be removed from the queue. For every add call, done must
+// be called to remove the cid from the queue. Otherwise, subsequent add calls will
+// block forever.
+func (m *processQueue) add(cid string) {
+	m.mutex.Lock()
+	done, ok := m.cids[cid]
+	if !ok {
+		m.cids[cid] = make(chan struct{})
+	}
+	m.mutex.Unlock()
+	if ok {
+		<-done
+		m.add(cid)
+	}
+}
+
+func (m *processQueue) done(cid string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	done, ok := m.cids[cid]
+	if ok {
+		delete(m.cids, cid)
+		close(done)
+	}
 }
