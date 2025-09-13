@@ -433,6 +433,7 @@ func (p *P2P) processPushlogRequest(
 		Cid:          headCID,
 		CollectionID: req.CollectionID,
 		Block:        req.Block,
+		IsRelay:      true,
 	}
 	p.db.Events().Publish(event.NewMessage(event.UpdateName, evt))
 	if err := p.SendUpdate(evt); err != nil {

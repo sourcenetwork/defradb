@@ -155,15 +155,23 @@ func waitForUpdateEvents(
 
 		for len(expect) > 0 {
 			var evt event.Update
-			select {
-			case msg, ok := <-node.Event.Update.Message():
-				if !ok {
-					require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
-				}
-				evt = msg.Data.(event.Update)
+		relayCheck:
+			// We need to ensure the message was not from a previously relayed update.
+			// If it is, we try the next one.
+			for {
+				select {
+				case msg, ok := <-node.Event.Update.Message():
+					if !ok {
+						require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
+					}
+					evt = msg.Data.(event.Update)
+					if !evt.IsRelay {
+						break relayCheck
+					}
 
-			case <-time.After(eventTimeout):
-				require.Fail(s.T, "timeout waiting for update event", "Node %d", i)
+				case <-time.After(eventTimeout):
+					require.Fail(s.T, "timeout waiting for update event", "Node %d", i)
+				}
 			}
 
 			// make sure the event is expected

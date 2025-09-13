@@ -91,6 +91,9 @@ type Update struct {
 
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
+
+	// Is relay is set to true if this update is created from a P2P sync.
+	IsRelay bool
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.
