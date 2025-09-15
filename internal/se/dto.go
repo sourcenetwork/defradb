@@ -12,40 +12,41 @@ package se
 
 import "github.com/sourcenetwork/defradb/internal/db/p2p/message"
 
+// QuerySEArtifactsRequest is the request object to query SE artifacts
 type QuerySEArtifactsRequest struct {
 	message.MetaData
 	CollectionID string
 	Queries      []SEFieldQuery
 }
 
-// seFieldQuery - Query for a specific field
+// SEFieldQuery is the SE query object for a specific field
 type SEFieldQuery struct {
 	FieldName string
 	IndexID   string
 	SearchTag []byte
 }
 
-// QuerySEArtifactsReply - Reply with matching document IDs
+// QuerySEArtifactsReply is the reply object  with matching document IDs for [QuerySEArtifactsRequest] query
 type QuerySEArtifactsReply struct {
 	message.MetaData
 	DocIDs []string
 }
 
-// PushSEArtifactsRequest - Request to push SE artifacts
+// PushSEArtifactsRequest is the request object to push SE artifacts
 type PushSEArtifactsRequest struct {
 	message.MetaData
 	CollectionID string
 	Artifacts    []SEArtifact
 }
 
-// SEArtifact - Network representation
+// SEArtifact is the SE artifact object to be pushed
 type SEArtifact struct {
 	DocID     string
 	IndexID   string
 	SearchTag []byte
 }
 
-// Reply type
+// PushSEArtifactsReply is the reply object for [PushSEArtifactsRequest] query
 type PushSEArtifactsReply struct {
 	message.MetaData
 }

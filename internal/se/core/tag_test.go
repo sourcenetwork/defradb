@@ -16,17 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEqualityTag_WithValidInputs_ReturnsTagWithoutError(t *testing.T) {
-	key := []byte("test-key-32-bytes-long-for-hmac!")
-	collectionID := "collection123"
-	fieldName := "email"
-	value := []byte("user@example.com")
-
-	tag, err := GenerateEqualityTag(key, collectionID, fieldName, value)
-	require.NoError(t, err)
-	require.NotNil(t, tag)
-}
-
 func TestEqualityTag_WhenGenerated_Returns16ByteTag(t *testing.T) {
 	key := []byte("test-key-32-bytes-long-for-hmac!")
 	collectionID := "collection123"

@@ -28,10 +28,8 @@ func GenerateEqualityTag(
 	// - collectionID ensures tags are unique per collection
 	// - fieldName ensures tags are unique per field
 	// This prevents cross-field and cross-collection tag collisions
-	// Note: This is HMAC input, not stored data
 	domainSeparator := fmt.Sprintf("eq:%s:%s", collectionID, fieldName)
 
-	// Compute HMAC-SHA256
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(domainSeparator))
 	h.Write(value)
