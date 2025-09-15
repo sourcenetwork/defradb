@@ -108,7 +108,7 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeSchemaAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionUpdatePerm); err != nil {
 		return nil, err
 	}
 

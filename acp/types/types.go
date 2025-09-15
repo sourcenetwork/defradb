@@ -88,7 +88,6 @@ const (
 	NodeNACStatusPerm
 	NodeNACRelationAddPerm
 	NodeNACRelationDeletePerm
-	NodeSchemaAddPerm
 	NodeCollectionUpdatePerm
 )
 
@@ -110,7 +109,6 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-status",
 	"nac-relation-add",
 	"nac-relation-delete",
-	"schema-add",
 	"collection-update",
 }
 
@@ -155,8 +153,6 @@ resources:
       nac-relation-add:
         expr: owner + admin
       nac-relation-delete:
-        expr: owner + admin
-      schema-add:
         expr: owner + admin
       collection-update:
         expr: owner + admin
