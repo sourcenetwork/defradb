@@ -11,11 +11,7 @@
 package se
 
 import (
-	"github.com/sourcenetwork/immutable"
-
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/event"
-	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
 // Event names for the event bus
@@ -24,26 +20,6 @@ const (
 	ReplicationFailureEventName = "se-replication-failure"
 	QuerySEArtifactsEventName   = "se-query-artifacts"
 )
-
-// ReplicateEvent - Published when SE artifacts need replication
-type ReplicateEvent struct {
-	DocID        string
-	CollectionID string
-	Artifacts    []secore.Artifact
-	IsRetry      bool
-	Success      chan bool // Used for synchronous retry feedback
-	Identity     immutable.Option[acpIdentity.Identity]
-}
-
-// ReplicationFailureEvent - Published when artifact replication fails
-type ReplicationFailureEvent struct {
-	DocID        string
-	CollectionID string
-	//PeerID       peer.ID
-	PeerID     string
-	FieldNames []string
-	Identity   immutable.Option[acpIdentity.Identity]
-}
 
 // RequestSEArtifactsEvent - Request to query SE artifacts from replicators
 type RequestSEArtifactsEvent struct {

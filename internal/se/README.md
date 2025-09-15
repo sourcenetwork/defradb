@@ -23,8 +23,8 @@ When a document is created or updated, the following flow occurs:
    - Retrieves the field value and encodes it deterministically
    - Generates a search tag using HMAC-SHA256 with the collection ID, field name, and encoded value
    - Creates an SE artifact containing the tag and document reference
-4. Artifacts are packaged into a `ReplicateEvent` and sent to replicator nodes
-5. Remote peers receive artifacts through gRPC and store them under keys structured as `/se/<collectionID>/<indexID>/<searchTag>/<docID>`
+4. Artifacts are sent directly to replicator peers via the P2P communication protocol
+5. Remote peers receive artifacts and store them under keys structured as `/se/<collectionID>/<indexID>/<searchTag>/<docID>`
 
 ### Query Execution
 
@@ -33,7 +33,7 @@ When executing queries on encrypted fields, the system follows a distributed sea
 1. The query planner detects filters on encrypted fields and creates a special scan node
 2. For each filter condition, it generates the same search tag that would be created during document storage
 3. A query request event is published to the event bus with the search tags
-4. The network layer handles the event by:
+4. The ReplicationCoordinator handles the event by:
    - Identifying all replicator nodes for the collection
    - Sending parallel queries to each replicator
    - Aggregating the results
@@ -46,12 +46,6 @@ This approach ensures that encrypted data remains private while enabling efficie
 
 The system includes a retry mechanism for handling replication failures. When a peer fails to process SE artifacts, the failure is recorded in the peerstore with retry information.
 
-Retry information is stored under `/se/retry/<peerID>/<collectionID>/<docID>` keys and includes:
-- Document and collection IDs
-- Affected field names
-- Number of retry attempts
-- Next retry timestamp
-
 The retry handler runs periodically, checking for failed replications that are due for retry. It uses exponential backoff to avoid overwhelming peers. During retry, the system regenerates artifacts by fetching current document values, ensuring that retries always use the latest data.
 
 ## Design Characteristics
@@ -59,5 +53,3 @@ The retry handler runs periodically, checking for failed replications that are d
 Producer nodes do not store SE artifacts locally. This reduces storage overhead on nodes that primarily write data and ensures that search operations naturally distribute load across reader nodes in the network.
 
 The system uses HMAC-SHA256 for tag generation, providing deterministic tags without revealing patterns in the data. The same field value will always produce the same tag, enabling consistent search results across the network.
-
-Network communication uses gRPC for efficient binary transmission of artifacts and queries. The event-driven architecture ensures loose coupling between components while maintaining reliability through retry mechanisms.

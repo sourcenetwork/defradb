@@ -604,7 +604,6 @@ func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
 		docMapper:        docMapper{selectReq.DocumentMapping},
 	}
 
-	// TODO: wrap it in a selectTopNode to support limit, order, etc.
 	return seScan, nil
 }
 

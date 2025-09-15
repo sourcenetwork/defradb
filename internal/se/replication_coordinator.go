@@ -252,15 +252,20 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtif
 }
 
 // handleReplicationFailure stores failed SE replication attempt for retry
-func (rc *ReplicationCoordinator) handleReplicationFailure(ctx context.Context, evt ReplicationFailureEvent) error {
-	retryKey := keys.NewPeerstoreSERetry(evt.PeerID, evt.CollectionID, evt.DocID)
+func (rc *ReplicationCoordinator) handleReplicationFailure(
+	ctx context.Context,
+	docID, collectionID, peerID string,
+	fieldNames []string,
+	identity immutable.Option[acpIdentity.Identity],
+) error {
+	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)
 
 	// TODO: think if such scenario is possible: "age" field is updated but failed to replicate and while being retried
 	// another "name" field is updated. In this case we should not overwrite the retry info.
 	var publicKey string
 	var keyType string
-	if evt.Identity.HasValue() {
-		identity := evt.Identity.Value()
+	if identity.HasValue() {
+		identity := identity.Value()
 		if pubKey := identity.PublicKey(); pubKey != nil {
 			publicKey = hex.EncodeToString(pubKey.Raw())
 			keyType = string(pubKey.Type())
@@ -268,9 +273,9 @@ func (rc *ReplicationCoordinator) handleReplicationFailure(ctx context.Context, 
 	}
 
 	retryInfo := SERetryInfo{
-		DocID:        evt.DocID,
-		CollectionID: evt.CollectionID,
-		FieldNames:   evt.FieldNames,
+		DocID:        docID,
+		CollectionID: collectionID,
+		FieldNames:   fieldNames,
 		NextRetry:    time.Now().Add(rc.retryIntervals[0]),
 		NumRetries:   0,
 		PublicKey:    publicKey,
@@ -352,13 +357,7 @@ func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
 			if isRetry {
 				return err
 			}
-			handleErr := rc.handleReplicationFailure(ctx, ReplicationFailureEvent{
-				DocID:        docID,
-				CollectionID: collectionID,
-				PeerID:       pid,
-				FieldNames:   fields,
-				Identity:     identity,
-			})
+			handleErr := rc.handleReplicationFailure(ctx, docID, collectionID, pid, fields, identity)
 			if handleErr != nil {
 				return errors.Join(err, handleErr)
 			}
