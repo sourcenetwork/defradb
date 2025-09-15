@@ -25,8 +25,10 @@ const (
 	protocolResponseSuffix = "_resp/" + protocolVersion
 )
 
-// CommProcessor defines the interface for processing requests
-// All processor functions must return (reply, error) - this unifies the signatures
+// CommProcessor defines the interface for processing requests and replies.
+// Uses 4 type parameters to solve the embedded interface pointer receiver problem:
+// - Req/Reply: Value types for stack allocation and clean processor signatures
+// - ReqP/ReplyP: Pointer types that implement message.Message interface
 type CommProcessor[Req any, Reply any, ReqP interface {
 	*Req
 	message.Message
@@ -37,11 +39,13 @@ type CommProcessor[Req any, Reply any, ReqP interface {
 	ProcessRequest(ctx context.Context, req Req, isReplicator bool) (Reply, error)
 }
 
-// CommChannel is the unified communication channel that replaces all three protocols
-// It establishes direct communication between peers without event dependencies
-//type CommChannel[Req message.Message, Reply message.Message] struct {
-
-// T any, PT interface{ *T; message.Message }
+// CommChannel unified protocol replacing ReplicatorProtocol, ReplicatorSEProtocol, SEQueryProtocol.
+// 4 type parameters needed because message.MetaData implements message.Message only as pointer:
+// - Req: Stack-allocated value type (e.g. PushLogRequest)
+// - Reply: Stack-allocated reply type (e.g. PushLogReply)
+// - ReqP: Pointer type implementing message.Message (e.g. *PushLogRequest)
+// - ReplyP: Pointer type implementing message.Message (e.g. *PushLogReply)
+// This enables stack allocation for performance while satisfying interface constraints.
 type CommChannel[Req any, Reply any, ReqP interface {
 	*Req
 	message.Message
@@ -89,14 +93,13 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 	peerID string,
 	isRetry bool,
 ) (Reply, error) {
-	reqPtr := ReqP(&req) // Convert to pointer type for message interface
+	reqPtr := ReqP(&req)
 	replyPtr, err := message.Send[ReplyP](ctx, c, reqPtr, peerID, c.requestEndpoint)
 	if err != nil {
 		var nilReply Reply
 		return nilReply, err
 	}
 
-	// Dereference the pointer to get the value type
 	reply := *replyPtr
 
 	return reply, nil
@@ -105,9 +108,8 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peerID string) {
 	ctx := context.Background()
 
-	// Create stack-allocated request and convert to pointer that satisfies interface
 	var req Req
-	reqPtr := ReqP(&req) // Convert to pointer type that implements message.Message
+	reqPtr := ReqP(&req)
 	err := message.Receive(stream, peerID, c, reqPtr)
 	if err != nil {
 		return
@@ -116,7 +118,7 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 	defer func() {
 		if err != nil {
 			var resp Reply
-			respPtr := ReplyP(&resp) // Convert to pointer type that implements message.Message
+			respPtr := ReplyP(&resp)
 			respPtr.SetMessageID(reqPtr.GetMessageID())
 			respPtr.SetErrMessage(err.Error())
 			_ = message.SendAndForget(ctx, c, respPtr, peerID, c.responseEndpoint)
@@ -128,14 +130,13 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 		return
 	}
 
-	// Set message ID and send response
-	replyPtr := ReplyP(&reply) // Convert to pointer type for message interface
+	replyPtr := ReplyP(&reply)
 	replyPtr.SetMessageID(reqPtr.GetMessageID())
 	err = message.SendAndForget(ctx, c, replyPtr, peerID, c.responseEndpoint)
 }
 
 func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onResponse(stream io.Reader, peerID string) {
 	var reply Reply
-	replyPtr := ReplyP(&reply) // Convert to pointer type for message interface
+	replyPtr := ReplyP(&reply)
 	_ = message.Receive(stream, peerID, c, replyPtr)
 }
