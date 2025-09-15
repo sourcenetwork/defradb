@@ -13,12 +13,17 @@ package db
 import (
 	"context"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
+
+type subscriptionSelector interface {
+	ToSubscriptionSelect(docID, cid string) request.Selection
+}
 
 // handleSubscription checks for a subscription within the given request and
 // starts a new go routine that will return all subscription results on the returned
@@ -27,11 +32,12 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if len(r.Subscription) == 0 || len(r.Subscription[0].Selections) == 0 {
 		return nil, nil // This is not a subscription request and we have nothing to do here
 	}
-	selections := r.Subscription[0].Selections[0]
-	subRequest, ok := selections.(*request.ObjectSubscription)
+	subRequest, ok := r.Subscription[0].Selections[0].(subscriptionSelector)
+	spew.Dump(r.Subscription[0].Selections[0])
 	if !ok {
-		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
+		return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
 	}
+
 	sub, err := db.events.Subscribe(event.UpdateName)
 	if err != nil {
 		return nil, err
@@ -67,13 +73,13 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			ctx := InitContext(ctx, txn)
 
 			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
-			s := subRequest.ToSelect(evt.DocID, evt.Cid.String())
-
+			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 			result, err := p.RunSelection(ctx, s)
 			if err == nil && len(result) == 0 {
 				txn.Discard(ctx)
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}
+
 			res := client.GQLResult{}
 			if err != nil {
 				res.Errors = append(res.Errors, err)
@@ -92,3 +98,5 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 	return resCh, nil
 }
+
+// func (db *DB) handleObjectSubscription(ctx context.Context, req *request.ObjectSubscription)

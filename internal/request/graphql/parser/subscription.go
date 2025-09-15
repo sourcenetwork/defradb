@@ -44,7 +44,7 @@ func parseSubscriptionOperationDefinition(
 // filters, IDs, etc.
 func parseSubscription(exe *gql.ExecutionContext, field *ast.Field) (request.Selection, error) {
 	if field.Name.Value == "commits" {
-		return parseCommitSelect(exe, exe.Schema.QueryType(), field)
+		return parseCommitSelect(exe, exe.Schema.SubscriptionType(), field)
 	}
 	return parseObjectSubscription(exe, field)
 }

@@ -60,3 +60,17 @@ func (c CommitSelect) ToSelect() *Select {
 		ChildSelect: c.ChildSelect,
 	}
 }
+
+func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
+	return &CommitSelect{
+		Field: Field{
+			Name:  c.Name,
+			Alias: c.Alias,
+		},
+		DocID: c.DocID,
+		CIDFilter: CIDFilter{
+			immutable.Some(cid),
+		},
+		ChildSelect: c.ChildSelect,
+	}
+}
