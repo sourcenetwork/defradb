@@ -106,7 +106,7 @@ var configDefaults = map[string]any{
 	"secretfile":                        ".env",
 	"telemetry.disabled":                false,
 	"datastore.nosigning":               false,
-	"datastore.nosearchableencryption": false,
+	"datastore.nosearchableencryption":  false,
 	"datastore.defaultkeytype":          "secp256k1",
 	"acp.node.enable":                   false,
 	"acp.document.type":                 "none",

@@ -32,7 +32,7 @@ type Select struct {
 	// ShowDeleted will return deleted documents along with non-deleted ones
 	// if set to true.
 	ShowDeleted bool
-	
+
 	// IsEncrypted indicates that this is an encrypted query that should
 	// use searchable encryption to query remote nodes.
 	IsEncrypted bool

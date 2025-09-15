@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	ds "github.com/ipfs/go-datastore"
+
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -76,15 +77,15 @@ func NewDatastoreSEFromString(key string) (DatastoreSE, error) {
 	}
 
 	k := DatastoreSE{}
-	
+
 	if len(parts) > 2 {
 		k.CollectionID = parts[2]
 	}
-	
+
 	if len(parts) > 3 {
 		k.IndexID = parts[3]
 	}
-	
+
 	if len(parts) > 4 {
 		searchTag, err := hex.DecodeString(parts[4])
 		if err != nil {
@@ -92,10 +93,10 @@ func NewDatastoreSEFromString(key string) (DatastoreSE, error) {
 		}
 		k.SearchTag = searchTag
 	}
-	
+
 	if len(parts) > 5 {
 		k.DocID = parts[5]
 	}
-	
+
 	return k, nil
 }

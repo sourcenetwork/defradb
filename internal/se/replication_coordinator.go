@@ -40,8 +40,6 @@ const (
 	// retryLoopInterval is the interval at which the retry handler checks for
 	// SE artifacts that are due for a retry. Same as document replicator.
 	retryLoopInterval = 2 * time.Second
-	// retryTimeout is the timeout for a single SE artifact retry.
-	retryTimeout = 10 * time.Second
 )
 
 var log = corelog.NewLogger("defra.se.replication")
@@ -54,8 +52,10 @@ type ReplicationCoordinator struct {
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            *p2p.P2P
-	storeSEProto   *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply, *PushSEArtifactsRequest, *PushSEArtifactsReply]
-	querySEProto   *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply, *QuerySEArtifactsRequest, *QuerySEArtifactsReply]
+	storeSEProto   *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply,
+		*PushSEArtifactsRequest, *PushSEArtifactsReply]
+	querySEProto *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply,
+		*QuerySEArtifactsRequest, *QuerySEArtifactsReply]
 }
 
 // DB interface required by ReplicationCoordinator
@@ -83,7 +83,11 @@ type seStoreProcessor struct {
 	coordinator *ReplicationCoordinator
 }
 
-func (proc *seStoreProcessor) ProcessRequest(ctx context.Context, req PushSEArtifactsRequest, isReplicator bool) (PushSEArtifactsReply, error) {
+func (proc *seStoreProcessor) ProcessRequest(
+	ctx context.Context,
+	req PushSEArtifactsRequest,
+	isReplicator bool,
+) (PushSEArtifactsReply, error) {
 	return PushSEArtifactsReply{}, proc.coordinator.processPushSEArtifactsRequest(ctx, &req, isReplicator)
 }
 
@@ -92,7 +96,11 @@ type seQueryProcessor struct {
 	coordinator *ReplicationCoordinator
 }
 
-func (proc *seQueryProcessor) ProcessRequest(ctx context.Context, req QuerySEArtifactsRequest, isReplicator bool) (QuerySEArtifactsReply, error) {
+func (proc *seQueryProcessor) ProcessRequest(
+	ctx context.Context,
+	req QuerySEArtifactsRequest,
+	isReplicator bool,
+) (QuerySEArtifactsReply, error) {
 	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req, isReplicator)
 }
 
@@ -137,7 +145,9 @@ func (rc *ReplicationCoordinator) Close() {
 }
 
 // reconstructIdentity reconstructs an Identity from stored public key information
-func (rc *ReplicationCoordinator) reconstructIdentity(publicKey, keyType string) (immutable.Option[acpIdentity.Identity], error) {
+func (rc *ReplicationCoordinator) reconstructIdentity(
+	publicKey, keyType string,
+) (immutable.Option[acpIdentity.Identity], error) {
 	if publicKey == "" || keyType == "" {
 		return immutable.None[acpIdentity.Identity](), nil
 	}
@@ -192,11 +202,7 @@ func (rc *ReplicationCoordinator) processEvents() {
 func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtifactsEvent) {
 	grpcQueries := make([]SEFieldQuery, len(evt.Queries))
 	for i, q := range evt.Queries {
-		grpcQueries[i] = SEFieldQuery{
-			FieldName: q.FieldName,
-			IndexID:   q.IndexID,
-			SearchTag: q.SearchTag,
-		}
+		grpcQueries[i] = SEFieldQuery(q)
 	}
 
 	grpcReq := QuerySEArtifactsRequest{
@@ -387,7 +393,6 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 		log.ErrorContextE(ctx, "Failed to iterate SE retry keys", err)
 		return
 	}
-	defer iter.Close()
 
 	now := time.Now()
 	for {
@@ -437,6 +442,11 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 			go rc.retrySEArtifacts(ctx, key.PeerID, retryInfo)
 		}
 	}
+
+	err = iter.Close()
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to close SE retry iterator", err)
+	}
 }
 
 // retrySEArtifacts attempts to retry SE artifact replication for a document
@@ -458,7 +468,8 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 		ctx = acpIdentity.WithContext(ctx, identity)
 	}
 
-	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID, retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
+	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
+		retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
 			corelog.String("DocID", retryInfo.DocID))
@@ -468,7 +479,12 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 }
 
 // updateRetryStatus updates the retry status after an attempt
-func (rc *ReplicationCoordinator) updateRetryStatus(ctx context.Context, peerID string, retryInfo SERetryInfo, success bool) {
+func (rc *ReplicationCoordinator) updateRetryStatus(
+	ctx context.Context,
+	peerID string,
+	retryInfo SERetryInfo,
+	success bool,
+) {
 	retryKey := keys.NewPeerstoreSERetry(peerID, retryInfo.CollectionID, retryInfo.DocID)
 
 	if success {
@@ -505,7 +521,11 @@ func (rc *ReplicationCoordinator) updateRetryStatus(ctx context.Context, peerID 
 // This is typically called when:
 //   - A document is deleted (searchTags is empty)
 //   - A field value changes (searchTags contains the old search tags to remove)
-func (rc *ReplicationCoordinator) DeleteSEArtifacts(ctx context.Context, collectionID string, indexID string, docID string, searchTags [][]byte) error {
+func (rc *ReplicationCoordinator) DeleteSEArtifacts(
+	ctx context.Context,
+	collectionID, indexID, docID string,
+	searchTags [][]byte,
+) error {
 	ds := datastore.DatastoreFrom(rc.db.Rootstore())
 
 	if len(searchTags) > 0 {
@@ -594,7 +614,8 @@ func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 		}
 		sb.WriteString(netArtifact.DocID)
 	}
-	log.InfoContext(ctx, "Handle push SE artifacts", corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.SenderID))
+	log.InfoContext(ctx, "Handle push SE artifacts",
+		corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.SenderID))
 
 	/*_, err := peerIDFromContext(ctx)
 	if err != nil {
@@ -638,14 +659,13 @@ func (rc *ReplicationCoordinator) processQuerySEArtifactsRequest(
 }
 
 // querySEArtifactsFromDatastore queries SE artifacts from the local datastore
-func (rc *ReplicationCoordinator) querySEArtifactsFromDatastore(ctx context.Context, req *QuerySEArtifactsRequest) ([]string, error) {
+func (rc *ReplicationCoordinator) querySEArtifactsFromDatastore(
+	ctx context.Context,
+	req *QuerySEArtifactsRequest,
+) ([]string, error) {
 	queries := make([]FieldQuery, len(req.Queries))
 	for i, q := range req.Queries {
-		queries[i] = FieldQuery{
-			FieldName: q.FieldName,
-			IndexID:   q.IndexID,
-			SearchTag: q.SearchTag,
-		}
+		queries[i] = FieldQuery(q)
 	}
 
 	return FetchDocIDs(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), req.CollectionID, queries)

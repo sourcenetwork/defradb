@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
@@ -47,7 +48,12 @@ func StoreArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []sec
 
 // FetchDocIDs queries the datastore for SE artifacts matching the given queries
 // and returns the unique document IDs that match.
-func FetchDocIDs(ctx context.Context, ds corekv.ReaderWriter, collectionID string, queries []FieldQuery) ([]string, error) {
+func FetchDocIDs(
+	ctx context.Context,
+	ds corekv.ReaderWriter,
+	collectionID string,
+	queries []FieldQuery,
+) ([]string, error) {
 	docIDSet := make(map[string]struct{})
 
 	for _, query := range queries {
@@ -63,7 +69,6 @@ func FetchDocIDs(ctx context.Context, ds corekv.ReaderWriter, collectionID strin
 		if err != nil {
 			return nil, err
 		}
-		defer iter.Close()
 
 		for {
 			hasNext, err := iter.Next()
@@ -73,13 +78,18 @@ func FetchDocIDs(ctx context.Context, ds corekv.ReaderWriter, collectionID strin
 
 			dsKey, err := keys.NewDatastoreSEFromString(string(iter.Key()))
 			if err != nil {
-				return nil, err
+				return nil, errors.Join(err, iter.Close())
 			}
 			if dsKey.DocID == "" {
-				return nil, NewErrEmptyDocID(dsKey.ToString())
+				return nil, errors.Join(NewErrEmptyDocID(dsKey.ToString()), iter.Close())
 			}
 
 			docIDSet[dsKey.DocID] = struct{}{}
+		}
+
+		err = iter.Close()
+		if err != nil {
+			return nil, err
 		}
 	}
 

@@ -59,7 +59,6 @@ func (n *seScanNode) generateSearchTags() error {
 	n.fieldSearchTags = make(map[string][]byte)
 
 	for fieldName, condition := range n.filter.ExternalConditions {
-
 		var encIdx *client.EncryptedIndexDescription
 		for _, idx := range n.encryptedIndexes {
 			if idx.FieldName == fieldName {

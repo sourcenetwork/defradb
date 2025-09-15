@@ -33,7 +33,7 @@ Example: delete an encrypted index for 'Users' collection on 'name' field:
 			if err != nil {
 				return err
 			}
-			
+
 			return col.DeleteEncryptedIndex(cmd.Context(), fieldArg)
 		},
 	}

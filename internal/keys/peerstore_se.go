@@ -42,22 +42,22 @@ func NewPeerstoreSERetry(peerID, collectionID, docID string) PeerstoreSERetry {
 func (k PeerstoreSERetry) ToString() string {
 	var sb strings.Builder
 	sb.WriteString(PEERSTORE_SE_RETRY_PREFIX)
-	
+
 	if k.PeerID != "" {
 		sb.WriteString("/")
 		sb.WriteString(k.PeerID)
-		
+
 		if k.CollectionID != "" {
 			sb.WriteString("/")
 			sb.WriteString(k.CollectionID)
-			
+
 			if k.DocID != "" {
 				sb.WriteString("/")
 				sb.WriteString(k.DocID)
 			}
 		}
 	}
-	
+
 	return sb.String()
 }
 

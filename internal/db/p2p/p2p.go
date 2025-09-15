@@ -18,6 +18,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/corelog"
@@ -66,7 +67,8 @@ type DB interface {
 
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
-	replicatorProtocol *protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply, *protocol.PushLogRequest, *protocol.PushLogReply]
+	replicatorProtocol *protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply,
+		*protocol.PushLogRequest, *protocol.PushLogReply]
 
 	ctx  context.Context
 	db   DB
@@ -90,7 +92,11 @@ type pushLogCommProcessor struct {
 	p2p *P2P
 }
 
-func (proc *pushLogCommProcessor) ProcessRequest(ctx context.Context, req protocol.PushLogRequest, isReplicator bool) (protocol.PushLogReply, error) {
+func (proc *pushLogCommProcessor) ProcessRequest(
+	ctx context.Context,
+	req protocol.PushLogRequest,
+	isReplicator bool,
+) (protocol.PushLogReply, error) {
 	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, isReplicator)
 }
 

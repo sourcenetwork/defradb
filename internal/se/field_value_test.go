@@ -58,12 +58,12 @@ func TestEncodeFieldValueForSE(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			encoded := encoding.EncodeFieldValue(nil, tt.value, false)
 			require.NotNil(t, encoded)
-			
+
 			// For strings, we can check if the encoded value contains the expected text
 			if tt.expected != "" {
 				assert.True(t, bytes.Contains(encoded, []byte(tt.expected)))
 			}
-			
+
 			// Ensure we can decode back
 			if str, ok := tt.value.String(); ok {
 				_, decoded, err := encoding.DecodeFieldValue(encoded, false, client.FieldKind_NILLABLE_STRING)
@@ -80,13 +80,13 @@ func TestNilValueHandling(t *testing.T) {
 	// Test that nil values are properly handled
 	nilVal, err := client.NewNormalNil(client.FieldKind_NILLABLE_STRING)
 	require.NoError(t, err)
-	
+
 	assert.True(t, nilVal.IsNil())
-	
+
 	// Encoding a nil value should work
 	encoded := encoding.EncodeFieldValue(nil, nilVal, false)
 	require.NotNil(t, encoded)
-	
+
 	// Decoding should return a nil value
 	_, decoded, err := encoding.DecodeFieldValue(encoded, false, client.FieldKind_NILLABLE_STRING)
 	require.NoError(t, err)

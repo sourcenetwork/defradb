@@ -14,9 +14,10 @@ import (
 	"context"
 	"testing"
 
-	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -73,7 +74,8 @@ func TestGenerateEncryptedQueryField(t *testing.T) {
 	}
 	assert.Equal(t, request.EncryptedSearchResultName, returnType.Name())
 
-	resultObj := returnType.(*gql.Object)
+	resultObj, ok := returnType.(*gql.Object)
+	assert.True(t, ok, "returnType should be an Object")
 	docIDsField, ok := resultObj.Fields()["docIDs"]
 	assert.True(t, ok, "EncryptedSearchResult should have docIDs field")
 

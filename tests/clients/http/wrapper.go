@@ -249,7 +249,9 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return w.client.GetAllIndexes(ctx)
 }
 
-func (w *Wrapper) GetAllEncryptedIndexes(ctx context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+func (w *Wrapper) GetAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	return w.client.GetAllEncryptedIndexes(ctx)
 }
 
