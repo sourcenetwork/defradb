@@ -36,13 +36,6 @@ func TestNAC_GatesCollectionPatchPreSetup_AllowIfAuthorizedElseError(t *testing.
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
-			},
 
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -56,11 +49,7 @@ func TestNAC_GatesCollectionPatchPreSetup_AllowIfAuthorizedElseError(t *testing.
 				Identity: testUtils.NoIdentity(),
 				Patch: `
 					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 				ExpectedError: "not authorized to perform operation",
@@ -71,11 +60,7 @@ func TestNAC_GatesCollectionPatchPreSetup_AllowIfAuthorizedElseError(t *testing.
 				Identity: testUtils.ClientIdentity(2),
 				Patch: `
 					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 				ExpectedError: "not authorized to perform operation",
@@ -86,11 +71,7 @@ func TestNAC_GatesCollectionPatchPreSetup_AllowIfAuthorizedElseError(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 			},

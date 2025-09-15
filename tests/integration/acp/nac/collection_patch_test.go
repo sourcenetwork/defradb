@@ -34,25 +34,13 @@ func TestNAC_GatesCollectionPatch_AllowIfAuthorizedElseError(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
-				Identity: testUtils.ClientIdentity(1),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
-			},
 
 			// We haven't authorized non-identities. So, this should error.
 			testUtils.PatchCollection{
 				Identity: testUtils.NoIdentity(),
 				Patch: `
 					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 				ExpectedError: "not authorized to perform operation",
@@ -63,11 +51,7 @@ func TestNAC_GatesCollectionPatch_AllowIfAuthorizedElseError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(2),
 				Patch: `
 					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 				ExpectedError: "not authorized to perform operation",
@@ -78,11 +62,7 @@ func TestNAC_GatesCollectionPatch_AllowIfAuthorizedElseError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[
-						{
-							"op": "copy",
-							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
-							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
-						}
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 			},
