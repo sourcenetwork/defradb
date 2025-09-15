@@ -14,8 +14,9 @@ import (
 	"os"
 	"slices"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/state"
 )

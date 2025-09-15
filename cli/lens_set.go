@@ -16,8 +16,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 )

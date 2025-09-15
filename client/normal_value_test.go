@@ -15,9 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 type nType string
@@ -928,8 +929,7 @@ func TestNormalValue_NewNormalValueFromAnyArray(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tStr := string(tt.name)
-		t.Run(tStr, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			actual, err := NewNormalValue(tt.input)
 			if tt.err != "" {
 				require.ErrorContains(t, err, tt.err)
@@ -1972,8 +1972,7 @@ func TestNormalValue_ToArrayOfNormalValues(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tStr := string(tt.name)
-		t.Run(tStr, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ToArrayOfNormalValues(tt.input)
 			if tt.err != "" {
 				require.ErrorContains(t, err, tt.err)
@@ -3589,8 +3588,7 @@ func TestNormalValue_IsEqual(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tStr := string(tt.name)
-		t.Run(tStr, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			actual := tt.v1.Equal(tt.v2)
 			assert.Equal(t, tt.expected, actual)
 		})

@@ -19,8 +19,9 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/crypto"
 )

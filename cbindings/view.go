@@ -28,7 +28,7 @@ import (
 )
 
 //export ViewAdd
-func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.char) *C.Result {
+func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.char) C.Result {
 	ctx := context.Background()
 
 	var transform immutable.Option[model.Lens]
@@ -63,7 +63,7 @@ func ViewRefresh(
 	collectionIDStr *C.char,
 	versionIDStr *C.char,
 	getInactive C.int,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 
 	viewName := C.GoString(viewNameStr)

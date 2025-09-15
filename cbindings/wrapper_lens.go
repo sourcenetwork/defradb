@@ -14,10 +14,10 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result* LensDown(uintptr_t nodePtr, char* collectionID, char* documents);
-extern Result* LensUp(uintptr_t nodePtr, char* collectionID, char* documents);
-extern Result* LensReload(uintptr_t nodePtr);
-extern Result* LensSetRegistry(uintptr_t nodePtr, char* collectionID, char* cfg);
+extern Result LensDown(uintptr_t nodePtr, char* collectionID, char* documents);
+extern Result LensUp(uintptr_t nodePtr, char* collectionID, char* documents);
+extern Result LensReload(uintptr_t nodePtr);
+extern Result LensSetRegistry(uintptr_t nodePtr, char* collectionID, char* cfg);
 */
 import "C"
 

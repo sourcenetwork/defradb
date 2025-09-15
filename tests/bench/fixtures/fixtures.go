@@ -120,7 +120,11 @@ func (g Generator) ExtractGQLFromType(t any) (string, error) {
 	name := tt.Name()
 
 	// write the GQL SDL object to the buffer, field by field
-	fmt.Fprintf(&buf, "type %s {\n", name)
+	_, err := fmt.Fprintf(&buf, "type %s {\n", name)
+	if err != nil {
+		return "", err
+	}
+
 	for i := 0; i < tt.NumField(); i++ {
 		// @todo: Handle non-scalar types
 		f := tt.Field(i)
@@ -137,9 +141,15 @@ func (g Generator) ExtractGQLFromType(t any) (string, error) {
 			}
 		}
 		// write field's name, type and directives
-		fmt.Fprintf(&buf, "\t%s: %s%s\n", fname, gqlType, directives)
+		_, err = fmt.Fprintf(&buf, "\t%s: %s%s\n", fname, gqlType, directives)
+		if err != nil {
+			return "", err
+		}
 	}
-	fmt.Fprint(&buf, "}")
+	_, err = fmt.Fprint(&buf, "}")
+	if err != nil {
+		return "", err
+	}
 
 	return buf.String(), nil
 }

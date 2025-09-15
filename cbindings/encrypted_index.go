@@ -27,9 +27,9 @@ func EncryptedIndexCreate(
 	nodePtr C.uintptr_t,
 	collectionName *C.char,
 	fieldName *C.char,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
-	
+
 	desc := client.EncryptedIndexCreateRequest{
 		FieldName: C.GoString(fieldName),
 	}
@@ -51,7 +51,7 @@ func EncryptedIndexCreate(
 }
 
 //export EncryptedIndexList
-func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
+func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 	ctx := context.Background()
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
@@ -82,7 +82,7 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 }
 
 //export EncryptedIndexDelete
-func EncryptedIndexDelete(nodePtr C.uintptr_t, collectionName *C.char, fieldName *C.char) *C.Result {
+func EncryptedIndexDelete(nodePtr C.uintptr_t, collectionName *C.char, fieldName *C.char) C.Result {
 	ctx := context.Background()
 
 	store, err := getStoreFromPointer(nodePtr)

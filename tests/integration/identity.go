@@ -14,8 +14,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/tests/action"

@@ -85,13 +85,13 @@ func (p JSONPath) String() string {
 	for i, part := range p {
 		if prop, ok := part.Property(); ok {
 			if i > 0 {
-				sb.WriteByte('.')
+				_ = sb.WriteByte('.')
 			}
-			sb.WriteString(prop)
+			_, _ = sb.WriteString(prop)
 		} else if index, ok := part.Index(); ok {
-			sb.WriteByte('[')
-			sb.WriteString(strconv.FormatUint(index, 10))
-			sb.WriteByte(']')
+			_ = sb.WriteByte('[')
+			_, _ = sb.WriteString(strconv.FormatUint(index, 10))
+			_ = sb.WriteByte(']')
 		}
 	}
 	return sb.String()
@@ -396,9 +396,9 @@ func (s jsonString) String() (string, bool) {
 	return s.val, true
 }
 
-func (n jsonString) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
-	n.path = path
-	return visitor(n)
+func (s jsonString) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
+	s.path = path
+	return visitor(s)
 }
 
 type jsonBool struct {
@@ -411,9 +411,9 @@ func (b jsonBool) Bool() (bool, bool) {
 	return b.val, true
 }
 
-func (n jsonBool) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
-	n.path = path
-	return visitor(n)
+func (b jsonBool) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
+	b.path = path
+	return visitor(b)
 }
 
 type jsonNull struct {

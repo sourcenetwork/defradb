@@ -122,10 +122,7 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 
 func decodeJSONPath(b []byte) ([]byte, client.JSONPath, error) {
 	var path client.JSONPath
-	for {
-		if len(b) == 0 {
-			break
-		}
+	for len(b) != 0 {
 		if b[0] == ascendingBytesEscapes.escapedTerm {
 			b = b[1:]
 			break

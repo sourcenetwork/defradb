@@ -15,10 +15,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"

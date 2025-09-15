@@ -15,8 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"

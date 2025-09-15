@@ -23,7 +23,7 @@ import (
 )
 
 //export ACPAddDACPolicy
-func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.char) *C.Result {
+func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.char) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -52,7 +52,7 @@ func ACPAddDACActorRelationship(
 	docID *C.char,
 	relation *C.char,
 	actor *C.char,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -87,7 +87,7 @@ func ACPDeleteDACActorRelationship(
 	docID *C.char,
 	relation *C.char,
 	actor *C.char,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -115,7 +115,7 @@ func ACPDeleteDACActorRelationship(
 }
 
 //export ACPDisableNAC
-func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
+func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -136,7 +136,7 @@ func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
 }
 
 //export ACPReEnableNAC
-func ACPReEnableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
+func ACPReEnableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -162,7 +162,7 @@ func ACPAddNACActorRelationship(
 	identityPtr C.uintptr_t,
 	relation *C.char,
 	actor *C.char,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -193,7 +193,7 @@ func ACPDeleteNACActorRelationship(
 	identityPtr C.uintptr_t,
 	relation *C.char,
 	actor *C.char,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
@@ -219,7 +219,7 @@ func ACPDeleteNACActorRelationship(
 }
 
 //export ACPGetNACStatus
-func ACPGetNACStatus(nodePtr C.uintptr_t, identityPtr C.uintptr_t) *C.Result {
+func ACPGetNACStatus(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)

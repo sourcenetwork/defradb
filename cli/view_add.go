@@ -16,9 +16,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
-	"github.com/spf13/cobra"
 )
 
 func MakeViewAddCommand() *cobra.Command {

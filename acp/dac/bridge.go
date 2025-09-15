@@ -16,8 +16,9 @@ import (
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/valyala/fastjson"
+
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"

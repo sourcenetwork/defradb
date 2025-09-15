@@ -122,7 +122,10 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		var text strings.Builder
 		for _, fieldName := range embedding.Fields {
 			if val, ok := fieldsVal[fieldName]; ok {
-				text.WriteString(fmt.Sprintf("%v\n", val.Unwrap()))
+				_, err := text.WriteString(fmt.Sprintf("%v\n", val.Unwrap()))
+				if err != nil {
+					return err
+				}
 			}
 		}
 		embeddingVec, err := embeddingFunc(ctx, text.String())

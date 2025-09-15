@@ -15,9 +15,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewTxnFrom(t *testing.T) {

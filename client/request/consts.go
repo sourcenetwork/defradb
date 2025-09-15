@@ -19,7 +19,6 @@ const (
 	// that corresponds to the related object's join relation id, i.e. `Author_id`.
 	RelatedObjectID = "_id"
 
-	Cid                = "cid"
 	Input              = "input"
 	CreateInput        = "create"
 	UpdateInput        = "update"
@@ -69,9 +68,7 @@ const (
 	SignatureFieldName       = "signature"
 	SignatureTypeName        = "Signature"
 	HeightFieldName          = "height"
-	CidFieldName             = "cid"
 	SchemaVersionIDFieldName = "schemaVersionId"
-	FieldNameFieldName       = "fieldName"
 	DeltaFieldName           = "delta"
 
 	DeltaArgFieldName       = "FieldName"
@@ -87,7 +84,7 @@ const (
 	SelfTypeName = "Self"
 
 	LinksNameFieldName = "name"
-	LinksCidFieldName  = "cid"
+	CidFieldName       = "cid"
 
 	SignatureTypeFieldName     = "type"
 	SignatureIdentityFieldName = "identity"
@@ -146,13 +143,13 @@ var (
 		CidFieldName,
 		DocIDArgName,
 		SchemaVersionIDFieldName,
-		FieldNameFieldName,
+		FieldNameName,
 		DeltaFieldName,
 	}
 
 	LinksFields = []string{
 		LinksNameFieldName,
-		LinksCidFieldName,
+		CidFieldName,
 	}
 
 	SignatureFields = []string{

@@ -53,13 +53,13 @@ type Generator struct {
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
-func (m *SchemaManager) NewGenerator(isSearchableEncryptionEnabled bool) *Generator {
-	m.Generator = &Generator{
-		manager:                       m,
+func (s *SchemaManager) NewGenerator(isSearchableEncryptionEnabled bool) *Generator {
+	s.Generator = &Generator{
+		manager:                       s,
 		expandedFields:                make(map[string]bool),
 		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
-	return m.Generator
+	return s.Generator
 }
 
 // Generate generates the query-op and mutation-op type definitions from
@@ -1309,7 +1309,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			}
 			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
 				Description: "The alias operator allows filters to target aliased fields.",
-				Type:        schemaTypes.JSONScalarType(),
+				Type:        schemaTypes.JSON,
 			}
 
 			// generate basic filter operator blocks
@@ -1498,7 +1498,7 @@ func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
 			fields := gql.InputObjectConfigFieldMap{}
 			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
 				Description: "The alias field allows ordering by aliased fields.",
-				Type:        schemaTypes.JSONScalarType(),
+				Type:        schemaTypes.JSON,
 			}
 
 			for f, field := range obj.Fields() {

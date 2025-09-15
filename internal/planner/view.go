@@ -86,7 +86,7 @@ func (n *viewNode) Next() (bool, error) {
 
 func (n *viewNode) Value() core.Doc {
 	// The source mapping will differ from this node's (request) mapping if either a Lens transform is
-	// involved, if the the view is materialized, or if any kind of operation is performed on the result
+	// involved, if the view is materialized, or if any kind of operation is performed on the result
 	// of the query (such as a filter or aggregate in the user-request), so we must convert the returned
 	// documents to the request mapping
 	return convertBetweenMaps(n.source.DocumentMap(), n.documentMapping, n.source.Value())

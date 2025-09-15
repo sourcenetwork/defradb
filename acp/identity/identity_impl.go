@@ -87,20 +87,20 @@ func (f *fullIdentity) BearerToken() string {
 }
 
 // PrivateKey returns the actor's private key for fullIdentity.
-func (p *fullIdentity) PrivateKey() crypto.PrivateKey {
-	return p.privateKey
+func (f *fullIdentity) PrivateKey() crypto.PrivateKey {
+	return f.privateKey
 }
 
 // IntoRawIdentity converts a fullIdentity into a RawIdentity struct.
-func (p *fullIdentity) IntoRawIdentity() RawIdentity {
-	privKeyBytes := p.privateKey.Raw()
-	keyType := string(p.privateKey.Type())
-	pubKeyBytes := p.publicKey.Raw()
+func (f *fullIdentity) IntoRawIdentity() RawIdentity {
+	privKeyBytes := f.privateKey.Raw()
+	keyType := string(f.privateKey.Type())
+	pubKeyBytes := f.publicKey.Raw()
 
 	return RawIdentity{
 		PrivateKey: hex.EncodeToString(privKeyBytes),
 		PublicKey:  hex.EncodeToString(pubKeyBytes),
-		DID:        p.did,
+		DID:        f.did,
 		KeyType:    keyType,
 	}
 }

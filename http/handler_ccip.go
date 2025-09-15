@@ -32,7 +32,7 @@ type CCIPResponse struct {
 }
 
 // ExecCCIP handles GraphQL over Cross Chain Interoperability Protocol requests.
-func (c *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
+func (h *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var ccipReq CCIPRequest

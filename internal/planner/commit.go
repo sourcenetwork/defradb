@@ -389,7 +389,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 	prio := block.Delta.GetPriority()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameFieldName, fieldName)
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameName, fieldName)
 
 	docID := block.Delta.GetDocID()
 	if docID != nil {
@@ -411,7 +411,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		for _, l := range block.Heads {
 			link := linksMapping.NewDoc()
 			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, "_head")
-			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Cid.String())
+			linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Cid.String())
 
 			links[i] = link
 			i++
@@ -422,7 +422,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 			if l.Name != "" {
 				linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
 			}
-			linksMapping.SetFirstOfName(&link, request.LinksCidFieldName, l.Link.Cid.String())
+			linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Link.Cid.String())
 
 			links[i] = link
 			i++

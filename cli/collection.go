@@ -13,8 +13,9 @@ package cli
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 )

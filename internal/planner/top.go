@@ -117,8 +117,8 @@ func (n *topLevelNode) Source() planNode {
 }
 
 // Children() makes topLevelNode into a MultiNode.
-func (p *topLevelNode) Children() []planNode {
-	return p.children
+func (n *topLevelNode) Children() []planNode {
+	return n.children
 }
 
 func (n *topLevelNode) Explain(explainType request.ExplainType) (map[string]any, error) {

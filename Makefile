@@ -126,7 +126,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint-go
 deps\:lint-go:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3
 
 .PHONY: deps\:lint-yaml
 deps\:lint-yaml:
@@ -380,12 +380,13 @@ validate\:circleci:
 
 .PHONY: lint
 lint:
-	golangci-lint run --config tools/configs/golangci.yaml
+	golangci-lint config verify --config=tools/configs/golangci.yaml
+	golangci-lint run --config=tools/configs/golangci.yaml
 	yamllint -c tools/configs/yamllint.yaml .
 
 .PHONY: lint\:fix
 lint\:fix:
-	golangci-lint run --config tools/configs/golangci.yaml --fix
+	golangci-lint run --config=tools/configs/golangci.yaml --fix
 
 .PHONY: lint\:todo
 lint\:todo:
@@ -393,7 +394,7 @@ lint\:todo:
 
 .PHONY: lint\:list
 lint\:list:
-	golangci-lint linters --config tools/configs/golangci.yaml
+	golangci-lint linters --config=tools/configs/golangci.yaml
 
 .PHONY: chglog
 chglog:

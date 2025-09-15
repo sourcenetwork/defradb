@@ -19,7 +19,7 @@ import (
 
 type acpHandler struct{}
 
-func (s *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	policyBytes, err := io.ReadAll(req.Body)
@@ -40,7 +40,7 @@ func (s *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, addPolicyResult)
 }
 
-func (s *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var message addDACActorRelationshipRequest
@@ -65,7 +65,7 @@ func (s *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, addDocActorRelResult)
 }
 
-func (s *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var message deleteDACActorRelationshipRequest
@@ -90,7 +90,7 @@ func (s *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *htt
 	responseJSON(rw, http.StatusOK, deleteDocActorRelResult)
 }
 
-func (s *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var message addNACActorRelationshipRequest
@@ -113,7 +113,7 @@ func (s *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, addActorRelationshipResult)
 }
 
-func (s *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var message deleteNACActorRelationshipRequest
@@ -136,7 +136,7 @@ func (s *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 	responseJSON(rw, http.StatusOK, deleteActorRelationshipResult)
 }
 
-func (s *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	err := db.ReEnableNAC(req.Context())
@@ -148,7 +148,7 @@ func (s *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	err := db.DisableNAC(req.Context())
@@ -160,7 +160,7 @@ func (s *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	statusNACResult, err := db.GetNACStatus(req.Context())

@@ -20,8 +20,9 @@ import (
 	"testing"
 
 	"github.com/ipfs/go-cid"
-	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/memory"
 
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/keys"

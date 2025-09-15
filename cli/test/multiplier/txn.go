@@ -20,7 +20,7 @@ func init() {
 	multiplier.Register(&txnCommit{})
 }
 
-// The TxnCommit multiplier adapts tests to cover the commiting of a single transaction.
+// TxnCommit multiplier adapts tests to cover the commiting of a single transaction.
 //
 // It will ensure that any write actions are reflected within the transaction scope pre-commit,
 // and will ensure that those writes are later persisted in the backing store after transaction

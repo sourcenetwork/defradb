@@ -57,7 +57,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, netConfig.WithListenAddresses(listeningAddresses...))
 	}
-	maxTxnRetries := int(gocOptions.MaxTransactionRetries)
+	maxTxnRetries := gocOptions.MaxTransactionRetries
 	if maxTxnRetries > 0 {
 		opts = append(opts, db.WithMaxRetries(maxTxnRetries))
 	}
@@ -114,7 +114,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 }
 
 //export NodeClose
-func NodeClose(nodePtr C.uintptr_t) *C.Result {
+func NodeClose(nodePtr C.uintptr_t) C.Result {
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

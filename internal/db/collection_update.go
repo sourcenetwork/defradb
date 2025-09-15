@@ -13,8 +13,9 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"

@@ -157,7 +157,11 @@ func EncryptECIES(plainText []byte, publicKey *ecdh.PublicKey, opts ...ECIESOpti
 	}
 
 	mac := hmac.New(sha256.New, hmacKey)
-	mac.Write(cipherText)
+	_, err = mac.Write(cipherText)
+	if err != nil {
+		return nil, NewErrFailedToWrite(err)
+	}
+
 	macSum := mac.Sum(nil)
 
 	var result []byte
@@ -250,7 +254,10 @@ func DecryptECIES(cipherText []byte, ourPrivateKey *ecdh.PrivateKey, opts ...ECI
 	cipherTextWithNonce := cipherText[:len(cipherText)-HMACSize]
 
 	mac := hmac.New(sha256.New, hmacKey)
-	mac.Write(cipherTextWithNonce)
+	_, err = mac.Write(cipherTextWithNonce)
+	if err != nil {
+		return nil, NewErrFailedToWrite(err)
+	}
 	expectedMAC := mac.Sum(nil)
 	if !hmac.Equal(macSum, expectedMAC) {
 		return nil, ErrVerificationWithHMACFailed

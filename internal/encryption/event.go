@@ -65,7 +65,7 @@ func NewResults() (*Results, chan<- Result) {
 
 // NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
 // for a specific docID/field
-// It returns the message and the results that that can be waited on.
+// It returns the message and the results that can be waited on.
 func NewRequestKeysMessage(keys []cidlink.Link) (event.Message, *Results) {
 	res, ch := NewResults()
 	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{

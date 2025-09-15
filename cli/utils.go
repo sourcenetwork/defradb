@@ -19,9 +19,10 @@ import (
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"

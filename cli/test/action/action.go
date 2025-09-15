@@ -139,8 +139,8 @@ func executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCl
 
 	go func() {
 		err := cmd.ExecuteContext(ctx)
-		stdOutWrite.CloseWithError(err)
-		stdErrWrite.CloseWithError(err)
+		_ = stdOutWrite.CloseWithError(err)
+		_ = stdErrWrite.CloseWithError(err)
 	}()
 
 	return stdOutRead, stdErrRead, nil

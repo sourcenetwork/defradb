@@ -53,7 +53,8 @@ func ExtractProperties(conditions map[connor.FilterKey]any) map[int]Property {
 			relatedProps := ExtractProperties(v.(map[connor.FilterKey]any))
 			properties[typedKey.Index] = mergeProps(prop, Property{Fields: relatedProps})
 		case *mapper.Operator:
-			if typedKey.Operation == request.FilterOpAnd || typedKey.Operation == request.FilterOpOr {
+			switch typedKey.Operation {
+			case request.FilterOpAnd, request.FilterOpOr:
 				compoundContent := v.([]any)
 				for _, compoundFilter := range compoundContent {
 					props := ExtractProperties(compoundFilter.(map[connor.FilterKey]any))
@@ -62,7 +63,7 @@ func ExtractProperties(conditions map[connor.FilterKey]any) map[int]Property {
 						properties[prop.Index] = mergeProps(existingProp, prop)
 					}
 				}
-			} else if typedKey.Operation == request.FilterOpNot {
+			case request.FilterOpNot:
 				props := ExtractProperties(v.(map[connor.FilterKey]any))
 				for _, prop := range props {
 					existingProp := properties[prop.Index]

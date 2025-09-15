@@ -79,8 +79,8 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 
 	go func() {
 		err := cmd.Execute()
-		stdOutWrite.CloseWithError(err)
-		stdErrWrite.CloseWithError(err)
+		_ = stdOutWrite.CloseWithError(err)
+		_ = stdErrWrite.CloseWithError(err)
 	}()
 
 	return stdOutRead, stdErrRead, nil

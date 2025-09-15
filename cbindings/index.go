@@ -30,7 +30,7 @@ func IndexCreate(
 	indexName *C.char,
 	fieldsStr *C.char,
 	isUnique C.int,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 	fieldsArg := splitCommaSeparatedString(C.GoString(fieldsStr))
 
@@ -81,7 +81,7 @@ func IndexCreate(
 }
 
 //export IndexList
-func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
+func IndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 	ctx := context.Background()
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
@@ -112,7 +112,7 @@ func IndexList(nodePtr C.uintptr_t, collectionName *C.char) *C.Result {
 }
 
 //export IndexDrop
-func IndexDrop(nodePtr C.uintptr_t, collectionName *C.char, indexName *C.char) *C.Result {
+func IndexDrop(nodePtr C.uintptr_t, collectionName *C.char, indexName *C.char) C.Result {
 	ctx := context.Background()
 
 	store, err := getStoreFromPointer(nodePtr)

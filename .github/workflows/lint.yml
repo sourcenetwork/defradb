@@ -45,24 +45,31 @@ jobs:
           cache: false
 
       - name: Run golangci-lint linter
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
           #  version is what will always be used.
-          version: v1.64
+          version: v2.3
+
+          # The mode to install golangci-lint. Default is `binary`, but we had problems
+          # with `binary` in the past where the binary was built with a higher version
+          # of go-lang that we didn't support, causing errors.
+          install-mode: goinstall
 
           # Optional: working directory, useful for monorepos or if we wanted to run this
           #  on a non-root directory.
           # working-directory: ./
 
           # Optional: golangci-lint command line arguments.
-          # Note: we can set `--issues-exit-code=0` if we want a successcode always,
+          # Note: we can set `--issues-exit-code=0` if we want a success-code always,
           #  indicating that the linter ran successfully (weather or not linter errors
           #  exist or not doesn't matter). But the good thing is that the annotations
-          #  will still show up. I think this can be useful if we don't want the pipeline
-          #  to stop just because we had some linter errors.
-          args: --issues-exit-code=1 --config tools/configs/golangci.yaml
+          #  will still show up. This can be useful if we don't want the pipeline to
+          #  stop just because we had some linter errors. Adding a = between the flag
+          #  name and its value is important because the action parses the arguments on
+          #  spaces.
+          args: --issues-exit-code=1 --config=tools/configs/golangci.yaml
 
           # Optional: we can set the below to `true` if we only want to see newly
           #  introduced linter errors, however I found that in practive that option is a

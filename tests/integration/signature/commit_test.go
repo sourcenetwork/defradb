@@ -15,6 +15,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/crypto"

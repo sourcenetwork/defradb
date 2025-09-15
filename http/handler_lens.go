@@ -14,12 +14,13 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 type lensHandler struct{}
 
-func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
+func (h *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	err := db.LensRegistry().ReloadLenses(req.Context())
@@ -30,7 +31,7 @@ func (s *lensHandler) ReloadLenses(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
+func (h *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var request setMigrationRequest
@@ -47,7 +48,7 @@ func (s *lensHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
+func (h *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var request migrateRequest
@@ -72,7 +73,7 @@ func (s *lensHandler) MigrateUp(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, value)
 }
 
-func (s *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
+func (h *lensHandler) MigrateDown(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var request migrateRequest

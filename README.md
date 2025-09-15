@@ -504,5 +504,7 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Fred Carle ([@fredcarle](https://github.com/fredcarle))
 - Islam Aliev ([@islamaliev](https://github.com/islamaliev))
 - Keenan Nemetz ([@nasdf](https://github.com/nasdf))
+- Ivan Vercenco ([@iverc](https://github.com/iverc))
+- Chris Quigley ([@ChrisBQu](https://github.com/ChrisBQu))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.

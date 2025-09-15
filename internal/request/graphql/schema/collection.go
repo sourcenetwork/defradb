@@ -39,7 +39,7 @@ const (
 	typeJSON     string = "JSON"
 )
 
-// this mapping is used to check that the default prop value
+// TypeToDefaultPropName mapping is used to check that the default prop value
 // matches the field type
 var TypeToDefaultPropName = map[string]string{
 	typeString:   types.DefaultDirectivePropString,
@@ -442,9 +442,9 @@ func defaultFromAST(
 	case types.DefaultDirectivePropDateTime:
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropJSON:
-		value = types.JSONScalarType().ParseLiteral(arg.Value, nil)
+		value = types.JSON.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropBlob:
-		value = types.BlobScalarType().ParseLiteral(arg.Value, nil)
+		value = types.Blob.ParseLiteral(arg.Value, nil)
 	}
 	// If the value is nil, then parsing has failed, or a nil value was provided.
 	// Since setting a default value to nil is the same as not providing one,

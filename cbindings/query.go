@@ -71,7 +71,7 @@ func removeSubscription(id string) {
 // and the payload of the message. If an error occurs, status 1 is returned.
 //
 //export PollSubscription
-func PollSubscription(id *C.char) *C.Result {
+func PollSubscription(id *C.char) C.Result {
 	subID := C.GoString(id)
 	sub, ok := getSubscription(subID)
 	if !ok {
@@ -90,7 +90,7 @@ func PollSubscription(id *C.char) *C.Result {
 }
 
 //export CloseSubscription
-func CloseSubscription(id *C.char) *C.Result {
+func CloseSubscription(id *C.char) C.Result {
 	removeSubscription(C.GoString(id))
 	return returnC(returnGoC(0, "", ""))
 }
@@ -102,7 +102,7 @@ func ExecuteQuery(
 	identityPtr C.uintptr_t,
 	operationName *C.char,
 	variables *C.char,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 	opts, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
 	if err != nil {

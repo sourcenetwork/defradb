@@ -21,7 +21,7 @@ import (
 )
 
 //export AddSchema
-func AddSchema(nodePtr C.uintptr_t, schema *C.char, identityPtr C.uintptr_t) *C.Result {
+func AddSchema(nodePtr C.uintptr_t, schema *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)

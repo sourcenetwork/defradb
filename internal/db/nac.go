@@ -15,10 +15,10 @@ import (
 	"encoding/json"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/acp/nac"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -97,7 +97,7 @@ func (db *DB) initializeNodeACP(ctx context.Context, txn datastore.Txn) error {
 		return err
 	}
 
-	iden := identity.FromContext(ctx)
+	iden := acpIdentity.FromContext(ctx)
 	hasIdentity := iden.HasValue()
 
 	// Was never setup before so start from scratch only if enabled in starting config and has identity.
@@ -229,7 +229,7 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 // Note:
 // - This function should only be called when starting node acp from a clean state.
 func (db *DB) tryRegisterNACPolicy(ctx context.Context) error {
-	iden := identity.FromContext(ctx)
+	iden := acpIdentity.FromContext(ctx)
 	if !iden.HasValue() {
 		return ErrNoIdentityInContext
 	}
@@ -405,7 +405,7 @@ func (db *DB) checkNodeAccess(
 		return ErrNACIsNotConfigured
 	}
 
-	ident := identity.FromContext(ctx)
+	ident := acpIdentity.FromContext(ctx)
 	if ident.HasValue() &&
 		db.nodeIdentity.HasValue() &&
 		ident.Value().DID() == db.nodeIdentity.Value().DID() {
@@ -565,7 +565,7 @@ func (db *DB) addNACActorRelationship(
 		return client.AddActorRelationshipResult{}, ErrNACIsEnabledButIsMissingPolicyInfo
 	}
 
-	requestActor := identity.FromContext(ctx)
+	requestActor := acpIdentity.FromContext(ctx)
 	if !requestActor.HasValue() || requestActor.Value() == nil || requestActor.Value().DID() == "" {
 		return client.AddActorRelationshipResult{}, ErrNACRelationshipOperationRequiresIdentity
 	}
@@ -623,7 +623,7 @@ func (db *DB) deleteNACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, ErrNACIsEnabledButIsMissingPolicyInfo
 	}
 
-	requestActor := identity.FromContext(ctx)
+	requestActor := acpIdentity.FromContext(ctx)
 	if !requestActor.HasValue() || requestActor.Value() == nil || requestActor.Value().DID() == "" {
 		return client.DeleteActorRelationshipResult{}, ErrNACRelationshipOperationRequiresIdentity
 	}

@@ -25,7 +25,7 @@ type CollectionDefinitionDelta struct {
 
 var _ Delta = (*CollectionDefinitionDelta)(nil)
 
-func (delta *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
+func (d *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CollectionDefinitionDelta struct {
 		priority  		Int
@@ -59,11 +59,11 @@ func NewCollectionDefinition(
 	}
 }
 
-func (m *CollectionDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return m.headstorePrefix
+func (c *CollectionDefinition) HeadstorePrefix() keys.HeadstoreKey {
+	return c.headstorePrefix
 }
 
-func (m *CollectionDefinition) Delta(
+func (c *CollectionDefinition) Delta(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
 ) (*CollectionDefinitionDelta, bool) {

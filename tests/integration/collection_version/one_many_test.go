@@ -79,7 +79,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name:         "owner_id",
-								Kind:         client.ScalarKind(client.FieldKind_DocID),
+								Kind:         client.FieldKind_DocID,
 								RelationName: immutable.Some("dog_user"),
 								Typ:          client.LWW_REGISTER,
 								IsPrimary:    true,
@@ -124,7 +124,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 							{
 								Name:         "a_id",
 								FieldID:      "bafyreibctyal4hy7fiupjmfy5rx5y75fuvuvjebx2itn54g2nwbktcbzne",
-								Kind:         client.ScalarKind(client.FieldKind_DocID),
+								Kind:         client.FieldKind_DocID,
 								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
 								IsPrimary:    true,
@@ -177,7 +177,7 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 							},
 							{
 								Name:         "b_id",
-								Kind:         client.ScalarKind(client.FieldKind_DocID),
+								Kind:         client.FieldKind_DocID,
 								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
 								IsPrimary:    true,

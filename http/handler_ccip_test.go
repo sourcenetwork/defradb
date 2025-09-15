@@ -23,9 +23,10 @@ import (
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
-	"github.com/sourcenetwork/corekv/badger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 
@@ -45,7 +46,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	data := "0x" + hex.EncodeToString([]byte(gqlData))
+	data := "0x" + hex.EncodeToString(gqlData)
 	sender := "0x0000000000000000000000000000000000000000"
 	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
 
@@ -84,7 +85,7 @@ func TestCCIPGet_WithSubscription(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	data := "0x" + hex.EncodeToString([]byte(gqlData))
+	data := "0x" + hex.EncodeToString(gqlData)
 	sender := "0x0000000000000000000000000000000000000000"
 	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
 
@@ -130,7 +131,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	require.NoError(t, err)
 
 	body, err := json.Marshal(&CCIPRequest{
-		Data:   "0x" + hex.EncodeToString([]byte(gqlJSON)),
+		Data:   "0x" + hex.EncodeToString(gqlJSON),
 		Sender: "0x0000000000000000000000000000000000000000",
 	})
 	require.NoError(t, err)

@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -25,7 +26,7 @@ import (
 
 type storeHandler struct{}
 
-func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
@@ -41,7 +42,7 @@ func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
@@ -57,7 +58,7 @@ func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	schema, err := io.ReadAll(req.Body)
@@ -73,7 +74,7 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var message patchCollectionRequest
@@ -91,7 +92,7 @@ func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	schemaVersionID, err := io.ReadAll(req.Body)
@@ -107,7 +108,7 @@ func (s *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var message addViewRequest
@@ -126,7 +127,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, defs)
 }
 
-func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var cfg client.LensConfig
@@ -143,7 +144,7 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	options := client.CollectionFetchOptions{}
@@ -179,7 +180,7 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 	responseJSON(rw, http.StatusOK, colDesc)
 }
 
-func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	options := client.CollectionFetchOptions{}
@@ -211,7 +212,7 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	indexes, err := db.GetAllIndexes(req.Context())
@@ -222,7 +223,7 @@ func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
-func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	if err := db.PrintDump(req.Context()); err != nil {
@@ -238,7 +239,7 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
-func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var request GraphQLRequest
@@ -340,7 +341,7 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	identity, err := db.GetNodeIdentity(req.Context())

@@ -37,6 +37,7 @@ const (
 	errUnsupportedPubKeyType           string = "unsupported public key type"
 	errFailedToCreateDIDKey            string = "failed to create DID key"
 	errUnsupportedKeyType              string = "unsupported key type"
+	errFailedToWrite                   string = "failed to write"
 )
 
 var (
@@ -53,6 +54,7 @@ var (
 	ErrUnsupportedPrivKeyType      = errors.New(errUnsupportedPrivKeyType)
 	ErrUnsupportedPubKeyType       = errors.New(errUnsupportedPubKeyType)
 	ErrSignatureVerification       = errors.New(errSignatureVerification)
+	ErrFailedToWrite               = errors.New(errFailedToWrite)
 )
 
 func NewErrFailedToGenerateEphemeralKey(inner error) error {
@@ -85,6 +87,10 @@ func NewErrFailedToDecrypt(inner error) error {
 
 func NewErrFailedToCreateDIDKey(inner error) error {
 	return errors.Wrap(errFailedToCreateDIDKey, inner)
+}
+
+func NewErrFailedToWrite(inner error) error {
+	return errors.Wrap(errFailedToWrite, inner)
 }
 
 func NewErrUnsupportedKeyType(keyType KeyType) error {

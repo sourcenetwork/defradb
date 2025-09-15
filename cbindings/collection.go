@@ -85,7 +85,7 @@ func CollectionCreate(
 	isEncrypted C.int,
 	encryptedFields *C.char,
 	options C.CollectionOptions,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
@@ -142,7 +142,7 @@ func CollectionCreate(
 }
 
 //export CollectionDelete
-func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, options C.CollectionOptions) *C.Result {
+func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
@@ -193,7 +193,7 @@ func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, 
 }
 
 //export CollectionDescribe
-func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Result {
+func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
@@ -221,7 +221,7 @@ func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Res
 }
 
 //export CollectionListDocIDs
-func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) *C.Result {
+func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
@@ -267,7 +267,7 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) *C.R
 }
 
 //export CollectionGet
-func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, options C.CollectionOptions) *C.Result {
+func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
@@ -303,7 +303,7 @@ func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, opt
 }
 
 //export CollectionPatch
-func CollectionPatch(nodePtr C.uintptr_t, patch *C.char, lensConfig *C.char, options C.CollectionOptions) *C.Result {
+func CollectionPatch(nodePtr C.uintptr_t, patch *C.char, lensConfig *C.char, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 
 	ctx, err := contextWithIdentity(ctx, options.identityPtr)
@@ -346,7 +346,7 @@ func CollectionUpdate(
 	filterStr *C.char,
 	updaterStr *C.char,
 	options C.CollectionOptions,
-) *C.Result {
+) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
@@ -409,7 +409,7 @@ func CollectionUpdate(
 }
 
 //export SetActiveCollection
-func SetActiveCollection(nodePtr C.uintptr_t, version *C.char) *C.Result {
+func SetActiveCollection(nodePtr C.uintptr_t, version *C.char) C.Result {
 	ctx := context.Background()
 
 	store, err := getStoreFromPointer(nodePtr)

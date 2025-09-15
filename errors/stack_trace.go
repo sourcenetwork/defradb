@@ -50,7 +50,7 @@ func toString(stack []uintptr) string {
 
 	for _, pc := range stack {
 		frame := goErrors.NewStackFrame(pc)
-		buf.WriteString(frame.String())
+		_, _ = buf.WriteString(frame.String())
 	}
 	return buf.String()
 }

@@ -14,7 +14,7 @@ package cbindings
 #include <stdlib.h>
 #include <stdint.h>
 #include "defra_structs.h"
-extern Result* TransactionCommit(uintptr_t txnPtr);
+extern Result TransactionCommit(uintptr_t txnPtr);
 extern void TransactionDiscard(uintptr_t txnPtr);
 */
 import "C"

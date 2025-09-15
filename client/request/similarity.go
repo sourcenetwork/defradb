@@ -19,7 +19,7 @@ type Similarity struct {
 	// It will be of type Int, Float32 or Float64. It must be the same type and length as Target.
 	Vector any
 
-	// Target is the field in the host object that we will compare the the vector to.
+	// Target is the field in the host object that we will compare the vector to.
 	//
 	// It must be a field of type Int, Float32 or Float64. It must be the same type and length as Vector.
 	Target string

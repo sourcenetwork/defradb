@@ -33,13 +33,11 @@ import (
 )
 
 // Helper function which builds a return struct from Go to C
-func returnC(gcr GoCResult) *C.Result {
-	result := (*C.Result)(C.malloc(C.size_t(unsafe.Sizeof(C.Result{}))))
-
+func returnC(gcr GoCResult) C.Result {
+	result := C.Result{}
 	result.status = C.int(gcr.Status)
 	result.error = C.CString(gcr.Error)
 	result.value = C.CString(gcr.Value)
-
 	return result
 }
 
@@ -184,7 +182,7 @@ func contextWithIdentity(ctx context.Context, identityPtr C.uintptr_t) (context.
 
 // ConvertAndFreeCResult exists to convert C.Result to GoCResult for use in integration tests
 // It will, in converting,consume the C.Result, freeing the memory for it
-func ConvertAndFreeCResult(cResult *C.Result) GoCResult {
+func ConvertAndFreeCResult(cResult C.Result) GoCResult {
 	defer C.free(unsafe.Pointer(cResult.error))
 	defer C.free(unsafe.Pointer(cResult.value))
 	return GoCResult{
