@@ -199,6 +199,9 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
+			// Having more than 3 nodes is important to test the robustness of the doc update message
+			// processing function. Having more than 3 connected nodes means that there is a chance that
+			// the message can be received multiple times simultaneously.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

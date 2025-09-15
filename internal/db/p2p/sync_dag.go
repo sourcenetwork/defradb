@@ -13,7 +13,6 @@ package p2p
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -22,10 +21,6 @@ import (
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
-
-// syncBlockLinkTimeout is the maximum amount of time
-// to wait for a block link to be fetched.
-var syncBlockLinkTimeout = 5 * time.Second
 
 func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
 	blockStore := &bsrvadapter.Adapter{Wrapped: blockService}

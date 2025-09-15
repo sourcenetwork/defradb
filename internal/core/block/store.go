@@ -226,6 +226,8 @@ func updateHeads(
 		}
 	}
 
+	// Marking the block as merged removes the to-merge index. It signals that nothing
+	// else needs to be done for that block.
 	err := txn.Blockstore().MarkAsMerged(ctx, blockLink.Cid)
 	if err != nil {
 		return NewErrMarkingAsMerged(blockLink.Cid, err)
@@ -238,6 +240,8 @@ func updateHeads(
 			return NewErrCheckingHead(linkCid, err)
 		}
 
+		// Marking the block as merged removes the to-merge index. It signals that nothing
+		// else needs to be done for that block.
 		err = txn.Blockstore().MarkAsMerged(ctx, linkCid)
 		if err != nil {
 			return NewErrMarkingAsMerged(blockLink.Cid, err)

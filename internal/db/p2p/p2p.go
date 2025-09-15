@@ -402,9 +402,9 @@ func (p *P2P) processPushlogRequest(
 	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
 	// if this initial sync call had a negative response for a given link, the subsequent calls will
 	// assume a negative response for that same link without retrying.
-	p.processQueue.add(headCID.String())
+	p.processQueue.add(headCID)
 	err = p.syncDAG(ctx, p.host.BlockService(), block)
-	p.processQueue.done(headCID.String())
+	p.processQueue.done(headCID)
 	if err != nil {
 		return err
 	}
@@ -481,13 +481,13 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 // processQueue is synchronization source to ensure that concurrent
 // document merges do not cause transaction conflicts.
 type processQueue struct {
-	cids  map[string]chan struct{}
+	cids  map[cid.Cid]chan struct{}
 	mutex sync.Mutex
 }
 
 func newProcessQueue() *processQueue {
 	return &processQueue{
-		cids: make(map[string]chan struct{}),
+		cids: make(map[cid.Cid]chan struct{}),
 	}
 }
 
@@ -495,7 +495,7 @@ func newProcessQueue() *processQueue {
 // wait for the cid to be removed from the queue. For every add call, done must
 // be called to remove the cid from the queue. Otherwise, subsequent add calls will
 // block forever.
-func (m *processQueue) add(cid string) {
+func (m *processQueue) add(cid cid.Cid) {
 	for {
 		m.mutex.Lock()
 		done, ok := m.cids[cid]
@@ -509,7 +509,7 @@ func (m *processQueue) add(cid string) {
 	}
 }
 
-func (m *processQueue) done(cid string) {
+func (m *processQueue) done(cid cid.Cid) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	done, ok := m.cids[cid]
