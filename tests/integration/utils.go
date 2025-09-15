@@ -1145,9 +1145,8 @@ func patchCollection(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		s.Ctx = getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.PatchCollection(s.Ctx, action.Patch, action.Lens)
-		resetStateContext(s)
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+		err := node.PatchCollection(ctx, action.Patch, action.Lens)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
