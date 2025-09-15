@@ -10,7 +10,11 @@
 
 package request
 
-import "github.com/sourcenetwork/immutable"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/immutable"
+)
 
 var (
 	_ Selection = (*CommitSelect)(nil)
@@ -62,6 +66,7 @@ func (c CommitSelect) ToSelect() *Select {
 }
 
 func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
+	fmt.Println("CommitSelect DocID", c.DocID.Value())
 	return &CommitSelect{
 		Field: Field{
 			Name:  c.Name,
@@ -73,4 +78,8 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 		},
 		ChildSelect: c.ChildSelect,
 	}
+}
+
+func (c CommitSelect) RenderField() Field {
+	return c.Field
 }

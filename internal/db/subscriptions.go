@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -23,6 +24,7 @@ import (
 
 type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
+	RenderField() request.Field
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -33,7 +35,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 		return nil, nil // This is not a subscription request and we have nothing to do here
 	}
 	subRequest, ok := r.Subscription[0].Selections[0].(subscriptionSelector)
-	spew.Dump(r.Subscription[0].Selections[0])
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
 	}
@@ -75,7 +76,9 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 			result, err := p.RunSelection(ctx, s)
-			if err == nil && len(result) == 0 {
+			fmt.Println("result lenght:", len(result))
+			spew.Dump(result)
+			if err == nil && len(result) == 0 || (len(result) > 0 && result[subRequest.RenderField().Label()]) {
 				txn.Discard(ctx)
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}

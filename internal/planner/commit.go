@@ -276,7 +276,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		len(n.visitedNodes) == 0 &&
 		n.commitSelect.DocID.HasValue() &&
 		currentDocID != n.commitSelect.DocID.Value() {
-		return false, ErrIncorrectCIDForDocId
+		return false, nil // ErrIncorrectCIDForDocId
 	}
 
 	// the dagscan node can traverse into the merkle dag
