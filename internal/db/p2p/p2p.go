@@ -365,23 +365,18 @@ func (p *P2P) processPushlogRequest(
 		return err
 	}
 
-	// No need to check access if the message is for replication as the node sending
-	// will have done so deliberately.
-	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
-		if err != nil {
-			return err
-		}
-		if !mightHaveAccess {
-			// If we know we don't have access, we can skip the rest of the processing.
-			return nil
-		}
-	}
-
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return err
 	}
+
+	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
+	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
+	// if this initial sync call had a negative response for a given link, the subsequent calls will
+	// assume a negative response for that same link without retrying.
+	p.processQueue.add(headCID)
+	done := p.processQueue.doneOnce(headCID)
+	defer done()
 
 	// Check if we've already merged this block. If so, skip the sink process.
 	txn, err := p.db.NewTxn(ctx, true)
@@ -398,16 +393,25 @@ func (p *P2P) processPushlogRequest(
 		return nil
 	}
 
-	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
-	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
-	// if this initial sync call had a negative response for a given link, the subsequent calls will
-	// assume a negative response for that same link without retrying.
-	p.processQueue.add(headCID)
+	// No need to check access if the message is for replication as the node sending
+	// will have done so deliberately.
+	if !isReplicator {
+		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+		if err != nil {
+			return err
+		}
+		if !mightHaveAccess {
+			// If we know we don't have access, we can skip the rest of the processing.
+			return nil
+		}
+	}
+
 	err = p.syncDAG(ctx, p.host.BlockService(), block)
-	p.processQueue.done(headCID)
 	if err != nil {
 		return err
 	}
+	// we call done as soon as we can to release the lock.
+	done()
 
 	go func() {
 		evt := event.Merge{
@@ -517,4 +521,11 @@ func (m *processQueue) done(cid cid.Cid) {
 		delete(m.cids, cid)
 		close(done)
 	}
+}
+
+// doneOnce returns a function that invokes done only once.
+func (m *processQueue) doneOnce(cid cid.Cid) func() {
+	return sync.OnceFunc(func() {
+		m.done(cid)
+	})
 }
