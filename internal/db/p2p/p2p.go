@@ -388,13 +388,13 @@ func (p *P2P) processPushlogRequest(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
 	clientTxn := datastore.MustGetFromClientTxn(txn)
-	merged, err := clientTxn.Blockstore().IsMerged(ctx, headCID)
+	isMerged, err := clientTxn.Blockstore().IsMerged(ctx, headCID)
+	txn.Discard(ctx)
 	if err != nil {
 		return err
 	}
-	if merged {
+	if isMerged {
 		return nil
 	}
 

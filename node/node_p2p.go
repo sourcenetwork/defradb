@@ -32,7 +32,7 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
 
 	peer, err := net.NewPeer(
 		ctx,
-		datastore.BlockstoreFrom(store),
+		datastore.P2PBlockstoreFrom(store),
 		filterOptions[netConfig.NodeOpt](n.options)...,
 	)
 	if err != nil {

@@ -93,6 +93,12 @@ func BlockstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
 	return newBlockstore(prefix(rootstore, blockStoreKey.Bytes()))
 }
 
+func P2PBlockstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
+	return &p2pBlockStore{
+		bstore: newBlockstore(prefix(rootstore, blockStoreKey.Bytes())),
+	}
+}
+
 func SystemstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return prefix(rootstore, systemStoreKey.Bytes())
 }

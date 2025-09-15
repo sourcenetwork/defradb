@@ -11,7 +11,6 @@
 package datastore
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/ipfs/boxo/blockstore"
@@ -84,13 +83,9 @@ func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 	if !k.Defined() {
 		return nil, ipld.ErrNotFound{Cid: k}
 	}
-	mergedKey, notMergedKey := getKeys(k)
-	bdata, err := bs.store.Get(ctx, mergedKey)
+	bdata, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
-		bdata, err = bs.store.Get(ctx, notMergedKey)
-		if errors.Is(err, corekv.ErrNotFound) {
-			return nil, ipld.ErrNotFound{Cid: k}
-		}
+		return nil, ipld.ErrNotFound{Cid: k}
 	}
 	if err != nil {
 		return nil, err
@@ -112,34 +107,26 @@ func (bs *bstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) {
 
 // Put stores a block to the blockstore.
 func (bs *bstore) Put(ctx context.Context, block blocks.Block) error {
-	mergedKey, notMergedKey := getKeys(block.Cid())
+	k := dshelp.MultihashToDsKey(block.Cid().Hash())
 
 	// Has is cheaper than Set, so see if we already have it
-	exists, err := bs.store.Has(ctx, mergedKey)
+	exists, err := bs.store.Has(ctx, k.Bytes())
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	exists, err = bs.store.Has(ctx, notMergedKey)
-	if err == nil && exists {
-		return nil // already stored.
-	}
-	return bs.store.Set(ctx, notMergedKey, block.RawData())
+	return bs.store.Set(ctx, k.Bytes(), block.RawData())
 }
 
 // PutMany stores multiple blocks to the blockstore.
 func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
-		mergedKey, notMergedKey := getKeys(b.Cid())
-		exists, err := bs.store.Has(ctx, mergedKey)
-		if err == nil && exists {
-			continue
-		}
-		exists, err = bs.store.Has(ctx, notMergedKey)
+		k := dshelp.MultihashToDsKey(b.Cid().Hash())
+		exists, err := bs.store.Has(ctx, k.Bytes())
 		if err == nil && exists {
 			continue
 		}
 
-		err = bs.store.Set(ctx, notMergedKey, b.RawData())
+		err = bs.store.Set(ctx, k.Bytes(), b.RawData())
 		if err != nil {
 			return err
 		}
@@ -149,35 +136,21 @@ func (bs *bstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 
 // Has returns whether a block is stored in the blockstore.
 func (bs *bstore) Has(ctx context.Context, k cid.Cid) (bool, error) {
-	mergedKey, notMergedKey := getKeys(k)
-	exists, err := bs.store.Has(ctx, mergedKey)
-	if err == nil && exists {
-		return true, nil
-	}
-	return bs.store.Has(ctx, notMergedKey)
+	return bs.store.Has(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 }
 
 // GetSize returns the size of a block in the blockstore.
 func (bs *bstore) GetSize(ctx context.Context, k cid.Cid) (int, error) {
-	mergedKey, notMergedKey := getKeys(k)
-	buf, err := bs.store.Get(ctx, mergedKey)
+	buf, err := bs.store.Get(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
-		buf, err = bs.store.Get(ctx, notMergedKey)
-		if errors.Is(err, corekv.ErrNotFound) {
-			return -1, ipld.ErrNotFound{Cid: k}
-		}
+		return -1, ipld.ErrNotFound{Cid: k}
 	}
 	return len(buf), err
 }
 
 // DeleteBlock removes a block from the blockstore.
 func (bs *bstore) DeleteBlock(ctx context.Context, k cid.Cid) error {
-	mergedKey, notMergedKey := getKeys(k)
-	err := bs.store.Delete(ctx, mergedKey)
-	if errors.Is(err, corekv.ErrNotFound) {
-		return bs.store.Delete(ctx, notMergedKey)
-	}
-	return err
+	return bs.store.Delete(ctx, dshelp.MultihashToDsKey(k.Hash()).Bytes())
 }
 
 // AllKeysChan runs a query for keys from the blockstore.
@@ -213,7 +186,8 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 				break
 			}
 
-			key := cleanKey(iter.Key())
+			key := iter.Key()
+
 			hash, err := dshelp.DsKeyToMultihash(ds.RawKey(string(key)))
 			if err != nil {
 				log.ErrorContextE(ctx, "Error parsing key from binary", err)
@@ -231,45 +205,72 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 	return output, nil
 }
 
-// MarkAsMerged sets a block as merged.
-func (bs *bstore) MarkAsMerged(ctx context.Context, k cid.Cid) error {
-	mergedKey, notMergedKey := getKeys(k)
-	exists, err := bs.store.Has(ctx, mergedKey)
+const (
+	objectMarker       = byte(0xff)
+	toMergeIndexPrefix = "/tm"
+)
+
+func newToMergeKey(cid string) []byte {
+	return []byte(toMergeIndexPrefix + "/" + cid)
+}
+
+func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
+	hasBlock, err := bs.Has(ctx, cid)
+	if err != nil {
+		return false, err
+	}
+	if !hasBlock {
+		return false, nil
+	}
+	notMerged, err := bs.store.Has(ctx, newToMergeKey(cid.String()))
+	if err != nil {
+		return false, err
+	}
+	return !notMerged, nil
+}
+
+func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
+	return bs.store.Delete(ctx, newToMergeKey(cid.String()))
+}
+
+type p2pBlockStore struct {
+	*bstore
+}
+
+var _ Blockstore = (*p2pBlockStore)(nil)
+
+// Put stores a block to the blockstore.
+func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
+	k := dshelp.MultihashToDsKey(block.Cid().Hash())
+
+	// Has is cheaper than Set, so see if we already have it
+	exists, err := bs.store.Has(ctx, k.Bytes())
 	if err == nil && exists {
-		// already marked as merged
-		return nil
+		return nil // already stored.
 	}
-	data, err := bs.store.Get(ctx, notMergedKey)
-	if errors.Is(err, corekv.ErrNotFound) {
-		return ipld.ErrNotFound{Cid: k}
-	}
-	err = bs.store.Delete(ctx, notMergedKey)
+	err = bs.store.Set(ctx, newToMergeKey(block.Cid().String()), []byte{objectMarker})
 	if err != nil {
 		return err
 	}
-	return bs.store.Set(ctx, mergedKey, data)
+	return bs.store.Set(ctx, k.Bytes(), block.RawData())
 }
 
-// IsMerged returns whether a block has been marked as merged.
-func (bs *bstore) IsMerged(ctx context.Context, k cid.Cid) (bool, error) {
-	mergedKey, _ := getKeys(k)
-	exists, err := bs.store.Has(ctx, mergedKey)
-	if err == nil && exists {
-		// already marked as merged
-		return true, nil
+// PutMany stores multiple blocks to the blockstore.
+func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) error {
+	for _, b := range blocks {
+		k := dshelp.MultihashToDsKey(b.Cid().Hash())
+		exists, err := bs.store.Has(ctx, k.Bytes())
+		if err == nil && exists {
+			continue
+		}
+		err = bs.store.Set(ctx, newToMergeKey(b.Cid().String()), []byte{objectMarker})
+		if err != nil {
+			return err
+		}
+		err = bs.store.Set(ctx, k.Bytes(), b.RawData())
+		if err != nil {
+			return err
+		}
 	}
-	return false, err
-}
-
-// getKeys returns both the mergedKey and the notMergedKey for a given cid.
-func getKeys(k cid.Cid) (mergedKey, notMergedKey []byte) {
-	key := dshelp.MultihashToDsKey(k.Hash())
-	mergedKey = append(key.Bytes(), []byte("/1")...)
-	notMergedKey = append(key.Bytes(), []byte("/0")...)
-	return mergedKey, notMergedKey
-}
-
-// cleanKey removes the merged or notMerged suffix from the key.
-func cleanKey(key []byte) []byte {
-	return bytes.TrimSuffix(bytes.TrimSuffix(key, []byte("/0")), []byte("/1"))
+	return nil
 }
