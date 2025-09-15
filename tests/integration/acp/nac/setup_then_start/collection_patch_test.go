@@ -15,13 +15,13 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesSchemaPatchPreSetup_AllowIfAuthorizedElseError(t *testing.T) {
+func TestNAC_GatesCollectionPatchPreSetup_AllowIfAuthorizedElseError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "node acp correctly gates schema patch operation (setup before nac), allow if authorized, otherwise error",
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since the setup steps will be done before
@@ -31,9 +31,16 @@ func TestNAC_GatesSchemaPatchPreSetup_AllowIfAuthorizedElseError(t *testing.T) {
 		),
 		Actions: []any{
 			// Note: Since this is not an in-memory test, we can do the setup steps before nac is enabled.
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
 				`,
 			},
 
@@ -45,38 +52,47 @@ func TestNAC_GatesSchemaPatchPreSetup_AllowIfAuthorizedElseError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Identity: testUtils.NoIdentity(),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+						{
+							"op": "copy",
+							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
+						}
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
-				ExpectedError:       "not authorized to perform operation",
+				ExpectedError: "not authorized to perform operation",
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Identity: testUtils.ClientIdentity(2),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+						{
+							"op": "copy",
+							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
+						}
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
-				ExpectedError:       "not authorized to perform operation",
+				ExpectedError: "not authorized to perform operation",
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.SchemaPatch{
+			testUtils.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+						{
+							"op": "copy",
+							"from": "/bafkreia2jn5ecrhtvy4fravk6pm3wqiny46m7mqymvjkgat7xiqupgqoai/Name",
+							"path": "/bafkreialnju2rez4t3quvpobf3463eai3lo64vdrdhdmunz7yy7sv3f5ce/Name"
+						}
 					]
 				`,
-				SetAsDefaultVersion: immutable.Some(false),
 			},
 		},
 	}

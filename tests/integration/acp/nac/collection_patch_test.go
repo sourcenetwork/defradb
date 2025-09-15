@@ -8,48 +8,39 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_nac_setup_then_start
+package test_acp_nac
 
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesPatchCollectionPreSetup_AllowIfAuthorizedElseError(t *testing.T) {
+func TestNAC_GatesCollectionPatch_AllowIfAuthorizedElseError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "node acp correctly gates patch collection operation (setup before nac), allow if authorized, otherwise error",
-		SupportedDatabaseTypes: immutable.Some(
-			[]state.DatabaseType{
-				// This test only supports file type databases since the setup steps will be done before
-				// the node is re-started with nac enabled (if it's in-memory it will loose setup state).
-				testUtils.BadgerFileType,
-			},
-		),
 		Actions: []any{
-			// Note: Since this is not an in-memory test, we can do the setup steps before nac is enabled.
-			testUtils.SchemaUpdate{
-				Schema: `
-					type Users {}
-				`,
-			},
-			testUtils.SchemaPatch{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
-				SetAsDefaultVersion: immutable.Some(false),
-			},
-
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema: `
+					type Users {}
+				`,
+			},
+			testUtils.PatchCollection{
+				Identity: testUtils.ClientIdentity(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
 			},
 
 			// We haven't authorized non-identities. So, this should error.

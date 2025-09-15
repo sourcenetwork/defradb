@@ -89,8 +89,7 @@ const (
 	NodeNACRelationAddPerm
 	NodeNACRelationDeletePerm
 	NodeSchemaAddPerm
-	NodeSchemaPatchPerm
-	NodePatchCollectionPerm
+	NodeCollectionUpdatePerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -112,8 +111,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-relation-add",
 	"nac-relation-delete",
 	"schema-add",
-	"schema-patch",
-	"patch-collection",
+	"collection-update",
 }
 
 const NodeACPObject = "NodeObject"
@@ -160,9 +158,7 @@ resources:
         expr: owner + admin
       schema-add:
         expr: owner + admin
-      schema-patch:
-        expr: owner + admin
-      patch-collection:
+      collection-update:
         expr: owner + admin
 
     relations:

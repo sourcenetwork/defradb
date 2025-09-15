@@ -149,7 +149,7 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodePatchCollectionPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionUpdatePerm); err != nil {
 		return err
 	}
 
