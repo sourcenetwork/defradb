@@ -16,9 +16,7 @@ import (
 
 // Event names for the event bus
 const (
-	ReplicateEventName          = "se-replicate"
-	ReplicationFailureEventName = "se-replication-failure"
-	QuerySEArtifactsEventName   = "se-query-artifacts"
+	QuerySEArtifactsEventName = "se-query-artifacts"
 )
 
 // RequestSEArtifactsEvent - Request to query SE artifacts from replicators
