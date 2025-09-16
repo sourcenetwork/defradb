@@ -312,11 +312,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = emitSSECompleteEvent(rw, flusher)
-		if err != nil {
-			return
-		}
-
+		_ = emitSSECompleteEvent(rw, flusher)
 		return
 	}
 
@@ -333,10 +329,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 			// We need to check for closure of the server context
 			// otherwise the server won't gracefully shutdown until all
 			// connections are closed.
-			err = emitSSECompleteEvent(rw, flusher)
-			if err != nil {
-				return
-			}
+			_ = emitSSECompleteEvent(rw, flusher)
 			return
 		case item, open := <-result.Subscription:
 			if !open {
@@ -347,10 +340,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 				return
 			}
 
-			err = emitSSENextEvent(rw, flusher, string(data))
-			if err != nil {
-				return
-			}
+			_ = emitSSENextEvent(rw, flusher, string(data))
 		}
 	}
 }
