@@ -171,6 +171,7 @@
                     "CollectionID": {
                         "type": "string"
                     },
+                    "CollectionSet": {},
                     "EncryptedIndexes": {
                         "items": {
                             "properties": {
@@ -185,7 +186,6 @@
                         },
                         "type": "array"
                     },
-                    "CollectionSet": {},
                     "Fields": {
                         "items": {
                             "properties": {
@@ -301,166 +301,6 @@
                     },
                     "VersionID": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "collection_definition": {
-                "properties": {
-                    "schema": {
-                        "properties": {
-                            "Fields": {
-                                "items": {
-                                    "properties": {
-                                        "Kind": {},
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "Typ": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Name": {
-                                "type": "string"
-                            },
-                            "Root": {
-                                "type": "string"
-                            },
-                            "VersionID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "version": {
-                        "properties": {
-                            "CollectionID": {
-                                "type": "string"
-                            },
-                            "EncryptedIndexes": {
-                                "items": {
-                                    "properties": {
-                                        "FieldName": {
-                                            "type": "string"
-                                        },
-                                        "Type": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Fields": {
-                                "items": {
-                                    "properties": {
-                                        "DefaultValue": {},
-                                        "Kind": {},
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "RelationName": {},
-                                        "Size": {
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "Indexes": {
-                                "items": {
-                                    "properties": {
-                                        "Fields": {
-                                            "items": {
-                                                "properties": {
-                                                    "Descending": {
-                                                        "type": "boolean"
-                                                    },
-                                                    "Name": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "type": "array"
-                                        },
-                                        "ID": {
-                                            "maximum": 4294967295,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        },
-                                        "Name": {
-                                            "type": "string"
-                                        },
-                                        "Unique": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "IsActive": {
-                                "type": "boolean"
-                            },
-                            "IsBranchable": {
-                                "type": "boolean"
-                            },
-                            "IsEmbeddedOnly": {
-                                "type": "boolean"
-                            },
-                            "IsMaterialized": {
-                                "type": "boolean"
-                            },
-                            "Name": {
-                                "type": "string"
-                            },
-                            "Policy": {},
-                            "Sources": {
-                                "items": {},
-                                "type": "array"
-                            },
-                            "VectorEmbeddings": {
-                                "items": {
-                                    "properties": {
-                                        "FieldName": {
-                                            "type": "string"
-                                        },
-                                        "Fields": {
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "type": "array"
-                                        },
-                                        "Model": {
-                                            "type": "string"
-                                        },
-                                        "Provider": {
-                                            "type": "string"
-                                        },
-                                        "Template": {
-                                            "type": "string"
-                                        },
-                                        "URL": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            },
-                            "VersionID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -1654,6 +1494,46 @@
                             }
                         },
                         "description": "Encrypted index description"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            }
+        },
+        "/collections/{name}/encrypted-indexes/{field}": {
+            "delete": {
+                "description": "Delete an encrypted index",
+                "operationId": "encrypted_index_delete",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Field name of the encrypted index",
+                        "in": "path",
+                        "name": "field",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
