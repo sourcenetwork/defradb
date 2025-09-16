@@ -62,7 +62,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-
 			txn, err := db.NewTxn(ctx, false)
 			if err != nil {
 				log.ErrorContext(ctx, err.Error())
@@ -119,5 +118,3 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 	return resCh, nil
 }
-
-// func (db *DB) handleObjectSubscription(ctx context.Context, req *request.ObjectSubscription)
