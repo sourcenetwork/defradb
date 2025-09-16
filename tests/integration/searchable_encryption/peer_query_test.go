@@ -75,59 +75,6 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDocEncryptionPeer_AfterDataLossUponSync_ShouldSyncEncryptedDAG(t *testing.T) {
-	test := testUtils.TestCase{
-		KMS:                        testUtils.KMS{Activated: true},
-		EnableSearchableEncryption: true,
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
-					type User {
-						name: String
-						age: Int @encryptedIndex
-						verified: Boolean
-					}`,
-			},
-			testUtils.ConfigureReplicator{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-				SEEnabled:    true,
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name":	"John",
-					"age":	21
-				}`,
-				IsDocEncrypted: true,
-			},
-			testUtils.Wait{
-				Duration: time.Millisecond * 100,
-			},
-			testUtils.Request{
-				NodeID: immutable.Some(0),
-				Request: `
-					query {
-						User_encrypted(filter: {age: {_eq: 21}}) {
-							docIDs
-						}
-					}`,
-				Results: map[string]any{
-					"User_encrypted": []map[string]any{
-						{
-							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},

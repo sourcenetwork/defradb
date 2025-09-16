@@ -14,21 +14,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
-/*const (
-	errPushLog                  = "failed to push log"
-	errFailedToGetDocID         = "failed to get DocID from broadcast message"
-	errPublishingToDocIDTopic   = "can't publish log %s for docID %s"
-	errPublishingToSchemaTopic  = "can't publish log %s for schema %s"
-	errCheckingForExistingBlock = "failed to check for existing block"
-	errRequestingEncryptionKeys = "failed to request encryption keys with %v"
-	errTopicAlreadyExist        = "topic with name \"%s\" already exists"
-	errTopicDoesNotExist        = "topic with name \"%s\" does not exists"
-	errFailedToGetIdentity      = "failed to get identity"
-	errReplicatorCollections    = "failed to get collections for replicator"
-	errPushSEArtifacts          = "failed to push SE artifacts"
-	errQuerySEArtifacts         = "failed to query SE artifacts"
-)*/
-
 var (
 	ErrPushLog                   = errors.New("failed to push log")
 	ErrTopicAlreadyExist         = errors.New("topic already exists")
@@ -48,19 +33,3 @@ func NewErrTopicAlreadyExist(topic string) error {
 func NewErrTopicDoesNotExist(topic string) error {
 	return errors.WithStack(ErrTopicDoesNotExist, errors.NewKV("topic", topic))
 }
-
-/*func NewErrFailedToGetIdentity(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errFailedToGetIdentity, inner, kv...)
-}
-
-func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errReplicatorCollections, inner, kv...)
-}
-
-func NewErrPushSEArtifacts(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errPushSEArtifacts, inner, kv...)
-}
-
-func NewErrQuerySEArtifacts(inner error, kv ...errors.KV) error {
-	return errors.Wrap(errQuerySEArtifacts, inner, kv...)
-}*/

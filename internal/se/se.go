@@ -37,7 +37,6 @@ func StoreArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []sec
 			DocID:        artifact.DocID,
 		}
 
-		// Store empty value - we only need the key for search lookups
 		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
 			return err
 		}
@@ -153,8 +152,6 @@ func GenerateDocArtifacts(
 }
 
 // GenerateFieldArtifact generates a single SE artifact for a specific field value.
-// This function encapsulates the logic for creating search tags and artifacts
-// for individual fields, making it reusable across different contexts.
 func GenerateFieldArtifact(
 	ctx context.Context,
 	collectionID string,
