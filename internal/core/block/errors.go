@@ -66,6 +66,7 @@ var (
 	ErrFailedToGetNextQResult      = errors.New(errFailedToGetNextQResult)
 	ErrDecodingHeight              = errors.New("error decoding height")
 	ErrCouldNotGetEncKey           = errors.New(errCouldNotGetEncKey)
+	ErrMarkingAsMerged             = errors.New("failed to mark block as merged")
 )
 
 // NewErrFailedToGetPriority returns an error indicating that the priority could not be retrieved.
@@ -152,4 +153,8 @@ func NewErrFailedToGetNextQResult(inner error) error {
 
 func NewErrUnsupportedKeyForSigning(keyType crypto.KeyType) error {
 	return errors.New(errUnsupportedKeyForSigning, errors.NewKV("KeyType", keyType))
+}
+
+func NewErrMarkingAsMerged(cid cid.Cid, inner error) error {
+	return errors.WithStack(errors.Join(ErrMarkingAsMerged, inner), errors.NewKV("Cid", cid))
 }

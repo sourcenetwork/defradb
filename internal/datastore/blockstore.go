@@ -204,3 +204,73 @@ func (bs *bstore) AllKeysChan(ctx context.Context) (<-chan cid.Cid, error) {
 
 	return output, nil
 }
+
+const (
+	objectMarker       = byte(0xff)
+	toMergeIndexPrefix = "/tm"
+)
+
+func newToMergeKey(cid string) []byte {
+	return []byte(toMergeIndexPrefix + "/" + cid)
+}
+
+func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
+	hasBlock, err := bs.Has(ctx, cid)
+	if err != nil {
+		return false, err
+	}
+	if !hasBlock {
+		return false, nil
+	}
+	notMerged, err := bs.store.Has(ctx, newToMergeKey(cid.String()))
+	if err != nil {
+		return false, err
+	}
+	return !notMerged, nil
+}
+
+func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
+	return bs.store.Delete(ctx, newToMergeKey(cid.String()))
+}
+
+type p2pBlockStore struct {
+	*bstore
+}
+
+var _ Blockstore = (*p2pBlockStore)(nil)
+
+// Put stores a block to the blockstore.
+func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
+	k := dshelp.MultihashToDsKey(block.Cid().Hash())
+
+	// Has is cheaper than Set, so see if we already have it
+	exists, err := bs.store.Has(ctx, k.Bytes())
+	if err == nil && exists {
+		return nil // already stored.
+	}
+	err = bs.store.Set(ctx, newToMergeKey(block.Cid().String()), []byte{objectMarker})
+	if err != nil {
+		return err
+	}
+	return bs.store.Set(ctx, k.Bytes(), block.RawData())
+}
+
+// PutMany stores multiple blocks to the blockstore.
+func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) error {
+	for _, b := range blocks {
+		k := dshelp.MultihashToDsKey(b.Cid().Hash())
+		exists, err := bs.store.Has(ctx, k.Bytes())
+		if err == nil && exists {
+			continue
+		}
+		err = bs.store.Set(ctx, newToMergeKey(b.Cid().String()), []byte{objectMarker})
+		if err != nil {
+			return err
+		}
+		err = bs.store.Set(ctx, k.Bytes(), b.RawData())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

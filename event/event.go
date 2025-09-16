@@ -97,6 +97,9 @@ type Update struct {
 
 	// Identity is the identity of the peer that created this update.
 	Identity immutable.Option[acpIdentity.Identity]
+
+	// Is relay is set to true if this update is created from a P2P sync.
+	IsRelay bool
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.

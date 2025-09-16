@@ -109,13 +109,13 @@ func (p *Peer) Pubkey() ([]byte, error) {
 	return crypto.MarshalPublicKey(p.host.Peerstore().PubKey(p.host.ID()))
 }
 
-func (p *Peer) Connect(ctx context.Context, info client.PeerInfo) error {
-	peerID, err := peer.Decode(info.ID)
+func (p *Peer) Connect(ctx context.Context, id string, addresses []string) error {
+	peerID, err := peer.Decode(id)
 	if err != nil {
 		return err
 	}
 	addrs := []ma.Multiaddr{}
-	for _, addr := range info.Addresses {
+	for _, addr := range addresses {
 		maddr, err := ma.NewMultiaddr(addr)
 		if err != nil {
 			return err

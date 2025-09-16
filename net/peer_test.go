@@ -48,7 +48,7 @@ func TestStart_WithKnownPeer_NoError(t *testing.T) {
 	require.NoError(t, err)
 	defer n2.Close()
 
-	err = n2.Connect(ctx, n1.PeerInfo())
+	err = n2.Connect(ctx, n1.PeerInfo().ID, n1.PeerInfo().Addresses)
 	require.NoError(t, err)
 }
 

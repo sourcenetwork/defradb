@@ -21,6 +21,7 @@ const (
 	errUnsupportedEncryptedOperator   string = "unsupported operator for encrypted field"
 	errFailedToCreateNormalValue      string = "failed to create normal value for field"
 	errFailedToGenerateSearchTag      string = "failed to generate search tag for field"
+	errMissingFieldSelection          string = "missing field selection"
 )
 
 var (
@@ -101,4 +102,8 @@ func NewErrFailedToGenerateSearchTag(fieldName string, inner error) error {
 		inner,
 		errors.NewKV("FieldName", fieldName),
 	)
+}
+
+func NewErrMissingFieldSelection(field string) error {
+	return errors.New(errMissingFieldSelection, errors.NewKV("Field", field))
 }

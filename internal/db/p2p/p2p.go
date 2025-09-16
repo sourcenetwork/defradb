@@ -63,6 +63,8 @@ type DB interface {
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	// Rootstore returns the rootstore
 	Rootstore() corekv.TxnStore
+	// P2PBlockSyncTimeout is the timeout duration for syncing block links.
+	P2PBlockSyncTimeout() time.Duration
 }
 
 type P2P struct {
@@ -85,6 +87,12 @@ type P2P struct {
 	// For example, this can define an exponential backoff strategy.
 	retryIntervals   []time.Duration
 	handleRetryMutex sync.Mutex
+
+	// a cid queue for the processing of Pushlogs
+	processQueue *processQueue
+
+	// timeout duration for syncing block links.
+	syncBlockLinkTimeout time.Duration
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -103,13 +111,15 @@ func (proc *pushLogCommProcessor) ProcessRequest(
 // New returns a new configured P2P instance.
 func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	p := P2P{
-		ctx:              ctx,
-		db:               db,
-		host:             host,
-		identityProtocol: protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
-		replicators:      make(map[string]map[string]client.PeerInfo),
-		peerIdentities:   make(map[string]identity.Identity),
-		retryIntervals:   db.RetryIntervals(),
+		ctx:                  ctx,
+		db:                   db,
+		host:                 host,
+		identityProtocol:     protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
+		replicators:          make(map[string]map[string]client.PeerInfo),
+		peerIdentities:       make(map[string]identity.Identity),
+		retryIntervals:       db.RetryIntervals(),
+		processQueue:         newProcessQueue(),
+		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
@@ -146,8 +156,8 @@ func (p *P2P) PeerInfo() client.PeerInfo {
 }
 
 // Connect initiates a connection to the peer with the given addresp.
-func (p *P2P) Connect(ctx context.Context, info client.PeerInfo) error {
-	return p.host.Connect(ctx, info)
+func (p *P2P) Connect(ctx context.Context, id string, addresses []string) error {
+	return p.host.Connect(ctx, id, addresses)
 }
 
 func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collectionIDs map[string]struct{}) {
@@ -157,7 +167,7 @@ func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collec
 			log.ErrorE("Failed to disconnect from replicator peer", err)
 		}
 	} else {
-		if err := p.host.Connect(ctx, rep); err != nil {
+		if err := p.host.Connect(ctx, rep.ID, rep.Addresses); err != nil {
 			log.ErrorE("Failed to connect to replicator peer", err)
 		}
 	}
@@ -377,6 +387,34 @@ func (p *P2P) processPushlogRequest(
 		return err
 	}
 
+	headCID, err := cid.Cast(req.CID)
+	if err != nil {
+		return err
+	}
+
+	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
+	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
+	// if this initial sync call had a negative response for a given link, the subsequent calls will
+	// assume a negative response for that same link without retrying.
+	p.processQueue.add(headCID)
+	done := p.processQueue.doneOnce(headCID)
+	defer done()
+
+	// Check if we've already merged this block. If so, skip the sink process.
+	txn, err := p.db.NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	clientTxn := datastore.MustGetFromClientTxn(txn)
+	isMerged, err := clientTxn.Blockstore().IsMerged(ctx, headCID)
+	txn.Discard(ctx)
+	if err != nil {
+		return err
+	}
+	if isMerged {
+		return nil
+	}
+
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
@@ -390,15 +428,12 @@ func (p *P2P) processPushlogRequest(
 		}
 	}
 
-	err = syncDAG(ctx, p.host.BlockService(), block)
+	err = p.syncDAG(ctx, p.host.BlockService(), block)
 	if err != nil {
 		return err
 	}
-
-	headCID, err := cid.Cast(req.CID)
-	if err != nil {
-		return err
-	}
+	// we call done as soon as we can to release the lock.
+	done()
 
 	go func() {
 		evt := event.Merge{
@@ -417,6 +452,21 @@ func (p *P2P) processPushlogRequest(
 				corelog.Any("Event", evt))
 		}
 	}()
+
+	// Notify bus subscribers and the network of peers that we have a new document available.
+	evt := event.Update{
+		DocID:        req.DocID,
+		Cid:          headCID,
+		CollectionID: req.CollectionID,
+		Block:        req.Block,
+		IsRelay:      true,
+	}
+	p.db.Events().Publish(event.NewMessage(event.UpdateName, evt))
+	if err := p.SendUpdate(evt); err != nil {
+		// We don't need to return the error for this side-effect-function call.
+		// It's a bonus action that shouldn't affect the caller of `processPuslogRequest`.
+		log.ErrorE("Failed to send update after sync", err)
+	}
 
 	return nil
 }
@@ -452,4 +502,52 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 	}
 
 	return nil
+}
+
+// processQueue is synchronization source to ensure that concurrent
+// document merges do not cause transaction conflicts.
+type processQueue struct {
+	cids  map[cid.Cid]chan struct{}
+	mutex sync.Mutex
+}
+
+func newProcessQueue() *processQueue {
+	return &processQueue{
+		cids: make(map[cid.Cid]chan struct{}),
+	}
+}
+
+// add adds a cid to the queue. If the cid is already in the queue, it will
+// wait for the cid to be removed from the queue. For every add call, done must
+// be called to remove the cid from the queue. Otherwise, subsequent add calls will
+// block forever.
+func (m *processQueue) add(cid cid.Cid) {
+	for {
+		m.mutex.Lock()
+		done, ok := m.cids[cid]
+		if !ok {
+			m.cids[cid] = make(chan struct{})
+			m.mutex.Unlock()
+			return
+		}
+		m.mutex.Unlock()
+		<-done
+	}
+}
+
+func (m *processQueue) done(cid cid.Cid) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	done, ok := m.cids[cid]
+	if ok {
+		delete(m.cids, cid)
+		close(done)
+	}
+}
+
+// doneOnce returns a function that invokes done only once.
+func (m *processQueue) doneOnce(cid cid.Cid) func() {
+	return sync.OnceFunc(func() {
+		m.done(cid)
+	})
 }

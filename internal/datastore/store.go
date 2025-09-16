@@ -11,7 +11,10 @@
 package datastore
 
 import (
+	"context"
+
 	"github.com/ipfs/boxo/blockstore"
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/storage"
 
 	"github.com/sourcenetwork/corekv"
@@ -27,6 +30,11 @@ var (
 type Blockstore interface {
 	blockstore.Blockstore
 	AsIPLDStorage() IPLDStorage
+	// Mark the block as merged by removing the to-merge index.
+	MarkAsMerged(ctx context.Context, k cid.Cid) error
+	// Check if the block has been merged. It will return false if either the CID is not found
+	// or the CID is found AND the to-mege index is aslo found.
+	IsMerged(ctx context.Context, k cid.Cid) (bool, error)
 }
 
 // IPLDStorage provides the methods needed for an IPLD LinkSystem.

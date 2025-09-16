@@ -37,7 +37,7 @@ func (db *DB) PeerInfo() client.PeerInfo {
 
 // Connect tries to connect to the peer with the given [PeerInfo].
 func (db *DB) Connect(ctx context.Context, info client.PeerInfo) error {
-	return db.p2p.Connect(ctx, info)
+	return db.p2p.Connect(ctx, info.ID, info.Addresses)
 }
 
 // SetReplicator adds a replicator to the persisted list or adds

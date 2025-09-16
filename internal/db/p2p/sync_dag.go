@@ -13,7 +13,6 @@ package p2p
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -22,10 +21,6 @@ import (
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
-
-// syncBlockLinkTimeout is the maximum amount of time
-// to wait for a block link to be fetched.
-var syncBlockLinkTimeout = 5 * time.Second
 
 func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
 	blockStore := &bsrvadapter.Adapter{Wrapped: blockService}
@@ -43,7 +38,7 @@ func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
 //
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func syncDAG(ctx context.Context, blockService blockservice.BlockService, block *coreblock.Block) error {
+func (p *P2P) syncDAG(ctx context.Context, blockService blockservice.BlockService, block *coreblock.Block) error {
 	// use a session to make remote fetches more efficient
 	ctx = blockservice.ContextWithSession(ctx, blockService)
 
@@ -55,7 +50,7 @@ func syncDAG(ctx context.Context, blockService blockservice.BlockService, block 
 		return err
 	}
 
-	err = loadBlockLinks(ctx, &linkSystem, block)
+	err = p.loadBlockLinks(ctx, &linkSystem, block)
 	if err != nil {
 		return err
 	}
@@ -66,7 +61,7 @@ func syncDAG(ctx context.Context, blockService blockservice.BlockService, block 
 //
 // If it encounters errors in the concurrent loading of links, it will return
 // the first error it encountered.
-func loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
+func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
 	ctxWithCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
 	var wg sync.WaitGroup
@@ -97,7 +92,7 @@ func loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *cor
 			if ctxWithCancel.Err() != nil {
 				return
 			}
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, syncBlockLinkTimeout)
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
 			defer cancel()
 			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
 			if err != nil {
@@ -110,7 +105,7 @@ func loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *cor
 				return
 			}
 
-			err = loadBlockLinks(ctx, linkSys, linkBlock)
+			err = p.loadBlockLinks(ctx, linkSys, linkBlock)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return

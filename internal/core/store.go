@@ -157,7 +157,7 @@ func determineBlockEncryption(
 			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
-			prevBlockEncBytes, err := txn.Encstore().AsIPLDStorage().Get(ctx, prevBlock.Encryption.Cid.KeyString())
+			prevBlockEncBytes, err := txn.Encstore().AsIPLDStorage().Get(ctx, prevBlock.Encryption.KeyString())
 			if err != nil {
 				return nil, cidlink.Link{}, coreblock.NewErrCouldNotFindBlock(headCid, err)
 			}
@@ -229,11 +229,25 @@ func updateHeads(
 		}
 	}
 
+	// Marking the block as merged removes the to-merge index. It signals that nothing
+	// else needs to be done for that block.
+	err := txn.Blockstore().MarkAsMerged(ctx, blockLink.Cid)
+	if err != nil {
+		return coreblock.NewErrMarkingAsMerged(blockLink.Cid, err)
+	}
+
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
 		isHead, err := headset.IsHead(ctx, linkCid)
 		if err != nil {
 			return coreblock.NewErrCheckingHead(linkCid, err)
+		}
+
+		// Marking the block as merged removes the to-merge index. It signals that nothing
+		// else needs to be done for that block.
+		err = txn.Blockstore().MarkAsMerged(ctx, linkCid)
+		if err != nil {
+			return coreblock.NewErrMarkingAsMerged(blockLink.Cid, err)
 		}
 
 		if isHead {

@@ -72,9 +72,9 @@ type P2P interface {
 	SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error
 }
 
-type StreamHandler func(stream io.Reader, peerID string)
-type PubsubMessageHandler func(from string, topic string, msg []byte) ([]byte, error)
-type BlockAccessFunc func(ctx context.Context, peerID string, c cid.Cid) bool
+type StreamHandler = func(stream io.Reader, peerID string)
+type PubsubMessageHandler = func(from string, topic string, msg []byte) ([]byte, error)
+type BlockAccessFunc = func(ctx context.Context, peerID string, c cid.Cid) bool
 
 type PeerInfo struct {
 	ID        string
@@ -106,8 +106,8 @@ type Host interface {
 	PeerInfo() PeerInfo
 	// Pubkey return the byte slice representation of the host's public key.
 	Pubkey() ([]byte, error)
-	// Connect tries to connect to the peer with the given [PeerInfo].
-	Connect(ctx context.Context, info PeerInfo) error
+	// Connect tries to connect to the peer with the given peer info.
+	Connect(ctx context.Context, id string, addresses []string) error
 	// Disconnect will try to disconnect from the peer with the given ID.
 	Disconnect(ctx context.Context, peerID string) error
 	// Send will try to send the given data to a peer.

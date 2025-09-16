@@ -155,15 +155,23 @@ func waitForUpdateEvents(
 
 		for len(expect) > 0 {
 			var evt event.Update
-			select {
-			case msg, ok := <-node.Event.Update.Message():
-				if !ok {
-					require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
-				}
-				evt = msg.Data.(event.Update)
+		relayCheck:
+			// We need to ensure the message was not from a previously relayed update.
+			// If it is, we try the next one.
+			for {
+				select {
+				case msg, ok := <-node.Event.Update.Message():
+					if !ok {
+						require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
+					}
+					evt = msg.Data.(event.Update)
+					if !evt.IsRelay {
+						break relayCheck
+					}
 
-			case <-time.After(eventTimeout):
-				require.Fail(s.T, "timeout waiting for update event", "Node %d", i)
+				case <-time.After(eventTimeout):
+					require.Fail(s.T, "timeout waiting for update event", "Node %d", i)
+				}
 			}
 
 			// make sure the event is expected
@@ -280,8 +288,27 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 	}
 
-	// update the expected document heads of connected nodes
-	for id := range node.P2P.Connections {
+	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
+}
+
+// updateConnectedNodes updates the expected document heads of connected nodes
+func updateConnectedNodes(
+	s *state.State,
+	nodeID int,
+	nodesCovered map[int]struct{},
+	ident immutable.Option[state.Identity],
+	collectionID int,
+	docIndex int,
+	evt event.Update,
+) {
+	if _, ok := nodesCovered[nodeID]; ok {
+		return
+	}
+	nodesCovered[nodeID] = struct{}{}
+	for id := range s.Nodes[nodeID].P2P.Connections {
+		if _, ok := nodesCovered[id]; ok {
+			continue
+		}
 		if ident.HasValue() && ident.Value().Selector != strconv.Itoa(id) {
 			// If the document is created by a specific identity, only the node with the
 			// same index as the identity can initially access it.
@@ -297,6 +324,8 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
 			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
 		}
+
+		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)
 	}
 }
 
