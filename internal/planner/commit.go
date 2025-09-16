@@ -444,6 +444,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	return commit, nil
 }
 
+// pre-condition: the signature needs to have been requested in the query selection
+// so that it properly populates the mapper, will panic otherwise.
 func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {
 	txn := datastore.CtxMustGetTxn(n.planner.ctx)
 
@@ -456,10 +458,7 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	if err != nil {
 		return err
 	}
-	sigFieldIndexes, exists := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName]
-	if !exists {
-		return NewErrMissingFieldSelection(request.SignatureFieldName)
-	}
+	sigFieldIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.SignatureFieldName]
 	sigMapping := n.commitSelect.DocumentMapping.ChildMappings[sigFieldIndexes[0]]
 
 	sigDoc := sigMapping.NewDoc()
