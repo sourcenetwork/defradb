@@ -239,7 +239,7 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
-func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// handle different request transports
 	// specifically, SSE
 	if req.Header.Get("Accept") == "text/event-stream" {
