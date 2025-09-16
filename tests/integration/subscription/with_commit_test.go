@@ -157,7 +157,7 @@ func TestCommitSubscriptionLinksWithCreateMutations(t *testing.T) {
 	execute(t, test)
 }
 
-func TestCommitSubscriptionWithDocFilterAndOneCreateMutations(t *testing.T) {
+func TestCommitSubscriptionWithDocFilterAndMultipleMutations(t *testing.T) {
 	// create1Links := testUtils.NewSameValue()
 	updateCid := testUtils.NewSameValue()
 
@@ -189,6 +189,7 @@ func TestCommitSubscriptionWithDocFilterAndOneCreateMutations(t *testing.T) {
 					},
 				},
 			},
+			// this mutation must be ignored by the subscription
 			testUtils.Request{
 				Request: `mutation {
 					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
@@ -203,6 +204,7 @@ func TestCommitSubscriptionWithDocFilterAndOneCreateMutations(t *testing.T) {
 					},
 				},
 			},
+			// this mutation will be included in the subscription
 			testUtils.Request{
 				Request: `mutation {
 					update_User(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915", input: {verified: false}) {

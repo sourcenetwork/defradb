@@ -186,6 +186,7 @@ var (
 	ErrInvalidCID                               = errors.New(errInvalidCID)
 	ErrUnknownCID                               = errors.New(errUnknownCID)
 	ErrNoP2P                                    = errors.New("no p2p system configured")
+	ErrBadDocsResultType                        = errors.New("bad docs result type")
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document

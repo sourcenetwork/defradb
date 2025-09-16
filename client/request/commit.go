@@ -79,7 +79,3 @@ func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 		ChildSelect: c.ChildSelect,
 	}
 }
-
-func (c CommitSelect) RenderField() Field {
-	return c.Field
-}

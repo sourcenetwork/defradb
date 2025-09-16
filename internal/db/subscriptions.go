@@ -12,9 +12,7 @@ package db
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -24,7 +22,6 @@ import (
 
 type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
-	RenderField() request.Field
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -75,15 +72,36 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
+
 			result, err := p.RunSelection(ctx, s)
-			fmt.Println("result lenght:", len(result))
-			spew.Dump(result)
-			if err == nil && len(result) == 0 || (len(result) > 0 && result[subRequest.RenderField().Label()]) {
+			if err == nil && len(result) == 0 {
 				txn.Discard(ctx)
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}
 
 			res := client.GQLResult{}
+
+			// This approach will only support return types that are []core.Doc
+			// for results. So top level aggregates, or other top level fields
+			// that we would want to add to subscriptions that don't return
+			// []core.Doc currently will not work.
+			for op, data := range result {
+				resultSlice, ok := data.([]map[string]interface{})
+				if !ok {
+					res.Errors = append(res.Errors, ErrBadDocsResultType)
+				}
+
+				if len(resultSlice) == 0 {
+					delete(result, op)
+				}
+			}
+
+			// now that weve filtered empty result sets, lets recheck
+			if len(result) == 0 {
+				txn.Discard(ctx)
+				continue
+			}
+
 			if err != nil {
 				res.Errors = append(res.Errors, err)
 			}

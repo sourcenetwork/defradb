@@ -23,10 +23,3 @@ type Field struct {
 	// from the query using the Alias instead of the Name.
 	Alias immutable.Option[string]
 }
-
-func (f Field) Label() string {
-	if f.Alias.HasValue() {
-		return f.Alias.Value()
-	}
-	return f.Name
-}

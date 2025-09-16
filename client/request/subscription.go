@@ -45,7 +45,3 @@ func (m ObjectSubscription) ToSubscriptionSelect(docID, cid string) Selection {
 		Filterable:  m.Filterable,
 	}
 }
-
-func (m ObjectMutation) ResultField() Field {
-	return m.Field
-}
