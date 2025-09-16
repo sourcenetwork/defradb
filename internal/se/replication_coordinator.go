@@ -56,13 +56,15 @@ type ReplicationCoordinator struct {
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            P2P
-	storeSEProto   *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply,
-		*PushSEArtifactsRequest, *PushSEArtifactsReply]
-	querySEProto *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply,
-		*QuerySEArtifactsRequest, *QuerySEArtifactsReply]
+	storeSEProto   proto[PushSEArtifactsRequest, PushSEArtifactsReply]
+	querySEProto   proto[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 
 	ctx    context.Context
 	cancel context.CancelFunc
+}
+
+type proto[Req, Rep any] interface {
+	SendRequest(context.Context, Req, string, bool) (Rep, error)
 }
 
 // DB interface required by ReplicationCoordinator
@@ -113,16 +115,15 @@ func (proc *seQueryProcessor) ProcessRequest(
 
 // NewReplicationCoordinator creates a new coordinator
 func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*ReplicationCoordinator, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	rc := &ReplicationCoordinator{
-		db:             db,
-		eventBus:       db.Events(),
-		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
-		encKey:         encKey,
-		p2p:            p2p,
-		ctx:            ctx,
-		cancel:         cancel,
+	rc, err := newReplicationCoordinator(
+		db,
+		p2p,
+		encKey,
+		nil,
+		nil,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	rc.storeSEProto = protocol.NewCommChannel(
@@ -135,6 +136,30 @@ func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*ReplicationCoord
 		"se_query",
 		&seQueryProcessor{coordinator: rc},
 	)
+
+	return rc, nil
+}
+
+func newReplicationCoordinator(
+	db DB,
+	p2p P2P,
+	encKey []byte,
+	push proto[PushSEArtifactsRequest, PushSEArtifactsReply],
+	query proto[QuerySEArtifactsRequest, QuerySEArtifactsReply],
+) (*ReplicationCoordinator, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	rc := &ReplicationCoordinator{
+		db:             db,
+		eventBus:       db.Events(),
+		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
+		encKey:         encKey,
+		p2p:            p2p,
+		ctx:            ctx,
+		cancel:         cancel,
+		storeSEProto:   push,
+		querySEProto:   query,
+	}
 
 	var err error
 	rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName)
@@ -150,7 +175,6 @@ func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*ReplicationCoord
 }
 
 func (rc *ReplicationCoordinator) Close() {
-	// Cancel context to stop background goroutines gracefully
 	rc.cancel()
 	rc.eventBus.Unsubscribe(rc.sub)
 }
