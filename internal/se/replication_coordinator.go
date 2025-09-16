@@ -30,7 +30,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
@@ -44,6 +43,11 @@ const (
 
 var log = corelog.NewLogger("defra.se.replication")
 
+type P2P interface {
+	GetReplicatorsIDs(collectionID string) []string
+	Host() client.Host
+}
+
 // ReplicationCoordinator manages SE artifact replication and storage
 type ReplicationCoordinator struct {
 	db             DB
@@ -51,11 +55,14 @@ type ReplicationCoordinator struct {
 	sub            event.Subscription
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
-	p2p            *p2p.P2P
+	p2p            P2P
 	storeSEProto   *protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply,
 		*PushSEArtifactsRequest, *PushSEArtifactsReply]
 	querySEProto *protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply,
 		*QuerySEArtifactsRequest, *QuerySEArtifactsReply]
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // DB interface required by ReplicationCoordinator
@@ -105,16 +112,19 @@ func (proc *seQueryProcessor) ProcessRequest(
 }
 
 // NewReplicationCoordinator creates a new coordinator
-func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*ReplicationCoordinator, error) {
+func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*ReplicationCoordinator, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	rc := &ReplicationCoordinator{
 		db:             db,
 		eventBus:       db.Events(),
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
 		p2p:            p2p,
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 
-	// Create unified CommChannels for SE protocols
 	rc.storeSEProto = protocol.NewCommChannel(
 		p2p.Host(),
 		"rep_se",
@@ -134,13 +144,14 @@ func NewReplicationCoordinator(db DB, p2p *p2p.P2P, encKey []byte) (*Replication
 
 	go rc.processEvents()
 
-	// TODO store context and use it for shutdown
-	go rc.retrySEReplicators(context.Background())
+	go rc.retrySEReplicators(rc.ctx)
 
 	return rc, nil
 }
 
 func (rc *ReplicationCoordinator) Close() {
+	// Cancel context to stop background goroutines gracefully
+	rc.cancel()
 	rc.eventBus.Unsubscribe(rc.sub)
 }
 
@@ -260,8 +271,6 @@ func (rc *ReplicationCoordinator) handleReplicationFailure(
 ) error {
 	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)
 
-	// TODO: think if such scenario is possible: "age" field is updated but failed to replicate and while being retried
-	// another "name" field is updated. In this case we should not overwrite the retry info.
 	var publicKey string
 	var keyType string
 	if identity.HasValue() {
@@ -456,9 +465,6 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
 	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
 
-	//successChan := make(chan bool)
-	//defer close(successChan)
-
 	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to reconstruct identity from stored data", err,
@@ -592,7 +598,6 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 	doc, err := col.Get(ctx, docIDType, false)
 	if err != nil {
 		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-			// TODO: Handle document deletion - generate delete artifacts
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get document: %w", err)
@@ -615,11 +620,6 @@ func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 	}
 	log.InfoContext(ctx, "Handle push SE artifacts",
 		corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.SenderID))
-
-	/*_, err := peerIDFromContext(ctx)
-	if err != nil {
-		return err
-	}*/
 
 	artifacts := make([]secore.Artifact, len(req.Artifacts))
 	for i, netArtifact := range req.Artifacts {
