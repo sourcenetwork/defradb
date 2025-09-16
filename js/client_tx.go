@@ -48,6 +48,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
 		"getCollections":             goji.Async(wrapper.getCollections),
 		"getAllIndexes":              goji.Async(wrapper.getAllIndexes),
+		"getAllEncryptedIndexes":     goji.Async(wrapper.getAllEncryptedIndexes),
 		"execRequest":                goji.Async(wrapper.execRequest),
 		"addDACPolicy":               goji.Async(wrapper.addDACPolicy),
 		"addDACActorRelationship":    goji.Async(wrapper.addDACActorRelationship),
@@ -214,6 +215,18 @@ func (t *transaction) getAllIndexes(this js.Value, args []js.Value) (js.Value, e
 		return js.Undefined(), err
 	}
 	indexes, err := t.txn.GetAllIndexes(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(indexes)
+}
+
+func (t *transaction) getAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	indexes, err := t.txn.GetAllEncryptedIndexes(ctx)
 	if err != nil {
 		return js.Undefined(), err
 	}

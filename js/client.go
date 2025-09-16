@@ -49,6 +49,7 @@ func (c *Client) JSValue() js.Value {
 		"getCollectionByName":        goji.Async(c.getCollectionByName),
 		"getCollections":             goji.Async(c.getCollections),
 		"getAllIndexes":              goji.Async(c.getAllIndexes),
+		"getAllEncryptedIndexes":     goji.Async(c.getAllEncryptedIndexes),
 		"execRequest":                goji.Async(c.execRequest),
 		"addDACPolicy":               goji.Async(c.addDACPolicy),
 		"verifyDACAccess":            goji.Async(c.verifyDACAccess),

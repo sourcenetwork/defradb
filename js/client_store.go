@@ -171,6 +171,18 @@ func (c *Client) getAllIndexes(this js.Value, args []js.Value) (js.Value, error)
 	return goji.MarshalJS(indexes)
 }
 
+func (c *Client) getAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	indexes, err := c.node.DB.GetAllEncryptedIndexes(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(indexes)
+}
+
 func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 	request, err := stringArg(args, 0, "request")
 	if err != nil {
