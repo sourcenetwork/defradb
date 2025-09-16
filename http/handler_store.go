@@ -257,7 +257,7 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	request, options, err := extractGraphQLRequest(rw, req)
+	request, options, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -266,7 +266,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	result := db.ExecRequest(req.Context(), request.Query, options...)
 
 	// if at this point the we get a subscription query, it isn't using
-	// the correct accpet headers, and we error
+	// the correct accept headers, and we error
 	if result.Subscription != nil {
 		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
 		return
@@ -278,7 +278,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	request, options, err := extractGraphQLRequest(rw, req)
+	request, options, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -368,7 +368,7 @@ func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string
 	return nil
 }
 
-func extractGraphQLRequest(rw http.ResponseWriter, req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
+func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
@@ -381,7 +381,6 @@ func extractGraphQLRequest(rw http.ResponseWriter, req *http.Request) (GraphQLRe
 		if variablesFromQuery != "" {
 			var variables map[string]any
 			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
-				// responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 				return GraphQLRequest{}, nil, err
 			}
 			request.Variables = variables

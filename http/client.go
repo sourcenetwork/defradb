@@ -337,11 +337,15 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	err = c.http.setDefaultHeaders(req)
 
+	err = c.http.setDefaultHeaders(req)
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
+	}
+
+	if strings.Contains(query, "subscription {") {
+		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
 	res, err := c.http.client.Do(req)
@@ -349,7 +353,7 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	if res.Header.Get("Content-Type") == "text/event-stream" {
+	if res.Header.Get("Content-Type") == sseAcceptHeader {
 		result.Subscription = c.execRequestSubscription(res.Body)
 		return result
 	}

@@ -168,7 +168,6 @@ func TestCommitSubscriptionLinksWithCreateMutations(t *testing.T) {
 }
 
 func TestCommitSubscriptionWithDocFilterAndMultipleMutations(t *testing.T) {
-	// create1Links := testUtils.NewSameValue()
 	updateCid := testUtils.NewSameValue()
 
 	docID := "bae-029c4d47-4790-5cd4-9c41-fd5991d88915"

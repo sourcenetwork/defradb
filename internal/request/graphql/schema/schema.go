@@ -49,7 +49,6 @@ func defaultSchema() (gql.Schema, error) {
 	return sch, err
 }
 
-// @todo: Use a better default Query type
 func defaultQueryType(fields ...*gql.Field) *gql.Object {
 	return defaultOperationType("Query", fields...)
 }
@@ -71,13 +70,9 @@ func defaultSubscriptionType(fields ...*gql.Field) *gql.Object {
 }
 
 func defaultOperationType(name string, fields ...*gql.Field) *gql.Object {
-	fieldsCfg := make(gql.Fields, len(fields)+1)
+	fieldsCfg := make(gql.Fields, len(fields))
 	for _, field := range fields {
 		fieldsCfg[field.Name] = field
-	}
-	fieldsCfg["_"] = &gql.Field{
-		Name: "_",
-		Type: gql.Boolean,
 	}
 
 	return gql.NewObject(gql.ObjectConfig{

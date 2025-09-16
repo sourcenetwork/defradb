@@ -171,7 +171,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithWrongFieldAndCID(t *testing.T) {
+func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -198,7 +198,7 @@ func TestQueryCommitsWithWrongFieldAndCID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithInvalidFieldAndCID(t *testing.T) {
+func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
