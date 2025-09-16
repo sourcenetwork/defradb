@@ -11,8 +11,6 @@
 package request
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -66,7 +64,6 @@ func (c CommitSelect) ToSelect() *Select {
 }
 
 func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
-	fmt.Println("CommitSelect DocID", c.DocID.Value())
 	return &CommitSelect{
 		Field: Field{
 			Name:  c.Name,

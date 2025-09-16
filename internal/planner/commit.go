@@ -237,7 +237,6 @@ func (n *dagScanNode) Next() (bool, error) {
 	}
 
 	if n.commitSelect.FieldName.HasValue() {
-
 		// early catch for CID based filtering
 		// since we are only concerned about this one CID lookup
 		if n.commitSelect.Cid.HasValue() &&

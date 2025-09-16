@@ -24,6 +24,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+const sseAcceptHeader = "text/event-stream"
+
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
@@ -242,12 +244,12 @@ type GraphQLRequest struct {
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// handle different request transports
 	// specifically, SSE
-	if req.Header.Get("Accept") == "text/event-stream" {
+	if req.Header.Get("Accept") == sseAcceptHeader {
 		execSSESubscription(rw, req)
 		return
 	}
 
-	// if its not a a subscription, then its just a regular
+	// if its not a subscription, then its just a regular
 	// GraphQL over HTTP request
 	execHTTPRequest(rw, req)
 }
@@ -289,7 +291,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rw.Header().Add("Content-Type", "text/event-stream")
+	rw.Header().Add("Content-Type", sseAcceptHeader)
 	rw.Header().Add("Cache-Control", "no-cache")
 	rw.Header().Add("Connection", "keep-alive")
 	rw.WriteHeader(http.StatusOK)
@@ -310,7 +312,11 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		emitSSECompleteEvent(rw, flusher)
+		err = emitSSECompleteEvent(rw, flusher)
+		if err != nil {
+			return
+		}
+
 		return
 	}
 
@@ -327,7 +333,10 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 			// We need to check for closure of the server context
 			// otherwise the server won't gracefully shutdown until all
 			// connections are closed.
-			emitSSECompleteEvent(rw, flusher)
+			err = emitSSECompleteEvent(rw, flusher)
+			if err != nil {
+				return
+			}
 			return
 		case item, open := <-result.Subscription:
 			if !open {
@@ -406,7 +415,7 @@ func extractGraphQLRequest(rw http.ResponseWriter, req *http.Request) (GraphQLRe
 	return request, options, nil
 }
 
-func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	identity, err := db.GetNodeIdentity(req.Context())

@@ -86,7 +86,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			// that we would want to add to subscriptions that don't return
 			// []core.Doc currently will not work.
 			for op, data := range result {
-				resultSlice, ok := data.([]map[string]interface{})
+				resultSlice, ok := data.([]map[string]any)
 				if !ok {
 					res.Errors = append(res.Errors, ErrBadDocsResultType)
 				}
