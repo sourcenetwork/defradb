@@ -59,8 +59,7 @@ type CommChannel[Req any, Reply any, ReqP interface {
 	responseEndpoint string
 }
 
-// NewCommChannel creates a new communication channel
-// This replaces NewReplicatorProtocol, NewSEReplicatorProtocol, and NewSEQueryProtocol
+// NewCommChannel creates a new communication channel [CommChannel]
 func NewCommChannel[Req any, Reply any, ReqP interface {
 	*Req
 	message.Message

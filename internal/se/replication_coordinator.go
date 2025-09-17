@@ -273,6 +273,7 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtif
 		for _, docID := range reply.DocIDs {
 			docIDSet[docID] = struct{}{}
 		}
+		break
 	}
 
 	docIDs := make([]string, 0, len(docIDSet))

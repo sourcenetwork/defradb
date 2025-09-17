@@ -33,3 +33,10 @@ packages: # Packages and their interfaces to generate mocks for.
         interfaces:
             Fetcher:
             EncodedDocument:
+
+    github.com/sourcenetwork/defradb/internal/se:
+        config:
+            dir: "./internal/se/mocks"
+        interfaces:
+            DB:
+            P2P:
