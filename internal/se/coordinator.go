@@ -48,8 +48,8 @@ type P2P interface {
 	Host() client.Host
 }
 
-// ReplicationCoordinator manages SE artifact replication and storage
-type ReplicationCoordinator struct {
+// Coordinator manages SE artifact replication and storage
+type Coordinator struct {
 	db             DB
 	eventBus       event.Bus
 	sub            event.Subscription
@@ -89,7 +89,7 @@ type SERetryInfo struct {
 
 // seStoreProcessor implements CommProcessor for SE artifact storage
 type seStoreProcessor struct {
-	coordinator *ReplicationCoordinator
+	coordinator *Coordinator
 }
 
 func (proc *seStoreProcessor) ProcessRequest(
@@ -101,7 +101,7 @@ func (proc *seStoreProcessor) ProcessRequest(
 
 // seQueryProcessor implements CommProcessor for SE artifact queries
 type seQueryProcessor struct {
-	coordinator *ReplicationCoordinator
+	coordinator *Coordinator
 }
 
 func (proc *seQueryProcessor) ProcessRequest(
@@ -112,7 +112,7 @@ func (proc *seQueryProcessor) ProcessRequest(
 }
 
 // NewReplicationCoordinator creates a new coordinator
-func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*ReplicationCoordinator, error) {
+func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*Coordinator, error) {
 	rc, err := newReplicationCoordinator(
 		db,
 		p2p,
@@ -144,10 +144,10 @@ func newReplicationCoordinator(
 	encKey []byte,
 	push proto[PushSEArtifactsRequest, PushSEArtifactsReply],
 	query proto[QuerySEArtifactsRequest, QuerySEArtifactsReply],
-) (*ReplicationCoordinator, error) {
+) (*Coordinator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	rc := &ReplicationCoordinator{
+	rc := &Coordinator{
 		db:             db,
 		eventBus:       db.Events(),
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
@@ -172,13 +172,13 @@ func newReplicationCoordinator(
 	return rc, nil
 }
 
-func (rc *ReplicationCoordinator) Close() {
+func (rc *Coordinator) Close() {
 	rc.cancel()
 	rc.eventBus.Unsubscribe(rc.sub)
 }
 
 // reconstructIdentity reconstructs an Identity from stored public key information
-func (rc *ReplicationCoordinator) reconstructIdentity(
+func (rc *Coordinator) reconstructIdentity(
 	publicKey, keyType string,
 ) (immutable.Option[acpIdentity.Identity], error) {
 	if publicKey == "" || keyType == "" {
@@ -209,7 +209,7 @@ func defaultRetryIntervals(maxRetries int) []time.Duration {
 }
 
 // processUpdateEvents handles updates to SE artifacts
-func (rc *ReplicationCoordinator) processEvents() {
+func (rc *Coordinator) processEvents() {
 	for {
 		msg, isOpen := <-rc.sub.Message()
 		if !isOpen {
@@ -232,7 +232,7 @@ func (rc *ReplicationCoordinator) processEvents() {
 	}
 }
 
-func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtifactsEvent) {
+func (rc *Coordinator) handleQuerySEArtifactsEvent(evt RequestSEArtifactsEvent) {
 	grpcQueries := make([]SEFieldQuery, len(evt.Queries))
 	for i, q := range evt.Queries {
 		grpcQueries[i] = SEFieldQuery(q)
@@ -276,7 +276,7 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtif
 }
 
 // handleReplicationFailure stores failed SE replication attempt for retry
-func (rc *ReplicationCoordinator) handleReplicationFailure(
+func (rc *Coordinator) handleReplicationFailure(
 	ctx context.Context,
 	docID, collectionID, peerID string,
 	fieldNames []string,
@@ -314,7 +314,7 @@ func (rc *ReplicationCoordinator) handleReplicationFailure(
 }
 
 // handleUpdateEvent processes SE update events and stores artifacts
-func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt event.Update) error {
+func (rc *Coordinator) handleUpdateEvent(ctx context.Context, evt event.Update) error {
 	// If this is a retry, we don't need to generate artifacts
 	if evt.IsRetry {
 		return nil
@@ -343,7 +343,7 @@ func (rc *ReplicationCoordinator) handleUpdateEvent(ctx context.Context, evt eve
 	return rc.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
 }
 
-func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
+func (rc *Coordinator) generateArtifactsAndPushToReplicators(
 	ctx context.Context,
 	docID, collectionID string,
 	fields []string,
@@ -390,7 +390,7 @@ func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
 }
 
 // retrySEReplicators periodically processes failed SE replications
-func (rc *ReplicationCoordinator) retrySEReplicators(ctx context.Context) {
+func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
 	ticker := time.NewTicker(retryLoopInterval)
 	defer ticker.Stop()
 
@@ -405,7 +405,7 @@ func (rc *ReplicationCoordinator) retrySEReplicators(ctx context.Context) {
 }
 
 // processSERetries checks for due retries and processes them
-func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
+func (rc *Coordinator) processSERetries(ctx context.Context) {
 	ps := datastore.PeerstoreFrom(rc.db.Rootstore())
 	iter, err := ps.Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewPeerstoreSERetry("", "", "").Bytes(),
@@ -475,7 +475,7 @@ func (rc *ReplicationCoordinator) processSERetries(ctx context.Context) {
 // Note: This function relies on the SE artifact generation phase to re-generate
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
-func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
+func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
 	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
 
 	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
@@ -497,7 +497,7 @@ func (rc *ReplicationCoordinator) retrySEArtifacts(ctx context.Context, peerID s
 }
 
 // updateRetryStatus updates the retry status after an attempt
-func (rc *ReplicationCoordinator) updateRetryStatus(
+func (rc *Coordinator) updateRetryStatus(
 	ctx context.Context,
 	peerID string,
 	retryInfo SERetryInfo,
@@ -539,7 +539,7 @@ func (rc *ReplicationCoordinator) updateRetryStatus(
 // This is typically called when:
 //   - A document is deleted (searchTags is empty)
 //   - A field value changes (searchTags contains the old search tags to remove)
-func (rc *ReplicationCoordinator) DeleteSEArtifacts(
+func (rc *Coordinator) DeleteSEArtifacts(
 	ctx context.Context,
 	collectionID, indexID, docID string,
 	searchTags [][]byte,
@@ -587,7 +587,7 @@ func (rc *ReplicationCoordinator) DeleteSEArtifacts(
 //
 // This method uses the extracted GenerateArtifacts function to recreate artifacts
 // needed for retry.
-func (rc *ReplicationCoordinator) generateSEArtifacts(
+func (rc *Coordinator) generateSEArtifacts(
 	ctx context.Context,
 	docID, collectionID string,
 	fieldNames []string,
@@ -619,7 +619,7 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 	return GenerateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
 }
 
-func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
+func (rc *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
@@ -650,7 +650,7 @@ func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 	return nil
 }
 
-func (rc *ReplicationCoordinator) processQuerySEArtifactsRequest(
+func (rc *Coordinator) processQuerySEArtifactsRequest(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) (QuerySEArtifactsReply, error) {
@@ -669,7 +669,7 @@ func (rc *ReplicationCoordinator) processQuerySEArtifactsRequest(
 }
 
 // querySEArtifactsFromDatastore queries SE artifacts from the local datastore
-func (rc *ReplicationCoordinator) querySEArtifactsFromDatastore(
+func (rc *Coordinator) querySEArtifactsFromDatastore(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) ([]string, error) {

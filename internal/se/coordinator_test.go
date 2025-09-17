@@ -43,7 +43,7 @@ type testSetup struct {
 	mockStorageProto *mockProto[PushSEArtifactsRequest, PushSEArtifactsReply]
 	mockQueryProto   *mockProto[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 	mockEventBus     *mockEventBus
-	coordinator      *ReplicationCoordinator
+	coordinator      *Coordinator
 	rootstore        *memory.Datastore
 
 	// Test data
@@ -1096,5 +1096,3 @@ type mockSubscription struct {
 func (m *mockSubscription) Message() <-chan event.Message {
 	return m.ch
 }
-
-// Removed mockSimpleCollection as we're now using the generated mocks from client/mocks

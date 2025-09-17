@@ -97,7 +97,7 @@ type DB struct {
 	searchableEncryptionKey []byte
 
 	// SE replication coordinator
-	seCoordinator *se.ReplicationCoordinator
+	seCoordinator *se.Coordinator
 
 	docMergeQueue *mergeQueue
 	colMergeQueue *mergeQueue
