@@ -16,8 +16,9 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
-	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/memory"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"

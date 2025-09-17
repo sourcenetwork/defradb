@@ -18,9 +18,10 @@ import (
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
-	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/corekv/memory"
 
 	"github.com/sourcenetwork/defradb/client"
 	clientmocks "github.com/sourcenetwork/defradb/client/mocks"
@@ -242,11 +243,11 @@ func (s *testSetup) close() {
 	s.mockStorageProto.AssertExpectations(s.t)
 }
 
-func (setup *testSetup) makeUpdateEvent() event.Update {
+func (s *testSetup) makeUpdateEvent() event.Update {
 	updateEvent := event.Update{
-		DocID:        setup.docID,
-		CollectionID: setup.collectionID,
-		Block:        setup.createValidCompositeBlock(),
+		DocID:        s.docID,
+		CollectionID: s.collectionID,
+		Block:        s.createValidCompositeBlock(),
 	}
 	return updateEvent
 }
@@ -319,7 +320,7 @@ type mockProtoExpectation[Req, Rep any] struct {
 	mock *mock.Mock
 }
 
-func (e *mockProtoExpectation[Req, Rep]) SendRequest(ctx, req, peerID interface{}) *mock.Call {
+func (e *mockProtoExpectation[Req, Rep]) SendRequest(ctx, req, peerID any) *mock.Call {
 	return e.mock.On("SendRequest", ctx, req, peerID)
 }
 

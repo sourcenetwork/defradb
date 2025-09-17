@@ -15,9 +15,10 @@ import (
 	"fmt"
 	"testing"
 
-	message "github.com/sourcenetwork/defradb/internal/db/p2p/message"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	message "github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
 func TestProcessQuerySEArtifactsRequest_WhenMatchingArtifacts_ShouldReturnDocIDs(t *testing.T) {
