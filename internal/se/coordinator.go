@@ -35,12 +35,6 @@ import (
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
-const (
-	// retryLoopInterval is the interval at which the retry handler checks for
-	// SE artifacts that are due for a retry. Same as document replicator.
-	retryLoopInterval = 2 * time.Second
-)
-
 var log = corelog.NewLogger("defra.se.replication")
 
 type P2P interface {
@@ -63,52 +57,12 @@ type Coordinator struct {
 	cancel context.CancelFunc
 }
 
-type proto[Req, Rep any] interface {
-	SendRequest(context.Context, Req, string) (Rep, error)
-}
-
 // DB interface required by ReplicationCoordinator
 type DB interface {
 	Rootstore() corekv.TxnStore
 	Events() event.Bus
 	MaxTxnRetries() int
 	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
-}
-
-// SERetryInfo stores retry information for failed SE replications
-type SERetryInfo struct {
-	DocID        string
-	CollectionID string
-	FieldNames   []string
-	NextRetry    time.Time
-	NumRetries   int
-	Retrying     bool
-	PublicKey    string // Hex-encoded public key for identity reconstruction
-	KeyType      string // Key type (secp256k1, ed25519, etc.)
-}
-
-// seStoreProcessor implements CommProcessor for SE artifact storage
-type seStoreProcessor struct {
-	coordinator *Coordinator
-}
-
-func (proc *seStoreProcessor) ProcessRequest(
-	ctx context.Context,
-	req PushSEArtifactsRequest,
-) (PushSEArtifactsReply, error) {
-	return PushSEArtifactsReply{}, proc.coordinator.processPushSEArtifactsRequest(ctx, &req)
-}
-
-// seQueryProcessor implements CommProcessor for SE artifact queries
-type seQueryProcessor struct {
-	coordinator *Coordinator
-}
-
-func (proc *seQueryProcessor) ProcessRequest(
-	ctx context.Context,
-	req QuerySEArtifactsRequest,
-) (QuerySEArtifactsReply, error) {
-	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req)
 }
 
 // NewReplicationCoordinator creates a new coordinator
@@ -196,16 +150,6 @@ func (rc *Coordinator) reconstructIdentity(
 	}
 
 	return immutable.Some(identity), nil
-}
-
-// defaultRetryIntervals generates retry intervals based on max retries
-func defaultRetryIntervals(maxRetries int) []time.Duration {
-	intervals := make([]time.Duration, maxRetries)
-	for i := range maxRetries {
-		// Exponential backoff: 2s, 4s, 8s, 16s...
-		intervals[i] = time.Second * time.Duration(2<<i)
-	}
-	return intervals
 }
 
 // processUpdateEvents handles updates to SE artifacts
@@ -389,147 +333,6 @@ func (rc *Coordinator) generateArtifactsAndPushToReplicators(
 	return nil
 }
 
-// retrySEReplicators periodically processes failed SE replications
-func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
-	ticker := time.NewTicker(retryLoopInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			rc.processSERetries(ctx)
-		}
-	}
-}
-
-// processSERetries checks for due retries and processes them
-func (rc *Coordinator) processSERetries(ctx context.Context) {
-	ps := datastore.PeerstoreFrom(rc.db.Rootstore())
-	iter, err := ps.Iterator(ctx, corekv.IterOptions{
-		Prefix: keys.NewPeerstoreSERetry("", "", "").Bytes(),
-	})
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to iterate SE retry keys", err)
-		return
-	}
-
-	now := time.Now()
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to get next SE retry key", err)
-			break
-		}
-		if !hasNext {
-			break
-		}
-
-		value, err := iter.Value()
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to get SE retry value", err)
-			continue
-		}
-
-		retryInfo := SERetryInfo{}
-		err = cbor.Unmarshal(value, &retryInfo)
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to unmarshal SE retry info", err)
-			continue
-		}
-
-		// Check if retry is due and not already in progress
-		if now.After(retryInfo.NextRetry) && !retryInfo.Retrying {
-			key, err := keys.NewPeerstoreSERetryFromString(string(iter.Key()))
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to parse SE retry key", err)
-				continue
-			}
-
-			retryInfo.Retrying = true
-			retryInfo.NumRetries++
-			b, err := cbor.Marshal(retryInfo)
-			if err != nil {
-				log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
-				continue
-			}
-			ps := datastore.PeerstoreFrom(rc.db.Rootstore())
-			if err := ps.Set(ctx, iter.Key(), b); err != nil {
-				log.ErrorContextE(ctx, "Failed to update SE retry info", err)
-				continue
-			}
-
-			go rc.retrySEArtifacts(ctx, key.PeerID, retryInfo)
-		}
-	}
-
-	err = iter.Close()
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to close SE retry iterator", err)
-	}
-}
-
-// retrySEArtifacts attempts to retry SE artifact replication for a document
-//
-// Note: This function relies on the SE artifact generation phase to re-generate
-// artifacts from the document's field values. We don't store SE artifacts locally
-// on the producer node - they are only stored on replicator nodes.
-func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
-	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
-
-	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to reconstruct identity from stored data", err,
-			corelog.String("DocID", retryInfo.DocID))
-	} else if identity.HasValue() {
-		ctx = acpIdentity.WithContext(ctx, identity)
-	}
-
-	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
-		retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
-			corelog.String("DocID", retryInfo.DocID))
-	}
-
-	rc.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
-}
-
-// updateRetryStatus updates the retry status after an attempt
-func (rc *Coordinator) updateRetryStatus(
-	ctx context.Context,
-	peerID string,
-	retryInfo SERetryInfo,
-	success bool,
-) {
-	retryKey := keys.NewPeerstoreSERetry(peerID, retryInfo.CollectionID, retryInfo.DocID)
-
-	if success {
-		ps := datastore.PeerstoreFrom(rc.db.Rootstore())
-		if err := ps.Delete(ctx, retryKey.Bytes()); err != nil {
-			log.ErrorContextE(ctx, "Failed to delete SE retry entry", err)
-		}
-	} else {
-		if retryInfo.NumRetries >= len(rc.retryIntervals) {
-			retryInfo.NextRetry = time.Now().Add(rc.retryIntervals[len(rc.retryIntervals)-1])
-		} else {
-			retryInfo.NextRetry = time.Now().Add(rc.retryIntervals[retryInfo.NumRetries])
-		}
-		retryInfo.Retrying = false
-
-		b, err := cbor.Marshal(retryInfo)
-		if err != nil {
-			log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
-			return
-		}
-		ps := datastore.PeerstoreFrom(rc.db.Rootstore())
-		if err := ps.Set(ctx, retryKey.Bytes(), b); err != nil {
-			log.ErrorContextE(ctx, "Failed to update SE retry info", err)
-		}
-	}
-}
-
 // DeleteSEArtifacts removes SE artifacts from the datastore.
 //
 // Parameters:
@@ -617,66 +420,4 @@ func (rc *Coordinator) generateSEArtifacts(
 	}
 
 	return GenerateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
-}
-
-func (rc *Coordinator) processPushSEArtifactsRequest(
-	ctx context.Context,
-	req *PushSEArtifactsRequest,
-) error {
-	sb := strings.Builder{}
-	for i, netArtifact := range req.Artifacts {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(netArtifact.DocID)
-	}
-	log.InfoContext(ctx, "Handle push SE artifacts",
-		corelog.String("DocIDs", sb.String()), corelog.String("Sender", req.SenderID))
-
-	artifacts := make([]secore.Artifact, len(req.Artifacts))
-	for i, netArtifact := range req.Artifacts {
-		artifacts[i] = secore.Artifact{
-			DocID:        netArtifact.DocID,
-			IndexID:      netArtifact.IndexID,
-			SearchTag:    netArtifact.SearchTag,
-			CollectionID: req.CollectionID,
-		}
-	}
-
-	if err := StoreArtifacts(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), artifacts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (rc *Coordinator) processQuerySEArtifactsRequest(
-	ctx context.Context,
-	req *QuerySEArtifactsRequest,
-) (QuerySEArtifactsReply, error) {
-	matchingDocIDs, err := rc.querySEArtifactsFromDatastore(ctx, req)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
-		return QuerySEArtifactsReply{}, err
-	}
-
-	log.InfoContext(ctx, "Handle SE artifacts query", corelog.String("DocIDs", strings.Join(matchingDocIDs, ", ")),
-		corelog.String("Sender", req.SenderID))
-
-	return QuerySEArtifactsReply{
-		DocIDs: matchingDocIDs,
-	}, nil
-}
-
-// querySEArtifactsFromDatastore queries SE artifacts from the local datastore
-func (rc *Coordinator) querySEArtifactsFromDatastore(
-	ctx context.Context,
-	req *QuerySEArtifactsRequest,
-) ([]string, error) {
-	queries := make([]FieldQuery, len(req.Queries))
-	for i, q := range req.Queries {
-		queries[i] = FieldQuery(q)
-	}
-
-	return FetchDocIDs(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), req.CollectionID, queries)
 }
