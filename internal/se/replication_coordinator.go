@@ -64,7 +64,7 @@ type ReplicationCoordinator struct {
 }
 
 type proto[Req, Rep any] interface {
-	SendRequest(context.Context, Req, string, bool) (Rep, error)
+	SendRequest(context.Context, Req, string) (Rep, error)
 }
 
 // DB interface required by ReplicationCoordinator
@@ -95,9 +95,8 @@ type seStoreProcessor struct {
 func (proc *seStoreProcessor) ProcessRequest(
 	ctx context.Context,
 	req PushSEArtifactsRequest,
-	isReplicator bool,
 ) (PushSEArtifactsReply, error) {
-	return PushSEArtifactsReply{}, proc.coordinator.processPushSEArtifactsRequest(ctx, &req, isReplicator)
+	return PushSEArtifactsReply{}, proc.coordinator.processPushSEArtifactsRequest(ctx, &req)
 }
 
 // seQueryProcessor implements CommProcessor for SE artifact queries
@@ -108,9 +107,8 @@ type seQueryProcessor struct {
 func (proc *seQueryProcessor) ProcessRequest(
 	ctx context.Context,
 	req QuerySEArtifactsRequest,
-	isReplicator bool,
 ) (QuerySEArtifactsReply, error) {
-	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req, isReplicator)
+	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req)
 }
 
 // NewReplicationCoordinator creates a new coordinator
@@ -245,9 +243,6 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtif
 		Queries:      grpcQueries,
 	}
 
-	docIDSet := make(map[string]struct{})
-	var queryErr error
-
 	peerIDs := rc.p2p.GetReplicatorsIDs(evt.CollectionID)
 
 	if len(peerIDs) == 0 {
@@ -258,32 +253,25 @@ func (rc *ReplicationCoordinator) handleQuerySEArtifactsEvent(evt RequestSEArtif
 		return
 	}
 
+	var err error
+	var reply QuerySEArtifactsReply
 	for _, pid := range peerIDs {
-		reply, err := rc.querySEProto.SendRequest(context.Background(), grpcReq, pid, false)
+		reply, err = rc.querySEProto.SendRequest(context.Background(), grpcReq, pid)
 		if err != nil {
 			log.ErrorE(
 				"Failed querying SE artifacts from replicator",
 				err,
 				corelog.String("CollectionID", evt.CollectionID),
 				corelog.Any("PeerID", pid))
-			queryErr = err
 			continue
 		}
 
-		for _, docID := range reply.DocIDs {
-			docIDSet[docID] = struct{}{}
-		}
 		break
 	}
 
-	docIDs := make([]string, 0, len(docIDSet))
-	for docID := range docIDSet {
-		docIDs = append(docIDs, docID)
-	}
-
 	evt.Response <- SEArtifactsResult{
-		DocIDs: docIDs,
-		Error:  queryErr,
+		DocIDs: reply.DocIDs,
+		Error:  err,
 	}
 }
 
@@ -386,7 +374,7 @@ func (rc *ReplicationCoordinator) generateArtifactsAndPushToReplicators(
 
 	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
 	for _, pid := range peerIDs {
-		_, err = rc.storeSEProto.SendRequest(ctx, req, pid, false)
+		_, err = rc.storeSEProto.SendRequest(ctx, req, pid)
 		if err != nil {
 			if isRetry {
 				return err
@@ -634,7 +622,6 @@ func (rc *ReplicationCoordinator) generateSEArtifacts(
 func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
-	isReplicator bool,
 ) error {
 	sb := strings.Builder{}
 	for i, netArtifact := range req.Artifacts {
@@ -666,7 +653,6 @@ func (rc *ReplicationCoordinator) processPushSEArtifactsRequest(
 func (rc *ReplicationCoordinator) processQuerySEArtifactsRequest(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
-	isReplicator bool,
 ) (QuerySEArtifactsReply, error) {
 	matchingDocIDs, err := rc.querySEArtifactsFromDatastore(ctx, req)
 	if err != nil {

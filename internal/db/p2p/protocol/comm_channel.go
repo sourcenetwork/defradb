@@ -36,7 +36,7 @@ type CommProcessor[Req any, Reply any, ReqP interface {
 	*Reply
 	message.Message
 }] interface {
-	ProcessRequest(ctx context.Context, req Req, isReplicator bool) (Reply, error)
+	ProcessRequest(ctx context.Context, req Req) (Reply, error)
 }
 
 // CommChannel unified protocol replacing ReplicatorProtocol, ReplicatorSEProtocol, SEQueryProtocol.
@@ -90,7 +90,6 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 	ctx context.Context,
 	req Req,
 	peerID string,
-	isRetry bool,
 ) (Reply, error) {
 	reqPtr := ReqP(&req)
 	replyPtr, err := message.Send[ReplyP](ctx, c, reqPtr, peerID, c.requestEndpoint)
@@ -124,7 +123,7 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 		}
 	}()
 
-	reply, err := c.processor.ProcessRequest(ctx, req, true)
+	reply, err := c.processor.ProcessRequest(ctx, req)
 	if err != nil {
 		return
 	}

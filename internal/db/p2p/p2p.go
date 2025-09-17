@@ -103,9 +103,12 @@ type pushLogCommProcessor struct {
 func (proc *pushLogCommProcessor) ProcessRequest(
 	ctx context.Context,
 	req protocol.PushLogRequest,
-	isReplicator bool,
 ) (protocol.PushLogReply, error) {
-	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, isReplicator)
+	f := func(ctx context.Context, req *protocol.PushLogRequest) error {
+		return proc.p2p.processPushlogRequest(ctx, req, true)
+	}
+
+	return protocol.PushLogReply{}, f(ctx, &req)
 }
 
 // New returns a new configured P2P instance.

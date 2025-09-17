@@ -189,7 +189,7 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 			Block:        rawblock,
 		}
 
-		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, false); err != nil {
+		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
 				err,
@@ -313,14 +313,16 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 					Creator:      p.host.ID(),
 					Block:        lg.Block,
 				}
-				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, lg.IsRetry); err != nil {
+				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 					log.ErrorE(
 						"Failed pushing log",
 						err,
 						corelog.String("DocID", lg.DocID),
 						corelog.Any("CID", lg.Cid),
 						corelog.Any("PeerID", peerID))
-					_ = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
+					if !lg.IsRetry {
+						_ = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
+					}
 				}
 			}()
 		}
@@ -809,8 +811,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
-		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID, true); err != nil {
-			_ = p.handleReplicatorFailure(ctx, peerID, docID)
+		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 			return err
 		}
 	}
