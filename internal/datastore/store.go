@@ -16,9 +16,6 @@ import (
 	"github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/storage"
-
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/corekv/namespace"
 )
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
@@ -36,8 +33,4 @@ type Blockstore interface {
 type IPLDStorage interface {
 	storage.ReadableStorage
 	storage.WritableStorage
-}
-
-func prefix(root corekv.ReaderWriter, prefix []byte) corekv.ReaderWriter {
-	return namespace.Wrap(root, prefix)
 }

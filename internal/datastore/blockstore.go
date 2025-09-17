@@ -46,11 +46,11 @@ func (bs *bstore) AsIPLDStorage() IPLDStorage {
 
 const (
 	objectMarker       = byte(0xff)
-	toMergeIndexPrefix = "/tm"
+	toMergeIndexPrefix = "m"
 )
 
 func newToMergeKey(cid string) []byte {
-	return []byte(toMergeIndexPrefix + "/" + cid)
+	return []byte(toMergeIndexPrefix + cid)
 }
 
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
@@ -85,7 +85,7 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	err = bs.store.Set(ctx, newToMergeKey(block.Cid().String()), []byte{objectMarker})
+	err = bs.store.Set(ctx, newToMergeKey(string(key)), []byte{objectMarker})
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 		if err == nil && exists {
 			continue
 		}
-		err = bs.store.Set(ctx, newToMergeKey(b.Cid().String()), []byte{objectMarker})
+		err = bs.store.Set(ctx, newToMergeKey(string(key)), []byte{objectMarker})
 		if err != nil {
 			return err
 		}
