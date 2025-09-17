@@ -16,9 +16,12 @@ package db
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -528,8 +531,34 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 			return errors.Join(err, iter.Close())
 		}
 
-		log.InfoContext(ctx, "", corelog.Any(string(iter.Key()), value))
+		key, err := makeHumanReadable(string(iter.Key()))
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		log.InfoContext(ctx, "", corelog.Any(key, value))
 	}
 
 	return iter.Close()
+}
+
+const (
+	blocksPrefix        = "/db/blocks/"
+	blocksToMergePrefix = "/db/blocks/tm"
+)
+
+// makeHumanReadable converts a raw byte representation of a key into a human redable format.
+//
+// It currently only works for block keys but it could also apply to index keys or any other
+// keys that benefit from using raw bytes.
+func makeHumanReadable(s string) (string, error) {
+	if strings.HasPrefix(s, blocksPrefix) && !strings.HasPrefix(s, blocksToMergePrefix) {
+		cidbytes := []byte(strings.TrimPrefix(s, blocksPrefix))
+		cid, err := cid.Cast(cidbytes)
+		if err != nil {
+			return "", err
+		}
+		return blocksPrefix + cid.String(), nil
+	}
+	return s, nil
 }
