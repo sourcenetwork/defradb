@@ -16,16 +16,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	clientmocks "github.com/sourcenetwork/defradb/client/mocks"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/se/mocks"
 )
 
@@ -38,6 +43,7 @@ type testSetup struct {
 	mockQueryProto   *mockProto[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 	mockEventBus     *mockEventBus
 	coordinator      *ReplicationCoordinator
+	rootstore        *memory.Datastore
 
 	// Test data
 	docID        string
@@ -49,6 +55,9 @@ type testSetup struct {
 
 // newTestSetup creates a new test setup with all mocks initialized
 func newTestSetup(t *testing.T) *testSetup {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
 	setup := &testSetup{
 		t:                t,
 		mockDB:           mocks.NewDB(t),
@@ -59,6 +68,7 @@ func newTestSetup(t *testing.T) *testSetup {
 			messages: make(chan event.Message, 10),
 			subs:     make(map[event.Subscription]chan event.Message),
 		},
+		rootstore: rootstore,
 
 		docID:        "bae-63c10140-a59a-5a7f-85d1-269e2c3841a6",
 		collectionID: "test-collection",
@@ -67,8 +77,9 @@ func newTestSetup(t *testing.T) *testSetup {
 		encKey:       []byte("test-encryption-key-32-bytes-!"),
 	}
 
-	setup.mockDB.EXPECT().Events().Return(setup.mockEventBus)
-	setup.mockDB.EXPECT().MaxTxnRetries().Return(3)
+	setup.mockDB.EXPECT().Events().Return(setup.mockEventBus).Maybe()
+	setup.mockDB.EXPECT().MaxTxnRetries().Return(3).Maybe()
+	setup.mockDB.EXPECT().Rootstore().Return(rootstore).Maybe()
 
 	setup.createCoordinator()
 
@@ -90,16 +101,11 @@ func (s *testSetup) createCoordinator() {
 
 // expectSEArtifactPush sets up expectation for SE artifact push to peer
 func (s *testSetup) expectSEArtifactPush() {
-	mockCollection := &mockSimpleCollection{
-		name:         "TestCollection",
-		collectionID: s.collectionID,
-		encryptedIndexes: []client.EncryptedIndexDescription{
-			{FieldName: s.fieldName, Type: client.EncryptedIndexTypeEquality},
-		},
-	}
+	mockCollection := s.createMockCollectionWithDocument()
 
 	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
-	s.mockP2P.EXPECT().GetReplicatorsIDs(s.collectionID).Return([]string{s.peerID})
+
+	s.mockGetReplicatorsIDs([]string{s.peerID})
 
 	// Expect SE artifact push to peer
 	s.mockStorageProto.EXPECT().SendRequest(
@@ -139,25 +145,76 @@ func (s *testSetup) waitForArtifactPush(validate func(*PushSEArtifactsRequest) b
 // waitForNoCalls verifies that no calls were made to the storage protocol
 func (s *testSetup) waitForNoCalls() {
 	// Wait a bit to ensure no async calls happen
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
 	require.Empty(s.t, s.mockStorageProto.Calls, "No SE artifacts should be pushed")
 }
 
-// expectCollectionFound sets up basic collection mock expectation
-func (s *testSetup) expectCollectionFound() {
-	mockCollection := s.createMockCollection()
-	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
+func (s *testSetup) mockGetReplicatorsIDs(peers []string) {
+	s.mockP2P.EXPECT().GetReplicatorsIDs(s.collectionID).Return(peers).Maybe()
+}
+
+func (s *testSetup) mockGetCollections(m ...*clientmocks.Collection) {
+	cols := make([]client.Collection, len(m))
+	for i, col := range m {
+		cols[i] = col
+	}
+	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Maybe().Return(cols, nil)
+}
+
+func getCollectionFieldsDescriptions() []client.CollectionFieldDescription {
+	return []client.CollectionFieldDescription{
+		{
+			Name: "age",
+			Kind: client.FieldKind_NILLABLE_INT,
+		},
+	}
+}
+
+func (s *testSetup) createEncryptedIndexesDescriptions() []client.EncryptedIndexDescription {
+	return []client.EncryptedIndexDescription{
+		{FieldName: s.fieldName, Type: client.EncryptedIndexTypeEquality},
+	}
+}
+
+func (s *testSetup) createCollectionVersion() client.CollectionVersion {
+	return client.CollectionVersion{
+		Name:             "TestCollection",
+		CollectionID:     s.collectionID,
+		Fields:           getCollectionFieldsDescriptions(),
+		EncryptedIndexes: s.createEncryptedIndexesDescriptions(),
+	}
 }
 
 // createMockCollection creates a configurable mock collection
-func (s *testSetup) createMockCollection() *mockSimpleCollection {
-	return &mockSimpleCollection{
-		name:         "TestCollection",
-		collectionID: s.collectionID,
-		encryptedIndexes: []client.EncryptedIndexDescription{
+func (s *testSetup) createMockCollection() *clientmocks.Collection {
+	mockCollection := clientmocks.NewCollection(s.t)
+
+	mockCollection.EXPECT().Name().Return("TestCollection").Maybe()
+	mockCollection.EXPECT().CollectionID().Return(s.collectionID).Maybe()
+	mockCollection.EXPECT().VersionID().Return("v1").Maybe()
+
+	mockCollection.EXPECT().GetEncryptedIndexes(mock.Anything).Return(
+		[]client.EncryptedIndexDescription{
 			{FieldName: s.fieldName, Type: client.EncryptedIndexTypeEquality},
-		},
-	}
+		}, nil).Maybe()
+
+	mockCollection.EXPECT().Version().Return(s.createCollectionVersion()).Maybe()
+
+	return mockCollection
+}
+
+// createMockCollectionWithDocument creates a mock collection that returns a successful Get
+func (s *testSetup) createMockCollectionWithDocument() *clientmocks.Collection {
+	mockCollection := s.createMockCollection()
+
+	// Setup Get method with default return
+	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+			doc, err := client.NewDocFromMap(map[string]any{"age": 21}, mockCollection.Version())
+			return doc, err
+		}).Maybe()
+
+	return mockCollection
 }
 
 // createNonCompositeBlock creates a non-composite block for testing
@@ -297,7 +354,7 @@ func TestReplicationCoordinator_WhenCollectionNotFound_ShouldNotPushToPeer(t *te
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	setup.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{}, nil)
+	setup.mockGetCollections()
 
 	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
 
@@ -309,7 +366,7 @@ func TestReplicationCoordinator_WhenInvalidDocID_ShouldNotPushToPeer(t *testing.
 	defer setup.close()
 
 	setup.docID = "invalid-doc-id"
-	setup.expectCollectionFound()
+	setup.mockGetCollections(setup.createMockCollectionWithDocument())
 
 	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
 
@@ -321,12 +378,15 @@ func TestReplicationCoordinator_WhenDocumentNotFound_ShouldNotPushToPeer(t *test
 	defer setup.close()
 
 	mockCollection := setup.createMockCollection()
-	mockCollection.docNotFound = true
-	setup.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
+	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, client.ErrDocumentNotFoundOrNotAuthorized).Maybe()
+	setup.mockGetCollections(mockCollection)
+
+	setup.mockGetReplicatorsIDs([]string{})
 
 	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
 
-	setup.waitForNoCalls()
+	require.Empty(setup.t, setup.mockStorageProto.Calls, "No SE artifacts should be pushed")
 }
 
 func TestReplicationCoordinator_WhenDocumentGetFails_ShouldNotPushToPeer(t *testing.T) {
@@ -334,8 +394,9 @@ func TestReplicationCoordinator_WhenDocumentGetFails_ShouldNotPushToPeer(t *test
 	defer setup.close()
 
 	mockCollection := setup.createMockCollection()
-	mockCollection.getError = fmt.Errorf("database error")
-	setup.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
+	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("database error")).Maybe()
+	setup.mockGetCollections(mockCollection)
 
 	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
 
@@ -347,12 +408,66 @@ func TestReplicationCoordinator_WhenNoEncryptedIndexes_ShouldNotPushToPeer(t *te
 	defer setup.close()
 
 	mockCollection := setup.createMockCollection()
-	mockCollection.encryptedIndexes = []client.EncryptedIndexDescription{}
-	setup.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
+	mockCollection.EXPECT().GetEncryptedIndexes(mock.Anything).Return(
+		[]client.EncryptedIndexDescription{}, nil).Maybe()
+
+	ver := setup.createCollectionVersion()
+	ver.EncryptedIndexes = []client.EncryptedIndexDescription{}
+	mockCollection.EXPECT().Version().Return(ver).Maybe()
+
+	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
+			doc, err := client.NewDocFromMap(map[string]any{"age": 21}, ver)
+			return doc, err
+		}).Maybe()
+
+	setup.mockGetCollections(mockCollection)
+
+	setup.mockGetReplicatorsIDs([]string{})
 
 	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
 
 	setup.waitForNoCalls()
+}
+
+func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeerstore(t *testing.T) {
+	setup := newTestSetup(t)
+	defer setup.close()
+
+	setup.mockGetCollections(setup.createMockCollectionWithDocument())
+
+	setup.mockGetReplicatorsIDs([]string{setup.peerID})
+
+	setup.mockStorageProto.EXPECT().SendRequest(mock.Anything, mock.Anything, setup.peerID).
+		Return(PushSEArtifactsReply{}, fmt.Errorf("network error"))
+
+	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+
+	require.Eventually(t, func() bool {
+		ps := datastore.PeerstoreFrom(setup.rootstore)
+		retryKey := keys.NewPeerstoreSERetry(setup.peerID, setup.collectionID, setup.docID)
+		has, err := ps.Has(context.Background(), retryKey.Bytes())
+		require.NoError(t, err)
+
+		if has {
+			value, err := ps.Get(context.Background(), retryKey.Bytes())
+			require.NoError(t, err)
+
+			var retryInfo SERetryInfo
+			err = cbor.Unmarshal(value, &retryInfo)
+			require.NoError(t, err)
+
+			require.Equal(t, setup.docID, retryInfo.DocID)
+			require.Equal(t, setup.collectionID, retryInfo.CollectionID)
+			require.Contains(t, retryInfo.FieldNames, setup.fieldName)
+			require.Equal(t, 0, retryInfo.NumRetries)
+			require.False(t, retryInfo.Retrying)
+			require.NotZero(t, retryInfo.NextRetry)
+
+			return true
+		}
+		return false
+	}, time.Second, 10*time.Millisecond, "Retry data should be stored in peerstore after push failure")
 }
 
 func newMockProto[Req, Rep any](t *testing.T) *mockProto[Req, Rep] {
@@ -428,75 +543,4 @@ func (m *mockSubscription) Message() <-chan event.Message {
 	return m.ch
 }
 
-type mockSimpleCollection struct {
-	name             string
-	collectionID     string
-	encryptedIndexes []client.EncryptedIndexDescription
-
-	docNotFound bool
-	getError    error
-}
-
-func (m *mockSimpleCollection) Name() string         { return m.name }
-func (m *mockSimpleCollection) VersionID() string    { return "v1" }
-func (m *mockSimpleCollection) CollectionID() string { return m.collectionID }
-func (m *mockSimpleCollection) Version() client.CollectionVersion {
-	return client.CollectionVersion{
-		Name:         m.name,
-		CollectionID: m.collectionID,
-		Fields: []client.CollectionFieldDescription{
-			{
-				Name: "age",
-				Kind: client.FieldKind_NILLABLE_INT,
-			},
-		},
-		EncryptedIndexes: m.encryptedIndexes,
-	}
-}
-func (m *mockSimpleCollection) GetEncryptedIndexes(context.Context) ([]client.EncryptedIndexDescription, error) {
-	return m.encryptedIndexes, nil
-}
-
-func (m *mockSimpleCollection) Create(context.Context, *client.Document, ...client.DocCreateOption) error {
-	return nil
-}
-func (m *mockSimpleCollection) CreateMany(context.Context, []*client.Document, ...client.DocCreateOption) error {
-	return nil
-}
-func (m *mockSimpleCollection) Update(context.Context, *client.Document) error { return nil }
-func (m *mockSimpleCollection) Save(context.Context, *client.Document, ...client.DocCreateOption) error {
-	return nil
-}
-func (m *mockSimpleCollection) Delete(context.Context, client.DocID) (bool, error) { return false, nil }
-func (m *mockSimpleCollection) Exists(context.Context, client.DocID) (bool, error) { return false, nil }
-func (m *mockSimpleCollection) UpdateWithFilter(context.Context, any, string) (*client.UpdateResult, error) {
-	return nil, nil
-}
-func (m *mockSimpleCollection) DeleteWithFilter(context.Context, any) (*client.DeleteResult, error) {
-	return nil, nil
-}
-func (m *mockSimpleCollection) Get(context.Context, client.DocID, bool) (*client.Document, error) {
-	if m.docNotFound {
-		return nil, client.ErrDocumentNotFoundOrNotAuthorized
-	}
-	if m.getError != nil {
-		return nil, m.getError
-	}
-
-	doc, err := client.NewDocFromMap(map[string]any{"age": 21}, m.Version())
-	return doc, err
-}
-func (m *mockSimpleCollection) GetAllDocIDs(context.Context) (<-chan client.DocIDResult, error) {
-	return nil, nil
-}
-func (m *mockSimpleCollection) CreateIndex(context.Context, client.IndexCreateRequest) (client.IndexDescription, error) {
-	return client.IndexDescription{}, nil
-}
-func (m *mockSimpleCollection) DropIndex(context.Context, string) error { return nil }
-func (m *mockSimpleCollection) GetIndexes(context.Context) ([]client.IndexDescription, error) {
-	return nil, nil
-}
-func (m *mockSimpleCollection) CreateEncryptedIndex(context.Context, client.EncryptedIndexCreateRequest) (client.EncryptedIndexDescription, error) {
-	return client.EncryptedIndexDescription{}, nil
-}
-func (m *mockSimpleCollection) DeleteEncryptedIndex(context.Context, string) error { return nil }
+// Removed mockSimpleCollection as we're now using the generated mocks from client/mocks
