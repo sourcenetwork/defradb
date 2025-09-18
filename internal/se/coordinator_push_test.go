@@ -31,13 +31,18 @@ func TestReplicationCoordinator_WhenUpdateEventReceived_ShouldPushSEArtifactsToP
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	setup.expectSEArtifactPush()
+	requestChan := setup.expectSEArtifactPush()
 
 	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
 
-	setup.waitForArtifactPush(func(req *PushSEArtifactsRequest) bool {
-		return req.CollectionID == setup.collectionID && len(req.Artifacts) > 0
-	})
+	require.Eventually(t, func() bool {
+		select {
+		case req := <-requestChan:
+			return req.CollectionID == setup.collectionID && len(req.Artifacts) > 0
+		default:
+			return false
+		}
+	}, time.Second, 10*time.Millisecond, "SE artifacts should be pushed to replicator with expected data")
 }
 
 func TestReplicationCoordinator_WhenBlockFailsToDeserialize_ShouldReturnError(t *testing.T) {

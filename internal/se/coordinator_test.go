@@ -98,21 +98,30 @@ func (s *testSetup) createCoordinator() {
 }
 
 // expectSEArtifactPush sets up expectation for SE artifact push to peer
-func (s *testSetup) expectSEArtifactPush() {
+// Returns a channel that will receive the request when it's made (for thread-safe validation)
+func (s *testSetup) expectSEArtifactPush() <-chan PushSEArtifactsRequest {
 	mockCollection := s.createMockCollectionWithDocument()
 
 	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
 
 	s.mockGetReplicatorsIDs([]string{s.peerID})
 
-	// Expect SE artifact push to peer
+	requestReceived := make(chan PushSEArtifactsRequest, 1)
+
 	s.mockStorageProto.EXPECT().SendRequest(
 		mock.Anything,
 		mock.MatchedBy(func(req PushSEArtifactsRequest) bool {
+			select {
+			case requestReceived <- req:
+			default:
+				// Channel is full, ignore
+			}
 			return req.CollectionID == s.collectionID && len(req.Artifacts) > 0
 		}),
 		s.peerID,
 	).Return(PushSEArtifactsReply{}, nil)
+
+	return requestReceived
 }
 
 // publishEvent publishes any event with the given name and data to the event bus
@@ -123,21 +132,6 @@ func (s *testSetup) publishEvent(name event.Name, evt any) {
 // createValidCompositeBlock creates a proper CBOR-encoded composite block
 func (s *testSetup) createValidCompositeBlock() []byte {
 	return createValidCompositeBlock(s.t, s.docID, s.collectionID, s.fieldName)
-}
-
-// waitForArtifactPush waits for SE artifacts to be pushed and validates with custom assertion
-func (s *testSetup) waitForArtifactPush(validate func(*PushSEArtifactsRequest) bool) {
-	require.Eventually(s.t, func() bool {
-		calls := s.mockStorageProto.Calls
-		for _, call := range calls {
-			if call.Method == "SendRequest" && len(call.Arguments) > 1 {
-				if req, ok := call.Arguments[1].(PushSEArtifactsRequest); ok {
-					return validate(&req)
-				}
-			}
-		}
-		return false
-	}, time.Second, 10*time.Millisecond, "SE artifacts should be pushed to replicator with expected data")
 }
 
 // waitForNoCalls verifies that no calls were made to the storage protocol
