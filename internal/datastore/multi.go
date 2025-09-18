@@ -113,7 +113,7 @@ func PeerstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 func HumanReadableKey(key []byte) (string, error) {
 	switch key[0] {
 	case blockStoreKey:
-		if bytes.HasPrefix(key[1:], []byte(toMergeIndexPrefix)) {
+		if bytes.HasPrefix(key[1:], []byte{toMergeIndexPrefix}) {
 			cid, err := cid.Cast(key[2:])
 			if err != nil {
 				return "", errors.WithStack(err)
