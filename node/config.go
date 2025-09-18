@@ -11,6 +11,8 @@
 package node
 
 import (
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 
 	"github.com/sourcenetwork/immutable"
@@ -68,6 +70,12 @@ func WithEnableDevelopment(enable bool) NodeOpt {
 	return func(o *Config) {
 		o.enableDevelopment = enable
 	}
+}
+
+// WithNodeIdentity sets the identity for the node. This is the identity that
+// will be used for things like block signatures and P2P sync operations.
+func WithNodeIdentity(ident identity.Identity) db.Option {
+	return db.WithNodeIdentity(ident)
 }
 
 // filterOptions returns a list of options containing
