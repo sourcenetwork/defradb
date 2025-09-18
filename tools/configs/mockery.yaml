@@ -40,3 +40,9 @@ packages: # Packages and their interfaces to generate mocks for.
         interfaces:
             DB:
             P2P:
+
+    github.com/sourcenetwork/defradb/internal/db/p2p/protocol:
+        config:
+            dir: "./internal/db/p2p/protocol/mocks"
+        interfaces:
+            CommChannel:

@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	protocolmocks "github.com/sourcenetwork/defradb/internal/db/p2p/protocol/mocks"
 	"github.com/sourcenetwork/defradb/internal/se/mocks"
 )
 
@@ -36,8 +37,8 @@ type testSetup struct {
 	t                *testing.T
 	mockDB           *mocks.DB
 	mockP2P          *mocks.P2P
-	mockStorageProto *mockProto[PushSEArtifactsRequest, PushSEArtifactsReply]
-	mockQueryProto   *mockProto[QuerySEArtifactsRequest, QuerySEArtifactsReply]
+	mockStorageProto *protocolmocks.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
+	mockQueryProto   *protocolmocks.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 	mockEventBus     *mockEventBus
 	coordinator      *Coordinator
 	rootstore        *memory.Datastore
@@ -59,8 +60,8 @@ func newTestSetup(t *testing.T) *testSetup {
 		t:                t,
 		mockDB:           mocks.NewDB(t),
 		mockP2P:          mocks.NewP2P(t),
-		mockStorageProto: newMockProto[PushSEArtifactsRequest, PushSEArtifactsReply](t),
-		mockQueryProto:   newMockProto[QuerySEArtifactsRequest, QuerySEArtifactsReply](t),
+		mockStorageProto: protocolmocks.NewCommChannel[PushSEArtifactsRequest, PushSEArtifactsReply](t),
+		mockQueryProto:   protocolmocks.NewCommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply](t),
 		mockEventBus: &mockEventBus{
 			messages: make(chan event.Message, 10),
 			subs:     make(map[event.Subscription]chan event.Message),
@@ -273,6 +274,9 @@ func createValidCompositeBlock(t *testing.T, docID, collectionID, fieldName stri
 	fieldBlockLink, err := lsys.Store(ipld.LinkContext{}, coreblock.GetLinkPrototype(), fieldBlock.GenerateNode())
 	require.NoError(t, err)
 
+	fieldLink, ok := fieldBlockLink.(cidlink.Link)
+	require.True(t, ok, "fieldBlockLink must be a cidlink.Link")
+
 	compositeBlock := coreblock.Block{
 		Delta: crdt.CRDT{
 			DocCompositeDelta: &crdt.DocCompositeDelta{
@@ -285,7 +289,7 @@ func createValidCompositeBlock(t *testing.T, docID, collectionID, fieldName stri
 		Links: []coreblock.DAGLink{
 			{
 				Name: fieldName,
-				Link: fieldBlockLink.(cidlink.Link),
+				Link: fieldLink,
 			},
 		},
 	}
@@ -293,35 +297,6 @@ func createValidCompositeBlock(t *testing.T, docID, collectionID, fieldName stri
 	blockBytes, err := compositeBlock.Marshal()
 	require.NoError(t, err)
 	return blockBytes
-}
-
-func newMockProto[Req, Rep any](t *testing.T) *mockProto[Req, Rep] {
-	return &mockProto[Req, Rep]{
-		Mock: mock.Mock{},
-		t:    t,
-	}
-}
-
-type mockProto[Req, Rep any] struct {
-	mock.Mock
-	t testing.TB
-}
-
-func (m *mockProto[Req, Rep]) SendRequest(ctx context.Context, req Req, peerID string) (Rep, error) {
-	args := m.Called(ctx, req, peerID)
-	return args.Get(0).(Rep), args.Error(1)
-}
-
-func (m *mockProto[Req, Rep]) EXPECT() *mockProtoExpectation[Req, Rep] {
-	return &mockProtoExpectation[Req, Rep]{mock: &m.Mock}
-}
-
-type mockProtoExpectation[Req, Rep any] struct {
-	mock *mock.Mock
-}
-
-func (e *mockProtoExpectation[Req, Rep]) SendRequest(ctx, req, peerID any) *mock.Call {
-	return e.mock.On("SendRequest", ctx, req, peerID)
 }
 
 type mockEventBus struct {
