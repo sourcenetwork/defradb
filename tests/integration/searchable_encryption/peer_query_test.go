@@ -40,7 +40,6 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
-				SEEnabled:    true,
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -94,7 +93,6 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *te
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
-				SEEnabled:    true,
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
@@ -181,7 +179,6 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
-				SEEnabled:    true,
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),

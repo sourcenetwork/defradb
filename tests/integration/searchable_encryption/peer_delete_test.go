@@ -38,7 +38,6 @@ func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testin
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
-				SEEnabled:    true,
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
