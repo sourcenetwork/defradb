@@ -323,6 +323,8 @@ type GQLOptions struct {
 	OperationName string `json:"operationName"`
 	// Variables is a map of names to varible values.
 	Variables map[string]any `json:"variables"`
+	// Subscription indicator
+	Subscription bool
 }
 
 // RequestOption sets an optional request setting.
@@ -339,6 +341,15 @@ func WithOperationName(operationName string) RequestOption {
 func WithVariables(variables map[string]any) RequestOption {
 	return func(o *GQLOptions) {
 		o.Variables = variables
+	}
+}
+
+// WithSubscription marks the GQL request as a subscription.
+// It is required when using subscription requests, otherwise
+// the connection won't upgrade to an event stream.
+func WithSubscription() RequestOption {
+	return func(o *GQLOptions) {
+		o.Subscription = true
 	}
 }
 

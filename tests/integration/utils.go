@@ -1906,7 +1906,7 @@ func executeSubscriptionRequest(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		result := node.ExecRequest(s.Ctx, action.Request)
+		result := node.ExecRequest(s.Ctx, action.Request, client.WithSubscription())
 		if AssertErrors(s.T, result.GQL.Errors, action.ExpectedError) {
 			return
 		}

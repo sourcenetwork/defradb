@@ -344,7 +344,9 @@ func (c *Client) ExecRequest(
 		return result
 	}
 
-	if strings.Contains(query, "subscription {") {
+	// This is an easy solution for now, and can be deprecated
+	// without breaking backwards compatability.
+	if gqlOptions.Subscription {
 		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
