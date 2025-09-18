@@ -50,8 +50,8 @@ type Coordinator struct {
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            P2P
-	storeSEProto   proto[PushSEArtifactsRequest, PushSEArtifactsReply]
-	querySEProto   proto[QuerySEArtifactsRequest, QuerySEArtifactsReply]
+	storeSEProto   protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
+	querySEProto   protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -96,8 +96,8 @@ func newReplicationCoordinator(
 	db DB,
 	p2p P2P,
 	encKey []byte,
-	push proto[PushSEArtifactsRequest, PushSEArtifactsReply],
-	query proto[QuerySEArtifactsRequest, QuerySEArtifactsReply],
+	push protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply],
+	query protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply],
 ) (*Coordinator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 

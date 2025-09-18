@@ -20,10 +20,6 @@ import (
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
-type proto[Req, Rep any] interface {
-	SendRequest(context.Context, Req, string) (Rep, error)
-}
-
 // seStoreProcessor implements CommProcessor for SE artifact storage
 type seStoreProcessor struct {
 	coordinator *Coordinator

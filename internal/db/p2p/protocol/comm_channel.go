@@ -39,14 +39,7 @@ type CommProcessor[Req any, Reply any, ReqP interface {
 	ProcessRequest(ctx context.Context, req Req) (Reply, error)
 }
 
-// CommChannel unified protocol replacing ReplicatorProtocol, ReplicatorSEProtocol, SEQueryProtocol.
-// 4 type parameters needed because message.MetaData implements message.Message only as pointer:
-// - Req: Stack-allocated value type (e.g. PushLogRequest)
-// - Reply: Stack-allocated reply type (e.g. PushLogReply)
-// - ReqP: Pointer type implementing message.Message (e.g. *PushLogRequest)
-// - ReplyP: Pointer type implementing message.Message (e.g. *PushLogReply)
-// This enables stack allocation for performance while satisfying interface constraints.
-type CommChannel[Req any, Reply any, ReqP interface {
+type commChannel[Req any, Reply any, ReqP interface {
 	*Req
 	message.Message
 }, ReplyP interface {
@@ -59,7 +52,18 @@ type CommChannel[Req any, Reply any, ReqP interface {
 	responseEndpoint string
 }
 
-// NewCommChannel creates a new communication channel [CommChannel]
+// CommChannel defines the interface for sending requests and receiving replies.
+type CommChannel[Req, Rep any] interface {
+	SendRequest(context.Context, Req, string) (Rep, error)
+}
+
+// NewCommChannel creates a new communication channel [commChannel]
+// 4 type parameters needed because message.MetaData implements message.Message only as pointer:
+// - Req: Stack-allocated value type (e.g. PushLogRequest)
+// - Reply: Stack-allocated reply type (e.g. PushLogReply)
+// - ReqP: Pointer type implementing message.Message (e.g. *PushLogRequest)
+// - ReplyP: Pointer type implementing message.Message (e.g. *PushLogReply)
+// This enables stack allocation for performance while satisfying interface constraints.
 func NewCommChannel[Req any, Reply any, ReqP interface {
 	*Req
 	message.Message
@@ -70,8 +74,8 @@ func NewCommChannel[Req any, Reply any, ReqP interface {
 	h client.Host,
 	name string,
 	processor CommProcessor[Req, Reply, ReqP, ReplyP],
-) *CommChannel[Req, Reply, ReqP, ReplyP] {
-	channel := &CommChannel[Req, Reply, ReqP, ReplyP]{
+) CommChannel[Req, Reply] {
+	channel := &commChannel[Req, Reply, ReqP, ReplyP]{
 		baseProto:        newBaseProto(h),
 		processor:        processor,
 		requestEndpoint:  protocolBase + name + protocolRequestSuffix,
@@ -86,7 +90,7 @@ func NewCommChannel[Req any, Reply any, ReqP interface {
 
 // SendRequest sends any request to a peer and returns the reply
 // This replaces all PushToReplicator methods and removes event.Update dependency
-func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
+func (c *commChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 	ctx context.Context,
 	req Req,
 	peerID string,
@@ -103,7 +107,7 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 	return reply, nil
 }
 
-func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peerID string) {
+func (c *commChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peerID string) {
 	ctx := context.Background()
 
 	var req Req
@@ -133,7 +137,7 @@ func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 	err = message.SendAndForget(ctx, c, replyPtr, peerID, c.responseEndpoint)
 }
 
-func (c *CommChannel[Req, Reply, ReqP, ReplyP]) onResponse(stream io.Reader, peerID string) {
+func (c *commChannel[Req, Reply, ReqP, ReplyP]) onResponse(stream io.Reader, peerID string) {
 	var reply Reply
 	replyPtr := ReplyP(&reply)
 	_ = message.Receive(stream, peerID, c, replyPtr)

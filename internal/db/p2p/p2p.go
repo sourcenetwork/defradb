@@ -69,8 +69,7 @@ type DB interface {
 
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
-	replicatorProtocol *protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply,
-		*protocol.PushLogRequest, *protocol.PushLogReply]
+	replicatorProtocol protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply]
 
 	ctx  context.Context
 	db   DB
