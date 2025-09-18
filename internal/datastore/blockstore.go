@@ -89,7 +89,7 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	err = bs.store.Set(ctx, newToMergeKey(key), []byte{objectMarker})
+	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 		if err == nil && exists {
 			continue
 		}
-		err = bs.store.Set(ctx, newToMergeKey(key), []byte{objectMarker})
+		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
 		if err != nil {
 			return err
 		}
