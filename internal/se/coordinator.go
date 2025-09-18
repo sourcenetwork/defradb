@@ -14,7 +14,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -326,59 +325,6 @@ func (rc *Coordinator) generateArtifactsAndPushToReplicators(
 			handleErr := rc.handleReplicationFailure(ctx, docID, collectionID, pid, fields, identity)
 			if handleErr != nil {
 				return errors.Join(err, handleErr)
-			}
-		}
-	}
-
-	return nil
-}
-
-// DeleteSEArtifacts removes SE artifacts from the datastore.
-//
-// Parameters:
-//   - searchTags: If provided, only delete artifacts with these specific search tags.
-//     If empty/nil, delete all artifacts for the given document/index combination.
-//
-// This is typically called when:
-//   - A document is deleted (searchTags is empty)
-//   - A field value changes (searchTags contains the old search tags to remove)
-func (rc *Coordinator) DeleteSEArtifacts(
-	ctx context.Context,
-	collectionID, indexID, docID string,
-	searchTags [][]byte,
-) error {
-	ds := datastore.DatastoreFrom(rc.db.Rootstore())
-
-	if len(searchTags) > 0 {
-		for _, tag := range searchTags {
-			key := keys.DatastoreSE{
-				CollectionID: collectionID,
-				IndexID:      indexID,
-				SearchTag:    tag,
-				DocID:        docID,
-			}
-			if err := ds.Delete(ctx, key.Bytes()); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	prefix := keys.DatastoreSE{
-		CollectionID: collectionID,
-		IndexID:      indexID,
-	}.Bytes()
-
-	keysToDelete, err := datastore.FetchKeysForPrefix(ctx, prefix, ds)
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		keyStr := string(key)
-		if strings.HasSuffix(keyStr, "/"+docID) {
-			if err := ds.Delete(ctx, key); err != nil {
-				return err
 			}
 		}
 	}
