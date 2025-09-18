@@ -345,6 +345,58 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	execute(t, test)
 }
 
+func TestSubscriptionWithDelete(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 27,
+					"verified": true,
+					"points": 42
+				}`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User(showDeleted: true) {
+						name
+						age
+						points
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"age":    int64(27),
+								"name":   "John",
+								"points": float64(42),
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					delete_User(filter: { name: { _eq: "John" } }) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"delete_User": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	execute(t, test)
+}
+
 func TestSubscription_WithClose_WontBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
