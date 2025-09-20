@@ -1845,8 +1845,9 @@ nodeLoop:
 				}
 			}
 		}
-
-		result := node.ExecRequest(ctx, action.Request, options...)
+		// Replace any template placeholders with the appropriate data.
+		request := replace(s, nodeID, action.Request)
+		result := node.ExecRequest(ctx, request, options...)
 
 		expectedErrorRaised = assertRequestResults(
 			s,

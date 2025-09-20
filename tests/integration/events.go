@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
@@ -165,6 +166,14 @@ func waitForUpdateEvents(
 						require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
 					}
 					evt = msg.Data.(event.Update)
+					// We keep track of the list of cids for all documents in the test
+					// in case we want to use them in subsequent test actions without having
+					// to know in advance what the CID will be.
+					if node.Composites == nil {
+						node.Composites = make(map[string][]cid.Cid)
+					}
+					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+
 					if !evt.IsRelay {
 						break relayCheck
 					}

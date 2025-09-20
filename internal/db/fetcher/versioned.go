@@ -408,7 +408,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 	}
 
 	// handle subgraphs
-	for _, l := range block.AllLinks() {
+	for _, l := range block.Links {
 		err = vf.merge(l.Cid)
 		if err != nil {
 			return err
