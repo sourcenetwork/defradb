@@ -35,10 +35,9 @@ When executing queries on encrypted fields, the system follows a distributed sea
 3. A query request event is published to the event bus with the search tags
 4. The ReplicationCoordinator handles the event by:
    - Identifying all replicator nodes for the collection
-   - Sending parallel queries to each replicator
-   - Aggregating the results
-5. Each replicator searches its local datastore for matching artifacts and returns document IDs
-6. The requesting node deduplicates results and attempts to fetch the full documents
+   - Sending queries to each replicator one by one until a successful response is received
+5. The replicator searches its local datastore for given artifacts and returns a union of unique document IDs that match one or more tags
+6. The requesting node sends results back to the query executor
 
 This approach ensures that encrypted data remains private while enabling efficient distributed search across the network.
 
