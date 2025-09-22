@@ -71,12 +71,7 @@ func (n *seScanNode) generateSearchTags() error {
 			continue
 		}
 
-		condMap, ok := condition.(map[string]any)
-		if !ok {
-			return NewErrInvalidEncryptedFieldCondition(fieldName)
-		}
-
-		value, hasEq := condMap["_eq"]
+		value, hasEq := condition.(map[string]any)["_eq"]
 		if !hasEq {
 			return NewErrUnsupportedEncryptedOperator(fieldName)
 		}
@@ -105,10 +100,6 @@ func (n *seScanNode) generateSearchTags() error {
 }
 
 func (n *seScanNode) queryRemoteNodes() ([]string, error) {
-	if len(n.fieldSearchTags) == 0 {
-		return nil, nil
-	}
-
 	queries := make([]se.FieldQuery, 0, len(n.fieldSearchTags))
 	for fieldName, searchTag := range n.fieldSearchTags {
 		queries = append(queries, se.FieldQuery{

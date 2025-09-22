@@ -17,7 +17,6 @@ const (
 	errFailedToClosePlan              string = "failed to close the plan"
 	errFailedToCollectExecExplainInfo string = "failed to collect execution explain information"
 	errSubTypeInit                    string = "sub-type initialization error at scan node reset"
-	errInvalidEncryptedFieldCondition string = "invalid condition for encrypted field"
 	errUnsupportedEncryptedOperator   string = "unsupported operator for encrypted field"
 	errFailedToCreateNormalValue      string = "failed to create normal value for field"
 	errFailedToGenerateSearchTag      string = "failed to generate search tag for field"
@@ -43,7 +42,6 @@ var (
 	ErrMismatchLengthOnSimilarity          = errors.New("source and vector must be of the same length")
 	ErrIncorrectCIDForDocId                = errors.New("cid does not belong to document")
 	ErrMissingCID                          = errors.New("missing cid")
-	ErrInvalidEncryptedFieldCondition      = errors.New(errInvalidEncryptedFieldCondition)
 	ErrUnsupportedEncryptedOperator        = errors.New(errUnsupportedEncryptedOperator)
 	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
@@ -70,13 +68,6 @@ func NewErrMismatchLengthOnSimilarity(source, vector int) error {
 		ErrMismatchLengthOnSimilarity,
 		errors.NewKV("Source", source),
 		errors.NewKV("Vector", vector),
-	)
-}
-
-func NewErrInvalidEncryptedFieldCondition(fieldName string) error {
-	return errors.WithStack(
-		ErrInvalidEncryptedFieldCondition,
-		errors.NewKV("FieldName", fieldName),
 	)
 }
 

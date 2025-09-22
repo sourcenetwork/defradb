@@ -939,7 +939,7 @@ func getTopLevelInfo(
 	}
 
 	if rootSelectType == EncryptedSearchSelection {
-		mapping.Add(0, request.DocIDsFieldName)
+		mapping.Add(core.DocIDFieldIndex, request.DocIDsFieldName)
 		mapping.SetTypeName(request.EncryptedSearchResultName)
 		return mapping, client.CollectionVersion{}, nil
 	}
