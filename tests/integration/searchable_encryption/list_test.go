@@ -33,7 +33,7 @@ func TestEncryptedIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
@@ -46,7 +46,7 @@ func TestEncryptedIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 1,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
@@ -72,7 +72,7 @@ func TestEncryptedIndexGet_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes
 					}
 				`,
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
@@ -84,7 +84,7 @@ func TestEncryptedIndexGet_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes
 			testUtils.CreateEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{

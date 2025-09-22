@@ -18,7 +18,7 @@ func MakeEncryptedIndexListCommand() *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
 		Use:   "list [-c --collection <collection>]",
-		Short: "Shows the list encrypted indexes in the database or for a specific collection",
+		Short: "Lists the encrypted indexes in the database or for a specific collection",
 		Long: `Shows the list encrypted indexes in the database or for a specific collection.
 		
 If the --collection flag is provided, only the encrypted indexes for that collection will be shown.
@@ -36,7 +36,7 @@ Example: show all encrypted indexes for 'Users' collection:
 				if err != nil {
 					return err
 				}
-				indexes, err := col.GetEncryptedIndexes(cmd.Context())
+				indexes, err := col.ListEncryptedIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}

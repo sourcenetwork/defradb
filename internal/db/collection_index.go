@@ -442,8 +442,8 @@ func (c *collection) createEncryptedIndex(
 	return c.def.EncryptedIndexes[len(c.def.EncryptedIndexes)-1], nil
 }
 
-// GetEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-func (c *collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
+func (c *collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
 	return c.Version().EncryptedIndexes, nil
 }
 

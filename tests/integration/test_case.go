@@ -550,9 +550,9 @@ type CreateEncryptedIndex struct {
 	ExpectedError string
 }
 
-// GetEncryptedIndexes will attempt to get the given encrypted index from the given collection
+// ListEncryptedIndexes will attempt to list encrypted index from the given collection
 // using the collection api.
-type GetEncryptedIndexes struct {
+type ListEncryptedIndexes struct {
 	// NodeID may hold the ID (index) of a node to create the secondary index on.
 	//
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.

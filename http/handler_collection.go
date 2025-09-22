@@ -318,10 +318,10 @@ func (h *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *ht
 	responseJSON(rw, http.StatusOK, index)
 }
 
-func (h *collectionHandler) GetEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) ListEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
-	indexes, err := col.GetEncryptedIndexes(req.Context())
+	indexes, err := col.ListEncryptedIndexes(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
@@ -603,7 +603,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodPost, createEncryptedIndex,
 		h.CreateEncryptedIndex)
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, getEncryptedIndexes,
-		h.GetEncryptedIndexes)
+		h.ListEncryptedIndexes)
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)
 }

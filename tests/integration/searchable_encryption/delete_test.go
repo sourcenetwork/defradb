@@ -30,7 +30,7 @@ func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *test
 					}
 				`,
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
@@ -42,7 +42,7 @@ func TestEncryptedIndexDelete_WithExistingIndex_ShouldDeleteSuccessfully(t *test
 			testUtils.DeleteEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{},
 			},
@@ -87,14 +87,14 @@ func TestEncryptedIndexDelete_AfterDelete_CanCreateIndexAnew(t *testing.T) {
 			testUtils.DeleteEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{},
 			},
 			testUtils.CreateEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
@@ -121,7 +121,7 @@ func TestEncryptedIndexDelete_MultipleIndexes_ShouldOnlyDeleteSpecified(t *testi
 					}
 				`,
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{
@@ -141,7 +141,7 @@ func TestEncryptedIndexDelete_MultipleIndexes_ShouldOnlyDeleteSpecified(t *testi
 			testUtils.DeleteEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.GetEncryptedIndexes{
+			testUtils.ListEncryptedIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.EncryptedIndexDescription{
 					{

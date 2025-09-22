@@ -152,8 +152,8 @@ type Collection interface {
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
 	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
 
-	// GetEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-	GetEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
+	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
+	ListEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

@@ -66,7 +66,7 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		indices, err := col.GetEncryptedIndexes(ctx)
+		indices, err := col.ListEncryptedIndexes(ctx)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

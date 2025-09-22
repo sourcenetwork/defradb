@@ -142,7 +142,7 @@ func TestReplicationCoordinator_WhenNoEncryptedIndexes_ShouldNotPushToPeer(t *te
 	defer setup.close()
 
 	mockCollection := setup.createMockCollection()
-	mockCollection.EXPECT().GetEncryptedIndexes(mock.Anything).Return(
+	mockCollection.EXPECT().ListEncryptedIndexes(mock.Anything).Return(
 		[]client.EncryptedIndexDescription{}, nil).Maybe()
 
 	ver := setup.createCollectionVersion()

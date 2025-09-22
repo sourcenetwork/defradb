@@ -449,8 +449,8 @@ func performAction(
 	case CreateEncryptedIndex:
 		createEncryptedIndex(s, action)
 
-	case GetEncryptedIndexes:
-		getEncryptedIndexes(s, action)
+	case ListEncryptedIndexes:
+		listEncryptedIndexes(s, action)
 
 	case DeleteEncryptedIndex:
 		deleteEncryptedIndex(s, action)
@@ -1722,9 +1722,9 @@ func createEncryptedIndex(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
-func getEncryptedIndexes(
+func listEncryptedIndexes(
 	s *state.State,
-	action GetEncryptedIndexes,
+	action ListEncryptedIndexes,
 ) {
 	if len(s.Nodes) == 0 {
 		return
@@ -1738,7 +1738,7 @@ func getEncryptedIndexes(
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].GetEncryptedIndexes(s.Ctx)
+				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx)
 				if err != nil {
 					return err
 				}

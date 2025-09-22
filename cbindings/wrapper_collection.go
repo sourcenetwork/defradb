@@ -630,7 +630,7 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	return nil
 }
 
-func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	defer C.free(unsafe.Pointer(name))
 

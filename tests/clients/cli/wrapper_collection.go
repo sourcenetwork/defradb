@@ -381,8 +381,8 @@ func (c *Collection) CreateEncryptedIndex(
 	return index, nil
 }
 
-// GetEncryptedIndexes implements client.Collection.
-func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+// ListEncryptedIndexes implements client.Collection.
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}
 	args = append(args, "--collection", c.Version().Name)
 

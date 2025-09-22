@@ -185,7 +185,7 @@ func (s *testSetup) createMockCollection() *clientmocks.Collection {
 	mockCollection.EXPECT().CollectionID().Return(s.collectionID).Maybe()
 	mockCollection.EXPECT().VersionID().Return("v1").Maybe()
 
-	mockCollection.EXPECT().GetEncryptedIndexes(mock.Anything).Return(
+	mockCollection.EXPECT().ListEncryptedIndexes(mock.Anything).Return(
 		[]client.EncryptedIndexDescription{
 			{FieldName: s.fieldName, Type: client.EncryptedIndexTypeEquality},
 		}, nil).Maybe()

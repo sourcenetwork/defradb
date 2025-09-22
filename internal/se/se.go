@@ -116,7 +116,7 @@ func GenerateDocArtifacts(
 	fieldNames []string,
 	encKey []byte,
 ) ([]secore.Artifact, error) {
-	encryptedIndexes, err := col.GetEncryptedIndexes(ctx)
+	encryptedIndexes, err := col.ListEncryptedIndexes(ctx)
 	if err != nil {
 		return nil, NewErrFailedToGetEncryptedIndexes(err)
 	}

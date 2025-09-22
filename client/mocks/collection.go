@@ -808,68 +808,6 @@ func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
-// GetEncryptedIndexes provides a mock function for the type Collection
-func (_mock *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetEncryptedIndexes")
-	}
-
-	var r0 []client.EncryptedIndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.EncryptedIndexDescription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_GetEncryptedIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetEncryptedIndexes'
-type Collection_GetEncryptedIndexes_Call struct {
-	*mock.Call
-}
-
-// GetEncryptedIndexes is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Collection_Expecter) GetEncryptedIndexes(ctx interface{}) *Collection_GetEncryptedIndexes_Call {
-	return &Collection_GetEncryptedIndexes_Call{Call: _e.mock.On("GetEncryptedIndexes", ctx)}
-}
-
-func (_c *Collection_GetEncryptedIndexes_Call) Run(run func(ctx context.Context)) *Collection_GetEncryptedIndexes_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_GetEncryptedIndexes_Call) Return(encryptedIndexDescriptions []client.EncryptedIndexDescription, err error) *Collection_GetEncryptedIndexes_Call {
-	_c.Call.Return(encryptedIndexDescriptions, err)
-	return _c
-}
-
-func (_c *Collection_GetEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.EncryptedIndexDescription, error)) *Collection_GetEncryptedIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetIndexes provides a mock function for the type Collection
 func (_mock *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
 	ret := _mock.Called(ctx)
@@ -928,6 +866,68 @@ func (_c *Collection_GetIndexes_Call) Return(indexDescriptions []client.IndexDes
 }
 
 func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.IndexDescription, error)) *Collection_GetIndexes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListEncryptedIndexes provides a mock function for the type Collection
+func (_mock *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEncryptedIndexes")
+	}
+
+	var r0 []client.EncryptedIndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.EncryptedIndexDescription)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Collection_ListEncryptedIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEncryptedIndexes'
+type Collection_ListEncryptedIndexes_Call struct {
+	*mock.Call
+}
+
+// ListEncryptedIndexes is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Collection_Expecter) ListEncryptedIndexes(ctx interface{}) *Collection_ListEncryptedIndexes_Call {
+	return &Collection_ListEncryptedIndexes_Call{Call: _e.mock.On("ListEncryptedIndexes", ctx)}
+}
+
+func (_c *Collection_ListEncryptedIndexes_Call) Run(run func(ctx context.Context)) *Collection_ListEncryptedIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_ListEncryptedIndexes_Call) Return(encryptedIndexDescriptions []client.EncryptedIndexDescription, err error) *Collection_ListEncryptedIndexes_Call {
+	_c.Call.Return(encryptedIndexDescriptions, err)
+	return _c
+}
+
+func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.EncryptedIndexDescription, error)) *Collection_ListEncryptedIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -587,7 +587,7 @@ func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
 		return nil, err
 	}
 
-	encryptedIndexes, err := col.GetEncryptedIndexes(p.ctx)
+	encryptedIndexes, err := col.ListEncryptedIndexes(p.ctx)
 	if err != nil {
 		return nil, err
 	}
