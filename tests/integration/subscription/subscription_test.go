@@ -13,6 +13,7 @@ package subscription
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -362,4 +363,54 @@ func TestSubscription_WithClose_WontBlock(t *testing.T) {
 	}
 
 	execute(t, test)
+}
+
+func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						counter: Int @crdt(type: pcounter)
+					}
+				`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User {
+						counter
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"counter": int64(1),
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"counter": int64(2),
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"counter": int64(1),
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"counter": 1}`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
 }

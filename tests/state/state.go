@@ -170,6 +170,8 @@ type NodeState struct {
 	// CachedPeerInfo holds the node's PeerInfo so that the node can be
 	// restarded with the same address configuration.
 	CachedPeerInfo client.PeerInfo
+	// Map of docIDs to their composite CIDs.
+	Composites map[string][]cid.Cid
 }
 
 // State contains all testing State.

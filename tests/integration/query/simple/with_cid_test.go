@@ -118,3 +118,44 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						counter: Int @crdt(type: pcounter)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"counter": int64(1),
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"counter": 1}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					User(cid: "{{.CID0_0_1}}") {
+						counter
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"counter": int64(2),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
