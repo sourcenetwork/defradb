@@ -125,6 +125,7 @@ var createOnlyValidators = []definitionValidator{}
 var updateOnlyValidators = []definitionValidator{
 	validateSourcesNotRedefined,
 	validateIndexesNotModified,
+	validateEncryptedIndexesNotModified,
 	validatePolicyNotModified,
 	validateIDNotEmpty,
 	validateIDUnique,
@@ -489,6 +490,37 @@ func validateIndexesNotModified(
 			// DeepEqual is temporary, as this validation is temporary
 			if !reflect.DeepEqual(oldCol.Indexes[i], newCol.Indexes[i]) {
 				errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateEncryptedIndexesNotModified(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
+		if !ok {
+			continue
+		}
+
+		if oldCol.IsPlaceholder {
+			continue
+		}
+
+		if len(oldCol.EncryptedIndexes) != len(newCol.EncryptedIndexes) {
+			errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+		}
+
+		for i := range oldCol.EncryptedIndexes {
+			if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
+				errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
 			}
 		}
 	}
