@@ -122,7 +122,7 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 func TestQuerySimpple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			action.AddSchema{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						counter: Int @crdt(type: pcounter)

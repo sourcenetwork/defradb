@@ -368,7 +368,7 @@ func TestSubscription_WithClose_WontBlock(t *testing.T) {
 func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			action.AddSchema{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						counter: Int @crdt(type: pcounter)
