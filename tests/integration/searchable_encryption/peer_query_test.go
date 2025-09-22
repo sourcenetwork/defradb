@@ -22,7 +22,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
+func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -74,7 +74,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDocEncryptionPeer_WithMultipleEncryptedFields_ShouldSyncAllFields(t *testing.T) {
+func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -333,6 +333,75 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 						}
 					}`,
 				ExpectedError: "Argument \"filter\" has invalid value",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnUnion(t *testing.T) {
+	test := testUtils.TestCase{
+		KMS:                        testUtils.KMS{Activated: true},
+		EnableSearchableEncryption: true,
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String @encryptedIndex
+						age: Int @encryptedIndex
+						city: String @encryptedIndex
+						verified: Boolean
+					}`,
+			},
+			testUtils.ConfigureReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name":	"John",
+					"age":	21
+				}`,
+				IsDocEncrypted: true,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Alice",
+					"age": 30
+				}`,
+				IsDocEncrypted: true,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Bob",
+					"age": 30
+				}`,
+				IsDocEncrypted: true,
+			},
+			testUtils.Wait{
+				Duration: time.Millisecond * 100,
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `
+					query {
+						User_encrypted(filter: {name: {_eq: "Bob"}, age: {_eq: 21}}) {
+							docIDs
+						}
+					}`,
+				Results: map[string]any{
+					"User_encrypted": []map[string]any{
+						{
+							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0), testUtils.DocIDAt(0, 2)),
+						},
+					},
+				},
 			},
 		},
 	}
