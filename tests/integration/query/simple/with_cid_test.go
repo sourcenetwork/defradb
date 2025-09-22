@@ -119,7 +119,7 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimpple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
+func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

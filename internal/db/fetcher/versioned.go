@@ -407,7 +407,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	// handle subgraphs
+	// Handle subgraphs. We range over `Links` only (not `Heads``) because the trunk is already accounted for
+	// by the initial caller or `merge`. Including `Heads` would result in unnecessary recursion and possible
+	// wrong final value for the fields.
 	for _, l := range block.Links {
 		err = vf.merge(l.Cid)
 		if err != nil {

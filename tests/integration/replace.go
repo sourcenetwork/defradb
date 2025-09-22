@@ -23,10 +23,19 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 
 		res := map[string]string{}
 		for colIndex, docIndexes := range s.DocIDs {
-			for dIndex, docID := range docIndexes {
+			for docIndex, docID := range docIndexes {
 				cids := docIDsToCIDs[docID.String()]
 				for cidIndex, cid := range cids {
-					res["CID"+strconv.Itoa(colIndex)+"_"+strconv.Itoa(dIndex)+"_"+strconv.Itoa(cidIndex)] = cid.String()
+					templateCIDRef := "CID" +
+						// The index of the collection in the test.
+						strconv.Itoa(colIndex) + "_" +
+						// The index of the document within that collection.
+						strconv.Itoa(docIndex) + "_" +
+						// The index of the CID for that document.
+						// WARNING: This mights be difficult for the writer of the
+						// test to accurately determine when testing P2P functionalities.
+						strconv.Itoa(cidIndex)
+					res[templateCIDRef] = cid.String()
 				}
 			}
 		}
