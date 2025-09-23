@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -101,7 +102,12 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				continue
 			}
 
-			if err != nil {
+			// ignore incorrect CID for DocID error. This is specific to
+			// subscription API. Only the DocID is externally configurable for
+			// this API, but the CID comes from the event, which means theres a
+			// high likely hood of CID/DocID mismatch, so we need to ignore it
+			// to falsely report errors to the subscription.
+			if err != nil && !errors.Is(err, planner.ErrIncorrectOrMissingCID) {
 				res.Errors = append(res.Errors, err)
 			}
 			res.Data = result

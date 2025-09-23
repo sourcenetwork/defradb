@@ -228,7 +228,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// clear the cid after
 	block, err := txn.Blockstore().Get(n.planner.ctx, *currentCid)
 	if err != nil {
-		return false, errors.Join(ErrMissingCID, err)
+		return false, errors.Join(ErrIncorrectOrMissingCID, err)
 	}
 
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
@@ -275,7 +275,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		len(n.visitedNodes) == 0 &&
 		n.commitSelect.DocID.HasValue() &&
 		currentDocID != n.commitSelect.DocID.Value() {
-		return false, nil
+		return false, ErrIncorrectOrMissingCID
 	}
 
 	// the dagscan node can traverse into the merkle dag

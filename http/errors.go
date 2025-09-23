@@ -43,6 +43,7 @@ var (
 	ErrMethodIsNotImplemented       = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
+	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
 )
 
 type errorResponse struct {

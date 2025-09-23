@@ -24,7 +24,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-const sseAcceptHeader = "text/event-stream"
+const (
+	sseAcceptHeader  = "text/event-stream"
+	jsonAcceptHeader = "application/json"
+)
 
 type storeHandler struct{}
 
