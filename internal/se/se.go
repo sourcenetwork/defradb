@@ -46,7 +46,7 @@ func StoreArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []sec
 }
 
 // FetchDocIDs queries the datastore for SE artifacts matching the given queries
-// and returns the unique document IDs that match.
+// and returns the document IDs for documents that match all queries.
 func FetchDocIDs(
 	ctx context.Context,
 	ds corekv.ReaderWriter,
@@ -55,6 +55,7 @@ func FetchDocIDs(
 ) ([]string, error) {
 	docIDSet := make(map[string]struct{})
 
+	isFirstPass := true
 	for _, query := range queries {
 		key := keys.DatastoreSE{
 			CollectionID: collectionID,
@@ -69,6 +70,7 @@ func FetchDocIDs(
 			return nil, err
 		}
 
+		querySet := make(map[string]struct{})
 		for {
 			hasNext, err := iter.Next()
 			if err != nil || !hasNext {
@@ -83,12 +85,27 @@ func FetchDocIDs(
 				return nil, errors.Join(NewErrEmptyDocID(dsKey.ToString()), iter.Close())
 			}
 
-			docIDSet[dsKey.DocID] = struct{}{}
+			querySet[dsKey.DocID] = struct{}{}
 		}
 
 		err = iter.Close()
 		if err != nil {
 			return nil, err
+		}
+
+		if isFirstPass {
+			docIDSet = querySet
+			isFirstPass = false
+		} else {
+			for docID := range docIDSet {
+				if _, exists := querySet[docID]; !exists {
+					delete(docIDSet, docID)
+				}
+			}
+		}
+
+		if len(docIDSet) == 0 {
+			break
 		}
 	}
 

@@ -114,25 +114,33 @@ func TestProcessQuerySEArtifactsRequest_WhenNoMatchingArtifacts_ShouldReturnEmpt
 	require.Empty(t, reply.DocIDs, "Should return empty list when no matches found")
 }
 
-func TestProcessQuerySEArtifactsRequest_WhenMultipleQueries_ShouldReturnUnion(t *testing.T) {
+func TestProcessQuerySEArtifactsRequest_WhenMultipleQueries_ShouldReturnIntersection(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
 	artifacts := []SEArtifact{
+		// doc-1 has both fields matching
 		{
 			DocID:     "doc-1",
 			IndexID:   "index-1",
 			SearchTag: []byte("tag-1"),
 		},
 		{
-			DocID:     "doc-2",
+			DocID:     "doc-1",
 			IndexID:   "index-2",
 			SearchTag: []byte("tag-2"),
 		},
+		// doc-2 only matches first field
+		{
+			DocID:     "doc-2",
+			IndexID:   "index-1",
+			SearchTag: []byte("tag-1"),
+		},
+		// doc-3 only matches second field
 		{
 			DocID:     "doc-3",
-			IndexID:   "index-3",
-			SearchTag: []byte("tag-3"),
+			IndexID:   "index-2",
+			SearchTag: []byte("tag-2"),
 		},
 	}
 
@@ -167,9 +175,8 @@ func TestProcessQuerySEArtifactsRequest_WhenMultipleQueries_ShouldReturnUnion(t 
 
 	reply, err := setup.coordinator.processQuerySEArtifactsRequest(context.Background(), queryReq)
 	require.NoError(t, err)
-	require.Len(t, reply.DocIDs, 2, "Should return union of matching documents")
-	require.Contains(t, reply.DocIDs, "doc-1")
-	require.Contains(t, reply.DocIDs, "doc-2")
+	require.Len(t, reply.DocIDs, 1, "Should return intersection of matching documents")
+	require.Contains(t, reply.DocIDs, "doc-1", "Only doc-1 matches both queries")
 }
 
 func TestProcessQuerySEArtifactsRequest_WhenEmptyQueries_ShouldReturnEmpty(t *testing.T) {

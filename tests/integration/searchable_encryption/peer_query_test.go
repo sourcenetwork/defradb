@@ -340,7 +340,7 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnUnion(t *testing.T) {
+func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t *testing.T) {
 	test := testUtils.TestCase{
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
@@ -371,7 +371,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnUnion(t *testin
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"name": "Alice",
+					"name": "John",
 					"age": 30
 				}`,
 				IsDocEncrypted: true,
@@ -391,6 +391,22 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnUnion(t *testin
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
+						User_encrypted(filter: {name: {_eq: "John"}, age: {_eq: 30}}) {
+							docIDs
+						}
+					}`,
+				Results: map[string]any{
+					"User_encrypted": []map[string]any{
+						{
+							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 1)),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `
+					query {
 						User_encrypted(filter: {name: {_eq: "Bob"}, age: {_eq: 21}}) {
 							docIDs
 						}
@@ -398,7 +414,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnUnion(t *testin
 				Results: map[string]any{
 					"User_encrypted": []map[string]any{
 						{
-							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0), testUtils.DocIDAt(0, 2)),
+							"docIDs": gomega.BeEmpty(),
 						},
 					},
 				},
