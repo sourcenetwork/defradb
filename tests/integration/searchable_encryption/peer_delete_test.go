@@ -59,11 +59,11 @@ func TestDocEncryptionPeer_AfterDeletingIndex_SEQueryShouldReturnError(t *testin
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						User_encrypted(filter: {age: {_eq: 21}}) {
+						discover_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
-				ExpectedError: "Cannot query field \"User_encrypted\" on type \"Query\".",
+				ExpectedError: "Cannot query field \"discover_User\" on type \"Query\".",
 			},
 		},
 	}

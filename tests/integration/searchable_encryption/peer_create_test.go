@@ -39,12 +39,12 @@ func TestEncryptedIndexCreatePeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						User_encrypted(filter: {age: {_eq: 33}}) {
+						discover_User(filter: {age: {_eq: 33}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"User_encrypted": gomega.Not(gomega.BeEmpty()),
+					"discover_User": gomega.Not(gomega.BeEmpty()),
 				},
 			},
 		},
@@ -75,12 +75,12 @@ func TestEncryptedIndexCreatePeer_AfterCreateRequest_ShouldGenerateGQL(t *testin
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						User_encrypted(filter: {age: {_eq: 33}}) {
+						discover_User(filter: {age: {_eq: 33}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"User_encrypted": gomega.Not(gomega.BeEmpty()),
+					"discover_User": gomega.Not(gomega.BeEmpty()),
 				},
 			},
 		},

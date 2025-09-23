@@ -143,7 +143,6 @@ func TestProcessQuerySEArtifactsRequest_WhenMultipleQueries_ShouldReturnIntersec
 			SearchTag: []byte("tag-2"),
 		},
 	}
-
 	storeReq := &PushSEArtifactsRequest{
 		MetaData: message.MetaData{
 			SenderID: "peer-setup",

@@ -1169,7 +1169,7 @@ func (g *Generator) GenerateEncryptedQueryInputForGQLType(
 	encryptedResultType := g.manager.schema.TypeMap()[request.EncryptedSearchResultName]
 
 	field := &gql.Field{
-		Name: obj.Name() + request.EncryptedCollectionSuffix,
+		Name: request.DiscoverPrefix + obj.Name(),
 		Description: "Search encrypted fields for " + obj.Name() + " and return matching document IDs." +
 			" When multiple filter conditions are specified, returns the document IDs for documents that match all conditions.",
 		Type: encryptedResultType,

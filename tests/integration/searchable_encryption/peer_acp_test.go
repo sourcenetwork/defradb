@@ -121,13 +121,13 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						User_encrypted(filter: {age: {_eq: 21}}) {
+						discover_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}
 				`,
 				Results: map[string]any{
-					"User_encrypted": []map[string]any{
+					"discover_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
