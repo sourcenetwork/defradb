@@ -439,3 +439,9 @@ fix:
 	
 build-c-shared-linux:
 	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+	
+build-c-shared-android:
+ifndef ANDROID_NDK
+	$(error ANDROID_NDK is not set. Usage: make build-c-shared-android ANDROID_NDK=/path/to/ndk)
+endif
+	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) "$(BUILD_FLAGS)"
