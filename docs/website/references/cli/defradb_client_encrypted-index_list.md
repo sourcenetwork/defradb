@@ -1,6 +1,6 @@
 ## defradb client encrypted-index list
 
-Shows the list encrypted indexes in the database or for a specific collection
+Lists the encrypted indexes in the database or for a specific collection
 
 ### Synopsis
 
