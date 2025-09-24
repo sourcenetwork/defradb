@@ -286,8 +286,8 @@ func (c *Collection) CreateEncryptedIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) GetEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
-	res, err := execute(ctx, c.client, "getEncryptedIndexes")
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	res, err := execute(ctx, c.client, "listEncryptedIndexes")
 	if err != nil {
 		return nil, err
 	}

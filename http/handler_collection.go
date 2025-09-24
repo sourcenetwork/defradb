@@ -567,13 +567,13 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithDescription("List of encrypted indexes").
 		WithJSONSchema(encryptedIndexArraySchema)
 
-	getEncryptedIndexes := openapi3.NewOperation()
-	getEncryptedIndexes.OperationID = "encrypted_index_list"
-	getEncryptedIndexes.Description = "List encrypted indexes"
-	getEncryptedIndexes.Tags = []string{"encrypted_index"}
-	getEncryptedIndexes.AddParameter(collectionNamePathParam)
-	getEncryptedIndexes.AddResponse(200, getEncryptedIndexesResponse)
-	getEncryptedIndexes.Responses.Set("400", errorResponse)
+	listEncryptedIndexes := openapi3.NewOperation()
+	listEncryptedIndexes.OperationID = "encrypted_index_list"
+	listEncryptedIndexes.Description = "List encrypted indexes"
+	listEncryptedIndexes.Tags = []string{"encrypted_index"}
+	listEncryptedIndexes.AddParameter(collectionNamePathParam)
+	listEncryptedIndexes.AddResponse(200, getEncryptedIndexesResponse)
+	listEncryptedIndexes.Responses.Set("400", errorResponse)
 
 	fieldNamePathParam := openapi3.NewPathParameter("field").
 		WithRequired(true).
@@ -602,7 +602,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/{docID}", http.MethodDelete, collectionDelete, h.Delete)
 	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodPost, createEncryptedIndex,
 		h.CreateEncryptedIndex)
-	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, getEncryptedIndexes,
+	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, listEncryptedIndexes,
 		h.ListEncryptedIndexes)
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)

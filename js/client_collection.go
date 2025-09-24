@@ -49,7 +49,7 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"getIndexes":           goji.Async(c.getIndexes),
 		"createEncryptedIndex": goji.Async(c.createEncryptedIndex),
 		"deleteEncryptedIndex": goji.Async(c.deleteEncryptedIndex),
-		"getEncryptedIndexes":  goji.Async(c.getEncryptedIndexes),
+		"listEncryptedIndexes": goji.Async(c.listEncryptedIndexes),
 	})
 }
 
@@ -353,12 +353,12 @@ func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) 
 	return js.Undefined(), err
 }
 
-func (c *clientCollection) getEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	desc, err := c.col.GetEncryptedIndexes(ctx)
+	desc, err := c.col.ListEncryptedIndexes(ctx)
 	if err != nil {
 		return js.Undefined(), err
 	}

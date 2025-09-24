@@ -447,8 +447,8 @@ func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey c
 	return err
 }
 
-func (w *Wrapper) GetAllEncryptedIndexes(
+func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	return w.node.DB.GetAllEncryptedIndexes(ctx)
+	return w.node.DB.ListAllEncryptedIndexes(ctx)
 }
