@@ -18,6 +18,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -189,7 +190,9 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 	rawblock, err := txn.Blockstore().Get(ctx, c)
 	if err != nil {
-		log.ErrorE("Failed to get block", err)
+		if !ipld.IsNotFound(err) {
+			log.ErrorE("Failed to get block", err)
+		}
 		return false
 	}
 
