@@ -81,10 +81,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			res := client.GQLResult{}
 
-			// This approach will only support return types that are []core.Doc
-			// for results. So top level aggregates, or other top level fields
+			// This approach will only support return types that are []map[string]any
+			// (ie docs) for results. So top level aggregates, or other top level fields
 			// that we would want to add to subscriptions that don't return
-			// []core.Doc currently will not work.
+			// docs currently will not work.
 			for op, data := range result {
 				resultSlice, ok := data.([]map[string]any)
 				if !ok {
