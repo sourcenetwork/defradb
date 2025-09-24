@@ -42,7 +42,7 @@ Example: show all encrypted indexes for 'Users' collection:
 				}
 				return writeJSON(cmd, indexes)
 			default:
-				indexes, err := cliClient.GetAllEncryptedIndexes(cmd.Context())
+				indexes, err := cliClient.ListAllEncryptedIndexes(cmd.Context())
 				if err != nil {
 					return err
 				}

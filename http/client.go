@@ -308,7 +308,7 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	return indexes, nil
 }
 
-func (c *Client) GetAllEncryptedIndexes(
+func (c *Client) ListAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	methodURL := c.http.apiURL.JoinPath("encrypted-indexes")

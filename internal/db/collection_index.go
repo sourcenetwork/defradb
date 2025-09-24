@@ -641,8 +641,8 @@ func generateIndexName(colName string, fields []client.IndexedFieldDescription, 
 	return sb.String(), nil
 }
 
-// getAllEncryptedIndexDescriptions returns all the encrypted index descriptions in the database.
-func (db *DB) getAllEncryptedIndexDescriptions(
+// listAllEncryptedIndexDescriptions returns all the encrypted index descriptions in the database.
+func (db *DB) listAllEncryptedIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	collections, err := description.GetCollections(ctx)

@@ -694,7 +694,7 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 	return resValue, nil
 }
 
-func (w *CWrapper) GetAllEncryptedIndexes(
+func (w *CWrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	colName := C.CString("")

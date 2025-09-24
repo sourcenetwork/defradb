@@ -280,8 +280,8 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
 
-	// GetAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
-	GetAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
+	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
+	ListAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult

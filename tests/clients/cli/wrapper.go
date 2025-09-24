@@ -409,7 +409,7 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 	return indexes, nil
 }
 
-func (w *Wrapper) GetAllEncryptedIndexes(
+func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	args := []string{"client", "encrypted-index", "list"}

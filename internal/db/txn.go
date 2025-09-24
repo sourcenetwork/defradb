@@ -255,11 +255,11 @@ func (txn *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]
 	return txn.db.GetAllIndexes(ctx)
 }
 
-func (txn *Txn) GetAllEncryptedIndexes(
+func (txn *Txn) ListAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllEncryptedIndexes(ctx)
+	return txn.db.ListAllEncryptedIndexes(ctx)
 }
 
 func (txn *Txn) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {

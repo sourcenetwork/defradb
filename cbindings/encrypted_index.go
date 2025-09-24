@@ -73,7 +73,7 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 		return returnC(marshalJSONToGoCResult(indices))
 	// Get all of the encrypted indices, because no collection was specified
 	default:
-		indices, err := store.GetAllEncryptedIndexes(ctx)
+		indices, err := store.ListAllEncryptedIndexes(ctx)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

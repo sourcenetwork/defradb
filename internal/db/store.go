@@ -99,8 +99,8 @@ func (db *DB) GetAllIndexes(
 	return db.getAllIndexDescriptions(ctx)
 }
 
-// GetAllEncryptedIndexes gets all the encrypted indexes in the database.
-func (db *DB) GetAllEncryptedIndexes(
+// ListAllEncryptedIndexes gets all the encrypted indexes in the database.
+func (db *DB) ListAllEncryptedIndexes(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
@@ -112,7 +112,7 @@ func (db *DB) GetAllEncryptedIndexes(
 	}
 	defer txn.Discard(ctx)
 
-	return db.getAllEncryptedIndexDescriptions(ctx)
+	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
