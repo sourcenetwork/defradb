@@ -50,8 +50,8 @@ func TestGenerateEncryptedQueryField(t *testing.T) {
 	queryType := manager.schema.QueryType()
 	require.NotNil(t, queryType)
 
-	encryptedField, ok := queryType.Fields()["discover_User"]
-	require.True(t, ok, "discover_User field should exist")
+	encryptedField, ok := queryType.Fields()["encrypted_User"]
+	require.True(t, ok, "encrypted_User field should exist")
 
 	hasFilter, hasLimit, hasOffset := false, false, false
 	for _, arg := range encryptedField.Args {

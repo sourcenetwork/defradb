@@ -56,12 +56,12 @@ func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 21}}) {
+						encrypted_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -111,12 +111,12 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {name: {_eq: "John"}}) {
+						encrypted_User(filter: {name: {_eq: "John"}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -127,12 +127,12 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 25}}) {
+						encrypted_User(filter: {age: {_eq: 25}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -143,12 +143,12 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {city: {_eq: "New York"}}) {
+						encrypted_User(filter: {city: {_eq: "New York"}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -211,12 +211,12 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 21}}) {
+						encrypted_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 0)),
 						},
@@ -227,12 +227,12 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 30}}) {
+						encrypted_User(filter: {age: {_eq: 30}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(
 								testUtils.DocIDAt(0, 1),
@@ -246,12 +246,12 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 33}}) {
+						encrypted_User(filter: {age: {_eq: 33}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": []string{},
 						},
@@ -290,11 +290,11 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 21}}) {
+						encrypted_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
-				ExpectedError: "Cannot query field \"discover_User\" on type \"Query\".",
+				ExpectedError: "Cannot query field \"encrypted_User\" on type \"Query\".",
 			},
 		},
 	}
@@ -328,7 +328,7 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 21}}) {
+						encrypted_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
@@ -391,12 +391,12 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {name: {_eq: "John"}, age: {_eq: 30}}) {
+						encrypted_User(filter: {name: {_eq: "John"}, age: {_eq: 30}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.ConsistOf(testUtils.DocIDAt(0, 1)),
 						},
@@ -407,12 +407,12 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
-						discover_User(filter: {name: {_eq: "Bob"}, age: {_eq: 21}}) {
+						encrypted_User(filter: {name: {_eq: "Bob"}, age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
 				Results: map[string]any{
-					"discover_User": []map[string]any{
+					"encrypted_User": []map[string]any{
 						{
 							"docIDs": gomega.BeEmpty(),
 						},

@@ -897,7 +897,7 @@ func getCollectionName(
 	} else if rootSelectType == CommitSelection {
 		return parentCollectionName, nil
 	} else if rootSelectType == EncryptedSearchSelection {
-		return strings.TrimPrefix(selectRequest.Name, request.DiscoverPrefix), nil
+		return strings.TrimPrefix(selectRequest.Name, request.EncryptedCollectionPrefix), nil
 	}
 
 	if parentCollectionName != "" {

@@ -30,7 +30,7 @@ const (
 
 	EncryptDocArgName         = "encrypt"
 	EncryptFieldsArgName      = "encryptFields"
-	DiscoverPrefix            = "discover_"
+	EncryptedCollectionPrefix = "encrypted_"
 	EncryptedSearchResultName = "EncryptedSearchResult"
 
 	FilterClause  = "filter"

@@ -31,11 +31,11 @@ func TestEncryptedIndexCreate_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						discover_User(filter: {age: {_eq: 21}}) {
+						encrypted_User(filter: {age: {_eq: 21}}) {
 							docIDs
 						}
 					}`,
-				ExpectedError: "Cannot query field \"discover_User\" on type \"Query\".",
+				ExpectedError: "Cannot query field \"encrypted_User\" on type \"Query\".",
 			},
 		},
 	}
