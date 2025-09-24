@@ -1068,68 +1068,6 @@ func (_c *TxnStore_ExecRequest_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
-// GetAllEncryptedIndexes provides a mock function for the type TxnStore
-func (_mock *TxnStore) GetAllEncryptedIndexes(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(context1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllEncryptedIndexes")
-	}
-
-	var r0 map[client.CollectionName][]client.EncryptedIndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(context1)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) map[client.CollectionName][]client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(context1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[client.CollectionName][]client.EncryptedIndexDescription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(context1)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// TxnStore_GetAllEncryptedIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllEncryptedIndexes'
-type TxnStore_GetAllEncryptedIndexes_Call struct {
-	*mock.Call
-}
-
-// GetAllEncryptedIndexes is a helper method to define mock.On call
-//   - context1 context.Context
-func (_e *TxnStore_Expecter) GetAllEncryptedIndexes(context1 interface{}) *TxnStore_GetAllEncryptedIndexes_Call {
-	return &TxnStore_GetAllEncryptedIndexes_Call{Call: _e.mock.On("GetAllEncryptedIndexes", context1)}
-}
-
-func (_c *TxnStore_GetAllEncryptedIndexes_Call) Run(run func(context1 context.Context)) *TxnStore_GetAllEncryptedIndexes_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *TxnStore_GetAllEncryptedIndexes_Call) Return(vToEncryptedIndexDescriptions map[client.CollectionName][]client.EncryptedIndexDescription, err error) *TxnStore_GetAllEncryptedIndexes_Call {
-	_c.Call.Return(vToEncryptedIndexDescriptions, err)
-	return _c
-}
-
-func (_c *TxnStore_GetAllEncryptedIndexes_Call) RunAndReturn(run func(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error)) *TxnStore_GetAllEncryptedIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetAllIndexes provides a mock function for the type TxnStore
 func (_mock *TxnStore) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	ret := _mock.Called(ctx)
@@ -1676,6 +1614,68 @@ func (_c *TxnStore_LensRegistry_Call) Return(lensRegistry client.LensRegistry) *
 }
 
 func (_c *TxnStore_LensRegistry_Call) RunAndReturn(run func() client.LensRegistry) *TxnStore_LensRegistry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListAllEncryptedIndexes provides a mock function for the type TxnStore
+func (_mock *TxnStore) ListAllEncryptedIndexes(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ret := _mock.Called(context1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAllEncryptedIndexes")
+	}
+
+	var r0 map[client.CollectionName][]client.EncryptedIndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(context1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) map[client.CollectionName][]client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(context1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[client.CollectionName][]client.EncryptedIndexDescription)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(context1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// TxnStore_ListAllEncryptedIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAllEncryptedIndexes'
+type TxnStore_ListAllEncryptedIndexes_Call struct {
+	*mock.Call
+}
+
+// ListAllEncryptedIndexes is a helper method to define mock.On call
+//   - context1 context.Context
+func (_e *TxnStore_Expecter) ListAllEncryptedIndexes(context1 interface{}) *TxnStore_ListAllEncryptedIndexes_Call {
+	return &TxnStore_ListAllEncryptedIndexes_Call{Call: _e.mock.On("ListAllEncryptedIndexes", context1)}
+}
+
+func (_c *TxnStore_ListAllEncryptedIndexes_Call) Run(run func(context1 context.Context)) *TxnStore_ListAllEncryptedIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *TxnStore_ListAllEncryptedIndexes_Call) Return(vToEncryptedIndexDescriptions map[client.CollectionName][]client.EncryptedIndexDescription, err error) *TxnStore_ListAllEncryptedIndexes_Call {
+	_c.Call.Return(vToEncryptedIndexDescriptions, err)
+	return _c
+}
+
+func (_c *TxnStore_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error)) *TxnStore_ListAllEncryptedIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }
