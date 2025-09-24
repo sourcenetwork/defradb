@@ -354,7 +354,7 @@ func (c *Client) ExecRequest(
 	}
 
 	if op == ast.OperationTypeSubscription {
-		req.Header.Add("Accept", sseAcceptHeader)
+		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
 	res, err := c.http.client.Do(req)

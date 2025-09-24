@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestCommitSubscriptionWithCreateMutations(t *testing.T) {
+func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.SubscriptionRequest{
@@ -42,33 +42,23 @@ func TestCommitSubscriptionWithCreateMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
-				Request: `mutation {
-					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
-						name
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 27,
+					"points": 42.1,
+					"verified": true
 				}`,
-				Results: map[string]any{
-					"create_User": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
-				},
 			},
-			testUtils.Request{
-				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
-						name
-					}
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Addo",
+					"age": 31,
+					"points": 42.1,
+					"verified": true
 				}`,
-				Results: map[string]any{
-					"create_User": []map[string]any{
-						{
-							"name": "Addo",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -76,7 +66,7 @@ func TestCommitSubscriptionWithCreateMutations(t *testing.T) {
 	execute(t, test)
 }
 
-func TestCommitSubscriptionLinksWithCreateMutations(t *testing.T) {
+func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing.T) {
 	create1Links := testUtils.NewSameValue()
 	create2Links := testUtils.NewSameValue()
 
@@ -167,7 +157,7 @@ func TestCommitSubscriptionLinksWithCreateMutations(t *testing.T) {
 	execute(t, test)
 }
 
-func TestCommitSubscriptionWithDocFilterAndMultipleMutations(t *testing.T) {
+func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
 	updateCid := testUtils.NewSameValue()
 
 	docID := "bae-029c4d47-4790-5cd4-9c41-fd5991d88915"

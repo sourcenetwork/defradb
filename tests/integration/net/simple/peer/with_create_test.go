@@ -314,7 +314,7 @@ func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) 
 				},
 			},
 			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
+				NodeID: immutable.Some(1),
 				Doc: `{
                     "Name": "John",
                     "Age": 21
