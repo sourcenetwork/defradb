@@ -1030,7 +1030,10 @@ func refreshDocuments(
 					if commits, ok := data["commits"].([]map[string]any); ok {
 						for _, commit := range commits {
 							cid := cid.MustParse(commit["cid"].(string))
-							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(s.Nodes[firstNodesID].Composites[doc.ID().String()], cid)
+							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
+								s.Nodes[firstNodesID].Composites[doc.ID().String()],
+								cid,
+							)
 						}
 					}
 				}
