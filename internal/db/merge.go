@@ -437,7 +437,7 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = core.ProcessBlock(ctx, crdt, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}

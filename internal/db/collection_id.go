@@ -24,7 +24,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/description"
@@ -453,7 +452,7 @@ func saveBlocks(
 			}
 			hasFieldsChanged = true
 
-			cid, _, err := core.AddDelta(ctx, fieldCRDT, delta)
+			cid, _, err := coreblock.AddDelta(ctx, fieldCRDT, delta)
 			if err != nil {
 				return err
 			}
@@ -472,7 +471,7 @@ func saveBlocks(
 		}
 		hasSetUpdated = true
 
-		cid, _, err := core.AddDelta(ctx, colCRDT, delta, newFieldLevelCIDs...)
+		cid, _, err := coreblock.AddDelta(ctx, colCRDT, delta, newFieldLevelCIDs...)
 		if err != nil {
 			return err
 		}
@@ -523,7 +522,7 @@ func saveBlocks(
 			links = append(links, coreblock.DAGLink{Link: colId})
 		}
 
-		cid, _, err := core.AddDelta(ctx, colSetCRDT, delta, links...)
+		cid, _, err := coreblock.AddDelta(ctx, colSetCRDT, delta, links...)
 		if err != nil {
 			return err
 		}

@@ -158,7 +158,7 @@ func (c *collection) applyDelete(
 	}
 
 	if !c.db.signingDisabled {
-		ctx = core.ContextWithEnabledSigning(ctx)
+		ctx = coreblock.ContextWithEnabledSigning(ctx)
 	}
 
 	merkleCRDT := crdt.NewDocComposite(
@@ -167,7 +167,7 @@ func (c *collection) applyDelete(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, b, err := core.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
+	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (c *collection) applyDelete(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := core.AddDelta(
+		link, headNode, err := coreblock.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),

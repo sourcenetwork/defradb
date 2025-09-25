@@ -395,7 +395,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	err = core.ProcessBlock(
+	err = coreblock.ProcessBlock(
 		vf.ctx,
 		mcrdt,
 		block,
