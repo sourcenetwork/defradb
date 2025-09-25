@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/matchers"
 	"github.com/stretchr/testify/assert"
@@ -1011,9 +1012,34 @@ func refreshDocuments(
 				// the test will fail later anyway
 				continue
 			}
-
+			if s.Nodes[firstNodesID].Composites == nil {
+				s.Nodes[firstNodesID].Composites = make(map[string][]cid.Cid)
+			}
 			for _, doc := range docs {
 				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
+				// We fetch the list of composite commits for the document so that
+				// they can be referenced later in the test if required.
+				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
+					commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
+						cid
+					}
+				}`, client.WithVariables(map[string]any{
+					"docID": doc.ID().String(),
+				}))
+				if data, ok := result.GQL.Data.(map[string]any); ok {
+					if commits, ok := data["commits"].([]map[string]any); ok {
+						for _, commit := range commits {
+							cid := cid.MustParse(commit["cid"].(string))
+							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
+								s.Nodes[firstNodesID].Composites[doc.ID().String()],
+								cid,
+							)
+						}
+					}
+				}
+				if len(result.GQL.Errors) > 0 {
+					s.T.Fatalf("Failed to get existing commits for doc %s: %v", doc.ID(), result.GQL.Errors)
+				}
 			}
 		}
 	}
