@@ -15,14 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestSubscriptionWithCreateMutations(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{state.HTTPClientType, state.CLIClientType}),
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {

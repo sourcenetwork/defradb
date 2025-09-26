@@ -443,6 +443,8 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	return commit, nil
 }
 
+// addSignatureFieldToDoc adds the signature from the provided block link
+// to the provided document.
 // pre-condition: the signature needs to have been requested in the query selection
 // so that it properly populates the mapper, will panic otherwise.
 func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc) error {

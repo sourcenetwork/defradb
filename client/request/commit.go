@@ -63,7 +63,7 @@ func (c CommitSelect) ToSelect() *Select {
 	}
 }
 
-// Implements the subscriptionSelector interface in internal/db/subscriptions.go
+// ToSubscriptionSelect implements the subscriptionSelector interface in internal/db/subscriptions.go
 // We can safely ignore the first parameter (docID) for now
 // since its always copied from the original subscription request
 func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
