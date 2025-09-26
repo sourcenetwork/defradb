@@ -24,6 +24,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+const (
+	sseAcceptHeader  = "text/event-stream"
+	jsonAcceptHeader = "application/json"
+)
+
 type storeHandler struct{}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
@@ -240,60 +245,79 @@ type GraphQLRequest struct {
 }
 
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
+	// handle different request transports
+	// specifically, SSE
+	if req.Header.Get("Accept") == sseAcceptHeader {
+		execSSESubscription(rw, req)
+		return
+	}
+
+	// if its not a subscription, then its just a regular
+	// GraphQL over HTTP request
+	execHTTPRequest(rw, req)
+}
+
+func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var request GraphQLRequest
-	switch {
-	case req.URL.Query().Get("query") != "":
-
-		request.Query = req.URL.Query().Get("query")
-
-		request.OperationName = req.URL.Query().Get("operationName")
-
-		variablesFromQuery := req.URL.Query().Get("variables")
-		if variablesFromQuery != "" {
-			var variables map[string]any
-			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
-			}
-			request.Variables = variables
-		}
-
-	case req.Body != nil:
-		if err := requestJSON(req, &request); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
-	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
+	request, options, err := extractGraphQLRequest(req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	var options []client.RequestOption
-	if request.OperationName != "" {
-		options = append(options, client.WithOperationName(request.OperationName))
-	}
-	if len(request.Variables) > 0 {
-		options = append(options, client.WithVariables(request.Variables))
-	}
+
 	result := db.ExecRequest(req.Context(), request.Query, options...)
 
-	if result.Subscription == nil {
-		responseJSON(rw, http.StatusOK, result.GQL)
+	// if at this point the we get a subscription query, it isn't using
+	// the correct accept headers, and we error
+	if result.Subscription != nil {
+		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
 		return
 	}
+
+	responseJSON(rw, http.StatusOK, result.GQL)
+}
+
+func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	request, options, err := extractGraphQLRequest(req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	// upgrade to SSE connection
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
 		return
 	}
 
-	rw.Header().Add("Content-Type", "text/event-stream")
+	rw.Header().Add("Content-Type", sseAcceptHeader)
 	rw.Header().Add("Cache-Control", "no-cache")
 	rw.Header().Add("Connection", "keep-alive")
-
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
+
+	result := db.ExecRequest(req.Context(), request.Query, options...)
+
+	// if we get an error in the initial GQL request, we need to emit
+	// it as a SSE event, then we can close the connection/subscription
+	if len(result.GQL.Errors) > 0 {
+		data, err := json.Marshal(result.GQL)
+		if err != nil {
+			return
+		}
+
+		err = emitSSENextEvent(rw, flusher, string(data))
+		if err != nil {
+			return
+		}
+
+		_ = emitSSECompleteEvent(rw, flusher)
+		return
+	}
 
 	serverCtx, hasServerCtx := tryGetContexCtx(req)
 	var serverDone <-chan struct{}
@@ -308,15 +332,7 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			// We need to check for closure of the server context
 			// otherwise the server won't gracefully shutdown until all
 			// connections are closed.
-			_, err := fmt.Fprintf(rw, "event: complete\n")
-			if err != nil {
-				return
-			}
-			_, err = fmt.Fprintf(rw, "data: {}\n\n")
-			if err != nil {
-				return
-			}
-			flusher.Flush()
+			_ = emitSSECompleteEvent(rw, flusher)
 			return
 		case item, open := <-result.Subscription:
 			if !open {
@@ -326,19 +342,69 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				return
 			}
-			// For compatibility with SSE, the payload should have
-			// a line defining the `event`.
-			_, err = fmt.Fprintf(rw, "event: next\n")
-			if err != nil {
-				return
-			}
-			_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
-			if err != nil {
-				return
-			}
-			flusher.Flush()
+
+			_ = emitSSENextEvent(rw, flusher, string(data))
 		}
 	}
+}
+
+func emitSSENextEvent(rw http.ResponseWriter, flusher http.Flusher, data string) error {
+	return emitSSEEvent(rw, flusher, "next", data)
+}
+
+func emitSSECompleteEvent(rw http.ResponseWriter, flusher http.Flusher) error {
+	return emitSSEEvent(rw, flusher, "complete", "{}")
+}
+
+func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string, data string) error {
+	// For compatibility with SSE, the payload should have
+	// a line defining the `event`.
+	_, err := fmt.Fprintf(rw, "event: %s\n", eventType)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
+	if err != nil {
+		return err
+	}
+	flusher.Flush()
+	return nil
+}
+
+func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
+	var request GraphQLRequest
+	switch {
+	case req.URL.Query().Get("query") != "":
+
+		request.Query = req.URL.Query().Get("query")
+
+		request.OperationName = req.URL.Query().Get("operationName")
+
+		variablesFromQuery := req.URL.Query().Get("variables")
+		if variablesFromQuery != "" {
+			var variables map[string]any
+			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+				return GraphQLRequest{}, nil, err
+			}
+			request.Variables = variables
+		}
+
+	case req.Body != nil:
+		if err := requestJSON(req, &request); err != nil {
+			return GraphQLRequest{}, nil, err
+		}
+	default:
+		return GraphQLRequest{}, nil, ErrMissingRequest
+	}
+	var options []client.RequestOption
+	if request.OperationName != "" {
+		options = append(options, client.WithOperationName(request.OperationName))
+	}
+	if len(request.Variables) > 0 {
+		options = append(options, client.WithVariables(request.Variables))
+	}
+
+	return request, options, nil
 }
 
 func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {

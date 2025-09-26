@@ -29,6 +29,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	"github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 var _ client.TxnStore = (*Client)(nil)
@@ -337,11 +340,21 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	err = c.http.setDefaultHeaders(req)
 
+	err = c.http.setDefaultHeaders(req)
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
+	}
+
+	op, err := parseGraphQLOperation(query)
+	if err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		return result
+	}
+
+	if op == ast.OperationTypeSubscription {
+		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
 	res, err := c.http.client.Do(req)
@@ -349,7 +362,7 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	if res.Header.Get("Content-Type") == "text/event-stream" {
+	if res.Header.Get("Content-Type") == sseAcceptHeader {
 		result.Subscription = c.execRequestSubscription(res.Body)
 		return result
 	}
@@ -465,4 +478,31 @@ func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.
 
 	_, err = c.http.request(req)
 	return err
+}
+
+func parseGraphQLQuery(query string) (*ast.Document, error) {
+	return parser.Parse(parser.ParseParams{
+		Source: &source.Source{
+			Body: []byte(query),
+			Name: "GraphQL",
+		},
+	})
+}
+
+func parseGraphQLOperation(query string) (string, error) {
+	doc, err := parseGraphQLQuery(query)
+	if err != nil {
+		return "", err
+	}
+
+	if len(doc.Definitions) == 0 {
+		return "", ErrInvalidGraphQLRequest
+	}
+
+	op, ok := doc.Definitions[0].(*ast.OperationDefinition)
+	if !ok {
+		return "", ErrInvalidGraphQLRequest
+	}
+
+	return op.Operation, nil
 }
