@@ -42,7 +42,14 @@ func parseSubscriptionOperationDefinition(
 // parseSubscription parses a typed subscription field
 // which includes sub fields, and may include
 // filters, IDs, etc.
-func parseSubscription(exe *gql.ExecutionContext, field *ast.Field) (*request.ObjectSubscription, error) {
+func parseSubscription(exe *gql.ExecutionContext, field *ast.Field) (request.Selection, error) {
+	if field.Name.Value == "commits" {
+		return parseCommitSelect(exe, exe.Schema.SubscriptionType(), field)
+	}
+	return parseObjectSubscription(exe, field)
+}
+
+func parseObjectSubscription(exe *gql.ExecutionContext, field *ast.Field) (*request.ObjectSubscription, error) {
 	sub := &request.ObjectSubscription{
 		Field: request.Field{
 			Name:  field.Name.Value,

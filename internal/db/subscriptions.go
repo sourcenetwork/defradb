@@ -16,9 +16,14 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
+
+type subscriptionSelector interface {
+	ToSubscriptionSelect(docID, cid string) request.Selection
+}
 
 // handleSubscription checks for a subscription within the given request and
 // starts a new go routine that will return all subscription results on the returned
@@ -27,11 +32,11 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	if len(r.Subscription) == 0 || len(r.Subscription[0].Selections) == 0 {
 		return nil, nil // This is not a subscription request and we have nothing to do here
 	}
-	selections := r.Subscription[0].Selections[0]
-	subRequest, ok := selections.(*request.ObjectSubscription)
+	subRequest, ok := r.Subscription[0].Selections[0].(subscriptionSelector)
 	if !ok {
-		return nil, client.NewErrUnexpectedType[request.ObjectSubscription]("SubscriptionSelection", selections)
+		return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
 	}
+
 	sub, err := db.events.Subscribe(event.UpdateName)
 	if err != nil {
 		return nil, err
@@ -58,7 +63,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-
 			txn, err := db.NewTxn(ctx, false)
 			if err != nil {
 				log.ErrorContext(ctx, err.Error())
@@ -67,15 +71,43 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			ctx := InitContext(ctx, txn)
 
 			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
-			s := subRequest.ToSelect(evt.DocID, evt.Cid.String())
+			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 
 			result, err := p.RunSelection(ctx, s)
 			if err == nil && len(result) == 0 {
 				txn.Discard(ctx)
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}
+
 			res := client.GQLResult{}
-			if err != nil {
+
+			// This approach will only support return types that are []map[string]any
+			// (ie docs) for results. So top level aggregates, or other top level fields
+			// that we would want to add to subscriptions that don't return
+			// docs currently will not work.
+			for op, data := range result {
+				resultSlice, ok := data.([]map[string]any)
+				if !ok {
+					res.Errors = append(res.Errors, ErrBadDocsResultType)
+				}
+
+				if len(resultSlice) == 0 {
+					delete(result, op)
+				}
+			}
+
+			// now that weve filtered empty result sets, lets recheck
+			if len(result) == 0 {
+				txn.Discard(ctx)
+				continue
+			}
+
+			// ignore incorrect CID for DocID error. This is specific to
+			// subscription API. Only the DocID is externally configurable for
+			// this API, but the CID comes from the event, which means theres a
+			// high likely hood of CID/DocID mismatch, so we need to ignore it
+			// to falsely report errors to the subscription.
+			if err != nil && !errors.Is(err, planner.ErrIncorrectOrMissingCID) {
 				res.Errors = append(res.Errors, err)
 			}
 			res.Data = result

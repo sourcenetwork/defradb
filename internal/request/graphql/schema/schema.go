@@ -25,10 +25,12 @@ func defaultSchema() (gql.Schema, error) {
 	commitLinkObject := types.CommitLinkObject()
 	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
-
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
-	return gql.NewSchema(gql.SchemaConfig{
+	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
+	queryLatestCommits := types.QueryLatestCommits(commitObject)
+
+	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
 			commitObject,
 			commitLinkObject,
@@ -38,31 +40,17 @@ func defaultSchema() (gql.Schema, error) {
 			explainEnum,
 			indexFieldInput,
 		),
-		Query:        defaultQueryType(commitObject, commitsOrderArg),
+		Query:        defaultQueryType(queryCommits, queryLatestCommits),
 		Mutation:     defaultMutationType(),
 		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
-		Subscription: defaultSubscriptionType(),
+		Subscription: defaultSubscriptionType(queryCommits),
 	})
+
+	return sch, err
 }
 
-// @todo: Use a better default Query type
-func defaultQueryType(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Object {
-	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
-	queryLatestCommits := types.QueryLatestCommits(commitObject)
-
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Query",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-
-			// database API queries
-			queryCommits.Name:       queryCommits,
-			queryLatestCommits.Name: queryLatestCommits,
-		},
-	})
+func defaultQueryType(fields ...*gql.Field) *gql.Object {
+	return defaultOperationType("Query", fields...)
 }
 
 func defaultMutationType() *gql.Object {
@@ -77,15 +65,19 @@ func defaultMutationType() *gql.Object {
 	})
 }
 
-func defaultSubscriptionType() *gql.Object {
+func defaultSubscriptionType(fields ...*gql.Field) *gql.Object {
+	return defaultOperationType("Subscription", fields...)
+}
+
+func defaultOperationType(name string, fields ...*gql.Field) *gql.Object {
+	fieldsCfg := make(gql.Fields, len(fields))
+	for _, field := range fields {
+		fieldsCfg[field.Name] = field
+	}
+
 	return gql.NewObject(gql.ObjectConfig{
-		Name: "Subscription",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-		},
+		Name:   name,
+		Fields: fieldsCfg,
 	})
 }
 

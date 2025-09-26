@@ -27,9 +27,9 @@ type ObjectSubscription struct {
 	Collection string
 }
 
-// ToSelect returns a basic Select object, with the same Name, Alias, and Fields as
+// ToSubscriptionSelect returns a basic Select object, with the same Name, Alias, and Fields as
 // the Subscription object. Used to create a Select planNode for the event stream return objects.
-func (m ObjectSubscription) ToSelect(docID, cid string) *Select {
+func (m ObjectSubscription) ToSubscriptionSelect(docID, cid string) Selection {
 	return &Select{
 		Field: Field{
 			Name:  m.Collection,

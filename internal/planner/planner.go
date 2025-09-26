@@ -607,7 +607,7 @@ func (p *Planner) executeRequest(
 // RunSelection runs a selection and returns the result(s).
 func (p *Planner) RunSelection(
 	ctx context.Context,
-	sel *request.Select,
+	sel request.Selection,
 ) (map[string]any, error) {
 	req := &request.Request{
 		Queries: []*request.OperationDefinition{{

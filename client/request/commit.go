@@ -10,7 +10,9 @@
 
 package request
 
-import "github.com/sourcenetwork/immutable"
+import (
+	"github.com/sourcenetwork/immutable"
+)
 
 var (
 	_ Selection = (*CommitSelect)(nil)
@@ -57,6 +59,23 @@ func (c CommitSelect) ToSelect() *Select {
 		Offsetable:  c.Offsetable,
 		Orderable:   c.Orderable,
 		Groupable:   c.Groupable,
+		ChildSelect: c.ChildSelect,
+	}
+}
+
+// ToSubscriptionSelect implements the subscriptionSelector interface in internal/db/subscriptions.go
+// We can safely ignore the first parameter (docID) for now
+// since its always copied from the original subscription request
+func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
+	return &CommitSelect{
+		Field: Field{
+			Name:  c.Name,
+			Alias: c.Alias,
+		},
+		DocID: c.DocID,
+		CIDFilter: CIDFilter{
+			immutable.Some(cid),
+		},
 		ChildSelect: c.ChildSelect,
 	}
 }

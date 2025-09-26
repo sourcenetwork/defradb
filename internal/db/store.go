@@ -108,7 +108,7 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeSchemaAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
 	}
 
@@ -148,6 +148,10 @@ func (db *DB) PatchCollection(
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+		return err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
