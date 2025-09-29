@@ -228,6 +228,17 @@ func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
+func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	indexes, err := db.ListAllEncryptedIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, indexes)
+}
+
 func (h *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
@@ -688,11 +699,34 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	getAllIndexes.AddResponse(200, getAllIndexesResponse)
 	getAllIndexes.Responses.Set("400", errorResponse)
 
+	encryptedIndexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/encrypted_index",
+	}
+	encryptedIndexArraySchema := openapi3.NewArraySchema()
+	encryptedIndexArraySchema.Items = encryptedIndexSchema
+
+	getAllEncryptedIndexesMapSchema := openapi3.NewObjectSchema()
+	getAllEncryptedIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
+		Schema: openapi3.NewSchemaRef("", encryptedIndexArraySchema),
+	}
+
+	getAllEncryptedIndexesResponse := openapi3.NewResponse().
+		WithDescription("Map of collection names to their encrypted indexes").
+		WithJSONSchema(getAllEncryptedIndexesMapSchema)
+
+	getAllEncryptedIndexes := openapi3.NewOperation()
+	getAllEncryptedIndexes.OperationID = "encrypted_indexes_list_all"
+	getAllEncryptedIndexes.Description = "List all encrypted indexes for all collections"
+	getAllEncryptedIndexes.Tags = []string{"encrypted_index"}
+	getAllEncryptedIndexes.AddResponse(200, getAllEncryptedIndexesResponse)
+	getAllEncryptedIndexes.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
 	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
+	router.AddRoute("/encrypted-indexes", http.MethodGet, getAllEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
