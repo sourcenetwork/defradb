@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
+func TestEncryptedIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -61,7 +61,7 @@ func TestEncryptedIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexGet_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
+func TestEncryptedIndexList_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -94,6 +94,47 @@ func TestEncryptedIndexGet_IfIndexCreatedLater_ShouldReturnListOfExistingIndexes
 					{
 						FieldName: "age",
 						Type:      client.EncryptedIndexTypeEquality,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestEncryptedIndexList_WhenRequestingAllIndexes_ShouldReturn(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String @encryptedIndex
+						age: Int @encryptedIndex
+					}
+					
+					type Address {
+						street: String @encryptedIndex
+					}
+				`,
+			},
+			testUtils.ListAllEncryptedIndexes{
+				ExpectedIndexes: map[client.CollectionName][]client.EncryptedIndexDescription{
+					"User": {
+						{
+							FieldName: "name",
+							Type:      client.EncryptedIndexTypeEquality,
+						},
+						{
+							FieldName: "age",
+							Type:      client.EncryptedIndexTypeEquality,
+						},
+					},
+					"Address": {
+						{
+							FieldName: "street",
+							Type:      client.EncryptedIndexTypeEquality,
+						},
 					},
 				},
 			},

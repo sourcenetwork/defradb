@@ -453,6 +453,9 @@ func performAction(
 	case ListEncryptedIndexes:
 		listEncryptedIndexes(s, action)
 
+	case ListAllEncryptedIndexes:
+		listAllEncryptedIndexes(s, action)
+
 	case DeleteEncryptedIndex:
 		deleteEncryptedIndex(s, action)
 
@@ -1771,6 +1774,48 @@ func listEncryptedIndexes(
 
 				require.ElementsMatch(s.T, action.ExpectedIndexes, actualIndexes,
 					"Unexpected encrypted indexes")
+
+				return nil
+			},
+		)
+		expectedErrorRaised = expectedErrorRaised ||
+			AssertError(s.T, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+}
+
+func listAllEncryptedIndexes(
+	s *state.State,
+	action ListAllEncryptedIndexes,
+) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	var expectedErrorRaised bool
+
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	for _, nodeID := range nodeIDs {
+		err := withRetryOnNode(
+			s.Nodes[nodeID],
+			func() error {
+				allActualIndexes, err := s.Nodes[nodeID].ListAllEncryptedIndexes(s.Ctx)
+				if err != nil {
+					return err
+				}
+
+				for collectionName, expectedIndexes := range action.ExpectedIndexes {
+					actualIndexes, exists := allActualIndexes[collectionName]
+					require.True(s.T, exists, "Collection %s should exist in actual indexes", collectionName)
+					require.ElementsMatch(s.T, expectedIndexes, actualIndexes,
+						"Unexpected encrypted indexes for collection %s", collectionName)
+					delete(allActualIndexes, collectionName)
+				}
+
+				if len(allActualIndexes) > 0 {
+					require.Fail(s.T, "Some collection have unexpected indexes", allActualIndexes)
+				}
 
 				return nil
 			},

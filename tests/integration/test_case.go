@@ -553,7 +553,7 @@ type CreateEncryptedIndex struct {
 // ListEncryptedIndexes will attempt to list encrypted index from the given collection
 // using the collection api.
 type ListEncryptedIndexes struct {
-	// NodeID may hold the ID (index) of a node to create the secondary index on.
+	// NodeID may hold the ID (index) of a node to list the encrypted index on.
 	//
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
@@ -563,6 +563,23 @@ type ListEncryptedIndexes struct {
 
 	// The expected encrypted indexes to be returned.
 	ExpectedIndexes []client.EncryptedIndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// ListAllEncryptedIndexes will attempt to list encrypted index from all collections.
+type ListAllEncryptedIndexes struct {
+	// NodeID may hold the ID (index) of a node to list the encrypted index on.
+	//
+	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
+	NodeID immutable.Option[int]
+
+	// The expected encrypted indexes by collection names to be returned.
+	ExpectedIndexes map[client.CollectionName][]client.EncryptedIndexDescription
 
 	// Any error expected from the action. Optional.
 	//
