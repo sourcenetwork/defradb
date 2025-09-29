@@ -2,14 +2,23 @@
 set -euo pipefail
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <ANDROID_NDK_PATH> [BUILD_FLAGS]"
+  echo "Usage: $0 <ANDROID_NDK_PATH> [BUILD_FLAGS] [API LEVEL]"
   exit 1
 fi
 
-ANDROID_NDK="$1"
-BUILD_FLAGS="${2:-}"
+API_LEVEL=21
+BUILD_FLAGS=""
 
-echo "Building c-shared library for Android (arm64) using NDK at: $ANDROID_NDK"
+# Parse remaining arguments
+for arg in "$@"; do
+  if [[ "$arg" =~ ^[0-9]+$ ]] && [ "$API_LEVEL" = 21 ]; then
+    API_LEVEL="$arg"
+  else
+    BUILD_FLAGS="$BUILD_FLAGS $arg"
+  fi
+done
+
+echo "Building c-shared library for Android (arm64) using NDK at: $ANDROID_NDK (API level $API_LEVEL)"
 
 search="package cbindings"
 replace="package main"
@@ -41,12 +50,20 @@ rm -f "$BUILD_DIR"/x86_64/*.so
 mkdir -p "$BUILD_DIR/x86_64"
 mkdir -p "$BUILD_DIR/arm64-v8a"
 
+# Detect host platform
+case "$(uname -s)" in
+    Linux*)   HOST_TAG=linux-x86_64 ;;
+    Darwin*)  HOST_TAG=darwin-x86_64 ;;
+    MINGW*|MSYS*|CYGWIN*) HOST_TAG=windows-x86_64 ;;
+    *)        echo "Unknown host: $(uname -s)"; exit 1 ;;
+esac
+
 # Build arm64-v8a
 echo "Building arm64-v8a shared object..."
 CGO_ENABLED=1 \
 GOOS=android \
 GOARCH=arm64 \
-CC="$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" \
+CC="$ANDROID_NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android${API_LEVEL}-clang" \
 go build -tags "cshared android" -buildmode=c-shared \
     -ldflags='-extldflags "-Wl,-soname,libdefradb.so"' \
     -o "$BUILD_DIR/arm64-v8a/libdefradb.so" ./cbindings
@@ -56,7 +73,7 @@ echo "Building x86_64 shared object..."
 CGO_ENABLED=1 \
 GOOS=android \
 GOARCH=amd64 \
-CC="$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang" \
+CC="$ANDROID_NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/x86_64-linux-android${API_LEVEL}-clang" \
 go build -tags "cshared android" -buildmode=c-shared \
     -ldflags='-extldflags "-Wl,-soname,libdefradb.so"' \
     -o "$BUILD_DIR/x86_64/libdefradb.so" ./cbindings

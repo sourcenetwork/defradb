@@ -436,12 +436,12 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
-	
+
+.PHONY build-c-shared-linux:	
 build-c-shared-linux:
 	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
-	
+
+API_LEVEL ?= 21
+.PHONY: build-c-shared-android
 build-c-shared-android:
-ifndef ANDROID_NDK
-	$(error ANDROID_NDK is not set. Usage: make build-c-shared-android ANDROID_NDK=/path/to/ndk)
-endif
-	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) "$(BUILD_FLAGS)"
+	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"
