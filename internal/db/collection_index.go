@@ -321,7 +321,7 @@ func (c *collection) indexExistingDocs(
 	ctx context.Context,
 	index CollectionIndex,
 ) error {
-	fields := make([]client.CollectionFieldDescription, 0, 1)
+	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().Fields))
 	for _, field := range index.Description().Fields {
 		colField, ok := c.Version().GetFieldByName(field.Name)
 		if ok {

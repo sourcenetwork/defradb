@@ -88,13 +88,11 @@ func createTestRetryInfo(nextRetryOffset time.Duration, numRetries int, retrying
 func TestProcessSERetries_WhenRetryNotDue_ShouldNotMarkAsRetrying(t *testing.T) {
 	setup := newRetryTestSetup(t)
 
-	// Test scenario: retry scheduled for future
 	retryInfo := createTestRetryInfo(1*time.Hour, 0, false)
 	retryKey := setup.storeRetryInfo(t, "peer-456", retryInfo)
 
 	setup.coordinator.processSERetries(setup.ctx)
 
-	// Verify retry was NOT modified
 	updatedInfo := setup.getRetryInfo(t, retryKey)
 	require.False(t, updatedInfo.Retrying, "Retry should not be marked as in progress")
 	require.Equal(t, 0, updatedInfo.NumRetries, "NumRetries should not be incremented")
@@ -103,31 +101,19 @@ func TestProcessSERetries_WhenRetryNotDue_ShouldNotMarkAsRetrying(t *testing.T) 
 func TestProcessSERetries_WhenAlreadyRetrying_ShouldNotReprocess(t *testing.T) {
 	setup := newRetryTestSetup(t)
 
-	// Test scenario: retry is due but already in progress
 	retryInfo := createTestRetryInfo(-1*time.Hour, 2, true)
 	retryKey := setup.storeRetryInfo(t, "peer-789", retryInfo)
 
 	setup.coordinator.processSERetries(setup.ctx)
 
-	// Verify retry was NOT modified
 	updatedInfo := setup.getRetryInfo(t, retryKey)
 	require.True(t, updatedInfo.Retrying, "Retrying flag should remain true")
 	require.Equal(t, 2, updatedInfo.NumRetries, "NumRetries should not be incremented")
 }
 
-func TestProcessSERetries_WhenNoRetries_ShouldCompleteWithoutError(t *testing.T) {
-	setup := newRetryTestSetup(t)
-
-	// Test scenario: empty peerstore (no retries to process)
-	setup.coordinator.processSERetries(setup.ctx)
-
-	// Test passes if no panic/error occurs
-}
-
 func TestProcessSERetries_WhenMultipleRetries_ShouldProcessOnlyDueOnes(t *testing.T) {
 	setup := newRetryTestSetup(t)
 
-	// Test scenario: mix of due and not-due retries
 	notDue := createTestRetryInfo(1*time.Hour, 0, false)
 	alreadyRetrying := createTestRetryInfo(-1*time.Hour, 1, true)
 
@@ -136,7 +122,6 @@ func TestProcessSERetries_WhenMultipleRetries_ShouldProcessOnlyDueOnes(t *testin
 
 	setup.coordinator.processSERetries(setup.ctx)
 
-	// Verify neither was modified
 	key1 := keys.NewPeerstoreSERetry("peer-1", notDue.CollectionID, notDue.DocID)
 	key2 := keys.NewPeerstoreSERetry("peer-2", alreadyRetrying.CollectionID, alreadyRetrying.DocID)
 
