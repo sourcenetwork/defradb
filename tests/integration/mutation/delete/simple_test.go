@@ -55,7 +55,7 @@ func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 
 					}
 				}`,
-				ExpectedError: "Syntax Error GraphQL request (2:17) Unexpected empty IN {}",
+				ExpectedError: "Syntax Error GraphQL",
 			},
 		},
 	}

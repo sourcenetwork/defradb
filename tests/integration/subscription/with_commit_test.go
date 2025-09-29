@@ -1,0 +1,233 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package subscription
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					commits {
+						cid
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"commits": []map[string]any{
+							{
+								"cid": "bafyreigpqtbobuikkvne7wkszl6xqgatsvhhzmwjh4uunpf5xldnjouu4a",
+							},
+						},
+					},
+					{
+						"commits": []map[string]any{
+							{
+								"cid": "bafyreihsducixg7n6wdbqoyjao4pecsalt4zjx2ybyncizqhq2ci46gyoa",
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 27,
+					"points": 42.1,
+					"verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Addo",
+					"age": 31,
+					"points": 42.1,
+					"verified": true
+				}`,
+			},
+		},
+	}
+
+	execute(t, test)
+}
+
+func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing.T) {
+	create1Links := testUtils.NewSameValue()
+	create2Links := testUtils.NewSameValue()
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					commits {
+						cid
+						links {
+							cid
+							name
+						}
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"commits": []map[string]any{
+							{
+								"cid":   "bafyreigpqtbobuikkvne7wkszl6xqgatsvhhzmwjh4uunpf5xldnjouu4a",
+								"links": create1Links,
+							},
+						},
+					},
+					{
+						"commits": []map[string]any{
+							{
+								"cid":   "bafyreihsducixg7n6wdbqoyjao4pecsalt4zjx2ybyncizqhq2ci46gyoa",
+								"links": create2Links,
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
+						name
+						_version {
+							links {
+								cid
+								name
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "John",
+							"_version": []map[string]any{
+								{
+									"links": create1Links,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+						name
+						_version {
+							links {
+								cid
+								name
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "Addo",
+							"_version": []map[string]any{
+								{
+									"links": create2Links,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	execute(t, test)
+}
+
+func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
+	updateCid := testUtils.NewSameValue()
+
+	docID := "bae-029c4d47-4790-5cd4-9c41-fd5991d88915"
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					commits(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915") {
+						cid		
+						docID
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"commits": []map[string]any{
+							{
+								"cid":   updateCid,
+								"docID": docID,
+							},
+						},
+					},
+				},
+			},
+			// this mutation must be ignored by the subscription
+			testUtils.Request{
+				Request: `mutation {
+					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"name": "Addo",
+						},
+					},
+				},
+			},
+			// this mutation will be included in the subscription
+			testUtils.Request{
+				Request: `mutation {
+					update_User(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915", input: {verified: false}) {
+						_docID
+						_version {
+							cid
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"update_User": []map[string]any{
+						{
+							"_docID": docID,
+							"_version": []map[string]any{
+								{
+									"cid": updateCid,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	execute(t, test)
+}

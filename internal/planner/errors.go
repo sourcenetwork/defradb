@@ -41,10 +41,10 @@ var (
 	ErrUpsertMultipleDocuments             = errors.New("cannot upsert multiple matching documents")
 	ErrMismatchLengthOnSimilarity          = errors.New("source and vector must be of the same length")
 	ErrIncorrectCIDForDocId                = errors.New("cid does not belong to document")
-	ErrMissingCID                          = errors.New("missing cid")
 	ErrUnsupportedEncryptedOperator        = errors.New(errUnsupportedEncryptedOperator)
 	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
+	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
 )
 
 func NewErrUnknownDependency(name string) error {

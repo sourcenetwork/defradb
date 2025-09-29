@@ -39,7 +39,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
-				ExpectedError: "missing cid",
+				ExpectedError: "cid either does not exist or belong to document",
 			},
 		},
 	}
@@ -77,7 +77,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 				Results: map[string]any{
 					"commits": []map[string]any{},
 				},
-				ExpectedError: "cid does not belong to document",
+				ExpectedError: "cid either does not exist or belong to document",
 			},
 		},
 	}

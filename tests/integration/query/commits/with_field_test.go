@@ -139,3 +139,88 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryCommitsWithFieldAndCID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits (fieldName: "age", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"commits": []map[string]any{
+						{
+							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits (fieldName: "name", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						commits (fieldName: "NOT_A_FIELD", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
