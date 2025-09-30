@@ -1813,6 +1813,39 @@
                 ]
             }
         },
+        "/encrypted-indexes": {
+            "get": {
+                "description": "List all encrypted indexes for all collections",
+                "operationId": "encrypted_indexes_list_all",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "items": {
+                                            "$ref": "#/components/schemas/encrypted_index"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Map of collection names to their encrypted indexes"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            }
+        },
         "/graphql": {
             "get": {
                 "description": "GraphQL GET endpoint",
