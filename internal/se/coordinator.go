@@ -365,5 +365,5 @@ func (rc *Coordinator) generateSEArtifacts(
 		return nil, fmt.Errorf("failed to get document: %w", err)
 	}
 
-	return GenerateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
+	return generateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
 }

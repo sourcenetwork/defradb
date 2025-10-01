@@ -26,9 +26,9 @@ import (
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
-// StoreArtifacts stores SE artifacts directly in the datastore.
+// storeArtifacts stores SE artifacts directly in the datastore.
 // This is called by the server when receiving artifacts from peers.
-func StoreArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []secore.Artifact) error {
+func storeArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []secore.Artifact) error {
 	for _, artifact := range artifacts {
 		key := keys.DatastoreSE{
 			CollectionID: artifact.CollectionID,
@@ -45,9 +45,9 @@ func StoreArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []sec
 	return nil
 }
 
-// FetchDocIDs queries the datastore for SE artifacts matching the given queries
+// fetchDocIDs queries the datastore for SE artifacts matching the given queries
 // and returns the document IDs for documents that match all queries.
-func FetchDocIDs(
+func fetchDocIDs(
 	ctx context.Context,
 	ds corekv.ReaderWriter,
 	collectionID string,
@@ -124,9 +124,9 @@ type FieldQuery struct {
 	SearchTag []byte
 }
 
-// GenerateDocArtifacts generates SE artifacts for specified fields of a document.
+// generateDocArtifacts generates SE artifacts for specified fields of a document.
 // If fieldNames is empty or nil, artifacts are generated for all encrypted fields.
-func GenerateDocArtifacts(
+func generateDocArtifacts(
 	ctx context.Context,
 	col client.Collection,
 	doc *client.Document,
