@@ -17,6 +17,14 @@ import (
 )
 
 // GenerateEqualityTag creates a deterministic search tag for equality queries
+//
+// SECURITY NOTE: This function generates the SAME tag for the same value across
+// ALL documents in the collection. This enables efficient equality search but
+// reveals when multiple documents share the same field value (frequency analysis).
+// For fields with low cardinality (e.g., boolean, status codes), consider the
+// privacy implications.
+//
+// The tag is computed as: HMAC-SHA256(key, "eq:collectionID:fieldName" || value)[:16]
 func GenerateEqualityTag(
 	key []byte,
 	collectionID string,
@@ -35,6 +43,8 @@ func GenerateEqualityTag(
 	h.Write(value)
 	tag := h.Sum(nil)
 
-	// Truncate to 16 bytes for efficiency (128-bit security)
+	// Truncate to 16 bytes for storage and network efficiency.
+	// HMAC's security doesn't degrade linearly with truncation and (128 bits) is explicitly approved
+	// by cryptographic standards providing good collision resistance even with billions of documents.
 	return tag[:16], nil
 }
