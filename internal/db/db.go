@@ -93,7 +93,7 @@ type DB struct {
 	// If true, block signing is disabled. By default, block signing is enabled.
 	signingDisabled bool
 
-	// The key used for searchable encryption.
+	// The cryptographic key used to generate search tags for searchable encryption.
 	searchableEncryptionKey []byte
 
 	// SE replication coordinator
