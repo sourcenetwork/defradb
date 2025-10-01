@@ -39,9 +39,9 @@ const (
 	errDefaultValueOneArg             string = "default value must specify one argument"
 	errFieldTypeNotSpecified          string = "field type not specified"
 	errInvalidTypeForConstraint       string = "size constraint can only be applied to array fields"
-	errEncryptedIndexUnknownArgument  string = "encryptedIndex with unknown argument"
-	errEncryptedIndexInvalidArgument  string = "encryptedIndex with invalid argument"
-	errEncryptedIndexTypeNotSupported string = "encryptedIndex type not supported"
+	errEncryptedIndexUnknownArgument  string = "encrypted index with unknown argument"
+	errEncryptedIndexInvalidArgument  string = "encrypted index with invalid argument"
+	errEncryptedIndexTypeNotSupported string = "encrypted index type not supported"
 )
 
 var (

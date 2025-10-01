@@ -93,11 +93,10 @@ func parseSelect(
 	field *ast.Field,
 ) (*request.Select, error) {
 	isEncrypted := strings.HasPrefix(field.Name.Value, request.EncryptedCollectionPrefix)
-	fieldName := field.Name.Value
 
 	slct := &request.Select{
 		Field: request.Field{
-			Name:  fieldName,
+			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
 		IsEncrypted: isEncrypted,
