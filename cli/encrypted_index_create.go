@@ -27,6 +27,8 @@ func MakeEncryptedIndexCreateCommand() *cobra.Command {
 		
 The --type flag is optional. If not provided, the default value will be "equality".
 
+Currently only "equality" type is supported.
+
 Example: create an index for 'Users' collection on 'name' field:
   defradb client encrypted-index create --collection Users --field name
 `,
