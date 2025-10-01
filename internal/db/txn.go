@@ -187,13 +187,6 @@ func (txn *Txn) VerifySignature(ctx context.Context, blockCid string, pubKey cry
 	return txn.db.VerifySignature(ctx, blockCid, pubKey)
 }
 
-func (txn *Txn) GetSearchableEncryptionKey() []byte {
-	if txn.db == nil {
-		return nil
-	}
-	return txn.db.searchableEncryptionKey
-}
-
 func (txn *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddSchema(ctx, sdl)
