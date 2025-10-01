@@ -103,11 +103,7 @@ func (proc *pushLogCommProcessor) ProcessRequest(
 	ctx context.Context,
 	req protocol.PushLogRequest,
 ) (protocol.PushLogReply, error) {
-	f := func(ctx context.Context, req *protocol.PushLogRequest) error {
-		return proc.p2p.processPushlogRequest(ctx, req, true)
-	}
-
-	return protocol.PushLogReply{}, f(ctx, &req)
+	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, true)
 }
 
 // New returns a new configured P2P instance.
