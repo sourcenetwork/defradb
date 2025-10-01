@@ -25,27 +25,20 @@ const (
 	protocolResponseSuffix = "_resp/" + protocolVersion
 )
 
+type messagePointer[T any] interface {
+	*T
+	message.Message
+}
+
 // CommProcessor defines the interface for processing requests and replies.
 // Uses 4 type parameters to solve the embedded interface pointer receiver problem:
 // - Req/Reply: Value types for stack allocation and clean processor signatures
 // - ReqP/ReplyP: Pointer types that implement message.Message interface
-type CommProcessor[Req any, Reply any, ReqP interface {
-	*Req
-	message.Message
-}, ReplyP interface {
-	*Reply
-	message.Message
-}] interface {
+type CommProcessor[Req any, Reply any, ReqP messagePointer[Req], ReplyP messagePointer[Reply]] interface {
 	ProcessRequest(ctx context.Context, req Req) (Reply, error)
 }
 
-type commChannel[Req any, Reply any, ReqP interface {
-	*Req
-	message.Message
-}, ReplyP interface {
-	*Reply
-	message.Message
-}] struct {
+type commChannel[Req any, Reply any, ReqP messagePointer[Req], ReplyP messagePointer[Reply]] struct {
 	*baseProto
 	processor        CommProcessor[Req, Reply, ReqP, ReplyP]
 	requestEndpoint  string
@@ -64,13 +57,7 @@ type CommChannel[Req, Rep any] interface {
 // - ReqP: Pointer type implementing message.Message (e.g. *PushLogRequest)
 // - ReplyP: Pointer type implementing message.Message (e.g. *PushLogReply)
 // This enables stack allocation for performance while satisfying interface constraints.
-func NewCommChannel[Req any, Reply any, ReqP interface {
-	*Req
-	message.Message
-}, ReplyP interface {
-	*Reply
-	message.Message
-}](
+func NewCommChannel[Req any, Reply any, ReqP messagePointer[Req], ReplyP messagePointer[Reply]](
 	h client.Host,
 	name string,
 	processor CommProcessor[Req, Reply, ReqP, ReplyP],
