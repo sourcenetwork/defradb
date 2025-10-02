@@ -75,14 +75,6 @@ func (db *DB) createCollections(
 			def.Definition.Indexes = append(def.Definition.Indexes, desc)
 		}
 
-		for _, createEncryptedIndex := range def.CreateEncryptedIndexes {
-			desc, err := processCreateEncryptedIndexRequest(def.Definition, createEncryptedIndex)
-			if err != nil {
-				return nil, err
-			}
-			def.Definition.EncryptedIndexes = append(def.Definition.EncryptedIndexes, desc)
-		}
-
 		err = description.SaveCollection(ctx, def.Definition)
 		if err != nil {
 			return nil, err
@@ -108,26 +100,6 @@ func (db *DB) createCollections(
 	}
 
 	return returnDescriptions, nil
-}
-
-func processCreateEncryptedIndexRequest(
-	definition client.CollectionVersion,
-	createEncryptedIndex client.EncryptedIndexCreateRequest,
-) (client.EncryptedIndexDescription, error) {
-	indexType := createEncryptedIndex.Type
-	if indexType == "" {
-		indexType = client.EncryptedIndexTypeEquality
-	}
-
-	err := checkExistingEncryptedFields(definition, createEncryptedIndex)
-	if err != nil {
-		return client.EncryptedIndexDescription{}, err
-	}
-
-	return client.EncryptedIndexDescription{
-		FieldName: createEncryptedIndex.FieldName,
-		Type:      indexType,
-	}, nil
 }
 
 // patchCollection takes the given JSON patch string and applies it to the set of CollectionVersions

@@ -30,7 +30,7 @@ func EncryptedIndexCreate(
 ) C.Result {
 	ctx := context.Background()
 
-	desc := client.EncryptedIndexCreateRequest{
+	desc := client.EncryptedIndexDescription{
 		FieldName: C.GoString(fieldName),
 	}
 	store, err := getStoreFromPointer(nodePtr)

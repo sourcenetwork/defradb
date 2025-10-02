@@ -588,7 +588,7 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
-	req client.EncryptedIndexCreateRequest,
+	req client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)

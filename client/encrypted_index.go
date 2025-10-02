@@ -25,12 +25,3 @@ type EncryptedIndexDescription struct {
 	// Currently only "equality" is supported.
 	Type EncryptedIndexType
 }
-
-// EncryptedIndexCreateRequest describes an encrypted index creation request.
-type EncryptedIndexCreateRequest struct {
-	// FieldName contains the name of the field that is being indexed.
-	FieldName string
-	// Type is the type of searchable encryption.
-	// Currently only "equality" is supported.
-	Type EncryptedIndexType
-}

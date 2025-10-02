@@ -155,8 +155,8 @@ func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc
 }
 
 // CreateEncryptedIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateEncryptedIndex(context1 context.Context, encryptedIndexCreateRequest client.EncryptedIndexCreateRequest) (client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(context1, encryptedIndexCreateRequest)
+func (_mock *Collection) CreateEncryptedIndex(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error) {
+	ret := _mock.Called(context1, encryptedIndexDescription)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateEncryptedIndex")
@@ -164,16 +164,16 @@ func (_mock *Collection) CreateEncryptedIndex(context1 context.Context, encrypte
 
 	var r0 client.EncryptedIndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexCreateRequest) (client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(context1, encryptedIndexCreateRequest)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(context1, encryptedIndexDescription)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexCreateRequest) client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(context1, encryptedIndexCreateRequest)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription) client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(context1, encryptedIndexDescription)
 	} else {
 		r0 = ret.Get(0).(client.EncryptedIndexDescription)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.EncryptedIndexCreateRequest) error); ok {
-		r1 = returnFunc(context1, encryptedIndexCreateRequest)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.EncryptedIndexDescription) error); ok {
+		r1 = returnFunc(context1, encryptedIndexDescription)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -187,20 +187,20 @@ type Collection_CreateEncryptedIndex_Call struct {
 
 // CreateEncryptedIndex is a helper method to define mock.On call
 //   - context1 context.Context
-//   - encryptedIndexCreateRequest client.EncryptedIndexCreateRequest
-func (_e *Collection_Expecter) CreateEncryptedIndex(context1 interface{}, encryptedIndexCreateRequest interface{}) *Collection_CreateEncryptedIndex_Call {
-	return &Collection_CreateEncryptedIndex_Call{Call: _e.mock.On("CreateEncryptedIndex", context1, encryptedIndexCreateRequest)}
+//   - encryptedIndexDescription client.EncryptedIndexDescription
+func (_e *Collection_Expecter) CreateEncryptedIndex(context1 interface{}, encryptedIndexDescription interface{}) *Collection_CreateEncryptedIndex_Call {
+	return &Collection_CreateEncryptedIndex_Call{Call: _e.mock.On("CreateEncryptedIndex", context1, encryptedIndexDescription)}
 }
 
-func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(context1 context.Context, encryptedIndexCreateRequest client.EncryptedIndexCreateRequest)) *Collection_CreateEncryptedIndex_Call {
+func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription)) *Collection_CreateEncryptedIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.EncryptedIndexCreateRequest
+		var arg1 client.EncryptedIndexDescription
 		if args[1] != nil {
-			arg1 = args[1].(client.EncryptedIndexCreateRequest)
+			arg1 = args[1].(client.EncryptedIndexDescription)
 		}
 		run(
 			arg0,
@@ -210,12 +210,12 @@ func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(context1 context.Co
 	return _c
 }
 
-func (_c *Collection_CreateEncryptedIndex_Call) Return(encryptedIndexDescription client.EncryptedIndexDescription, err error) *Collection_CreateEncryptedIndex_Call {
-	_c.Call.Return(encryptedIndexDescription, err)
+func (_c *Collection_CreateEncryptedIndex_Call) Return(encryptedIndexDescription1 client.EncryptedIndexDescription, err error) *Collection_CreateEncryptedIndex_Call {
+	_c.Call.Return(encryptedIndexDescription1, err)
 	return _c
 }
 
-func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(context1 context.Context, encryptedIndexCreateRequest client.EncryptedIndexCreateRequest) (client.EncryptedIndexDescription, error)) *Collection_CreateEncryptedIndex_Call {
+func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error)) *Collection_CreateEncryptedIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }

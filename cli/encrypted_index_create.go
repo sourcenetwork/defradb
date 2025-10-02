@@ -36,7 +36,7 @@ Example: create an index for 'Users' collection on 'name' field:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			createReq := client.EncryptedIndexCreateRequest{
+			createReq := client.EncryptedIndexDescription{
 				FieldName: fieldArg,
 				Type:      client.EncryptedIndexType(typeArg),
 			}

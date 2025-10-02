@@ -140,7 +140,7 @@ func fromAstDefinition(
 
 	indexes := []client.IndexCreateRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
-	encryptedIndexes := []client.EncryptedIndexCreateRequest{}
+	encryptedIndexes := []client.EncryptedIndexDescription{}
 	for _, field := range def.Fields {
 		tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -185,6 +185,11 @@ func fromAstDefinition(
 		}
 		return collectionFieldDescriptions[i].Name < collectionFieldDescriptions[j].Name
 	})
+
+	err := validateEncryptedIndexes(encryptedIndexes, collectionFieldDescriptions)
+	if err != nil {
+		return core.Collection{}, err
+	}
 
 	isMaterialized := immutable.None[bool]()
 	var isBranchable bool
@@ -251,9 +256,9 @@ func fromAstDefinition(
 			IsEmbeddedOnly:   def.IsInterface,
 			IsActive:         true,
 			VectorEmbeddings: vectorEmbeddings,
+			EncryptedIndexes: encryptedIndexes,
 		},
-		CreateIndexes:          indexes,
-		CreateEncryptedIndexes: encryptedIndexes,
+		CreateIndexes: indexes,
 	}, nil
 }
 
@@ -458,9 +463,10 @@ func defaultFromAST(
 func encryptedIndexFromAST(
 	directive *ast.Directive,
 	fieldDef *ast.FieldDefinition,
-) (client.EncryptedIndexCreateRequest, error) {
-	encryptedIndex := client.EncryptedIndexCreateRequest{
+) (client.EncryptedIndexDescription, error) {
+	encryptedIndex := client.EncryptedIndexDescription{
 		FieldName: fieldDef.Name.Value,
+		Type:      client.EncryptedIndexType(client.EncryptedIndexTypeEquality),
 	}
 
 	for _, arg := range directive.Arguments {
@@ -468,21 +474,50 @@ func encryptedIndexFromAST(
 		case types.EncryptedIndexDirectivePropType:
 			typeVal, ok := arg.Value.(*ast.StringValue)
 			if !ok {
-				return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
+				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
 			}
 
 			// Currently only equality is supported
 			if typeVal.Value != string(client.EncryptedIndexTypeEquality) {
-				return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexTypeNotSupported(typeVal.Value)
+				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexTypeNotSupported(typeVal.Value)
 			}
 			encryptedIndex.Type = client.EncryptedIndexType(typeVal.Value)
 
 		default:
-			return client.EncryptedIndexCreateRequest{}, NewErrEncryptedIndexWithUnknownArg(arg.Name.Value)
+			return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithUnknownArg(arg.Name.Value)
 		}
 	}
 
 	return encryptedIndex, nil
+}
+
+// validateEncryptedIndexes validates that encrypted indexes can be created on the given fields.
+// It checks that all fields exist in the collection schema and that there is at most one index per field.
+func validateEncryptedIndexes(
+	encryptedIndexes []client.EncryptedIndexDescription,
+	fields []client.CollectionFieldDescription,
+) error {
+	indexedFields := make(map[string]struct{}, len(encryptedIndexes))
+
+	for _, encryptedIndex := range encryptedIndexes {
+		found := false
+		for _, field := range fields {
+			if field.Name == encryptedIndex.FieldName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return NewErrEncryptedIndexOnNonExistentField(encryptedIndex.FieldName)
+		}
+
+		if _, exists := indexedFields[encryptedIndex.FieldName]; exists {
+			return NewErrEncryptedIndexAlreadyExists(encryptedIndex.FieldName)
+		}
+		indexedFields[encryptedIndex.FieldName] = struct{}{}
+	}
+
+	return nil
 }
 
 func fieldsFromAST(

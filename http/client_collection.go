@@ -390,7 +390,7 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
-	indexDesc client.EncryptedIndexCreateRequest,
+	indexDesc client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
 

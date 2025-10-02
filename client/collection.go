@@ -147,7 +147,7 @@ type Collection interface {
 
 	// CreateEncryptedIndex creates a new encrypted index on the collection.
 	// `EncryptedIndexCreateRequest` contains the description of the index to be created.
-	CreateEncryptedIndex(context.Context, EncryptedIndexCreateRequest) (EncryptedIndexDescription, error)
+	CreateEncryptedIndex(context.Context, EncryptedIndexDescription) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
 	DeleteEncryptedIndex(ctx context.Context, fieldName string) error

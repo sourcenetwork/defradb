@@ -399,7 +399,7 @@ func (c *collection) GetIndexes(context.Context) ([]client.IndexDescription, err
 // `EncryptedIndexCreateRequest` contains the description of the index to be created.
 func (c *collection) CreateEncryptedIndex(
 	ctx context.Context,
-	createRequest client.EncryptedIndexCreateRequest,
+	createRequest client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -419,14 +419,17 @@ func (c *collection) CreateEncryptedIndex(
 
 func (c *collection) createEncryptedIndex(
 	ctx context.Context,
-	createRequest client.EncryptedIndexCreateRequest,
+	encryptedIndex client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {
-	desc, err := processCreateEncryptedIndexRequest(c.Version(), createRequest)
+	if encryptedIndex.Type == "" {
+		encryptedIndex.Type = client.EncryptedIndexTypeEquality
+	}
+	err := validateNewEncryptedIndex(c.Version(), encryptedIndex)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 
-	c.def.EncryptedIndexes = append(c.def.EncryptedIndexes, desc)
+	c.def.EncryptedIndexes = append(c.def.EncryptedIndexes, encryptedIndex)
 
 	err = description.SaveCollection(ctx, c.def)
 	if err != nil {
@@ -522,19 +525,19 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 	return nil
 }
 
-// checkExistingEncryptedFields validates, if encrypted index can be created on the field.
+// validateNewEncryptedIndex validates, if encrypted index can be created on the field.
 // It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
-func checkExistingEncryptedFields(
+func validateNewEncryptedIndex(
 	definition client.CollectionVersion,
-	createEncryptedIndex client.EncryptedIndexCreateRequest,
+	newEncryptedIndex client.EncryptedIndexDescription,
 ) error {
-	_, found := definition.GetFieldByName(createEncryptedIndex.FieldName)
+	_, found := definition.GetFieldByName(newEncryptedIndex.FieldName)
 	if !found {
-		return NewErrEncryptedIndexOnNonExistentField(createEncryptedIndex.FieldName)
+		return NewErrEncryptedIndexOnNonExistentField(newEncryptedIndex.FieldName)
 	}
 	for _, encryptedIndex := range definition.EncryptedIndexes {
-		if encryptedIndex.FieldName == createEncryptedIndex.FieldName {
-			return NewErrEncryptedIndexAlreadyExists(createEncryptedIndex.FieldName)
+		if encryptedIndex.FieldName == newEncryptedIndex.FieldName {
+			return NewErrEncryptedIndexAlreadyExists(newEncryptedIndex.FieldName)
 		}
 	}
 	return nil

@@ -304,7 +304,7 @@ func (h *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 func (h *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
-	var indexDesc client.EncryptedIndexCreateRequest
+	var indexDesc client.EncryptedIndexDescription
 	if err := requestJSON(req, &indexDesc); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

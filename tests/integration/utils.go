@@ -1733,7 +1733,7 @@ func createEncryptedIndex(
 			s.T.Fatalf("fieldName is required for encrypted index")
 		}
 
-		indexDesc := client.EncryptedIndexCreateRequest{
+		indexDesc := client.EncryptedIndexDescription{
 			FieldName: action.FieldName,
 			Type:      client.EncryptedIndexType(action.Type),
 		}
