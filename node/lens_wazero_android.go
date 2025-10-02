@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !js && !android
+//go:build !js
 
 package node
 
@@ -20,5 +20,6 @@ import (
 const Wazero LensRuntimeType = "wazero"
 
 func init() {
+	runtimeConstructors[DefaultLens] = func() module.Runtime { return wazero.New() }
 	runtimeConstructors[Wazero] = func() module.Runtime { return wazero.New() }
 }
