@@ -430,22 +430,19 @@ func validateSourcesNotRedefined(
 			continue
 		}
 
-		newColSources := newCol.CollectionSources()
-		oldColSources := oldCol.CollectionSources()
-
-		if len(newColSources) != len(oldColSources) {
+		if len(newCol.VersionSources) != len(oldCol.VersionSources) {
 			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
 		}
 
-		for i := range newColSources {
-			if i >= len(oldColSources) {
+		for i := range newCol.VersionSources {
+			if i >= len(oldCol.VersionSources) {
 				continue // Avoid out-of-bounds panic
 			}
-			if newColSources[i].SourceCollectionID != oldColSources[i].SourceCollectionID {
+			if newCol.VersionSources[i].SourceCollectionID != oldCol.VersionSources[i].SourceCollectionID {
 				errs = append(errs, NewErrCollectionSourceIDMutated(
 					newCol.VersionID,
-					newColSources[i].SourceCollectionID,
-					oldColSources[i].SourceCollectionID,
+					newCol.VersionSources[i].SourceCollectionID,
+					oldCol.VersionSources[i].SourceCollectionID,
 				))
 			}
 		}
@@ -1032,7 +1029,7 @@ func validateCollectionSourceFromSameCollection(
 			continue
 		}
 
-		for _, source := range col.CollectionSources() {
+		for _, source := range col.VersionSources {
 			for _, otherCol := range newState.collections {
 				if otherCol.VersionID == source.SourceCollectionID &&
 					otherCol.CollectionID != col.CollectionID {

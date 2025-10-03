@@ -290,7 +290,7 @@ func (db *DB) patchCollection(
 			// Clear any existing migrations in the registry, using this semi-hacky way
 			// to avoid adding more functions to a public interface that we wish to remove.
 
-			for _, src := range existingCol.CollectionSources() {
+			for _, src := range existingCol.VersionSources {
 				if src.Transform.HasValue() {
 					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
 					if err != nil {
@@ -306,7 +306,7 @@ func (db *DB) patchCollection(
 			}
 		}
 
-		for _, src := range col.CollectionSources() {
+		for _, src := range col.VersionSources {
 			if src.Transform.HasValue() {
 				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
 				if err != nil {
