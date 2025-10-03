@@ -501,7 +501,7 @@ func saveBlocks(
 				// it is incorrect and needs to be replaced by a reference to the new-old collection,
 				// using the new migration (if any) - this source was likely inherited by a patch command.
 
-				for i, _ := range oldCol.VersionSources {
+				for i := range oldCol.VersionSources {
 					collection.VersionSources[i] = newSource
 					break
 				}

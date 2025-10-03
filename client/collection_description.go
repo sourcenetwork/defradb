@@ -11,7 +11,6 @@
 package client
 
 import (
-	"encoding/json"
 	"reflect"
 
 	"github.com/sourcenetwork/immutable"
@@ -224,78 +223,6 @@ func (col CollectionVersion) GetFieldByRelation(
 // Equal returns true if this and the given [CollectionVersion] are equal.
 func (col CollectionVersion) Equal(other CollectionVersion) bool {
 	return reflect.DeepEqual(col, other)
-}
-
-// collectionVersion is a private type used to facilitate the unmarshalling
-// of json to a [CollectionVersion].
-type collectionVersion struct {
-	// These properties are unmarshalled using the default json unmarshaller
-	Name             string
-	VersionID        string
-	CollectionID     string
-	RootID           uint32
-	CollectionSet    immutable.Option[CollectionSetDescription]
-	IsMaterialized   bool
-	IsBranchable     bool
-	IsEmbeddedOnly   bool
-	IsActive         bool
-	IsPlaceholder    bool
-	Policy           immutable.Option[PolicyDescription]
-	Indexes          []IndexDescription
-	Fields           []CollectionFieldDescription
-	VectorEmbeddings []VectorEmbeddingDescription
-	Query            immutable.Option[QuerySource]
-
-	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
-	VersionSources []map[string]json.RawMessage
-}
-
-func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
-	var descMap collectionVersion
-	err := json.Unmarshal(bytes, &descMap)
-	if err != nil {
-		return err
-	}
-
-	col.Name = descMap.Name
-	col.VersionID = descMap.VersionID
-	col.CollectionID = descMap.CollectionID
-	col.CollectionSet = descMap.CollectionSet
-	col.IsMaterialized = descMap.IsMaterialized
-	col.IsBranchable = descMap.IsBranchable
-	col.IsEmbeddedOnly = descMap.IsEmbeddedOnly
-	col.IsActive = descMap.IsActive
-	col.IsPlaceholder = descMap.IsPlaceholder
-	col.Indexes = descMap.Indexes
-	col.Fields = descMap.Fields
-	col.VersionSources = make([]CollectionSource, len(descMap.VersionSources))
-	col.Policy = descMap.Policy
-	col.VectorEmbeddings = descMap.VectorEmbeddings
-	col.Query = descMap.Query
-
-	for i, source := range descMap.VersionSources {
-		sourceJson, err := json.Marshal(source)
-		if err != nil {
-			return err
-		}
-
-		var sourceValue CollectionSource
-		if _, ok := source["SourceCollectionID"]; ok {
-			// This must be a CollectionSource, as only the `CollectionSource` type has a `SourceCollectionID` field
-			var collectionSource CollectionSource
-			err := json.Unmarshal(sourceJson, &collectionSource)
-			if err != nil {
-				return err
-			}
-			sourceValue = collectionSource
-		} else {
-			return ErrFailedToUnmarshalCollection
-		}
-
-		col.VersionSources[i] = sourceValue
-	}
-
-	return nil
 }
 
 // VectorEmbeddingDescription hold the relevant information to generate embeddings.
