@@ -19,11 +19,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/namespace"
-	"github.com/sourcenetwork/corelog"
-)
-
-var (
-	log = corelog.NewLogger("store")
 )
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
