@@ -298,12 +298,10 @@ func (db *DB) patchCollection(
 					}
 				}
 			}
-			for _, src := range existingCol.QuerySources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-					if err != nil {
-						return err
-					}
+			if existingCol.Query.HasValue() && existingCol.Query.Value().Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
+				if err != nil {
+					return err
 				}
 			}
 		}
@@ -317,12 +315,10 @@ func (db *DB) patchCollection(
 			}
 		}
 
-		for _, src := range col.QuerySources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
+		if col.Query.HasValue() && col.Query.Value().Transform.HasValue() {
+			err = db.LensRegistry().SetMigration(ctx, col.VersionID, col.Query.Value().Transform.Value())
+			if err != nil {
+				return err
 			}
 		}
 	}

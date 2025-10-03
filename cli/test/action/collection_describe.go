@@ -70,6 +70,11 @@ func (a *CollectionDescribe) Execute() {
 			require.Equal(a.s.T, expected.Sources, actual.Sources)
 		}
 
+		if expected.Query.HasValue() {
+			// Dont bother asserting this by default, the query object is to complex to bother with in most cases.
+			require.Equal(a.s.T, expected.Query, actual.Query)
+		}
+
 		if expected.Fields != nil {
 			require.Equal(a.s.T, expected.Fields, actual.Fields)
 		}

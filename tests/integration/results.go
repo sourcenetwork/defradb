@@ -405,6 +405,11 @@ func assertCollectionVersions(
 			require.Equal(s.T, expected.Sources, actual.Sources)
 		}
 
+		if expected.Query.HasValue() {
+			// Dont bother asserting this by default, the query object is to complex to bother with in most cases.
+			require.Equal(s.T, expected.Query, actual.Query)
+		}
+
 		if expected.Fields != nil {
 			require.Equal(s.T, len(expected.Fields), len(actual.Fields))
 			for i := range expected.Fields {

@@ -52,6 +52,12 @@ type CollectionVersion struct {
 	// If this CollectionVersion is not part of a collection set, this property will be None.
 	CollectionSet immutable.Option[CollectionSetDescription]
 
+	// Query may hold a query, along with a Lens transform to source data from.
+	//
+	// If a value is provided, this Collection may not be directly written too,
+	// and it may not (yet) have its documents synced across the P2P network.
+	Query immutable.Option[QuerySource]
+
 	// Sources is the set of sources from which this collection draws data.
 	//
 	// Currently supported source types are:
@@ -219,11 +225,6 @@ func (col CollectionVersion) GetFieldByRelation(
 	return CollectionFieldDescription{}, false
 }
 
-// QuerySources returns all the Sources of type [QuerySource]
-func (col CollectionVersion) QuerySources() []*QuerySource {
-	return sourcesOfType[*QuerySource](col)
-}
-
 // CollectionSources returns all the Sources of type [CollectionSource]
 func (col CollectionVersion) CollectionSources() []*CollectionSource {
 	return sourcesOfType[*CollectionSource](col)
@@ -262,6 +263,7 @@ type collectionVersion struct {
 	Indexes          []IndexDescription
 	Fields           []CollectionFieldDescription
 	VectorEmbeddings []VectorEmbeddingDescription
+	Query            immutable.Option[*QuerySource]
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Sources []map[string]json.RawMessage
@@ -288,6 +290,7 @@ func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 	col.Sources = make([]any, len(descMap.Sources))
 	col.Policy = descMap.Policy
 	col.VectorEmbeddings = descMap.VectorEmbeddings
+	col.Query = descMap.Query
 
 	for i, source := range descMap.Sources {
 		sourceJson, err := json.Marshal(source)
