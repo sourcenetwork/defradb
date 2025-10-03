@@ -436,6 +436,17 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
-	
+
+.PHONY build-c-shared-linux:	
 build-c-shared-linux:
 	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+
+# Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
+# For more information, see: https://apilevels.com/
+# The minimum supported API level is 21, which is the default.
+# 
+# ANDROID_NDK should be the path to the installed Android NDK on your system
+API_LEVEL ?= 21
+.PHONY: build-c-shared-android
+build-c-shared-android:
+	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"
