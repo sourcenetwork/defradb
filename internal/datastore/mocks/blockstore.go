@@ -405,46 +405,6 @@ func (_c *Blockstore_Has_Call) RunAndReturn(run func(context1 context.Context, c
 	return _c
 }
 
-// HashOnRead provides a mock function for the type Blockstore
-func (_mock *Blockstore) HashOnRead(enabled bool) {
-	_mock.Called(enabled)
-	return
-}
-
-// Blockstore_HashOnRead_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HashOnRead'
-type Blockstore_HashOnRead_Call struct {
-	*mock.Call
-}
-
-// HashOnRead is a helper method to define mock.On call
-//   - enabled bool
-func (_e *Blockstore_Expecter) HashOnRead(enabled interface{}) *Blockstore_HashOnRead_Call {
-	return &Blockstore_HashOnRead_Call{Call: _e.mock.On("HashOnRead", enabled)}
-}
-
-func (_c *Blockstore_HashOnRead_Call) Run(run func(enabled bool)) *Blockstore_HashOnRead_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 bool
-		if args[0] != nil {
-			arg0 = args[0].(bool)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Blockstore_HashOnRead_Call) Return() *Blockstore_HashOnRead_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *Blockstore_HashOnRead_Call) RunAndReturn(run func(enabled bool)) *Blockstore_HashOnRead_Call {
-	_c.Run(run)
-	return _c
-}
-
 // IsMerged provides a mock function for the type Blockstore
 func (_mock *Blockstore) IsMerged(ctx context.Context, k cid.Cid) (bool, error) {
 	ret := _mock.Called(ctx, k)
