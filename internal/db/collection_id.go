@@ -497,15 +497,15 @@ func saveBlocks(
 			if len(newColSources) == 0 {
 				// If the new collection has no collection sources, this is easy and we can just append
 				// one that references the old collection version.
-				collection.Sources = append(collection.Sources, newSource)
+				collection.VersionSources = append(collection.VersionSources, newSource)
 			} else if newColSources[0].SourceCollectionID == oldColSources[0].SourceCollectionID {
 				// If the new collection source references the same version as the old collection source
 				// it is incorrect and needs to be replaced by a reference to the new-old collection,
 				// using the new migration (if any) - this source was likely inherited by a patch command.
 
-				for i, source := range oldCol.Sources {
+				for i, source := range oldCol.VersionSources {
 					if _, ok := source.(*client.CollectionSource); ok {
-						collection.Sources[i] = newSource
+						collection.VersionSources[i] = newSource
 						break
 					}
 				}

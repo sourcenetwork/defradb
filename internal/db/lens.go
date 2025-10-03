@@ -60,11 +60,11 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 	isDstCollectionFound := false
 	if dstFound {
-		if len(dstCol.Sources) == 0 {
+		if len(dstCol.VersionSources) == 0 {
 			// If the destingation collection has no sources at all, it must have been added as an orphaned source
 			// by another migration.  This can happen if the migrations are added in an unusual order, before
 			// their schemas have been defined locally.
-			dstCol.Sources = append(dstCol.Sources, &client.CollectionSource{
+			dstCol.VersionSources = append(dstCol.VersionSources, &client.CollectionSource{
 				SourceCollectionID: sourceCol.VersionID,
 			})
 		}
@@ -84,7 +84,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
-			Sources: []any{
+			VersionSources: []any{
 				&client.CollectionSource{
 					SourceCollectionID: sourceCol.VersionID,
 					// The transform will be set later, when updating all destination collections

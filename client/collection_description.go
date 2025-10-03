@@ -58,12 +58,8 @@ type CollectionVersion struct {
 	// and it may not (yet) have its documents synced across the P2P network.
 	Query immutable.Option[QuerySource]
 
-	// Sources is the set of sources from which this collection draws data.
-	//
-	// Currently supported source types are:
-	// - [QuerySource]
-	// - [CollectionSource]
-	Sources []any
+	// VersionSources is the set of versions from which this collection may draws data from.
+	VersionSources []any
 
 	// Fields contains the fields local to the node within this Collection.
 	//
@@ -232,7 +228,7 @@ func (col CollectionVersion) CollectionSources() []*CollectionSource {
 
 func sourcesOfType[ResultType any](col CollectionVersion) []ResultType {
 	result := []ResultType{}
-	for _, source := range col.Sources {
+	for _, source := range col.VersionSources {
 		if typedSource, isOfType := source.(ResultType); isOfType {
 			result = append(result, typedSource)
 		}
@@ -266,7 +262,7 @@ type collectionVersion struct {
 	Query            immutable.Option[*QuerySource]
 
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
-	Sources []map[string]json.RawMessage
+	VersionSources []map[string]json.RawMessage
 }
 
 func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
@@ -287,12 +283,12 @@ func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 	col.IsPlaceholder = descMap.IsPlaceholder
 	col.Indexes = descMap.Indexes
 	col.Fields = descMap.Fields
-	col.Sources = make([]any, len(descMap.Sources))
+	col.VersionSources = make([]any, len(descMap.VersionSources))
 	col.Policy = descMap.Policy
 	col.VectorEmbeddings = descMap.VectorEmbeddings
 	col.Query = descMap.Query
 
-	for i, source := range descMap.Sources {
+	for i, source := range descMap.VersionSources {
 		sourceJson, err := json.Marshal(source)
 		if err != nil {
 			return err
@@ -324,7 +320,7 @@ func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
 			return ErrFailedToUnmarshalCollection
 		}
 
-		col.Sources[i] = sourceValue
+		col.VersionSources[i] = sourceValue
 	}
 
 	return nil

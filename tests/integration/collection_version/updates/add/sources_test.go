@@ -30,7 +30,7 @@ func TestColVersionUpdateAddSources_Errors(t *testing.T) {
 					[
 						{
 							"op": "add",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Sources/-",
+							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionSources/-",
 							"value": {"SourceCollectionID": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"}
 						}
 					]

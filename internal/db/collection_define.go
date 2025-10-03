@@ -245,7 +245,7 @@ func (db *DB) patchCollection(
 			isFound := false
 			for j, col := range newCollections {
 				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
-					newCollections[j].Sources = placeholder.Sources
+					newCollections[j].VersionSources = placeholder.VersionSources
 					isFound = true
 					break
 				}

@@ -51,7 +51,7 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 					{
 						VersionID:      "also does not exist",
 						IsMaterialized: true,
-						Sources: []any{
+						VersionSources: []any{
 							&client.CollectionSource{
 								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(

@@ -66,7 +66,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 						[
 							{
 								"op": "replace",
-								"path": "/Users/Sources/0/Transform",
+								"path": "/Users/VersionSources/0/Transform",
 								"value": %s
 							}
 						]
