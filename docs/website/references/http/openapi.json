@@ -252,10 +252,7 @@
                         "type": "string"
                     },
                     "Policy": {},
-                    "Sources": {
-                        "items": {},
-                        "type": "array"
-                    },
+                    "Query": {},
                     "VectorEmbeddings": {
                         "items": {
                             "properties": {
@@ -287,6 +284,18 @@
                     },
                     "VersionID": {
                         "type": "string"
+                    },
+                    "VersionSources": {
+                        "items": {
+                            "properties": {
+                                "SourceCollectionID": {
+                                    "type": "string"
+                                },
+                                "Transform": {}
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
