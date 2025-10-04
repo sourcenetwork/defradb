@@ -45,6 +45,13 @@ var (
 	tracer = telemetry.NewTracer()
 )
 
+type (
+	peerID        = string
+	collectionID  = string
+	addresses     = []string
+	peerAddresses = map[peerID]addresses
+)
+
 const networkRequestTimeout = 10 * time.Second
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -92,10 +99,10 @@ type P2P struct {
 	// This is a cached in-memory copy of the persisted replicators in the database.
 	// It is used to quickly find the replicators for a given collection when sending updates.
 	// The map is protected by repMu.
-	replicators map[string]map[string][]string
+	replicators map[collectionID]peerAddresses
 	repMu       sync.Mutex
 
-	peerIdentities map[string]identity.Identity
+	peerIdentities map[peerID]identity.Identity
 	piMu           sync.RWMutex
 
 	// The intervals at which to retry replicator failures.
