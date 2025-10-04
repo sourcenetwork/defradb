@@ -39,7 +39,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.4.1
 	github.com/sourcenetwork/corekv v0.2.3
-	github.com/sourcenetwork/corekv/badger v0.0.0-20251002183059-6d8366118c02
+	github.com/sourcenetwork/corekv/badger v0.2.3
 	github.com/sourcenetwork/corekv/blockstore v0.2.3
 	github.com/sourcenetwork/corekv/memory v0.2.3
 	github.com/sourcenetwork/corekv/namespace v0.2.3
