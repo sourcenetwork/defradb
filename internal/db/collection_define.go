@@ -141,7 +141,7 @@ func (db *DB) patchCollection(
 	for _, col := range existingCols {
 		if col.VersionSources == nil {
 			// JSON patch only allows the `-` array-path to be used on non-nil
-			// arrays, so we assign any previously nil arrays to nil here
+			// arrays, so we assign any previously nil arrays to empty here
 			col.VersionSources = []client.CollectionSource{}
 		}
 
