@@ -71,7 +71,7 @@ func (a *CollectionDescribe) Execute() {
 		}
 
 		if expected.Query.HasValue() {
-			// Dont bother asserting this by default, the query object is to complex to bother with in most cases.
+			// Dont bother asserting this by default, the query object is too complex to bother with in most cases.
 			require.Equal(a.s.T, expected.Query, actual.Query)
 		}
 
