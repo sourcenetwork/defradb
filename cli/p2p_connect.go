@@ -11,14 +11,12 @@
 package cli
 
 import (
-	"strings"
-
 	"github.com/spf13/cobra"
 )
 
 func MakeP2PConnectCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "connect <addresses>",
+		Use:   "connect <addresses...>",
 		Short: "Connect to one or more peers",
 		Long: `Connect to one or more peers with the given addresses
 
@@ -28,19 +26,9 @@ Example: Connect to a peer
 Example: Connect to multiple peers
   defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
 		`,
-		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-
-			var addresses []string
-			for _, id := range strings.Split(args[0], ",") {
-				id = strings.TrimSpace(id)
-				if id == "" {
-					continue
-				}
-				addresses = append(addresses, id)
-			}
-			return cliClient.Connect(cmd.Context(), addresses)
+			return cliClient.Connect(cmd.Context(), args)
 		},
 	}
 	return cmd
