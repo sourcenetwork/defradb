@@ -14,13 +14,14 @@ import (
 	"net"
 	"time"
 
-	netConfig "github.com/sourcenetwork/defradb/net/config"
-	"github.com/sourcenetwork/defradb/tests/state"
-
+	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/go-p2p"
+
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // ConnectPeers connects two nodes together as peers.
@@ -224,11 +225,16 @@ func connectPeers(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	log.InfoContext(s.Ctx, "Connect peers",
-		corelog.Any("Source", sourceNode.PeerInfo()),
-		corelog.Any("Target", targetNode.PeerInfo()))
+	sourceAddresses, err := sourceNode.PeerInfo()
+	require.NoError(s.T, err)
+	targetAddresses, err := targetNode.PeerInfo()
+	require.NoError(s.T, err)
 
-	err := sourceNode.Connect(s.Ctx, targetNode.PeerInfo())
+	log.InfoContext(s.Ctx, "Connect peers",
+		corelog.Any("Source", sourceAddresses),
+		corelog.Any("Target", targetAddresses))
+
+	err = sourceNode.Connect(s.Ctx, targetAddresses)
 	require.NoError(s.T, err)
 
 	s.Nodes[cfg.SourceNodeID].P2P.Connections[cfg.TargetNodeID] = struct{}{}
@@ -252,7 +258,9 @@ func configureReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	err := sourceNode.SetReplicator(s.Ctx, targetNode.PeerInfo())
+	targetAddresses, err := targetNode.PeerInfo()
+	require.NoError(s.T, err)
+	err = sourceNode.SetReplicator(s.Ctx, targetAddresses)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -269,7 +277,14 @@ func deleteReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	err := sourceNode.DeleteReplicator(s.Ctx, targetNode.PeerInfo())
+	targetAddresses, err := targetNode.PeerInfo()
+	require.NoError(s.T, err)
+	require.NotZero(s.T, len(targetAddresses))
+	maddr, err := multiaddr.NewMultiaddr(targetAddresses[0])
+	require.NoError(s.T, err)
+	id, err := maddr.ValueForProtocol(multiaddr.P_P2P)
+	require.NoError(s.T, err)
+	err = sourceNode.DeleteReplicator(s.Ctx, id)
 	require.NoError(s.T, err)
 	waitForReplicatorDeleteEvent(s, cfg)
 }
@@ -459,21 +474,26 @@ func reconnectPeers(s *state.State) {
 			sourceNode := s.Nodes[i]
 			targetNode := s.Nodes[j]
 
-			log.InfoContext(s.Ctx, "Connect peers",
-				corelog.Any("Source", sourceNode.PeerInfo()),
-				corelog.Any("Target", targetNode.PeerInfo()))
+			sourceAddresses, err := sourceNode.PeerInfo()
+			require.NoError(s.T, err)
+			targetAddresses, err := targetNode.PeerInfo()
+			require.NoError(s.T, err)
 
-			err := sourceNode.Connect(s.Ctx, targetNode.PeerInfo())
+			log.InfoContext(s.Ctx, "Connect peers",
+				corelog.Any("Source", sourceAddresses),
+				corelog.Any("Target", targetAddresses))
+
+			err = sourceNode.Connect(s.Ctx, targetAddresses)
 			require.NoError(s.T, err)
 		}
 	}
 }
 
 func RandomNetworkingConfig() ConfigureNode {
-	return func() []netConfig.NodeOpt {
-		return []netConfig.NodeOpt{
-			netConfig.WithListenAddresses("/ip4/" + getIPString() + "/tcp/0"),
-			netConfig.WithEnableRelay(true),
+	return func() []p2p.NodeOpt {
+		return []p2p.NodeOpt{
+			p2p.WithListenAddresses("/ip4/" + getIPString() + "/tcp/0"),
+			p2p.WithEnableRelay(true),
 		}
 	}
 }

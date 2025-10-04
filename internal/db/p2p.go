@@ -28,21 +28,21 @@ func (db *DB) sendUpdate(evt event.Update) {
 }
 
 // PeerInfo returns the p2p host id and listening addresses.
-func (db *DB) PeerInfo() client.PeerInfo {
+func (db *DB) PeerInfo() ([]string, error) {
 	if db.p2p == nil {
-		return client.PeerInfo{}
+		return nil, nil
 	}
 	return db.p2p.PeerInfo()
 }
 
 // Connect tries to connect to the peer with the given [PeerInfo].
-func (db *DB) Connect(ctx context.Context, info client.PeerInfo) error {
-	return db.p2p.Connect(ctx, info.ID, info.Addresses)
+func (db *DB) Connect(ctx context.Context, addresses []string) error {
+	return db.p2p.Connect(ctx, addresses)
 }
 
 // SetReplicator adds a replicator to the persisted list or adds
 // schemas if the replicator already exists.
-func (db *DB) SetReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (db *DB) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	if db.p2p == nil {
 		return ErrNoP2P
 	}
@@ -52,7 +52,7 @@ func (db *DB) SetReplicator(ctx context.Context, info client.PeerInfo, collectio
 	}
 	defer txn.Discard()
 
-	err = db.p2p.SetReplicator(ctx, info, collectionNames...)
+	err = db.p2p.SetReplicator(ctx, addresses, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (db *DB) SetReplicator(ctx context.Context, info client.PeerInfo, collectio
 
 // DeleteReplicator deletes a replicator from the persisted list
 // or specific schemas if they are specified.
-func (db *DB) DeleteReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (db *DB) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
 	if db.p2p == nil {
 		return ErrNoP2P
 	}
@@ -72,7 +72,7 @@ func (db *DB) DeleteReplicator(ctx context.Context, info client.PeerInfo, collec
 	}
 	defer txn.Discard()
 
-	err = db.p2p.DeleteReplicator(ctx, info, collectionNames...)
+	err = db.p2p.DeleteReplicator(ctx, id, collectionNames...)
 	if err != nil {
 		return err
 	}

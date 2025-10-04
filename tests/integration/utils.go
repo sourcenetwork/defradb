@@ -32,6 +32,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -41,7 +42,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -848,7 +848,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			opts = append(opts, opt)
 		}
 
-		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].CachedPeerInfo.Addresses...))
+		opts = append(opts, p2p.WithListenAddresses(s.Nodes[nodeIndex].CachedAddresses...))
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -979,7 +979,7 @@ func configureNode(
 	require.NoError(s.T, err)
 
 	netNodeOpts := action()
-	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
+	netNodeOpts = append(netNodeOpts, p2p.WithPrivateKey(privateKey))
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	for _, opt := range netNodeOpts {

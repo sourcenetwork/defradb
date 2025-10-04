@@ -9,7 +9,6 @@ import (
 
 	"github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -98,52 +97,6 @@ func (_c *Blockstore_AllKeysChan_Call) Return(cidCh <-chan cid.Cid, err error) *
 }
 
 func (_c *Blockstore_AllKeysChan_Call) RunAndReturn(run func(ctx context.Context) (<-chan cid.Cid, error)) *Blockstore_AllKeysChan_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AsIPLDStorage provides a mock function for the type Blockstore
-func (_mock *Blockstore) AsIPLDStorage() datastore.IPLDStorage {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for AsIPLDStorage")
-	}
-
-	var r0 datastore.IPLDStorage
-	if returnFunc, ok := ret.Get(0).(func() datastore.IPLDStorage); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(datastore.IPLDStorage)
-		}
-	}
-	return r0
-}
-
-// Blockstore_AsIPLDStorage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AsIPLDStorage'
-type Blockstore_AsIPLDStorage_Call struct {
-	*mock.Call
-}
-
-// AsIPLDStorage is a helper method to define mock.On call
-func (_e *Blockstore_Expecter) AsIPLDStorage() *Blockstore_AsIPLDStorage_Call {
-	return &Blockstore_AsIPLDStorage_Call{Call: _e.mock.On("AsIPLDStorage")}
-}
-
-func (_c *Blockstore_AsIPLDStorage_Call) Run(run func()) *Blockstore_AsIPLDStorage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Blockstore_AsIPLDStorage_Call) Return(iPLDStorage datastore.IPLDStorage) *Blockstore_AsIPLDStorage_Call {
-	_c.Call.Return(iPLDStorage)
-	return _c
-}
-
-func (_c *Blockstore_AsIPLDStorage_Call) RunAndReturn(run func() datastore.IPLDStorage) *Blockstore_AsIPLDStorage_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -14,12 +14,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -107,7 +107,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() []netConfig.NodeOpt
+type ConfigureNode func() []p2p.NodeOpt
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}

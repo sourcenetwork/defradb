@@ -40,12 +40,12 @@ extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
 extern Result P2PgetAllReplicators(uintptr_t nodePtr);
-extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
-extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
+extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses);
+extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id);
 extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections);
 extern Result P2PcollectionRemove(uintptr_t nodePtr, char* collections);
 extern Result P2PcollectionGetAll(uintptr_t nodePtr);
-extern Result P2Pconnect(uintptr_t nodePtr, char* peerID, char* peerAddresses);
+extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses);
 extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections);
 extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections);
 extern Result P2PdocumentGetAll(uintptr_t nodePtr);
@@ -104,27 +104,27 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo() client.PeerInfo {
+func (w *CWrapper) PeerInfo() ([]string, error) {
 	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle)))
 
 	if res.Status != 0 {
-		return client.PeerInfo{}
+		return nil, errors.New(res.Error)
 	}
 
-	addrInfo, err := unmarshalResult[client.PeerInfo](res.Value)
+	addresses, err := unmarshalResult[[]string](res.Value)
 	if err != nil {
-		return client.PeerInfo{}
+		return nil, err
 	}
-	return addrInfo
+	return addresses, nil
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
-	peerStr := C.CString(info.String())
+func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
-	defer C.free(unsafe.Pointer(peerStr))
+	defer C.free(unsafe.Pointer(addrStr))
 	defer C.free(unsafe.Pointer(colStr))
 
-	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, peerStr))
+	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -132,13 +132,13 @@ func (w *CWrapper) SetReplicator(ctx context.Context, info client.PeerInfo, coll
 	return nil
 }
 
-func (w *CWrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
-	peerStr := C.CString(info.String())
+func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+	peerID := C.CString(id)
 	colStr := C.CString(strings.Join(collections, ","))
-	defer C.free(unsafe.Pointer(peerStr))
+	defer C.free(unsafe.Pointer(peerID))
 	defer C.free(unsafe.Pointer(colStr))
 
-	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerStr))
+	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerID))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -822,13 +822,11 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
-	cPeerID := C.CString(addr.ID)
-	cPeerAddresses := C.CString(strings.Join(addr.Addresses, ","))
-	defer C.free(unsafe.Pointer(cPeerID))
+func (w *CWrapper) Connect(ctx context.Context, addresses []string) error {
+	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.P2Pconnect(callHandle, cPeerID, cPeerAddresses))
+	res := ConvertAndFreeCResult(C.P2Pconnect(callHandle, cPeerAddresses))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

@@ -21,6 +21,7 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -31,11 +32,11 @@ import (
 
 func putBlock(
 	ctx context.Context,
-	blockstore datastore.Blockstore,
+	store datastore.Blockstore,
 	block interface{ GenerateNode() ipld.Node },
 ) (cidlink.Link, error) {
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(blockstore.AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(store))
 	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
@@ -145,7 +146,7 @@ func determineBlockEncryption(
 
 	// otherwise we use the same encryption as the previous block
 	for _, headCid := range heads {
-		prevBlockBytes, err := txn.Blockstore().AsIPLDStorage().Get(ctx, headCid.KeyString())
+		prevBlockBytes, err := blockstore.NewIPLDStore(txn.Blockstore()).Get(ctx, headCid.KeyString())
 		if err != nil {
 			return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 		}
@@ -154,7 +155,7 @@ func determineBlockEncryption(
 			return nil, cidlink.Link{}, err
 		}
 		if prevBlock.Encryption != nil {
-			prevBlockEncBytes, err := txn.Encstore().AsIPLDStorage().Get(ctx, prevBlock.Encryption.KeyString())
+			prevBlockEncBytes, err := blockstore.NewIPLDStore(txn.Encstore()).Get(ctx, prevBlock.Encryption.Cid.KeyString())
 			if err != nil {
 				return nil, cidlink.Link{}, NewErrCouldNotFindBlock(headCid, err)
 			}

@@ -68,58 +68,46 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() client.PeerInfo {
+func (w *Wrapper) PeerInfo() ([]string, error) {
 	args := []string{"client", "p2p", "info"}
 
 	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get peer info: %v", err))
+		return nil, err
 	}
-	var info client.PeerInfo
-	if err := json.Unmarshal(data, &info); err != nil {
-		panic(fmt.Sprintf("failed to get peer info: %v", err))
+	var addresses []string
+	if err := json.Unmarshal(data, &addresses); err != nil {
+		return nil, err
 	}
-	return info
+	return addresses, nil
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
+func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	args := []string{"client", "p2p", "connect"}
 
-	infoBytes, err := json.Marshal(addr)
-	if err != nil {
-		return err
-	}
-	args = append(args, string(infoBytes))
+	args = append(args, strings.Join(addresses, ","))
 
-	_, err = w.cmd.execute(ctx, args)
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "set"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
-	infoBytes, err := json.Marshal(info)
-	if err != nil {
-		return err
-	}
-	args = append(args, string(infoBytes))
+	args = append(args, strings.Join(addresses, ","))
 
-	_, err = w.cmd.execute(ctx, args)
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
-	infoBytes, err := json.Marshal(info)
-	if err != nil {
-		return err
-	}
-	args = append(args, string(infoBytes))
+	args = append(args, id)
 
-	_, err = w.cmd.execute(ctx, args)
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 

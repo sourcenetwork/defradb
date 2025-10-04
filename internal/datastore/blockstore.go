@@ -13,13 +13,23 @@ package datastore
 import (
 	"context"
 
+	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 )
+
+// Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
+type Blockstore interface {
+	ipfsBlockstore.Blockstore
+	// Mark the block as merged by removing the to-merge index.
+	MarkAsMerged(ctx context.Context, k cid.Cid) error
+	// Check if the block has been merged. It will return false if either the CID is not found
+	// or the CID is found AND the to-merge index is also found.
+	IsMerged(ctx context.Context, k cid.Cid) (bool, error)
+}
 
 func newBlockstore(store corekv.ReaderWriter) *bstore {
 	return &bstore{
@@ -35,14 +45,6 @@ type bstore struct {
 }
 
 var _ Blockstore = (*bstore)(nil)
-
-// AsIPLDStorage returns an IPLDStorage instance.
-//
-// It wraps the blockstore in an IPLD Blockstore adapter for use with
-// the IPLD LinkSystem.
-func (bs *bstore) AsIPLDStorage() IPLDStorage {
-	return &bsadapter.Adapter{Wrapped: bs}
-}
 
 const (
 	objectMarker       = byte(0xff)

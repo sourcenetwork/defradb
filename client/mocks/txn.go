@@ -703,16 +703,16 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func() error) *Txn_Commit_Call {
 }
 
 // Connect provides a mock function for the type Txn
-func (_mock *Txn) Connect(ctx context.Context, info client.PeerInfo) error {
-	ret := _mock.Called(ctx, info)
+func (_mock *Txn) Connect(ctx context.Context, addresses []string) error {
+	ret := _mock.Called(ctx, addresses)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Connect")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.PeerInfo) error); ok {
-		r0 = returnFunc(ctx, info)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
+		r0 = returnFunc(ctx, addresses)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -726,20 +726,20 @@ type Txn_Connect_Call struct {
 
 // Connect is a helper method to define mock.On call
 //   - ctx context.Context
-//   - info client.PeerInfo
-func (_e *Txn_Expecter) Connect(ctx interface{}, info interface{}) *Txn_Connect_Call {
-	return &Txn_Connect_Call{Call: _e.mock.On("Connect", ctx, info)}
+//   - addresses []string
+func (_e *Txn_Expecter) Connect(ctx interface{}, addresses interface{}) *Txn_Connect_Call {
+	return &Txn_Connect_Call{Call: _e.mock.On("Connect", ctx, addresses)}
 }
 
-func (_c *Txn_Connect_Call) Run(run func(ctx context.Context, info client.PeerInfo)) *Txn_Connect_Call {
+func (_c *Txn_Connect_Call) Run(run func(ctx context.Context, addresses []string)) *Txn_Connect_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.PeerInfo
+		var arg1 []string
 		if args[1] != nil {
-			arg1 = args[1].(client.PeerInfo)
+			arg1 = args[1].([]string)
 		}
 		run(
 			arg0,
@@ -754,7 +754,7 @@ func (_c *Txn_Connect_Call) Return(err error) *Txn_Connect_Call {
 	return _c
 }
 
-func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, info client.PeerInfo) error) *Txn_Connect_Call {
+func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses []string) error) *Txn_Connect_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -916,12 +916,12 @@ func (_c *Txn_DeleteNACActorRelationship_Call) RunAndReturn(run func(ctx context
 }
 
 // DeleteReplicator provides a mock function for the type Txn
-func (_mock *Txn) DeleteReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (_mock *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
 	var tmpRet mock.Arguments
 	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, info, collectionNames)
+		tmpRet = _mock.Called(ctx, id, collectionNames)
 	} else {
-		tmpRet = _mock.Called(ctx, info)
+		tmpRet = _mock.Called(ctx, id)
 	}
 	ret := tmpRet
 
@@ -930,8 +930,8 @@ func (_mock *Txn) DeleteReplicator(ctx context.Context, info client.PeerInfo, co
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.PeerInfo, ...string) error); ok {
-		r0 = returnFunc(ctx, info, collectionNames...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...string) error); ok {
+		r0 = returnFunc(ctx, id, collectionNames...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -945,22 +945,22 @@ type Txn_DeleteReplicator_Call struct {
 
 // DeleteReplicator is a helper method to define mock.On call
 //   - ctx context.Context
-//   - info client.PeerInfo
+//   - id string
 //   - collectionNames ...string
-func (_e *Txn_Expecter) DeleteReplicator(ctx interface{}, info interface{}, collectionNames ...interface{}) *Txn_DeleteReplicator_Call {
+func (_e *Txn_Expecter) DeleteReplicator(ctx interface{}, id interface{}, collectionNames ...interface{}) *Txn_DeleteReplicator_Call {
 	return &Txn_DeleteReplicator_Call{Call: _e.mock.On("DeleteReplicator",
-		append([]interface{}{ctx, info}, collectionNames...)...)}
+		append([]interface{}{ctx, id}, collectionNames...)...)}
 }
 
-func (_c *Txn_DeleteReplicator_Call) Run(run func(ctx context.Context, info client.PeerInfo, collectionNames ...string)) *Txn_DeleteReplicator_Call {
+func (_c *Txn_DeleteReplicator_Call) Run(run func(ctx context.Context, id string, collectionNames ...string)) *Txn_DeleteReplicator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.PeerInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(client.PeerInfo)
+			arg1 = args[1].(string)
 		}
 		var arg2 []string
 		var variadicArgs []string
@@ -982,7 +982,7 @@ func (_c *Txn_DeleteReplicator_Call) Return(err error) *Txn_DeleteReplicator_Cal
 	return _c
 }
 
-func (_c *Txn_DeleteReplicator_Call) RunAndReturn(run func(ctx context.Context, info client.PeerInfo, collectionNames ...string) error) *Txn_DeleteReplicator_Call {
+func (_c *Txn_DeleteReplicator_Call) RunAndReturn(run func(ctx context.Context, id string, collectionNames ...string) error) *Txn_DeleteReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1865,20 +1865,31 @@ func (_c *Txn_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, p
 }
 
 // PeerInfo provides a mock function for the type Txn
-func (_mock *Txn) PeerInfo() client.PeerInfo {
+func (_mock *Txn) PeerInfo() ([]string, error) {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for PeerInfo")
 	}
 
-	var r0 client.PeerInfo
-	if returnFunc, ok := ret.Get(0).(func() client.PeerInfo); ok {
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() ([]string, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() []string); ok {
 		r0 = returnFunc()
 	} else {
-		r0 = ret.Get(0).(client.PeerInfo)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // Txn_PeerInfo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PeerInfo'
@@ -1898,12 +1909,12 @@ func (_c *Txn_PeerInfo_Call) Run(run func()) *Txn_PeerInfo_Call {
 	return _c
 }
 
-func (_c *Txn_PeerInfo_Call) Return(peerInfo client.PeerInfo) *Txn_PeerInfo_Call {
-	_c.Call.Return(peerInfo)
+func (_c *Txn_PeerInfo_Call) Return(strings []string, err error) *Txn_PeerInfo_Call {
+	_c.Call.Return(strings, err)
 	return _c
 }
 
-func (_c *Txn_PeerInfo_Call) RunAndReturn(run func() client.PeerInfo) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) RunAndReturn(run func() ([]string, error)) *Txn_PeerInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2314,12 +2325,12 @@ func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, conf
 }
 
 // SetReplicator provides a mock function for the type Txn
-func (_mock *Txn) SetReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (_mock *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	var tmpRet mock.Arguments
 	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, info, collectionNames)
+		tmpRet = _mock.Called(ctx, addresses, collectionNames)
 	} else {
-		tmpRet = _mock.Called(ctx, info)
+		tmpRet = _mock.Called(ctx, addresses)
 	}
 	ret := tmpRet
 
@@ -2328,8 +2339,8 @@ func (_mock *Txn) SetReplicator(ctx context.Context, info client.PeerInfo, colle
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.PeerInfo, ...string) error); ok {
-		r0 = returnFunc(ctx, info, collectionNames...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...string) error); ok {
+		r0 = returnFunc(ctx, addresses, collectionNames...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2343,22 +2354,22 @@ type Txn_SetReplicator_Call struct {
 
 // SetReplicator is a helper method to define mock.On call
 //   - ctx context.Context
-//   - info client.PeerInfo
+//   - addresses []string
 //   - collectionNames ...string
-func (_e *Txn_Expecter) SetReplicator(ctx interface{}, info interface{}, collectionNames ...interface{}) *Txn_SetReplicator_Call {
+func (_e *Txn_Expecter) SetReplicator(ctx interface{}, addresses interface{}, collectionNames ...interface{}) *Txn_SetReplicator_Call {
 	return &Txn_SetReplicator_Call{Call: _e.mock.On("SetReplicator",
-		append([]interface{}{ctx, info}, collectionNames...)...)}
+		append([]interface{}{ctx, addresses}, collectionNames...)...)}
 }
 
-func (_c *Txn_SetReplicator_Call) Run(run func(ctx context.Context, info client.PeerInfo, collectionNames ...string)) *Txn_SetReplicator_Call {
+func (_c *Txn_SetReplicator_Call) Run(run func(ctx context.Context, addresses []string, collectionNames ...string)) *Txn_SetReplicator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.PeerInfo
+		var arg1 []string
 		if args[1] != nil {
-			arg1 = args[1].(client.PeerInfo)
+			arg1 = args[1].([]string)
 		}
 		var arg2 []string
 		var variadicArgs []string
@@ -2380,7 +2391,7 @@ func (_c *Txn_SetReplicator_Call) Return(err error) *Txn_SetReplicator_Call {
 	return _c
 }
 
-func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, info client.PeerInfo, collectionNames ...string) error) *Txn_SetReplicator_Call {
+func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames ...string) error) *Txn_SetReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }

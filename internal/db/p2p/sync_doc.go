@@ -21,6 +21,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -101,7 +102,7 @@ func (p *P2P) waitAndHandleDocSyncResponses(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	pubSubRespChan <-chan client.PubsubResponse,
+	pubSubRespChan <-chan p2p.PubsubResponse,
 ) (results map[string][]cid.Cid, err error) {
 	result := make(map[string][]cid.Cid)
 
@@ -130,7 +131,7 @@ loop:
 // It mutates the results map with the document IDs and their corresponding CIDs.
 func (p *P2P) handleDocSyncResponse(
 	ctx context.Context,
-	resp client.PubsubResponse,
+	resp p2p.PubsubResponse,
 	collectionID string,
 	results map[string][]cid.Cid,
 ) {
@@ -213,7 +214,7 @@ func (p *P2P) syncDocumentAndMerge(
 
 // syncDocumentDAG synchronizes the DAG for a specific document CID.
 func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
-	linkSys := makeLinkSystem(p.host.BlockService())
+	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
@@ -225,7 +226,7 @@ func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
 		return err
 	}
 
-	return p.syncDAG(ctx, p.host.BlockService(), linkBlock)
+	return p.syncDAG(ctx, linkBlock)
 }
 
 // docSyncMessageHandler handles incoming document sync requests from the pubsub network.

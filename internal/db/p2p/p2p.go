@@ -88,8 +88,11 @@ type P2P struct {
 	db   DB
 	host client.Host
 
-	// replicators is a map from collection CollectionID => peerId
-	replicators map[string]map[string]client.PeerInfo
+	// replicators is a map from collection CollectionID => peerId => list of addresses.
+	// This is a cached in-memory copy of the persisted replicators in the database.
+	// It is used to quickly find the replicators for a given collection when sending updates.
+	// The map is protected by repMu.
+	replicators map[string]map[string][]string
 	repMu       sync.Mutex
 
 	peerIdentities map[string]identity.Identity
@@ -132,7 +135,7 @@ func New(ctx context.Context, db DB, host client.Host, nodeIdentity immutable.Op
 		db:                   db,
 		host:                 host,
 		identityProtocol:     protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
-		replicators:          make(map[string]map[string]client.PeerInfo),
+		replicators:          make(map[string]map[string][]string),
 		peerIdentities:       make(map[string]identity.Identity),
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(),
@@ -162,7 +165,7 @@ func New(ctx context.Context, db DB, host client.Host, nodeIdentity immutable.Op
 	}
 
 	if len(db.SearchableEncryptionKey()) > 0 {
-		coord, err := se.NewCoordinator(&p, p.Host(), db, db.SearchableEncryptionKey(), nodeIdentity)
+		coord, err := se.NewCoordinator(&p, host, db, db.SearchableEncryptionKey(), nodeIdentity)
 		if err != nil {
 			return nil, err
 		}
@@ -171,10 +174,6 @@ func New(ctx context.Context, db DB, host client.Host, nodeIdentity immutable.Op
 	}
 
 	return &p, nil
-}
-
-func (p *P2P) Host() client.Host {
-	return p.host
 }
 
 func (p *P2P) SECoordinator() *se.Coordinator {
@@ -186,24 +185,24 @@ func (p *P2P) AddPushToReplicatorsHandler(handler PushToReplicatorsHandler) {
 	p.pushHandlers = append(p.pushHandlers, handler)
 }
 
-func (p *P2P) PeerInfo() client.PeerInfo {
-	return p.host.PeerInfo()
+func (p *P2P) PeerInfo() ([]string, error) {
+	return p.host.Addresses()
 }
 
-// Connect initiates a connection to the peer with the given addresp.
-func (p *P2P) Connect(ctx context.Context, id string, addresses []string) error {
-	return p.host.Connect(ctx, id, addresses)
+// Connect initiates a connection to the peer with the given addresses.
+func (p *P2P) Connect(ctx context.Context, addresses []string) error {
+	return p.host.Connect(ctx, addresses)
 }
 
-func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collectionIDs map[string]struct{}) {
+func (p *P2P) updateReplicators(ctx context.Context, id string, addresses []string, collectionIDs map[string]struct{}) {
 	if len(collectionIDs) == 0 {
 		// remove peer from store
-		if err := p.host.Disconnect(ctx, rep.ID); err != nil {
+		if err := p.host.Disconnect(ctx, id); err != nil {
 			log.ErrorE("Failed to disconnect from replicator peer", err)
 		}
 	} else {
-		if err := p.host.Connect(ctx, rep.ID, rep.Addresses); err != nil {
-			log.ErrorE("Failed to connect to replicator peer", err)
+		if err := p.host.Connect(ctx, addresses); err != nil {
+			log.ErrorE("Failed to connect to replicator peer", err, corelog.Any("Addresses", addresses))
 		}
 	}
 
@@ -211,19 +210,19 @@ func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collec
 	p.repMu.Lock()
 	for collectionID, peers := range p.replicators {
 		if _, hasID := collectionIDs[collectionID]; hasID {
-			p.replicators[collectionID][rep.ID] = rep
+			p.replicators[collectionID][id] = addresses
 			delete(collectionIDs, collectionID)
 		} else {
-			if _, exists := peers[rep.ID]; exists {
-				delete(p.replicators[collectionID], rep.ID)
+			if _, exists := peers[id]; exists {
+				delete(p.replicators[collectionID], id)
 			}
 		}
 	}
 	for collectionID := range collectionIDs {
 		if _, exists := p.replicators[collectionID]; !exists {
-			p.replicators[collectionID] = make(map[string]client.PeerInfo)
+			p.replicators[collectionID] = make(map[string][]string)
 		}
-		p.replicators[collectionID][rep.ID] = rep
+		p.replicators[collectionID][id] = addresses
 	}
 	p.repMu.Unlock()
 }
@@ -465,7 +464,7 @@ func (p *P2P) processPushlogRequest(
 		}
 	}
 
-	err = p.syncDAG(ctx, p.host.BlockService(), block)
+	err = p.syncDAG(ctx, block)
 	if err != nil {
 		return err
 	}

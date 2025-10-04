@@ -19,8 +19,10 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -40,44 +42,37 @@ const (
 	retryLoopInterval = 2 * time.Second
 )
 
-func (p *P2P) SetReplicator(ctx context.Context, repInfo client.PeerInfo, collectionNames ...string) error {
+func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	clientTxn := datastore.CtxMustGetClientTxn(ctx)
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
-	peerInfo := p.PeerInfo()
-	if repInfo.ID == peerInfo.ID {
-		return ErrSelfTargetForReplicator
-	}
-
-	repKey := keys.NewReplicatorKey(repInfo.ID)
-	hasOldRep, err := txn.Peerstore().Has(ctx, repKey.Bytes())
-	if err != nil {
-		return err
-	}
-
-	storedRep := client.Replicator{}
-	storedCollectionIDs := make(map[string]struct{})
-	if hasOldRep {
-		repBytes, err := txn.Peerstore().Get(ctx, repKey.Bytes())
+	// Build a map of replicator ID to list of addresses to handle multiple addresses
+	replicatorMap := make(map[string][]string)
+	for _, addr := range addresses {
+		maddrWithID, err := multiaddr.NewMultiaddr(addr)
 		if err != nil {
 			return err
 		}
-		err = json.Unmarshal(repBytes, &storedRep)
-		if err != nil {
-			return err
+		_, p2ppart := multiaddr.SplitLast(maddrWithID)
+		if p2ppart == nil || p2ppart.Protocol().Code != multiaddr.P_P2P {
+			return errors.New("multiaddr does not contain peer ID")
 		}
-		for _, id := range storedRep.CollectionIDs {
-			storedCollectionIDs[id] = struct{}{}
+		id := p2ppart.Value()
+		if id == p.host.ID() {
+			return ErrSelfTargetForReplicator
 		}
-	} else {
-		storedRep.Info = repInfo
-		storedRep.LastStatusChange = time.Now()
+		if replicatorMap[id] != nil {
+			replicatorMap[id] = append(replicatorMap[id], addr)
+		} else {
+			replicatorMap[id] = []string{addr}
+		}
 	}
 
 	var fetchedCollections []client.Collection
+	var err error
 	switch {
 	case len(collectionNames) > 0:
 		// if specific collections are chosen get them by name
@@ -100,36 +95,71 @@ func (p *P2P) SetReplicator(ctx context.Context, repInfo client.PeerInfo, collec
 		}
 	}
 
-	addedCols := []client.Collection{}
-	for _, col := range fetchedCollections {
-		if _, ok := storedCollectionIDs[col.CollectionID()]; !ok {
-			storedCollectionIDs[col.CollectionID()] = struct{}{}
-			addedCols = append(addedCols, col)
-			storedRep.CollectionIDs = append(storedRep.CollectionIDs, col.CollectionID())
+	// Update the list of collections for each replicator prior to persisting.
+	storedRepCollectionIDs := make(map[string]map[string]struct{}) // replicatorID => collectionID
+	addedCols := make(map[string][]client.Collection)              // peerID => list of collections added
+
+	for id, addresses := range replicatorMap {
+		if storedRepCollectionIDs[id] == nil {
+			storedRepCollectionIDs[id] = make(map[string]struct{})
+		}
+		repKey := keys.NewReplicatorKey(id)
+		hasOldRep, err := txn.Peerstore().Has(ctx, repKey.Bytes())
+		if err != nil {
+			return err
+		}
+
+		storedRep := client.Replicator{}
+		if hasOldRep {
+			repBytes, err := txn.Peerstore().Get(ctx, repKey.Bytes())
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(repBytes, &storedRep)
+			if err != nil {
+				return err
+			}
+			for _, colID := range storedRep.CollectionIDs {
+				storedRepCollectionIDs[id][colID] = struct{}{}
+			}
+		} else {
+			storedRep.ID = id
+			storedRep.LastStatusChange = time.Now()
+		}
+		// Update the list of addresses for this replicator whether it is new or existing.
+		storedRep.Addresses = addresses
+
+		for _, col := range fetchedCollections {
+			if _, ok := storedRepCollectionIDs[id][col.CollectionID()]; !ok {
+				storedRepCollectionIDs[id][col.CollectionID()] = struct{}{}
+				addedCols[id] = append(addedCols[id], col)
+				storedRep.CollectionIDs = append(storedRep.CollectionIDs, col.CollectionID())
+			}
+		}
+
+		newRepBytes, err := json.Marshal(storedRep)
+		if err != nil {
+			return err
+		}
+
+		err = txn.Peerstore().Set(ctx, repKey.Bytes(), newRepBytes)
+		if err != nil {
+			return err
 		}
 	}
 
-	// persist replicator to the datastore
-	newRepBytes, err := json.Marshal(storedRep)
-	if err != nil {
-		return err
-	}
-
-	err = txn.Peerstore().Set(ctx, repKey.Bytes(), newRepBytes)
-	if err != nil {
-		return err
-	}
-
 	txn.OnSuccessAsync(func() {
-		p.updateReplicators(ctx, repInfo, storedCollectionIDs)
-		for _, col := range addedCols {
-			err := p.pushHeadsForAllDocs(context.Background(), col, repInfo.ID)
-			if err != nil {
-				log.ErrorE(
-					"Failed push heads for all docs",
-					err,
-					corelog.Any("Collection", col.Name()),
-				)
+		for id, addresses := range replicatorMap {
+			p.updateReplicators(ctx, id, addresses, storedRepCollectionIDs[id])
+			for _, col := range addedCols[id] {
+				err := p.pushHeadsForAllDocs(context.Background(), col, id)
+				if err != nil {
+					log.ErrorE(
+						"Failed push heads for all docs",
+						err,
+						corelog.Any("Collection", col.Name()),
+					)
+				}
 			}
 		}
 		p.db.Events().Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
@@ -204,7 +234,7 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 	return nil
 }
 
-func (p *P2P) DeleteReplicator(ctx context.Context, repInfo client.PeerInfo, collectionNames ...string) error {
+func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -213,7 +243,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, repInfo client.PeerInfo, col
 
 	storedRep := client.Replicator{}
 	storedCollectionIDs := make(map[string]struct{})
-	repKey := keys.NewReplicatorKey(repInfo.ID)
+	repKey := keys.NewReplicatorKey(id)
 	hasOldRep, err := txn.Peerstore().Has(ctx, repKey.Bytes())
 	if err != nil {
 		return err
@@ -255,7 +285,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, repInfo client.PeerInfo, col
 	}
 
 	// Persist the replicator to the store, deleting it if no collection remain
-	key := keys.NewReplicatorKey(repInfo.ID)
+	key := keys.NewReplicatorKey(id)
 	if len(storedRep.CollectionIDs) == 0 {
 		err := txn.Peerstore().Delete(ctx, key.Bytes())
 		if err != nil {
@@ -273,7 +303,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, repInfo client.PeerInfo, col
 	}
 
 	txn.OnSuccess(func() {
-		p.updateReplicators(ctx, repInfo, storedCollectionIDs)
+		p.updateReplicators(ctx, storedRep.ID, storedRep.Addresses, storedCollectionIDs)
 		p.db.Events().Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 	})
 
@@ -358,7 +388,7 @@ func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
 		for _, id := range rep.CollectionIDs {
 			storedCollectionIDs[id] = struct{}{}
 		}
-		p.updateReplicators(ctx, rep.Info, storedCollectionIDs)
+		p.updateReplicators(ctx, rep.ID, rep.Addresses, storedCollectionIDs)
 	}
 	return nil
 }
@@ -735,7 +765,7 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	headstore := txn.Headstore()
-	blockstore := txn.Blockstore().AsIPLDStorage()
+	blockstore := blockstore.NewIPLDStore(txn.Blockstore())
 
 	prefix := keys.HeadstoreDocKey{
 		DocID:   docID,

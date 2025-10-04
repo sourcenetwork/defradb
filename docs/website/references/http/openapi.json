@@ -328,6 +328,20 @@
                 },
                 "type": "object"
             },
+            "delete_replicator_params": {
+                "properties": {
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "ID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "delete_result": {
                 "properties": {
                     "Count": {
@@ -525,25 +539,20 @@
             },
             "replicator": {
                 "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "CollectionIDs": {
                         "items": {
                             "type": "string"
                         },
                         "type": "array"
                     },
-                    "Info": {
-                        "properties": {
-                            "Addresses": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "ID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
+                    "ID": {
+                        "type": "string"
                     },
                     "LastStatusChange": {
                         "format": "date-time",
@@ -553,31 +562,6 @@
                         "maximum": 255,
                         "minimum": 0,
                         "type": "integer"
-                    }
-                },
-                "type": "object"
-            },
-            "replicator_params": {
-                "properties": {
-                    "Collections": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "Info": {
-                        "properties": {
-                            "Addresses": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "ID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -609,6 +593,23 @@
                             }
                         },
                         "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "set_replicator_params": {
+                "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -2229,7 +2230,7 @@
             }
         },
         "/p2p/connect": {
-            "get": {
+            "post": {
                 "operationId": "connect",
                 "responses": {
                     "200": {
@@ -2420,7 +2421,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
+                                "$ref": "#/components/schemas/delete_replicator_params"
                             }
                         }
                     },
@@ -2476,7 +2477,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
+                                "$ref": "#/components/schemas/set_replicator_params"
                             }
                         }
                     },

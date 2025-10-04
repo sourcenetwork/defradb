@@ -11,11 +11,9 @@
 package cli
 
 import (
-	"encoding/json"
+	"strings"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PReplicatorSetCommand() *cobra.Command {
@@ -27,17 +25,21 @@ func MakeP2PReplicatorSetCommand() *cobra.Command {
 A replicator synchronizes one or all collection(s) from this node to another.
 
 Example:
-  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
+  defradb client p2p replicator set -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
 `,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			var info client.PeerInfo
-			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
-				return err
+			var addresses []string
+			for _, id := range strings.Split(args[0], ",") {
+				id = strings.TrimSpace(id)
+				if id == "" {
+					continue
+				}
+				addresses = append(addresses, id)
 			}
-			return cliClient.SetReplicator(cmd.Context(), info, collections...)
+			return cliClient.SetReplicator(cmd.Context(), addresses, collections...)
 		},
 	}
 

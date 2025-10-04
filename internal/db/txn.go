@@ -270,22 +270,22 @@ func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) er
 	return txn.db.BasicExport(ctx, config)
 }
 
-func (txn *Txn) PeerInfo() client.PeerInfo {
+func (txn *Txn) PeerInfo() ([]string, error) {
 	return txn.db.PeerInfo()
 }
 
-func (txn *Txn) Connect(ctx context.Context, info client.PeerInfo) error {
-	return txn.db.Connect(ctx, info)
+func (txn *Txn) Connect(ctx context.Context, addresses []string) error {
+	return txn.db.Connect(ctx, addresses)
 }
 
-func (txn *Txn) SetReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (txn *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SetReplicator(ctx, info, collectionNames...)
+	return txn.db.SetReplicator(ctx, addresses, collectionNames...)
 }
 
-func (txn *Txn) DeleteReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteReplicator(ctx, info, collectionNames...)
+	return txn.db.DeleteReplicator(ctx, id, collectionNames...)
 }
 
 func (txn *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {

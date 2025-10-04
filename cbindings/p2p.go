@@ -18,10 +18,7 @@ import "C"
 
 import (
 	"context"
-	"encoding/json"
 	"time"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 //export P2PInfo
@@ -30,8 +27,11 @@ func P2PInfo(nodePtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	info := node.DB.PeerInfo()
-	return returnC(marshalJSONToGoCResult(info))
+	addresses, err := node.DB.PeerInfo()
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(marshalJSONToGoCResult(addresses))
 }
 
 //export P2PgetAllReplicators
@@ -49,20 +49,16 @@ func P2PgetAllReplicators(nodePtr C.uintptr_t) C.Result {
 }
 
 //export P2PsetReplicator
-func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.char) C.Result {
+func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, addresses *C.char) C.Result {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
-
-	var info client.PeerInfo
-	if err := json.Unmarshal([]byte(C.GoString(peerInfo)), &info); err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
+	addressesArgs := splitCommaSeparatedString(C.GoString(addresses))
 
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SetReplicator(ctx, info, colArgs...)
+	err = node.DB.SetReplicator(ctx, addressesArgs, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -70,20 +66,15 @@ func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.char
 }
 
 //export P2PdeleteReplicator
-func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, peerInfo *C.char) C.Result {
+func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char) C.Result {
 	ctx := context.Background()
 	colArgs := splitCommaSeparatedString(C.GoString(collections))
-
-	var info client.PeerInfo
-	if err := json.Unmarshal([]byte(C.GoString(peerInfo)), &info); err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
 
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.DeleteReplicator(ctx, info, colArgs...)
+	err = node.DB.DeleteReplicator(ctx, C.GoString(id), colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -217,16 +208,14 @@ func P2PdocumentSync(nodePtr C.uintptr_t, collection *C.char, docIDs *C.char, ti
 }
 
 //export P2Pconnect
-func P2Pconnect(nodePtr C.uintptr_t, peerID *C.char, peerAddresses *C.char) C.Result {
+func P2Pconnect(nodePtr C.uintptr_t, peerAddresses *C.char) C.Result {
 	ctx := context.Background()
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	var info client.PeerInfo
-	info.ID = C.GoString(peerID)
-	info.Addresses = splitCommaSeparatedString(C.GoString(peerAddresses))
-	err = node.DB.Connect(ctx, info)
+	addresses := splitCommaSeparatedString(C.GoString(peerAddresses))
+	err = node.DB.Connect(ctx, addresses)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

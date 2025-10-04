@@ -14,20 +14,17 @@ import (
 	"context"
 	"sync"
 
-	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
 
+	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
 
-func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
-	blockStore := &bsrvadapter.Adapter{Wrapped: blockService}
-
+func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
 	linkSys := cidlink.DefaultLinkSystem()
-	linkSys.SetWriteStorage(blockStore)
-	linkSys.SetReadStorage(blockStore)
+	linkSys.SetWriteStorage(blockService)
+	linkSys.SetReadStorage(blockService)
 	linkSys.TrustedStorage = true
 
 	return linkSys
@@ -38,11 +35,11 @@ func makeLinkSystem(blockService blockservice.BlockService) linking.LinkSystem {
 //
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
-func (p *P2P) syncDAG(ctx context.Context, blockService blockservice.BlockService, block *coreblock.Block) error {
+func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 	// use a session to make remote fetches more efficient
-	ctx = blockservice.ContextWithSession(ctx, blockService)
+	ctx = p.host.ContextWithSession(ctx)
 
-	linkSystem := makeLinkSystem(blockService)
+	linkSystem := makeLinkSystem(p.host.IPLDStore())
 
 	// Store the block in the DAG store
 	_, err := linkSystem.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())

@@ -11,30 +11,36 @@
 package cli
 
 import (
-	"encoding/json"
+	"strings"
 
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeP2PConnectCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "connect <peerInfo>",
-		Short: "Connect to a peer",
-		Long: `Connect to a peer with the given ID and addresses
-Example: 
-  defradb client p2p connect '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
-  		`,
+		Use:   "connect <addresses>",
+		Short: "Connect to one or more peers",
+		Long: `Connect to one or more peers with the given addresses
+
+Example: Connect to a peer
+  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
+  
+Example: Connect to multiple peers
+  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
+		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			var info client.PeerInfo
-			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
-				return err
+			var addresses []string
+			for _, id := range strings.Split(args[0], ",") {
+				id = strings.TrimSpace(id)
+				if id == "" {
+					continue
+				}
+				addresses = append(addresses, id)
 			}
-			return cliClient.Connect(cmd.Context(), info)
+			return cliClient.Connect(cmd.Context(), addresses)
 		},
 	}
 	return cmd

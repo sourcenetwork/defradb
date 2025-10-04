@@ -47,15 +47,15 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() client.PeerInfo {
-	return client.PeerInfo{}
+func (w *Wrapper) PeerInfo() ([]string, error) {
+	return nil, nil
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -426,8 +426,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
-	return w.node.DB.Connect(ctx, addr)
+func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+	return w.node.DB.Connect(ctx, addresses)
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {

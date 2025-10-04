@@ -17,13 +17,13 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega/types"
 
+	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
@@ -162,12 +162,12 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 type NodeState struct {
 	// The node's client active in this test.
 	clients.Client
-	// Event contains all Event node subscriptions.
+	// Event cp2p.NodeOptontains all Event node subscriptions.
 	Event *EventState
 	// P2P contains P2P states for the node.
 	P2P *P2PState
 	// The network configurations for the nodes
-	NetOpts []netConfig.NodeOpt
+	NetOpts []p2p.NodeOpt
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
@@ -175,9 +175,9 @@ type NodeState struct {
 	Collections []client.Collection
 	// indicates if the node is Closed.
 	Closed bool
-	// CachedPeerInfo holds the node's PeerInfo so that the node can be
-	// restarded with the same address configuration.
-	CachedPeerInfo client.PeerInfo
+	// CachedAddresses holds the node's addresses so that the node can be
+	// restarted with the same address configuration.
+	CachedAddresses []string
 	// Map of docIDs to their composite CIDs.
 	Composites map[string][]cid.Cid
 }

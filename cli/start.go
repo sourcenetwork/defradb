@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -31,7 +32,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/version"
 )
@@ -102,10 +102,10 @@ func MakeStartCommand() *cobra.Command {
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				db.WithRetryInterval(replicatorRetryIntervals),
 				// net node options
-				netConfig.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
-				netConfig.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
-				netConfig.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
-				netConfig.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
+				p2p.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
+				p2p.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
+				p2p.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
+				p2p.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
 
 				// http server options
 				http.WithAddress(cfg.GetString("api.address")),
@@ -407,7 +407,7 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	} else if err != nil {
 		return nil, err
 	}
-	return append(opts, netConfig.WithPrivateKey(peerKey)), nil
+	return append(opts, p2p.WithPrivateKey(peerKey)), nil
 }
 
 func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Viper) ([]node.Option, error) {

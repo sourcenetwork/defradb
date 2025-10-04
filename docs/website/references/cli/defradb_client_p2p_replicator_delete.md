@@ -8,11 +8,11 @@ Delete replicator(s) and stop synchronization.
 A replicator synchronizes one or all collection(s) from this node to another.
 		
 Example:		
-  defradb client p2p replicator delete -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
+  defradb client p2p replicator delete -c Users 12D3...
 		
 
 ```
-defradb client p2p replicator delete [-c, --collection] <peer> [flags]
+defradb client p2p replicator delete [-c, --collection] <peerID> [flags]
 ```
 
 ### Options

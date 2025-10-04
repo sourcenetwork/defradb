@@ -16,21 +16,24 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 type p2pHandler struct{}
 
 func (h *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	responseJSON(rw, http.StatusOK, db.PeerInfo())
+	addresses, err := db.PeerInfo()
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, addresses)
 }
 
 func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var resp client.PeerInfo
+	var resp []string
 	if err := requestJSON(req, &resp); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -46,12 +49,12 @@ func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var rep ReplicatorParams
+	var rep SetReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.SetReplicator(req.Context(), rep.Info, rep.Collections...)
+	err := db.SetReplicator(req.Context(), rep.Addresses, rep.Collections...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -62,12 +65,12 @@ func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var rep ReplicatorParams
+	var rep DeleteReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.DeleteReplicator(req.Context(), rep.Info, rep.Collections...)
+	err := db.DeleteReplicator(req.Context(), rep.ID, rep.Collections...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -220,8 +223,11 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	replicatorSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/replicator",
 	}
-	replicatorParamsSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/replicator_params",
+	setReplicatorParamsSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/set_replicator_params",
+	}
+	deleteReplicatorParamsSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/delete_replicator_params",
 	}
 
 	peerInfoResponse := openapi3.NewResponse().
@@ -254,27 +260,31 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	getReplicators.AddResponse(200, getReplicatorsResponse)
 	getReplicators.Responses.Set("400", errorResponse)
 
-	replicatorRequest := openapi3.NewRequestBody().
+	setReplicatorRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(replicatorParamsSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(setReplicatorParamsSchema))
 
 	setReplicator := openapi3.NewOperation()
 	setReplicator.Description = "Add peer replicators"
 	setReplicator.OperationID = "peer_replicator_set"
 	setReplicator.Tags = []string{"p2p"}
 	setReplicator.RequestBody = &openapi3.RequestBodyRef{
-		Value: replicatorRequest,
+		Value: setReplicatorRequest,
 	}
 	setReplicator.Responses = openapi3.NewResponses()
 	setReplicator.Responses.Set("200", successResponse)
 	setReplicator.Responses.Set("400", errorResponse)
+
+	deleteReplicatorRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(deleteReplicatorParamsSchema))
 
 	deleteReplicator := openapi3.NewOperation()
 	deleteReplicator.Description = "Delete peer replicators"
 	deleteReplicator.OperationID = "peer_replicator_delete"
 	deleteReplicator.Tags = []string{"p2p"}
 	deleteReplicator.RequestBody = &openapi3.RequestBodyRef{
-		Value: replicatorRequest,
+		Value: deleteReplicatorRequest,
 	}
 	deleteReplicator.Responses = openapi3.NewResponses()
 	deleteReplicator.Responses.Set("200", successResponse)
@@ -385,7 +395,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncDocuments.Responses.Set("500", errorResponse)
 
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
-	router.AddRoute("/p2p/connect", http.MethodGet, connect, h.Connect)
+	router.AddRoute("/p2p/connect", http.MethodPost, connect, h.Connect)
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)
 	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)

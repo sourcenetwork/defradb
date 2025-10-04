@@ -22,6 +22,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -205,10 +206,10 @@ func (db *DB) newMergeProcessor(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	blockLS := cidlink.DefaultLinkSystem()
-	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
+	blockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Blockstore()))
 
 	encBlockLS := cidlink.DefaultLinkSystem()
-	encBlockLS.SetReadStorage(txn.Encstore().AsIPLDStorage())
+	encBlockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Encstore()))
 
 	return &mergeProcessor{
 		blockLS:                   blockLS,

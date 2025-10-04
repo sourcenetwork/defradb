@@ -15,13 +15,13 @@ package tests
 import (
 	"fmt"
 
+	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -130,9 +130,9 @@ func setupNode(
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
-	netOpts := make([]netConfig.NodeOpt, 0)
+	netOpts := make([]p2p.NodeOpt, 0)
 	for _, opt := range opts {
-		if opt, ok := opt.(netConfig.NodeOpt); ok {
+		if opt, ok := opt.(p2p.NodeOpt); ok {
 			netOpts = append(netOpts, opt)
 		}
 	}
@@ -169,7 +169,9 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	st.CachedPeerInfo = nodeObj.DB.PeerInfo()
+	addresses, err := nodeObj.DB.PeerInfo()
+	require.NoError(s.T, err)
+	st.CachedAddresses = addresses
 
 	return st, nil
 }

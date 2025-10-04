@@ -8,7 +8,7 @@ Add replicator(s) and start synchronization.
 A replicator synchronizes one or all collection(s) from this node to another.
 
 Example:
-  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
+  defradb client p2p replicator set -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
 
 
 ```
