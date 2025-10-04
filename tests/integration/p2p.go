@@ -477,6 +477,8 @@ func getIPString() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		// If getting the local address fails, we simply return the loopback address.
+		// This would occur if the machine running the tests has no network connection.
+		// This will cause the integration tests that depend on DHT relaying of messages to fail.
 		return loopbackIP
 	}
 	defer func() {

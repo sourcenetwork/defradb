@@ -424,11 +424,6 @@ func (p *P2P) processPushlogRequest(
 	}
 	err = p.db.Merge(ctx, mergeEvt)
 	if err != nil {
-		// log.ErrorContextE(
-		// 	ctx,
-		// 	"Failed to execute merge",
-		// 	err,
-		// 	corelog.Any("Event", mergeEvt))
 		return err
 	}
 
