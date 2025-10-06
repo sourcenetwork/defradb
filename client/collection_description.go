@@ -11,7 +11,6 @@
 package client
 
 import (
-	"encoding/json"
 	"reflect"
 
 	"github.com/sourcenetwork/immutable"
@@ -52,12 +51,14 @@ type CollectionVersion struct {
 	// If this CollectionVersion is not part of a collection set, this property will be None.
 	CollectionSet immutable.Option[CollectionSetDescription]
 
-	// Sources is the set of sources from which this collection draws data.
+	// Query may hold a query, along with a Lens transform to source data from.
 	//
-	// Currently supported source types are:
-	// - [QuerySource]
-	// - [CollectionSource]
-	Sources []any
+	// If a value is provided, this Collection may not be directly written too,
+	// and it may not (yet) have its documents synced across the P2P network.
+	Query immutable.Option[QuerySource]
+
+	// VersionSources is the set of versions from which this collection may draw data from.
+	VersionSources []CollectionSource
 
 	// Fields contains the fields local to the node within this Collection.
 	//
@@ -219,112 +220,9 @@ func (col CollectionVersion) GetFieldByRelation(
 	return CollectionFieldDescription{}, false
 }
 
-// QuerySources returns all the Sources of type [QuerySource]
-func (col CollectionVersion) QuerySources() []*QuerySource {
-	return sourcesOfType[*QuerySource](col)
-}
-
-// CollectionSources returns all the Sources of type [CollectionSource]
-func (col CollectionVersion) CollectionSources() []*CollectionSource {
-	return sourcesOfType[*CollectionSource](col)
-}
-
-func sourcesOfType[ResultType any](col CollectionVersion) []ResultType {
-	result := []ResultType{}
-	for _, source := range col.Sources {
-		if typedSource, isOfType := source.(ResultType); isOfType {
-			result = append(result, typedSource)
-		}
-	}
-	return result
-}
-
 // Equal returns true if this and the given [CollectionVersion] are equal.
 func (col CollectionVersion) Equal(other CollectionVersion) bool {
 	return reflect.DeepEqual(col, other)
-}
-
-// collectionVersion is a private type used to facilitate the unmarshalling
-// of json to a [CollectionVersion].
-type collectionVersion struct {
-	// These properties are unmarshalled using the default json unmarshaller
-	Name             string
-	VersionID        string
-	CollectionID     string
-	RootID           uint32
-	CollectionSet    immutable.Option[CollectionSetDescription]
-	IsMaterialized   bool
-	IsBranchable     bool
-	IsEmbeddedOnly   bool
-	IsActive         bool
-	IsPlaceholder    bool
-	Policy           immutable.Option[PolicyDescription]
-	Indexes          []IndexDescription
-	Fields           []CollectionFieldDescription
-	VectorEmbeddings []VectorEmbeddingDescription
-
-	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
-	Sources []map[string]json.RawMessage
-}
-
-func (col *CollectionVersion) UnmarshalJSON(bytes []byte) error {
-	var descMap collectionVersion
-	err := json.Unmarshal(bytes, &descMap)
-	if err != nil {
-		return err
-	}
-
-	col.Name = descMap.Name
-	col.VersionID = descMap.VersionID
-	col.CollectionID = descMap.CollectionID
-	col.CollectionSet = descMap.CollectionSet
-	col.IsMaterialized = descMap.IsMaterialized
-	col.IsBranchable = descMap.IsBranchable
-	col.IsEmbeddedOnly = descMap.IsEmbeddedOnly
-	col.IsActive = descMap.IsActive
-	col.IsPlaceholder = descMap.IsPlaceholder
-	col.Indexes = descMap.Indexes
-	col.Fields = descMap.Fields
-	col.Sources = make([]any, len(descMap.Sources))
-	col.Policy = descMap.Policy
-	col.VectorEmbeddings = descMap.VectorEmbeddings
-
-	for i, source := range descMap.Sources {
-		sourceJson, err := json.Marshal(source)
-		if err != nil {
-			return err
-		}
-
-		var sourceValue any
-		// We detect which concrete type each `Source` object is by detecting
-		// non-nillable fields, if the key is present it must be of that type.
-		// They must be non-nillable as nil values may have their keys omitted from
-		// the json. This also relies on the fields being unique.  We may wish to change
-		// this later to custom-serialize with a `_type` property.
-		if _, ok := source["Query"]; ok {
-			// This must be a QuerySource, as only the `QuerySource` type has a `Query` field
-			var querySource QuerySource
-			err := json.Unmarshal(sourceJson, &querySource)
-			if err != nil {
-				return err
-			}
-			sourceValue = &querySource
-		} else if _, ok := source["SourceCollectionID"]; ok {
-			// This must be a CollectionSource, as only the `CollectionSource` type has a `SourceCollectionID` field
-			var collectionSource CollectionSource
-			err := json.Unmarshal(sourceJson, &collectionSource)
-			if err != nil {
-				return err
-			}
-			sourceValue = &collectionSource
-		} else {
-			return ErrFailedToUnmarshalCollection
-		}
-
-		col.Sources[i] = sourceValue
-	}
-
-	return nil
 }
 
 // VectorEmbeddingDescription hold the relevant information to generate embeddings.

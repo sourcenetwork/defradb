@@ -268,7 +268,7 @@ func validateSecondaryFieldsPairUp(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		if len(newCollection.QuerySources()) > 0 {
+		if newCollection.Query.HasValue() {
 			// Views do not require both sides of the relation to be defined.
 			continue
 		}
@@ -430,30 +430,24 @@ func validateSourcesNotRedefined(
 			continue
 		}
 
-		newColSources := newCol.CollectionSources()
-		oldColSources := oldCol.CollectionSources()
-
-		if len(newColSources) != len(oldColSources) {
+		if len(newCol.VersionSources) != len(oldCol.VersionSources) {
 			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
 		}
 
-		for i := range newColSources {
-			if i >= len(oldColSources) {
+		for i := range newCol.VersionSources {
+			if i >= len(oldCol.VersionSources) {
 				continue // Avoid out-of-bounds panic
 			}
-			if newColSources[i].SourceCollectionID != oldColSources[i].SourceCollectionID {
+			if newCol.VersionSources[i].SourceCollectionID != oldCol.VersionSources[i].SourceCollectionID {
 				errs = append(errs, NewErrCollectionSourceIDMutated(
 					newCol.VersionID,
-					newColSources[i].SourceCollectionID,
-					oldColSources[i].SourceCollectionID,
+					newCol.VersionSources[i].SourceCollectionID,
+					oldCol.VersionSources[i].SourceCollectionID,
 				))
 			}
 		}
 
-		newQuerySources := newCol.QuerySources()
-		oldQuerySources := oldCol.QuerySources()
-
-		if len(newQuerySources) != len(oldQuerySources) {
+		if newCol.Query.HasValue() != oldCol.Query.HasValue() {
 			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
 		}
 	}
@@ -1035,7 +1029,7 @@ func validateCollectionSourceFromSameCollection(
 			continue
 		}
 
-		for _, source := range col.CollectionSources() {
+		for _, source := range col.VersionSources {
 			for _, otherCol := range newState.collections {
 				if otherCol.VersionID == source.SourceCollectionID &&
 					otherCol.CollectionID != col.CollectionID {
@@ -1059,7 +1053,7 @@ func validateCollectionMaterialized(
 ) error {
 	var errs []error
 	for _, col := range newState.collections {
-		if len(col.QuerySources()) == 0 && !col.IsMaterialized {
+		if !col.Query.HasValue() && !col.IsMaterialized {
 			errs = append(errs, NewErrColNotMaterialized(col.Name))
 		}
 	}
@@ -1078,7 +1072,7 @@ func validateMaterializedHasNoPolicy(
 ) error {
 	var errs []error
 	for _, col := range newState.collections {
-		if col.IsMaterialized && len(col.QuerySources()) != 0 && col.Policy.HasValue() {
+		if col.IsMaterialized && col.Query.HasValue() && col.Policy.HasValue() {
 			errs = append(errs, NewErrMaterializedViewAndACPNotSupported(col.Name))
 		}
 	}

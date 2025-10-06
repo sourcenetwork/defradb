@@ -70,7 +70,7 @@ func (db *DB) addView(
 			Query:     *baseQuery,
 			Transform: transform,
 		}
-		parseResults[i].Definition.Sources = append(parseResults[i].Definition.Sources, &source)
+		parseResults[i].Definition.Query = immutable.Some(source)
 	}
 
 	returnDescriptions, err := db.createCollections(ctx, parseResults)
@@ -79,12 +79,10 @@ func (db *DB) addView(
 	}
 
 	for _, definition := range returnDescriptions {
-		for _, source := range definition.QuerySources() {
-			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.VersionID, source.Transform.Value())
-				if err != nil {
-					return nil, err
-				}
+		if definition.Query.HasValue() && definition.Query.Value().Transform.HasValue() {
+			err = db.LensRegistry().SetMigration(ctx, definition.VersionID, definition.Query.Value().Transform.Value())
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -135,7 +133,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 
 	var views []client.CollectionVersion
 	for _, col := range cols {
-		if querySrcs := col.Version().QuerySources(); len(querySrcs) == 0 {
+		if !col.Version().Query.HasValue() {
 			continue
 		}
 

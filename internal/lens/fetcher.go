@@ -98,7 +98,7 @@ func (f *lensedFetcher) Init(
 
 historyLoop:
 	for _, historyItem := range history {
-		sources := historyItem.collection.CollectionSources()
+		sources := historyItem.collection.VersionSources
 		for _, source := range sources {
 			if source.Transform.HasValue() {
 				f.hasMigrations = true

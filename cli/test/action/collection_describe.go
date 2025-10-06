@@ -64,10 +64,15 @@ func (a *CollectionDescribe) Execute() {
 			require.Equal(a.s.T, expected.Indexes, actual.Indexes)
 		}
 
-		if expected.Sources != nil {
+		if expected.VersionSources != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no sources)
-			require.Equal(a.s.T, expected.Sources, actual.Sources)
+			require.Equal(a.s.T, expected.VersionSources, actual.VersionSources)
+		}
+
+		if expected.Query.HasValue() {
+			// Dont bother asserting this by default, the query object is too complex to bother with in most cases.
+			require.Equal(a.s.T, expected.Query, actual.Query)
 		}
 
 		if expected.Fields != nil {
