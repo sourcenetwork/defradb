@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/corelog"
 
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -70,6 +71,33 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 
 	if err := storeArtifacts(ctx, datastore.DatastoreFrom(rc.p2p.DB().Rootstore()), artifacts); err != nil {
 		return err
+	}
+
+	// Group artifacts by docID to publish events
+	docFieldsMap := make(map[string]map[string]struct{})
+	for _, artifact := range artifacts {
+		if _, exists := docFieldsMap[artifact.DocID]; !exists {
+			docFieldsMap[artifact.DocID] = make(map[string]struct{})
+		}
+		docFieldsMap[artifact.DocID][artifact.IndexID] = struct{}{}
+	}
+
+	// Publish SEArtifactSyncComplete event for each document
+	for docID, fieldsSet := range docFieldsMap {
+		fieldNames := make([]string, 0, len(fieldsSet))
+		for fieldName := range fieldsSet {
+			fieldNames = append(fieldNames, fieldName)
+		}
+
+		log.InfoContext(ctx, "Publishing SE artifact sync complete event",
+			corelog.String("DocID", docID),
+			corelog.String("CollectionID", req.CollectionID))
+
+		rc.p2p.DB().Events().Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
+			DocID:        docID,
+			CollectionID: req.CollectionID,
+			FieldNames:   fieldNames,
+		}))
 	}
 
 	return nil

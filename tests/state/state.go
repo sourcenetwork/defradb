@@ -127,6 +127,9 @@ type EventState struct {
 
 	// Replicator is the `event.ReplicatorCompletedName` subscription
 	Replicator event.Subscription
+
+	// SESync is the `event.SEArtifactSyncCompleteName` subscription
+	SESync event.Subscription
 }
 
 // NewEventState returns an eventState with all required subscriptions.
@@ -143,10 +146,15 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 	if err != nil {
 		return nil, err
 	}
+	seSync, err := bus.Subscribe(event.SEArtifactReceivedName)
+	if err != nil {
+		return nil, err
+	}
 	return &EventState{
 		Merge:      merge,
 		Update:     update,
 		Replicator: replicator,
+		SESync:     seSync,
 	}, nil
 }
 

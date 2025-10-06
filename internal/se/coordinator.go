@@ -41,6 +41,7 @@ type DB interface {
 	Rootstore() corekv.TxnStore
 	MaxTxnRetries() int
 	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
+	Events() event.Bus
 }
 
 type P2P interface {

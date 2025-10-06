@@ -56,9 +56,15 @@ func newTestSetup(t *testing.T) *testSetup {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
+	mockEventBus := &mockEventBus{
+		messages: make(chan event.Message, 10),
+		subs:     make(map[event.Subscription]chan event.Message),
+	}
+
 	mockDBImpl := NewMockDB(t)
 	mockDBImpl.EXPECT().MaxTxnRetries().Return(3).Maybe()
 	mockDBImpl.EXPECT().Rootstore().Return(rootstore).Maybe()
+	mockDBImpl.EXPECT().Events().Return(mockEventBus).Maybe()
 
 	mockP2PImpl := NewMockP2P(t)
 	mockP2PImpl.EXPECT().DB().Return(mockDBImpl).Maybe()
@@ -69,11 +75,8 @@ func newTestSetup(t *testing.T) *testSetup {
 		mockP2P:          mockP2PImpl,
 		mockStorageProto: protocolmocks.NewCommChannel[PushSEArtifactsRequest, PushSEArtifactsReply](t),
 		mockQueryProto:   protocolmocks.NewCommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply](t),
-		mockEventBus: &mockEventBus{
-			messages: make(chan event.Message, 10),
-			subs:     make(map[event.Subscription]chan event.Message),
-		},
-		rootstore: rootstore,
+		mockEventBus:     mockEventBus,
+		rootstore:        rootstore,
 
 		docID:        "bae-63c10140-a59a-5a7f-85d1-269e2c3841a6",
 		collectionID: "test-collection",

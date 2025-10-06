@@ -205,6 +205,13 @@ type WaitForSync struct {
 	Decrypted []int
 }
 
+// WaitForSESync waits for SE artifact synchronization to complete.
+type WaitForSESync struct {
+	// DocIDs is a list of document indexes expected to have SE artifacts synced.
+	// If empty, waits for SE sync of all created documents.
+	DocIDs []int
+}
+
 // connectPeers connects two existing, started, nodes as peers.  It returns a channel
 // that will receive an empty struct upon sync completion of all expected peer-sync events.
 //

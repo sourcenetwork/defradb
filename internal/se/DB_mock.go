@@ -9,6 +9,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -37,6 +38,52 @@ type MockDB_Expecter struct {
 
 func (_m *MockDB) EXPECT() *MockDB_Expecter {
 	return &MockDB_Expecter{mock: &_m.Mock}
+}
+
+// Events provides a mock function for the type DB
+func (_mock *MockDB) Events() event.Bus {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Events")
+	}
+
+	var r0 event.Bus
+	if returnFunc, ok := ret.Get(0).(func() event.Bus); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(event.Bus)
+		}
+	}
+	return r0
+}
+
+// DB_Events_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Events'
+type MockDB_Events_Call struct {
+	*mock.Call
+}
+
+// Events is a helper method to define mock.On call
+func (_e *MockDB_Expecter) Events() *MockDB_Events_Call {
+	return &MockDB_Events_Call{Call: _e.mock.On("Events")}
+}
+
+func (_c *MockDB_Events_Call) Run(run func()) *MockDB_Events_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockDB_Events_Call) Return(bus event.Bus) *MockDB_Events_Call {
+	_c.Call.Return(bus)
+	return _c
+}
+
+func (_c *MockDB_Events_Call) RunAndReturn(run func() event.Bus) *MockDB_Events_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetCollections provides a mock function for the type DB

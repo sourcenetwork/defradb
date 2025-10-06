@@ -200,11 +200,11 @@ func ExecuteTestCase(
 
 	var databases []state.DatabaseType
 	if badgerInMemory {
-		databases = append(databases, BadgerIMType)
+		//databases = append(databases, BadgerIMType)
 	}
-	if badgerFile {
-		databases = append(databases, BadgerFileType)
-	}
+	//if badgerFile {
+	databases = append(databases, BadgerFileType)
+	//}
 	if inMemoryStore {
 		databases = append(databases, DefraIMType)
 	}
@@ -485,6 +485,9 @@ func performAction(
 
 	case WaitForSync:
 		waitForSync(s, action)
+
+	case WaitForSESync:
+		waitForSESync(s, action)
 
 	case SyncDocs:
 		syncDocs(s, action)
