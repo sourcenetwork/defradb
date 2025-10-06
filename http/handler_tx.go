@@ -67,7 +67,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
-	err = dsTxn.Commit(req.Context())
+	err = dsTxn.Commit()
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -91,7 +91,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
-	dsTxn.Discard(req.Context())
+	dsTxn.Discard()
 
 	rw.WriteHeader(http.StatusOK)
 }

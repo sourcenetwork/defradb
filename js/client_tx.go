@@ -13,7 +13,6 @@
 package js
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"syscall/js"
@@ -63,12 +62,12 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 }
 
 func (t *transaction) commit(this js.Value, args []js.Value) (js.Value, error) {
-	err := t.txn.Commit(context.Background())
+	err := t.txn.Commit()
 	return js.Undefined(), err
 }
 
 func (t *transaction) discard(this js.Value, args []js.Value) (js.Value, error) {
-	t.txn.Discard(context.Background())
+	t.txn.Discard()
 	return js.Undefined(), nil
 }
 

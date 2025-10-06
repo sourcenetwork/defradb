@@ -143,7 +143,7 @@ func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescript
 }
 
 func (f *indexTestFixture) commitTxn() {
-	err := f.txn.Commit(f.ctx)
+	err := f.txn.Commit()
 	require.NoError(f.t, err)
 	txn, err := f.db.NewTxn(false)
 	require.NoError(f.t, err)

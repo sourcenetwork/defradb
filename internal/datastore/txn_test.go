@@ -27,7 +27,7 @@ func TestNewTxnFrom(t *testing.T) {
 
 	txn := NewTxnFrom(rootstore, 0, false)
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 }
 
@@ -41,7 +41,7 @@ func TestOnSuccess(t *testing.T) {
 	txn.OnSuccess(func() {
 		text += " Inc"
 	})
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 
 	require.Equal(t, text, "Source Inc")
@@ -59,7 +59,7 @@ func TestOnSuccessAsync(t *testing.T) {
 	})
 
 	wg.Add(1)
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 	wg.Wait()
 }
@@ -78,7 +78,7 @@ func TestOnError(t *testing.T) {
 	err := rootstore.Close()
 	require.NoError(t, err)
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	require.ErrorIs(t, err, corekv.ErrDBClosed)
 
 	require.Equal(t, text, "Source Inc")
@@ -99,7 +99,7 @@ func TestOnErrorAsync(t *testing.T) {
 	require.NoError(t, err)
 
 	wg.Add(1)
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	require.ErrorIs(t, err, corekv.ErrDBClosed)
 	wg.Wait()
 }
@@ -114,7 +114,7 @@ func TestOnDiscard(t *testing.T) {
 	txn.OnDiscard(func() {
 		text += " Inc"
 	})
-	txn.Discard(ctx)
+	txn.Discard()
 
 	require.Equal(t, text, "Source Inc")
 }
@@ -131,6 +131,6 @@ func TestOnDiscardAsync(t *testing.T) {
 	})
 
 	wg.Add(1)
-	txn.Discard(ctx)
+	txn.Discard()
 	wg.Wait()
 }

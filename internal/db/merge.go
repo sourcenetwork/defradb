@@ -81,7 +81,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	var key keys.HeadstoreKey
 	if dagMerge.DocID != "" {
@@ -129,7 +129,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		}
 	}
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	if err != nil {
 		return err
 	}
@@ -549,7 +549,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	cols, err := db.getCollections(
 		ctx,

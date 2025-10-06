@@ -260,7 +260,7 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	if err != nil {
 		return docSyncItem{}, err
 	}
-	defer clientTxn.Discard(p.ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	key := keys.HeadstoreDocKey{

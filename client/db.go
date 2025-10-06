@@ -308,13 +308,13 @@ type Txn interface {
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
-	Commit(ctx context.Context) error
+	Commit() error
 
 	// Discard throws away changes recorded in a transaction without committing
 	// them to the underlying Datastore. Any calls made to Discard after Commit
 	// has been successfully called will have no effect on the transaction and
 	// state of the Datastore, making it safe to defer.
-	Discard(ctx context.Context)
+	Discard()
 }
 
 // GQLOptions contains optional arguments for GQL requests.

@@ -144,7 +144,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -320,7 +320,7 @@ func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
 
 	replicators, err := p.GetAllReplicators(ctx)
@@ -362,7 +362,7 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -379,7 +379,7 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 	if err != nil {
 		return err
 	}
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
@@ -387,7 +387,7 @@ func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string,
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -414,7 +414,7 @@ func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string,
 			return err
 		}
 	}
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // updateReplicatorStatus updates the status of a replicator in the peerstore.
@@ -494,7 +494,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: []byte(keys.REPLICATOR_RETRY_ID),
@@ -551,7 +551,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 			// The replicator might have been deleted by the time we reach this point.
 			// If it no longer exists, we delete the retry key and all retry docs.
 			exists, err := txn.Peerstore().Has(ctx, keys.NewReplicatorKey(key.PeerID).Bytes())
-			clientTxn.Discard(ctx)
+			clientTxn.Discard()
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to check if replicator exists", err)
 				continue
@@ -585,7 +585,7 @@ func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRe
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	return txn.Peerstore().Set(ctx, key.Bytes(), b)
@@ -640,7 +640,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
@@ -689,7 +689,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		}
 		txn := datastore.MustGetFromClientTxn(clientTxn)
 		err = txn.Peerstore().Delete(ctx, key.Bytes())
-		clientTxn.Discard(ctx)
+		clientTxn.Discard()
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
 		}
@@ -767,7 +767,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -833,7 +833,7 @@ func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) e
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 

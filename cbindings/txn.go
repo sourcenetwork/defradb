@@ -17,7 +17,6 @@ package cbindings
 import "C"
 
 import (
-	"context"
 	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -45,13 +44,11 @@ func TransactionCreate(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int
 
 //export TransactionCommit
 func TransactionCommit(txnPtr C.uintptr_t) C.Result {
-	ctx := context.Background()
-
 	h := cgo.Handle(txnPtr)
 	defer h.Delete()
 	txn := h.Value().(client.Txn) //nolint:forcetypeassert
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -61,8 +58,6 @@ func TransactionCommit(txnPtr C.uintptr_t) C.Result {
 
 //export TransactionDiscard
 func TransactionDiscard(txnPtr C.uintptr_t) {
-	ctx := context.Background()
-
 	// Avoid panic in the case of a double discard
 	defer func() {
 		if r := recover(); r != nil {
@@ -72,6 +67,6 @@ func TransactionDiscard(txnPtr C.uintptr_t) {
 
 	h := cgo.Handle(txnPtr)
 	txn := h.Value().(client.Txn) //nolint:forcetypeassert
-	txn.Discard(ctx)
+	txn.Discard()
 	h.Delete()
 }

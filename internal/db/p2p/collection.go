@@ -205,7 +205,7 @@ func (p *P2P) loadAndPublishP2PCollections(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
 
 	collectionIDs, err := p.getAllP2PCollectionIDs(ctx)

@@ -400,7 +400,7 @@ func (db *DB) initialize(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	if err := db.initializeNodeACP(ctx, txn); err != nil {
 		return err
@@ -434,7 +434,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		// The query language types are only updated on successful commit
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.
-		return txn.Commit(ctx)
+		return txn.Commit()
 	}
 
 	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
@@ -442,7 +442,7 @@ func (db *DB) initialize(ctx context.Context) error {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (db *DB) Rootstore() corekv.TxnStore {

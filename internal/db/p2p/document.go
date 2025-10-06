@@ -127,7 +127,7 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
 
 	docIDs, err := p.GetAllP2PDocuments(ctx)

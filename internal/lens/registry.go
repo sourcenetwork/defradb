@@ -111,5 +111,17 @@ func (s *txnSource) NewTxn(ctx context.Context, readOnly bool) (repository.Txn, 
 		return nil, err
 	}
 
-	return datastore.MustGetFromClientTxn(txn), nil
+	return &wrappedTxn{Txn: datastore.MustGetFromClientTxn(txn)}, nil
+}
+
+type wrappedTxn struct {
+	datastore.Txn
+}
+
+func (t *wrappedTxn) Discard(context.Context) {
+	t.Txn.Discard()
+}
+
+func (t *wrappedTxn) Commit(context.Context) error {
+	return t.Txn.Commit()
 }

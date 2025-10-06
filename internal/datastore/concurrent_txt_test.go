@@ -31,12 +31,11 @@ func getBadgerTxnDB(t *testing.T) *badger.Datastore {
 }
 
 func TestNewConcurrentTxnFrom(t *testing.T) {
-	ctx := context.Background()
 	rootstore := getBadgerTxnDB(t)
 
 	txn := NewConcurrentTxnFrom(rootstore, 0, false)
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 }
 
@@ -46,7 +45,7 @@ func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
 
 	txn := NewConcurrentTxnFrom(rootstore, 0, false)
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 }
 

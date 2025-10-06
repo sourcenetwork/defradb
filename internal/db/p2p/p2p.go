@@ -184,7 +184,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		log.ErrorE("Failed to get new transaction", err)
 		return false
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	rawblock, err := txn.Blockstore().Get(ctx, c)
@@ -295,7 +295,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 	if err != nil {
 		return false, err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 
 	cols, err := clientTxn.GetCollections(
 		ctx,
@@ -385,7 +385,7 @@ func (p *P2P) processPushlogRequest(
 	}
 	clientTxn := datastore.MustGetFromClientTxn(txn)
 	isMerged, err := clientTxn.Blockstore().IsMerged(ctx, headCID)
-	txn.Discard(ctx)
+	txn.Discard()
 	if err != nil {
 		return err
 	}
