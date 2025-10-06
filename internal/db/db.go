@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -552,10 +553,21 @@ func (db *DB) GetSearchableEncryptionKey() []byte {
 	return db.searchableEncryptionKey
 }
 
-// QuerySEArtifacts queries SE artifacts from replicators for the given collection and field queries.
-func (db *DB) QuerySEArtifacts(ctx context.Context, collectionID string, queries []se.FieldQuery) ([]string, error) {
+// QueryDocIDsByValues queries SE artifacts from replicators based on field values.
+func (db *DB) QueryDocIDsByValues(ctx context.Context, collectionID string, fieldValues []planner.SEFieldValueQuery) ([]string, error) {
 	if db.p2p == nil || db.p2p.SECoordinator() == nil {
 		return []string{}, nil
 	}
-	return db.p2p.SECoordinator().QuerySEArtifacts(ctx, collectionID, queries)
+
+	// Convert planner.SEFieldValueQuery to se.FieldValueQuery
+	seFieldValues := make([]se.FieldValueQuery, len(fieldValues))
+	for i, fv := range fieldValues {
+		seFieldValues[i] = se.FieldValueQuery{
+			FieldName: fv.FieldName,
+			IndexDesc: fv.IndexDesc,
+			Value:     fv.Value,
+		}
+	}
+
+	return db.p2p.SECoordinator().QueryDocIDsByValues(ctx, collectionID, seFieldValues)
 }

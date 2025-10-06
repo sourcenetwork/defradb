@@ -136,6 +136,46 @@ func (rc *Coordinator) reconstructIdentity(
 	return immutable.Some(identity), nil
 }
 
+// FieldValueQuery represents a field value to query for SE artifacts.
+type FieldValueQuery struct {
+	FieldName string
+	IndexDesc client.EncryptedIndexDescription
+	Value     client.NormalValue
+}
+
+// QueryDocIDsByValues queries SE artifacts from replicators based on field values.
+// It generates search tags from the values and queries replicators for matching documents.
+func (rc *Coordinator) QueryDocIDsByValues(
+	ctx context.Context,
+	collectionID string,
+	fieldValues []FieldValueQuery,
+) ([]string, error) {
+	queries := make([]FieldQuery, 0, len(fieldValues))
+
+	for _, fv := range fieldValues {
+		// Generate search tag
+		artifact, err := GenerateFieldArtifact(
+			ctx,
+			collectionID,
+			"", // docID not needed for search tag generation
+			fv.IndexDesc,
+			fv.Value,
+			rc.encKey,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		queries = append(queries, FieldQuery{
+			FieldName: fv.FieldName,
+			IndexID:   fv.FieldName,
+			SearchTag: artifact.SearchTag,
+		})
+	}
+
+	return rc.QuerySEArtifacts(ctx, collectionID, queries)
+}
+
 // QuerySEArtifacts queries SE artifacts from replicators and returns matching document IDs.
 // This is called directly by the planner when executing SE queries.
 func (rc *Coordinator) QuerySEArtifacts(ctx context.Context, collectionID string, queries []FieldQuery) ([]string, error) {

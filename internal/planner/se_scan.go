@@ -15,7 +15,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
-	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 // seScanNode implements a plan node for searchable encryption queries.
@@ -31,9 +30,8 @@ type seScanNode struct {
 	filter           *mapper.Filter
 	encryptedIndexes []client.EncryptedIndexDescription
 
-	fieldSearchTags map[string][]byte
-	remoteDocIDs    []string
-	hasReturned     bool
+	remoteDocIDs []string
+	hasReturned  bool
 }
 
 var _ planNode = (*seScanNode)(nil)
@@ -45,20 +43,16 @@ func (n *seScanNode) Init() error {
 }
 
 func (n *seScanNode) Start() error {
-	if err := n.generateSearchTags(); err != nil {
-		return err
-	}
-
 	n.remoteDocIDs = nil
 	n.hasReturned = false
-
 	return nil
 }
 
-func (n *seScanNode) generateSearchTags() error {
-	n.fieldSearchTags = make(map[string][]byte)
+func (n *seScanNode) queryRemoteNodes() ([]string, error) {
+	fieldValues := make([]SEFieldValueQuery, 0, len(n.filter.ExternalConditions))
 
 	for fieldName, condition := range n.filter.ExternalConditions {
+		// Find the encrypted index for this field
 		var encIdx *client.EncryptedIndexDescription
 		for _, idx := range n.encryptedIndexes {
 			if idx.FieldName == fieldName {
@@ -71,45 +65,30 @@ func (n *seScanNode) generateSearchTags() error {
 			continue
 		}
 
+		// Extract the equality value
 		value, hasEq := condition.(map[string]any)["_eq"]
 		if !hasEq {
-			return NewErrUnsupportedEncryptedOperator(fieldName)
+			return nil, NewErrUnsupportedEncryptedOperator(fieldName)
 		}
 
+		// Create normal value
 		normalValue, err := client.NewNormalValue(value)
 		if err != nil {
-			return NewErrFailedToCreateNormalValue(fieldName, err)
+			return nil, NewErrFailedToCreateNormalValue(fieldName, err)
 		}
 
-		artifact, err := se.GenerateFieldArtifact(
-			n.p.ctx,
-			n.collectionID,
-			"",
-			*encIdx,
-			normalValue,
-			n.p.db.GetSearchableEncryptionKey(),
-		)
-		if err != nil {
-			return NewErrFailedToGenerateSearchTag(fieldName, err)
-		}
-
-		n.fieldSearchTags[fieldName] = artifact.SearchTag
-	}
-
-	return nil
-}
-
-func (n *seScanNode) queryRemoteNodes() ([]string, error) {
-	queries := make([]se.FieldQuery, 0, len(n.fieldSearchTags))
-	for fieldName, searchTag := range n.fieldSearchTags {
-		queries = append(queries, se.FieldQuery{
+		fieldValues = append(fieldValues, SEFieldValueQuery{
 			FieldName: fieldName,
-			IndexID:   fieldName,
-			SearchTag: searchTag,
+			IndexDesc: *encIdx,
+			Value:     normalValue,
 		})
 	}
 
-	docIDs, err := n.p.db.QuerySEArtifacts(n.p.ctx, n.collectionID, queries)
+	docIDs, err := n.p.db.QueryDocIDsByValues(
+		n.p.ctx,
+		n.collectionID,
+		fieldValues,
+	)
 	if err != nil {
 		return nil, err
 	}
