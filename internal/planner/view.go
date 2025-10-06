@@ -34,15 +34,14 @@ type viewNode struct {
 }
 
 func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, error) {
-	// For now, we assume a single source.  This will need to change if/when we support multiple sources
-	querySource := (col.Version().Sources[0].(*client.QuerySource))
-	hasTransform := querySource.Transform.HasValue()
+	hasTransform := col.Version().Query.Value().Transform.HasValue()
 
 	var source planNode
 	if col.Version().IsMaterialized {
 		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
 	} else {
-		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &querySource.Query)
+		viewQuery := col.Version().Query.Value().Query
+		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &viewQuery)
 		if err != nil {
 			return nil, err
 		}

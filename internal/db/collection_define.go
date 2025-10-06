@@ -139,6 +139,12 @@ func (db *DB) patchCollection(
 	existingColsByName := map[string]client.CollectionVersion{}
 	existingColsByID := map[string]client.CollectionVersion{}
 	for _, col := range existingCols {
+		if col.VersionSources == nil {
+			// JSON patch only allows the `-` array-path to be used on non-nil
+			// arrays, so we assign any previously nil arrays to empty here
+			col.VersionSources = []client.CollectionSource{}
+		}
+
 		if col.IsActive {
 			existingColsByName[col.Name] = col
 		}
@@ -245,7 +251,7 @@ func (db *DB) patchCollection(
 			isFound := false
 			for j, col := range newCollections {
 				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
-					newCollections[j].Sources = placeholder.Sources
+					newCollections[j].VersionSources = placeholder.VersionSources
 					isFound = true
 					break
 				}
@@ -290,7 +296,7 @@ func (db *DB) patchCollection(
 			// Clear any existing migrations in the registry, using this semi-hacky way
 			// to avoid adding more functions to a public interface that we wish to remove.
 
-			for _, src := range existingCol.CollectionSources() {
+			for _, src := range existingCol.VersionSources {
 				if src.Transform.HasValue() {
 					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
 					if err != nil {
@@ -298,17 +304,15 @@ func (db *DB) patchCollection(
 					}
 				}
 			}
-			for _, src := range existingCol.QuerySources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-					if err != nil {
-						return err
-					}
+			if existingCol.Query.HasValue() && existingCol.Query.Value().Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
+				if err != nil {
+					return err
 				}
 			}
 		}
 
-		for _, src := range col.CollectionSources() {
+		for _, src := range col.VersionSources {
 			if src.Transform.HasValue() {
 				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
 				if err != nil {
@@ -317,12 +321,10 @@ func (db *DB) patchCollection(
 			}
 		}
 
-		for _, src := range col.QuerySources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
+		if col.Query.HasValue() && col.Query.Value().Transform.HasValue() {
+			err = db.LensRegistry().SetMigration(ctx, col.VersionID, col.Query.Value().Transform.Value())
+			if err != nil {
+				return err
 			}
 		}
 	}

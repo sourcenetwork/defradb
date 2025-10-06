@@ -50,8 +50,6 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents unwanted behaviour, it should fail but it does not, likely due to the `Sources` json
-// deserialization magic.  This bug is documented by https://github.com/sourcenetwork/defradb/issues/3795
 func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -68,9 +66,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 						{ "op": "add", "path": "/Users/-", "value": {"Foo": "Bar"} }
 					]
 				`,
-				ExpectedError: "",
-				// Below is the desired error
-				//ExpectedError: `json: unknown field "-"`,
+				ExpectedError: `json: unknown field "-"`,
 			},
 		},
 	}

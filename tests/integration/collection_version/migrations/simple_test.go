@@ -51,8 +51,8 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 					{
 						VersionID:      "also does not exist",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
+						VersionSources: []client.CollectionSource{
+							{
 								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
@@ -127,8 +127,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					{
 						VersionID:      "also does not exist",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
+						VersionSources: []client.CollectionSource{
+							{
 								SourceCollectionID: "does not exist",
 								Transform: immutable.Some(
 									model.Lens{
@@ -149,8 +149,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					{
 						IsMaterialized: true,
 						VersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
-						Sources: []any{
-							&client.CollectionSource{
+						VersionSources: []client.CollectionSource{
+							{
 								SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
 								Transform: immutable.Some(
 									model.Lens{
@@ -234,8 +234,8 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					{
 						VersionID:      "b",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
+						VersionSources: []client.CollectionSource{
+							{
 								SourceCollectionID: "a",
 								Transform: immutable.Some(
 									model.Lens{
@@ -256,8 +256,8 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					{
 						VersionID:      "c",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
+						VersionSources: []client.CollectionSource{
+							{
 								SourceCollectionID: "a",
 								Transform: immutable.Some(
 									model.Lens{

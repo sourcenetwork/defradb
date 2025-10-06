@@ -161,7 +161,7 @@ func getCollectionHistory(
 	}
 
 	for _, historyItem := range history {
-		for _, source := range historyItem.collection.CollectionSources() {
+		for _, source := range historyItem.collection.VersionSources {
 			src := history[source.SourceCollectionID]
 			historyItem.previous = append(
 				historyItem.previous,
