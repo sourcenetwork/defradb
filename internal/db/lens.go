@@ -13,22 +13,68 @@ package db
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/immutable/enumerable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
+// WARNING - This function does not create a txn ctx if one does not exist
+// and so should not be exposed to users.
+func (db *DB) AddLens(ctx context.Context, cfg model.Lens) (cid.Cid, error) {
+	return db.GetLensStore(ctx).Add(ctx, cfg)
+}
+
+// WARNING - This function does not create a txn ctx if one does not exist
+// and so should not be exposed to users.
+func (db *DB) Transform(
+	ctx context.Context,
+	source enumerable.Enumerable[map[string]any],
+	id string,
+) (enumerable.Enumerable[map[string]any], error) {
+	return db.GetLensStore(ctx).Transform(ctx, source, id)
+}
+
+// WARNING - This function does not create a txn ctx if one does not exist
+// and so should not be exposed to users.
+func (db *DB) Inverse(
+	ctx context.Context,
+	source enumerable.Enumerable[map[string]any],
+	id string,
+) (enumerable.Enumerable[map[string]any], error) {
+	return db.GetLensStore(ctx).Inverse(ctx, source, id)
+}
+
+// WARNING - This function does not create a txn ctx if one does not exist
+// and so should not be exposed to users.
+func (db *DB) GetLensStore(ctx context.Context) store.Store {
+	txn, ok := datastore.CtxTryGetTxn(ctx)
+	if ok {
+		return db.lensNode.Store.WithTxn(wrappedTxn{
+			Txn:          txn,
+			ReaderWriter: db.rootstore,
+		})
+	}
+
+	return db.lensNode.Store
+}
+
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			dstFound = false
 		} else {
-			return err
+			return "", err
 		}
 	}
 
@@ -38,7 +84,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		if errors.Is(err, corekv.ErrNotFound) {
 			srcFound = false
 		} else {
-			return err
+			return "", err
 		}
 	}
 
@@ -52,7 +98,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 		err = description.SaveCollection(ctx, sourceCol)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -67,18 +113,23 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
-		return NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+	}
+
+	id, err := db.GetLensStore(ctx).Add(ctx, cfg.Lens)
+	if err != nil {
+		return "", err
 	}
 
 	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
 		SourceCollectionID: sourceCol.VersionID,
-		Transform:          immutable.Some(cfg.Lens),
+		Transform:          immutable.Some(id.String()),
 	})
 
 	err = description.SaveCollection(ctx, dstCol)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return db.LensRegistry().SetMigration(ctx, dstCol.VersionID, cfg.Lens)
+	return id.String(), nil
 }

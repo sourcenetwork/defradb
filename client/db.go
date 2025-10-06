@@ -241,23 +241,20 @@ type Store interface {
 	// when making this call.
 	RefreshViews(ctx context.Context, options CollectionFetchOptions) error
 
-	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
+	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
 	//
 	// There may only be one migration per collection version.  If another migration was registered it will be
 	// overwritten by this migration.
 	//
-	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
-	// This is to allow the migration of documents of schema versions unknown to the local node received by the
+	// Neither of the collection version IDs specified in the configuration need to exist at the time of calling.
+	// This is to allow the migration of documents of collection versions unknown to the local node received by the
 	// P2P system.
 	//
-	// Migrations will only run if there is a complete path from the document schema version to the latest local
-	// schema version.
-	SetMigration(ctx context.Context, config LensConfig) error
-
-	// LensRegistry returns the LensRegistry in use by this database instance.
+	// Migrations will only run if there is a complete path from the document collection version to the latest local
+	// collection version.
 	//
-	// It exposes several useful thread-safe migration related functions.
-	LensRegistry() LensRegistry
+	// Returns the ID of the Lens transform.
+	SetMigration(ctx context.Context, config LensConfig) (string, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//

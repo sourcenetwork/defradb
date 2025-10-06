@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
+
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -69,14 +71,16 @@ func init() {
 
 func defaultNodeOpts() []node.Option {
 	return []node.Option{
-		node.WithLensPoolSize(lensPoolSize),
+		db.WithLensOpts(
+			lensNode.WithPoolSize(lensPoolSize),
+		),
+		db.WithLensRuntime(lensType),
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.TxnStore].
 		node.WithDisableAPI(true),
 		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
 		// to keep the tests as lightweight as possible.
 		node.WithDisableP2P(true),
-		node.WithLensRuntime(lensType),
 		// The default is 5 and that is never going to be needed in a testing scenario where all the
 		// nodes are on the same machine with no network latency.
 		db.WithP2PBlockSyncTimeout(1 * time.Second),

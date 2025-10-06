@@ -201,7 +201,7 @@ func setupDatabase(t *testing.T) DB {
 	adminInfo, err := db.NewNACInfo(ctx, "", false)
 	require.NoError(t, err)
 
-	cdb, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP, nil)
+	cdb, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP)
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {

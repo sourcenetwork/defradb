@@ -70,7 +70,14 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			ctx := InitContext(ctx, txn)
 
-			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, db.p2p)
+			p := planner.New(
+				ctx,
+				identity.FromContext(ctx),
+				db.documentACP,
+				db,
+				db.p2p,
+				db.GetLensStore(ctx),
+			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 
 			result, err := p.RunSelection(ctx, s)

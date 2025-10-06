@@ -10,7 +10,7 @@
 
 //go:build !js && !android
 
-package node
+package db
 
 import (
 	"github.com/sourcenetwork/lens/host-go/engine/module"

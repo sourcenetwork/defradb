@@ -263,7 +263,7 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
-	df := c.newFetcher()
+	df := c.newFetcher(ctx)
 	err := df.Init(
 		ctx,
 		identity.FromContext(ctx),

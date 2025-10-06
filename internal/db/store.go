@@ -209,22 +209,27 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	return txn.Commit()
 }
 
-func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer txn.Discard()
 
-	err = db.setMigration(ctx, cfg)
+	lensID, err := db.setMigration(ctx, cfg)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return txn.Commit()
+	err = txn.Commit()
+	if err != nil {
+		return "", err
+	}
+
+	return lensID, nil
 }
 
 func (db *DB) AddView(

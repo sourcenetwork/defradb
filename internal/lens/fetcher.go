@@ -18,6 +18,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -35,9 +36,9 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/1589
 
 type lensedFetcher struct {
-	source   fetcher.Fetcher
-	registry client.LensRegistry
-	lens     Lens
+	source fetcher.Fetcher
+	store  store.Store
+	lens   Lens
 
 	txn datastore.Txn
 
@@ -56,10 +57,10 @@ var _ fetcher.Fetcher = (*lensedFetcher)(nil)
 
 // NewFetcher returns a new fetcher that will migrate any documents from the given
 // source Fetcher as they are are yielded.
-func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fetcher {
+func NewFetcher(source fetcher.Fetcher, store store.Store) fetcher.Fetcher {
 	return &lensedFetcher{
-		source:   source,
-		registry: registry,
+		source: source,
+		store:  store,
 	}
 }
 
@@ -93,7 +94,7 @@ func (f *lensedFetcher) Init(
 	if err != nil {
 		return err
 	}
-	f.lens = new(ctx, f.registry, f.col.Version().VersionID, history)
+	f.lens = new(ctx, f.store, f.col.Version().VersionID, history)
 	f.txn = txn
 
 	for _, historyItem := range history {

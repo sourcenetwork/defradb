@@ -8,18 +8,17 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !js && !android
+//go:build !windows && !js && !android
 
-package node
+package db
 
 import (
 	"github.com/sourcenetwork/lens/host-go/engine/module"
-	"github.com/sourcenetwork/lens/host-go/runtimes/wasmtime"
+	"github.com/sourcenetwork/lens/host-go/runtimes/wasmer"
 )
 
-const WasmTime LensRuntimeType = "wasm-time"
+const Wasmer LensRuntimeType = "wasmer"
 
 func init() {
-	runtimeConstructors[DefaultLens] = func() module.Runtime { return wasmtime.New() }
-	runtimeConstructors[WasmTime] = func() module.Runtime { return wasmtime.New() }
+	runtimeConstructors[Wasmer] = func() module.Runtime { return wasmer.New() }
 }

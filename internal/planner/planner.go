@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
+	lensStore "github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -97,8 +98,10 @@ type Planner struct {
 	identity    immutable.Option[acpIdentity.Identity]
 	documentACP immutable.Option[dac.DocumentACP]
 	db          client.TxnStore
-	p2p         P2P
-	ctx         context.Context
+
+	p2p       P2P
+	ctx       context.Context
+	lensStore lensStore.Store
 }
 
 func New(
@@ -107,12 +110,14 @@ func New(
 	documentACP immutable.Option[dac.DocumentACP],
 	db client.TxnStore,
 	p2p P2P,
+	lensStore lensStore.Store,
 ) *Planner {
 	return &Planner{
 		identity:    identity,
 		documentACP: documentACP,
 		db:          db,
 		p2p:         p2p,
+		lensStore:   lensStore,
 		ctx:         ctx,
 	}
 }

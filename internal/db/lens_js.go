@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package node
+package db
 
 import (
 	"github.com/sourcenetwork/lens/host-go/engine/module"

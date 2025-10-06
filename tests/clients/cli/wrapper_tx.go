@@ -125,13 +125,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 	return txn.Wrapper.RefreshViews(ctx, options)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetMigration(ctx, config)
-}
-
-func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return txn.Wrapper.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(

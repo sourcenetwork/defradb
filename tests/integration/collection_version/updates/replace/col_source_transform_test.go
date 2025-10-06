@@ -11,37 +11,39 @@
 package replace
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
 func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
-	transformCfgJson, err := json.Marshal(
-		model.Lens{
-			Lenses: []model.LensModule{
-				{
-					Path: lenses.SetDefaultModulePath,
-					Arguments: map[string]any{
-						"dst":   "name",
-						"value": "Fred",
+	test := testUtils.TestCase{
+		Actions: []any{
+			// This ConfigureMigration action is a temporary work around as we have not yet exposed a
+			// means to add lenses into Defra.  The collection ids are made up and have no impact on
+			// the test.  The ID is passed into the next PatchCollection action.
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      "bafyreih7useaapqn4pf6k5rxb2oufmsjb3e7xnccmbjr2njva3bgpdwyzu",
+					DestinationSchemaVersionID: "bafyreicrtehvnvxkjdxac523mb7kkiwyn3wntj3yiuljskcco5ixhcpk7y",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "name",
+									"value": "Fred",
+								},
+							},
+						},
 					},
 				},
 			},
-		},
-	)
-	require.NoError(t, err)
-
-	test := testUtils.TestCase{
-		Actions: []any{
 			&action.AddSchema{
 				Schema: `
 					type Users {
@@ -62,17 +64,15 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 				`,
 			},
 			testUtils.PatchCollection{
-				Patch: fmt.Sprintf(`
-						[
-							{
-								"op": "replace",
-								"path": "/Users/PreviousVersion/Transform",
-								"value": %s
-							}
-						]
-					`,
-					transformCfgJson,
-				),
+				Patch: `
+					[
+						{
+							"op": "replace",
+							"path": "/Users/PreviousVersion/Transform",
+							"value": "{{.LensID0}}"
+						}
+					]
+				`,
 			},
 			testUtils.Request{
 				Request: `query {

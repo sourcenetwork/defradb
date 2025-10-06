@@ -30,7 +30,7 @@ func setupNode(
 ) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
-	opts = append(opts, node.WithLensRuntime(node.JSLensRuntime))
+	opts = append(opts, db.WithLensRuntime(db.JSLensRuntime))
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
 	// If this hard-coding is changed in future, don't forget to tweak the following func:

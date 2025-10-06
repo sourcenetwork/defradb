@@ -570,12 +570,12 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	return nil
 }
 
-func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	src := C.CString(config.SourceSchemaVersionID)
 	dst := C.CString(config.DestinationSchemaVersionID)
 	lensConfig, err := json.Marshal(config.Lens)
 	if err != nil {
-		return err
+		return "", err
 	}
 	lens := C.CString(string(lensConfig))
 	defer C.free(unsafe.Pointer(src))
@@ -586,13 +586,9 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) e
 	res := ConvertAndFreeCResult(C.LensSet(callHandle, src, dst, lens))
 
 	if res.Status != 0 {
-		return errors.New(res.Error)
+		return "", errors.New(res.Error)
 	}
-	return nil
-}
-
-func (w *CWrapper) LensRegistry() client.LensRegistry {
-	return &LensRegistry{CWrapper: w}
+	return res.Value, nil
 }
 
 func (w *CWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

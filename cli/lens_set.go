@@ -82,7 +82,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				Lens:                       lensCfg,
 			}
 
-			return cliClient.SetMigration(cmd.Context(), migrationCfg)
+			lensID, err := cliClient.SetMigration(cmd.Context(), migrationCfg)
+			if err != nil {
+				return err
+			}
+
+			return writeJSON(cmd, lensID)
 		},
 	}
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")

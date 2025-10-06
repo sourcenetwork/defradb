@@ -45,7 +45,6 @@ func (c *Client) JSValue() js.Value {
 		"addView":                    goji.Async(c.addView),
 		"refreshViews":               goji.Async(c.refreshViews),
 		"setMigration":               goji.Async(c.setMigration),
-		"lensRegistry":               goji.Async(c.lensRegistry),
 		"getCollectionByName":        goji.Async(c.getCollectionByName),
 		"getCollections":             goji.Async(c.getCollections),
 		"getAllIndexes":              goji.Async(c.getAllIndexes),

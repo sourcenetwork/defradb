@@ -221,13 +221,9 @@ func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetch
 	return txn.db.RefreshViews(ctx, options)
 }
 
-func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SetMigration(ctx, config)
-}
-
-func (txn *Txn) LensRegistry() client.LensRegistry {
-	return txn.db.LensRegistry()
 }
 
 func (txn *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

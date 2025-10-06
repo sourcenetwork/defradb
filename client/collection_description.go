@@ -14,7 +14,6 @@ import (
 	"reflect"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -169,12 +168,12 @@ type QuerySource struct {
 	// Query contains the base query of this data source.
 	Query request.Select
 
-	// Transform is a optional Lens configuration.  If specified, data drawn from the [Query] will have the
+	// Transform is a optional Lens configuration.  If an ID is specified, data drawn from the [Query] will have the
 	// transform applied before being returned.
 	//
 	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
 	// those passed in from the underlying query.
-	Transform immutable.Option[model.Lens]
+	Transform immutable.Option[string]
 }
 
 // CollectionSource represents a collection data source from another collection instance.
@@ -191,12 +190,12 @@ type CollectionSource struct {
 	// be available to the source collection instance.
 	SourceCollectionID string
 
-	// Transform is a optional Lens configuration.  If specified, data drawn from the source will have the
+	// Transform is a optional Lens configuration.  If an ID is specified, data drawn from the source will have the
 	// transform applied before being returned by any operation on the host collection instance.
 	//
 	// If the transform supports an inverse operation, that inverse will be applied when the source collection
 	// draws data from this host.
-	Transform immutable.Option[model.Lens]
+	Transform immutable.Option[string]
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it

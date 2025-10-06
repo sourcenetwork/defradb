@@ -42,8 +42,6 @@ var openApiSchemas = map[string]any{
 	"ccip_response":                            &CCIPResponse{},
 	"patch_collection_request":                 &patchCollectionRequest{},
 	"add_view_request":                         &addViewRequest{},
-	"migrate_request":                          &migrateRequest{},
-	"set_migration_request":                    &setMigrationRequest{},
 	"acp_policy_add_result":                    &client.AddPolicyResult{},
 	"acp_relationship_add_result":              &client.AddActorRelationshipResult{},
 	"acp_relationship_delete_result":           &client.DeleteActorRelationshipResult{},

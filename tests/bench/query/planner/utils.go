@@ -89,6 +89,7 @@ func runMakePlanBench(
 			dac.NoDocumentACP,
 			d,
 			&p2pWrapper{},
+			nil,
 		)
 		plan, err := planner.MakePlan(q)
 		if err != nil {

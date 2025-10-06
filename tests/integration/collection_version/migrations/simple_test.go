@@ -54,19 +54,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "does not exist",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": false,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID0}}"),
 						}),
 					},
 					{
@@ -128,19 +116,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "does not exist",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": false,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID0}}"),
 						}),
 					},
 					{
@@ -148,19 +124,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						VersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": true,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID1}}"),
 						}),
 					},
 					{
@@ -231,19 +195,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "a",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": false,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID0}}"),
 						}),
 					},
 					{
@@ -251,19 +203,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "a",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "age",
-												"value": float64(123),
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID1}}"),
 						}),
 					},
 				},

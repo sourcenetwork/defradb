@@ -226,12 +226,8 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchO
 	return w.client.RefreshViews(ctx, opts)
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return w.client.SetMigration(ctx, config)
-}
-
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return w.client.LensRegistry()
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

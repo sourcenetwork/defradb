@@ -227,25 +227,25 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 	return err
 }
 
-func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	body, err := json.Marshal(config)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	_, err = c.http.request(req)
-	return err
-}
+	var lensID string
+	if err := c.http.requestJson(req, &lensID); err != nil {
+		return "", err
+	}
 
-func (c *Client) LensRegistry() client.LensRegistry {
-	return &LensRegistry{c.http}
+	return lensID, nil
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

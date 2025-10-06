@@ -274,6 +274,9 @@ type State struct {
 	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
 	// should have the same Cid.
 	CurrentNodeID int
+
+	// LenIDs of lenses added to Defra.
+	LensIDs []string
 }
 
 func (s *State) GetClientType() ClientType {

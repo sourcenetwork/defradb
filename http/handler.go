@@ -37,7 +37,6 @@ func NewApiRouter() (*Router, error) {
 	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
 	p2p_handler := &p2pHandler{}
-	lens_handler := &lensHandler{}
 	ccip_handler := &ccipHandler{}
 	extras_handler := &extrasHandler{}
 	block_handler := &blockHandler{}
@@ -58,10 +57,6 @@ func NewApiRouter() (*Router, error) {
 	router.AddRouteGroup(func(r *Router) {
 		r.AddMiddleware(CollectionMiddleware)
 		collection_handler.bindRoutes(r)
-	})
-
-	router.AddRouteGroup(func(r *Router) {
-		lens_handler.bindRoutes(r)
 	})
 
 	if err := router.Validate(context.Background()); err != nil {

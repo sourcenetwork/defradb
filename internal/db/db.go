@@ -21,8 +21,11 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/corekv"
+	_ "github.com/sourcenetwork/corekv/chunk"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
+	lensStore "github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -64,7 +67,9 @@ type DB struct {
 
 	parser core.Parser
 
-	lensRegistry client.LensRegistry
+	// WARNING - This property should never be accessed directly, use `db.GetLensStore`
+	// in order to ensure any transactions are respected.
+	lensNode *lensNode.Node
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
@@ -113,10 +118,9 @@ func NewDB(
 	rootstore corekv.TxnStore,
 	nodeACP NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
-	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, nodeACP, documentACP, lens, options...)
+	return newDB(ctx, rootstore, nodeACP, documentACP, options...)
 }
 
 func newDB(
@@ -124,7 +128,6 @@ func newDB(
 	rootstore corekv.TxnStore,
 	nodeACP NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
-	lens client.LensRegistry,
 	options ...Option,
 ) (*DB, error) {
 	opts := defaultDBOptions()
@@ -143,7 +146,6 @@ func newDB(
 		rootstore:           rootstore,
 		nodeACP:             nodeACP,
 		documentACP:         documentACP,
-		lensRegistry:        lens,
 		parser:              parser,
 		options:             options,
 		events:              event.NewChannelBus(commandBufferSize, eventBufferSize),
@@ -162,9 +164,23 @@ func newDB(
 	db.signingDisabled = opts.disableSigning
 	db.searchableEncryptionKey = opts.searchableEncryptionKey
 
-	if lens != nil {
-		lens.Init(db)
+	lensRuntime, err := newLensRuntime(opts.LensRuntimeType)
+	if err != nil {
+		return nil, err
 	}
+
+	// Overwrite a few key Lens options for now, by appending them to the end of the option
+	// slice.
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithP2PDisabled(true))
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithRootstore(rootstore))
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithTxnSource(wrapSource(db)))
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithRuntime(lensRuntime))
+
+	node, err := lensNode.New(ctx, opts.LensOptions...)
+	if err != nil {
+		return nil, err
+	}
+	db.lensNode = node
 
 	if opts.p2p.HasValue() {
 		p, err := p2p.New(ctx, db, opts.p2p.Value(), db.nodeIdentity)
@@ -194,10 +210,6 @@ func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly)
 	return wrapDatastoreTxn(txn, db), nil
-}
-
-func (db *DB) LensRegistry() client.LensRegistry {
-	return db.lensRegistry
 }
 
 func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
@@ -430,7 +442,7 @@ func (db *DB) initialize(ctx context.Context) error {
 			return err
 		}
 
-		err = db.lensRegistry.ReloadLenses(ctx)
+		err = db.GetLensStore(ctx).Reload(ctx)
 		if err != nil {
 			return err
 		}
@@ -550,4 +562,35 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	}
 
 	return iter.Close()
+}
+
+type txnSource struct {
+	txnSource client.TxnSource
+}
+
+var _ lensStore.TxnSource = (*txnSource)(nil)
+
+func wrapSource(s client.TxnSource) *txnSource {
+	return &txnSource{
+		txnSource: s,
+	}
+}
+
+func (s *txnSource) NewTxn(readOnly bool) (lensStore.Txn, error) {
+	txn, err := s.txnSource.NewTxn(readOnly)
+	if err != nil {
+		return nil, err
+	}
+
+	dsTxn := datastore.MustGetFromClientTxn(txn)
+
+	return &wrappedTxn{
+		Txn:          dsTxn,
+		ReaderWriter: dsTxn.Rootstore(),
+	}, nil
+}
+
+type wrappedTxn struct {
+	datastore.Txn
+	corekv.ReaderWriter
 }

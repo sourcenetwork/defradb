@@ -132,6 +132,7 @@ const (
 	errInvalidCID                                string = "invalid CID"
 	errUnknownCID                                string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions       string = "cannot migrate between non-adjacent collection versions"
+	errLensRuntimeNotSupported                   string = "the selected lens runtime is not supported by this build"
 )
 
 var (
@@ -197,6 +198,7 @@ var (
 	ErrNoP2P                                     = errors.New("no p2p system configured")
 	ErrBadDocsResultType                         = errors.New("bad docs result type")
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
+	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -812,4 +814,8 @@ func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destination
 		errors.NewKV("SourceVersionID", sourceVersion),
 		errors.NewKV("DestinationVersionID", destinationVersion),
 	)
+}
+
+func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
+	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
 }

@@ -321,23 +321,27 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 	return err
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	args := []string{"client", "lens", "set"}
 
 	lenses, err := json.Marshal(config.Lens)
 	if err != nil {
-		return err
+		return "", err
 	}
 	args = append(args, config.SourceSchemaVersionID)
 	args = append(args, config.DestinationSchemaVersionID)
 	args = append(args, string(lenses))
 
-	_, err = w.cmd.execute(ctx, args)
-	return err
-}
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return "", err
+	}
 
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return &LensRegistry{w.cmd}
+	var lensID string
+	if err := json.Unmarshal(data, &lensID); err != nil {
+		return "", err
+	}
+	return lensID, nil
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

@@ -141,12 +141,13 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := db.SetMigration(req.Context(), cfg)
+	lensID, err := db.SetMigration(req.Context(), cfg)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	rw.WriteHeader(http.StatusOK)
+
+	responseJSON(rw, http.StatusOK, lensID)
 }
 
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {

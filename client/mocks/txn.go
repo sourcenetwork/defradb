@@ -1693,52 +1693,6 @@ func (_c *Txn_ID_Call) RunAndReturn(run func() uint64) *Txn_ID_Call {
 	return _c
 }
 
-// LensRegistry provides a mock function for the type Txn
-func (_mock *Txn) LensRegistry() client.LensRegistry {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for LensRegistry")
-	}
-
-	var r0 client.LensRegistry
-	if returnFunc, ok := ret.Get(0).(func() client.LensRegistry); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.LensRegistry)
-		}
-	}
-	return r0
-}
-
-// Txn_LensRegistry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LensRegistry'
-type Txn_LensRegistry_Call struct {
-	*mock.Call
-}
-
-// LensRegistry is a helper method to define mock.On call
-func (_e *Txn_Expecter) LensRegistry() *Txn_LensRegistry_Call {
-	return &Txn_LensRegistry_Call{Call: _e.mock.On("LensRegistry")}
-}
-
-func (_c *Txn_LensRegistry_Call) Run(run func()) *Txn_LensRegistry_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Txn_LensRegistry_Call) Return(lensRegistry client.LensRegistry) *Txn_LensRegistry_Call {
-	_c.Call.Return(lensRegistry)
-	return _c
-}
-
-func (_c *Txn_LensRegistry_Call) RunAndReturn(run func() client.LensRegistry) *Txn_LensRegistry_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ListAllEncryptedIndexes provides a mock function for the type Txn
 func (_mock *Txn) ListAllEncryptedIndexes(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ret := _mock.Called(context1)
@@ -2268,20 +2222,29 @@ func (_c *Txn_SetActiveCollectionVersion_Call) RunAndReturn(run func(ctx context
 }
 
 // SetMigration provides a mock function for the type Txn
-func (_mock *Txn) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (_mock *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ret := _mock.Called(ctx, config)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetMigration")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig) error); ok {
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig) (string, error)); ok {
+		return returnFunc(ctx, config)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig) string); ok {
 		r0 = returnFunc(ctx, config)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(string)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.LensConfig) error); ok {
+		r1 = returnFunc(ctx, config)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // Txn_SetMigration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMigration'
@@ -2314,12 +2277,12 @@ func (_c *Txn_SetMigration_Call) Run(run func(ctx context.Context, config client
 	return _c
 }
 
-func (_c *Txn_SetMigration_Call) Return(err error) *Txn_SetMigration_Call {
-	_c.Call.Return(err)
+func (_c *Txn_SetMigration_Call) Return(s string, err error) *Txn_SetMigration_Call {
+	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, config client.LensConfig) error) *Txn_SetMigration_Call {
+func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, config client.LensConfig) (string, error)) *Txn_SetMigration_Call {
 	_c.Call.Return(run)
 	return _c
 }

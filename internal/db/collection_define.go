@@ -45,7 +45,7 @@ func (db *DB) createCollections(
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections, immutable.None[model.Lens]())
+	err = setCollectionIDs(ctx, newCollections)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (db *DB) patchCollection(
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections, migration)
+	err = setCollectionIDs(ctx, newCollections)
 	if err != nil {
 		return err
 	}
@@ -286,33 +286,14 @@ func (db *DB) patchCollection(
 					return err
 				}
 			}
-
-			// Clear any existing migrations in the registry, using this semi-hacky way
-			// to avoid adding more functions to a public interface that we wish to remove.
-
-			if existingCol.PreviousVersion.HasValue() && existingCol.PreviousVersion.Value().Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-				if err != nil {
-					return err
-				}
-			}
-			if existingCol.Query.HasValue() && existingCol.Query.Value().Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-				if err != nil {
-					return err
-				}
-			}
 		}
 
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			err = db.LensRegistry().SetMigration(ctx, col.VersionID, col.PreviousVersion.Value().Transform.Value())
-			if err != nil {
-				return err
-			}
-		}
-
-		if col.Query.HasValue() && col.Query.Value().Transform.HasValue() {
-			err = db.LensRegistry().SetMigration(ctx, col.VersionID, col.Query.Value().Transform.Value())
+		if col.PreviousVersion.HasValue() && migration.HasValue() {
+			_, err = db.setMigration(ctx, client.LensConfig{
+				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
+				DestinationSchemaVersionID: col.VersionID,
+				Lens:                       migration.Value(),
+			})
 			if err != nil {
 				return err
 			}

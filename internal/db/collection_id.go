@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -36,7 +35,6 @@ import (
 func setCollectionIDs(
 	ctx context.Context,
 	newCollections []client.CollectionVersion,
-	migration immutable.Option[model.Lens],
 ) error {
 	// We need to group the inputs and then mutate them, so we temporarily
 	// map them to pointers.
@@ -55,7 +53,7 @@ func setCollectionIDs(
 		sortSet(collectionSet)
 
 		substituteRelationFieldKinds(collectionSet, collectionSets)
-		err := saveBlocks(ctx, collectionSet, migration)
+		err := saveBlocks(ctx, collectionSet)
 		if err != nil {
 			return err
 		}
@@ -407,7 +405,6 @@ setLoop:
 func saveBlocks(
 	ctx context.Context,
 	collectionSet []*client.CollectionVersion,
-	migration immutable.Option[model.Lens],
 ) error {
 	colIds := make([]cidlink.Link, 0, len(collectionSet))
 	hasSetUpdated := false
@@ -484,6 +481,13 @@ func saveBlocks(
 		colIds = append(colIds, cid)
 
 		if oldCol.VersionID != "" {
+			var migration immutable.Option[string]
+			if oldCol.PreviousVersion.Value().Transform.Value() != collection.PreviousVersion.Value().Transform.Value() {
+				// If the patch has updated the migration, use it, otherwise assume it was the old version migration,
+				// and ignore it.
+				migration = collection.PreviousVersion.Value().Transform
+			}
+
 			collection.PreviousVersion = immutable.Some(
 				client.CollectionSource{
 					SourceCollectionID: oldCol.VersionID,

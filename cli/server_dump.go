@@ -35,7 +35,7 @@ func MakeServerDumpCmd() *cobra.Command {
 			storeOpts := []node.StoreOpt{
 				node.WithStorePath(badgerPath),
 			}
-			rootstore, err := node.NewStore(ctx, storeOpts...)
+			rootstore, _, err := node.NewStore(ctx, storeOpts...)
 			if err != nil {
 				return err
 			}
@@ -48,7 +48,6 @@ func MakeServerDumpCmd() *cobra.Command {
 				rootstore,
 				nacInfo,
 				dac.NoDocumentACP,
-				nil,
 			)
 			if err != nil {
 				return errors.Wrap("failed to initialize database", err)

@@ -175,6 +175,7 @@ func (c *collection) makeSelectionPlan(
 		c.db.documentACP,
 		c.db,
 		c.db.p2p,
+		c.db.GetLensStore(ctx),
 	)
 
 	return planner.MakeSelectionPlan(slct)

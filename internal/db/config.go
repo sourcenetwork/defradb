@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/engine/module"
+	lens "github.com/sourcenetwork/lens/host-go/node"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -33,6 +35,8 @@ type dbOptions struct {
 	retryIntervals          []time.Duration
 	// timeout duration for syncing block links.
 	p2pBlockSyncTimeout time.Duration
+	LensRuntimeType     LensRuntimeType
+	LensOptions         []lens.Option
 }
 
 func defaultDBOptions() *dbOptions {
@@ -49,6 +53,8 @@ func defaultDBOptions() *dbOptions {
 			time.Minute * 32,
 		},
 		p2pBlockSyncTimeout: time.Second * 5,
+		LensRuntimeType:     DefaultLens,
+		LensOptions:         []lens.Option{},
 	}
 }
 
@@ -101,5 +107,40 @@ func WithP2P(host client.Host) Option {
 func WithP2PBlockSyncTimeout(timeout time.Duration) Option {
 	return func(opt *dbOptions) {
 		opt.p2pBlockSyncTimeout = timeout
+	}
+}
+
+func WithLensOpts(opts ...lens.Option) Option {
+	return func(dbOpt *dbOptions) {
+		dbOpt.LensOptions = append(dbOpt.LensOptions, opts...)
+	}
+}
+
+type LensRuntimeType string
+
+const (
+	// The Go-enum default LensRuntimeType.
+	//
+	// The actual runtime type that this resolves to depends on the build target.
+	DefaultLens LensRuntimeType = ""
+)
+
+// runtimeConstructors is a map of [LensRuntimeType]s to lens runtimes.
+//
+// Is is populated by the `init` functions in the runtime-specific files - this
+// allows it's population to be managed by build flags.
+var runtimeConstructors = map[LensRuntimeType]func() module.Runtime{}
+
+func newLensRuntime(runtimeType LensRuntimeType) (module.Runtime, error) {
+	if runtimeConstructor, ok := runtimeConstructors[runtimeType]; ok {
+		return runtimeConstructor(), nil
+	} else {
+		return nil, NewErrLensRuntimeNotSupported(runtimeType)
+	}
+}
+
+func WithLensRuntime(runtime LensRuntimeType) Option {
+	return func(o *dbOptions) {
+		o.LensRuntimeType = runtime
 	}
 }

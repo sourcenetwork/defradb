@@ -47,7 +47,14 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		return res
 	}
 
-	planner := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, db.p2p)
+	planner := planner.New(
+		ctx,
+		identity.FromContext(ctx),
+		db.documentACP,
+		db,
+		db.p2p,
+		db.GetLensStore(ctx),
+	)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)
 	if err != nil {

@@ -269,23 +269,16 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchO
 	return err
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	configVal, err := goji.MarshalJS(config)
 	if err != nil {
-		return err
+		return "", err
 	}
-	_, err = execute(ctx, w.value, "setMigration", configVal)
-	return err
-}
-
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	res, err := execute(context.Background(), w.value, "lensRegistry")
+	res, err := execute(ctx, w.value, "setMigration", configVal)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return &LensRegistry{
-		client: res[0],
-	}
+	return res[0].String(), err
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

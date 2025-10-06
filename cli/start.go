@@ -93,7 +93,6 @@ func MakeStartCommand() *cobra.Command {
 				node.WithSourceHubChainID(cfg.GetString("acp.document.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress")),
-				node.WithLensRuntime(node.LensRuntimeType(cfg.GetString("lens.runtime"))),
 				node.WithEnableDevelopment(cfg.GetBool("development")),
 				// store options
 				node.WithStorePath(cfg.GetString("datastore.badger.path")),
@@ -101,6 +100,7 @@ func MakeStartCommand() *cobra.Command {
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				db.WithRetryInterval(replicatorRetryIntervals),
+				db.WithLensRuntime(db.LensRuntimeType(cfg.GetString("lens.runtime"))),
 				// net node options
 				p2p.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
 				p2p.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),

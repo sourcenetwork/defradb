@@ -66,11 +66,7 @@ func NewDefraCommand() *cobra.Command {
 
 	lens := MakeLensCommand()
 	lens.AddCommand(
-		MakeLensUpCommand(),
-		MakeLensDownCommand(),
-		MakeLensReloadCommand(),
 		MakeLensSetCommand(),
-		MakeLensSetRegistryCommand(),
 	)
 
 	schema := MakeSchemaCommand()

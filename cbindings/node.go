@@ -53,7 +53,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	opts := []node.Option{
 		node.WithStorePath(gocOptions.DbPath),
-		node.WithLensRuntime(node.Wazero),
+		db.WithLensRuntime(db.Wazero),
 	}
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, p2p.WithListenAddresses(listeningAddresses...))

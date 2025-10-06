@@ -18,6 +18,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+const (
+	// 1 MB, this matches the maximum badger-in-memory value size.
+	//
+	// Nearly at least, badger panics if this is set to it's max for reasons not yet
+	// looked into.  Going one byte smaller does not have this issue.
+	defaultChunkSize = (1 << 20) - 1
+)
+
 // Option is a generic option that applies to any subsystem.
 //
 // Invalid option types will be silently ignored. Valid option types are:
