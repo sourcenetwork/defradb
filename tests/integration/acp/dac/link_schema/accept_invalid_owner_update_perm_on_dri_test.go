@@ -11,14 +11,14 @@
 package test_acp_dac_link_schema
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
+func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnUpdatePermissionExprOnDRI_AcceptSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -29,37 +29,20 @@ func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
 
 				Policy: `
                     name: test
-                    description: A Partially DRI Compliant Policy
+                    description: a policy
 
                     actor:
                       name: actor
 
                     resources:
-                      usersValid:
+                      users:
                         permissions:
                           read:
-                            expr: owner + reader
-                          update:
                             expr: owner
+                          update:
+                            expr: owner - owner
                           delete:
                             expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      usersInvalid:
-                        permissions:
-                          read:
-                            expr: reader - owner
-                          update:
-                            expr: reader
-                          delete:
-                            expr: reader
 
                         relations:
                           owner:
@@ -70,23 +53,18 @@ func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
                               - actor
                 `,
 			},
-
+			// Even though we have an invalid expr: `owner - owner` in the policy, when it is uploaded
+			// core acp internals change it to `owner + (owner - owner)` magically.
 			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
-						resource: "usersInvalid"
+						resource: "users"
 					) {
 						name: String
 						age: Int
 					}
 				`,
-
-				ExpectedError: fmt.Sprintf(
-					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"read",
-					"owner",
-				),
 			},
 
 			testUtils.IntrospectionRequest{
@@ -105,7 +83,26 @@ func TestACP_LinkSchema_UseInvalidResource_RejectSchema(t *testing.T) {
 					}
 				`,
 				ExpectedData: map[string]any{
-					"__type": nil, // NOTE: No "Users" should exist.
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
 				},
 			},
 		},

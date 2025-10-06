@@ -12,6 +12,7 @@ package acp
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -102,16 +103,27 @@ func ValidateResourceInterface(
 //
 // Learn more about the DefraDB [ACP System](/acp/README.md)
 func validateExpressionOfRequiredPermission(expression string, requiredPermission string) error {
-	exprNoSpace := strings.ReplaceAll(expression, " ", "")
+	exprTrimmed := strings.ReplaceAll(expression, " ", "")
+	if exprTrimmed == acpTypes.RequiredRegistererRelationName {
+		// This is to handle the edge case when it's only owner it won't have `()` around it.
+		return nil
+	}
 
-	if !strings.HasPrefix(exprNoSpace, acpTypes.RequiredRegistererRelationName) {
+	fmt.Println("222222222222222222222222222222222222")
+	fmt.Println("expression      : ", expression)
+	fmt.Println("exprTrimmed      : ", exprTrimmed)
+	exprTrimmed = exprTrimmed[1 : len(exprTrimmed)-1] // Trim surrounding ()
+	fmt.Println("exprTrimmed      : ", exprTrimmed)
+	fmt.Println("222222222222222222222222222222222222")
+
+	if !strings.HasPrefix(exprTrimmed, acpTypes.RequiredRegistererRelationName) {
 		return NewErrExprOfRequiredPermissionMustStartWithRelation(
 			requiredPermission,
 			acpTypes.RequiredRegistererRelationName,
 		)
 	}
 
-	restOfTheExpr := exprNoSpace[len(acpTypes.RequiredRegistererRelationName):]
+	restOfTheExpr := exprTrimmed[len(acpTypes.RequiredRegistererRelationName):]
 	if len(restOfTheExpr) != 0 {
 		c := restOfTheExpr[0]
 		// First non-space character after the required relation name MUST be a `+`.

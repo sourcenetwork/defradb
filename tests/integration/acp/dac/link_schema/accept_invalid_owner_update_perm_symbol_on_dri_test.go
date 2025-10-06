@@ -18,7 +18,7 @@ import (
 	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
-func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
+func TestACP_LinkSchema_OwnerRelationWithDifferenceSetOpOnUpdatePermissionExprOnDRI_AcceptSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -29,37 +29,20 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
 
 				Policy: `
                     name: test
-                    description: A Partially DRI Compliant Policy
+                    description: a policy
 
                     actor:
                       name: actor
 
                     resources:
-                      usersValid:
+                      users:
                         permissions:
                           read:
                             expr: owner + reader
                           update:
-                            expr: owner
+                            expr: owner - reader
                           delete:
                             expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      usersInvalid:
-                        permissions:
-                          read:
-                            expr: reader - owner
-                          update:
-                            expr: reader
-                          delete:
-                            expr: reader
 
                         relations:
                           owner:
@@ -71,11 +54,13 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
                 `,
 			},
 
+			// Even though we have an invalid expr: `owner - reader` in the policy, when it is uploaded
+			// core acp internals change it to `owner + (owner - reader)` magically.
 			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
-						resource: "usersValid"
+						resource: "users"
 					) {
 						name: String
 						age: Int
@@ -127,7 +112,7 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_LinkSchema_UseInvalidResource_AcceptSchema(t *testing.T) {
+func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnUpdatePermissionExprOnDRI_AcceptSchema(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -138,37 +123,20 @@ func TestACP_LinkSchema_UseInvalidResource_AcceptSchema(t *testing.T) {
 
 				Policy: `
                     name: test
-                    description: A Partially DRI Compliant Policy
+                    description: a policy
 
                     actor:
                       name: actor
 
                     resources:
-                      usersValid:
+                      users:
                         permissions:
                           read:
                             expr: owner + reader
                           update:
-                            expr: owner
+                            expr: owner & reader
                           delete:
                             expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      usersInvalid:
-                        permissions:
-                          read:
-                            expr: reader - owner
-                          update:
-                            expr: reader
-                          delete:
-                            expr: reader
 
                         relations:
                           owner:
@@ -180,13 +148,13 @@ func TestACP_LinkSchema_UseInvalidResource_AcceptSchema(t *testing.T) {
                 `,
 			},
 
-			// Even though we have an invalid expr: `reader - owner` in the policy, when it is uploaded
-			// core acp internals change it to `owner + (reader - owner)` magically.
+			// Even though we have an invalid expr: `owner & reader` in the policy, when it is uploaded
+			// core acp internals change it to `owner + (owner & reader)` magically.
 			&action.AddSchema{
 				Schema: `
 					type Users @policy(
 						id: "{{.Policy0}}",
-						resource: "usersInvalid"
+						resource: "users"
 					) {
 						name: String
 						age: Int
