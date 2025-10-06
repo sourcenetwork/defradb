@@ -28,9 +28,9 @@ func MakeTxCreateCommand() *cobra.Command {
 
 			var tx client.Txn
 			if concurrent {
-				tx, err = cliClient.NewConcurrentTxn(cmd.Context(), readOnly)
+				tx, err = cliClient.NewConcurrentTxn(readOnly)
 			} else {
-				tx, err = cliClient.NewTxn(cmd.Context(), readOnly)
+				tx, err = cliClient.NewTxn(readOnly)
 			}
 			if err != nil {
 				return err

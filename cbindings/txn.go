@@ -26,17 +26,15 @@ import (
 
 //export TransactionCreate
 func TransactionCreate(nodePtr C.uintptr_t, isConcurrent C.int, isReadOnly C.int) C.NewTxnResult {
-	ctx := context.Background()
-
 	h := cgo.Handle(nodePtr)
 	n := h.Value().(*node.Node) //nolint:forcetypeassert
 
 	var tx client.Txn
 	var err error
 	if isConcurrent != 0 {
-		tx, err = n.DB.NewConcurrentTxn(ctx, isReadOnly != 0)
+		tx, err = n.DB.NewConcurrentTxn(isReadOnly != 0)
 	} else {
-		tx, err = n.DB.NewTxn(ctx, isReadOnly != 0)
+		tx, err = n.DB.NewTxn(isReadOnly != 0)
 	}
 	if err != nil {
 		return returnNewTxnResultC(1, err.Error(), nil)

@@ -179,16 +179,16 @@ func newDB(
 }
 
 // NewTxn creates a new transaction.
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (client.Txn, error) {
+func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	txn := datastore.NewTxnFrom(db.rootstore, txnId, readonly)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (client.Txn, error) {
+func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
+	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly)
 	return wrapDatastoreTxn(txn, db), nil
 }
 

@@ -1805,7 +1805,7 @@ func getTransaction(
 
 	if s.Txns[transactionID] == nil {
 		// Create a new transaction if one does not already exist.
-		txn, err := db.NewTxn(s.Ctx, false)
+		txn, err := db.NewTxn(false)
 		if AssertError(s.T, err, expectedError) {
 			txn.Discard(s.Ctx)
 			return nil

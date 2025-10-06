@@ -123,7 +123,7 @@ func (p *P2P) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 }
 
 func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}

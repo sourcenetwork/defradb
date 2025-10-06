@@ -106,7 +106,7 @@ func wrapSource(s client.TxnSource) *txnSource {
 }
 
 func (s *txnSource) NewTxn(ctx context.Context, readOnly bool) (repository.Txn, error) {
-	txn, err := s.txnSource.NewTxn(ctx, readOnly)
+	txn, err := s.txnSource.NewTxn(readOnly)
 	if err != nil {
 		return nil, err
 	}

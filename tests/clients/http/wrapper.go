@@ -257,8 +257,8 @@ func (w *Wrapper) ExecRequest(
 	return w.client.ExecRequest(ctx, query, opts...)
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	clientTxn, err := w.client.NewTxn(ctx, readOnly)
+func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewTxn(readOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -269,8 +269,8 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	return &Transaction{w, serverTxn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	clientTxn, err := w.client.NewConcurrentTxn(ctx, readOnly)
+func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewConcurrentTxn(readOnly)
 	if err != nil {
 		return nil, err
 	}

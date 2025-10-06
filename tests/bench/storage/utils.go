@@ -79,7 +79,7 @@ func runStorageBenchTxnGet(
 		return err
 	}
 
-	clientTxn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func runStorageBenchTxnIterator(
 		return err
 	}
 
-	clientTxn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func backfillBenchmarkTxn(
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
-	clientTxn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(false)
 	if err != nil {
 		return nil, err
 	}

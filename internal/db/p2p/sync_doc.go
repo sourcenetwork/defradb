@@ -256,7 +256,7 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
-	clientTxn, err := p.db.NewTxn(p.ctx, true)
+	clientTxn, err := p.db.NewTxn(true)
 	if err != nil {
 		return docSyncItem{}, err
 	}

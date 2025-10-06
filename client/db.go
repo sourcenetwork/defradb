@@ -33,13 +33,13 @@ type TxnStore interface {
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
-	NewTxn(ctx context.Context, readOnly bool) (Txn, error)
+	NewTxn(readOnly bool) (Txn, error)
 
 	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
-	NewConcurrentTxn(ctx context.Context, readOnly bool) (Txn, error)
+	NewConcurrentTxn(readOnly bool) (Txn, error)
 }
 
 type Store interface {

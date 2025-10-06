@@ -62,7 +62,7 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
@@ -127,7 +127,7 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
@@ -192,7 +192,7 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
@@ -269,7 +269,7 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	err = col1.Update(ctx, doc1)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
@@ -334,7 +334,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	err = col2.Create(ctx, doc3)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, true)
+	txn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	defer txn.Discard(ctx)
 
@@ -383,7 +383,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
 	ctx = identity.WithContext(ctx, identity.None)
@@ -403,7 +403,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	err = txn.Commit(ctx)
 	require.NoError(t, err)
 
-	txn, err = db.NewTxn(ctx, true)
+	txn, err = db.NewTxn(true)
 	require.NoError(t, err)
 
 	ctx = identity.WithContext(ctx, identity.None)
@@ -448,7 +448,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	ctx = InitContext(ctx, txn)
 
@@ -484,7 +484,7 @@ func TestBasicImport_WithObjectCollection_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	ctx = InitContext(ctx, txn)
 
@@ -520,7 +520,7 @@ func TestBasicImport_WithInvalidFilepath_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	ctx = InitContext(ctx, txn)
 
@@ -557,7 +557,7 @@ func TestBasicImport_WithInvalidCollection_ReturnError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	ctx = InitContext(ctx, txn)
 

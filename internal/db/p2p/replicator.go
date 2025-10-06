@@ -140,7 +140,7 @@ func (p *P2P) SetReplicator(ctx context.Context, repInfo client.PeerInfo, collec
 // pushHeadsForAllDocs gets all the docID for the given collection and sends them to get
 // pushed to the given peer.
 func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, peerID string) error {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 }
 
 func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 	p.handleRetryMutex.Lock()
 	defer p.handleRetryMutex.Unlock()
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -383,7 +383,7 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 }
 
 func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -490,7 +490,7 @@ func createIfNotExistsReplicatorRetry(
 }
 
 func (p *P2P) retryReplicators(ctx context.Context) {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 	}
@@ -542,7 +542,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 		}
 		// If the next retry time has passed and the replicator is not already retrying.
 		if now.After(rInfo.NextRetry) && !rInfo.Retrying {
-			clientTxn, err := p.db.NewTxn(ctx, false)
+			clientTxn, err := p.db.NewTxn(false)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 			}
@@ -581,7 +581,7 @@ func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRe
 	if err != nil {
 		return err
 	}
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 	}
@@ -636,7 +636,7 @@ func setReplicatorNextRetry(
 func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 	}
@@ -683,7 +683,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 			// if one doc fails, stop retrying the rest and just wait for the next retry
 			return
 		}
-		clientTxn, err := p.db.NewTxn(ctx, false)
+		clientTxn, err := p.db.NewTxn(false)
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to get new transaction on replicator retry", err)
 		}
@@ -763,7 +763,7 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 }
 
 func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -829,7 +829,7 @@ func deleteReplicatorRetryIfNoMoreDocs(
 
 // deleteReplicatorRetryAndDocs deletes the replicator retry and all retry docs.
 func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) error {
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return err
 	}

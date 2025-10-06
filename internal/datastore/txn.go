@@ -91,7 +91,7 @@ type BasicTxn struct {
 var _ Txn = (*BasicTxn)(nil)
 
 // newTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) *BasicTxn {
+func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	multistore := NewMultistore(rootTxn)
 	return &BasicTxn{

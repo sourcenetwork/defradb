@@ -24,7 +24,7 @@ import (
 
 // transactionDB is a db that can create transactions.
 type transactionDB interface {
-	NewTxn(context.Context, bool) (client.Txn, error)
+	NewTxn(bool) (client.Txn, error)
 }
 
 // ensureContextTxn ensures that the returned context has a transaction.
@@ -69,7 +69,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
 		}
 	}
-	clientTxn, err := db.NewTxn(ctx, readOnly)
+	clientTxn, err := db.NewTxn(readOnly)
 	if err != nil {
 		return nil, nil, err
 	}
