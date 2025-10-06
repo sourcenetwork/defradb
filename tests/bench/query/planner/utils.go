@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/node"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
@@ -33,6 +34,10 @@ type dbWrapper struct {
 
 func (w *dbWrapper) GetSearchableEncryptionKey() []byte {
 	return nil
+}
+
+func (w *dbWrapper) QuerySEArtifacts(ctx context.Context, collectionID string, queries []se.FieldQuery) ([]string, error) {
+	return []string{}, nil
 }
 
 func runQueryParserBench(

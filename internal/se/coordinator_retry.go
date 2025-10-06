@@ -69,7 +69,7 @@ func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
 
 // processSERetries checks for due retries and processes them
 func (rc *Coordinator) processSERetries(ctx context.Context) {
-	ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+	ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
 	iter, err := ps.Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewPeerstoreSERetry("", "", "").Bytes(),
 	})
@@ -117,7 +117,7 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
 				continue
 			}
-			ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+			ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
 			if err := ps.Set(ctx, iter.Key(), b); err != nil {
 				log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 				continue
@@ -149,7 +149,7 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 		ctx = acpIdentity.WithContext(ctx, identity)
 	}
 
-	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
+	err = rc.GenerateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
 		retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
@@ -169,7 +169,7 @@ func (rc *Coordinator) updateRetryStatus(
 	retryKey := keys.NewPeerstoreSERetry(peerID, retryInfo.CollectionID, retryInfo.DocID)
 
 	if success {
-		ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+		ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
 		if err := ps.Delete(ctx, retryKey.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete SE retry entry", err)
 		}
@@ -186,7 +186,7 @@ func (rc *Coordinator) updateRetryStatus(
 			log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
 			return
 		}
-		ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+		ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
 		if err := ps.Set(ctx, retryKey.Bytes(), b); err != nil {
 			log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 		}

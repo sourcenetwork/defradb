@@ -36,16 +36,21 @@ import (
 
 var log = corelog.NewLogger("defra.se.replication")
 
+// DB defines the database operations needed by the SE coordinator
+type DB interface {
+	Rootstore() corekv.TxnStore
+	MaxTxnRetries() int
+	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
+}
+
 type P2P interface {
 	GetReplicatorsIDs(collectionID string) []string
 	Host() client.Host
+	DB() DB
 }
 
 // Coordinator manages SE artifact replication and storage
 type Coordinator struct {
-	db             DB
-	eventBus       event.Bus
-	sub            event.Subscription
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            P2P
@@ -56,18 +61,9 @@ type Coordinator struct {
 	cancel context.CancelFunc
 }
 
-// DB interface required by ReplicationCoordinator
-type DB interface {
-	Rootstore() corekv.TxnStore
-	Events() event.Bus
-	MaxTxnRetries() int
-	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
-}
-
-// NewReplicationCoordinator creates a new coordinator
-func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*Coordinator, error) {
+// NewCoordinator creates a new coordinator
+func NewCoordinator(p2p P2P, encKey []byte) (*Coordinator, error) {
 	rc, err := newReplicationCoordinator(
-		db,
 		p2p,
 		encKey,
 		nil,
@@ -92,17 +88,15 @@ func NewReplicationCoordinator(db DB, p2p P2P, encKey []byte) (*Coordinator, err
 }
 
 func newReplicationCoordinator(
-	db DB,
 	p2p P2P,
 	encKey []byte,
 	push protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply],
 	query protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply],
 ) (*Coordinator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
+	db := p2p.DB()
 
 	rc := &Coordinator{
-		db:             db,
-		eventBus:       db.Events(),
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
 		p2p:            p2p,
@@ -112,14 +106,6 @@ func newReplicationCoordinator(
 		querySEProto:   query,
 	}
 
-	var err error
-	rc.sub, err = db.Events().Subscribe(event.UpdateName, QuerySEArtifactsEventName)
-	if err != nil {
-		return nil, err
-	}
-
-	go rc.processEvents()
-
 	go rc.retrySEReplicators(rc.ctx)
 
 	return rc, nil
@@ -127,7 +113,6 @@ func newReplicationCoordinator(
 
 func (rc *Coordinator) Close() {
 	rc.cancel()
-	rc.eventBus.Unsubscribe(rc.sub)
 }
 
 // reconstructIdentity reconstructs an Identity from stored public key information
@@ -151,60 +136,34 @@ func (rc *Coordinator) reconstructIdentity(
 	return immutable.Some(identity), nil
 }
 
-// processUpdateEvents handles updates to SE artifacts
-func (rc *Coordinator) processEvents() {
-	for {
-		msg, isOpen := <-rc.sub.Message()
-		if !isOpen {
-			return
-		}
-
-		switch evt := msg.Data.(type) {
-		case event.Update:
-			if err := rc.handleUpdateEvent(context.Background(), evt); err != nil {
-				log.ErrorE("Failed to handle SE update event", err,
-					corelog.String("DocID", evt.DocID))
-			}
-
-		case RequestSEArtifactsEvent:
-			go rc.handleQuerySEArtifactsEvent(evt)
-
-		default:
-			continue
-		}
-	}
-}
-
-func (rc *Coordinator) handleQuerySEArtifactsEvent(evt RequestSEArtifactsEvent) {
-	grpcQueries := make([]SEFieldQuery, len(evt.Queries))
-	for i, q := range evt.Queries {
+// QuerySEArtifacts queries SE artifacts from replicators and returns matching document IDs.
+// This is called directly by the planner when executing SE queries.
+func (rc *Coordinator) QuerySEArtifacts(ctx context.Context, collectionID string, queries []FieldQuery) ([]string, error) {
+	grpcQueries := make([]SEFieldQuery, len(queries))
+	for i, q := range queries {
 		grpcQueries[i] = SEFieldQuery(q)
 	}
 
 	grpcReq := QuerySEArtifactsRequest{
-		CollectionID: evt.CollectionID,
+		CollectionID: collectionID,
 		Queries:      grpcQueries,
 	}
 
-	peerIDs := rc.p2p.GetReplicatorsIDs(evt.CollectionID)
+	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
 
 	if len(peerIDs) == 0 {
-		evt.Response <- SEArtifactsResult{
-			DocIDs: []string{},
-			Error:  nil,
-		}
-		return
+		return []string{}, nil
 	}
 
 	var err error
 	var reply QuerySEArtifactsReply
 	for _, pid := range peerIDs {
-		reply, err = rc.querySEProto.SendRequest(context.Background(), grpcReq, pid)
+		reply, err = rc.querySEProto.SendRequest(ctx, grpcReq, pid)
 		if err != nil {
-			log.ErrorE(
+			log.ErrorContextE(ctx,
 				"Failed querying SE artifacts from replicator",
 				err,
-				corelog.String("CollectionID", evt.CollectionID),
+				corelog.String("CollectionID", collectionID),
 				corelog.Any("PeerID", pid))
 			continue
 		}
@@ -212,10 +171,11 @@ func (rc *Coordinator) handleQuerySEArtifactsEvent(evt RequestSEArtifactsEvent) 
 		break
 	}
 
-	evt.Response <- SEArtifactsResult{
-		DocIDs: reply.DocIDs,
-		Error:  err,
+	if err != nil {
+		return nil, err
 	}
+
+	return reply.DocIDs, nil
 }
 
 // handleReplicationFailure stores failed SE replication attempt for retry
@@ -252,12 +212,13 @@ func (rc *Coordinator) handleReplicationFailure(
 		return err
 	}
 
-	ps := datastore.PeerstoreFrom(rc.db.Rootstore())
+	ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
 	return ps.Set(ctx, retryKey.Bytes(), b)
 }
 
-// handleUpdateEvent processes SE update events and stores artifacts
-func (rc *Coordinator) handleUpdateEvent(ctx context.Context, evt event.Update) error {
+// HandlePushToReplicators processes document update events and generates SE artifacts.
+// This implements the PushToReplicatorsHandler interface for P2P.
+func (rc *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Update) error {
 	// If this is a retry, we don't need to generate artifacts
 	if evt.IsRetry {
 		return nil
@@ -283,10 +244,12 @@ func (rc *Coordinator) handleUpdateEvent(ctx context.Context, evt event.Update) 
 		ctx = acpIdentity.WithContext(ctx, evt.Identity)
 	}
 
-	return rc.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
+	return rc.GenerateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
 }
 
-func (rc *Coordinator) generateArtifactsAndPushToReplicators(
+// GenerateArtifactsAndPushToReplicators generates SE artifacts and pushes them to replicators.
+// This is called by the P2P layer when document updates occur.
+func (rc *Coordinator) GenerateArtifactsAndPushToReplicators(
 	ctx context.Context,
 	docID, collectionID string,
 	fields []string,
@@ -341,7 +304,7 @@ func (rc *Coordinator) generateSEArtifacts(
 	docID, collectionID string,
 	fieldNames []string,
 ) ([]secore.Artifact, error) {
-	cols, err := rc.db.GetCollections(ctx, client.CollectionFetchOptions{
+	cols, err := rc.p2p.DB().GetCollections(ctx, client.CollectionFetchOptions{
 		CollectionID: immutable.Some(collectionID),
 	})
 	if err != nil {

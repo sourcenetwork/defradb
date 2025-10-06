@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -90,6 +91,8 @@ type DB interface {
 	Events() event.Bus
 	// GetSearchableEncryptionKey returns the key used for searchable encryption.
 	GetSearchableEncryptionKey() []byte
+	// QuerySEArtifacts queries SE artifacts from replicators for the given collection and field queries.
+	QuerySEArtifacts(ctx context.Context, collectionID string, queries []se.FieldQuery) ([]string, error)
 }
 
 // Planner combines session state and database state to

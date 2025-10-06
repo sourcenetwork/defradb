@@ -22,7 +22,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/se/mocks"
 )
 
 // retryTestSetup holds common setup for retry tests
@@ -36,14 +35,17 @@ func newRetryTestSetup(t *testing.T) *retryTestSetup {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	mockDB := mocks.NewDB(t)
-	mockDB.EXPECT().Rootstore().Return(rootstore).Maybe()
+	mockDBImpl := NewMockDB(t)
+	mockDBImpl.EXPECT().Rootstore().Return(rootstore).Maybe()
+
+	mockP2PImpl := NewMockP2P(t)
+	mockP2PImpl.EXPECT().DB().Return(mockDBImpl).Maybe()
 
 	return &retryTestSetup{
 		ctx:       ctx,
 		rootstore: rootstore,
 		coordinator: &Coordinator{
-			db: mockDB,
+			p2p: mockP2PImpl,
 		},
 	}
 }

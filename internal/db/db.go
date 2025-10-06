@@ -96,9 +96,6 @@ type DB struct {
 	// The cryptographic key used to generate search tags for searchable encryption.
 	searchableEncryptionKey []byte
 
-	// SE replication coordinator
-	seCoordinator *se.Coordinator
-
 	docMergeQueue *mergeQueue
 	colMergeQueue *mergeQueue
 
@@ -176,14 +173,6 @@ func newDB(
 			return nil, err
 		}
 		db.p2p = p
-
-		if len(db.searchableEncryptionKey) > 0 {
-			coord, err := se.NewReplicationCoordinator(db, db.p2p, db.searchableEncryptionKey)
-			if err != nil {
-				return nil, err
-			}
-			db.seCoordinator = coord
-		}
 	}
 
 	err = db.initialize(ctx)
@@ -479,6 +468,11 @@ func (db *DB) MaxTxnRetries() int {
 	return defaultMaxTxnRetries
 }
 
+// SearchableEncryptionKey returns the searchable encryption key if configured.
+func (db *DB) SearchableEncryptionKey() []byte {
+	return db.searchableEncryptionKey
+}
+
 // RetryIntervals returns the replicator retry configuration.
 func (db *DB) RetryIntervals() []time.Duration {
 	return db.retryIntervals
@@ -520,8 +514,8 @@ func (db *DB) Close() {
 		}
 	}
 
-	if db.seCoordinator != nil {
-		db.seCoordinator.Close()
+	if db.p2p != nil && db.p2p.SECoordinator() != nil {
+		db.p2p.SECoordinator().Close()
 	}
 
 	log.Info("Successfully closed running process")
@@ -556,4 +550,12 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 
 func (db *DB) GetSearchableEncryptionKey() []byte {
 	return db.searchableEncryptionKey
+}
+
+// QuerySEArtifacts queries SE artifacts from replicators for the given collection and field queries.
+func (db *DB) QuerySEArtifacts(ctx context.Context, collectionID string, queries []se.FieldQuery) ([]string, error) {
+	if db.p2p == nil || db.p2p.SECoordinator() == nil {
+		return []string{}, nil
+	}
+	return db.p2p.SECoordinator().QuerySEArtifacts(ctx, collectionID, queries)
 }

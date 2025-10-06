@@ -252,21 +252,16 @@ func TestProcessQuerySEArtifactsRequest_WhenDifferentCollections_ShouldOnlyRetur
 	require.NotContains(t, reply.DocIDs, "doc-2", "Should not return documents from other collections")
 }
 
-func TestHandleQuerySEArtifactsEvent_WhenReplicatorsExist_ShouldQueryAndReturnDocIDs(t *testing.T) {
+func TestQuerySEArtifacts_WhenReplicatorsExist_ShouldQueryAndReturnDocIDs(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	responseChan := make(chan SEArtifactsResult, 1)
-	evt := RequestSEArtifactsEvent{
-		CollectionID: setup.collectionID,
-		Queries: []FieldQuery{
-			{
-				FieldName: "field1",
-				IndexID:   "index-1",
-				SearchTag: []byte("tag-1"),
-			},
+	queries := []FieldQuery{
+		{
+			FieldName: "field1",
+			IndexID:   "index-1",
+			SearchTag: []byte("tag-1"),
 		},
-		Response: responseChan,
 	}
 
 	setup.mockGetReplicatorsIDs([]string{setup.peerID})
@@ -274,56 +269,44 @@ func TestHandleQuerySEArtifactsEvent_WhenReplicatorsExist_ShouldQueryAndReturnDo
 	expectedReply := QuerySEArtifactsReply{DocIDs: []string{"doc-1", "doc-2"}}
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, setup.peerID).Return(expectedReply, nil)
 
-	setup.coordinator.handleQuerySEArtifactsEvent(evt)
+	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
 
-	result := <-responseChan
-	require.NoError(t, result.Error)
-	require.Len(t, result.DocIDs, 2)
-	require.Contains(t, result.DocIDs, "doc-1")
-	require.Contains(t, result.DocIDs, "doc-2")
+	require.NoError(t, err)
+	require.Len(t, docIDs, 2)
+	require.Contains(t, docIDs, "doc-1")
+	require.Contains(t, docIDs, "doc-2")
 }
 
-func TestHandleQuerySEArtifactsEvent_WhenNoReplicators_ShouldReturnEmpty(t *testing.T) {
+func TestQuerySEArtifacts_WhenNoReplicators_ShouldReturnEmpty(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	responseChan := make(chan SEArtifactsResult, 1)
-	evt := RequestSEArtifactsEvent{
-		CollectionID: setup.collectionID,
-		Queries: []FieldQuery{
-			{
-				FieldName: "field1",
-				IndexID:   "index-1",
-				SearchTag: []byte("tag-1"),
-			},
+	queries := []FieldQuery{
+		{
+			FieldName: "field1",
+			IndexID:   "index-1",
+			SearchTag: []byte("tag-1"),
 		},
-		Response: responseChan,
 	}
 
 	setup.mockGetReplicatorsIDs([]string{})
 
-	setup.coordinator.handleQuerySEArtifactsEvent(evt)
+	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
 
-	result := <-responseChan
-	require.NoError(t, result.Error)
-	require.Empty(t, result.DocIDs)
+	require.NoError(t, err)
+	require.Empty(t, docIDs)
 }
 
-func TestHandleQuerySEArtifactsEvent_WhenFirstReplicatorFails_ShouldTryNext(t *testing.T) {
+func TestQuerySEArtifacts_WhenFirstReplicatorFails_ShouldTryNext(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	responseChan := make(chan SEArtifactsResult, 1)
-	evt := RequestSEArtifactsEvent{
-		CollectionID: setup.collectionID,
-		Queries: []FieldQuery{
-			{
-				FieldName: "field1",
-				IndexID:   "index-1",
-				SearchTag: []byte("tag-1"),
-			},
+	queries := []FieldQuery{
+		{
+			FieldName: "field1",
+			IndexID:   "index-1",
+			SearchTag: []byte("tag-1"),
 		},
-		Response: responseChan,
 	}
 
 	peerID1 := "peer-1"
@@ -338,30 +321,24 @@ func TestHandleQuerySEArtifactsEvent_WhenFirstReplicatorFails_ShouldTryNext(t *t
 	}
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, peerID2).Return(expectedReply, nil).Once()
 
-	setup.coordinator.handleQuerySEArtifactsEvent(evt)
+	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
 
-	result := <-responseChan
-	require.NoError(t, result.Error)
-	require.Len(t, result.DocIDs, 2)
-	require.Contains(t, result.DocIDs, "doc-3")
-	require.Contains(t, result.DocIDs, "doc-4")
+	require.NoError(t, err)
+	require.Len(t, docIDs, 2)
+	require.Contains(t, docIDs, "doc-3")
+	require.Contains(t, docIDs, "doc-4")
 }
 
-func TestHandleQuerySEArtifactsEvent_WhenAllReplicatorsFail_ShouldReturnError(t *testing.T) {
+func TestQuerySEArtifacts_WhenAllReplicatorsFail_ShouldReturnError(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	responseChan := make(chan SEArtifactsResult, 1)
-	evt := RequestSEArtifactsEvent{
-		CollectionID: setup.collectionID,
-		Queries: []FieldQuery{
-			{
-				FieldName: "field1",
-				IndexID:   "index-1",
-				SearchTag: []byte("tag-1"),
-			},
+	queries := []FieldQuery{
+		{
+			FieldName: "field1",
+			IndexID:   "index-1",
+			SearchTag: []byte("tag-1"),
 		},
-		Response: responseChan,
 	}
 
 	peerID1 := "peer-1"
@@ -374,39 +351,33 @@ func TestHandleQuerySEArtifactsEvent_WhenAllReplicatorsFail_ShouldReturnError(t 
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, peerID2).
 		Return(QuerySEArtifactsReply{}, fmt.Errorf("network error 2")).Once()
 
-	setup.coordinator.handleQuerySEArtifactsEvent(evt)
+	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
 
-	result := <-responseChan
-	require.Error(t, result.Error)
-	require.Empty(t, result.DocIDs)
-	require.Contains(t, result.Error.Error(), "network error 2")
+	require.Error(t, err)
+	require.Empty(t, docIDs)
+	require.Contains(t, err.Error(), "network error 2")
 }
 
-func TestHandleQuerySEArtifactsEvent_WhenMultipleQueries_ShouldPassAllToReplicator(t *testing.T) {
+func TestQuerySEArtifacts_WhenMultipleQueries_ShouldPassAllToReplicator(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	responseChan := make(chan SEArtifactsResult, 1)
-	evt := RequestSEArtifactsEvent{
-		CollectionID: setup.collectionID,
-		Queries: []FieldQuery{
-			{
-				FieldName: "field1",
-				IndexID:   "index-1",
-				SearchTag: []byte("tag-1"),
-			},
-			{
-				FieldName: "field2",
-				IndexID:   "index-2",
-				SearchTag: []byte("tag-2"),
-			},
-			{
-				FieldName: "field3",
-				IndexID:   "index-3",
-				SearchTag: []byte("tag-3"),
-			},
+	queries := []FieldQuery{
+		{
+			FieldName: "field1",
+			IndexID:   "index-1",
+			SearchTag: []byte("tag-1"),
 		},
-		Response: responseChan,
+		{
+			FieldName: "field2",
+			IndexID:   "index-2",
+			SearchTag: []byte("tag-2"),
+		},
+		{
+			FieldName: "field3",
+			IndexID:   "index-3",
+			SearchTag: []byte("tag-3"),
+		},
 	}
 
 	setup.mockGetReplicatorsIDs([]string{setup.peerID})
@@ -422,12 +393,11 @@ func TestHandleQuerySEArtifactsEvent_WhenMultipleQueries_ShouldPassAllToReplicat
 		setup.peerID,
 	).Return(expectedReply, nil)
 
-	setup.coordinator.handleQuerySEArtifactsEvent(evt)
+	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
 
-	result := <-responseChan
-	require.NoError(t, result.Error)
-	require.Len(t, result.DocIDs, 3)
-	require.Contains(t, result.DocIDs, "doc-1")
-	require.Contains(t, result.DocIDs, "doc-2")
-	require.Contains(t, result.DocIDs, "doc-3")
+	require.NoError(t, err)
+	require.Len(t, docIDs, 3)
+	require.Contains(t, docIDs, "doc-1")
+	require.Contains(t, docIDs, "doc-2")
+	require.Contains(t, docIDs, "doc-3")
 }

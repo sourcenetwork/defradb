@@ -68,7 +68,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 		}
 	}
 
-	if err := storeArtifacts(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), artifacts); err != nil {
+	if err := storeArtifacts(ctx, datastore.DatastoreFrom(rc.p2p.DB().Rootstore()), artifacts); err != nil {
 		return err
 	}
 
@@ -103,5 +103,5 @@ func (rc *Coordinator) querySEArtifactsFromDatastore(
 		queries[i] = FieldQuery(q)
 	}
 
-	return fetchDocIDs(ctx, datastore.DatastoreFrom(rc.db.Rootstore()), req.CollectionID, queries)
+	return fetchDocIDs(ctx, datastore.DatastoreFrom(rc.p2p.DB().Rootstore()), req.CollectionID, queries)
 }

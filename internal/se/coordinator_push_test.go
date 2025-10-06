@@ -27,13 +27,15 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func TestReplicationCoordinator_WhenUpdateEventReceived_ShouldPushSEArtifactsToPeers(t *testing.T) {
+func TestReplicationCoordinator_WhenHandlePushToReplicatorsCalled_ShouldPushSEArtifactsToPeers(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
 	requestChan := setup.expectSEArtifactPush()
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.NoError(t, err)
 
 	require.Eventually(t, func() bool {
 		select {
@@ -54,7 +56,8 @@ func TestReplicationCoordinator_WhenBlockFailsToDeserialize_ShouldReturnError(t 
 		CollectionID: setup.collectionID,
 		Block:        []byte("invalid-block-data"),
 	}
-	setup.publishEvent(event.UpdateName, updateEvent)
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), updateEvent)
+	require.Error(t, err, "Should return error when block fails to deserialize")
 
 	setup.waitForNoCalls()
 }
@@ -68,7 +71,8 @@ func TestReplicationCoordinator_WhenNonCompositeBlock_ShouldNotPushToPeer(t *tes
 		CollectionID: setup.collectionID,
 		Block:        setup.createNonCompositeBlock(),
 	}
-	setup.publishEvent(event.UpdateName, updateEvent)
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), updateEvent)
+	require.NoError(t, err)
 
 	setup.waitForNoCalls()
 }
@@ -79,7 +83,9 @@ func TestReplicationCoordinator_WhenGetCollectionsFails_ShouldNotPushToPeer(t *t
 
 	setup.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("database error"))
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.Error(t, err) // Should return error when GetCollections fails
 
 	setup.waitForNoCalls()
 }
@@ -90,7 +96,9 @@ func TestReplicationCoordinator_WhenCollectionNotFound_ShouldNotPushToPeer(t *te
 
 	setup.mockGetCollections()
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.Error(t, err, "Should return error when collection not found")
 
 	setup.waitForNoCalls()
 }
@@ -102,7 +110,9 @@ func TestReplicationCoordinator_WhenInvalidDocID_ShouldNotPushToPeer(t *testing.
 	setup.docID = "invalid-doc-id"
 	setup.mockGetCollections(setup.createMockCollectionWithDocument())
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.Error(t, err, "Should return error when doc ID is invalid")
 
 	setup.waitForNoCalls()
 }
@@ -118,7 +128,9 @@ func TestReplicationCoordinator_WhenDocumentNotFound_ShouldNotPushToPeer(t *test
 
 	setup.mockGetReplicatorsIDs([]string{})
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.NoError(t, err)
 
 	require.Empty(setup.t, setup.mockStorageProto.Calls, "No SE artifacts should be pushed")
 }
@@ -132,7 +144,9 @@ func TestReplicationCoordinator_WhenDocumentGetFails_ShouldNotPushToPeer(t *test
 		Return(nil, fmt.Errorf("database error")).Maybe()
 	setup.mockGetCollections(mockCollection)
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.Error(t, err, "Should return error when document get fails")
 
 	setup.waitForNoCalls()
 }
@@ -149,17 +163,16 @@ func TestReplicationCoordinator_WhenNoEncryptedIndexes_ShouldNotPushToPeer(t *te
 	ver.EncryptedIndexes = []client.EncryptedIndexDescription{}
 	mockCollection.EXPECT().Version().Return(ver).Maybe()
 
-	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
-		func(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-			doc, err := client.NewDocFromMap(map[string]any{"age": 21}, ver)
-			return doc, err
-		}).Maybe()
+	doc, err := client.NewDocFromMap(map[string]any{"age": 21}, ver)
+	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
 
 	setup.mockGetCollections(mockCollection)
 
 	setup.mockGetReplicatorsIDs([]string{})
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err = setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.NoError(t, err)
 
 	setup.waitForNoCalls()
 }
@@ -175,7 +188,9 @@ func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeer
 	setup.mockStorageProto.EXPECT().SendRequest(mock.Anything, mock.Anything, setup.peerID).
 		Return(PushSEArtifactsReply{}, fmt.Errorf("network error"))
 
-	setup.publishEvent(event.UpdateName, setup.makeUpdateEvent())
+	evt := setup.makeUpdateEvent()
+	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
+	require.NoError(t, err) // Error is stored in retry, not returned
 
 	require.Eventually(t, func() bool {
 		ps := datastore.PeerstoreFrom(setup.rootstore)

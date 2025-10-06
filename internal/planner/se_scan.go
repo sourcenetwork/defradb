@@ -109,15 +109,12 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 		})
 	}
 
-	msg, responseChan := se.NewQuerySEArtifactsMessage(n.collectionID, queries)
-	n.p.db.Events().Publish(msg)
-
-	response := <-responseChan
-	if response.Error != nil {
-		return nil, response.Error
+	docIDs, err := n.p.db.QuerySEArtifacts(n.p.ctx, n.collectionID, queries)
+	if err != nil {
+		return nil, err
 	}
 
-	return response.DocIDs, nil
+	return docIDs, nil
 }
 
 func (n *seScanNode) Next() (bool, error) {

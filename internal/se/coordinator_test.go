@@ -29,14 +29,14 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	protocolmocks "github.com/sourcenetwork/defradb/internal/db/p2p/protocol/mocks"
-	"github.com/sourcenetwork/defradb/internal/se/mocks"
+	
 )
 
 // testSetup holds all test mocks and utilities for ReplicationCoordinator testing
 type testSetup struct {
 	t                *testing.T
-	mockDB           *mocks.DB
-	mockP2P          *mocks.P2P
+	mockDB           *MockDB
+	mockP2P          *MockP2P
 	mockStorageProto *protocolmocks.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
 	mockQueryProto   *protocolmocks.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 	mockEventBus     *mockEventBus
@@ -56,10 +56,17 @@ func newTestSetup(t *testing.T) *testSetup {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
+	mockDBImpl := NewMockDB(t)
+	mockDBImpl.EXPECT().MaxTxnRetries().Return(3).Maybe()
+	mockDBImpl.EXPECT().Rootstore().Return(rootstore).Maybe()
+
+	mockP2PImpl := NewMockP2P(t)
+	mockP2PImpl.EXPECT().DB().Return(mockDBImpl).Maybe()
+
 	setup := &testSetup{
 		t:                t,
-		mockDB:           mocks.NewDB(t),
-		mockP2P:          mocks.NewP2P(t),
+		mockDB:           mockDBImpl,
+		mockP2P:          mockP2PImpl,
 		mockStorageProto: protocolmocks.NewCommChannel[PushSEArtifactsRequest, PushSEArtifactsReply](t),
 		mockQueryProto:   protocolmocks.NewCommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply](t),
 		mockEventBus: &mockEventBus{
@@ -75,10 +82,6 @@ func newTestSetup(t *testing.T) *testSetup {
 		encKey:       []byte("test-encryption-key-32-bytes-!"),
 	}
 
-	setup.mockDB.EXPECT().Events().Return(setup.mockEventBus).Maybe()
-	setup.mockDB.EXPECT().MaxTxnRetries().Return(3).Maybe()
-	setup.mockDB.EXPECT().Rootstore().Return(rootstore).Maybe()
-
 	setup.createCoordinator()
 
 	return setup
@@ -87,7 +90,6 @@ func newTestSetup(t *testing.T) *testSetup {
 // createCoordinator creates the ReplicationCoordinator with all mocks
 func (s *testSetup) createCoordinator() {
 	rc, err := newReplicationCoordinator(
-		s.mockDB,
 		s.mockP2P,
 		s.encKey,
 		s.mockStorageProto,
@@ -200,11 +202,8 @@ func (s *testSetup) createMockCollectionWithDocument() *clientmocks.Collection {
 	mockCollection := s.createMockCollection()
 
 	// Setup Get method with default return
-	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
-		func(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-			doc, err := client.NewDocFromMap(map[string]any{"age": 21}, mockCollection.Version())
-			return doc, err
-		}).Maybe()
+	doc, err := client.NewDocFromMap(map[string]any{"age": 21}, mockCollection.Version())
+	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
 
 	return mockCollection
 }

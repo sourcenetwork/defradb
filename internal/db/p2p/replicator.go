@@ -301,6 +301,14 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 	reps, exists := p.replicators[lg.CollectionID]
 	p.repMu.Unlock()
 
+	for _, handler := range p.pushHandlers {
+		if err := handler.HandlePushToReplicators(context.Background(), lg); err != nil {
+			log.ErrorE("Push handler failed", err,
+				corelog.String("DocID", lg.DocID),
+				corelog.String("CollectionID", lg.CollectionID))
+		}
+	}
+
 	if exists {
 		for peerID := range reps {
 			go func() {
