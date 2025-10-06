@@ -36,9 +36,9 @@ packages: # Packages and their interfaces to generate mocks for.
 
     github.com/sourcenetwork/defradb/internal/se:
         config:
-            dir: "./internal/se"
-            filename: "{{.InterfaceName}}_mock.go"
-            inpackage: true
+            dir: "./internal/se/mocks"
+            #filename: "{{.InterfaceName}}_mock.go"
+            #inpackage: true
         interfaces:
             DB:
             P2P:

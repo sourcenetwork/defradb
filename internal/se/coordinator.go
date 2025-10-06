@@ -64,7 +64,7 @@ type Coordinator struct {
 
 // NewCoordinator creates a new coordinator
 func NewCoordinator(p2p P2P, encKey []byte) (*Coordinator, error) {
-	rc, err := newReplicationCoordinator(
+	rc, err := NewCoordinatorConfigure(
 		p2p,
 		encKey,
 		nil,
@@ -88,7 +88,7 @@ func NewCoordinator(p2p P2P, encKey []byte) (*Coordinator, error) {
 	return rc, nil
 }
 
-func newReplicationCoordinator(
+func NewCoordinatorConfigure(
 	p2p P2P,
 	encKey []byte,
 	push protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply],

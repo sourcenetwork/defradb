@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package se
+package se_test
 
 import (
 	"context"
@@ -29,17 +29,19 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	protocolmocks "github.com/sourcenetwork/defradb/internal/db/p2p/protocol/mocks"
+	"github.com/sourcenetwork/defradb/internal/se"
+	"github.com/sourcenetwork/defradb/internal/se/mocks"
 )
 
 // testSetup holds all test mocks and utilities for ReplicationCoordinator testing
 type testSetup struct {
 	t                *testing.T
-	mockDB           *MockDB
-	mockP2P          *MockP2P
-	mockStorageProto *protocolmocks.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
-	mockQueryProto   *protocolmocks.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
+	mockDB           *mocks.DB
+	mockP2P          *mocks.P2P
+	mockStorageProto *protocolmocks.CommChannel[se.PushSEArtifactsRequest, se.PushSEArtifactsReply]
+	mockQueryProto   *protocolmocks.CommChannel[se.QuerySEArtifactsRequest, se.QuerySEArtifactsReply]
 	mockEventBus     *mockEventBus
-	coordinator      *Coordinator
+	coordinator      *se.Coordinator
 	rootstore        *memory.Datastore
 
 	// Test data
@@ -60,20 +62,20 @@ func newTestSetup(t *testing.T) *testSetup {
 		subs:     make(map[event.Subscription]chan event.Message),
 	}
 
-	mockDBImpl := NewMockDB(t)
+	mockDBImpl := mocks.NewDB(t)
 	mockDBImpl.EXPECT().MaxTxnRetries().Return(3).Maybe()
 	mockDBImpl.EXPECT().Rootstore().Return(rootstore).Maybe()
 	mockDBImpl.EXPECT().Events().Return(mockEventBus).Maybe()
 
-	mockP2PImpl := NewMockP2P(t)
+	mockP2PImpl := mocks.NewP2P(t)
 	mockP2PImpl.EXPECT().DB().Return(mockDBImpl).Maybe()
 
 	setup := &testSetup{
 		t:                t,
 		mockDB:           mockDBImpl,
 		mockP2P:          mockP2PImpl,
-		mockStorageProto: protocolmocks.NewCommChannel[PushSEArtifactsRequest, PushSEArtifactsReply](t),
-		mockQueryProto:   protocolmocks.NewCommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply](t),
+		mockStorageProto: protocolmocks.NewCommChannel[se.PushSEArtifactsRequest, se.PushSEArtifactsReply](t),
+		mockQueryProto:   protocolmocks.NewCommChannel[se.QuerySEArtifactsRequest, se.QuerySEArtifactsReply](t),
 		mockEventBus:     mockEventBus,
 		rootstore:        rootstore,
 
@@ -91,7 +93,7 @@ func newTestSetup(t *testing.T) *testSetup {
 
 // createCoordinator creates the ReplicationCoordinator with all mocks
 func (s *testSetup) createCoordinator() {
-	rc, err := newReplicationCoordinator(
+	rc, err := se.NewCoordinatorConfigure(
 		s.mockP2P,
 		s.encKey,
 		s.mockStorageProto,
@@ -103,18 +105,18 @@ func (s *testSetup) createCoordinator() {
 
 // expectSEArtifactPush sets up expectation for SE artifact push to peer
 // Returns a channel that will receive the request when it's made (for thread-safe validation)
-func (s *testSetup) expectSEArtifactPush() <-chan PushSEArtifactsRequest {
+func (s *testSetup) expectSEArtifactPush() <-chan se.PushSEArtifactsRequest {
 	mockCollection := s.createMockCollectionWithDocument()
 
 	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
 
 	s.mockGetReplicatorsIDs([]string{s.peerID})
 
-	requestReceived := make(chan PushSEArtifactsRequest, 1)
+	requestReceived := make(chan se.PushSEArtifactsRequest, 1)
 
 	s.mockStorageProto.EXPECT().SendRequest(
 		mock.Anything,
-		mock.MatchedBy(func(req PushSEArtifactsRequest) bool {
+		mock.MatchedBy(func(req se.PushSEArtifactsRequest) bool {
 			select {
 			case requestReceived <- req:
 			default:
@@ -123,7 +125,7 @@ func (s *testSetup) expectSEArtifactPush() <-chan PushSEArtifactsRequest {
 			return req.CollectionID == s.collectionID && len(req.Artifacts) > 0
 		}),
 		s.peerID,
-	).Return(PushSEArtifactsReply{}, nil)
+	).Return(se.PushSEArtifactsReply{}, nil)
 
 	return requestReceived
 }

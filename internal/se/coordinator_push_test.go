@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package se
+package se_test
 
 import (
 	"context"
@@ -23,8 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	message "github.com/sourcenetwork/defradb/internal/db/p2p/message"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 func TestReplicationCoordinator_WhenHandlePushToReplicatorsCalled_ShouldPushSEArtifactsToPeers(t *testing.T) {
@@ -186,7 +186,7 @@ func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeer
 	setup.mockGetReplicatorsIDs([]string{setup.peerID})
 
 	setup.mockStorageProto.EXPECT().SendRequest(mock.Anything, mock.Anything, setup.peerID).
-		Return(PushSEArtifactsReply{}, fmt.Errorf("network error"))
+		Return(se.PushSEArtifactsReply{}, fmt.Errorf("network error"))
 
 	evt := setup.makeUpdateEvent()
 	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
@@ -202,7 +202,7 @@ func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeer
 			value, err := ps.Get(context.Background(), retryKey.Bytes())
 			require.NoError(t, err)
 
-			var retryInfo SERetryInfo
+			var retryInfo se.SERetryInfo
 			err = cbor.Unmarshal(value, &retryInfo)
 			require.NoError(t, err)
 
@@ -219,144 +219,6 @@ func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeer
 	}, time.Second, 10*time.Millisecond, "Retry data should be stored in peerstore after push failure")
 }
 
-func TestProcessPushSEArtifactsRequest_WhenArtifactsProvided_ShouldStoreInDatastore(t *testing.T) {
-	setup := newTestSetup(t)
-	defer setup.close()
 
-	req := &PushSEArtifactsRequest{
-		MetaData: message.MetaData{
-			SenderID: "peer-123",
-		},
-		CollectionID: setup.collectionID,
-		Artifacts: []SEArtifact{
-			{
-				DocID:     setup.docID,
-				IndexID:   "index-1",
-				SearchTag: []byte("search-tag-1"),
-			},
-		},
-	}
 
-	err := setup.coordinator.processPushSEArtifactsRequest(context.Background(), req)
-	require.NoError(t, err)
 
-	ds := datastore.DatastoreFrom(setup.rootstore)
-	key := keys.DatastoreSE{
-		CollectionID: setup.collectionID,
-		IndexID:      "index-1",
-		SearchTag:    []byte("search-tag-1"),
-		DocID:        setup.docID,
-	}
-
-	has, err := ds.Has(context.Background(), key.Bytes())
-	require.NoError(t, err)
-	require.True(t, has, "Artifact should be stored in datastore")
-}
-
-func TestProcessPushSEArtifactsRequest_WhenMultipleArtifacts_ShouldStoreAll(t *testing.T) {
-	setup := newTestSetup(t)
-	defer setup.close()
-
-	req := &PushSEArtifactsRequest{
-		MetaData: message.MetaData{
-			SenderID: "peer-123",
-		},
-		CollectionID: setup.collectionID,
-		Artifacts: []SEArtifact{
-			{
-				DocID:     setup.docID,
-				IndexID:   "index-1",
-				SearchTag: []byte("tag-1"),
-			},
-			{
-				DocID:     "doc-2",
-				IndexID:   "index-2",
-				SearchTag: []byte("tag-2"),
-			},
-			{
-				DocID:     "doc-3",
-				IndexID:   "index-3",
-				SearchTag: []byte("tag-3"),
-			},
-		},
-	}
-
-	err := setup.coordinator.processPushSEArtifactsRequest(context.Background(), req)
-	require.NoError(t, err)
-
-	ds := datastore.DatastoreFrom(setup.rootstore)
-
-	for i, artifact := range req.Artifacts {
-		key := keys.DatastoreSE{
-			CollectionID: setup.collectionID,
-			IndexID:      artifact.IndexID,
-			SearchTag:    artifact.SearchTag,
-			DocID:        artifact.DocID,
-		}
-
-		has, err := ds.Has(context.Background(), key.Bytes())
-		require.NoError(t, err)
-		require.True(t, has, "Artifact %d should be stored in datastore", i+1)
-	}
-}
-
-func TestProcessPushSEArtifactsRequest_WhenEmptyArtifacts_ShouldSucceed(t *testing.T) {
-	setup := newTestSetup(t)
-	defer setup.close()
-
-	req := &PushSEArtifactsRequest{
-		MetaData: message.MetaData{
-			SenderID: "peer-123",
-		},
-		CollectionID: setup.collectionID,
-		Artifacts:    []SEArtifact{},
-	}
-
-	err := setup.coordinator.processPushSEArtifactsRequest(context.Background(), req)
-	require.NoError(t, err, "Should succeed with empty artifacts list")
-}
-
-func TestProcessPushSEArtifactsRequest_WhenDuplicateArtifacts_ShouldOverwrite(t *testing.T) {
-	setup := newTestSetup(t)
-	defer setup.close()
-
-	artifact := SEArtifact{
-		DocID:     setup.docID,
-		IndexID:   "index-1",
-		SearchTag: []byte("search-tag"),
-	}
-
-	req1 := &PushSEArtifactsRequest{
-		MetaData: message.MetaData{
-			SenderID: "peer-1",
-		},
-		CollectionID: setup.collectionID,
-		Artifacts:    []SEArtifact{artifact},
-	}
-
-	err := setup.coordinator.processPushSEArtifactsRequest(context.Background(), req1)
-	require.NoError(t, err)
-
-	req2 := &PushSEArtifactsRequest{
-		MetaData: message.MetaData{
-			SenderID: "peer-2",
-		},
-		CollectionID: setup.collectionID,
-		Artifacts:    []SEArtifact{artifact},
-	}
-
-	err = setup.coordinator.processPushSEArtifactsRequest(context.Background(), req2)
-	require.NoError(t, err, "Should succeed when storing duplicate artifact")
-
-	ds := datastore.DatastoreFrom(setup.rootstore)
-	key := keys.DatastoreSE{
-		CollectionID: setup.collectionID,
-		IndexID:      artifact.IndexID,
-		SearchTag:    artifact.SearchTag,
-		DocID:        artifact.DocID,
-	}
-
-	has, err := ds.Has(context.Background(), key.Bytes())
-	require.NoError(t, err)
-	require.True(t, has, "Artifact should exist in datastore")
-}
