@@ -179,7 +179,11 @@ func (rc *Coordinator) QueryDocIDsByValues(
 
 // QuerySEArtifacts queries SE artifacts from replicators and returns matching document IDs.
 // This is called directly by the planner when executing SE queries.
-func (rc *Coordinator) QuerySEArtifacts(ctx context.Context, collectionID string, queries []FieldQuery) ([]string, error) {
+func (rc *Coordinator) QuerySEArtifacts(
+	ctx context.Context,
+	collectionID string,
+	queries []FieldQuery,
+) ([]string, error) {
 	grpcQueries := make([]SEFieldQuery, len(queries))
 	for i, q := range queries {
 		grpcQueries[i] = SEFieldQuery(q)

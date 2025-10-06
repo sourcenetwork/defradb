@@ -29,7 +29,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	protocolmocks "github.com/sourcenetwork/defradb/internal/db/p2p/protocol/mocks"
-	
 )
 
 // testSetup holds all test mocks and utilities for ReplicationCoordinator testing
@@ -127,11 +126,6 @@ func (s *testSetup) expectSEArtifactPush() <-chan PushSEArtifactsRequest {
 	).Return(PushSEArtifactsReply{}, nil)
 
 	return requestReceived
-}
-
-// publishEvent publishes any event with the given name and data to the event bus
-func (s *testSetup) publishEvent(name event.Name, evt any) {
-	s.mockEventBus.Publish(event.NewMessage(name, evt))
 }
 
 // createValidCompositeBlock creates a proper CBOR-encoded composite block

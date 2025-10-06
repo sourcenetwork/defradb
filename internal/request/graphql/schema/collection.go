@@ -466,7 +466,7 @@ func encryptedIndexFromAST(
 ) (client.EncryptedIndexDescription, error) {
 	encryptedIndex := client.EncryptedIndexDescription{
 		FieldName: fieldDef.Name.Value,
-		Type:      client.EncryptedIndexType(client.EncryptedIndexTypeEquality),
+		Type:      client.EncryptedIndexTypeEquality,
 	}
 
 	for _, arg := range directive.Arguments {

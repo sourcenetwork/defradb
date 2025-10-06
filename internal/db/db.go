@@ -554,7 +554,11 @@ func (db *DB) GetSearchableEncryptionKey() []byte {
 }
 
 // QueryDocIDsByValues queries SE artifacts from replicators based on field values.
-func (db *DB) QueryDocIDsByValues(ctx context.Context, collectionID string, fieldValues []planner.SEFieldValueQuery) ([]string, error) {
+func (db *DB) QueryDocIDsByValues(
+	ctx context.Context,
+	collectionID string,
+	fieldValues []planner.SEFieldValueQuery,
+) ([]string, error) {
 	if db.p2p == nil || db.p2p.SECoordinator() == nil {
 		return []string{}, nil
 	}
