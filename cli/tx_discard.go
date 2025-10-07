@@ -35,7 +35,7 @@ func MakeTxDiscardCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			tx.Discard(cmd.Context())
+			tx.Discard()
 			return nil
 		},
 	}

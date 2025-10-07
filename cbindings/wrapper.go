@@ -736,7 +736,7 @@ func (w *CWrapper) ExecRequest(
 	return retval
 }
 
-func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	var concurrent C.int = 0
 	var cReadOnly C.int = 0
 	if readOnly {
@@ -759,7 +759,7 @@ func (w *CWrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error
 	return retTxn, nil
 }
 
-func (w *CWrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	var concurrent C.int = 1
 	var cReadOnly C.int = 0
 	if readOnly {

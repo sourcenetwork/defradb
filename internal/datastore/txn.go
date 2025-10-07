@@ -47,12 +47,12 @@ type Txn interface {
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
-	Commit(ctx context.Context) error
+	Commit() error
 	// Discard throws away changes recorded in a transaction without committing
 	// them to the underlying Datastore. Any calls made to Discard after Commit
 	// has been successfully called will have no effect on the transaction and
 	// state of the Datastore, making it safe to defer.
-	Discard(ctx context.Context)
+	Discard()
 
 	// OnSuccess registers a function to be called when the transaction is committed.
 	OnSuccess(fn func())
@@ -91,7 +91,7 @@ type BasicTxn struct {
 var _ Txn = (*BasicTxn)(nil)
 
 // newTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(ctx context.Context, rootstore corekv.TxnStore, id uint64, readonly bool) *BasicTxn {
+func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	multistore := NewMultistore(rootTxn)
 	return &BasicTxn{
@@ -105,7 +105,7 @@ func (t *BasicTxn) ID() uint64 {
 	return t.id
 }
 
-func (t *BasicTxn) Commit(ctx context.Context) error {
+func (t *BasicTxn) Commit() error {
 	var fns []func()
 	var asyncFns []func()
 
@@ -127,7 +127,7 @@ func (t *BasicTxn) Commit(ctx context.Context) error {
 	return err
 }
 
-func (t *BasicTxn) Discard(ctx context.Context) {
+func (t *BasicTxn) Discard() {
 	t.txn.Discard()
 
 	for _, fn := range t.discardAsyncFns {

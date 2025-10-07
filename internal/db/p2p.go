@@ -50,14 +50,14 @@ func (db *DB) SetReplicator(ctx context.Context, info client.PeerInfo, collectio
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.p2p.SetReplicator(ctx, info, collectionNames...)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // DeleteReplicator deletes a replicator from the persisted list
@@ -70,14 +70,14 @@ func (db *DB) DeleteReplicator(ctx context.Context, info client.PeerInfo, collec
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.p2p.DeleteReplicator(ctx, info, collectionNames...)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // GetAllReplicators returns the full list of replicators with their
@@ -90,7 +90,7 @@ func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 	return db.p2p.GetAllReplicators(ctx)
 }
 
@@ -105,14 +105,14 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.p2p.AddP2PCollections(ctx, collectionNames...)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // RemoveP2PCollections removes the given collections from the P2P system and
@@ -126,14 +126,14 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.p2p.RemoveP2PCollections(ctx, collectionNames...)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // GetAllP2PCollections returns the list of persisted collection names that
@@ -146,7 +146,7 @@ func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.p2p.GetAllP2PCollections(ctx)
 }
@@ -162,14 +162,14 @@ func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.p2p.AddP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // RemoveP2PDocuments removes the given docIDs from the P2P system and
@@ -183,14 +183,14 @@ func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.p2p.RemoveP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // GetAllP2PDocuments returns the list of persisted docIDs that
@@ -203,7 +203,7 @@ func (db *DB) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.p2p.GetAllP2PDocuments(ctx)
 }

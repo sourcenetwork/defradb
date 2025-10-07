@@ -32,7 +32,7 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	options := &client.GQLOptions{}
 	for _, o := range opts {
@@ -44,7 +44,7 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 		return res
 	}
 
-	if err := txn.Commit(ctx); err != nil {
+	if err := txn.Commit(); err != nil {
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
@@ -61,7 +61,7 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.getCollectionByName(ctx, name)
 }
@@ -78,7 +78,7 @@ func (db *DB) GetCollections(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.getCollections(ctx, options)
 }
@@ -94,7 +94,7 @@ func (db *DB) GetAllIndexes(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.getAllIndexDescriptions(ctx)
 }
@@ -116,14 +116,14 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	cols, err := db.addSchema(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := txn.Commit(ctx); err != nil {
+	if err := txn.Commit(); err != nil {
 		return nil, err
 	}
 	return cols, nil
@@ -157,14 +157,14 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
@@ -175,14 +175,14 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.setActiveCollectionVersion(ctx, schemaVersionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
@@ -193,14 +193,14 @@ func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.setMigration(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (db *DB) AddView(
@@ -216,14 +216,14 @@ func (db *DB) AddView(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	defs, err := db.addView(ctx, query, sdl, transform)
 	if err != nil {
 		return nil, err
 	}
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -239,14 +239,14 @@ func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.refreshViews(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	if err != nil {
 		return err
 	}
@@ -264,14 +264,14 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.basicImport(ctx, filepath)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // BasicExport exports the current data or subset of data to file in json format.
@@ -283,12 +283,12 @@ func (db *DB) BasicExport(ctx context.Context, config *client.BackupConfig) erro
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.basicExport(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }

@@ -45,7 +45,7 @@ const networkRequestTimeout = 10 * time.Second
 // DB hold the database related methods that are required by P2P.
 type DB interface {
 	// NewTxn returns a new transaction on the root store that may be managed externally.
-	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
+	NewTxn(readOnly bool) (client.Txn, error)
 	// GetNodeIndentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetCollections returns all collections and their descriptions matching the given options
@@ -179,12 +179,12 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return true
 	}
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		log.ErrorE("Failed to get new transaction", err)
 		return false
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	rawblock, err := txn.Blockstore().Get(ctx, c)
@@ -291,11 +291,11 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	clientTxn, err := p.db.NewTxn(ctx, false)
+	clientTxn, err := p.db.NewTxn(false)
 	if err != nil {
 		return false, err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 
 	cols, err := clientTxn.GetCollections(
 		ctx,
@@ -379,13 +379,13 @@ func (p *P2P) processPushlogRequest(
 	defer done()
 
 	// Check if we've already merged this block. If so, skip the sink process.
-	txn, err := p.db.NewTxn(ctx, true)
+	txn, err := p.db.NewTxn(true)
 	if err != nil {
 		return err
 	}
 	clientTxn := datastore.MustGetFromClientTxn(txn)
 	isMerged, err := clientTxn.Blockstore().IsMerged(ctx, headCID)
-	txn.Discard(ctx)
+	txn.Discard()
 	if err != nil {
 		return err
 	}

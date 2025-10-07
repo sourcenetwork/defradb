@@ -477,12 +477,12 @@ func validateIndexesNotModified(
 			// inconsistent for this property, so we have to check the length and elements
 			// manually instead of using DeepEqual.
 			errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
-		}
-
-		for i := range oldCol.Indexes {
-			// DeepEqual is temporary, as this validation is temporary
-			if !reflect.DeepEqual(oldCol.Indexes[i], newCol.Indexes[i]) {
-				errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
+		} else {
+			for i := range oldCol.Indexes {
+				// DeepEqual is temporary, as this validation is temporary
+				if !reflect.DeepEqual(oldCol.Indexes[i], newCol.Indexes[i]) {
+					errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
+				}
 			}
 		}
 	}

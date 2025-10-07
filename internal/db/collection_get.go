@@ -36,7 +36,7 @@ func (c *collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	return doc, txn.Commit(ctx)
+	return doc, txn.Commit()
 }
 
 func (c *collection) get(

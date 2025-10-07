@@ -79,7 +79,7 @@ func (f *indexTestFixture) addUsersCollection() client.Collection {
 	col, err := f.db.GetCollectionByName(f.ctx, usersColName)
 	require.NoError(f.t, err)
 
-	f.txn, err = f.db.NewTxn(f.ctx, false)
+	f.txn, err = f.db.NewTxn(false)
 	require.NoError(f.t, err)
 
 	return col
@@ -89,7 +89,7 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
-	txn, err := db.NewTxn(ctx, false)
+	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
 	return &indexTestFixture{
@@ -143,9 +143,9 @@ func (f *indexTestFixture) createUserCollectionIndexOnAge() client.IndexDescript
 }
 
 func (f *indexTestFixture) commitTxn() {
-	err := f.txn.Commit(f.ctx)
+	err := f.txn.Commit()
 	require.NoError(f.t, err)
-	txn, err := f.db.NewTxn(f.ctx, false)
+	txn, err := f.db.NewTxn(false)
 	require.NoError(f.t, err)
 	f.txn = txn
 }
@@ -413,7 +413,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	collection, err := f.db.GetCollectionByName(f.ctx, "testCollection")
 	require.NoError(f.t, err)
 
-	f.txn, err = f.db.NewTxn(f.ctx, false)
+	f.txn, err = f.db.NewTxn(false)
 	require.NoError(f.t, err)
 	for i := 1; i <= num; i++ {
 		iStr := toSuffix(i)
