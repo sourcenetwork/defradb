@@ -12,6 +12,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 	"sync"
@@ -894,12 +895,20 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 
 		// In the case of nillable arrays, we need to convert to the underlying value.
 		normValue := value.NormalValue()
+
+		if normValue.IsNil() {
+			fmt.Println("normValue is nil")
+			docMap[k] = nil
+			continue
+		}
+
 		var innerValue any
 		if v, ok := normValue.NillableStringArray(); ok {
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableIntArray(); ok {
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableFloat64Array(); ok {
+			fmt.Println("normValue is float64 array")
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableFloat32Array(); ok {
 			innerValue = convertImmutable(v)

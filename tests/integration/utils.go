@@ -1288,6 +1288,7 @@ func createDoc(
 
 	docIDMap := make(map[string]struct{})
 	for _, docID := range docIDs {
+		fmt.Println("docID", docID.String())
 		docIDMap[docID.String()] = struct{}{}
 	}
 

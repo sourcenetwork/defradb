@@ -24,7 +24,7 @@ func TestQueryInlineIntegerArrayWithMinAndOrder(t *testing.T) {
 					"books": [3, 4, 5],
 					"movies": [1, 2, 3],
 					"games": [3, 4, 2]
-				}`, // Average: 3
+				}`, // Minimum: 1
 			},
 
 			testUtils.CreateDoc{
@@ -32,7 +32,7 @@ func TestQueryInlineIntegerArrayWithMinAndOrder(t *testing.T) {
 					"books": [30, 40, 50],
 					"movies": [10, 20, 30],
 					"games": [30, 40, 20]
-				}`, // Average: 30
+				}`, // Minimum: 10
 			},
 
 			// Test descending order
@@ -45,10 +45,10 @@ func TestQueryInlineIntegerArrayWithMinAndOrder(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"total": 30,
+							"total": 10,
 						},
 						{
-							"total": 3,
+							"total": 1,
 						},
 					},
 				},
@@ -64,10 +64,10 @@ func TestQueryInlineIntegerArrayWithMinAndOrder(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"total": 3,
+							"total": 1,
 						},
 						{
-							"total": 30,
+							"total": 10,
 						},
 					},
 				},

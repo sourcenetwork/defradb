@@ -206,7 +206,7 @@ func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQueryInlineArrayWithIntegers_EmplyList(t *testing.T) {
+func TestQueryInlineArrayWithIntegers_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
