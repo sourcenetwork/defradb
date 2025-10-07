@@ -124,6 +124,7 @@ const (
 	errRelationNameEmpty                        string = "relation name cannot be empty"
 	errInvalidCID                               string = "invalid CID"
 	errUnknownCID                               string = "unknown CID, collection ids cannot be manually defined"
+	errMigrationBetweenNonAdjacentVersions      string = "cannot migrate between non-adjacent collection versions"
 )
 
 var (
@@ -187,6 +188,7 @@ var (
 	ErrUnknownCID                               = errors.New(errUnknownCID)
 	ErrNoP2P                                    = errors.New("no p2p system configured")
 	ErrBadDocsResultType                        = errors.New("bad docs result type")
+	ErrMigrationBetweenNonAdjacentVersions      = errors.New(errMigrationBetweenNonAdjacentVersions)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -765,5 +767,13 @@ func NewErrCollectionSourceWrongCollection(hostCollectionID string, sourceCollec
 		errCollectionSourceWrongCollection,
 		errors.NewKV("HostCollectionID", hostCollectionID),
 		errors.NewKV("SourceCollectionID", sourceCollectionID),
+	)
+}
+
+func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destinationVersion string) error {
+	return errors.New(
+		errMigrationBetweenNonAdjacentVersions,
+		errors.NewKV("SourceVersionID", sourceVersion),
+		errors.NewKV("DestinationVersionID", destinationVersion),
 	)
 }

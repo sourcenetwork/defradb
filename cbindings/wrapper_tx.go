@@ -46,7 +46,7 @@ func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
 }
 
-func (txn *Transaction) Commit(ctx context.Context) error {
+func (txn *Transaction) Commit() error {
 	res := ConvertAndFreeCResult(C.TransactionCommit(C.uintptr_t(txn.handle)))
 	txnHandleMap.Delete(txn.ID())
 	if res.Status != 0 {
@@ -55,7 +55,7 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 	return nil
 }
 
-func (txn *Transaction) Discard(ctx context.Context) {
+func (txn *Transaction) Discard() {
 	C.TransactionDiscard(C.uintptr_t(txn.handle))
 	txnHandleMap.Delete(txn.ID())
 }

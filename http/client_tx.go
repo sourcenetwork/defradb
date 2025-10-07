@@ -44,10 +44,10 @@ func (txn *Transaction) ID() uint64 {
 	return txn.id
 }
 
-func (txn *Transaction) Commit(ctx context.Context) error {
+func (txn *Transaction) Commit() error {
 	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -55,10 +55,10 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
-func (txn *Transaction) Discard(ctx context.Context) {
+func (txn *Transaction) Discard() {
 	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return
 	}

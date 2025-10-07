@@ -1805,9 +1805,9 @@ func getTransaction(
 
 	if s.Txns[transactionID] == nil {
 		// Create a new transaction if one does not already exist.
-		txn, err := db.NewTxn(s.Ctx, false)
+		txn, err := db.NewTxn(false)
 		if AssertError(s.T, err, expectedError) {
-			txn.Discard(s.Ctx)
+			txn.Discard()
 			return nil
 		}
 
@@ -1825,9 +1825,9 @@ func commitTransaction(
 	s *state.State,
 	action TransactionCommit,
 ) {
-	err := s.Txns[action.TransactionID].Commit(s.Ctx)
+	err := s.Txns[action.TransactionID].Commit()
 	if err != nil {
-		s.Txns[action.TransactionID].Discard(s.Ctx)
+		s.Txns[action.TransactionID].Discard()
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)

@@ -79,11 +79,11 @@ func runStorageBenchTxnGet(
 		return err
 	}
 
-	clientTxn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(false)
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
@@ -121,11 +121,11 @@ func runStorageBenchTxnIterator(
 		return err
 	}
 
-	clientTxn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(false)
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
@@ -235,11 +235,11 @@ func backfillBenchmarkTxn(
 	objCount int,
 	valueSize int,
 ) ([]string, error) {
-	clientTxn, err := db.NewTxn(ctx, false)
+	clientTxn, err := db.NewTxn(false)
 	if err != nil {
 		return nil, err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
@@ -261,7 +261,7 @@ func backfillBenchmarkTxn(
 	}
 
 	sort.Strings(keys)
-	return keys, txn.Commit(ctx)
+	return keys, txn.Commit()
 }
 
 func getSampledIndex(populationSize int, sampleSize int, i int) int {

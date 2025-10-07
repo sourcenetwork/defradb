@@ -1619,8 +1619,8 @@ func (_c *TxnStore_LensRegistry_Call) RunAndReturn(run func() client.LensRegistr
 }
 
 // NewConcurrentTxn provides a mock function for the type TxnStore
-func (_mock *TxnStore) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	ret := _mock.Called(ctx, readOnly)
+func (_mock *TxnStore) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
+	ret := _mock.Called(readOnly)
 
 	if len(ret) == 0 {
 		panic("no return value specified for NewConcurrentTxn")
@@ -1628,18 +1628,18 @@ func (_mock *TxnStore) NewConcurrentTxn(ctx context.Context, readOnly bool) (cli
 
 	var r0 client.Txn
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) (client.Txn, error)); ok {
-		return returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(0).(func(bool) (client.Txn, error)); ok {
+		return returnFunc(readOnly)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) client.Txn); ok {
-		r0 = returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(0).(func(bool) client.Txn); ok {
+		r0 = returnFunc(readOnly)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(client.Txn)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, bool) error); ok {
-		r1 = returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = returnFunc(readOnly)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1652,25 +1652,19 @@ type TxnStore_NewConcurrentTxn_Call struct {
 }
 
 // NewConcurrentTxn is a helper method to define mock.On call
-//   - ctx context.Context
 //   - readOnly bool
-func (_e *TxnStore_Expecter) NewConcurrentTxn(ctx interface{}, readOnly interface{}) *TxnStore_NewConcurrentTxn_Call {
-	return &TxnStore_NewConcurrentTxn_Call{Call: _e.mock.On("NewConcurrentTxn", ctx, readOnly)}
+func (_e *TxnStore_Expecter) NewConcurrentTxn(readOnly interface{}) *TxnStore_NewConcurrentTxn_Call {
+	return &TxnStore_NewConcurrentTxn_Call{Call: _e.mock.On("NewConcurrentTxn", readOnly)}
 }
 
-func (_c *TxnStore_NewConcurrentTxn_Call) Run(run func(ctx context.Context, readOnly bool)) *TxnStore_NewConcurrentTxn_Call {
+func (_c *TxnStore_NewConcurrentTxn_Call) Run(run func(readOnly bool)) *TxnStore_NewConcurrentTxn_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
+		var arg0 bool
 		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 bool
-		if args[1] != nil {
-			arg1 = args[1].(bool)
+			arg0 = args[0].(bool)
 		}
 		run(
 			arg0,
-			arg1,
 		)
 	})
 	return _c
@@ -1681,14 +1675,14 @@ func (_c *TxnStore_NewConcurrentTxn_Call) Return(txn client.Txn, err error) *Txn
 	return _c
 }
 
-func (_c *TxnStore_NewConcurrentTxn_Call) RunAndReturn(run func(ctx context.Context, readOnly bool) (client.Txn, error)) *TxnStore_NewConcurrentTxn_Call {
+func (_c *TxnStore_NewConcurrentTxn_Call) RunAndReturn(run func(readOnly bool) (client.Txn, error)) *TxnStore_NewConcurrentTxn_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // NewTxn provides a mock function for the type TxnStore
-func (_mock *TxnStore) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	ret := _mock.Called(ctx, readOnly)
+func (_mock *TxnStore) NewTxn(readOnly bool) (client.Txn, error) {
+	ret := _mock.Called(readOnly)
 
 	if len(ret) == 0 {
 		panic("no return value specified for NewTxn")
@@ -1696,18 +1690,18 @@ func (_mock *TxnStore) NewTxn(ctx context.Context, readOnly bool) (client.Txn, e
 
 	var r0 client.Txn
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) (client.Txn, error)); ok {
-		return returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(0).(func(bool) (client.Txn, error)); ok {
+		return returnFunc(readOnly)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) client.Txn); ok {
-		r0 = returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(0).(func(bool) client.Txn); ok {
+		r0 = returnFunc(readOnly)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(client.Txn)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, bool) error); ok {
-		r1 = returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = returnFunc(readOnly)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1720,25 +1714,19 @@ type TxnStore_NewTxn_Call struct {
 }
 
 // NewTxn is a helper method to define mock.On call
-//   - ctx context.Context
 //   - readOnly bool
-func (_e *TxnStore_Expecter) NewTxn(ctx interface{}, readOnly interface{}) *TxnStore_NewTxn_Call {
-	return &TxnStore_NewTxn_Call{Call: _e.mock.On("NewTxn", ctx, readOnly)}
+func (_e *TxnStore_Expecter) NewTxn(readOnly interface{}) *TxnStore_NewTxn_Call {
+	return &TxnStore_NewTxn_Call{Call: _e.mock.On("NewTxn", readOnly)}
 }
 
-func (_c *TxnStore_NewTxn_Call) Run(run func(ctx context.Context, readOnly bool)) *TxnStore_NewTxn_Call {
+func (_c *TxnStore_NewTxn_Call) Run(run func(readOnly bool)) *TxnStore_NewTxn_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
+		var arg0 bool
 		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 bool
-		if args[1] != nil {
-			arg1 = args[1].(bool)
+			arg0 = args[0].(bool)
 		}
 		run(
 			arg0,
-			arg1,
 		)
 	})
 	return _c
@@ -1749,7 +1737,7 @@ func (_c *TxnStore_NewTxn_Call) Return(txn client.Txn, err error) *TxnStore_NewT
 	return _c
 }
 
-func (_c *TxnStore_NewTxn_Call) RunAndReturn(run func(ctx context.Context, readOnly bool) (client.Txn, error)) *TxnStore_NewTxn_Call {
+func (_c *TxnStore_NewTxn_Call) RunAndReturn(run func(readOnly bool) (client.Txn, error)) *TxnStore_NewTxn_Call {
 	_c.Call.Return(run)
 	return _c
 }
