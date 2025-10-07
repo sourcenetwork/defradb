@@ -406,6 +406,11 @@ func assertCollectionVersions(
 				expected.PreviousVersion.Value().SourceCollectionID,
 				actual.PreviousVersion.Value().SourceCollectionID,
 			)
+			require.Equal(
+				s.T,
+				expected.PreviousVersion.Value().Transform.HasValue(),
+				actual.PreviousVersion.Value().Transform.HasValue(),
+			)
 
 			if expected.PreviousVersion.Value().Transform.HasValue() {
 				// Dont bother asserting this by default, the transform object is too complex to bother with in most cases.
