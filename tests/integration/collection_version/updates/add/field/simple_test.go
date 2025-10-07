@@ -62,6 +62,9 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 						CollectionID:   schemaVersion1ID,
 						IsActive:       true,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -153,6 +156,9 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 						CollectionID:   schemaVersion1ID,
 						IsActive:       false,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",

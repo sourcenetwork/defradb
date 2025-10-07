@@ -56,7 +56,7 @@ func (r *LensRegistry) ReloadLenses(ctx context.Context) error {
 	}
 
 	for _, col := range cols {
-		if len(col.VersionSources) == 0 {
+		if !col.PreviousVersion.HasValue() {
 			continue
 		}
 
@@ -64,11 +64,11 @@ func (r *LensRegistry) ReloadLenses(ctx context.Context) error {
 		// currently collections can only have one source, however this code will need to change if/when
 		// collections support multiple sources.
 
-		if !col.VersionSources[0].Transform.HasValue() {
+		if !col.PreviousVersion.Value().Transform.HasValue() {
 			continue
 		}
 
-		err = r.SetMigration(ctx, col.VersionID, col.VersionSources[0].Transform.Value())
+		err = r.SetMigration(ctx, col.VersionID, col.PreviousVersion.Value().Transform.Value())
 		if err != nil {
 			return err
 		}
