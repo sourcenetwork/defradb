@@ -57,8 +57,11 @@ type CollectionVersion struct {
 	// and it may not (yet) have its documents synced across the P2P network.
 	Query immutable.Option[QuerySource]
 
-	// VersionSources is the set of versions from which this collection may draw data from.
-	VersionSources []CollectionSource
+	// PreviousVersion may hold the path details to the previous collection version.
+	//
+	// If it is None, this is either the first version, or this is an orphaned version
+	// created by setting a migration from a collection version not yet known locally.
+	PreviousVersion immutable.Option[CollectionSource]
 
 	// Fields contains the fields local to the node within this Collection.
 	//

@@ -74,6 +74,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						CollectionID:   schemaVersion1ID,
 						IsActive:       false,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -118,6 +121,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						CollectionID:   schemaVersion1ID,
 						IsActive:       true,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -149,11 +155,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						Name:           "Users",
 						VersionID:      schemaVersion2ID,
 						IsMaterialized: true,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -168,11 +172,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						VersionID:      schemaVersion3ID,
 						IsMaterialized: true,
 						IsActive:       true,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 				},
 			},
@@ -248,6 +250,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						CollectionID:   schemaVersion1ID,
 						IsActive:       true,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion3ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -285,11 +290,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						VersionID:      schemaVersion2ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 					{
 						// The original collection version is present, it has no source and is inactive
@@ -305,11 +308,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						VersionID:      schemaVersion4ID,
 						IsMaterialized: true,
 						IsActive:       true,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion3ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion3ID,
+						}),
 					},
 					{
 						// The collection version for schema version 3 is present and inactive, it has the first collection
@@ -318,11 +319,9 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						VersionID:      schemaVersion3ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 				},
 			},
@@ -400,11 +399,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 						VersionID:      schemaVersion2ID,
 						IsMaterialized: true,
 						IsActive:       true,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 					{
 						// The original collection version is present, it has no source and is inactive.
@@ -420,11 +417,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 						VersionID:      schemaVersion3ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 				},
 			},
@@ -504,6 +499,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						CollectionID:   schemaVersion1ID,
 						IsActive:       true,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion2ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -541,11 +539,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						VersionID:      schemaVersion2ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 					{
 						// The original collection version is present, it has no source and is inactive.
@@ -561,11 +557,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						VersionID:      schemaVersion4ID,
 						IsMaterialized: true,
 						IsActive:       true,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion2ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion2ID,
+						}),
 					},
 					{
 						// The collection version for schema version 3 is present and inactive, it has the first collection
@@ -574,11 +568,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						VersionID:      schemaVersion3ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: schemaVersion1ID,
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 				},
 			},

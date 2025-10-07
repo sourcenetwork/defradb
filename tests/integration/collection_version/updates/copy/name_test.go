@@ -58,6 +58,9 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 						Name:           "Books",
 						IsActive:       true,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreidwu5chln6nhcrpxtfhd4bqfgbg2bevbcym7d4m223nmy2jgxcm7q",
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: request.DocIDFieldName,

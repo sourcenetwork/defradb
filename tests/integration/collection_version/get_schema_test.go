@@ -107,6 +107,9 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 						Name:           "Users",
 						IsActive:       false,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq",
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -199,6 +202,9 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 						VersionID:      usersSchemaVersion2ID,
 						IsActive:       false,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: usersSchemaVersion1ID,
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",
@@ -251,6 +257,9 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 						Name:           "Users",
 						IsActive:       false,
 						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq",
+						}),
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name: "_docID",

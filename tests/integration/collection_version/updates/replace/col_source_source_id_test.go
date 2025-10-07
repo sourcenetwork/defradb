@@ -44,7 +44,7 @@ func TestColVersionUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *tes
 					[
 						{
 							"op": "replace",
-							"path": "/Users/VersionSources/0/SourceCollectionID",
+							"path": "/Users/PreviousVersion/SourceCollectionID",
 							"value": "gfddsfaa"
 						}
 					]

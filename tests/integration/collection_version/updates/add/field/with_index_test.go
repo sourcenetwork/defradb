@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *testing.T) {
@@ -58,6 +59,9 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 						Name:           "Users",
 						IsMaterialized: true,
 						IsActive:       true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+						}),
 						Indexes: []client.IndexDescription{
 							{
 								Name:   "Users_name_ASC",
@@ -156,6 +160,9 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 						Name:           "Users",
 						IsMaterialized: true,
 						IsActive:       true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+						}),
 						Indexes: []client.IndexDescription{
 							{
 								Name:   "Users_name_ASC",

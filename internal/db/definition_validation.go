@@ -430,21 +430,15 @@ func validateSourcesNotRedefined(
 			continue
 		}
 
-		if len(newCol.VersionSources) != len(oldCol.VersionSources) {
+		if newCol.PreviousVersion.HasValue() != oldCol.PreviousVersion.HasValue() {
 			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
-		}
-
-		for i := range newCol.VersionSources {
-			if i >= len(oldCol.VersionSources) {
-				continue // Avoid out-of-bounds panic
-			}
-			if newCol.VersionSources[i].SourceCollectionID != oldCol.VersionSources[i].SourceCollectionID {
-				errs = append(errs, NewErrCollectionSourceIDMutated(
-					newCol.VersionID,
-					newCol.VersionSources[i].SourceCollectionID,
-					oldCol.VersionSources[i].SourceCollectionID,
-				))
-			}
+		} else if newCol.PreviousVersion.HasValue() &&
+			newCol.PreviousVersion.Value().SourceCollectionID != oldCol.PreviousVersion.Value().SourceCollectionID {
+			errs = append(errs, NewErrCollectionSourceIDMutated(
+				newCol.VersionID,
+				newCol.PreviousVersion.Value().SourceCollectionID,
+				oldCol.PreviousVersion.Value().SourceCollectionID,
+			))
 		}
 
 		if newCol.Query.HasValue() != oldCol.Query.HasValue() {
@@ -1029,9 +1023,9 @@ func validateCollectionSourceFromSameCollection(
 			continue
 		}
 
-		for _, source := range col.VersionSources {
+		if col.PreviousVersion.HasValue() {
 			for _, otherCol := range newState.collections {
-				if otherCol.VersionID == source.SourceCollectionID &&
+				if otherCol.VersionID == col.PreviousVersion.Value().SourceCollectionID &&
 					otherCol.CollectionID != col.CollectionID {
 					errs = append(errs, NewErrCollectionSourceWrongCollection(col.CollectionID, otherCol.CollectionID))
 				}
