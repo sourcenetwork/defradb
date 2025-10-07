@@ -325,7 +325,7 @@ func (c *clientCollection) getIndexes(this js.Value, args []js.Value) (js.Value,
 }
 
 func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
-	var request client.EncryptedIndexCreateRequest
+	var request client.EncryptedIndexDescription
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}

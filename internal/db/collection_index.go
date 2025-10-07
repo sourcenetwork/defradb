@@ -396,7 +396,6 @@ func (c *collection) GetIndexes(context.Context) ([]client.IndexDescription, err
 }
 
 // CreateEncryptedIndex creates a new encrypted index on the collection.
-// `EncryptedIndexCreateRequest` contains the description of the index to be created.
 func (c *collection) CreateEncryptedIndex(
 	ctx context.Context,
 	createRequest client.EncryptedIndexDescription,
