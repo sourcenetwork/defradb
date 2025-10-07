@@ -21,11 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/se"
 )
 
-
-
-
-
-
 func TestQuerySEArtifacts_WhenReplicatorsExist_ShouldQueryAndReturnDocIDs(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()

@@ -218,7 +218,3 @@ func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeer
 		return false
 	}, time.Second, 10*time.Millisecond, "Retry data should be stored in peerstore after push failure")
 }
-
-
-
-
