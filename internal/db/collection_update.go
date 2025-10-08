@@ -38,13 +38,13 @@ func (c *collection) UpdateWithFilter(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
 		return nil, err
 	}
-	return res, txn.Commit(ctx)
+	return res, txn.Commit()
 }
 
 func (c *collection) updateWithFilter(

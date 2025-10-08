@@ -198,8 +198,8 @@ func (_c *DB_MaxTxnRetries_Call) RunAndReturn(run func() int) *DB_MaxTxnRetries_
 }
 
 // NewTxn provides a mock function for the type DB
-func (_mock *DB) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	ret := _mock.Called(ctx, readOnly)
+func (_mock *DB) NewTxn(readOnly bool) (client.Txn, error) {
+	ret := _mock.Called(readOnly)
 
 	if len(ret) == 0 {
 		panic("no return value specified for NewTxn")
@@ -207,18 +207,18 @@ func (_mock *DB) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) 
 
 	var r0 client.Txn
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) (client.Txn, error)); ok {
-		return returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(0).(func(bool) (client.Txn, error)); ok {
+		return returnFunc(readOnly)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) client.Txn); ok {
-		r0 = returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(0).(func(bool) client.Txn); ok {
+		r0 = returnFunc(readOnly)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(client.Txn)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, bool) error); ok {
-		r1 = returnFunc(ctx, readOnly)
+	if returnFunc, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = returnFunc(readOnly)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -231,25 +231,19 @@ type DB_NewTxn_Call struct {
 }
 
 // NewTxn is a helper method to define mock.On call
-//   - ctx context.Context
 //   - readOnly bool
-func (_e *DB_Expecter) NewTxn(ctx interface{}, readOnly interface{}) *DB_NewTxn_Call {
-	return &DB_NewTxn_Call{Call: _e.mock.On("NewTxn", ctx, readOnly)}
+func (_e *DB_Expecter) NewTxn(readOnly interface{}) *DB_NewTxn_Call {
+	return &DB_NewTxn_Call{Call: _e.mock.On("NewTxn", readOnly)}
 }
 
-func (_c *DB_NewTxn_Call) Run(run func(ctx context.Context, readOnly bool)) *DB_NewTxn_Call {
+func (_c *DB_NewTxn_Call) Run(run func(readOnly bool)) *DB_NewTxn_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
+		var arg0 bool
 		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 bool
-		if args[1] != nil {
-			arg1 = args[1].(bool)
+			arg0 = args[0].(bool)
 		}
 		run(
 			arg0,
-			arg1,
 		)
 	})
 	return _c
@@ -260,7 +254,7 @@ func (_c *DB_NewTxn_Call) Return(txn client.Txn, err error) *DB_NewTxn_Call {
 	return _c
 }
 
-func (_c *DB_NewTxn_Call) RunAndReturn(run func(ctx context.Context, readOnly bool) (client.Txn, error)) *DB_NewTxn_Call {
+func (_c *DB_NewTxn_Call) RunAndReturn(run func(readOnly bool) (client.Txn, error)) *DB_NewTxn_Call {
 	_c.Call.Return(run)
 	return _c
 }

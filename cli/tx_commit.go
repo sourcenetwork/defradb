@@ -35,7 +35,7 @@ func MakeTxCommitCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return tx.Commit(cmd.Context())
+			return tx.Commit()
 		},
 	}
 	return cmd

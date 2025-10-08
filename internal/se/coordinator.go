@@ -36,7 +36,7 @@ var log = corelog.NewLogger("defra.se.replication")
 
 // DB defines the database operations needed by the SE coordinator
 type DB interface {
-	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
+	NewTxn(readOnly bool) (client.Txn, error)
 	MaxTxnRetries() int
 	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
 	Events() event.Bus
@@ -232,11 +232,11 @@ func (rc *Coordinator) handleReplicationFailure(
 	fieldNames []string,
 	identity immutable.Option[acpIdentity.Identity],
 ) error {
-	clientTxn, err := rc.db.NewTxn(ctx, true)
+	clientTxn, err := rc.db.NewTxn(true)
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -272,7 +272,7 @@ func (rc *Coordinator) handleReplicationFailure(
 		return nil
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // HandlePushToReplicators processes document update events and generates SE artifacts.

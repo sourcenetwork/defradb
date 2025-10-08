@@ -49,7 +49,7 @@ func NewClient(rawURL string) (*Client, error) {
 	return &Client{httpClient}, nil
 }
 
-func (c *Client) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
@@ -58,7 +58,7 @@ func (c *Client) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) 
 	methodURL := c.http.apiURL.JoinPath("tx")
 	methodURL.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *Client) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) 
 	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
-func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
@@ -78,7 +78,7 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Tx
 	methodURL := c.http.apiURL.JoinPath("tx", "concurrent")
 	methodURL.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

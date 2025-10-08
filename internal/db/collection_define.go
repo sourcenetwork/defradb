@@ -139,12 +139,6 @@ func (db *DB) patchCollection(
 	existingColsByName := map[string]client.CollectionVersion{}
 	existingColsByID := map[string]client.CollectionVersion{}
 	for _, col := range existingCols {
-		if col.VersionSources == nil {
-			// JSON patch only allows the `-` array-path to be used on non-nil
-			// arrays, so we assign any previously nil arrays to empty here
-			col.VersionSources = []client.CollectionSource{}
-		}
-
 		if col.IsActive {
 			existingColsByName[col.Name] = col
 		}
@@ -251,7 +245,7 @@ func (db *DB) patchCollection(
 			isFound := false
 			for j, col := range newCollections {
 				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
-					newCollections[j].VersionSources = placeholder.VersionSources
+					newCollections[j].PreviousVersion = placeholder.PreviousVersion
 					isFound = true
 					break
 				}
@@ -296,12 +290,10 @@ func (db *DB) patchCollection(
 			// Clear any existing migrations in the registry, using this semi-hacky way
 			// to avoid adding more functions to a public interface that we wish to remove.
 
-			for _, src := range existingCol.VersionSources {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-					if err != nil {
-						return err
-					}
+			if existingCol.PreviousVersion.HasValue() && existingCol.PreviousVersion.Value().Transform.HasValue() {
+				err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
+				if err != nil {
+					return err
 				}
 			}
 			if existingCol.Query.HasValue() && existingCol.Query.Value().Transform.HasValue() {
@@ -312,12 +304,10 @@ func (db *DB) patchCollection(
 			}
 		}
 
-		for _, src := range col.VersionSources {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
+		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
+			err = db.LensRegistry().SetMigration(ctx, col.VersionID, col.PreviousVersion.Value().Transform.Value())
+			if err != nil {
+				return err
 			}
 		}
 

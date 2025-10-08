@@ -63,7 +63,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-			txn, err := db.NewTxn(ctx, false)
+			txn, err := db.NewTxn(false)
 			if err != nil {
 				log.ErrorContext(ctx, err.Error())
 				continue
@@ -75,7 +75,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			result, err := p.RunSelection(ctx, s)
 			if err == nil && len(result) == 0 {
-				txn.Discard(ctx)
+				txn.Discard()
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}
 
@@ -98,7 +98,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			// now that weve filtered empty result sets, lets recheck
 			if len(result) == 0 {
-				txn.Discard(ctx)
+				txn.Discard()
 				continue
 			}
 
@@ -114,10 +114,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			select {
 			case <-ctx.Done():
-				txn.Discard(ctx)
+				txn.Discard()
 				return // context cancelled
 			case resCh <- res:
-				txn.Discard(ctx)
+				txn.Discard()
 			}
 		}
 	}()

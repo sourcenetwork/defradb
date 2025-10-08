@@ -155,7 +155,6 @@ func (vf *VersionedFetcher) Init(
 	}
 
 	vf.store = datastore.NewTxnFrom(
-		ctx,
 		vf.root,
 		// We can take the parent txn id here
 		txn.ID(),

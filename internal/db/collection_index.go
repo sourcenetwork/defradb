@@ -165,13 +165,13 @@ func (c *collection) CreateIndex(
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	index, err := c.createIndex(ctx, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
-	return index.Description(), txn.Commit(ctx)
+	return index.Description(), txn.Commit()
 }
 
 func processCreateIndexRequest(
@@ -346,13 +346,13 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = c.dropIndex(ctx, indexName)
 	if err != nil {
 		return err
 	}
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (c *collection) dropIndex(ctx context.Context, indexName string) error {
@@ -407,13 +407,13 @@ func (c *collection) CreateEncryptedIndex(
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	index, err := c.createEncryptedIndex(ctx, createRequest)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
-	return index, txn.Commit(ctx)
+	return index, txn.Commit()
 }
 
 func (c *collection) createEncryptedIndex(
@@ -461,13 +461,13 @@ func (c *collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = c.deleteEncryptedIndex(ctx, fieldName)
 	if err != nil {
 		return err
 	}
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string) error {

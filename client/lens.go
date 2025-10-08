@@ -41,7 +41,7 @@ type LensConfig struct {
 // TxnSource represents an object capable of constructing the transactions that
 // implicit-transaction registries need internally.
 type TxnSource interface {
-	NewTxn(context.Context, bool) (Txn, error)
+	NewTxn(bool) (Txn, error)
 }
 
 // LensRegistry exposes several useful thread-safe migration related functions which may

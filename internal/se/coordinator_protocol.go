@@ -49,11 +49,11 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
-	clientTxn, err := rc.db.NewTxn(ctx, false)
+	clientTxn, err := rc.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -108,7 +108,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 		}))
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (rc *Coordinator) processQuerySEArtifactsRequest(
@@ -134,11 +134,11 @@ func (rc *Coordinator) querySEArtifactsFromDatastore(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) ([]string, error) {
-	clientTxn, err := rc.db.NewTxn(ctx, true)
+	clientTxn, err := rc.db.NewTxn(true)
 	if err != nil {
 		return nil, err
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 

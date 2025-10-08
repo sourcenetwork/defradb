@@ -59,7 +59,7 @@ func TestColVersionUpdateRemoveCollectionSourceTransform(t *testing.T) {
 					[
 						{
 							"op": "remove",
-							"path": "/Users/VersionSources/0/Transform"
+							"path": "/Users/PreviousVersion/Transform"
 						}
 					]
 				`,

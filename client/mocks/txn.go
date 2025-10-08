@@ -659,16 +659,16 @@ func (_c *Txn_BasicImport_Call) RunAndReturn(run func(ctx context.Context, filep
 }
 
 // Commit provides a mock function for the type Txn
-func (_mock *Txn) Commit(ctx context.Context) error {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) Commit() error {
+	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Commit")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -681,20 +681,13 @@ type Txn_Commit_Call struct {
 }
 
 // Commit is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Txn_Expecter) Commit(ctx interface{}) *Txn_Commit_Call {
-	return &Txn_Commit_Call{Call: _e.mock.On("Commit", ctx)}
+func (_e *Txn_Expecter) Commit() *Txn_Commit_Call {
+	return &Txn_Commit_Call{Call: _e.mock.On("Commit")}
 }
 
-func (_c *Txn_Commit_Call) Run(run func(ctx context.Context)) *Txn_Commit_Call {
+func (_c *Txn_Commit_Call) Run(run func()) *Txn_Commit_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
+		run()
 	})
 	return _c
 }
@@ -704,7 +697,7 @@ func (_c *Txn_Commit_Call) Return(err error) *Txn_Commit_Call {
 	return _c
 }
 
-func (_c *Txn_Commit_Call) RunAndReturn(run func(ctx context.Context) error) *Txn_Commit_Call {
+func (_c *Txn_Commit_Call) RunAndReturn(run func() error) *Txn_Commit_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1046,8 +1039,8 @@ func (_c *Txn_DisableNAC_Call) RunAndReturn(run func(ctx context.Context) error)
 }
 
 // Discard provides a mock function for the type Txn
-func (_mock *Txn) Discard(ctx context.Context) {
-	_mock.Called(ctx)
+func (_mock *Txn) Discard() {
+	_mock.Called()
 	return
 }
 
@@ -1057,20 +1050,13 @@ type Txn_Discard_Call struct {
 }
 
 // Discard is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Txn_Expecter) Discard(ctx interface{}) *Txn_Discard_Call {
-	return &Txn_Discard_Call{Call: _e.mock.On("Discard", ctx)}
+func (_e *Txn_Expecter) Discard() *Txn_Discard_Call {
+	return &Txn_Discard_Call{Call: _e.mock.On("Discard")}
 }
 
-func (_c *Txn_Discard_Call) Run(run func(ctx context.Context)) *Txn_Discard_Call {
+func (_c *Txn_Discard_Call) Run(run func()) *Txn_Discard_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
+		run()
 	})
 	return _c
 }
@@ -1080,7 +1066,7 @@ func (_c *Txn_Discard_Call) Return() *Txn_Discard_Call {
 	return _c
 }
 
-func (_c *Txn_Discard_Call) RunAndReturn(run func(ctx context.Context)) *Txn_Discard_Call {
+func (_c *Txn_Discard_Call) RunAndReturn(run func()) *Txn_Discard_Call {
 	_c.Run(run)
 	return _c
 }

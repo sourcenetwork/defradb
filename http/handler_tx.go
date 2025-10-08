@@ -29,7 +29,7 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
-	tx, err := db.NewTxn(req.Context(), readOnly)
+	tx, err := db.NewTxn(readOnly)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -43,7 +43,7 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 	txs := mustGetContextSyncMap(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
-	tx, err := db.NewConcurrentTxn(req.Context(), readOnly)
+	tx, err := db.NewConcurrentTxn(readOnly)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -67,7 +67,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
-	err = dsTxn.Commit(req.Context())
+	err = dsTxn.Commit()
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -91,7 +91,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
-	dsTxn.Discard(req.Context())
+	dsTxn.Discard()
 
 	rw.WriteHeader(http.StatusOK)
 }

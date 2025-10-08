@@ -69,12 +69,12 @@ func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
 
 // processSERetries checks for due retries and processes them
 func (rc *Coordinator) processSERetries(ctx context.Context) {
-	clientTxn, err := rc.db.NewTxn(ctx, true)
+	clientTxn, err := rc.db.NewTxn(true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
 		return
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
@@ -125,12 +125,12 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				continue
 			}
 
-			clientTxn, err := rc.db.NewTxn(ctx, false)
+			clientTxn, err := rc.db.NewTxn(false)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
 				return
 			}
-			defer clientTxn.Discard(ctx)
+			defer clientTxn.Discard()
 			txn := datastore.MustGetFromClientTxn(clientTxn)
 
 			if err := txn.Peerstore().Set(ctx, iter.Key(), b); err != nil {
@@ -138,7 +138,7 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				continue
 			}
 
-			if err = txn.Commit(ctx); err != nil {
+			if err = txn.Commit(); err != nil {
 				log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
 			}
 
@@ -158,12 +158,12 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
 func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
-	clientTxn, err := rc.db.NewTxn(ctx, false)
+	clientTxn, err := rc.db.NewTxn(false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err, corelog.String("PeerID", peerID))
 		return
 	}
-	defer clientTxn.Discard(ctx)
+	defer clientTxn.Discard()
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -186,7 +186,7 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 
 	rc.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
 
-	if err = txn.Commit(ctx); err != nil {
+	if err = txn.Commit(); err != nil {
 		log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
 	}
 }

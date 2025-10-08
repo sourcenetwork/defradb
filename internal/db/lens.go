@@ -43,79 +43,42 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	if !srcFound {
-		desc := client.CollectionVersion{
+		sourceCol = client.CollectionVersion{
 			VersionID:      cfg.SourceSchemaVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 		}
 
-		err = description.SaveCollection(ctx, desc)
+		err = description.SaveCollection(ctx, sourceCol)
 		if err != nil {
 			return err
 		}
-
-		sourceCol = desc
 	}
 
-	isDstCollectionFound := false
-	if dstFound {
-		if len(dstCol.VersionSources) == 0 {
-			// If the destingation collection has no sources at all, it must have been added as an orphaned source
-			// by another migration.  This can happen if the migrations are added in an unusual order, before
-			// their schemas have been defined locally.
-			dstCol.VersionSources = append(dstCol.VersionSources, client.CollectionSource{
-				SourceCollectionID: sourceCol.VersionID,
-			})
-		}
-
-		for _, source := range dstCol.VersionSources {
-			if source.SourceCollectionID == sourceCol.VersionID {
-				isDstCollectionFound = true
-				break
-			}
-		}
-	}
-
-	if !isDstCollectionFound {
+	if !dstFound {
 		dstCol = client.CollectionVersion{
 			Name:           sourceCol.Name,
 			VersionID:      cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
-			VersionSources: []client.CollectionSource{
-				{
-					SourceCollectionID: sourceCol.VersionID,
-					// The transform will be set later, when updating all destination collections
-					// whether they are newly created or not.
-				},
-			},
-		}
-
-		err = description.SaveCollection(ctx, dstCol)
-		if err != nil {
-			return err
 		}
 	}
 
-	for i := range dstCol.VersionSources {
-		// WARNING: Here we assume that the collection source points at a collection of the source schema version.
-		// This works currently, as collections only have a single source.  If/when this changes we need to make
-		// sure we only update the correct source.
-
-		dstCol.VersionSources[i].Transform = immutable.Some(cfg.Lens)
-
-		err = db.LensRegistry().SetMigration(ctx, dstCol.VersionID, cfg.Lens)
-		if err != nil {
-			return err
-		}
+	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
+		return NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
 	}
+
+	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
+		SourceCollectionID: sourceCol.VersionID,
+		Transform:          immutable.Some(cfg.Lens),
+	})
 
 	err = description.SaveCollection(ctx, dstCol)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return db.LensRegistry().SetMigration(ctx, dstCol.VersionID, cfg.Lens)
 }

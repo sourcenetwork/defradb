@@ -96,14 +96,11 @@ func (f *lensedFetcher) Init(
 	f.lens = new(ctx, f.registry, f.col.Version().VersionID, history)
 	f.txn = txn
 
-historyLoop:
 	for _, historyItem := range history {
-		sources := historyItem.collection.VersionSources
-		for _, source := range sources {
-			if source.Transform.HasValue() {
-				f.hasMigrations = true
-				break historyLoop
-			}
+		if historyItem.collection.PreviousVersion.HasValue() &&
+			historyItem.collection.PreviousVersion.Value().Transform.HasValue() {
+			f.hasMigrations = true
+			break
 		}
 	}
 

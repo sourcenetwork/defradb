@@ -382,8 +382,8 @@ func handleSubscription(value sysjs.Value) <-chan client.GQLResult {
 	return sub
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	res, err := execute(ctx, w.value, "newTxn", readOnly)
+func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
+	res, err := execute(context.Background(), w.value, "newTxn", readOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -396,8 +396,8 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	return &Transaction{w, txn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
-	res, err := execute(ctx, w.value, "newConcurrentTxn", readOnly)
+func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
+	res, err := execute(context.Background(), w.value, "newConcurrentTxn", readOnly)
 	if err != nil {
 		return nil, err
 	}

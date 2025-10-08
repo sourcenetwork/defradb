@@ -24,7 +24,7 @@ import (
 
 // transactionDB is a db that can create transactions.
 type transactionDB interface {
-	NewTxn(context.Context, bool) (client.Txn, error)
+	NewTxn(bool) (client.Txn, error)
 }
 
 // ensureContextTxn ensures that the returned context has a transaction.
@@ -69,7 +69,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
 		}
 	}
-	clientTxn, err := db.NewTxn(ctx, readOnly)
+	clientTxn, err := db.NewTxn(readOnly)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,24 +93,24 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 	}
 }
 
-func (txn *Txn) Commit(ctx context.Context) error {
+func (txn *Txn) Commit() error {
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Commit` on an explicit transaction should result in a no-op.
 		return nil
 	}
-	return txn.BasicTxn.Commit(ctx)
+	return txn.BasicTxn.Commit()
 }
 
-func (txn *Txn) Discard(ctx context.Context) {
+func (txn *Txn) Discard() {
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Discard` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Discard` on an explicit transaction should result in a no-op.
 		return
 	}
-	txn.BasicTxn.Discard(ctx)
+	txn.BasicTxn.Discard()
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {

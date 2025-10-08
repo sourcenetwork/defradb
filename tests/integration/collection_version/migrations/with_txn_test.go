@@ -51,24 +51,22 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 					{
 						VersionID:      "also does not exist",
 						IsMaterialized: true,
-						VersionSources: []client.CollectionSource{
-							{
-								SourceCollectionID: "does not exist",
-								Transform: immutable.Some(
-									model.Lens{
-										Lenses: []model.LensModule{
-											{
-												Path: lenses.SetDefaultModulePath,
-												Arguments: map[string]any{
-													"dst":   "verified",
-													"value": false,
-												},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "does not exist",
+							Transform: immutable.Some(
+								model.Lens{
+									Lenses: []model.LensModule{
+										{
+											Path: lenses.SetDefaultModulePath,
+											Arguments: map[string]any{
+												"dst":   "verified",
+												"value": false,
 											},
 										},
 									},
-								),
-							},
-						},
+								},
+							),
+						}),
 					},
 					{
 						VersionID:      "does not exist",
