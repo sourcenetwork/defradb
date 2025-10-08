@@ -182,17 +182,7 @@ func GenerateFieldArtifact(
 	var tag []byte
 	switch encIdx.Type {
 	case client.EncryptedIndexTypeEquality:
-		var err error
-		tag, err = secore.GenerateEqualityTag(
-			encKey,
-			collectionID,
-			encIdx.FieldName,
-			valueBytes,
-		)
-
-		if err != nil {
-			return secore.Artifact{}, err
-		}
+		tag = secore.GenerateEqualityTag(encKey, collectionID, encIdx.FieldName, valueBytes)
 
 	default:
 		return secore.Artifact{}, NewErrUnsupportedIndexType(string(encIdx.Type))

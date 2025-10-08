@@ -30,7 +30,7 @@ func GenerateEqualityTag(
 	collectionID string,
 	fieldName string,
 	value []byte,
-) ([]byte, error) {
+) []byte {
 	// Domain separation explanation:
 	// - "eq" indicates equality search (vs future range/prefix)
 	// - collectionID ensures tags are unique per collection
@@ -46,5 +46,5 @@ func GenerateEqualityTag(
 	// Truncate to 16 bytes for storage and network efficiency.
 	// HMAC's security doesn't degrade linearly with truncation and (128 bits) is explicitly approved
 	// by cryptographic standards providing good collision resistance even with billions of documents.
-	return tag[:16], nil
+	return tag[:16]
 }

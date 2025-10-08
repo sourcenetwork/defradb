@@ -22,8 +22,7 @@ func TestEqualityTag_WhenGenerated_Returns16ByteTag(t *testing.T) {
 	fieldName := "email"
 	value := []byte("user@example.com")
 
-	tag, err := GenerateEqualityTag(key, collectionID, fieldName, value)
-	require.NoError(t, err)
+	tag := GenerateEqualityTag(key, collectionID, fieldName, value)
 	require.Len(t, tag, 16, "tag should be 16 bytes (truncated from 32)")
 }
 
@@ -33,11 +32,9 @@ func TestEqualityTag_WithSameInputs_ReturnsSameTag(t *testing.T) {
 	fieldName := "email"
 	value := []byte("user@example.com")
 
-	tag1, err := GenerateEqualityTag(key, collectionID, fieldName, value)
-	require.NoError(t, err)
+	tag1 := GenerateEqualityTag(key, collectionID, fieldName, value)
 
-	tag2, err := GenerateEqualityTag(key, collectionID, fieldName, value)
-	require.NoError(t, err)
+	tag2 := GenerateEqualityTag(key, collectionID, fieldName, value)
 
 	require.Equal(t, tag1, tag2, "same inputs should produce same tag")
 }
@@ -47,11 +44,9 @@ func TestEqualityTag_WhenOnlyFieldNameDiffers_ReturnsDifferentTag(t *testing.T) 
 	collectionID := "collection123"
 	value := []byte("user@example.com")
 
-	tagEmail, err := GenerateEqualityTag(key, collectionID, "email", value)
-	require.NoError(t, err)
+	tagEmail := GenerateEqualityTag(key, collectionID, "email", value)
 
-	tagName, err := GenerateEqualityTag(key, collectionID, "name", value)
-	require.NoError(t, err)
+	tagName := GenerateEqualityTag(key, collectionID, "name", value)
 
 	require.NotEqual(t, tagEmail, tagName, "tags should be different for different fields")
 }
@@ -61,11 +56,9 @@ func TestEqualityTag_WhenOnlyCollectionDiffers_ReturnsDifferentTag(t *testing.T)
 	fieldName := "email"
 	value := []byte("user@example.com")
 
-	tagColl1, err := GenerateEqualityTag(key, "collection123", fieldName, value)
-	require.NoError(t, err)
+	tagColl1 := GenerateEqualityTag(key, "collection123", fieldName, value)
 
-	tagColl2, err := GenerateEqualityTag(key, "collection456", fieldName, value)
-	require.NoError(t, err)
+	tagColl2 := GenerateEqualityTag(key, "collection456", fieldName, value)
 
 	require.NotEqual(t, tagColl1, tagColl2, "tags should be different for different collections")
 }
@@ -75,11 +68,9 @@ func TestEqualityTag_WhenOnlyValueDiffers_ReturnsDifferentTag(t *testing.T) {
 	collectionID := "collection123"
 	fieldName := "email"
 
-	tag1, err := GenerateEqualityTag(key, collectionID, fieldName, []byte("user@example.com"))
-	require.NoError(t, err)
+	tag1 := GenerateEqualityTag(key, collectionID, fieldName, []byte("user@example.com"))
 
-	tag2, err := GenerateEqualityTag(key, collectionID, fieldName, []byte("different@example.com"))
-	require.NoError(t, err)
+	tag2 := GenerateEqualityTag(key, collectionID, fieldName, []byte("different@example.com"))
 
 	require.NotEqual(t, tag1, tag2, "tags should be different for different values")
 }
@@ -89,11 +80,9 @@ func TestEqualityTag_WhenOnlyKeyDiffers_ReturnsDifferentTag(t *testing.T) {
 	fieldName := "email"
 	value := []byte("user@example.com")
 
-	tag1, err := GenerateEqualityTag([]byte("key1-32-bytes-long-for-hmac-123"), collectionID, fieldName, value)
-	require.NoError(t, err)
+	tag1 := GenerateEqualityTag([]byte("key1-32-bytes-long-for-hmac-123"), collectionID, fieldName, value)
 
-	tag2, err := GenerateEqualityTag([]byte("key2-32-bytes-long-for-hmac-456"), collectionID, fieldName, value)
-	require.NoError(t, err)
+	tag2 := GenerateEqualityTag([]byte("key2-32-bytes-long-for-hmac-456"), collectionID, fieldName, value)
 
 	require.NotEqual(t, tag1, tag2, "tags should be different for different keys")
 }
@@ -103,8 +92,7 @@ func TestEqualityTag_WithEmptyValue_ReturnsValidTag(t *testing.T) {
 	collectionID := "collection123"
 	fieldName := "email"
 
-	tag, err := GenerateEqualityTag(key, collectionID, fieldName, []byte(""))
-	require.NoError(t, err)
+	tag := GenerateEqualityTag(key, collectionID, fieldName, []byte(""))
 	require.NotNil(t, tag)
 	require.Len(t, tag, 16)
 }
@@ -114,8 +102,7 @@ func TestEqualityTag_WithNilValue_ReturnsValidTag(t *testing.T) {
 	collectionID := "collection123"
 	fieldName := "email"
 
-	tag, err := GenerateEqualityTag(key, collectionID, fieldName, nil)
-	require.NoError(t, err)
+	tag := GenerateEqualityTag(key, collectionID, fieldName, nil)
 	require.NotNil(t, tag)
 	require.Len(t, tag, 16)
 }
