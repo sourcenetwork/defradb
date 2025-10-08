@@ -206,17 +206,19 @@ func (rc *Coordinator) QuerySEArtifacts(
 	for _, pid := range peerIDs {
 		reply, err = rc.querySEProto.SendRequest(ctx, grpcReq, pid)
 		if err != nil {
+			// Log the error and try the next peer
 			log.ErrorContextE(ctx,
 				"Failed querying SE artifacts from replicator",
 				err,
 				corelog.String("CollectionID", collectionID),
 				corelog.Any("PeerID", pid))
-			continue
+		} else {
+			// if successful, no need to try other peers
+			break
 		}
-
-		break
 	}
 
+	// If all peers failed, return the last error
 	if err != nil {
 		return nil, err
 	}
