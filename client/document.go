@@ -892,14 +892,13 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			continue
 		}
 
-		// In the case of nillable arrays, we need to convert to the underlying value.
 		normValue := value.NormalValue()
-
 		if normValue.IsNil() {
 			docMap[k] = nil
 			continue
 		}
 
+		// In the case of nillable arrays, we need to convert to the underlying value.
 		var innerValue any
 		if v, ok := normValue.NillableStringArray(); ok {
 			innerValue = convertImmutable(v)
