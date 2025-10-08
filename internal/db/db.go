@@ -553,8 +553,8 @@ func (db *DB) GetSearchableEncryptionKey() []byte {
 	return db.searchableEncryptionKey
 }
 
-// QueryDocIDsByValues queries SE artifacts from replicators based on field values.
-func (db *DB) QueryDocIDsByValues(
+// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
+func (db *DB) QueryDocIDsWithSETags(
 	ctx context.Context,
 	collectionID string,
 	fieldValues []planner.SEFieldValueQuery,

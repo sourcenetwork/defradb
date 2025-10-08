@@ -90,8 +90,8 @@ type DB interface {
 	Events() event.Bus
 	// GetSearchableEncryptionKey returns the key used for searchable encryption.
 	GetSearchableEncryptionKey() []byte
-	// QueryDocIDsByValues queries SE artifacts from replicators based on field values.
-	QueryDocIDsByValues(ctx context.Context, collectionID string, fieldValues []SEFieldValueQuery) ([]string, error)
+	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
+	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []SEFieldValueQuery) ([]string, error)
 }
 
 // SEFieldValueQuery represents a field value to query for SE artifacts.

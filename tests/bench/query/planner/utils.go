@@ -35,7 +35,7 @@ func (w *dbWrapper) GetSearchableEncryptionKey() []byte {
 	return nil
 }
 
-func (w *dbWrapper) QueryDocIDsByValues(context.Context, string, []planner.SEFieldValueQuery) ([]string, error) {
+func (w *dbWrapper) QueryDocIDsWithSETags(context.Context, string, []planner.SEFieldValueQuery) ([]string, error) {
 	return []string{}, nil
 }
 
