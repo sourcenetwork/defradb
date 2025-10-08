@@ -524,7 +524,7 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 	return nil
 }
 
-// validateNewEncryptedIndex validates, if encrypted index can be created on the field.
+// validateNewEncryptedIndex validates, if encrypted index can be created on the given collection.
 // It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
 func validateNewEncryptedIndex(
 	definition client.CollectionVersion,
@@ -538,6 +538,22 @@ func validateNewEncryptedIndex(
 		if encryptedIndex.FieldName == newEncryptedIndex.FieldName {
 			return NewErrEncryptedIndexAlreadyExists(newEncryptedIndex.FieldName)
 		}
+	}
+	return nil
+}
+
+// validateEncryptedIndexesOnCollection validates all encrypted indexes on the collection.
+// It checks if the all indexes are set on existing distinct fields.
+func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) error {
+	encryptedFieldNames := make(map[string]struct{}, len(definition.EncryptedIndexes))
+	for _, encryptedIndex := range definition.EncryptedIndexes {
+		if _, found := definition.GetFieldByName(encryptedIndex.FieldName); !found {
+			return NewErrEncryptedIndexOnNonExistentField(encryptedIndex.FieldName)
+		}
+		if _, found := encryptedFieldNames[encryptedIndex.FieldName]; found {
+			return NewErrEncryptedIndexAlreadyExists(encryptedIndex.FieldName)
+		}
+		encryptedFieldNames[encryptedIndex.FieldName] = struct{}{}
 	}
 	return nil
 }

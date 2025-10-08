@@ -173,6 +173,7 @@ var globalValidators = []definitionValidator{
 	validateVersionID,
 	validateCollectionID,
 	validateCollectionSourceFromSameCollection,
+	validateEncryptedIndexes,
 }
 
 var createValidators = append(
@@ -1213,6 +1214,23 @@ func validateCollectionID(
 
 		if !exists {
 			errs = append(errs, NewErrUnknownCID("CollectionID", col.CollectionID))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateEncryptedIndexes(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+
+	for _, newCol := range newState.collections {
+		if err := validateEncryptedIndexesOnCollection(newCol); err != nil {
+			errs = append(errs, err)
 		}
 	}
 
