@@ -154,7 +154,7 @@ func generateDocArtifacts(
 
 		fieldValue, err := doc.GetValue(encIdx.FieldName)
 		if err != nil {
-			return nil, NewErrFailedToGetFieldValue(encIdx.FieldName, err)
+			return nil, err
 		}
 
 		normalValue := fieldValue.NormalValue()

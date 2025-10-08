@@ -17,7 +17,6 @@ import (
 const (
 	errEmptyDocID                  = "DocID must not be empty"
 	errFailedToGetEncIndexes       = "failed to get encrypted indexes"
-	errFailedToGetFieldValue       = "failed to get field value"
 	errUnsupportedIndexType        = "unsupported encrypted index type"
 	errFailedToDeserializeBlock    = "failed to deserialize block"
 	errFailedToGenerateSEArtifacts = "failed to generate SE artifacts"
@@ -33,10 +32,6 @@ func NewErrEmptyDocID(key string) error {
 
 func NewErrFailedToGetEncryptedIndexes(inner error) error {
 	return errors.Wrap(errFailedToGetEncIndexes, inner)
-}
-
-func NewErrFailedToGetFieldValue(fieldName string, inner error) error {
-	return errors.Wrap(errFailedToGetFieldValue, inner, errors.NewKV("FieldName", fieldName))
 }
 
 func NewErrUnsupportedIndexType(indexType string) error {
