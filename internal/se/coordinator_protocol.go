@@ -49,6 +49,14 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
+	clientTxn, err := rc.p2p.DB().NewTxn(ctx, false)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	sb := strings.Builder{}
 	for i, netArtifact := range req.Artifacts {
 		if i > 0 {
@@ -69,7 +77,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 		}
 	}
 
-	if err := storeArtifacts(ctx, datastore.DatastoreFrom(rc.p2p.DB().Rootstore()), artifacts); err != nil {
+	if err := storeArtifacts(ctx, txn.Datastore(), artifacts); err != nil {
 		return err
 	}
 
@@ -100,7 +108,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 		}))
 	}
 
-	return nil
+	return txn.Commit(ctx)
 }
 
 func (rc *Coordinator) processQuerySEArtifactsRequest(
@@ -126,10 +134,18 @@ func (rc *Coordinator) querySEArtifactsFromDatastore(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) ([]string, error) {
+	clientTxn, err := rc.p2p.DB().NewTxn(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	queries := make([]FieldQuery, len(req.Queries))
 	for i, q := range req.Queries {
 		queries[i] = FieldQuery(q)
 	}
 
-	return fetchDocIDs(ctx, datastore.DatastoreFrom(rc.p2p.DB().Rootstore()), req.CollectionID, queries)
+	return fetchDocIDs(ctx, txn.Datastore(), req.CollectionID, queries)
 }

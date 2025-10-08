@@ -69,8 +69,15 @@ func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
 
 // processSERetries checks for due retries and processes them
 func (rc *Coordinator) processSERetries(ctx context.Context) {
-	ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
-	iter, err := ps.Iterator(ctx, corekv.IterOptions{
+	clientTxn, err := rc.p2p.DB().NewTxn(ctx, true)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
+		return
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
+	iter, err := txn.Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix: keys.NewPeerstoreSERetry("", "", "").Bytes(),
 	})
 	if err != nil {
@@ -117,10 +124,22 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
 				continue
 			}
-			ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
-			if err := ps.Set(ctx, iter.Key(), b); err != nil {
+
+			clientTxn, err := rc.p2p.DB().NewTxn(ctx, false)
+			if err != nil {
+				log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
+				return
+			}
+			defer clientTxn.Discard(ctx)
+			txn := datastore.MustGetFromClientTxn(clientTxn)
+
+			if err := txn.Peerstore().Set(ctx, iter.Key(), b); err != nil {
 				log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 				continue
+			}
+
+			if err = txn.Commit(ctx); err != nil {
+				log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
 			}
 
 			go rc.retrySEArtifacts(ctx, key.PeerID, retryInfo)
@@ -139,6 +158,15 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
 func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
+	clientTxn, err := rc.p2p.DB().NewTxn(ctx, false)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to create transaction on retry", err, corelog.String("PeerID", peerID))
+		return
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
 
 	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
@@ -157,20 +185,26 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 	}
 
 	rc.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
+
+	if err = txn.Commit(ctx); err != nil {
+		log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
+	}
 }
 
 // updateRetryStatus updates the retry status after an attempt
+// It expects transaction in the context
 func (rc *Coordinator) updateRetryStatus(
 	ctx context.Context,
 	peerID string,
 	retryInfo SERetryInfo,
 	success bool,
 ) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	retryKey := keys.NewPeerstoreSERetry(peerID, retryInfo.CollectionID, retryInfo.DocID)
 
 	if success {
-		ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
-		if err := ps.Delete(ctx, retryKey.Bytes()); err != nil {
+		if err := txn.Peerstore().Delete(ctx, retryKey.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete SE retry entry", err)
 		}
 	} else {
@@ -186,8 +220,7 @@ func (rc *Coordinator) updateRetryStatus(
 			log.ErrorContextE(ctx, "Failed to marshal SE retry info", err)
 			return
 		}
-		ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
-		if err := ps.Set(ctx, retryKey.Bytes(), b); err != nil {
+		if err := txn.Peerstore().Set(ctx, retryKey.Bytes(), b); err != nil {
 			log.ErrorContextE(ctx, "Failed to update SE retry info", err)
 		}
 	}

@@ -18,7 +18,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -38,7 +37,7 @@ var log = corelog.NewLogger("defra.se.replication")
 
 // DB defines the database operations needed by the SE coordinator
 type DB interface {
-	Rootstore() corekv.TxnStore
+	NewTxn(ctx context.Context, readOnly bool) (client.Txn, error)
 	MaxTxnRetries() int
 	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
 	Events() event.Bus
@@ -230,6 +229,14 @@ func (rc *Coordinator) handleReplicationFailure(
 	fieldNames []string,
 	identity immutable.Option[acpIdentity.Identity],
 ) error {
+	clientTxn, err := rc.p2p.DB().NewTxn(ctx, true)
+	if err != nil {
+		return err
+	}
+	defer clientTxn.Discard(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)
 
 	var publicKey string
@@ -257,8 +264,12 @@ func (rc *Coordinator) handleReplicationFailure(
 		return err
 	}
 
-	ps := datastore.PeerstoreFrom(rc.p2p.DB().Rootstore())
-	return ps.Set(ctx, retryKey.Bytes(), b)
+	err = txn.Peerstore().Set(ctx, retryKey.Bytes(), b)
+	if err != nil {
+		return nil
+	}
+
+	return txn.Commit(ctx)
 }
 
 // HandlePushToReplicators processes document update events and generates SE artifacts.
