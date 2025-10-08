@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithMinAndOrder(t *testing.T) {
+func TestQueryInlineIntegerArray_WithMinAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{

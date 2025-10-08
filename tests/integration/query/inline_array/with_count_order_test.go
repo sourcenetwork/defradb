@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithCountAndOrder(t *testing.T) {
+func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{

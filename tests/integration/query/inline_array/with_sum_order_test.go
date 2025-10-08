@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithSumAndOrder(t *testing.T) {
+func TestQueryInlineIntegerArray_WithSumAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 
