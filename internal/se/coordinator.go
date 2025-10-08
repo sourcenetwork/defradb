@@ -295,9 +295,7 @@ func (rc *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Up
 
 	updatedFields := []string{}
 	for _, link := range block.Links {
-		if link.Name != "" && link.Name != "_head" {
-			updatedFields = append(updatedFields, link.Name)
-		}
+		updatedFields = append(updatedFields, link.Name)
 	}
 
 	if evt.Identity.HasValue() {
