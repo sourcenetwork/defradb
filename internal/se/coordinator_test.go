@@ -62,17 +62,16 @@ func newTestSetup(t *testing.T) *testSetup {
 		subs:     make(map[event.Subscription]chan event.Message),
 	}
 
-	mockDBImpl := mocks.NewDB(t)
-	mockDBImpl.EXPECT().MaxTxnRetries().Return(3).Maybe()
-	mockDBImpl.EXPECT().Rootstore().Return(rootstore).Maybe()
-	mockDBImpl.EXPECT().Events().Return(mockEventBus).Maybe()
+	mockDB := mocks.NewDB(t)
+	mockDB.EXPECT().MaxTxnRetries().Return(3).Maybe()
+	mockDB.EXPECT().Events().Return(mockEventBus).Maybe()
+	// NewTxn is not stubbed globally - individual tests that need it will set it up
 
 	mockP2PImpl := mocks.NewP2P(t)
-	mockP2PImpl.EXPECT().DB().Return(mockDBImpl).Maybe()
 
 	setup := &testSetup{
 		t:                t,
-		mockDB:           mockDBImpl,
+		mockDB:           mockDB,
 		mockP2P:          mockP2PImpl,
 		mockStorageProto: protocolmocks.NewCommChannel[se.PushSEArtifactsRequest, se.PushSEArtifactsReply](t),
 		mockQueryProto:   protocolmocks.NewCommChannel[se.QuerySEArtifactsRequest, se.QuerySEArtifactsReply](t),
@@ -95,6 +94,7 @@ func newTestSetup(t *testing.T) *testSetup {
 func (s *testSetup) createCoordinator() {
 	rc, err := se.NewCoordinatorConfigure(
 		s.mockP2P,
+		s.mockDB,
 		s.encKey,
 		s.mockStorageProto,
 		s.mockQueryProto,

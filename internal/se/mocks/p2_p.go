@@ -6,7 +6,6 @@ package mocks
 
 import (
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/se"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -35,52 +34,6 @@ type P2P_Expecter struct {
 
 func (_m *P2P) EXPECT() *P2P_Expecter {
 	return &P2P_Expecter{mock: &_m.Mock}
-}
-
-// DB provides a mock function for the type P2P
-func (_mock *P2P) DB() se.DB {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for DB")
-	}
-
-	var r0 se.DB
-	if returnFunc, ok := ret.Get(0).(func() se.DB); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(se.DB)
-		}
-	}
-	return r0
-}
-
-// P2P_DB_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DB'
-type P2P_DB_Call struct {
-	*mock.Call
-}
-
-// DB is a helper method to define mock.On call
-func (_e *P2P_Expecter) DB() *P2P_DB_Call {
-	return &P2P_DB_Call{Call: _e.mock.On("DB")}
-}
-
-func (_c *P2P_DB_Call) Run(run func()) *P2P_DB_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *P2P_DB_Call) Return(dB se.DB) *P2P_DB_Call {
-	_c.Call.Return(dB)
-	return _c
-}
-
-func (_c *P2P_DB_Call) RunAndReturn(run func() se.DB) *P2P_DB_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // GetReplicatorsIDs provides a mock function for the type P2P

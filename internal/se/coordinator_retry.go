@@ -69,7 +69,7 @@ func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
 
 // processSERetries checks for due retries and processes them
 func (rc *Coordinator) processSERetries(ctx context.Context) {
-	clientTxn, err := rc.p2p.DB().NewTxn(ctx, true)
+	clientTxn, err := rc.db.NewTxn(ctx, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
 		return
@@ -125,7 +125,7 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				continue
 			}
 
-			clientTxn, err := rc.p2p.DB().NewTxn(ctx, false)
+			clientTxn, err := rc.db.NewTxn(ctx, false)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
 				return
@@ -158,7 +158,7 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
 func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
-	clientTxn, err := rc.p2p.DB().NewTxn(ctx, false)
+	clientTxn, err := rc.db.NewTxn(ctx, false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err, corelog.String("PeerID", peerID))
 		return

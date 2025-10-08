@@ -49,7 +49,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
-	clientTxn, err := rc.p2p.DB().NewTxn(ctx, false)
+	clientTxn, err := rc.db.NewTxn(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 			corelog.String("DocID", docID),
 			corelog.String("CollectionID", req.CollectionID))
 
-		rc.p2p.DB().Events().Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
+		rc.db.Events().Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
 			DocID:        docID,
 			CollectionID: req.CollectionID,
 			FieldNames:   fieldNames,
@@ -134,7 +134,7 @@ func (rc *Coordinator) querySEArtifactsFromDatastore(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) ([]string, error) {
-	clientTxn, err := rc.p2p.DB().NewTxn(ctx, true)
+	clientTxn, err := rc.db.NewTxn(ctx, true)
 	if err != nil {
 		return nil, err
 	}

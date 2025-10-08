@@ -7,7 +7,6 @@ package mocks
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	mock "github.com/stretchr/testify/mock"
@@ -198,48 +197,70 @@ func (_c *DB_MaxTxnRetries_Call) RunAndReturn(run func() int) *DB_MaxTxnRetries_
 	return _c
 }
 
-// Rootstore provides a mock function for the type DB
-func (_mock *DB) Rootstore() corekv.TxnStore {
-	ret := _mock.Called()
+// NewTxn provides a mock function for the type DB
+func (_mock *DB) NewTxn(ctx context.Context, readOnly bool) (client.Txn, error) {
+	ret := _mock.Called(ctx, readOnly)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Rootstore")
+		panic("no return value specified for NewTxn")
 	}
 
-	var r0 corekv.TxnStore
-	if returnFunc, ok := ret.Get(0).(func() corekv.TxnStore); ok {
-		r0 = returnFunc()
+	var r0 client.Txn
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) (client.Txn, error)); ok {
+		return returnFunc(ctx, readOnly)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, bool) client.Txn); ok {
+		r0 = returnFunc(ctx, readOnly)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(corekv.TxnStore)
+			r0 = ret.Get(0).(client.Txn)
 		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, bool) error); ok {
+		r1 = returnFunc(ctx, readOnly)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// DB_Rootstore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rootstore'
-type DB_Rootstore_Call struct {
+// DB_NewTxn_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewTxn'
+type DB_NewTxn_Call struct {
 	*mock.Call
 }
 
-// Rootstore is a helper method to define mock.On call
-func (_e *DB_Expecter) Rootstore() *DB_Rootstore_Call {
-	return &DB_Rootstore_Call{Call: _e.mock.On("Rootstore")}
+// NewTxn is a helper method to define mock.On call
+//   - ctx context.Context
+//   - readOnly bool
+func (_e *DB_Expecter) NewTxn(ctx interface{}, readOnly interface{}) *DB_NewTxn_Call {
+	return &DB_NewTxn_Call{Call: _e.mock.On("NewTxn", ctx, readOnly)}
 }
 
-func (_c *DB_Rootstore_Call) Run(run func()) *DB_Rootstore_Call {
+func (_c *DB_NewTxn_Call) Run(run func(ctx context.Context, readOnly bool)) *DB_NewTxn_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bool
+		if args[1] != nil {
+			arg1 = args[1].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
 
-func (_c *DB_Rootstore_Call) Return(txnStore corekv.TxnStore) *DB_Rootstore_Call {
-	_c.Call.Return(txnStore)
+func (_c *DB_NewTxn_Call) Return(txn client.Txn, err error) *DB_NewTxn_Call {
+	_c.Call.Return(txn, err)
 	return _c
 }
 
-func (_c *DB_Rootstore_Call) RunAndReturn(run func() corekv.TxnStore) *DB_Rootstore_Call {
+func (_c *DB_NewTxn_Call) RunAndReturn(run func(ctx context.Context, readOnly bool) (client.Txn, error)) *DB_NewTxn_Call {
 	_c.Call.Return(run)
 	return _c
 }

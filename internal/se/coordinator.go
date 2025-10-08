@@ -46,7 +46,6 @@ type DB interface {
 type P2P interface {
 	GetReplicatorsIDs(collectionID string) []string
 	Host() client.Host
-	DB() DB
 }
 
 // Coordinator manages SE artifact replication and storage
@@ -54,6 +53,7 @@ type Coordinator struct {
 	retryIntervals []time.Duration
 	encKey         []byte // Encryption key for SE artifacts
 	p2p            P2P
+	db             DB
 	storeSEProto   protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
 	querySEProto   protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 
@@ -62,9 +62,10 @@ type Coordinator struct {
 }
 
 // NewCoordinator creates a new coordinator
-func NewCoordinator(p2p P2P, encKey []byte) (*Coordinator, error) {
+func NewCoordinator(p2p P2P, db DB, encKey []byte) (*Coordinator, error) {
 	rc, err := NewCoordinatorConfigure(
 		p2p,
+		db,
 		encKey,
 		nil,
 		nil,
@@ -89,17 +90,18 @@ func NewCoordinator(p2p P2P, encKey []byte) (*Coordinator, error) {
 
 func NewCoordinatorConfigure(
 	p2p P2P,
+	db DB,
 	encKey []byte,
 	push protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply],
 	query protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply],
 ) (*Coordinator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	db := p2p.DB()
 
 	rc := &Coordinator{
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
 		p2p:            p2p,
+		db:             db,
 		ctx:            ctx,
 		cancel:         cancel,
 		storeSEProto:   push,
@@ -229,7 +231,7 @@ func (rc *Coordinator) handleReplicationFailure(
 	fieldNames []string,
 	identity immutable.Option[acpIdentity.Identity],
 ) error {
-	clientTxn, err := rc.p2p.DB().NewTxn(ctx, true)
+	clientTxn, err := rc.db.NewTxn(ctx, true)
 	if err != nil {
 		return err
 	}
@@ -360,7 +362,7 @@ func (rc *Coordinator) generateSEArtifacts(
 	docID, collectionID string,
 	fieldNames []string,
 ) ([]secore.Artifact, error) {
-	cols, err := rc.p2p.DB().GetCollections(ctx, client.CollectionFetchOptions{
+	cols, err := rc.db.GetCollections(ctx, client.CollectionFetchOptions{
 		CollectionID: immutable.Some(collectionID),
 	})
 	if err != nil {

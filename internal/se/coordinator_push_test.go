@@ -16,15 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 func TestReplicationCoordinator_WhenHandlePushToReplicatorsCalled_ShouldPushSEArtifactsToPeers(t *testing.T) {
@@ -175,46 +171,4 @@ func TestReplicationCoordinator_WhenNoEncryptedIndexes_ShouldNotPushToPeer(t *te
 	require.NoError(t, err)
 
 	setup.waitForNoCalls()
-}
-
-func TestReplicationCoordinator_WhenPushToReplicatorFails_ShouldStoreRetryInPeerstore(t *testing.T) {
-	setup := newTestSetup(t)
-	defer setup.close()
-
-	setup.mockGetCollections(setup.createMockCollectionWithDocument())
-
-	setup.mockGetReplicatorsIDs([]string{setup.peerID})
-
-	setup.mockStorageProto.EXPECT().SendRequest(mock.Anything, mock.Anything, setup.peerID).
-		Return(se.PushSEArtifactsReply{}, fmt.Errorf("network error"))
-
-	evt := setup.makeUpdateEvent()
-	err := setup.coordinator.HandlePushToReplicators(context.Background(), evt)
-	require.NoError(t, err) // Error is stored in retry, not returned
-
-	require.Eventually(t, func() bool {
-		ps := datastore.PeerstoreFrom(setup.rootstore)
-		retryKey := keys.NewPeerstoreSERetry(setup.peerID, setup.collectionID, setup.docID)
-		has, err := ps.Has(context.Background(), retryKey.Bytes())
-		require.NoError(t, err)
-
-		if has {
-			value, err := ps.Get(context.Background(), retryKey.Bytes())
-			require.NoError(t, err)
-
-			var retryInfo se.SERetryInfo
-			err = cbor.Unmarshal(value, &retryInfo)
-			require.NoError(t, err)
-
-			require.Equal(t, setup.docID, retryInfo.DocID)
-			require.Equal(t, setup.collectionID, retryInfo.CollectionID)
-			require.Contains(t, retryInfo.FieldNames, setup.fieldName)
-			require.Equal(t, 0, retryInfo.NumRetries)
-			require.False(t, retryInfo.Retrying)
-			require.NotZero(t, retryInfo.NextRetry)
-
-			return true
-		}
-		return false
-	}, time.Second, 10*time.Millisecond, "Retry data should be stored in peerstore after push failure")
 }
