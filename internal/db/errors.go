@@ -95,6 +95,9 @@ const (
 	errCollectionsCannotBeDeleted                string = "collections cannot be deleted"
 	errCanNotHavePolicyWithoutACP                string = "can not specify policy on collection, without acp"
 	errRelationMissingField                      string = "relation missing field"
+	errMultipleRelationPrimaries                 string = "relation can only have a single field set as primary"
+	errP2PColHasPolicy                           string = "p2p collection specified has a policy on it"
+	errReplicatorColHasPolicy                    string = "replicator collection specified has a policy on it"
 	errNoTransactionInContext                    string = "no transaction in context"
 	errReplicatorExists                          string = "replicator already exists for %s with peerID %s"
 	errReplicatorDocID                           string = "failed to get docID for replicator"
@@ -160,10 +163,10 @@ var (
 	ErrCollectionsCannotBeDeleted                       = errors.New(errCollectionsCannotBeDeleted)
 	ErrCanNotHavePolicyWithoutACP                       = errors.New(errCanNotHavePolicyWithoutACP)
 	ErrRelationMissingField                             = errors.New(errRelationMissingField)
-	ErrMultipleRelationPrimaries                        = errors.New("relation can only have a single field set as primary")
-	ErrP2PColHasPolicy                                  = errors.New("p2p collection specified has a policy on it")
+	ErrMultipleRelationPrimaries                        = errors.New(errMultipleRelationPrimaries)
+	ErrP2PColHasPolicy                                  = errors.New(errP2PColHasPolicy)
 	ErrNoTransactionInContext                           = errors.New(errNoTransactionInContext)
-	ErrReplicatorColHasPolicy                           = errors.New("replicator collection specified has a policy on it")
+	ErrReplicatorColHasPolicy                           = errors.New(errReplicatorColHasPolicy)
 	ErrCanNotEncryptBuiltinField                        = errors.New(errCanNotEncryptBuiltinField)
 	ErrSelfReferenceWithoutSelf                         = errors.New(errSelfReferenceWithoutSelf)
 	ErrColNotMaterialized                               = errors.New(errColNotMaterialized)
