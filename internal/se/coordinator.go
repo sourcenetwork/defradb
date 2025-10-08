@@ -155,7 +155,7 @@ func (rc *Coordinator) QueryDocIDsByValues(
 
 	for _, fv := range fieldValues {
 		// Generate search tag
-		artifact, err := GenerateFieldArtifact(
+		artifact, err := generateFieldArtifact(
 			ctx,
 			collectionID,
 			"", // docID not needed for search tag generation
@@ -301,12 +301,12 @@ func (rc *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Up
 		ctx = acpIdentity.WithContext(ctx, evt.Identity)
 	}
 
-	return rc.GenerateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
+	return rc.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
 }
 
-// GenerateArtifactsAndPushToReplicators generates SE artifacts and pushes them to replicators.
+// generateArtifactsAndPushToReplicators generates SE artifacts and pushes them to replicators.
 // This is called by the P2P layer when document updates occur.
-func (rc *Coordinator) GenerateArtifactsAndPushToReplicators(
+func (rc *Coordinator) generateArtifactsAndPushToReplicators(
 	ctx context.Context,
 	docID, collectionID string,
 	fields []string,

@@ -147,8 +147,7 @@ func generateDocArtifacts(
 
 	var artifacts []secore.Artifact
 	for _, encIdx := range encryptedIndexes {
-		// Skip if fieldNames is specified and this field is not in the list
-		if len(fieldNames) > 0 && !slices.Contains(fieldNames, encIdx.FieldName) {
+		if !slices.Contains(fieldNames, encIdx.FieldName) {
 			continue
 		}
 
@@ -158,7 +157,7 @@ func generateDocArtifacts(
 		}
 
 		normalValue := fieldValue.NormalValue()
-		artifact, err := GenerateFieldArtifact(ctx, collectionID, docID, encIdx, normalValue, encKey)
+		artifact, err := generateFieldArtifact(ctx, collectionID, docID, encIdx, normalValue, encKey)
 		if err != nil {
 			return nil, err
 		}
@@ -168,8 +167,8 @@ func generateDocArtifacts(
 	return artifacts, nil
 }
 
-// GenerateFieldArtifact generates a single SE artifact for a specific field value.
-func GenerateFieldArtifact(
+// generateFieldArtifact generates a single SE artifact for a specific field value.
+func generateFieldArtifact(
 	ctx context.Context,
 	collectionID string,
 	docID string,

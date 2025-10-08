@@ -177,7 +177,7 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 		ctx = acpIdentity.WithContext(ctx, identity)
 	}
 
-	err = rc.GenerateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
+	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
 		retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
