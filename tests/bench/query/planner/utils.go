@@ -31,10 +31,6 @@ type dbWrapper struct {
 	node.DB
 }
 
-func (w *dbWrapper) GetSearchableEncryptionKey() []byte {
-	return nil
-}
-
 func (w *dbWrapper) QueryDocIDsWithSETags(context.Context, string, []planner.SEFieldValueQuery) ([]string, error) {
 	return []string{}, nil
 }

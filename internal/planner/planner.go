@@ -88,8 +88,6 @@ type PlanContext struct {
 type DB interface {
 	client.TxnStore
 	Events() event.Bus
-	// GetSearchableEncryptionKey returns the key used for searchable encryption.
-	GetSearchableEncryptionKey() []byte
 	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
 	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []SEFieldValueQuery) ([]string, error)
 }
