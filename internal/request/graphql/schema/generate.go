@@ -1158,7 +1158,7 @@ func (g *Generator) GenerateEncryptedQueryInputForGQLType(
 		}
 	}
 
-	if collection == nil || len(collection.EncryptedIndexes) == 0 {
+	if len(collection.EncryptedIndexes) == 0 {
 		return nil, nil
 	}
 
@@ -1414,14 +1414,13 @@ func (g *Generator) genEncryptedFilterArgInput(
 					}
 				}
 				if objField == nil {
-					// This should not happen, as we should have already validated the schema
-					continue
+					panic("encrypted index field not found in schema - validation should have caught this")
 				}
 
 				encryptedFilterTypeName := g.genEncryptedFilterTypeName(objField.Type)
 				encryptedFilterType, exists := g.manager.schema.TypeMap()[encryptedFilterTypeName]
 				if !exists {
-					continue
+					panic("encrypted filter type not found in schema - type generation failed")
 				}
 
 				fields[encIdx.FieldName] = &gql.InputObjectFieldConfig{
