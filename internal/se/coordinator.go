@@ -13,7 +13,6 @@ package se
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -286,7 +285,7 @@ func (rc *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Up
 
 	block, err := coreblock.GetFromBytes(evt.Block)
 	if err != nil {
-		return fmt.Errorf("failed to deserialize block: %w", err)
+		return NewErrFailedToDeserializeBlock(err)
 	}
 
 	if !block.Delta.IsComposite() {
@@ -316,7 +315,7 @@ func (rc *Coordinator) GenerateArtifactsAndPushToReplicators(
 ) error {
 	artifacts, err := rc.generateSEArtifacts(ctx, docID, collectionID, fields)
 	if err != nil {
-		return fmt.Errorf("failed to generate SE artifacts: %w", err)
+		return NewErrFailedToGenerateSEArtifacts(err)
 	}
 	if len(artifacts) == 0 {
 		return nil
@@ -366,16 +365,16 @@ func (rc *Coordinator) generateSEArtifacts(
 		CollectionID: immutable.Some(collectionID),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get collection: %w", err)
+		return nil, NewErrFailedToGetCollection(err)
 	}
 	if len(cols) == 0 {
-		return nil, fmt.Errorf("collection not found: %s", collectionID)
+		return nil, NewErrCollectionNotFound(collectionID)
 	}
 
 	col := cols[0]
 	docIDType, err := client.NewDocIDFromString(docID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid document ID: %w", err)
+		return nil, NewErrInvalidDocumentID(err)
 	}
 
 	doc, err := col.Get(ctx, docIDType, false)
@@ -383,7 +382,7 @@ func (rc *Coordinator) generateSEArtifacts(
 		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to get document: %w", err)
+		return nil, NewErrFailedToGetDocument(err)
 	}
 
 	return generateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
