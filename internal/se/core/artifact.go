@@ -26,13 +26,33 @@ const (
 	OperationDelete OperationType = "delete"
 )
 
-// Artifact represents a searchable encryption operation to be replicated
+// Artifact represents a searchable encryption artifact to be replicated to remote nodes.
+// It contains the cryptographic search tag and metadata needed to store and query
+// encrypted indexes on untrusted replicator nodes.
 type Artifact struct {
-	Type         ArtifactType
+	// Type is the artifact type (e.g., equality_tag for equality searches)
+	Type ArtifactType
+
+	// CollectionID is the unique identifier of the collection
 	CollectionID string
-	FieldName    string
-	DocID        string
-	Operation    OperationType
-	IndexID      string
-	SearchTag    []byte
+
+	// FieldName is the name of the field this artifact is for
+	FieldName string
+
+	// DocID is the unique document identifier
+	DocID string
+
+	// Operation indicates whether this is an add or delete operation
+	Operation OperationType
+
+	// IndexID is the unique identifier of the encrypted index
+	// Used as a domain separator in search tag computation
+	IndexID string
+
+	// SearchTag is the deterministic cryptographic tag used for searching.
+	// The remote node stores this tag in its KV store at:
+	// /se/<CollectionID>/<IndexID>/<SearchTag>/<DocID>
+	// When querying, the client computes the same tag for the search value
+	// and the remote node returns all DocIDs with matching tags.
+	SearchTag []byte
 }
