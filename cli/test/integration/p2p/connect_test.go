@@ -62,7 +62,7 @@ func TestConnect_WithInvalidIP_ShouldFail(t *testing.T) {
 // However, it does at least verify that a single address can be passed in.
 //
 // TODO: Add capability to have multiple defradb instances in tests, so we can
-// actually test successful connections. #4021
+// actually test successful connections. https://github.com/sourcenetwork/defradb/issues/4021
 func TestConnect_WithSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
@@ -80,7 +80,7 @@ func TestConnect_WithSinglePeer_ShouldSucceed(t *testing.T) {
 // However, it does at least verify that multiple addresses can be passed in.
 //
 // TODO: Add capability to have multiple defradb instances in tests, so we can
-// actually test successful connections. #4021
+// actually test successful connections. https://github.com/sourcenetwork/defradb/issues/4021
 func TestConnect_WithMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{

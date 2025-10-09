@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// P2PReplicatorDelete executes the `client p2p replicator set` command.
+// P2PReplicatorDelete executes the `client p2p replicator delete` command.
 type P2PReplicatorDelete struct {
 	stateful
 	augmented

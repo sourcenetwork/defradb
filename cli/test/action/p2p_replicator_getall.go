@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// P2PReplicatorGetAll executes the `client p2p replicator set` command.
+// P2PReplicatorGetAll executes the `client p2p replicator getall` command.
 type P2PReplicatorGetAll struct {
 	stateful
 	augmented
