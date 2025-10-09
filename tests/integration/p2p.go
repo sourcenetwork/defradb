@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"net"
 	"time"
 
 	netConfig "github.com/sourcenetwork/defradb/net/config"
@@ -464,10 +465,33 @@ func reconnectPeers(s *state.State) {
 func RandomNetworkingConfig() ConfigureNode {
 	return func() []netConfig.NodeOpt {
 		return []netConfig.NodeOpt{
-			netConfig.WithListenAddresses("/ip4/127.0.0.1/tcp/0"),
-			netConfig.WithEnableRelay(false),
+			netConfig.WithListenAddresses("/ip4/" + getIPString() + "/tcp/0"),
+			netConfig.WithEnableRelay(true),
 		}
 	}
+}
+
+func getIPString() string {
+	loopbackIP := "127.0.0.1"
+
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		// If getting the local address fails, we simply return the loopback address.
+		// This would occur if the machine running the tests has no network connection.
+		// This will cause the integration tests that depend on DHT relaying of messages to fail.
+		return loopbackIP
+	}
+	defer func() {
+		// The test doesn't care about an error on close so we can ignore it.
+		_ = conn.Close()
+	}()
+
+	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok {
+		return loopbackIP
+	}
+
+	return localAddr.IP.String()
 }
 
 // syncDocs requests document sync from peers.
