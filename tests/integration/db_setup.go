@@ -18,6 +18,7 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -27,8 +28,6 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
-
-	"github.com/stretchr/testify/require"
 )
 
 func createBadgerEncryptionKey() error {
