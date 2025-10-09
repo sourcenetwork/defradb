@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -434,7 +435,18 @@ func defaultFromAST(
 	case types.DefaultDirectivePropDateTime:
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropJSON:
-		value = types.JSON.ParseLiteral(arg.Value, nil)
+		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)
+		// If the value is already a string, use it as-is
+		// Otherwise, marshal it to a JSON string for storage
+		if strValue, ok := jsonValue.(string); ok {
+			value = strValue
+		} else {
+			jsonBytes, err := json.Marshal(jsonValue)
+			if err != nil {
+				return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
+			}
+			value = string(jsonBytes)
+		}
 	case types.DefaultDirectivePropBlob:
 		value = types.Blob.ParseLiteral(arg.Value, nil)
 	}

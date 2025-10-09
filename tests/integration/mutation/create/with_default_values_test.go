@@ -280,3 +280,75 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreate_WithDefaultJSONValues_ShouldBeSet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						metadata: JSON @default(json: {one: 1})
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						metadata
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"metadata": "{\"one\":1}",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultNestedJSONValues_ShouldBeSet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						metadata: JSON @default(json: {one: {two: {three: 3}}})
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						metadata
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"metadata": "{\"one\":{\"two\":{\"three\":3}}}",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
