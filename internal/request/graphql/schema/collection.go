@@ -436,11 +436,13 @@ func defaultFromAST(
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropJSON:
 		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)
-		// If the value is already a string, use it as-is
-		// Otherwise, marshal it to a JSON string for storage
-		if strValue, ok := jsonValue.(string); ok {
-			value = strValue
-		} else {
+		switch v := jsonValue.(type) {
+		case nil:
+			value = nil
+		case string, int32, float64, bool:
+			value = v
+		default:
+			// If the value is not a primitive type, marshal it to a JSON string for storage
 			jsonBytes, err := json.Marshal(jsonValue)
 			if err != nil {
 				return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
@@ -453,7 +455,8 @@ func defaultFromAST(
 	// If the value is nil, then parsing has failed, or a nil value was provided.
 	// Since setting a default value to nil is the same as not providing one,
 	// it is safer to return an error to let the user know something is wrong.
-	if value == nil {
+	// Exception: JSON fields can have nil as a valid default value
+	if value == nil && propName != types.DefaultDirectivePropJSON {
 		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
 	}
 	return value, nil

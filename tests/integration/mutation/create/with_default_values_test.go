@@ -281,7 +281,151 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithDefaultJSONValues_ShouldBeSet(t *testing.T) {
+func TestMutationCreate_WithDefaultJSONIntValue_ShouldBeSet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						metadata: JSON @default(json: 1)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						metadata
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"metadata": 1,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultJSONFloatValue_ShouldBeSet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						metadata: JSON @default(json: 1.2)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						metadata
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"metadata": 1.2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						metadata: JSON @default(json: true)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						metadata
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"metadata": true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultJSONNullValue_ShouldBeSet(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						metadata: JSON @default(json: null)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					User {
+						metadata
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"metadata": nil,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultJSONObjectValues_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -317,14 +461,14 @@ func TestMutationCreate_WithDefaultJSONValues_ShouldBeSet(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithDefaultNestedJSONValues_ShouldBeSet(t *testing.T) {
+func TestMutationCreate_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
-						metadata: JSON @default(json: {one: {two: {three: 3}}})
+						metadata: JSON @default(json: {one: {two: {i: 3, f: 1.2, b: true, s: "three", n: null}}})
 					}
 				`,
 			},
@@ -342,7 +486,7 @@ func TestMutationCreate_WithDefaultNestedJSONValues_ShouldBeSet(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"metadata": "{\"one\":{\"two\":{\"three\":3}}}",
+							"metadata": "{\"one\":{\"two\":{\"b\":true,\"f\":1.2,\"i\":3,\"n\":null,\"s\":\"three\"}}}",
 						},
 					},
 				},
