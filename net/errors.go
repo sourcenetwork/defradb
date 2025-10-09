@@ -23,7 +23,7 @@ var (
 )
 
 func NewErrPushLog(inner error, kv ...errors.KV) error {
-	return errors.WithStack(errors.Join(ErrPushLog, inner), kv...)
+	return errors.WithStack(errors.Join(inner, ErrPushLog), kv...)
 }
 
 func NewErrTopicAlreadyExist(topic string) error {
