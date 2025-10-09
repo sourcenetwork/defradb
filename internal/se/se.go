@@ -51,7 +51,7 @@ func fetchDocIDs(
 	ctx context.Context,
 	ds corekv.ReaderWriter,
 	collectionID string,
-	queries []FieldQuery,
+	queries []fieldQuery,
 ) ([]string, error) {
 	docIDSet := make(map[string]struct{})
 
@@ -117,8 +117,8 @@ func fetchDocIDs(
 	return docIDs, nil
 }
 
-// FieldQuery represents a query for a specific encrypted field
-type FieldQuery struct {
+// fieldQuery represents a query for a specific encrypted field
+type fieldQuery struct {
 	FieldName string
 	IndexID   string
 	SearchTag []byte

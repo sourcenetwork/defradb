@@ -142,9 +142,9 @@ func (coordinator *Coordinator) querySEArtifactsFromDatastore(
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
-	queries := make([]FieldQuery, len(req.Queries))
+	queries := make([]fieldQuery, len(req.Queries))
 	for i, q := range req.Queries {
-		queries[i] = FieldQuery(q)
+		queries[i] = fieldQuery(q)
 	}
 
 	return fetchDocIDs(ctx, txn.Datastore(), req.CollectionID, queries)

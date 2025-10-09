@@ -23,7 +23,7 @@ func TestQuerySEArtifacts_WhenReplicatorsExist_ShouldQueryAndReturnDocIDs(t *tes
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []FieldQuery{
+	queries := []fieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -48,7 +48,7 @@ func TestQuerySEArtifacts_WhenNoReplicators_ShouldReturnEmpty(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []FieldQuery{
+	queries := []fieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -68,7 +68,7 @@ func TestQuerySEArtifacts_WhenFirstReplicatorFails_ShouldTryNext(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []FieldQuery{
+	queries := []fieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -100,7 +100,7 @@ func TestQuerySEArtifacts_WhenAllReplicatorsFail_ShouldReturnError(t *testing.T)
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []FieldQuery{
+	queries := []fieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -129,7 +129,7 @@ func TestQuerySEArtifacts_WhenMultipleQueries_ShouldPassAllToReplicator(t *testi
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []FieldQuery{
+	queries := []fieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",

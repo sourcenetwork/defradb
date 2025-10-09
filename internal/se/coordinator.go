@@ -150,7 +150,7 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 	collectionID string,
 	fieldValues []FieldValueQuery,
 ) ([]string, error) {
-	queries := make([]FieldQuery, 0, len(fieldValues))
+	queries := make([]fieldQuery, 0, len(fieldValues))
 
 	for _, fv := range fieldValues {
 		// Generate search tag
@@ -165,7 +165,7 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 			return nil, err
 		}
 
-		queries = append(queries, FieldQuery{
+		queries = append(queries, fieldQuery{
 			FieldName: fv.FieldName,
 			IndexID:   fv.FieldName,
 			SearchTag: artifact.SearchTag,
@@ -180,7 +180,7 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 func (coordinator *Coordinator) QuerySEArtifacts(
 	ctx context.Context,
 	collectionID string,
-	queries []FieldQuery,
+	queries []fieldQuery,
 ) ([]string, error) {
 	grpcQueries := make([]SEFieldQuery, len(queries))
 	for i, q := range queries {
