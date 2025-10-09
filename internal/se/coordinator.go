@@ -32,7 +32,7 @@ import (
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
-var log = corelog.NewLogger("defra.se.replication")
+var log = corelog.NewLogger("se")
 
 // DB defines the database operations needed by the SE coordinator
 type DB interface {
@@ -44,7 +44,6 @@ type DB interface {
 
 type P2P interface {
 	GetReplicatorsIDs(collectionID string) []string
-	Host() client.Host
 }
 
 // Coordinator manages SE artifact replication and storage
@@ -61,7 +60,7 @@ type Coordinator struct {
 }
 
 // NewCoordinator creates a new coordinator
-func NewCoordinator(p2p P2P, db DB, encKey []byte) (*Coordinator, error) {
+func NewCoordinator(p2p P2P, host client.Host, db DB, encKey []byte) (*Coordinator, error) {
 	rc, err := NewCoordinatorConfigure(
 		p2p,
 		db,
@@ -74,12 +73,12 @@ func NewCoordinator(p2p P2P, db DB, encKey []byte) (*Coordinator, error) {
 	}
 
 	rc.storeSEProto = protocol.NewCommChannel(
-		p2p.Host(),
+		host,
 		"rep_se",
 		&seStoreProcessor{coordinator: rc},
 	)
 	rc.querySEProto = protocol.NewCommChannel(
-		p2p.Host(),
+		host,
 		"se_query",
 		&seQueryProcessor{coordinator: rc},
 	)
@@ -99,7 +98,6 @@ func NewCoordinatorConfigure(
 	rc := &Coordinator{
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
-		p2p:            p2p,
 		db:             db,
 		ctx:            ctx,
 		cancel:         cancel,

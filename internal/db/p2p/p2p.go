@@ -160,7 +160,7 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	}
 
 	if len(db.SearchableEncryptionKey()) > 0 {
-		coord, err := se.NewCoordinator(&p, db, db.SearchableEncryptionKey())
+		coord, err := se.NewCoordinator(&p, p.Host(), db, db.SearchableEncryptionKey())
 		if err != nil {
 			return nil, err
 		}
