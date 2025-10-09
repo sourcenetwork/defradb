@@ -14,7 +14,7 @@ Example: Connect to multiple peers
 		
 
 ```
-defradb client p2p connect <addresses> [flags]
+defradb client p2p connect <addresses...> [flags]
 ```
 
 ### Options
