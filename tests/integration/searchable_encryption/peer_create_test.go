@@ -25,6 +25,7 @@ func TestEncryptedIndexCreatePeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
+			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddSchema{
@@ -58,6 +59,7 @@ func TestEncryptedIndexCreatePeer_AfterCreateRequest_ShouldGenerateGQL(t *testin
 		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		Actions: []any{
+			// Add peers to enable p2p so that SE gql queries are generated
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			&action.AddSchema{

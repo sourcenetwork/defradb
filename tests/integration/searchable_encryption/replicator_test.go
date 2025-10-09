@@ -22,9 +22,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestSEReplicator_WithEncryptedIndexAndCreate_ShouldReplicateArtifacts(t *testing.T) {
+func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testing.T) {
 	test := testUtils.TestCase{
-		KMS:                        testUtils.KMS{Activated: true},
 		EnableSearchableEncryption: true,
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
@@ -68,7 +67,6 @@ func TestSEReplicator_WithEncryptedIndexAndCreate_ShouldReplicateArtifacts(t *te
 			testUtils.Start{
 				NodeID: immutable.Some(1),
 			},
-			testUtils.WaitForSync{},
 			testUtils.WaitForSESync{},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
