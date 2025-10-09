@@ -22,7 +22,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	clientmocks "github.com/sourcenetwork/defradb/client/mocks"
 	"github.com/sourcenetwork/defradb/event"
@@ -97,6 +99,7 @@ func (s *testSetup) createCoordinator() {
 		s.encKey,
 		s.mockStorageProto,
 		s.mockQueryProto,
+		immutable.None[acpIdentity.Identity](),
 	)
 	require.NoError(s.t, err)
 	s.coordinator = rc

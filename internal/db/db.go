@@ -167,7 +167,7 @@ func newDB(
 	}
 
 	if opts.p2p.HasValue() {
-		p, err := p2p.New(ctx, db, opts.p2p.Value())
+		p, err := p2p.New(ctx, db, opts.p2p.Value(), db.nodeIdentity)
 		if err != nil {
 			return nil, err
 		}

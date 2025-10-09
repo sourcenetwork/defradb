@@ -14,10 +14,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
 
-	"github.com/sourcenetwork/immutable"
-
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -97,9 +93,6 @@ type Update struct {
 
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
-
-	// Identity is the identity of the peer that created this update.
-	Identity immutable.Option[acpIdentity.Identity]
 
 	// Is relay is set to true if this update is created from a P2P sync.
 	IsRelay bool

@@ -12,7 +12,6 @@ package searchable_encryption
 
 import (
 	"testing"
-	"time"
 
 	"github.com/onsi/gomega"
 
@@ -87,7 +86,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
+				Identity: testUtils.NodeIdentity(0),
 				Policy:   policy,
 			},
 			&action.AddSchema{
@@ -106,7 +105,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.CreateDoc{
-				Identity: testUtils.ClientIdentity(1),
+				Identity: testUtils.NodeIdentity(0),
 				NodeID:   immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -114,12 +113,10 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Wait{
-				Duration: time.Millisecond * 100,
-			},
+			testUtils.WaitForSESync{},
 			testUtils.Request{
 				NodeID:   immutable.Some(0),
-				Identity: testUtils.ClientIdentity(1),
+				Identity: testUtils.NodeIdentity(0),
 				Request: `
 					query {
 						encrypted_User(filter: {age: {_eq: 21}}) {
@@ -137,7 +134,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 			},
 			testUtils.Request{
 				NodeID:   immutable.Some(1),
-				Identity: testUtils.ClientIdentity(1),
+				Identity: testUtils.NodeIdentity(0),
 				Request: `
 					query {
 						User {
@@ -152,7 +149,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 			},
 			testUtils.Request{
 				NodeID:   immutable.Some(1),
-				Identity: testUtils.ClientIdentity(1),
+				Identity: testUtils.NodeIdentity(0),
 				Request: `
 					query {
 						commits {

@@ -124,7 +124,7 @@ func (proc *pushLogCommProcessor) ProcessRequest(
 }
 
 // New returns a new configured P2P instance.
-func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
+func New(ctx context.Context, db DB, host client.Host, nodeIdentity immutable.Option[identity.Identity]) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
 		db:                   db,
@@ -160,7 +160,7 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 	}
 
 	if len(db.SearchableEncryptionKey()) > 0 {
-		coord, err := se.NewCoordinator(&p, p.Host(), db, db.SearchableEncryptionKey())
+		coord, err := se.NewCoordinator(&p, p.Host(), db, db.SearchableEncryptionKey(), nodeIdentity)
 		if err != nil {
 			return nil, err
 		}

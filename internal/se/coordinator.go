@@ -12,7 +12,6 @@ package se
 
 import (
 	"context"
-	"encoding/hex"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -22,7 +21,6 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -55,18 +53,26 @@ type Coordinator struct {
 	storeSEProto   protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
 	querySEProto   protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx          context.Context
+	cancel       context.CancelFunc
+	nodeIdentity immutable.Option[acpIdentity.Identity]
 }
 
 // NewCoordinator creates a new coordinator
-func NewCoordinator(p2p P2P, host client.Host, db DB, encKey []byte) (*Coordinator, error) {
+func NewCoordinator(
+	p2p P2P,
+	host client.Host,
+	db DB,
+	encKey []byte,
+	nodeIdentity immutable.Option[acpIdentity.Identity],
+) (*Coordinator, error) {
 	coordinator, err := NewCoordinatorConfigure(
 		p2p,
 		db,
 		encKey,
 		nil,
 		nil,
+		nodeIdentity,
 	)
 	if err != nil {
 		return nil, err
@@ -92,6 +98,7 @@ func NewCoordinatorConfigure(
 	encKey []byte,
 	push protocol.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply],
 	query protocol.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply],
+	nodeIdentity immutable.Option[acpIdentity.Identity],
 ) (*Coordinator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -104,6 +111,7 @@ func NewCoordinatorConfigure(
 		cancel:         cancel,
 		storeSEProto:   push,
 		querySEProto:   query,
+		nodeIdentity:   nodeIdentity,
 	}
 
 	go coordinator.retrySEReplicators(coordinator.ctx)
@@ -113,27 +121,6 @@ func NewCoordinatorConfigure(
 
 func (coordinator *Coordinator) Close() {
 	coordinator.cancel()
-}
-
-// reconstructIdentity reconstructs an Identity from stored public key information
-func (coordinator *Coordinator) reconstructIdentity(
-	publicKey, keyType string,
-) (immutable.Option[acpIdentity.Identity], error) {
-	if publicKey == "" || keyType == "" {
-		return immutable.None[acpIdentity.Identity](), nil
-	}
-
-	pubKey, err := crypto.PublicKeyFromString(crypto.KeyType(keyType), publicKey)
-	if err != nil {
-		return immutable.None[acpIdentity.Identity](), err
-	}
-
-	identity, err := acpIdentity.FromPublicKey(pubKey)
-	if err != nil {
-		return immutable.None[acpIdentity.Identity](), err
-	}
-
-	return immutable.Some(identity), nil
 }
 
 // FieldValueQuery represents a field value to query for SE artifacts.
@@ -159,7 +146,7 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 			"", // docID not needed for search tag generation
 			fv.IndexDesc,
 			fv.Value,
-			acpIdentity.FromContext(ctx),
+			coordinator.nodeIdentity,
 			coordinator.encKey,
 		)
 		if err != nil {
@@ -229,7 +216,6 @@ func (coordinator *Coordinator) handleReplicationFailure(
 	ctx context.Context,
 	docID, collectionID, peerID string,
 	fieldNames []string,
-	identity immutable.Option[acpIdentity.Identity],
 ) error {
 	clientTxn, err := coordinator.db.NewTxn(false)
 	if err != nil {
@@ -241,24 +227,12 @@ func (coordinator *Coordinator) handleReplicationFailure(
 
 	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)
 
-	var publicKey string
-	var keyType string
-	if identity.HasValue() {
-		identity := identity.Value()
-		if pubKey := identity.PublicKey(); pubKey != nil {
-			publicKey = hex.EncodeToString(pubKey.Raw())
-			keyType = string(pubKey.Type())
-		}
-	}
-
 	retryInfo := SERetryInfo{
 		DocID:        docID,
 		CollectionID: collectionID,
 		FieldNames:   fieldNames,
 		NextRetry:    time.Now().Add(coordinator.retryIntervals[0]),
 		NumRetries:   0,
-		PublicKey:    publicKey,
-		KeyType:      keyType,
 	}
 
 	b, err := cbor.Marshal(retryInfo)
@@ -296,12 +270,7 @@ func (coordinator *Coordinator) HandlePushToReplicators(ctx context.Context, evt
 		updatedFields = append(updatedFields, link.Name)
 	}
 
-	if evt.Identity.HasValue() {
-		ctx = acpIdentity.WithContext(ctx, evt.Identity)
-	}
-
-	return coordinator.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID,
-		updatedFields, evt.Identity, false)
+	return coordinator.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, false)
 }
 
 // generateArtifactsAndPushToReplicators generates SE artifacts and pushes them to replicators.
@@ -310,10 +279,9 @@ func (coordinator *Coordinator) generateArtifactsAndPushToReplicators(
 	ctx context.Context,
 	docID, collectionID string,
 	fields []string,
-	identity immutable.Option[acpIdentity.Identity],
 	isRetry bool,
 ) error {
-	artifacts, err := coordinator.generateSEArtifacts(ctx, docID, collectionID, fields, identity)
+	artifacts, err := coordinator.generateSEArtifacts(ctx, docID, collectionID, fields)
 	if err != nil {
 		return NewErrFailedToGenerateSEArtifacts(err)
 	}
@@ -342,7 +310,7 @@ func (coordinator *Coordinator) generateArtifactsAndPushToReplicators(
 			if isRetry {
 				return err
 			}
-			handleErr := coordinator.handleReplicationFailure(ctx, docID, collectionID, pid, fields, identity)
+			handleErr := coordinator.handleReplicationFailure(ctx, docID, collectionID, pid, fields)
 			if handleErr != nil {
 				return errors.Join(err, handleErr)
 			}
@@ -360,7 +328,6 @@ func (coordinator *Coordinator) generateSEArtifacts(
 	ctx context.Context,
 	docID, collectionID string,
 	fieldNames []string,
-	identity immutable.Option[acpIdentity.Identity],
 ) ([]secore.Artifact, error) {
 	cols, err := coordinator.db.GetCollections(ctx, client.CollectionFetchOptions{
 		CollectionID: immutable.Some(collectionID),
@@ -378,6 +345,10 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		return nil, err
 	}
 
+	if coordinator.nodeIdentity.HasValue() {
+		ctx = acpIdentity.WithContext(ctx, coordinator.nodeIdentity)
+	}
+
 	doc, err := col.Get(ctx, docIDType, false)
 	if err != nil {
 		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
@@ -386,5 +357,5 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		return nil, err
 	}
 
-	return generateDocArtifacts(ctx, col, doc, fieldNames, identity, coordinator.encKey)
+	return generateDocArtifacts(ctx, col, doc, fieldNames, coordinator.nodeIdentity, coordinator.encKey)
 }

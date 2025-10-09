@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -38,8 +37,6 @@ type SERetryInfo struct {
 	NextRetry    time.Time
 	NumRetries   int
 	Retrying     bool
-	PublicKey    string // Hex-encoded public key for identity reconstruction
-	KeyType      string // Key type (secp256k1, ed25519, etc.)
 }
 
 // defaultRetryIntervals generates retry intervals based on max retries
@@ -169,16 +166,8 @@ func (coordinator *Coordinator) retrySEArtifacts(ctx context.Context, peerID str
 
 	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
 
-	identity, err := coordinator.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
-	if err != nil {
-		log.ErrorContextE(ctx, "Failed to reconstruct identity from stored data", err,
-			corelog.String("DocID", retryInfo.DocID))
-	} else if identity.HasValue() {
-		ctx = acpIdentity.WithContext(ctx, identity)
-	}
-
 	err = coordinator.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
-		retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
+		retryInfo.CollectionID, retryInfo.FieldNames, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
 			corelog.String("DocID", retryInfo.DocID))
