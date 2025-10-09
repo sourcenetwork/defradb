@@ -232,7 +232,7 @@ func (rc *Coordinator) handleReplicationFailure(
 	fieldNames []string,
 	identity immutable.Option[acpIdentity.Identity],
 ) error {
-	clientTxn, err := rc.db.NewTxn(true)
+	clientTxn, err := rc.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
