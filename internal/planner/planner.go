@@ -19,7 +19,6 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -87,7 +86,6 @@ type PlanContext struct {
 
 type DB interface {
 	client.TxnStore
-	Events() event.Bus
 	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
 	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []SEFieldValueQuery) ([]string, error)
 }
