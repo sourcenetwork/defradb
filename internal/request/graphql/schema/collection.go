@@ -186,11 +186,6 @@ func fromAstDefinition(
 		return collectionFieldDescriptions[i].Name < collectionFieldDescriptions[j].Name
 	})
 
-	err := validateEncryptedIndexes(encryptedIndexes, collectionFieldDescriptions)
-	if err != nil {
-		return core.Collection{}, err
-	}
-
 	isMaterialized := immutable.None[bool]()
 	var isBranchable bool
 	for _, directive := range def.Directives {
@@ -489,35 +484,6 @@ func encryptedIndexFromAST(
 	}
 
 	return encryptedIndex, nil
-}
-
-// validateEncryptedIndexes validates that encrypted indexes can be created on the given fields.
-// It checks that all fields exist in the collection schema and that there is at most one index per field.
-func validateEncryptedIndexes(
-	encryptedIndexes []client.EncryptedIndexDescription,
-	fields []client.CollectionFieldDescription,
-) error {
-	indexedFields := make(map[string]struct{}, len(encryptedIndexes))
-
-	for _, encryptedIndex := range encryptedIndexes {
-		found := false
-		for _, field := range fields {
-			if field.Name == encryptedIndex.FieldName {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return NewErrEncryptedIndexOnNonExistentField(encryptedIndex.FieldName)
-		}
-
-		if _, exists := indexedFields[encryptedIndex.FieldName]; exists {
-			return NewErrEncryptedIndexAlreadyExists(encryptedIndex.FieldName)
-		}
-		indexedFields[encryptedIndex.FieldName] = struct{}{}
-	}
-
-	return nil
 }
 
 func fieldsFromAST(
