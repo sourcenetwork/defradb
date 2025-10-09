@@ -364,7 +364,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		CollectionID: immutable.Some(collectionID),
 	})
 	if err != nil {
-		return nil, NewErrFailedToGetCollection(err)
+		return nil, err
 	}
 	if len(cols) == 0 {
 		return nil, NewErrCollectionNotFound(collectionID)
@@ -373,7 +373,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 	col := cols[0]
 	docIDType, err := client.NewDocIDFromString(docID)
 	if err != nil {
-		return nil, NewErrInvalidDocumentID(err)
+		return nil, err
 	}
 
 	doc, err := col.Get(ctx, docIDType, false)
@@ -381,7 +381,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 			return nil, nil
 		}
-		return nil, NewErrFailedToGetDocument(err)
+		return nil, err
 	}
 
 	return generateDocArtifacts(ctx, col, doc, fieldNames, coordinator.encKey)

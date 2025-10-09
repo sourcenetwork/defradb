@@ -20,10 +20,7 @@ const (
 	errUnsupportedIndexType        = "unsupported encrypted index type"
 	errFailedToDeserializeBlock    = "failed to deserialize block"
 	errFailedToGenerateSEArtifacts = "failed to generate SE artifacts"
-	errFailedToGetCollection       = "failed to get collection"
 	errCollectionNotFound          = "collection not found"
-	errInvalidDocumentID           = "invalid document ID"
-	errFailedToGetDocument         = "failed to get document"
 )
 
 func NewErrEmptyDocID(key string) error {
@@ -46,18 +43,6 @@ func NewErrFailedToGenerateSEArtifacts(inner error) error {
 	return errors.Wrap(errFailedToGenerateSEArtifacts, inner)
 }
 
-func NewErrFailedToGetCollection(inner error) error {
-	return errors.Wrap(errFailedToGetCollection, inner)
-}
-
 func NewErrCollectionNotFound(collectionID string) error {
 	return errors.New(errCollectionNotFound, errors.NewKV("CollectionID", collectionID))
-}
-
-func NewErrInvalidDocumentID(inner error) error {
-	return errors.Wrap(errInvalidDocumentID, inner)
-}
-
-func NewErrFailedToGetDocument(inner error) error {
-	return errors.Wrap(errFailedToGetDocument, inner)
 }
