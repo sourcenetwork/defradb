@@ -15,11 +15,13 @@ package tests
 import (
 	"fmt"
 
+	"github.com/multiformats/go-multiaddr"
 	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/node"
@@ -171,7 +173,36 @@ func setupNode(
 
 	addresses, err := nodeObj.DB.PeerInfo()
 	require.NoError(s.T, err)
+	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
+	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
+	// before caching the addresses on the state.
+	addresses, err = removePeerIDFromAddr(addresses)
+	require.NoError(s.T, err)
 	st.CachedAddresses = addresses
 
 	return st, nil
+}
+
+func removePeerIDFromAddr(addr []string) ([]string, error) {
+	addrs := make([]string, len(addr))
+	for i, a := range addr {
+		justAddr, err := removePeerID(a)
+		if err != nil {
+			return nil, err
+		}
+		addrs[i] = justAddr
+	}
+	return addrs, nil
+}
+
+func removePeerID(addr string) (string, error) {
+	maddrWithID, err := multiaddr.NewMultiaddr(addr)
+	if err != nil {
+		return "", err
+	}
+	justAddr, p2ppart := multiaddr.SplitLast(maddrWithID)
+	if p2ppart == nil || p2ppart.Protocol().Code != multiaddr.P_P2P {
+		return "", errors.New("address does not contain a /p2p/ part")
+	}
+	return justAddr.String(), nil
 }
