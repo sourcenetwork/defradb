@@ -12,7 +12,6 @@ package searchable_encryption
 
 import (
 	"testing"
-	"time"
 
 	"github.com/onsi/gomega"
 
@@ -49,9 +48,7 @@ func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Wait{
-				Duration: time.Millisecond * 100,
-			},
+			testUtils.WaitForSESync{},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
 				Request: `
@@ -104,9 +101,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Wait{
-				Duration: time.Millisecond * 100,
-			},
+			testUtils.WaitForSESync{},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
 				Request: `
@@ -204,9 +199,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Wait{
-				Duration: time.Millisecond * 100,
-			},
+			testUtils.WaitForSESync{},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
 				Request: `
@@ -384,9 +377,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Wait{
-				Duration: time.Millisecond * 100,
-			},
+			testUtils.WaitForSESync{},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
 				Request: `
