@@ -101,9 +101,6 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 
 	dbOpts := filterOptions[db.Option](n.options)
-	if n.config.disableP2P {
-		dbOpts = append(dbOpts, db.WithSearchableEncryptionKey(nil))
-	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, lens, dbOpts...)
 	if err != nil {
