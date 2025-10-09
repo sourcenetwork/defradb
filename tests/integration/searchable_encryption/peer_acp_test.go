@@ -118,7 +118,8 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				Duration: time.Millisecond * 100,
 			},
 			testUtils.Request{
-				NodeID: immutable.Some(0),
+				NodeID:   immutable.Some(0),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						encrypted_User(filter: {age: {_eq: 21}}) {
@@ -135,7 +136,8 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				NodeID: immutable.Some(1),
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						User {
@@ -149,7 +151,8 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				},
 			},
 			testUtils.Request{
-				NodeID: immutable.Some(1),
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
 						commits {

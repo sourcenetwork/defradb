@@ -18,7 +18,9 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/encoding"
@@ -126,11 +128,13 @@ type fieldQuery struct {
 
 // generateDocArtifacts generates SE artifacts for specified fields of a document.
 // If fieldNames is empty or nil, artifacts are generated for all encrypted fields.
+// The identity is used in tag computation to isolate tags per identity on the remote node.
 func generateDocArtifacts(
 	ctx context.Context,
 	col client.Collection,
 	doc *client.Document,
 	fieldNames []string,
+	identity immutable.Option[acpIdentity.Identity],
 	encKey []byte,
 ) ([]secore.Artifact, error) {
 	encryptedIndexes, err := col.ListEncryptedIndexes(ctx)
@@ -157,7 +161,7 @@ func generateDocArtifacts(
 		}
 
 		normalValue := fieldValue.NormalValue()
-		artifact, err := generateFieldArtifact(collectionID, docID, encIdx, normalValue, encKey)
+		artifact, err := generateFieldArtifact(collectionID, docID, encIdx, normalValue, identity, encKey)
 		if err != nil {
 			return nil, err
 		}
@@ -168,19 +172,29 @@ func generateDocArtifacts(
 }
 
 // generateFieldArtifact generates a single SE artifact for a specific field value.
+// The identity is included in the tag computation to isolate data per identity on remote nodes.
 func generateFieldArtifact(
 	collectionID string,
 	docID string,
 	encIdx client.EncryptedIndexDescription,
 	fieldValue client.NormalValue,
+	identity immutable.Option[acpIdentity.Identity],
 	encKey []byte,
 ) (secore.Artifact, error) {
 	valueBytes := encoding.EncodeFieldValue(nil, fieldValue, false)
 
+	var identityStr string
+	if identity.HasValue() {
+		ident := identity.Value()
+		if pubKey := ident.PublicKey(); pubKey != nil {
+			identityStr = string(pubKey.Raw())
+		}
+	}
+
 	var tag []byte
 	switch encIdx.Type {
 	case client.EncryptedIndexTypeEquality:
-		tag = secore.GenerateEqualityTag(encKey, collectionID, encIdx.FieldName, valueBytes)
+		tag = secore.GenerateEqualityTag(encKey, identityStr, collectionID, encIdx.FieldName, valueBytes)
 
 	default:
 		return secore.Artifact{}, NewErrUnsupportedIndexType(string(encIdx.Type))

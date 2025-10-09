@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -159,6 +160,7 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 			"", // docID not needed for search tag generation
 			fv.IndexDesc,
 			fv.Value,
+			identity.FromContext(ctx),
 			coordinator.encKey,
 		)
 		if err != nil {
@@ -312,7 +314,7 @@ func (coordinator *Coordinator) generateArtifactsAndPushToReplicators(
 	identity immutable.Option[acpIdentity.Identity],
 	isRetry bool,
 ) error {
-	artifacts, err := coordinator.generateSEArtifacts(ctx, docID, collectionID, fields)
+	artifacts, err := coordinator.generateSEArtifacts(ctx, docID, collectionID, fields, identity)
 	if err != nil {
 		return NewErrFailedToGenerateSEArtifacts(err)
 	}
@@ -359,6 +361,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 	ctx context.Context,
 	docID, collectionID string,
 	fieldNames []string,
+	identity immutable.Option[acpIdentity.Identity],
 ) ([]secore.Artifact, error) {
 	cols, err := coordinator.db.GetCollections(ctx, client.CollectionFetchOptions{
 		CollectionID: immutable.Some(collectionID),
@@ -384,5 +387,5 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		return nil, err
 	}
 
-	return generateDocArtifacts(ctx, col, doc, fieldNames, coordinator.encKey)
+	return generateDocArtifacts(ctx, col, doc, fieldNames, identity, coordinator.encKey)
 }
