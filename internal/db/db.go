@@ -33,7 +33,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
-	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -557,7 +556,7 @@ func (db *DB) GetSearchableEncryptionKey() []byte {
 func (db *DB) QueryDocIDsWithSETags(
 	ctx context.Context,
 	collectionID string,
-	fieldValues []planner.SEFieldValueQuery,
+	fieldValues []se.FieldValueQuery,
 ) ([]string, error) {
 	if db.p2p == nil || db.p2p.SECoordinator() == nil {
 		return []string{}, nil

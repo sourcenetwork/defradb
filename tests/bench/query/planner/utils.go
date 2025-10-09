@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/node"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
@@ -31,7 +32,7 @@ type dbWrapper struct {
 	node.DB
 }
 
-func (w *dbWrapper) QueryDocIDsWithSETags(context.Context, string, []planner.SEFieldValueQuery) ([]string, error) {
+func (w *dbWrapper) QueryDocIDsWithSETags(context.Context, string, []se.FieldValueQuery) ([]string, error) {
 	return []string{}, nil
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 // seScanNode implements a plan node for searchable encryption queries.
@@ -49,7 +50,7 @@ func (n *seScanNode) Start() error {
 }
 
 func (n *seScanNode) queryRemoteNodes() ([]string, error) {
-	fieldValues := make([]SEFieldValueQuery, 0, len(n.filter.ExternalConditions))
+	fieldValues := make([]se.FieldValueQuery, 0, len(n.filter.ExternalConditions))
 
 	for fieldName, condition := range n.filter.ExternalConditions {
 		// Find the encrypted index for this field
@@ -77,7 +78,7 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 			return nil, NewErrFailedToCreateNormalValue(fieldName, err)
 		}
 
-		fieldValues = append(fieldValues, SEFieldValueQuery{
+		fieldValues = append(fieldValues, se.FieldValueQuery{
 			FieldName: fieldName,
 			IndexDesc: *encIdx,
 			Value:     normalValue,

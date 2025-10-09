@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -87,14 +88,7 @@ type PlanContext struct {
 type DB interface {
 	client.TxnStore
 	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
-	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []SEFieldValueQuery) ([]string, error)
-}
-
-// SEFieldValueQuery represents a field value to query for SE artifacts.
-type SEFieldValueQuery struct {
-	FieldName string
-	IndexDesc client.EncryptedIndexDescription
-	Value     client.NormalValue
+	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []se.FieldValueQuery) ([]string, error)
 }
 
 // Planner combines session state and database state to
