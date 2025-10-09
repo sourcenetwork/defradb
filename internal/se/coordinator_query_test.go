@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package se_test
+package se
 
 import (
 	"context"
@@ -17,15 +17,13 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 func TestQuerySEArtifacts_WhenReplicatorsExist_ShouldQueryAndReturnDocIDs(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []se.FieldQuery{
+	queries := []FieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -35,7 +33,7 @@ func TestQuerySEArtifacts_WhenReplicatorsExist_ShouldQueryAndReturnDocIDs(t *tes
 
 	setup.mockGetReplicatorsIDs([]string{setup.peerID})
 
-	expectedReply := se.QuerySEArtifactsReply{DocIDs: []string{"doc-1", "doc-2"}}
+	expectedReply := QuerySEArtifactsReply{DocIDs: []string{"doc-1", "doc-2"}}
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, setup.peerID).Return(expectedReply, nil)
 
 	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
@@ -50,7 +48,7 @@ func TestQuerySEArtifacts_WhenNoReplicators_ShouldReturnEmpty(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []se.FieldQuery{
+	queries := []FieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -70,7 +68,7 @@ func TestQuerySEArtifacts_WhenFirstReplicatorFails_ShouldTryNext(t *testing.T) {
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []se.FieldQuery{
+	queries := []FieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -83,9 +81,9 @@ func TestQuerySEArtifacts_WhenFirstReplicatorFails_ShouldTryNext(t *testing.T) {
 	setup.mockGetReplicatorsIDs([]string{peerID1, peerID2})
 
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, peerID1).
-		Return(se.QuerySEArtifactsReply{}, fmt.Errorf("network error")).Once()
+		Return(QuerySEArtifactsReply{}, fmt.Errorf("network error")).Once()
 
-	expectedReply := se.QuerySEArtifactsReply{
+	expectedReply := QuerySEArtifactsReply{
 		DocIDs: []string{"doc-3", "doc-4"},
 	}
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, peerID2).Return(expectedReply, nil).Once()
@@ -102,7 +100,7 @@ func TestQuerySEArtifacts_WhenAllReplicatorsFail_ShouldReturnError(t *testing.T)
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []se.FieldQuery{
+	queries := []FieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -115,10 +113,10 @@ func TestQuerySEArtifacts_WhenAllReplicatorsFail_ShouldReturnError(t *testing.T)
 	setup.mockGetReplicatorsIDs([]string{peerID1, peerID2})
 
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, peerID1).
-		Return(se.QuerySEArtifactsReply{}, fmt.Errorf("network error 1")).Once()
+		Return(QuerySEArtifactsReply{}, fmt.Errorf("network error 1")).Once()
 
 	setup.mockQueryProto.EXPECT().SendRequest(mock.Anything, mock.Anything, peerID2).
-		Return(se.QuerySEArtifactsReply{}, fmt.Errorf("network error 2")).Once()
+		Return(QuerySEArtifactsReply{}, fmt.Errorf("network error 2")).Once()
 
 	docIDs, err := setup.coordinator.QuerySEArtifacts(context.Background(), setup.collectionID, queries)
 
@@ -131,7 +129,7 @@ func TestQuerySEArtifacts_WhenMultipleQueries_ShouldPassAllToReplicator(t *testi
 	setup := newTestSetup(t)
 	defer setup.close()
 
-	queries := []se.FieldQuery{
+	queries := []FieldQuery{
 		{
 			FieldName: "field1",
 			IndexID:   "index-1",
@@ -151,12 +149,12 @@ func TestQuerySEArtifacts_WhenMultipleQueries_ShouldPassAllToReplicator(t *testi
 
 	setup.mockGetReplicatorsIDs([]string{setup.peerID})
 
-	expectedReply := se.QuerySEArtifactsReply{
+	expectedReply := QuerySEArtifactsReply{
 		DocIDs: []string{"doc-1", "doc-2", "doc-3"},
 	}
 	setup.mockQueryProto.EXPECT().SendRequest(
 		mock.Anything,
-		mock.MatchedBy(func(req se.QuerySEArtifactsRequest) bool {
+		mock.MatchedBy(func(req QuerySEArtifactsRequest) bool {
 			return req.CollectionID == setup.collectionID && len(req.Queries) == 3
 		}),
 		setup.peerID,

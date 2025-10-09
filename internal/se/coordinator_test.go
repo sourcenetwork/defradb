@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package se_test
+package se
 
 import (
 	"context"
@@ -29,7 +29,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	protocolmocks "github.com/sourcenetwork/defradb/internal/db/p2p/protocol/mocks"
-	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/se/mocks"
 )
 
@@ -38,10 +37,10 @@ type testSetup struct {
 	t                *testing.T
 	mockDB           *mocks.DB
 	mockP2P          *mocks.P2P
-	mockStorageProto *protocolmocks.CommChannel[se.PushSEArtifactsRequest, se.PushSEArtifactsReply]
-	mockQueryProto   *protocolmocks.CommChannel[se.QuerySEArtifactsRequest, se.QuerySEArtifactsReply]
+	mockStorageProto *protocolmocks.CommChannel[PushSEArtifactsRequest, PushSEArtifactsReply]
+	mockQueryProto   *protocolmocks.CommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply]
 	mockEventBus     *mockEventBus
-	coordinator      *se.Coordinator
+	coordinator      *Coordinator
 	rootstore        *memory.Datastore
 
 	// Test data
@@ -73,8 +72,8 @@ func newTestSetup(t *testing.T) *testSetup {
 		t:                t,
 		mockDB:           mockDB,
 		mockP2P:          mockP2PImpl,
-		mockStorageProto: protocolmocks.NewCommChannel[se.PushSEArtifactsRequest, se.PushSEArtifactsReply](t),
-		mockQueryProto:   protocolmocks.NewCommChannel[se.QuerySEArtifactsRequest, se.QuerySEArtifactsReply](t),
+		mockStorageProto: protocolmocks.NewCommChannel[PushSEArtifactsRequest, PushSEArtifactsReply](t),
+		mockQueryProto:   protocolmocks.NewCommChannel[QuerySEArtifactsRequest, QuerySEArtifactsReply](t),
 		mockEventBus:     mockEventBus,
 		rootstore:        rootstore,
 
@@ -92,7 +91,7 @@ func newTestSetup(t *testing.T) *testSetup {
 
 // createCoordinator creates the ReplicationCoordinator with all mocks
 func (s *testSetup) createCoordinator() {
-	rc, err := se.NewCoordinatorConfigure(
+	rc, err := NewCoordinatorConfigure(
 		s.mockP2P,
 		s.mockDB,
 		s.encKey,
@@ -105,18 +104,18 @@ func (s *testSetup) createCoordinator() {
 
 // expectSEArtifactPush sets up expectation for SE artifact push to peer
 // Returns a channel that will receive the request when it's made (for thread-safe validation)
-func (s *testSetup) expectSEArtifactPush() <-chan se.PushSEArtifactsRequest {
+func (s *testSetup) expectSEArtifactPush() <-chan PushSEArtifactsRequest {
 	mockCollection := s.createMockCollectionWithDocument()
 
 	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
 
 	s.mockGetReplicatorsIDs([]string{s.peerID})
 
-	requestReceived := make(chan se.PushSEArtifactsRequest, 1)
+	requestReceived := make(chan PushSEArtifactsRequest, 1)
 
 	s.mockStorageProto.EXPECT().SendRequest(
 		mock.Anything,
-		mock.MatchedBy(func(req se.PushSEArtifactsRequest) bool {
+		mock.MatchedBy(func(req PushSEArtifactsRequest) bool {
 			select {
 			case requestReceived <- req:
 			default:
@@ -125,7 +124,7 @@ func (s *testSetup) expectSEArtifactPush() <-chan se.PushSEArtifactsRequest {
 			return req.CollectionID == s.collectionID && len(req.Artifacts) > 0
 		}),
 		s.peerID,
-	).Return(se.PushSEArtifactsReply{}, nil)
+	).Return(PushSEArtifactsReply{}, nil)
 
 	return requestReceived
 }
