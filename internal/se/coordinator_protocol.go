@@ -45,11 +45,11 @@ func (proc *seQueryProcessor) ProcessRequest(
 	return proc.coordinator.processQuerySEArtifactsRequest(ctx, &req)
 }
 
-func (rc *Coordinator) processPushSEArtifactsRequest(
+func (coordinator *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
-	clientTxn, err := rc.db.NewTxn(false)
+	clientTxn, err := coordinator.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 			corelog.String("DocID", docID),
 			corelog.String("CollectionID", req.CollectionID))
 
-		rc.db.Events().Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
+		coordinator.db.Events().Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
 			DocID:        docID,
 			CollectionID: req.CollectionID,
 			FieldNames:   fieldNames,
@@ -111,11 +111,11 @@ func (rc *Coordinator) processPushSEArtifactsRequest(
 	return txn.Commit()
 }
 
-func (rc *Coordinator) processQuerySEArtifactsRequest(
+func (coordinator *Coordinator) processQuerySEArtifactsRequest(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) (QuerySEArtifactsReply, error) {
-	matchingDocIDs, err := rc.querySEArtifactsFromDatastore(ctx, req)
+	matchingDocIDs, err := coordinator.querySEArtifactsFromDatastore(ctx, req)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to query SE artifacts from datastore", err)
 		return QuerySEArtifactsReply{}, err
@@ -130,11 +130,11 @@ func (rc *Coordinator) processQuerySEArtifactsRequest(
 }
 
 // querySEArtifactsFromDatastore queries SE artifacts from the local datastore
-func (rc *Coordinator) querySEArtifactsFromDatastore(
+func (coordinator *Coordinator) querySEArtifactsFromDatastore(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) ([]string, error) {
-	clientTxn, err := rc.db.NewTxn(true)
+	clientTxn, err := coordinator.db.NewTxn(true)
 	if err != nil {
 		return nil, err
 	}

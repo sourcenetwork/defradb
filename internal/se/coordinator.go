@@ -61,7 +61,7 @@ type Coordinator struct {
 
 // NewCoordinator creates a new coordinator
 func NewCoordinator(p2p P2P, host client.Host, db DB, encKey []byte) (*Coordinator, error) {
-	rc, err := NewCoordinatorConfigure(
+	coordinator, err := NewCoordinatorConfigure(
 		p2p,
 		db,
 		encKey,
@@ -72,18 +72,18 @@ func NewCoordinator(p2p P2P, host client.Host, db DB, encKey []byte) (*Coordinat
 		return nil, err
 	}
 
-	rc.storeSEProto = protocol.NewCommChannel(
+	coordinator.storeSEProto = protocol.NewCommChannel(
 		host,
 		"rep_se",
-		&seStoreProcessor{coordinator: rc},
+		&seStoreProcessor{coordinator: coordinator},
 	)
-	rc.querySEProto = protocol.NewCommChannel(
+	coordinator.querySEProto = protocol.NewCommChannel(
 		host,
 		"se_query",
-		&seQueryProcessor{coordinator: rc},
+		&seQueryProcessor{coordinator: coordinator},
 	)
 
-	return rc, nil
+	return coordinator, nil
 }
 
 func NewCoordinatorConfigure(
@@ -95,7 +95,7 @@ func NewCoordinatorConfigure(
 ) (*Coordinator, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	rc := &Coordinator{
+	coordinator := &Coordinator{
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
 		db:             db,
@@ -105,17 +105,17 @@ func NewCoordinatorConfigure(
 		querySEProto:   query,
 	}
 
-	go rc.retrySEReplicators(rc.ctx)
+	go coordinator.retrySEReplicators(coordinator.ctx)
 
-	return rc, nil
+	return coordinator, nil
 }
 
-func (rc *Coordinator) Close() {
-	rc.cancel()
+func (coordinator *Coordinator) Close() {
+	coordinator.cancel()
 }
 
 // reconstructIdentity reconstructs an Identity from stored public key information
-func (rc *Coordinator) reconstructIdentity(
+func (coordinator *Coordinator) reconstructIdentity(
 	publicKey, keyType string,
 ) (immutable.Option[acpIdentity.Identity], error) {
 	if publicKey == "" || keyType == "" {
@@ -144,7 +144,7 @@ type FieldValueQuery struct {
 
 // QueryDocIDsByValues queries SE artifacts from replicators based on field values.
 // It generates search tags from the values and queries replicators for matching documents.
-func (rc *Coordinator) QueryDocIDsByValues(
+func (coordinator *Coordinator) QueryDocIDsByValues(
 	ctx context.Context,
 	collectionID string,
 	fieldValues []FieldValueQuery,
@@ -159,7 +159,7 @@ func (rc *Coordinator) QueryDocIDsByValues(
 			"", // docID not needed for search tag generation
 			fv.IndexDesc,
 			fv.Value,
-			rc.encKey,
+			coordinator.encKey,
 		)
 		if err != nil {
 			return nil, err
@@ -172,12 +172,12 @@ func (rc *Coordinator) QueryDocIDsByValues(
 		})
 	}
 
-	return rc.QuerySEArtifacts(ctx, collectionID, queries)
+	return coordinator.QuerySEArtifacts(ctx, collectionID, queries)
 }
 
 // QuerySEArtifacts queries SE artifacts from replicators and returns matching document IDs.
 // This is called directly by the planner when executing SE queries.
-func (rc *Coordinator) QuerySEArtifacts(
+func (coordinator *Coordinator) QuerySEArtifacts(
 	ctx context.Context,
 	collectionID string,
 	queries []FieldQuery,
@@ -192,7 +192,7 @@ func (rc *Coordinator) QuerySEArtifacts(
 		Queries:      grpcQueries,
 	}
 
-	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
+	peerIDs := coordinator.p2p.GetReplicatorsIDs(collectionID)
 
 	if len(peerIDs) == 0 {
 		return []string{}, nil
@@ -201,7 +201,7 @@ func (rc *Coordinator) QuerySEArtifacts(
 	var err error
 	var reply QuerySEArtifactsReply
 	for _, pid := range peerIDs {
-		reply, err = rc.querySEProto.SendRequest(ctx, grpcReq, pid)
+		reply, err = coordinator.querySEProto.SendRequest(ctx, grpcReq, pid)
 		if err != nil {
 			// Log the error and try the next peer
 			log.ErrorContextE(ctx,
@@ -224,13 +224,13 @@ func (rc *Coordinator) QuerySEArtifacts(
 }
 
 // handleReplicationFailure stores failed SE replication attempt for retry
-func (rc *Coordinator) handleReplicationFailure(
+func (coordinator *Coordinator) handleReplicationFailure(
 	ctx context.Context,
 	docID, collectionID, peerID string,
 	fieldNames []string,
 	identity immutable.Option[acpIdentity.Identity],
 ) error {
-	clientTxn, err := rc.db.NewTxn(false)
+	clientTxn, err := coordinator.db.NewTxn(false)
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,7 @@ func (rc *Coordinator) handleReplicationFailure(
 		DocID:        docID,
 		CollectionID: collectionID,
 		FieldNames:   fieldNames,
-		NextRetry:    time.Now().Add(rc.retryIntervals[0]),
+		NextRetry:    time.Now().Add(coordinator.retryIntervals[0]),
 		NumRetries:   0,
 		PublicKey:    publicKey,
 		KeyType:      keyType,
@@ -275,7 +275,7 @@ func (rc *Coordinator) handleReplicationFailure(
 
 // HandlePushToReplicators processes document update events and generates SE artifacts.
 // This implements the PushToReplicatorsHandler interface for P2P.
-func (rc *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Update) error {
+func (coordinator *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Update) error {
 	// If this is a retry, we don't need to generate artifacts
 	if evt.IsRetry {
 		return nil
@@ -299,19 +299,20 @@ func (rc *Coordinator) HandlePushToReplicators(ctx context.Context, evt event.Up
 		ctx = acpIdentity.WithContext(ctx, evt.Identity)
 	}
 
-	return rc.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID, updatedFields, evt.Identity, false)
+	return coordinator.generateArtifactsAndPushToReplicators(ctx, evt.DocID, evt.CollectionID,
+		updatedFields, evt.Identity, false)
 }
 
 // generateArtifactsAndPushToReplicators generates SE artifacts and pushes them to replicators.
 // This is called by the P2P layer when document updates occur.
-func (rc *Coordinator) generateArtifactsAndPushToReplicators(
+func (coordinator *Coordinator) generateArtifactsAndPushToReplicators(
 	ctx context.Context,
 	docID, collectionID string,
 	fields []string,
 	identity immutable.Option[acpIdentity.Identity],
 	isRetry bool,
 ) error {
-	artifacts, err := rc.generateSEArtifacts(ctx, docID, collectionID, fields)
+	artifacts, err := coordinator.generateSEArtifacts(ctx, docID, collectionID, fields)
 	if err != nil {
 		return NewErrFailedToGenerateSEArtifacts(err)
 	}
@@ -333,14 +334,14 @@ func (rc *Coordinator) generateArtifactsAndPushToReplicators(
 		Artifacts:    protoArtifacts,
 	}
 
-	peerIDs := rc.p2p.GetReplicatorsIDs(collectionID)
+	peerIDs := coordinator.p2p.GetReplicatorsIDs(collectionID)
 	for _, pid := range peerIDs {
-		_, err = rc.storeSEProto.SendRequest(ctx, req, pid)
+		_, err = coordinator.storeSEProto.SendRequest(ctx, req, pid)
 		if err != nil {
 			if isRetry {
 				return err
 			}
-			handleErr := rc.handleReplicationFailure(ctx, docID, collectionID, pid, fields, identity)
+			handleErr := coordinator.handleReplicationFailure(ctx, docID, collectionID, pid, fields, identity)
 			if handleErr != nil {
 				return errors.Join(err, handleErr)
 			}
@@ -354,12 +355,12 @@ func (rc *Coordinator) generateArtifactsAndPushToReplicators(
 //
 // This method uses the extracted GenerateArtifacts function to recreate artifacts
 // needed for retry.
-func (rc *Coordinator) generateSEArtifacts(
+func (coordinator *Coordinator) generateSEArtifacts(
 	ctx context.Context,
 	docID, collectionID string,
 	fieldNames []string,
 ) ([]secore.Artifact, error) {
-	cols, err := rc.db.GetCollections(ctx, client.CollectionFetchOptions{
+	cols, err := coordinator.db.GetCollections(ctx, client.CollectionFetchOptions{
 		CollectionID: immutable.Some(collectionID),
 	})
 	if err != nil {
@@ -383,5 +384,5 @@ func (rc *Coordinator) generateSEArtifacts(
 		return nil, NewErrFailedToGetDocument(err)
 	}
 
-	return generateDocArtifacts(ctx, col, doc, fieldNames, rc.encKey)
+	return generateDocArtifacts(ctx, col, doc, fieldNames, coordinator.encKey)
 }

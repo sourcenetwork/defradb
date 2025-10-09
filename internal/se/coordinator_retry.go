@@ -53,7 +53,7 @@ func defaultRetryIntervals(maxRetries int) []time.Duration {
 }
 
 // retrySEReplicators periodically processes failed SE replications
-func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
+func (coordinator *Coordinator) retrySEReplicators(ctx context.Context) {
 	ticker := time.NewTicker(retryLoopInterval)
 	defer ticker.Stop()
 
@@ -62,14 +62,14 @@ func (rc *Coordinator) retrySEReplicators(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			rc.processSERetries(ctx)
+			coordinator.processSERetries(ctx)
 		}
 	}
 }
 
 // processSERetries checks for due retries and processes them
-func (rc *Coordinator) processSERetries(ctx context.Context) {
-	clientTxn, err := rc.db.NewTxn(true)
+func (coordinator *Coordinator) processSERetries(ctx context.Context) {
+	clientTxn, err := coordinator.db.NewTxn(true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
 		return
@@ -125,7 +125,7 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				continue
 			}
 
-			clientTxn, err := rc.db.NewTxn(false)
+			clientTxn, err := coordinator.db.NewTxn(false)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to create transaction on retry", err)
 				return
@@ -142,7 +142,7 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 				log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
 			}
 
-			go rc.retrySEArtifacts(ctx, key.PeerID, retryInfo)
+			go coordinator.retrySEArtifacts(ctx, key.PeerID, retryInfo)
 		}
 	}
 
@@ -157,8 +157,8 @@ func (rc *Coordinator) processSERetries(ctx context.Context) {
 // Note: This function relies on the SE artifact generation phase to re-generate
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
-func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
-	clientTxn, err := rc.db.NewTxn(false)
+func (coordinator *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
+	clientTxn, err := coordinator.db.NewTxn(false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err, corelog.String("PeerID", peerID))
 		return
@@ -169,7 +169,7 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 
 	log.InfoContext(ctx, "Retrying SE replicator", corelog.String("PeerID", peerID))
 
-	identity, err := rc.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
+	identity, err := coordinator.reconstructIdentity(retryInfo.PublicKey, retryInfo.KeyType)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to reconstruct identity from stored data", err,
 			corelog.String("DocID", retryInfo.DocID))
@@ -177,14 +177,14 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 		ctx = acpIdentity.WithContext(ctx, identity)
 	}
 
-	err = rc.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
+	err = coordinator.generateArtifactsAndPushToReplicators(ctx, retryInfo.DocID,
 		retryInfo.CollectionID, retryInfo.FieldNames, identity, true)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to generate and push SE artifacts for retry", err,
 			corelog.String("DocID", retryInfo.DocID))
 	}
 
-	rc.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
+	coordinator.updateRetryStatus(ctx, peerID, retryInfo, err == nil)
 
 	if err = txn.Commit(); err != nil {
 		log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
@@ -193,7 +193,7 @@ func (rc *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retr
 
 // updateRetryStatus updates the retry status after an attempt
 // It expects transaction in the context
-func (rc *Coordinator) updateRetryStatus(
+func (coordinator *Coordinator) updateRetryStatus(
 	ctx context.Context,
 	peerID string,
 	retryInfo SERetryInfo,
@@ -208,10 +208,11 @@ func (rc *Coordinator) updateRetryStatus(
 			log.ErrorContextE(ctx, "Failed to delete SE retry entry", err)
 		}
 	} else {
-		if retryInfo.NumRetries >= len(rc.retryIntervals) {
-			retryInfo.NextRetry = time.Now().Add(rc.retryIntervals[len(rc.retryIntervals)-1])
+		l := len(coordinator.retryIntervals)
+		if retryInfo.NumRetries >= l {
+			retryInfo.NextRetry = time.Now().Add(coordinator.retryIntervals[l-1])
 		} else {
-			retryInfo.NextRetry = time.Now().Add(rc.retryIntervals[retryInfo.NumRetries])
+			retryInfo.NextRetry = time.Now().Add(coordinator.retryIntervals[retryInfo.NumRetries])
 		}
 		retryInfo.Retrying = false
 
