@@ -98,6 +98,7 @@ func NewCoordinatorConfigure(
 	coordinator := &Coordinator{
 		retryIntervals: defaultRetryIntervals(db.MaxTxnRetries()),
 		encKey:         encKey,
+		p2p:            p2p,
 		db:             db,
 		ctx:            ctx,
 		cancel:         cancel,
