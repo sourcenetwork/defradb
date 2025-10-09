@@ -5,7 +5,6 @@
 package mocks
 
 import (
-	"github.com/sourcenetwork/defradb/client"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -85,52 +84,6 @@ func (_c *P2P_GetReplicatorsIDs_Call) Return(strings []string) *P2P_GetReplicato
 }
 
 func (_c *P2P_GetReplicatorsIDs_Call) RunAndReturn(run func(collectionID string) []string) *P2P_GetReplicatorsIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Host provides a mock function for the type P2P
-func (_mock *P2P) Host() client.Host {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Host")
-	}
-
-	var r0 client.Host
-	if returnFunc, ok := ret.Get(0).(func() client.Host); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Host)
-		}
-	}
-	return r0
-}
-
-// P2P_Host_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Host'
-type P2P_Host_Call struct {
-	*mock.Call
-}
-
-// Host is a helper method to define mock.On call
-func (_e *P2P_Expecter) Host() *P2P_Host_Call {
-	return &P2P_Host_Call{Call: _e.mock.On("Host")}
-}
-
-func (_c *P2P_Host_Call) Run(run func()) *P2P_Host_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *P2P_Host_Call) Return(host client.Host) *P2P_Host_Call {
-	_c.Call.Return(host)
-	return _c
-}
-
-func (_c *P2P_Host_Call) RunAndReturn(run func() client.Host) *P2P_Host_Call {
 	_c.Call.Return(run)
 	return _c
 }
