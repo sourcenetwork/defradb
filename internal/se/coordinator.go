@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -160,7 +159,7 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 			"", // docID not needed for search tag generation
 			fv.IndexDesc,
 			fv.Value,
-			identity.FromContext(ctx),
+			acpIdentity.FromContext(ctx),
 			coordinator.encKey,
 		)
 		if err != nil {
