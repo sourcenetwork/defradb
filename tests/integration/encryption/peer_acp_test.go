@@ -220,7 +220,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 					"Users": []map[string]any{},
 				},
 			},
-			// If the node doesn't have rights to the doc, it can't do merge
+			// If the instance doesn't have rights to the doc, it can't do block sync
 			// and therefore has no heads. So commits should be empty.
 			testUtils.Request{
 				NodeID:   immutable.Some(1),

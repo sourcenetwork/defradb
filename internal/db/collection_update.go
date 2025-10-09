@@ -174,6 +174,7 @@ func (c *collection) makeSelectionPlan(
 		identity.FromContext(ctx),
 		c.db.documentACP,
 		c.db,
+		c.db.p2p,
 	)
 
 	return planner.MakeSelectionPlan(slct)

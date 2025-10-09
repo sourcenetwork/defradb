@@ -34,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
-	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
@@ -548,29 +547,4 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	return iter.Close()
 }
 
-func (db *DB) GetSearchableEncryptionKey() []byte {
-	return db.searchableEncryptionKey
-}
-
 // QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
-func (db *DB) QueryDocIDsWithSETags(
-	ctx context.Context,
-	collectionID string,
-	fieldValues []se.FieldValueQuery,
-) ([]string, error) {
-	if db.p2p == nil || db.p2p.SECoordinator() == nil {
-		return []string{}, nil
-	}
-
-	// Convert planner.SEFieldValueQuery to se.FieldValueQuery
-	seFieldValues := make([]se.FieldValueQuery, len(fieldValues))
-	for i, fv := range fieldValues {
-		seFieldValues[i] = se.FieldValueQuery{
-			FieldName: fv.FieldName,
-			IndexDesc: fv.IndexDesc,
-			Value:     fv.Value,
-		}
-	}
-
-	return db.p2p.SECoordinator().QueryDocIDsByValues(ctx, collectionID, seFieldValues)
-}

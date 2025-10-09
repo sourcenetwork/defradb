@@ -85,7 +85,7 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 		})
 	}
 
-	docIDs, err := n.p.db.QueryDocIDsWithSETags(
+	docIDs, err := n.p.p2p.QueryDocIDsWithSETags(
 		n.p.ctx,
 		n.collectionID,
 		fieldValues,

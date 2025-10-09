@@ -584,3 +584,16 @@ func (m *processQueue) doneOnce(cid cid.Cid) func() {
 		m.done(cid)
 	})
 }
+
+// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
+func (p *P2P) QueryDocIDsWithSETags(
+	ctx context.Context,
+	collectionID string,
+	fieldValues []se.FieldValueQuery,
+) ([]string, error) {
+	if p.seCoordinator == nil {
+		return []string{}, nil
+	}
+
+	return p.seCoordinator.QueryDocIDsByValues(ctx, collectionID, fieldValues)
+}

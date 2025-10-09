@@ -23,16 +23,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/se"
-	"github.com/sourcenetwork/defradb/node"
 	benchutils "github.com/sourcenetwork/defradb/tests/bench"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 )
 
-type dbWrapper struct {
-	node.DB
-}
+type p2pWrapper struct{}
 
-func (w *dbWrapper) QueryDocIDsWithSETags(context.Context, string, []se.FieldValueQuery) ([]string, error) {
+func (w *p2pWrapper) QueryDocIDsWithSETags(context.Context, string, []se.FieldValueQuery) ([]string, error) {
 	return []string{}, nil
 }
 
@@ -72,8 +69,6 @@ func runMakePlanBench(
 	}
 	defer d.Close()
 
-	wrapper := dbWrapper{d}
-
 	parser, err := buildParser(ctx, fixture)
 	if err != nil {
 		return err
@@ -92,7 +87,8 @@ func runMakePlanBench(
 			ctx,
 			acpIdentity.None,
 			dac.NoDocumentACP,
-			&wrapper,
+			d,
+			&p2pWrapper{},
 		)
 		plan, err := planner.MakePlan(q)
 		if err != nil {

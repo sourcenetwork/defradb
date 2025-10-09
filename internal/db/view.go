@@ -146,7 +146,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) (err error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
+	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db, db.p2p)
 
 	// temporarily disable the cache in order to query without using it
 	col.IsMaterialized = false
