@@ -157,7 +157,7 @@ func generateDocArtifacts(
 		}
 
 		normalValue := fieldValue.NormalValue()
-		artifact, err := generateFieldArtifact(ctx, collectionID, docID, encIdx, normalValue, encKey)
+		artifact, err := generateFieldArtifact(collectionID, docID, encIdx, normalValue, encKey)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +169,6 @@ func generateDocArtifacts(
 
 // generateFieldArtifact generates a single SE artifact for a specific field value.
 func generateFieldArtifact(
-	ctx context.Context,
 	collectionID string,
 	docID string,
 	encIdx client.EncryptedIndexDescription,

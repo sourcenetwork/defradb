@@ -155,7 +155,6 @@ func (coordinator *Coordinator) QueryDocIDsByValues(
 	for _, fv := range fieldValues {
 		// Generate search tag
 		artifact, err := generateFieldArtifact(
-			ctx,
 			collectionID,
 			"", // docID not needed for search tag generation
 			fv.IndexDesc,
