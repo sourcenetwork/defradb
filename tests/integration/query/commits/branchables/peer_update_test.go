@@ -83,7 +83,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{
 				// Update node 1 after the peer connection has been established, this will cause the `Shahzad` commit
-				// to be synced to node 0, as well as the related collection commits.
+				// to be synced to node 0, as well as the related collection _commits.
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name":	"Chris"
@@ -92,8 +92,8 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{
 				// Update node 0 after `Chris` and `Shahzad` have synced to node 0.  As this update happens after the peer
-				// connection has been established, this will cause the `Fred` and `Addo` doc commits, and their corresponding
-				// collection-level commits to sync to node 1.
+				// connection has been established, this will cause the `Fred` and `Addo` doc _commits, and their corresponding
+				// collection-level _commits to sync to node 1.
 				//
 				// Now, all nodes should have a full history, including the 'offline' changes made before establishing the
 				// peer connection.
@@ -107,7 +107,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				// Strong eventual consistency must now have been established across both nodes, the result of this query
 				// *must* exactly match across both nodes.
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
 								cid
@@ -115,7 +115,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(collectionNode0Update3Cid, uniqueCid),
 							"links": []map[string]any{

@@ -145,12 +145,12 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			},
 			testUtils.Request{
 				Request: `query {
-					commits (fieldName: "_C") {
+					_commits (fieldName: "_C") {
 						schemaVersionId
 					}
 				}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							// Update commit
 							"schemaVersionId": updatedSchemaVersionID,

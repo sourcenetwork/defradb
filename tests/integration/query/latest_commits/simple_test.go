@@ -29,7 +29,7 @@ func TestQueryLatestCommits(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits {
+					_latestCommits {
 						cid
 						links {
 							cid
@@ -37,7 +37,7 @@ func TestQueryLatestCommits(t *testing.T) {
 						}
 					}
 				}`,
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"_latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

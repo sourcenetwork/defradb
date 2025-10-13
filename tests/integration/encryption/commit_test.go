@@ -31,7 +31,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							cid
 							delta
 							docID
@@ -45,7 +45,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":       "bafyreia37txi77ajmma3t3o4hlnkx7qdbzymioplbuscla576i52rr5hri",
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
@@ -104,13 +104,13 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldName: "age") {
+						_commits(fieldName: "age") {
 							delta
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta": encrypt(testUtils.CBORValue(22), john21DocID, ""),
 						},
@@ -152,14 +152,14 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldName: "age") {
+						_commits(fieldName: "age") {
 							delta
 							docID
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta": testUtils.CBORValue(34),
 							"docID": islam33DocID,
@@ -203,14 +203,14 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta": encrypt(testUtils.CBORValue(5), docID, ""),
 							"docID": docID,
@@ -251,13 +251,13 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldName: "points") {
+						_commits(fieldName: "points") {
 							delta
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta": encrypt(testUtils.CBORValue(3), docID, ""),
 						},
@@ -284,14 +284,14 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta": encrypt(testUtils.CBORValue(33), islam33DocID, ""),
 							"docID": testUtils.NewDocIndex(0, 0),
@@ -346,14 +346,14 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldName: "age") {
+						_commits(fieldName: "age") {
 							delta
 							fieldName
 						}
 					}
 				`,
 				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
+					commits := testUtils.ConvertToArrayOfMaps(t, result["_commits"])
 					require.Equal(t, 2, len(commits), "Expected 2 commits")
 					require.Equal(t, commits[0]["fieldName"], "age")
 					delta1 := commits[0]["delta"]

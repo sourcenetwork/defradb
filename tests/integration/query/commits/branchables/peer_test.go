@@ -59,7 +59,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 			testUtils.WaitForSync{},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
 								cid
@@ -67,7 +67,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(collectionCid, uniqueCid),
 							"links": []map[string]any{
@@ -153,7 +153,7 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 			testUtils.WaitForSync{},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
 								cid
@@ -161,7 +161,7 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(collectionDoc2CreateCid, uniqueCid),
 							"links": []map[string]any{

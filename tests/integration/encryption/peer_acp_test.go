@@ -227,14 +227,14 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},

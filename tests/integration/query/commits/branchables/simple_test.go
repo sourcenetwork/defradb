@@ -40,12 +40,12 @@ func TestQueryCommitsBranchables(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": uniqueCid,
 						},
@@ -93,7 +93,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							schemaVersionId
 							delta
@@ -107,7 +107,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":             gomega.And(collectionCid, uniqueCid),
 							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",

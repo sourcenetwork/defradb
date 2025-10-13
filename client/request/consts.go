@@ -22,7 +22,8 @@ const (
 	Input              = "input"
 	CreateInput        = "create"
 	UpdateInput        = "update"
-	FieldName          = "field"
+	FieldArgName       = "field"
+	FieldNameArgName   = "fieldName"
 	FieldIDName        = "fieldId"
 	FieldNameName      = "fieldName"
 	CompositeFieldName = "_C"
@@ -40,7 +41,9 @@ const (
 	OrderClause   = "order"
 	DepthClause   = "depth"
 
-	DocIDArgName = "docID"
+	DocIDArgName  = "docID"
+	CidArgName    = "cid"
+	HeightArgName = "height"
 
 	AverageFieldName    = "_avg"
 	CountFieldName      = "_count"
@@ -60,8 +63,8 @@ const (
 
 	ExplainLabel = "explain"
 
-	LatestCommitsName = "latestCommits"
-	CommitsName       = "commits"
+	LatestCommitsName = "_latestCommits"
+	CommitsName       = "_commits"
 
 	CommitTypeName           = "Commit"
 	LinksFieldName           = "links"

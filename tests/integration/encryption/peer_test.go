@@ -43,7 +43,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				NodeID: immutable.Some(1),
 				Request: `
 					query {
-						commits {
+						_commits {
 							cid
 							delta
 							docID
@@ -57,7 +57,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":       "bafyreia37txi77ajmma3t3o4hlnkx7qdbzymioplbuscla576i52rr5hri",
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),

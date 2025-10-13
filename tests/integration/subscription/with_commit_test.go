@@ -21,20 +21,20 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					commits {
+					_commits {
 						cid
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
 								"cid": "bafyreigpqtbobuikkvne7wkszl6xqgatsvhhzmwjh4uunpf5xldnjouu4a",
 							},
 						},
 					},
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
 								"cid": "bafyreihsducixg7n6wdbqoyjao4pecsalt4zjx2ybyncizqhq2ci46gyoa",
 							},
@@ -74,7 +74,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					commits {
+					_commits {
 						cid
 						links {
 							cid
@@ -84,7 +84,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
 								"cid":   "bafyreigpqtbobuikkvne7wkszl6xqgatsvhhzmwjh4uunpf5xldnjouu4a",
 								"links": create1Links,
@@ -92,7 +92,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 						},
 					},
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
 								"cid":   "bafyreihsducixg7n6wdbqoyjao4pecsalt4zjx2ybyncizqhq2ci46gyoa",
 								"links": create2Links,
@@ -172,14 +172,14 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 			},
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					commits(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915") {
+					_commits(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915") {
 						cid		
 						docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
 								"cid":   updateCid,
 								"docID": docID,

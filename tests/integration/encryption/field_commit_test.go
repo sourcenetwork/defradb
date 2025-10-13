@@ -30,7 +30,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 							fieldName
@@ -38,7 +38,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, "age"),
 							"docID":     john21DocID,
@@ -98,7 +98,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							cid
 							delta
 							fieldName
@@ -106,7 +106,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 					}
 				`,
 				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
+					commits := testUtils.ConvertToArrayOfMaps(t, result["_commits"])
 					name1 := deltaForField("name1", commits)
 					name2 := deltaForField("name2", commits)
 					name3 := deltaForField("name3", commits)
@@ -167,7 +167,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 			testUtils.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}, limit: 5) {
+						_commits(order: {height: DESC}, limit: 5) {
 							cid
 							delta
 							fieldName
@@ -176,7 +176,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 					}
 				`,
 				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
-					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
+					commits := testUtils.ConvertToArrayOfMaps(t, result["_commits"])
 					name1 := deltaForField("name1", commits)
 					name2 := deltaForField("name2", commits)
 					name3 := deltaForField("name3", commits)

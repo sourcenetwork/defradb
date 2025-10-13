@@ -29,12 +29,12 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(depth: 1) {
+						_commits(depth: 1) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 						},
@@ -73,13 +73,13 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(depth: 1) {
+						_commits(depth: 1) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							// "Age" field head
 							"cid":    "bafyreic5mqzoba47yzm5pugx5b35visawxi2al2tq7p7x2b6yayklwomga",
@@ -130,13 +130,13 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(depth: 2) {
+						_commits(depth: 2) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							// Composite head
 							"cid":    "bafyreiaa6r6d6ure3murz63ebfbmwlmtgm5rc5wbqvucufnku2k3vlgsga",
@@ -191,12 +191,12 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(depth: 1) {
+						_commits(depth: 1) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreifpabjgptgmwx4xw5vmvkp55xqrlnenvb2qfl2jazmq7crfzhmxz4",
 						},

@@ -98,9 +98,9 @@ func parseCommitSelect(
 		}
 	}
 
-	// latestCommits is just syntax sugar around a commits operation.
+	// _latestCommits is just syntax sugar around a commits operation.
 	if commit.Name == request.LatestCommitsName {
-		// Depth is not exposed as an input parameter for latestCommits,
+		// Depth is not exposed as an input parameter for _latestCommits,
 		// so we can blindly set it here without worrying about existing
 		// values
 		commit.Depth = immutable.Some(uint64(1))

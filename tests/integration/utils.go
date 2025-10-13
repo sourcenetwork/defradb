@@ -1036,16 +1036,16 @@ func refreshDocuments(
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
-					commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
-						cid
+					_commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
+						_cid
 					}
 				}`, client.WithVariables(map[string]any{
 					"docID": doc.ID().String(),
 				}))
 				if data, ok := result.GQL.Data.(map[string]any); ok {
-					if commits, ok := data["commits"].([]map[string]any); ok {
+					if commits, ok := data["_commits"].([]map[string]any); ok {
 						for _, commit := range commits {
-							cid := cid.MustParse(commit["cid"].(string))
+							cid := cid.MustParse(commit[request.CidFieldName].(string))
 							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
 								s.Nodes[firstNodesID].Composites[doc.ID().String()],
 								cid,

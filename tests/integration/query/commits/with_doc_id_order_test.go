@@ -36,13 +36,13 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: DESC}) {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreic5mqzoba47yzm5pugx5b35visawxi2al2tq7p7x2b6yayklwomga",
 							"height": int64(2),
@@ -92,13 +92,13 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: ASC}) {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"height": int64(1),
@@ -148,13 +148,13 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {cid: DESC}) {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {cid: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
 							"height": int64(1),
@@ -204,13 +204,13 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {cid: ASC}) {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {cid: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"height": int64(1),
@@ -274,13 +274,13 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						 commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: ASC}) {
+						 _commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: ASC}) {
 							 cid
 							 height
 						 }
 					 }`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"height": int64(1),

@@ -40,7 +40,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", fieldName: "name") {
+					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", fieldName: "name") {
 						links {
 							cid
 						}
@@ -64,7 +64,7 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
+					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
 						links {
 							cid
 						}
@@ -88,7 +88,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", fieldName: "name") {
+					_latestCommits(docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", fieldName: "name") {
 						cid
 						links {
 							cid
@@ -113,7 +113,7 @@ func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
+					_latestCommits(docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
 						cid
 						links {
 							cid
@@ -138,7 +138,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits(fieldName: "name") {
+					_latestCommits(fieldName: "name") {
 						cid
 						links {
 							cid
@@ -146,7 +146,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
 					}
 				}`,
 
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"_latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}
@@ -163,7 +163,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.
 			testUtils.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					latestCommits {
+					_latestCommits {
 						cid
 						links {
 							cid
@@ -171,7 +171,7 @@ func TestDebugExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.
 					}
 				}`,
 
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"_latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

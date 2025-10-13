@@ -37,12 +37,12 @@ func TestQueryCommits(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(nameCid, uniqueCid),
 						},
@@ -81,12 +81,12 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreigyslrbac5tgyapdtdo5jrqwon4hewndxjztlbenx632zgmqsma2y",
 						},
@@ -127,13 +127,13 @@ func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							schemaVersionId
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":             "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
@@ -168,13 +168,13 @@ func TestQueryCommitsWithFieldNameField(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 						},
@@ -211,13 +211,13 @@ func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 						},
@@ -268,7 +268,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							cid
 							delta
 							docID
@@ -280,12 +280,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							}
 							signature {
 								type
-						}
+							}
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":       gomega.And(ageUpdateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(22),
@@ -352,7 +352,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 									"name": "name",
 								},
 							},
-							"signature": nil,
+							"_signature": nil,
 						},
 					},
 				},
@@ -376,7 +376,7 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					history: commits {
+					history: _commits {
 						cid
 					}
 				}`,

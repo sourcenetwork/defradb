@@ -129,14 +129,14 @@ This returns only user documents which have a value for the `points` field *Grea
 
 ## Obtain document commits
 
-DefraDB's data model is based on [MerkleCRDTs](./guides/merkle-crdt.md). Each document has a graph of all of its updates, similar to Git. The updates are called `commits` and are identified by `cid`, a content identifier. Each references its parents by their `cid`s.
+DefraDB's data model is based on [MerkleCRDTs](./guides/merkle-crdt.md). Each document has a graph of all of its updates, similar to Git. The updates are called `_commits` and are identified by `cid`, a content identifier. Each references its parents by their `cid`s.
 
 To get the most recent commits in the MerkleDAG for the document identified as `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`:
 
 ```shell
 defradb client query '
   query {
-    latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
+    _latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
       delta
       height
@@ -154,26 +154,26 @@ It returns a structure similar to the following, which contains the update paylo
 ```json
 {
   "data": {
-    "latestCommits": [
+    "_latestCommits": [
       {
         "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
         "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
         "height": 1,
         "links": [
           {
-            "cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
+            "_cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
             "name": "age"
           },
           {
-            "cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
+            "_cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
             "name": "name"
           },
           {
-            "cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
+            "_cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
             "name": "points"
           },
           {
-            "cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
+            "_cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
             "name": "verified"
           }
         ]
@@ -188,7 +188,7 @@ Obtain a specific commit by its content identifier (`cid`):
 ```shell
 defradb client query '
   query {
-    commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
+    _commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
       cid
       delta
       height

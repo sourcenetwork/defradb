@@ -266,7 +266,7 @@ func parseAggregateTarget(
 
 	for name, value := range arguments {
 		switch name {
-		case request.FieldName:
+		case request.FieldArgName:
 			if v, ok := value.(string); ok {
 				childName = v
 			}

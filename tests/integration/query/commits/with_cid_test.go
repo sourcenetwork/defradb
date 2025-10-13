@@ -36,14 +36,14 @@ func TestQueryCommitsWithCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(
+						_commits(
 							cid: "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 						},
@@ -75,14 +75,14 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(
+						_commits(
 							cid: "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
 						},
@@ -108,14 +108,14 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(cid: "fhbnjfahfhfhanfhga") {
+						_commits(cid: "fhbnjfahfhfhanfhga") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "invalid cid",
 			},
@@ -138,14 +138,14 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
+						_commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "invalid cid",
 			},
@@ -168,14 +168,14 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
+						_commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "cid either does not exist or belong to document",
 			},

@@ -152,7 +152,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				Identity: testUtils.NodeIdentity(0),
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 						}
 					}
@@ -161,7 +161,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				// commit blocks. Once we introduce a dedicated permission for replication,
 				// this should be updated to return the commits with encrypted deltas.
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},
