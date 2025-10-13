@@ -455,8 +455,7 @@ func defaultFromAST(
 	// If the value is nil, then parsing has failed, or a nil value was provided.
 	// Since setting a default value to nil is the same as not providing one,
 	// it is safer to return an error to let the user know something is wrong.
-	// Exception: JSON fields can have nil as a valid default value
-	if value == nil && propName != types.DefaultDirectivePropJSON {
+	if value == nil {
 		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
 	}
 	return value, nil
@@ -486,7 +485,7 @@ func fieldsFromAST(
 				return nil, err
 			}
 		case types.ConstraintsDirectiveLabel:
-			constraints, err = contraintsFromAST(kind, directive)
+			constraints, err = constraintsFromAST(kind, directive)
 			if err != nil {
 				return nil, err
 			}
@@ -609,7 +608,7 @@ type constraintDescription struct {
 	Size int
 }
 
-func contraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
+func constraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
 	constraints := constraintDescription{}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
