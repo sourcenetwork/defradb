@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -225,7 +223,6 @@ func (n *sumNode) Explain(explainType request.ExplainType) (map[string]any, erro
 }
 
 func (n *sumNode) Next() (bool, error) {
-	fmt.Println("Making a check")
 	for {
 		n.execInfo.iterations++
 
@@ -242,131 +239,102 @@ func (n *sumNode) Next() (bool, error) {
 			child := n.currentValue.Fields[source.Index]
 			var collectionSum float64
 			var err error
+			switch childCollection := child.(type) {
+			case []core.Doc:
+				collectionSum = reduceDocs(childCollection, 0, func(childItem core.Doc, value float64) float64 {
+					childProperty := childItem.Fields[source.ChildTarget.Index]
+					switch v := childProperty.(type) {
+					case int:
+						return value + float64(v)
+					case int64:
+						return value + float64(v)
+					case uint64:
+						return value + float64(v)
+					case float32:
+						return value + float64(v)
+					case float64:
+						return value + v
+					default:
+						// return nothing, cannot be summed
+						return value + 0
+					}
+				})
+			case []int64:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[int64],
+					0,
+					func(childItem int64, value float64) float64 {
+						return value + float64(childItem)
+					},
+				)
 
-			// Handle scalar numeric fields directly
-			switch v := child.(type) {
-			case int:
-				collectionSum = float64(v)
-			case int64:
-				collectionSum = float64(v)
-			case uint64:
-				collectionSum = float64(v)
-			case float32:
-				collectionSum = float64(v)
-			case float64:
-				collectionSum = v
-			case immutable.Option[int64]:
-				if v.HasValue() {
-					collectionSum = float64(v.Value())
-				}
-			case immutable.Option[float32]:
-				if v.HasValue() {
-					collectionSum = float64(v.Value())
-				}
-			case immutable.Option[float64]:
-				if v.HasValue() {
-					collectionSum = v.Value()
-				}
-			default:
-				// Existing switch logic for arrays and docs
-				switch childCollection := child.(type) {
-				case []core.Doc:
-					collectionSum = reduceDocs(childCollection, 0, func(childItem core.Doc, value float64) float64 {
-						childProperty := childItem.Fields[source.ChildTarget.Index]
-						switch v := childProperty.(type) {
-						case int:
-							return value + float64(v)
-						case int64:
-							return value + float64(v)
-						case uint64:
-							return value + float64(v)
-						case float32:
-							return value + float64(v)
-						case float64:
-							return value + v
-						default:
-							// return nothing, cannot be summed
+			case []immutable.Option[int64]:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[int64],
+					0,
+					func(childItem immutable.Option[int64], value float64) float64 {
+						if !childItem.HasValue() {
 							return value + 0
 						}
-					})
-				case []int64:
-					collectionSum, err = reduceItems(
-						childCollection,
-						&source,
-						lessN[int64],
-						0,
-						func(childItem int64, value float64) float64 {
-							return value + float64(childItem)
-						},
-					)
+						return value + float64(childItem.Value())
+					},
+				)
+			case []float32:
+				var tempSum float32
+				tempSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[float32],
+					0,
+					func(childItem float32, value float32) float32 {
+						return value + childItem
+					},
+				)
+				collectionSum = float64(tempSum)
+			case []immutable.Option[float32]:
+				var tempSum float32
+				tempSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[float32],
+					0,
+					func(childItem immutable.Option[float32], value float32) float32 {
+						if !childItem.HasValue() {
+							return value + 0
+						}
+						return value + childItem.Value()
+					},
+				)
+				collectionSum = float64(tempSum)
+			case []float64:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessN[float64],
+					0,
+					func(childItem float64, value float64) float64 {
+						return value + childItem
+					},
+				)
 
-				case []immutable.Option[int64]:
-					collectionSum, err = reduceItems(
-						childCollection,
-						&source,
-						lessO[int64],
-						0,
-						func(childItem immutable.Option[int64], value float64) float64 {
-							if !childItem.HasValue() {
-								return value + 0
-							}
-							return value + float64(childItem.Value())
-						},
-					)
-				case []float32:
-					var tempSum float32
-					tempSum, err = reduceItems(
-						childCollection,
-						&source,
-						lessN[float32],
-						0,
-						func(childItem float32, value float32) float32 {
-							return value + childItem
-						},
-					)
-					collectionSum = float64(tempSum)
-				case []immutable.Option[float32]:
-					var tempSum float32
-					tempSum, err = reduceItems(
-						childCollection,
-						&source,
-						lessO[float32],
-						0,
-						func(childItem immutable.Option[float32], value float32) float32 {
-							if !childItem.HasValue() {
-								return value + 0
-							}
-							return value + childItem.Value()
-						},
-					)
-					collectionSum = float64(tempSum)
-				case []float64:
-					collectionSum, err = reduceItems(
-						childCollection,
-						&source,
-						lessN[float64],
-						0,
-						func(childItem float64, value float64) float64 {
-							return value + childItem
-						},
-					)
-
-				case []immutable.Option[float64]:
-					collectionSum, err = reduceItems(
-						childCollection,
-						&source,
-						lessO[float64],
-						0,
-						func(childItem immutable.Option[float64], value float64) float64 {
-							if !childItem.HasValue() {
-								return value + 0
-							}
-							return value + childItem.Value()
-						},
-					)
-				}
+			case []immutable.Option[float64]:
+				collectionSum, err = reduceItems(
+					childCollection,
+					&source,
+					lessO[float64],
+					0,
+					func(childItem immutable.Option[float64], value float64) float64 {
+						if !childItem.HasValue() {
+							return value + 0
+						}
+						return value + childItem.Value()
+					},
+				)
 			}
-
 			if err != nil {
 				return false, err
 			}
