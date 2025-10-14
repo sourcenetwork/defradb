@@ -190,13 +190,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 			return errors.Join(err, iter.Close())
 		}
 
-		var value []byte
-		if dsKey.InstanceType == keys.ValueKey {
-			value, err = iter.Value()
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
 		}
+
 		kvArray = append(kvArray, kv{
 			key:   dsKey,
 			value: value,
@@ -209,11 +207,9 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	}
 
 	for _, item := range kvArray {
-		if item.value != nil {
-			err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
-			if err != nil {
-				return err
-			}
+		err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
+		if err != nil {
+			return err
 		}
 		err = m.store.Delete(ctx, item.key.Bytes())
 		if err != nil {
