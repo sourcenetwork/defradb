@@ -212,12 +212,12 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		if item.value != nil {
 			err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
 			if err != nil {
-				return errors.Join(err, iter.Close())
+				return err
 			}
 		}
 		err = m.store.Delete(ctx, item.key.Bytes())
 		if err != nil {
-			return errors.Join(err, iter.Close())
+			return err
 		}
 	}
 
