@@ -304,7 +304,7 @@ const (
 	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
 	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 22
-	// TO DO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
+	// TODO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
 )
 
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to

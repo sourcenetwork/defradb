@@ -865,8 +865,6 @@ func (doc *Document) Clean() {
 //
 // If `true` is provided, properties with nil values will be ommited from
 // the result.
-// Assumes in same package, so we can access field.Value() or the unexported field.
-// If value is exposed via method, use that method instead.
 func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 	doc.mu.RLock()
 	defer doc.mu.RUnlock()
@@ -898,7 +896,7 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			continue
 		}
 
-		// In the case of nillable arrays, we need to convert to the underlying value.
+		// In the case of nillable arrays of nillables, we need to convert to the underlying value.
 		var innerValue any
 		if v, ok := normValue.NillableStringArray(); ok {
 			innerValue = convertImmutable(v)

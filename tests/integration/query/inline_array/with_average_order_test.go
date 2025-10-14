@@ -16,22 +16,20 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArray_WithAverageAndOrder_Succeeds(t *testing.T) {
+func TestQueryInlineIntegerArrayWithAverageAndOrder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
-					"books": [3, 4, 5],
-					"movies": [1, 2, 3],
-					"games": [3, 4, 2]
-				}`, // Average: 3
+					"testScores": [3, 4, 5],
+					"pageRatings": [1.0, 2.0, 3.0]
+				}`, // Average: 3.0
 			},
 
 			testUtils.CreateDoc{
 				Doc: `{
-					"books": [30, 40, 50],
-					"movies": [10, 20, 30],
-					"games": [30, 40, 20]
+					"testScores": [30, 40, 50],
+					"pageRatings": [10.0, 20.0, 30.0]
 				}`, // Average: 30
 			},
 
@@ -39,7 +37,7 @@ func TestQueryInlineIntegerArray_WithAverageAndOrder_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(books: {}, games: {}, movies: {})
+						total: _avg(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -58,7 +56,7 @@ func TestQueryInlineIntegerArray_WithAverageAndOrder_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(books: {}, games: {}, movies: {})
+						total: _avg(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{

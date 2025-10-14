@@ -21,34 +21,32 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
-					"books": [3, 4],
-					"movies": [1, 2, 3],
-					"games": [3, 4]
-				}`, // Average: 7
+					"testScores": [3, 4, 5],
+					"pageRatings": [1.0, 2.0, 3.0]
+				}`, // Count: 6
 			},
 
 			testUtils.CreateDoc{
 				Doc: `{
-					"books": [30, 40, 50],
-					"movies": [10, 20, 30],
-					"games": [30, 40, 20, 10]
-				}`, // Count: 10
+					"testScores": [3, 4, 5, 6],
+					"pageRatings": [1.0, 2.0, 3.0, 4.0]
+				}`, // Count: 8
 			},
 
 			// Test descending order
 			testUtils.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _count(books: {}, games: {}, movies: {})
+						total: _count(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"total": 10,
+							"total": 8,
 						},
 						{
-							"total": 7,
+							"total": 6,
 						},
 					},
 				},
@@ -58,16 +56,16 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _count(books: {}, games: {}, movies: {})
+						total: _count(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"total": 7,
+							"total": 6,
 						},
 						{
-							"total": 10,
+							"total": 8,
 						},
 					},
 				},

@@ -21,17 +21,15 @@ func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
-					"books": [3, 4, 5],
-					"movies": [1, 2, 3],
-					"games": [3, 4, 2]
+					"testScores": [3, 4, 5],
+					"pageRatings": [1.0, 2.0, 3.0]
 				}`, // Maximum: 5
 			},
 
 			testUtils.CreateDoc{
 				Doc: `{
-					"books": [30, 40, 50],
-					"movies": [10, 20, 30],
-					"games": [30, 40, 20]
+					"testScores": [30, 40, 50],
+					"pageRatings": [10.0, 20.0, 30.0]
 				}`, // Maximum: 50
 			},
 
@@ -39,7 +37,7 @@ func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _max(books: {}, games: {}, movies: {})
+						total: _max(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -58,7 +56,7 @@ func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _max(books: {}, games: {}, movies: {})
+						total: _max(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
