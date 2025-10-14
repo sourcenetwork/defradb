@@ -16,9 +16,10 @@ import (
 	"fmt"
 
 	"github.com/multiformats/go-multiaddr"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
