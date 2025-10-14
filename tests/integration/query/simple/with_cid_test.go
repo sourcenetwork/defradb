@@ -159,3 +159,46 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.DeleteDoc{
+				DocID: 0,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users (
+						cid: "bafyreicqkiictnyz3etodsfrvmrj5haj3gmr5pcedqwnepuhz6h3zexn5y"
+						showDeleted: true
+					){
+						name
+						_deleted
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "John",
+							"_deleted": true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

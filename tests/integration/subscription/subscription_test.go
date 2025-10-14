@@ -414,3 +414,68 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User (showDeleted: true) { 
+						name
+						_deleted
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"name":     "John",
+								"_deleted": false,
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"name":     "Johny",
+								"_deleted": false,
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"name":     "Johny",
+								"_deleted": true,
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"name": "Johny"}`,
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        0,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

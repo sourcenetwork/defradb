@@ -169,6 +169,13 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		return err
 	}
 
+	// Since some of the underlying datastores don't support mutating state in the middle of iterating, we
+	// collect the affected key/values and apply the mutations afterwards.
+	type kv struct {
+		key   keys.DataStoreKey
+		value []byte
+	}
+	kvArray := []kv{}
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -183,23 +190,36 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 			return errors.Join(err, iter.Close())
 		}
 
+		var value []byte
 		if dsKey.InstanceType == keys.ValueKey {
-			value, err := iter.Value()
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-
-			err = m.store.Set(ctx, dsKey.WithDeletedFlag().Bytes(), value)
+			value, err = iter.Value()
 			if err != nil {
 				return errors.Join(err, iter.Close())
 			}
 		}
+		kvArray = append(kvArray, kv{
+			key:   dsKey,
+			value: value,
+		})
+	}
 
-		err = m.store.Delete(ctx, dsKey.Bytes())
+	err = iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range kvArray {
+		if item.value != nil {
+			err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
+			if err != nil {
+				return errors.Join(err, iter.Close())
+			}
+		}
+		err = m.store.Delete(ctx, item.key.Bytes())
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}
 	}
 
-	return iter.Close()
+	return nil
 }
