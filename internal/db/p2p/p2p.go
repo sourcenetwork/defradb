@@ -13,11 +13,13 @@ package p2p
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -189,7 +191,9 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 	rawblock, err := txn.Blockstore().Get(ctx, c)
 	if err != nil {
-		log.ErrorE("Failed to get block", err)
+		if !ipld.IsNotFound(err) {
+			log.ErrorE("Failed to get block", err)
+		}
 		return false
 	}
 
@@ -410,40 +414,32 @@ func (p *P2P) processPushlogRequest(
 	if err != nil {
 		return err
 	}
-	// we call done as soon as we can to release the lock.
-	done()
 
-	go func() {
-		evt := event.Merge{
-			DocID:        req.DocID,
-			ByPeer:       req.SenderID,
-			FromPeer:     req.Creator,
-			Cid:          headCID,
-			CollectionID: req.CollectionID,
-		}
-		err := p.db.Merge(ctx, evt)
-		if err != nil {
-			log.ErrorContextE(
-				ctx,
-				"Failed to execute merge",
-				err,
-				corelog.Any("Event", evt))
-		}
-	}()
+	mergeEvt := event.Merge{
+		DocID:        req.DocID,
+		ByPeer:       req.SenderID,
+		FromPeer:     req.Creator,
+		Cid:          headCID,
+		CollectionID: req.CollectionID,
+	}
+	err = p.db.Merge(ctx, mergeEvt)
+	if err != nil {
+		return err
+	}
 
 	// Notify bus subscribers and the network of peers that we have a new document available.
-	evt := event.Update{
+	updateEvt := event.Update{
 		DocID:        req.DocID,
 		Cid:          headCID,
 		CollectionID: req.CollectionID,
 		Block:        req.Block,
 		IsRelay:      true,
 	}
-	p.db.Events().Publish(event.NewMessage(event.UpdateName, evt))
-	if err := p.SendUpdate(evt); err != nil {
+	p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+	if err := p.SendUpdate(updateEvt); err != nil {
 		// We don't need to return the error for this side-effect-function call.
 		// It's a bonus action that shouldn't affect the caller of `processPuslogRequest`.
-		log.ErrorE("Failed to send update after sync", err)
+		log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
 	}
 
 	return nil
