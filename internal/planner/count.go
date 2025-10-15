@@ -180,9 +180,6 @@ func (n *countNode) Next() (bool, error) {
 					}
 					count += arrayCount
 				}
-			case reflect.Int, reflect.Int64, reflect.Uint64, reflect.Float32, reflect.Float64, reflect.Bool:
-				count += 1
-			}
 		}
 
 		n.currentValue.Fields[n.virtualFieldIndex] = count

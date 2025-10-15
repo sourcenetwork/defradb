@@ -759,9 +759,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 
 	for _, field := range obj.Fields() {
 		listType, isList := field.Type.(*gql.List)
-		// If it's not a list, it will end up having a count of 1
 		if !isList {
-			childTypesByFieldName[field.Name] = gql.NewInputObject(gql.InputObjectConfig{})
 			continue
 		}
 		inputObjectName := genObjectCountName(listType.OfType.Name())
