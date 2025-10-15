@@ -114,13 +114,29 @@ func (s *Select) validateGroupBy() []error {
 }
 
 func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
-	s.DocIDsFilter = DocIDsFilter{
-		DocIDs: immutable.Some([]string{docID}),
+	var docIDFilter DocIDsFilter
+	// We only redefine the docID if it hasn't been defined by the user.
+	if !s.DocIDsFilter.DocIDs.HasValue() {
+		docIDFilter = DocIDsFilter{
+			DocIDs: immutable.Some([]string{docID}),
+		}
+	} else {
+		docIDFilter = s.DocIDsFilter
 	}
-	s.CIDFilter = CIDFilter{
-		immutable.Some(cid),
+	return &Select{
+		Field:        s.Field,
+		ChildSelect:  s.ChildSelect,
+		Limitable:    s.Limitable,
+		Offsetable:   s.Offsetable,
+		Orderable:    s.Orderable,
+		Filterable:   s.Filterable,
+		DocIDsFilter: docIDFilter,
+		CIDFilter: CIDFilter{
+			immutable.Some(cid),
+		},
+		Groupable:   s.Groupable,
+		ShowDeleted: s.ShowDeleted,
 	}
-	return s
 }
 
 // selectJson is a private object used for handling json deserialization
