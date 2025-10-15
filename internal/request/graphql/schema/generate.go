@@ -758,9 +758,10 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	childTypesByFieldName := map[string]gql.Type{}
 
 	for _, field := range obj.Fields() {
-		// Only lists can be counted
 		listType, isList := field.Type.(*gql.List)
+		// If it's not a list, it will end up having a count of 1
 		if !isList {
+			//childTypesByFieldName[field.Name] = gql.NewInputObject(gql.InputObjectConfig{})
 			continue
 		}
 		inputObjectName := genObjectCountName(listType.OfType.Name())
@@ -889,12 +890,10 @@ func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 	fieldTypes := map[string]gql.Type{}
 	for _, field := range obj.Fields() {
 		listType, isList := field.Type.(*gql.List)
-		if !isList {
-			continue
-		}
-
 		var inputObjectName string
-		if isNumericArray(listType) {
+		if !isList {
+			fieldTypes[field.Name] = gql.NewInputObject(gql.InputObjectConfig{})
+		} else if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
 			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
