@@ -528,7 +528,12 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 			return errors.Join(err, iter.Close())
 		}
 
-		log.InfoContext(ctx, "", corelog.Any(string(iter.Key()), value))
+		key, err := datastore.HumanReadableKey(iter.Key())
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		log.InfoContext(ctx, "", corelog.Any(key, value))
 	}
 
 	return iter.Close()
