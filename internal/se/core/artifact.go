@@ -30,20 +30,11 @@ const (
 // It contains the cryptographic search tag and metadata needed to store and query
 // encrypted indexes on untrusted replicator nodes.
 type Artifact struct {
-	// Type is the artifact type (e.g., equality_tag for equality searches)
-	Type ArtifactType
-
 	// CollectionID is the unique identifier of the collection
 	CollectionID string
 
-	// FieldName is the name of the field this artifact is for
-	FieldName string
-
 	// DocID is the unique document identifier
 	DocID string
-
-	// Operation indicates whether this is an add or delete operation
-	Operation OperationType
 
 	// IndexID is the unique identifier of the encrypted index
 	// Used as a domain separator in search tag computation

@@ -29,7 +29,6 @@ import (
 )
 
 // storeArtifacts stores SE artifacts directly in the datastore.
-// This is called by the server when receiving artifacts from peers.
 func storeArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []secore.Artifact) error {
 	for _, artifact := range artifacts {
 		key := keys.DatastoreSE{
@@ -201,11 +200,8 @@ func generateFieldArtifact(
 	}
 
 	artifact := secore.Artifact{
-		Type:         secore.ArtifactTypeEqualityTag,
 		CollectionID: collectionID,
-		FieldName:    encIdx.FieldName,
 		DocID:        docID,
-		Operation:    secore.OperationAdd,
 		IndexID:      encIdx.FieldName,
 		SearchTag:    tag,
 	}
