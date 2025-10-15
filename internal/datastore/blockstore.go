@@ -46,11 +46,15 @@ func (bs *bstore) AsIPLDStorage() IPLDStorage {
 
 const (
 	objectMarker       = byte(0xff)
-	toMergeIndexPrefix = "/tm"
+	toMergeIndexPrefix = byte('m')
 )
 
-func newToMergeKey(cid string) []byte {
-	return []byte(toMergeIndexPrefix + "/" + cid)
+func newToMergeKey(cid []byte) []byte {
+	l := len(cid)
+	key := make([]byte, l+1)
+	copy(key[1:], cid)
+	key[0] = toMergeIndexPrefix
+	return key
 }
 
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
@@ -61,7 +65,7 @@ func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	if !hasBlock {
 		return false, nil
 	}
-	notMerged, err := bs.store.Has(ctx, newToMergeKey(cid.String()))
+	notMerged, err := bs.store.Has(ctx, newToMergeKey(cid.Bytes()))
 	if err != nil {
 		return false, err
 	}
@@ -69,7 +73,7 @@ func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 }
 
 func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
-	return bs.store.Delete(ctx, newToMergeKey(cid.String()))
+	return bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
 }
 
 type p2pBlockStore struct {
@@ -85,7 +89,7 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	err = bs.store.Set(ctx, newToMergeKey(block.Cid().String()), []byte{objectMarker})
+	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
 	if err != nil {
 		return err
 	}
@@ -99,7 +103,7 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 		if err == nil && exists {
 			continue
 		}
-		err = bs.store.Set(ctx, newToMergeKey(b.Cid().String()), []byte{objectMarker})
+		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
 		if err != nil {
 			return err
 		}
