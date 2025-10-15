@@ -85,7 +85,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 
 	case ast.OperationTypeSubscription:
 		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
-		if err != nil {
+		if errs != nil {
 			return nil, errs
 		}
 
