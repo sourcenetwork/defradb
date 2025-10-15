@@ -162,7 +162,7 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 type NodeState struct {
 	// The node's client active in this test.
 	clients.Client
-	// Event cp2p.NodeOptontains all Event node subscriptions.
+	// Event contains all Event node subscriptions.
 	Event *EventState
 	// P2P contains P2P states for the node.
 	P2P *P2PState
