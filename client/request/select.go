@@ -12,6 +12,8 @@ package request
 
 import (
 	"encoding/json"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // Select is a complex Field with strong typing.
@@ -109,6 +111,16 @@ func (s *Select) validateGroupBy() []error {
 	}
 
 	return result
+}
+
+func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
+	s.DocIDsFilter = DocIDsFilter{
+		DocIDs: immutable.Some([]string{docID}),
+	}
+	s.CIDFilter = CIDFilter{
+		immutable.Some(cid),
+	}
+	return s
 }
 
 // selectJson is a private object used for handling json deserialization
