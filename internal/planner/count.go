@@ -134,37 +134,44 @@ func (n *countNode) Next() (bool, error) {
 		}
 
 		n.currentValue = n.plan.Value()
+		// Can just scan for now, can be replaced later by something fancier if needed
 		var count int
-
 		for _, source := range n.aggregateMapping {
 			property := n.currentValue.Fields[source.Index]
 			v := reflect.ValueOf(property)
-
 			switch v.Kind() {
-			// Existing case: handle arrays, slices, maps, strings, etc.
+			// v.Len will panic if v is not one of these types, we don't want it to panic
 			case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 				if source.Filter == nil && source.Limit == nil {
-					count += v.Len()
+					count = count + v.Len()
 				} else {
 					var arrayCount int
 					var err error
 					switch array := property.(type) {
 					case []core.Doc:
 						arrayCount = countDocs(array)
+
 					case []bool:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []immutable.Option[bool]:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []int64:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []immutable.Option[int64]:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []float64:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []immutable.Option[float64]:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []string:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []immutable.Option[string]:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
 					}
@@ -173,11 +180,7 @@ func (n *countNode) Next() (bool, error) {
 					}
 					count += arrayCount
 				}
-
-			// ✅ NEW CASE: handle scalar (non-collection) values
-			case reflect.Int, reflect.Int64, reflect.Uint64,
-				reflect.Float32, reflect.Float64, reflect.Bool:
-				// Count a single scalar as 1
+			case reflect.Int, reflect.Int64, reflect.Uint64, reflect.Float32, reflect.Float64, reflect.Bool:
 				count += 1
 			}
 		}
