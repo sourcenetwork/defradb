@@ -389,7 +389,7 @@ func TestMutationCreate_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithDefaultJSONNullValue_ShouldBeSet(t *testing.T) {
+func TestMutationCreate_WithDefaultJSONNullValue_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -399,25 +399,7 @@ func TestMutationCreate_WithDefaultJSONNullValue_ShouldBeSet(t *testing.T) {
 						metadata: JSON @default(json: null)
 					}
 				`,
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"name": "John",
-				},
-			},
-			testUtils.Request{
-				Request: `query {
-					User {
-						metadata
-					}
-				}`,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{
-							"metadata": nil,
-						},
-					},
-				},
+				ExpectedError: "default value is invalid",
 			},
 		},
 	}
