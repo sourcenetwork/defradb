@@ -180,8 +180,8 @@ func (n *countNode) Next() (bool, error) {
 					}
 					count += arrayCount
 				}
+			}
 		}
-
 		n.currentValue.Fields[n.virtualFieldIndex] = count
 
 		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)
