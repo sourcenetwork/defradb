@@ -139,7 +139,7 @@ func (coordinator *Coordinator) processSERetries(ctx context.Context) {
 				log.ErrorContextE(ctx, "Failed to commit transaction on retry", err)
 			}
 
-			go coordinator.retrySEArtifacts(ctx, key.PeerID, retryInfo)
+			coordinator.retrySEArtifacts(ctx, key.PeerID, retryInfo)
 		}
 	}
 
