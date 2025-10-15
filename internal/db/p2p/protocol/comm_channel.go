@@ -127,5 +127,8 @@ func (c *commChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 func (c *commChannel[Req, Reply, ReqP, ReplyP]) onResponse(stream io.Reader, peerID string) {
 	var reply Reply
 	replyPtr := ReplyP(&reply)
-	_ = message.Receive(stream, peerID, c, replyPtr)
+	err := message.Receive(stream, peerID, c, replyPtr)
+	if err != nil {
+		log.ErrorE("Failed to receive response message.", err)
+	}
 }

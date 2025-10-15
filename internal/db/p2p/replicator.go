@@ -329,7 +329,10 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 						corelog.Any("CID", lg.Cid),
 						corelog.Any("PeerID", peerID))
 					if !lg.IsRetry {
-						_ = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
+						err = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
+						if err != nil {
+							log.ErrorE("Failed to handle replicator failure.", err)
+						}
 					}
 				}
 			}()

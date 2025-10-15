@@ -24,7 +24,7 @@ import (
 )
 
 // messageVersion is used to keep track of message format changes
-// so that we can try to be backword compatible
+// so that we can try to be backward compatible
 const messageVersion = "/defradb/0.0.1"
 
 // Message is the interface that protocol messages need to implement
@@ -71,7 +71,7 @@ type Message interface {
 	SetErrMessage(err string)
 }
 
-// proto is the minum set of methods that protocols should implement to handle
+// proto is the minimum set of methods that protocols should implement to handle
 // sending and receiving messages adequately.
 type proto interface {
 	Host() client.Host
@@ -80,7 +80,7 @@ type proto interface {
 	GetResponseChan(messageID string) (chan Message, bool)
 }
 
-// Reveive takes in a network stream and store the unmarshalled message in the provided [Message]
+// Receive takes in a network stream and store the unmarshalled message in the provided [Message]
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
 	b, err := io.ReadAll(stream)
 	if err != nil {
