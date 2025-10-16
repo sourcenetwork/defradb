@@ -38,9 +38,15 @@ func getNodesWithIDs(nodeID immutable.Option[int], nodes []*state.NodeState) ([]
 func refreshCollections(
 	s *state.State,
 ) {
-	for _, node := range s.Nodes {
+	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		// Inject node's identity into the context while refreshing so the [GetCollections] call
+		// doesn't fail due to lack of authorization(s) if NAC is enabled.
+		nodeIdentity := NodeIdentity(s.GetCurrentNodeID())
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		allCollections, err := node.GetCollections(s.Ctx, client.CollectionFetchOptions{})
+		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
+		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
