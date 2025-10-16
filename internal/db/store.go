@@ -195,7 +195,7 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionSetActiveVersionPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 

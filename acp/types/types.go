@@ -90,7 +90,6 @@ const (
 	NodeNACRelationDeletePerm
 	NodeCollectionPatchPerm
 	NodeCollectionGetPerm
-	NodeCollectionSetActiveVersionPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -113,7 +112,6 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-relation-delete",
 	"collection-patch",
 	"collection-get",
-	"collection-set-active-version",
 }
 
 const NodeACPObject = "NodeObject"
@@ -161,8 +159,6 @@ resources:
       collection-patch:
         expr: owner + admin
       collection-get:
-        expr: owner + admin
-      collection-set-active-version:
         expr: owner + admin
 
     relations:
