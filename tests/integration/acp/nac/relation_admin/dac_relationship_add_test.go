@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_AdminRelation_CanAddDACActorRelationship(t *testing.T) {
+func TestNAC_AdminRelation_WithDACManagerRelation_CanAddDACActorRelationship(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -41,8 +41,16 @@ func TestNAC_AdminRelation_CanAddDACActorRelationship(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
+			testUtils.AddDACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				CollectionID:      0,
+				DocID:             0,
+				// Note: If the other user is not a manager it can't perform relationship operations
+				Relation: "manager",
+			},
 
-			// This user, can not perform this gated operation yet.
+			// This user, can not perform this gated operation yet, eventhough they are a DAC manager.
 			testUtils.AddDACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
@@ -68,6 +76,73 @@ func TestNAC_AdminRelation_CanAddDACActorRelationship(t *testing.T) {
 				DocID:             0,
 				Relation:          "reader",
 				ExpectedExistence: false,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_AdminRelation_WithoutManagerDACRelation_CanNotAddDACActorRelationship(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   examplePolicy,
+			},
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+			},
+			testUtils.CreateDoc{
+				Identity:     testUtils.ClientIdentity(1),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+			},
+			testUtils.AddDACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				CollectionID:      0,
+				DocID:             0,
+				// Note: This is a reader and not a manger so can't perform DAC relationship operations.
+				Relation: "reader",
+			},
+
+			// This user, can not perform this gated operation yet, eventhough they are a DAC manager.
+			testUtils.AddDACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(2),
+				TargetIdentity:    testUtils.ClientIdentity(3),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
+				ExpectedError:     "not authorized to perform operation",
+			},
+
+			// Grant access to user.
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
+				Relation:          "admin",
+				ExpectedExistence: false,
+			},
+
+			// This user, can now try to perform this gated operation.
+			// But, since this user is not a DAC manager, they can't add a DAC actor relationship.
+			testUtils.AddDACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(2),
+				TargetIdentity:    testUtils.ClientIdentity(3),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
+				ExpectedError:     "cannot create relationship: actor is not a manager of relation",
 			},
 		},
 	}

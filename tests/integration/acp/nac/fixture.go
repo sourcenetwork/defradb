@@ -28,6 +28,13 @@ const examplePolicy = `
           owner:
             types:
               - actor
+          manager:
+            types:
+              - actor
+            manages:
+              - reader
+              - updater
+              - deleter
           reader:
             types:
               - actor
