@@ -1229,9 +1229,11 @@ func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		err := node.SetActiveCollectionVersion(s.Ctx, action.VersionID)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+		err := node.SetActiveCollectionVersion(ctx, action.VersionID)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

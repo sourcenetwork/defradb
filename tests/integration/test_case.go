@@ -220,7 +220,15 @@ type SetActiveCollectionVersion struct {
 	// If a value is not provided the version will be set on all nodes.
 	NodeID immutable.Option[int]
 
-	VersionID     string
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// VersionID to set as active collection version.
+	VersionID string
+
+	// Any error expected from the action. Optional.
 	ExpectedError string
 }
 
