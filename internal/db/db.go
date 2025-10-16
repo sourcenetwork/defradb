@@ -551,5 +551,3 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 
 	return iter.Close()
 }
-
-// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.

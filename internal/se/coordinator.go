@@ -227,7 +227,7 @@ func (coordinator *Coordinator) handleReplicationFailure(
 
 	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)
 
-	retryInfo := SERetryInfo{
+	retryInfo := seRetryInfo{
 		DocID:        docID,
 		CollectionID: collectionID,
 		FieldNames:   fieldNames,

@@ -157,8 +157,8 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 						}
 					}
 				`,
-				// this replicator doesn't have access to the document, so it can't even
-				// store heads. Once we introduce a dedicated permission for replication,
+				// this replicator doesn't have access to the document, so it doesn't have the related
+				// commit blocks. Once we introduce a dedicated permission for replication,
 				// this should be updated to return the commits with encrypted deltas.
 				Results: map[string]any{
 					"commits": []map[string]any{},

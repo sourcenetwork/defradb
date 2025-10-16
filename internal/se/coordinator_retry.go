@@ -29,8 +29,8 @@ const (
 	retryLoopInterval = 2 * time.Second
 )
 
-// SERetryInfo stores retry information for failed SE replications
-type SERetryInfo struct {
+// seRetryInfo stores retry information for failed SE replications
+type seRetryInfo struct {
 	DocID        string
 	CollectionID string
 	FieldNames   []string
@@ -99,7 +99,7 @@ func (coordinator *Coordinator) processSERetries(ctx context.Context) {
 			continue
 		}
 
-		retryInfo := SERetryInfo{}
+		retryInfo := seRetryInfo{}
 		err = cbor.Unmarshal(value, &retryInfo)
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to unmarshal SE retry info", err)
@@ -154,7 +154,7 @@ func (coordinator *Coordinator) processSERetries(ctx context.Context) {
 // Note: This function relies on the SE artifact generation phase to re-generate
 // artifacts from the document's field values. We don't store SE artifacts locally
 // on the producer node - they are only stored on replicator nodes.
-func (coordinator *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo SERetryInfo) {
+func (coordinator *Coordinator) retrySEArtifacts(ctx context.Context, peerID string, retryInfo seRetryInfo) {
 	clientTxn, err := coordinator.db.NewTxn(false)
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to create transaction on retry", err, corelog.String("PeerID", peerID))
@@ -185,7 +185,7 @@ func (coordinator *Coordinator) retrySEArtifacts(ctx context.Context, peerID str
 func (coordinator *Coordinator) updateRetryStatus(
 	ctx context.Context,
 	peerID string,
-	retryInfo SERetryInfo,
+	retryInfo seRetryInfo,
 	success bool,
 ) {
 	txn := datastore.CtxMustGetTxn(ctx)

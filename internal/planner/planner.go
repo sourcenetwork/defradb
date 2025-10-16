@@ -85,10 +85,6 @@ type PlanContext struct {
 	context.Context
 }
 
-type DB interface {
-	client.TxnStore
-}
-
 // P2P defines the P2P operations needed by the planner.
 type P2P interface {
 	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
@@ -100,7 +96,7 @@ type P2P interface {
 type Planner struct {
 	identity    immutable.Option[acpIdentity.Identity]
 	documentACP immutable.Option[dac.DocumentACP]
-	db          DB
+	db          client.TxnStore
 	p2p         P2P
 	ctx         context.Context
 }
@@ -109,7 +105,7 @@ func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	documentACP immutable.Option[dac.DocumentACP],
-	db DB,
+	db client.TxnStore,
 	p2p P2P,
 ) *Planner {
 	return &Planner{

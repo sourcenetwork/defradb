@@ -71,7 +71,7 @@ var (
 	ErrPolicyInvalidIDProp       = errors.New(errPolicyInvalidIDProp)
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
-	ErrInvalidTypeForContraint   = errors.New(errInvalidTypeForConstraint)
+	ErrInvalidTypeForConstraint  = errors.New(errInvalidTypeForConstraint)
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {
