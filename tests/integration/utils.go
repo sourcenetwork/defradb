@@ -32,7 +32,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -844,11 +843,9 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		opts := []node.Option{
 			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex))),
 		}
-		for _, opt := range s.Nodes[nodeIndex].NetOpts {
-			opts = append(opts, opt)
-		}
+		opts = append(opts, s.Nodes[nodeIndex].NetOpts...)
 
-		opts = append(opts, p2p.WithListenAddresses(s.Nodes[nodeIndex].CachedAddresses...))
+		opts = withWithListenAddresses(opts, s.Nodes[nodeIndex].CachedAddresses...)
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -979,12 +976,11 @@ func configureNode(
 	require.NoError(s.T, err)
 
 	netNodeOpts := action()
-	netNodeOpts = append(netNodeOpts, p2p.WithPrivateKey(privateKey))
+
+	netNodeOpts = withPrivateKey(netNodeOpts, privateKey)
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
-	for _, opt := range netNodeOpts {
-		nodeOpts = append(nodeOpts, opt)
-	}
+	nodeOpts = append(nodeOpts, netNodeOpts...)
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
 	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?

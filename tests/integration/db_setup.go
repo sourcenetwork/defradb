@@ -18,7 +18,6 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -132,12 +131,7 @@ func setupNode(
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
-	netOpts := make([]p2p.NodeOpt, 0)
-	for _, opt := range opts {
-		if opt, ok := opt.(p2p.NodeOpt); ok {
-			netOpts = append(netOpts, opt)
-		}
-	}
+	netOpts := getP2POptions(opts)
 
 	if s.IsNetworkEnabled {
 		opts = append(opts, node.WithDisableP2P(false))

@@ -17,7 +17,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega/types"
 
-	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -167,7 +166,7 @@ type NodeState struct {
 	// P2P contains P2P states for the node.
 	P2P *P2PState
 	// The network configurations for the nodes
-	NetOpts []p2p.NodeOpt
+	NetOpts []node.Option
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.

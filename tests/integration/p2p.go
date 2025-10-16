@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"net"
 	"time"
 
 	"github.com/multiformats/go-multiaddr"
@@ -19,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/go-p2p"
 
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -487,38 +485,6 @@ func reconnectPeers(s *state.State) {
 			require.NoError(s.T, err)
 		}
 	}
-}
-
-func RandomNetworkingConfig() ConfigureNode {
-	return func() []p2p.NodeOpt {
-		return []p2p.NodeOpt{
-			p2p.WithListenAddresses("/ip4/" + getIPString() + "/tcp/0"),
-			p2p.WithEnableRelay(true),
-		}
-	}
-}
-
-func getIPString() string {
-	loopbackIP := "127.0.0.1"
-
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		// If getting the local address fails, we simply return the loopback address.
-		// This would occur if the machine running the tests has no network connection.
-		// This will cause the integration tests that depend on DHT relaying of messages to fail.
-		return loopbackIP
-	}
-	defer func() {
-		// The test doesn't care about an error on close so we can ignore it.
-		_ = conn.Close()
-	}()
-
-	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
-	if !ok {
-		return loopbackIP
-	}
-
-	return localAddr.IP.String()
 }
 
 // syncDocs requests document sync from peers.
