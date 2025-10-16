@@ -176,8 +176,6 @@ type PatchCollection struct {
 
 	// Any error expected from the action. Optional.
 	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
 	ExpectedError string
 }
 
@@ -192,6 +190,11 @@ type GetCollections struct {
 
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The expected results.
 	//

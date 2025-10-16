@@ -57,6 +57,10 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -73,6 +77,10 @@ func (db *DB) GetCollections(
 ) ([]client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {

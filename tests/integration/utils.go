@@ -1176,10 +1176,12 @@ func getCollections(
 	s *state.State,
 	action GetCollections,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.InitContext(s.Ctx, txn)
+		ctx = getContextWithIdentity(ctx, s, action.Identity, nodeID)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
