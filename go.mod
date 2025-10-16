@@ -38,13 +38,13 @@ require (
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.4.1
-	github.com/sourcenetwork/corekv v0.2.3
+	github.com/sourcenetwork/corekv v0.2.4
 	github.com/sourcenetwork/corekv/badger v0.2.3
-	github.com/sourcenetwork/corekv/blockstore v0.2.3
-	github.com/sourcenetwork/corekv/memory v0.2.3
-	github.com/sourcenetwork/corekv/namespace v0.2.3
+	github.com/sourcenetwork/corekv/blockstore v0.2.4
+	github.com/sourcenetwork/corekv/memory v0.2.4
+	github.com/sourcenetwork/corekv/namespace v0.2.4
 	github.com/sourcenetwork/corelog v0.0.8
-	github.com/sourcenetwork/go-p2p v0.1.2
+	github.com/sourcenetwork/go-p2p v0.1.4
 	github.com/sourcenetwork/goji v0.0.8
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a
 	github.com/sourcenetwork/immutable v0.3.0
@@ -340,6 +340,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/sourcenetwork/corekv/chunk v0.2.4 // indirect
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect

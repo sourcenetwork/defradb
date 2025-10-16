@@ -20,7 +20,6 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	grpcpeer "google.golang.org/grpc/peer"
 
-	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
@@ -45,7 +44,7 @@ type PubSubServer interface {
 		topic string,
 		data []byte,
 		withMultiResponse bool,
-	) (<-chan p2p.PubsubResponse, error)
+	) (<-chan client.PubsubResponse, error)
 }
 
 type CollectionRetriever interface {
@@ -233,7 +232,7 @@ type fetchEncryptionKeyReply struct {
 
 // handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
 func (s *pubSubService) handleFetchEncryptionKeyResponse(
-	resp p2p.PubsubResponse,
+	resp client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,

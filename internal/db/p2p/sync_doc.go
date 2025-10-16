@@ -21,7 +21,6 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -102,7 +101,7 @@ func (p *P2P) waitAndHandleDocSyncResponses(
 	ctx context.Context,
 	collectionID string,
 	docIDs []string,
-	pubSubRespChan <-chan p2p.PubsubResponse,
+	pubSubRespChan <-chan client.PubsubResponse,
 ) (results map[string][]cid.Cid, err error) {
 	result := make(map[string][]cid.Cid)
 
@@ -131,7 +130,7 @@ loop:
 // It mutates the results map with the document IDs and their corresponding CIDs.
 func (p *P2P) handleDocSyncResponse(
 	ctx context.Context,
-	resp p2p.PubsubResponse,
+	resp client.PubsubResponse,
 	collectionID string,
 	results map[string][]cid.Cid,
 ) {

@@ -18,7 +18,6 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
-	"github.com/sourcenetwork/go-p2p"
 )
 
 // P2P is a peer connected database implementation.
@@ -88,7 +87,7 @@ func (p PeerInfo) String() string {
 	return string(b)
 }
 
-type PubsubResponse struct {
+type PubsubResponse = struct {
 	// ID is the cid.Cid of the received message.
 	ID string
 	// From is the ID of the sender.
@@ -133,7 +132,7 @@ type Host interface {
 		topic string,
 		data []byte,
 		withMultiResponse bool,
-	) (<-chan p2p.PubsubResponse, error)
+	) (<-chan PubsubResponse, error)
 	// IPLDStore returns the host's IPLD store implementation.
 	IPLDStore() blockstore.IPLDStore
 	// ContextWithSession returns a new context with a session for the underlying block service..
