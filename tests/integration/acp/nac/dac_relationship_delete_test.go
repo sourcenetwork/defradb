@@ -13,12 +13,12 @@ package test_acp_nac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_GatesDeletingDACRelationship_AllowIfAuthorizedElseError(t *testing.T) {
+func TestNAC_GatesDeletingDACRelationship_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "admin acp correctly gates deleting DAC relationship operation, allow if authorized, otherwise error",
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -30,39 +30,59 @@ func TestNAC_GatesDeletingDACRelationship_AllowIfAuthorizedElseError(t *testing.
 			// will loose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
-				Policy: `
-                    name: Test Policy
-                    description: A Policy
-                    actor:
-                      name: actor
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-                          update:
-                            expr: owner + updater
-                          delete:
-                            expr: owner + deleter
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          updater:
-                            types:
-                              - actor
-                          deleter:
-                            types:
-                              - actor
-                `,
+				Policy:   examplePolicy,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
-				Replace:  map[string]testUtils.ReplaceType{"Policy0": testUtils.NewPolicyIndex(0)},
+			},
+			testUtils.CreateDoc{
+				Identity:     testUtils.ClientIdentity(1),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+			},
+			testUtils.AddDACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(3),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
+				ExpectedExistence: false,
+			},
+
+			// This should work as the identity is authorized.
+			testUtils.DeleteDACActorRelationship{
+				RequestorIdentity:   testUtils.ClientIdentity(1),
+				TargetIdentity:      testUtils.ClientIdentity(3),
+				CollectionID:        0,
+				DocID:               0,
+				Relation:            "reader",
+				ExpectedRecordFound: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesDeletingDACRelationship_NoIdentity_NotAuthorizedError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   examplePolicy,
+			},
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
 			testUtils.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -87,6 +107,44 @@ func TestNAC_GatesDeletingDACRelationship_AllowIfAuthorizedElseError(t *testing.
 				Relation:          "reader",
 				ExpectedError:     "not authorized to perform operation",
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesDeletingDACRelationship_WrongIdentity_NotAuthorizedError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   examplePolicy,
+			},
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
+			},
+			testUtils.CreateDoc{
+				Identity:     testUtils.ClientIdentity(1),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+			},
+			testUtils.AddDACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(3),
+				CollectionID:      0,
+				DocID:             0,
+				Relation:          "reader",
+				ExpectedExistence: false,
+			},
 
 			// Wrong user/identity will also not be authorized.
 			testUtils.DeleteDACActorRelationship{
@@ -96,16 +154,6 @@ func TestNAC_GatesDeletingDACRelationship_AllowIfAuthorizedElseError(t *testing.
 				DocID:             0,
 				Relation:          "reader",
 				ExpectedError:     "not authorized to perform operation",
-			},
-
-			// This should work as the identity is authorized.
-			testUtils.DeleteDACActorRelationship{
-				RequestorIdentity:   testUtils.ClientIdentity(1),
-				TargetIdentity:      testUtils.ClientIdentity(3),
-				CollectionID:        0,
-				DocID:               0,
-				Relation:            "reader",
-				ExpectedRecordFound: true,
 			},
 		},
 	}

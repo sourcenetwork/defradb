@@ -16,38 +16,29 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_GatesAddingDACPolicy_AllowIfAuthorizedElseError(t *testing.T) {
-	policy := `
-        name: Test Policy
-        description: A Policy
-        actor:
-          name: actor
-        resources:
-          users:
-            permissions:
-              read:
-                expr: owner + reader + updater + deleter
-              update:
-                expr: owner + updater
-              delete:
-                expr: owner + deleter
-            relations:
-              owner:
-                types:
-                  - actor
-              reader:
-                types:
-                  - actor
-              updater:
-                types:
-                  - actor
-              deleter:
-                types:
-                  - actor
-`
-
+func TestNAC_GatesAddingDACPolicy_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "admin acp correctly gates adding DAC policy operation, allow if authorized, otherwise error",
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			// This should work as the identity is authorized.
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   examplePolicy,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesAddingDACPolicy_NoIdentity_NotAuthorizedError(t *testing.T) {
+	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -59,21 +50,30 @@ func TestNAC_GatesAddingDACPolicy_AllowIfAuthorizedElseError(t *testing.T) {
 			// We haven't authorized non-identities. So, this should error.
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.NoIdentity(),
-				Policy:        policy,
+				Policy:        examplePolicy,
 				ExpectedError: "not authorized to perform operation",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesAddingDACPolicy_WrongIdentity_NotAuthorizedError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
 			},
 
 			// Wrong user/identity will also not be authorized.
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.ClientIdentity(2),
-				Policy:        policy,
+				Policy:        examplePolicy,
 				ExpectedError: "not authorized to perform operation",
-			},
-
-			// This should work as the identity is authorized.
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-				Policy:   policy,
 			},
 		},
 	}
