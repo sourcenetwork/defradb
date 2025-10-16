@@ -31,10 +31,6 @@ var (
 	encStoreKey    = byte('e')
 )
 
-func prefix(root corekv.ReaderWriter, prefix []byte) corekv.ReaderWriter {
-	return namespace.Wrap(root, prefix)
-}
-
 type Multistore struct {
 	block  Blockstore
 	data   corekv.ReaderWriter

@@ -60,7 +60,6 @@ func getP2POptions(opts []node.Option) []node.Option {
 		}
 	}
 	return netOpts
-
 }
 
 func withPrivateKey(opts []node.Option, key []byte) []node.Option {
