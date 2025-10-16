@@ -11,7 +11,10 @@
 package crdt
 
 import (
+	"bytes"
 	"context"
+
+	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -20,7 +23,9 @@ import (
 type CollectionDefinitionDelta struct {
 	Priority uint64
 
-	Name string
+	Name           string
+	QuerySelect    *[]byte
+	QueryTransform *string
 }
 
 var _ Delta = (*CollectionDefinitionDelta)(nil)
@@ -30,6 +35,8 @@ func (d *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 	type CollectionDefinitionDelta struct {
 		priority  		Int
 		name String
+		querySelect optional Bytes
+		queryTransform optional String
 	}`)
 }
 
@@ -66,14 +73,55 @@ func (c *CollectionDefinition) HeadstorePrefix() keys.HeadstoreKey {
 func (c *CollectionDefinition) Delta(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
-) (*CollectionDefinitionDelta, bool) {
+) (*CollectionDefinitionDelta, bool, error) {
 	if new.Name == old.Name {
-		return &CollectionDefinitionDelta{}, false
+		return &CollectionDefinitionDelta{}, false, nil
+	}
+
+	var queryDelta *[]byte
+	if new.Query.HasValue() {
+		newQuery, err := cbor.Marshal(new.Query.Value().Query)
+		if err != nil {
+			return &CollectionDefinitionDelta{}, false, err
+		}
+
+		if old.Query.HasValue() {
+			oldQuery, err := cbor.Marshal(old.Query.Value().Query)
+			if err != nil {
+				return &CollectionDefinitionDelta{}, false, err
+			}
+
+			if !bytes.Equal(newQuery, oldQuery) {
+				queryDelta = &newQuery
+			}
+		} else {
+			queryDelta = &newQuery
+		}
+	} else if old.Query.HasValue() {
+		queryDelta = &[]byte{}
+	}
+
+	var transformDelta *string
+	if new.Query.HasValue() && new.Query.Value().Transform.HasValue() {
+		newLensID := new.Query.Value().Transform.Value()
+
+		if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
+			if new.Query.Value().Transform.Value() != old.Query.Value().Transform.Value() {
+				transformDelta = &newLensID
+			}
+		} else {
+			transformDelta = &newLensID
+		}
+	} else if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
+		newLensID := ""
+		transformDelta = &newLensID
 	}
 
 	return &CollectionDefinitionDelta{
-		Name: new.Name,
-	}, true
+		Name:           new.Name,
+		QuerySelect:    queryDelta,
+		QueryTransform: transformDelta,
+	}, true, nil
 }
 
 func (c *CollectionDefinition) Merge(ctx context.Context, other Delta) error {

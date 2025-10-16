@@ -459,7 +459,10 @@ func saveBlocks(
 		}
 
 		colCRDT := crdt.NewCollectionDefinition(collection.Name)
-		delta, hasCollectionChanged := colCRDT.Delta(*collection, oldCol)
+		delta, hasCollectionChanged, err := colCRDT.Delta(*collection, oldCol)
+		if err != nil {
+			return err
+		}
 
 		if !hasFieldsChanged && !hasCollectionChanged {
 			// If the global collection state has not changed, there is nothing to do here and we
