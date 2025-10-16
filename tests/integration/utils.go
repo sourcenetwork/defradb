@@ -1037,7 +1037,7 @@ func refreshDocuments(
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
 					_commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
-						_cid
+						cid
 					}
 				}`, client.WithVariables(map[string]any{
 					"docID": doc.ID().String(),

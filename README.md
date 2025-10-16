@@ -218,12 +218,12 @@ To get the most recent commit in the MerkleDAG for the document identified as `b
 defradb client query '
   query {
     _latestCommits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
-      _cid
-      _delta
-      _height
-      _links {
-        _cid
-        _name
+      cid
+      delta
+      height
+      links {
+        cid
+        name
       }
     }
   }
@@ -237,25 +237,25 @@ It returns a structure similar to the following, which contains the update paylo
   "data": {
     "_latestCommits": [
       {
-        "_cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
-        "_delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
-        "_height": 1,
-        "_links": [
+        "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
+        "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
+        "height": 1,
+        "links": [
           {
-            "_cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
-            "_name": "age"
+            "cid": "bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy",
+            "name": "age"
           },
           {
-            "_cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
-            "_name": "name"
+            "cid": "bafybeielahxy3r3ulykwoi5qalvkluojta4jlg6eyxvt7lbon3yd6ignby",
+            "name": "name"
           },
           {
-            "_cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
-            "_name": "points"
+            "cid": "bafybeia3tkpz52s3nx4uqadbm7t5tir6gagkvjkgipmxs2xcyzlkf4y4dm",
+            "name": "points"
           },
           {
-            "_cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
-            "_name": "verified"
+            "cid": "bafybeia4off4javopmxcdyvr6fgb5clo7m5bblxic5sqr2vd52s6khyksm",
+            "name": "verified"
           }
         ]
       }
