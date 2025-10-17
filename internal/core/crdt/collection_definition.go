@@ -23,7 +23,7 @@ import (
 type CollectionDefinitionDelta struct {
 	Priority uint64
 
-	Name           string
+	Name           *string
 	QuerySelect    []byte
 	QueryTransform *string
 }
@@ -34,7 +34,7 @@ func (d *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CollectionDefinitionDelta struct {
 		priority  		Int
-		name String
+		name optional String
 		querySelect optional Bytes
 		queryTransform optional String
 	}`)
@@ -74,8 +74,9 @@ func (c *CollectionDefinition) Delta(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
 ) (*CollectionDefinitionDelta, bool, error) {
-	if new.Name == old.Name {
-		return &CollectionDefinitionDelta{}, false, nil
+	var name *string
+	if new.Name != old.Name {
+		name = &new.Name
 	}
 
 	var queryDelta []byte
@@ -117,8 +118,12 @@ func (c *CollectionDefinition) Delta(
 		transformDelta = &newLensID
 	}
 
+	if name == nil && queryDelta == nil && transformDelta == nil {
+		return &CollectionDefinitionDelta{}, false, nil
+	}
+
 	return &CollectionDefinitionDelta{
-		Name:           new.Name,
+		Name:           name,
 		QuerySelect:    queryDelta,
 		QueryTransform: transformDelta,
 	}, true, nil

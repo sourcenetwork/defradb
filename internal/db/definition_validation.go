@@ -424,7 +424,7 @@ func validateSourcesNotRedefined(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
+		oldCol, ok := oldState.activeCollectionsByName[newCol.Name]
 		if !ok {
 			continue
 		}
@@ -432,15 +432,17 @@ func validateSourcesNotRedefined(
 			continue
 		}
 
-		if newCol.PreviousVersion.HasValue() != oldCol.PreviousVersion.HasValue() {
-			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
-		} else if newCol.PreviousVersion.HasValue() &&
-			newCol.PreviousVersion.Value().SourceCollectionID != oldCol.PreviousVersion.Value().SourceCollectionID {
-			errs = append(errs, NewErrCollectionSourceIDMutated(
-				newCol.VersionID,
-				newCol.PreviousVersion.Value().SourceCollectionID,
-				oldCol.PreviousVersion.Value().SourceCollectionID,
-			))
+		if newCol.VersionID == oldCol.VersionID {
+			if newCol.PreviousVersion.HasValue() != oldCol.PreviousVersion.HasValue() {
+				errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
+			} else if newCol.PreviousVersion.HasValue() &&
+				newCol.PreviousVersion.Value().SourceCollectionID != oldCol.PreviousVersion.Value().SourceCollectionID {
+				errs = append(errs, NewErrCollectionSourceIDMutated(
+					newCol.VersionID,
+					newCol.PreviousVersion.Value().SourceCollectionID,
+					oldCol.PreviousVersion.Value().SourceCollectionID,
+				))
+			}
 		}
 
 		if newCol.Query.HasValue() != oldCol.Query.HasValue() {

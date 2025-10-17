@@ -104,26 +104,6 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 				},
 				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:           "Users",
-						IsActive:       false,
-						IsMaterialized: true,
-						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq",
-						}),
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name: "name",
-								Kind: client.FieldKind_NILLABLE_STRING,
-								Typ:  client.LWW_REGISTER,
-							},
-						},
-					},
-					{
 						Name:           "Books",
 						IsActive:       true,
 						IsMaterialized: true,
@@ -145,6 +125,26 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 							},
 						},
 					},
+					{
+						Name:           "Users",
+						IsActive:       false,
+						IsMaterialized: true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq",
+						}),
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -155,7 +155,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 
 func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 	usersSchemaVersion1ID := "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
-	usersSchemaVersion2ID := "bafyreidfzu2x6i4akqlmt5lloaeflwep4ykq2f4unwm2utkmrkgpfyf7bi"
+	usersSchemaVersion2ID := "bafyreihkqi5vwtq7wh66mgjw7biyhrf7ilwzsulzfhrvmzvfppnqmpt5ne"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -255,6 +255,17 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+						},
+					},
+					{
+						Name:           "Users",
 						IsActive:       false,
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
@@ -270,17 +281,6 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
-							},
-						},
-					},
-					{
-						Name:           "Users",
-						IsActive:       true,
-						IsMaterialized: true,
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
 							},
 						},
 					},
