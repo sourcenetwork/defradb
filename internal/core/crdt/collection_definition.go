@@ -95,11 +95,7 @@ func (c *CollectionDefinition) Delta(
 			if !bytes.Equal(newQuery, oldQuery) {
 				queryDelta = newQuery
 			}
-		} else {
-			queryDelta = newQuery
 		}
-	} else if old.Query.HasValue() {
-		queryDelta = []byte{}
 	}
 
 	var transformDelta *string
