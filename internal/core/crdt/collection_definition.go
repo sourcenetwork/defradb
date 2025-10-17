@@ -24,7 +24,7 @@ type CollectionDefinitionDelta struct {
 	Priority uint64
 
 	Name           string
-	QuerySelect    *[]byte
+	QuerySelect    []byte
 	QueryTransform *string
 }
 
@@ -78,7 +78,7 @@ func (c *CollectionDefinition) Delta(
 		return &CollectionDefinitionDelta{}, false, nil
 	}
 
-	var queryDelta *[]byte
+	var queryDelta []byte
 	if new.Query.HasValue() {
 		newQuery, err := cbor.Marshal(new.Query.Value().Query)
 		if err != nil {
@@ -92,13 +92,13 @@ func (c *CollectionDefinition) Delta(
 			}
 
 			if !bytes.Equal(newQuery, oldQuery) {
-				queryDelta = &newQuery
+				queryDelta = newQuery
 			}
 		} else {
-			queryDelta = &newQuery
+			queryDelta = newQuery
 		}
 	} else if old.Query.HasValue() {
-		queryDelta = &[]byte{}
+		queryDelta = []byte{}
 	}
 
 	var transformDelta *string
