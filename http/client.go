@@ -240,12 +240,12 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (st
 		return "", err
 	}
 
-	var lensID string
-	if err := c.http.requestJson(req, &lensID); err != nil {
+	var res SetMigrationResponse
+	if err := c.http.requestJson(req, &res); err != nil {
 		return "", err
 	}
 
-	return lensID, nil
+	return res.LensID, nil
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

@@ -132,6 +132,10 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, defs)
 }
 
+type SetMigrationResponse struct {
+	LensID string `json:"lensId"`
+}
+
 func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
@@ -147,7 +151,7 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	responseJSON(rw, http.StatusOK, lensID)
+	responseJSON(rw, http.StatusOK, &SetMigrationResponse{LensID: lensID})
 }
 
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
@@ -620,6 +624,13 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithJSONSchemaRef(lensConfigSchema)
 
+	setMigrationSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/set_migration",
+	}
+
+	setMigrationResponse := openapi3.NewResponse().
+		WithDescription("Lens info").
+		WithJSONSchemaRef(setMigrationSchema)
 	setMigration := openapi3.NewOperation()
 	setMigration.OperationID = "lens_set_migration"
 	setMigration.Description = "Add a new lens migration"
@@ -628,7 +639,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Value: setMigrationRequest,
 	}
 	setMigration.Responses = openapi3.NewResponses()
-	setMigration.Responses.Set("200", successResponse)
+	setMigration.AddResponse(200, setMigrationResponse)
 	setMigration.Responses.Set("400", errorResponse)
 
 	graphQLRequest := openapi3.NewRequestBody().

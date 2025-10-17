@@ -551,33 +551,10 @@
                 },
                 "type": "object"
             },
-            "set_migration_request": {
+            "set_migration": {
                 "properties": {
-                    "CollectionID": {
+                    "lensId": {
                         "type": "string"
-                    },
-                    "Config": {
-                        "properties": {
-                            "Lenses": {
-                                "items": {
-                                    "properties": {
-                                        "Arguments": {
-                                            "additionalProperties": {},
-                                            "type": "object"
-                                        },
-                                        "Inverse": {
-                                            "type": "boolean"
-                                        },
-                                        "Path": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            }
-                        },
-                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -1950,7 +1927,14 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/set_migration"
+                                }
+                            }
+                        },
+                        "description": "Lens info"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
