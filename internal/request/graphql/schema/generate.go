@@ -760,6 +760,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	for _, field := range obj.Fields() {
 		listType, isList := field.Type.(*gql.List)
 		if !isList {
+
 			continue
 		}
 		inputObjectName := genObjectCountName(listType.OfType.Name())

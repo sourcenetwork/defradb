@@ -2175,6 +2175,9 @@ func assertIntrospectionResults(
 	for _, node := range nodes {
 		result := node.ExecRequest(s.Ctx, action.Request)
 
+		fmt.Println("Result:")
+		fmt.Printf("%#v\n", result.GQL.Data)
+
 		if AssertErrors(s.T, result.GQL.Errors, action.ExpectedError) {
 			return true
 		}
