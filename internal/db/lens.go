@@ -13,12 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
-
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/immutable/enumerable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -27,35 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-// WARNING - This function does not create a txn ctx if one does not exist
-// and so should not be exposed to users.
-func (db *DB) AddLens(ctx context.Context, cfg model.Lens) (cid.Cid, error) {
-	return db.GetLensStore(ctx).Add(ctx, cfg)
-}
-
-// WARNING - This function does not create a txn ctx if one does not exist
-// and so should not be exposed to users.
-func (db *DB) Transform(
-	ctx context.Context,
-	source enumerable.Enumerable[map[string]any],
-	id string,
-) (enumerable.Enumerable[map[string]any], error) {
-	return db.GetLensStore(ctx).Transform(ctx, source, id)
-}
-
-// WARNING - This function does not create a txn ctx if one does not exist
-// and so should not be exposed to users.
-func (db *DB) Inverse(
-	ctx context.Context,
-	source enumerable.Enumerable[map[string]any],
-	id string,
-) (enumerable.Enumerable[map[string]any], error) {
-	return db.GetLensStore(ctx).Inverse(ctx, source, id)
-}
-
-// WARNING - This function does not create a txn ctx if one does not exist
-// and so should not be exposed to users.
-func (db *DB) GetLensStore(ctx context.Context) store.Store {
+func (db *DB) getLensStore(ctx context.Context) store.Store {
 	txn, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
 		return db.lensNode.Store.WithTxn(wrappedTxn{
@@ -116,7 +84,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
 	}
 
-	id, err := db.GetLensStore(ctx).Add(ctx, cfg.Lens)
+	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)
 	if err != nil {
 		return "", err
 	}

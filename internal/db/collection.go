@@ -84,7 +84,7 @@ func (c *collection) newFetcher(ctx context.Context) fetcher.Fetcher {
 		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
-	return lens.NewFetcher(innerFetcher, c.db.GetLensStore(ctx))
+	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx))
 }
 
 // getCollectionByName returns an existing collection within the database.

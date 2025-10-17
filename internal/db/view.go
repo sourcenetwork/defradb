@@ -68,7 +68,7 @@ func (db *DB) addView(
 	for i := range parseResults {
 		var lensID immutable.Option[string]
 		if transform.HasValue() {
-			cid, err := db.AddLens(ctx, transform.Value())
+			cid, err := db.getLensStore(ctx).Add(ctx, transform.Value())
 			if err != nil {
 				return nil, err
 			}
@@ -152,7 +152,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		db.documentACP,
 		db,
 		db.p2p,
-		db.GetLensStore(ctx),
+		db.getLensStore(ctx),
 	)
 
 	// temporarily disable the cache in order to query without using it

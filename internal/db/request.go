@@ -53,7 +53,7 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		db.documentACP,
 		db,
 		db.p2p,
-		db.GetLensStore(ctx),
+		db.getLensStore(ctx),
 	)
 
 	results, err := planner.RunRequest(ctx, parsedRequest)

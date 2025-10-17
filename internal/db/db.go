@@ -442,7 +442,7 @@ func (db *DB) initialize(ctx context.Context) error {
 			return err
 		}
 
-		err = db.GetLensStore(ctx).Reload(ctx)
+		err = db.getLensStore(ctx).Reload(ctx)
 		if err != nil {
 			return err
 		}
