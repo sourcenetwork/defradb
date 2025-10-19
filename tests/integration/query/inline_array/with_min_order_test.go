@@ -75,3 +75,63 @@ func TestQueryInlineIntegerArray_WithMinAndOrder_Succeeds(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryInlineIntegerArray_WithNullAndMinAndOrder_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [3, 4, 5, null],
+					"pageRatings": [1.0, 2.0, 3.0, null]
+				}`, // Minimum: 1
+			},
+
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [30, 40, 50, null],
+					"pageRatings": [10.0, 20.0, 30.0, null]
+				}`, // Minimum: 10
+			},
+
+			// Test descending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: DESC}}) {
+						total: _min(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 10,
+						},
+						{
+							"total": 1,
+						},
+					},
+				},
+			},
+
+			// Test ascending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: ASC}}) {
+						total: _min(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 1,
+						},
+						{
+							"total": 10,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

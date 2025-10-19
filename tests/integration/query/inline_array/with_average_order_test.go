@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryInlineIntegerArrayWithAverageAndOrder(t *testing.T) {
+func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -30,6 +30,66 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder(t *testing.T) {
 				Doc: `{
 					"testScores": [30, 40, 50],
 					"pageRatings": [10.0, 20.0, 30.0]
+				}`, // Average: 30
+			},
+
+			// Test descending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: DESC}}) {
+						total: _avg(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 30,
+						},
+						{
+							"total": 3,
+						},
+					},
+				},
+			},
+
+			// Test ascending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: ASC}}) {
+						total: _avg(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 3,
+						},
+						{
+							"total": 30,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [3, 4, 5, null],
+					"pageRatings": [1.0, 2.0, 3.0, null]
+				}`, // Average: 3.0
+			},
+
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [30, 40, 50, null],
+					"pageRatings": [10.0, 20.0, 30.0, null]
 				}`, // Average: 30
 			},
 

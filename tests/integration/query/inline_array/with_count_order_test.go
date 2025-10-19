@@ -75,3 +75,63 @@ func TestQueryInlineIntegerArray_WithCountAndOrder_Succeeds(t *testing.T) {
 
 	executeTestCase(t, test)
 }
+
+func TestQueryInlineIntegerArray_WithNullAndCountAndOrder_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [3, 4, 5, null],
+					"pageRatings": [1.0, 2.0, 3.0, null]
+				}`, // Count: 8
+			},
+
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [3, 4, 5, 6, null],
+					"pageRatings": [1.0, 2.0, 3.0, 4.0, null]
+				}`, // Count: 10
+			},
+
+			// Test descending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: DESC}}) {
+						total: _count(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 10,
+						},
+						{
+							"total": 8,
+						},
+					},
+				},
+			},
+
+			// Test ascending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: ASC}}) {
+						total: _count(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 8,
+						},
+						{
+							"total": 10,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
