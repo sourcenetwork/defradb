@@ -65,7 +65,7 @@ jobs:
         database-type: [file, memory]
         mutation-type: [gql, collection-named, collection-save]
 
-    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/spot=lowest-price/cpu=8+16/family=m7*+c7*/extras=s3-cache
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
