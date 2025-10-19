@@ -189,19 +189,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"inputFields": []interface{}{
 												map[string]interface{}{
 													"name": "filter",
-													"type": map[string]interface{}{"name": "NotNullFloat64FilterArg"},
+													"type": map[string]interface{}{
+														"name": "NotNullFloat64FilterArg",
+													},
 												},
 												map[string]interface{}{
 													"name": "limit",
-													"type": map[string]interface{}{"name": "Int"},
+													"type": map[string]interface{}{
+														"name": "Int",
+													},
 												},
 												map[string]interface{}{
 													"name": "offset",
-													"type": map[string]interface{}{"name": "Int"},
+													"type": map[string]interface{}{
+														"name": "Int",
+													},
 												},
 												map[string]interface{}{
 													"name": "order",
-													"type": map[string]interface{}{"name": "Ordering"},
+													"type": map[string]interface{}{
+														"name": "Ordering",
+													},
 												},
 											},
 											"name": "Users__FavouriteFloats__NumericSelector",

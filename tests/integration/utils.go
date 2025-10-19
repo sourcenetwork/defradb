@@ -2167,6 +2167,14 @@ func assertExpectedErrorRaised(t testing.TB, expectedError string, wasRaised boo
 	}
 }
 
+func jsonToMap(b []byte) map[string]interface{} {
+	var m map[string]interface{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		panic(err)
+	}
+	return m
+}
+
 func assertIntrospectionResults(
 	s *state.State,
 	action IntrospectionRequest,
@@ -2179,6 +2187,11 @@ func assertIntrospectionResults(
 			return true
 		}
 		resultantData := result.GQL.Data.(map[string]any)
+
+		fmt.Println("Resultant Data:")
+		b, _ := json.Marshal(result.GQL.Data)
+		fmt.Printf("ContainsData: %#v\n", map[string]interface{}{})
+		fmt.Printf("ContainsData: %#v\n", jsonToMap(b))
 
 		if len(action.ExpectedData) == 0 && len(action.ContainsData) == 0 {
 			require.Equal(s.T, action.ExpectedData, resultantData)
