@@ -52,7 +52,7 @@ extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
 extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
-extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options);
+extern Result SetActiveCollection(uintptr_t nodePtr, char* version);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
 extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
@@ -500,28 +500,11 @@ func (w *CWrapper) PatchCollection(
 }
 
 func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-
-	cIdentity := identityFromContext(ctx)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString("")
-
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
-
-	var opts C.CollectionOptions
-	opts.identityPtr = cIdentity
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.getInactive = 0
-
 	cSchemaVersionID := C.CString(schemaVersionID)
 	defer C.free(unsafe.Pointer(cSchemaVersionID))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, opts))
+	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, cSchemaVersionID))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
