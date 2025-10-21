@@ -27,7 +27,7 @@ func TestNAC_GatesDeletingDACRelationship_AuthorizedIdentity_AllowAccess(t *test
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
@@ -75,7 +75,7 @@ func TestNAC_GatesDeletingDACRelationship_NoIdentity_NotAuthorizedError(t *testi
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
@@ -123,7 +123,7 @@ func TestNAC_GatesDeletingDACRelationship_WrongIdentity_NotAuthorizedError(t *te
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,

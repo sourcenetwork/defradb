@@ -26,7 +26,7 @@ func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(3), // Try deleting relationship for this actor.

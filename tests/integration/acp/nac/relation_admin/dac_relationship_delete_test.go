@@ -27,7 +27,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanDeleteDACActorRelationship(
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
@@ -101,7 +101,7 @@ func TestNAC_AdminRelation_WithoutDACManagerRelation_CanNotDeleteDACActorRelatio
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy:   examplePolicy,
