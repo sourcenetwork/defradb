@@ -240,7 +240,6 @@ func (n *sumNode) Next() (bool, error) {
 			var collectionSum float64
 			var err error
 			switch childCollection := child.(type) {
-
 			case float64, float32, int64, int:
 				switch v := childCollection.(type) {
 				case float64:

@@ -174,40 +174,40 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 						}
 					}
 				`,
-				ContainsData: map[string]interface{}{
-					"__type": map[string]interface{}{
-						"fields": []interface{}{
-							map[string]interface{}{
-								"args": []interface{}{},
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"fields": []any{
+							map[string]any{
+								"args": []any{},
 								"name": "FavouriteFloats",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "FavouriteFloats",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullFloat64FilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -215,96 +215,96 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"name": "Users__FavouriteFloats__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_sum",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
 								},
 								"name": "_avg",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "FavouriteFloats",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullFloat64FilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
@@ -312,25 +312,25 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"name": "Users__FavouriteFloats__CountSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
@@ -338,19 +338,19 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"name": "Users__CountSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_version",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
@@ -361,125 +361,125 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 								},
 								"name": "_count",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "_deleted",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "_docID",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "docID",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
-											"name":        interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
+											"name":        any(nil),
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "filter",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "FavouriteFloats",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullFloat64ListOperatorBlock",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_alias",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "JSON",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_and",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_docID",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "IDOperatorBlock",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_not",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_or",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "UsersFilterArg",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "groupBy",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
-											"name":        interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
+											"name":        any(nil),
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "limit",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
 											"name":        "Int",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "offset",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
 											"name":        "Int",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "order",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
-											"name":        interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
+											"name":        any(nil),
 										},
 									},
 								},
 								"name": "_group",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "FavouriteFloats",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullFloat64FilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -487,109 +487,109 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"name": "Users__FavouriteFloats__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_avg",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_sum",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
 								},
 								"name": "_max",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "FavouriteFloats",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullFloat64FilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -597,99 +597,99 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"name": "Users__FavouriteFloats__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_avg",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_max",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_sum",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
 								},
 								"name": "_min",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "FavouriteFloats",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "vector",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
@@ -699,33 +699,33 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 								},
 								"name": "_similarity",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "FavouriteFloats",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullFloat64FilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -733,59 +733,59 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 											"name": "Users__FavouriteFloats__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
@@ -795,8 +795,8 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 								},
 								"name": "_sum",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "_version",
 							},
 						},
@@ -843,102 +843,102 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 						}
 					}
 				`,
-				ContainsData: map[string]interface{}{
-					"__type": map[string]interface{}{
-						"fields": []interface{}{
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"fields": []any{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_sum",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "favouriteIntegers",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullIntFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -949,27 +949,27 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								},
 								"name": "_avg",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
@@ -977,19 +977,19 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 											"name": "Users__CountSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_version",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
@@ -997,25 +997,25 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 											"name": "Users___version__CountSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "favouriteIntegers",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullIntFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
@@ -1026,60 +1026,60 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								},
 								"name": "_count",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "_deleted",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "_docID",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "docID",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
-											"name":        interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
+											"name":        any(nil),
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "filter",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "_alias",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "JSON",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_and",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_docID",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "IDOperatorBlock",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_not",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "_or",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "favouriteIntegers",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullIntListOperatorBlock",
 													},
 												},
@@ -1087,137 +1087,137 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 											"name": "UsersFilterArg",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "groupBy",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
-											"name":        interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
+											"name":        any(nil),
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "limit",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
 											"name":        "Int",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "offset",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
 											"name":        "Int",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "order",
-										"type": map[string]interface{}{
-											"inputFields": interface{}(nil),
-											"name":        interface{}(nil),
+										"type": map[string]any{
+											"inputFields": any(nil),
+											"name":        any(nil),
 										},
 									},
 								},
 								"name": "_group",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "_avg",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_sum",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "favouriteIntegers",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullIntFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -1228,113 +1228,113 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								},
 								"name": "_max",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "_avg",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_max",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_sum",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "favouriteIntegers",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullIntFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -1345,16 +1345,16 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								},
 								"name": "_min",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "favouriteIntegers",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "vector",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
@@ -1364,92 +1364,92 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								},
 								"name": "_similarity",
 							},
-							map[string]interface{}{
-								"args": []interface{}{
-									map[string]interface{}{
+							map[string]any{
+								"args": []any{
+									map[string]any{
 										"name": "_count",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_deleted",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_docID",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{},
+										"type": map[string]any{
+											"inputFields": []any{},
 											"name":        "",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "_group",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "field",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "UsersFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
-														"name": interface{}(nil),
+													"type": map[string]any{
+														"name": any(nil),
 													},
 												},
 											},
 											"name": "Users__NumericSelector",
 										},
 									},
-									map[string]interface{}{
+									map[string]any{
 										"name": "favouriteIntegers",
-										"type": map[string]interface{}{
-											"inputFields": []interface{}{
-												map[string]interface{}{
+										"type": map[string]any{
+											"inputFields": []any{
+												map[string]any{
 													"name": "filter",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "NotNullIntFilterArg",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "limit",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "offset",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Int",
 													},
 												},
-												map[string]interface{}{
+												map[string]any{
 													"name": "order",
-													"type": map[string]interface{}{
+													"type": map[string]any{
 														"name": "Ordering",
 													},
 												},
@@ -1460,12 +1460,12 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								},
 								"name": "_sum",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "_version",
 							},
-							map[string]interface{}{
-								"args": []interface{}{},
+							map[string]any{
+								"args": []any{},
 								"name": "favouriteIntegers",
 							},
 						},

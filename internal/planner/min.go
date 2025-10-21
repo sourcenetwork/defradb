@@ -141,7 +141,6 @@ func (n *minNode) Next() (bool, error) {
 			var collectionMin *big.Float
 			var err error
 			switch childCollection := child.(type) {
-
 			case float64, float32, int64, int:
 				var res *big.Float
 				switch v := childCollection.(type) {
