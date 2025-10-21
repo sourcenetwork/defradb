@@ -13,8 +13,7 @@ package crdt
 import (
 	"bytes"
 	"context"
-
-	"github.com/fxamacker/cbor/v2"
+	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -81,13 +80,13 @@ func (c *CollectionDefinition) Delta(
 
 	var queryDelta []byte
 	if new.Query.HasValue() {
-		newQuery, err := cbor.Marshal(new.Query.Value().Query)
+		newQuery, err := json.Marshal(new.Query.Value().Query)
 		if err != nil {
 			return &CollectionDefinitionDelta{}, false, err
 		}
 
 		if old.Query.HasValue() {
-			oldQuery, err := cbor.Marshal(old.Query.Value().Query)
+			oldQuery, err := json.Marshal(old.Query.Value().Query)
 			if err != nil {
 				return &CollectionDefinitionDelta{}, false, err
 			}
@@ -95,6 +94,8 @@ func (c *CollectionDefinition) Delta(
 			if !bytes.Equal(newQuery, oldQuery) {
 				queryDelta = newQuery
 			}
+		} else {
+			queryDelta = newQuery
 		}
 	}
 
