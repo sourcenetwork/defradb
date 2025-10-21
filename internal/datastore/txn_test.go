@@ -19,13 +19,14 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestNewTxnFrom(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	err := txn.Commit()
 	require.NoError(t, err)
@@ -35,7 +36,7 @@ func TestOnSuccess(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	text := "Source"
 	txn.OnSuccess(func() {
@@ -51,7 +52,7 @@ func TestOnSuccessAsync(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	var wg sync.WaitGroup
 	txn.OnSuccessAsync(func() {
@@ -68,7 +69,7 @@ func TestOnError(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	text := "Source"
 	txn.OnError(func() {
@@ -88,7 +89,7 @@ func TestOnErrorAsync(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	var wg sync.WaitGroup
 	txn.OnErrorAsync(func() {
@@ -108,7 +109,7 @@ func TestOnDiscard(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	text := "Source"
 	txn.OnDiscard(func() {
@@ -123,7 +124,7 @@ func TestOnDiscardAsync(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	var wg sync.WaitGroup
 	txn.OnDiscardAsync(func() {

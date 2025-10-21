@@ -2359,6 +2359,72 @@ func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, add
 	return _c
 }
 
+// SyncCollections provides a mock function for the type Txn
+func (_mock *Txn) SyncCollections(ctx context.Context, versionIDs ...string) error {
+	var tmpRet mock.Arguments
+	if len(versionIDs) > 0 {
+		tmpRet = _mock.Called(ctx, versionIDs)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for SyncCollections")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, versionIDs...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_SyncCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncCollections'
+type Txn_SyncCollections_Call struct {
+	*mock.Call
+}
+
+// SyncCollections is a helper method to define mock.On call
+//   - ctx context.Context
+//   - versionIDs ...string
+func (_e *Txn_Expecter) SyncCollections(ctx interface{}, versionIDs ...interface{}) *Txn_SyncCollections_Call {
+	return &Txn_SyncCollections_Call{Call: _e.mock.On("SyncCollections",
+		append([]interface{}{ctx}, versionIDs...)...)}
+}
+
+func (_c *Txn_SyncCollections_Call) Run(run func(ctx context.Context, versionIDs ...string)) *Txn_SyncCollections_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_SyncCollections_Call) Return(err error) *Txn_SyncCollections_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_SyncCollections_Call) RunAndReturn(run func(ctx context.Context, versionIDs ...string) error) *Txn_SyncCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SyncDocuments provides a mock function for the type Txn
 func (_mock *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	ret := _mock.Called(ctx, collectionName, docIDs)

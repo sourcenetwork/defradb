@@ -8,18 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package node
+package p2p
 
-import (
-	"context"
+import "context"
 
-	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
-)
-
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
-	if n.config.disableP2P {
-		return nil
-	}
-	return ErrP2PNotSupported
+func (p *P2P) SyncCollections(ctx context.Context, versionIDs ...string) error {
+	// Nil-op, let the JS client return any errors it wants to
+	return nil
 }

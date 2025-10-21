@@ -204,6 +204,20 @@ func (w *Wrapper) SyncDocuments(
 	return err
 }
 
+func (w *Wrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
+	args := []string{"client", "p2p", "collection", "sync"}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	args = append(args, versionIDs...)
+
+	_, err := w.cmd.execute(context.Background(), args)
+	return err
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	args := []string{"client", "backup", "import"}
 	args = append(args, filepath)

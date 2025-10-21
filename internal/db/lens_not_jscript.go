@@ -8,22 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build !js
+
 package db
 
-import (
-	"github.com/sourcenetwork/lens/host-go/engine/module"
-	lensNode "github.com/sourcenetwork/lens/host-go/node"
-	"github.com/sourcenetwork/lens/host-go/runtimes/js"
-)
-
-const JSLensRuntime LensRuntimeType = "js"
-
-func init() {
-	runtimeConstructors[DefaultLens] = func() module.Runtime { return js.New() }
-	runtimeConstructors[JSLensRuntime] = func() module.Runtime { return js.New() }
-}
+import lensNode "github.com/sourcenetwork/lens/host-go/node"
 
 func appendLensP2POpt(lensOptions []lensNode.Option, opts *dbOptions) []lensNode.Option {
 	// Nil-op, js-lens does not support p2p
-	return lensOptions
+	return append(lensOptions, lensNode.WithP2P(opts.p2p.Value()))
 }

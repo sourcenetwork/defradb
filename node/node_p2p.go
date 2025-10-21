@@ -19,17 +19,18 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/go-p2p"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
+func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
 	if n.config.disableP2P {
 		return nil
 	}
 
-	n.options = append(n.options, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store)))
+	n.options = append(n.options, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store, chunkSize)))
 
 	peer, err := p2p.NewPeer(
 		ctx,

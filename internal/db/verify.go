@@ -38,7 +38,7 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 		return err
 	}
 
-	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore)}
+	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
 	linkSys := cidlink.DefaultLinkSystem()
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true

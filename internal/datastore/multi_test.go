@@ -20,17 +20,18 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMultistore_HumanReadableKeys_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	ms := NewMultistore(rootstore)
+	ms := NewMultistore(rootstore, immutable.None[int]())
 
 	err := ms.Blockstore().Put(ctx, blocks.NewBlock([]byte("123")))
 	require.NoError(t, err)
-	err = P2PBlockstoreFrom(rootstore).Put(ctx, blocks.NewBlock([]byte("1234")))
+	err = P2PBlockstoreFrom(rootstore, immutable.None[int]()).Put(ctx, blocks.NewBlock([]byte("1234")))
 	require.NoError(t, err)
 	err = ms.Datastore().Set(ctx, []byte("/123"), []byte("123"))
 	require.NoError(t, err)

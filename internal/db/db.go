@@ -72,6 +72,8 @@ type DB struct {
 	// in order to ensure any transactions are respected.
 	lensNode *lensNode.Node
 
+	blockStoreChunkSize immutable.Option[int]
+
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
@@ -145,6 +147,7 @@ func newDB(
 
 	db := &DB{
 		rootstore:           rootstore,
+		blockStoreChunkSize: opts.ChunkSize,
 		nodeACP:             nodeACP,
 		documentACP:         documentACP,
 		parser:              parser,
@@ -172,10 +175,16 @@ func newDB(
 
 	// Overwrite a few key Lens options for now, by appending them to the end of the option
 	// slice.
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithP2PDisabled(true))
 	opts.LensOptions = append(opts.LensOptions, lensNode.WithRootstore(rootstore))
 	opts.LensOptions = append(opts.LensOptions, lensNode.WithTxnSource(wrapSource(db)))
 	opts.LensOptions = append(opts.LensOptions, lensNode.WithRuntime(lensRuntime))
+
+	if opts.p2p.HasValue() {
+		opts.LensOptions = appendLensP2POpt(opts.LensOptions, opts)
+	} else {
+		// If defra has no P2P enabled, it doesn't make sense to enable it for Lens
+		opts.LensOptions = append(opts.LensOptions, lensNode.WithP2PDisabled(true))
+	}
 
 	node, err := lensNode.New(ctx, opts.LensOptions...)
 	if err != nil {
@@ -184,7 +193,7 @@ func newDB(
 	db.lensNode = node
 
 	if opts.p2p.HasValue() {
-		p, err := p2p.New(ctx, db, opts.p2p.Value(), db.nodeIdentity)
+		p, err := p2p.New(ctx, db, node, opts.p2p.Value(), db.nodeIdentity)
 		if err != nil {
 			return nil, err
 		}
@@ -202,14 +211,14 @@ func newDB(
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewTxnFrom(db.rootstore, txnId, readonly)
+	txn := datastore.NewTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly)
+	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
@@ -274,7 +283,7 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	headsIterator, err := NewHeadBlocksIterator(
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
-		datastore.BlockstoreFrom(db.rootstore),
+		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
 		docID,
 	)
 	if err != nil {
