@@ -409,15 +409,15 @@ func CollectionUpdate(
 }
 
 //export SetActiveCollection
-func SetActiveCollection(nodePtr C.uintptr_t, opts C.CollectionOptions) C.Result {
+func SetActiveCollection(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, opts.identityPtr)
+	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	versionID := C.GoString(opts.version)
+	versionID := C.GoString(options.version)
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {

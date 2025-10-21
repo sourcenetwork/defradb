@@ -49,7 +49,7 @@ func TestNAC_AdminRelation_CanCollectionSetActiveVersion(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.ClientIdentity(2),
-				VersionID:     "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
+				VersionID:     "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda",
 				ExpectedError: "not authorized to perform operation",
 			},
 
@@ -64,7 +64,7 @@ func TestNAC_AdminRelation_CanCollectionSetActiveVersion(t *testing.T) {
 			// This user, can now perform this gated operation.
 			testUtils.SetActiveCollectionVersion{
 				Identity:  testUtils.ClientIdentity(2),
-				VersionID: "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
+				VersionID: "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda",
 			},
 		},
 	}

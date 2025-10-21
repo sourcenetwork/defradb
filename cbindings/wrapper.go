@@ -502,10 +502,9 @@ func (w *CWrapper) PatchCollection(
 	return nil
 }
 
-func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-
+func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
 	cIdentity := identityFromContext(ctx)
-	cVersion := C.CString("")
+	cVersion := C.CString(collectionVersionID)
 	cCollectionID := C.CString("")
 	cName := C.CString("")
 
@@ -519,9 +518,6 @@ func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersion
 	opts.collectionID = cCollectionID
 	opts.name = cName
 	opts.getInactive = 0
-
-	cSchemaVersionID := C.CString(schemaVersionID)
-	defer C.free(unsafe.Pointer(cSchemaVersionID))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, opts))
