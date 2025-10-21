@@ -721,8 +721,6 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 						"name": "Users",
 					},
 				},
-
-				// End of ContainsData
 			},
 		},
 	}
