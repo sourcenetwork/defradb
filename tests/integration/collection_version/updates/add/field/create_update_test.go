@@ -19,7 +19,7 @@ import (
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
 	initialSchemaVersionID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
-	updatedSchemaVersionID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
+	updatedSchemaVersionID := "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
 	initialSchemaVersionID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
-	updatedSchemaVersionID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
+	updatedSchemaVersionID := "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -145,12 +145,12 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			},
 			testUtils.Request{
 				Request: `query {
-					commits (fieldName: "_C") {
+					_commits (fieldName: "_C") {
 						schemaVersionId
 					}
 				}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							// Update commit
 							"schemaVersionId": updatedSchemaVersionID,

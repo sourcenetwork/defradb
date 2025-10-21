@@ -29,13 +29,13 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 							cid
 							_count(field: links)
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"_count": 0,

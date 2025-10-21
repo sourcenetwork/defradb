@@ -30,7 +30,7 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits (fieldName: "Age") {
+					_latestCommits (fieldName: "Age") {
 						cid
 						links {
 							cid
@@ -38,7 +38,7 @@ func TestQueryLatestCommitsWithField(t *testing.T) {
 						}
 					}
 				}`,
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"_latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}
@@ -60,7 +60,7 @@ func TestQueryLatestCommitsWithFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits (fieldName: "1") {
+					_latestCommits (fieldName: "1") {
 						cid
 						links {
 							cid
@@ -68,7 +68,7 @@ func TestQueryLatestCommitsWithFieldId(t *testing.T) {
 						}
 					}
 				}`,
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
+				ExpectedError: "Field \"_latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

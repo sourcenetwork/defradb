@@ -57,6 +57,10 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
@@ -73,6 +77,10 @@ func (db *DB) GetCollections(
 ) ([]client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
@@ -97,6 +105,22 @@ func (db *DB) GetAllIndexes(
 	defer txn.Discard()
 
 	return db.getAllIndexDescriptions(ctx)
+}
+
+// ListAllEncryptedIndexes gets all the encrypted indexes in the database.
+func (db *DB) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -171,6 +195,10 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
@@ -185,22 +213,27 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	return txn.Commit()
 }
 
-func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer txn.Discard()
 
-	err = db.setMigration(ctx, cfg)
+	lensID, err := db.setMigration(ctx, cfg)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return txn.Commit()
+	err = txn.Commit()
+	if err != nil {
+		return "", err
+	}
+
+	return lensID, nil
 }
 
 func (db *DB) AddView(

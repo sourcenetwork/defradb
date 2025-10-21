@@ -36,7 +36,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(
+						_commits(
 							cid: "bafyreiai57cngq2fthjmwmdnqhkugj6u5nqz5wtvpphnel6l2i6jyumevu"
 						) {
 							cid
@@ -45,7 +45,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreiai57cngq2fthjmwmdnqhkugj6u5nqz5wtvpphnel6l2i6jyumevu",
 							// Extra params are used to verify this is a collection level cid

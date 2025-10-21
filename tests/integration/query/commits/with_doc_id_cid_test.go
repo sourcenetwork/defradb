@@ -29,7 +29,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(
+						_commits(
 							docID: "bae-not-this-doc",
 							cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
 						) {
@@ -37,7 +37,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "cid either does not exist or belong to document",
 			},
@@ -67,7 +67,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(
+						_commits(
 							docID: "bae-not-this-doc",
 							cid: "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy"
 						) {
@@ -75,7 +75,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "cid either does not exist or belong to document",
 			},
@@ -105,7 +105,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(
+						_commits(
 							docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
 							cid: "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy"
 						) {
@@ -113,7 +113,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
 						},
@@ -148,7 +148,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 			// from the target cid (ie >=2)
 			testUtils.Request{
 				Request: ` {
-						commits(
+						_commits(
 							docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
 							cid: "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
 							depth: 5
@@ -157,7 +157,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
 						},

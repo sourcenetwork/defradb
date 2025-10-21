@@ -22,8 +22,8 @@ import (
 
 func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
-	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
-	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
+	schemaVersion2ID := "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda"
+	schemaVersion3ID := "bafyreic4xohr7idybbfpdabs6foed5i2uv5v3hdgyvse5p2x4yrlp7et3i"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -160,12 +160,6 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 						}),
 					},
 					{
-						// The original collection version is present, it has no source and is inactive (has no name).
-						VersionID:      schemaVersion1ID,
-						IsMaterialized: true,
-						Name:           "Users",
-					},
-					{
 						// The collection version for schema version 3 is present and is active, it also has the first collection
 						// as source.
 						Name:           "Users",
@@ -176,6 +170,12 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 							SourceCollectionID: schemaVersion1ID,
 						}),
 					},
+					{
+						// The original collection version is present, it has no source and is inactive (has no name).
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						Name:           "Users",
+					},
 				},
 			},
 		},
@@ -185,9 +185,9 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 
 func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
-	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
-	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
-	schemaVersion4ID := "bafyreih3jgjlud3h3xnnjysgtvfegcn2xdixlavwzbw7s6as65atwfhtvi"
+	schemaVersion2ID := "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda"
+	schemaVersion3ID := "bafyreic4xohr7idybbfpdabs6foed5i2uv5v3hdgyvse5p2x4yrlp7et3i"
+	schemaVersion4ID := "bafyreid47ua6uiszzdhlotafzv2e32nopt2uow3fgigtt2flc2e2abcvwq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -295,11 +295,15 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						}),
 					},
 					{
-						// The original collection version is present, it has no source and is inactive
+						// The collection version for schema version 3 is present and inactive, it has the first collection
+						// as source.
 						Name:           "Users",
-						VersionID:      schemaVersion1ID,
+						VersionID:      schemaVersion3ID,
 						IsMaterialized: true,
 						IsActive:       false,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 					{
 						// The collection version for schema version 4 is present and is active, it also has the third collection
@@ -313,15 +317,11 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 						}),
 					},
 					{
-						// The collection version for schema version 3 is present and inactive, it has the first collection
-						// as source.
+						// The original collection version is present, it has no source and is inactive
 						Name:           "Users",
-						VersionID:      schemaVersion3ID,
+						VersionID:      schemaVersion1ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: schemaVersion1ID,
-						}),
 					},
 				},
 			},
@@ -332,8 +332,8 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *testing.T) {
 	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
-	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
-	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
+	schemaVersion2ID := "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda"
+	schemaVersion3ID := "bafyreic4xohr7idybbfpdabs6foed5i2uv5v3hdgyvse5p2x4yrlp7et3i"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -404,13 +404,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 						}),
 					},
 					{
-						// The original collection version is present, it has no source and is inactive.
-						Name:           "Users",
-						VersionID:      schemaVersion1ID,
-						IsMaterialized: true,
-						IsActive:       false,
-					},
-					{
 						// The collection version for schema version 3 is present and is inactive, it also has the first collection
 						// as source.
 						Name:           "Users",
@@ -421,6 +414,13 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 							SourceCollectionID: schemaVersion1ID,
 						}),
 					},
+					{
+						// The original collection version is present, it has no source and is inactive.
+						Name:           "Users",
+						VersionID:      schemaVersion1ID,
+						IsMaterialized: true,
+						IsActive:       false,
+					},
 				},
 			},
 		},
@@ -430,9 +430,9 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 
 func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPatch(t *testing.T) {
 	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
-	schemaVersion2ID := "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a"
-	schemaVersion3ID := "bafyreih3tqiftewsy5mb2wpsuuinkfptxlrh36c7a36bkehnmyn6lodvau"
-	schemaVersion4ID := "bafyreih3jgjlud3h3xnnjysgtvfegcn2xdixlavwzbw7s6as65atwfhtvi"
+	schemaVersion2ID := "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda"
+	schemaVersion3ID := "bafyreic4xohr7idybbfpdabs6foed5i2uv5v3hdgyvse5p2x4yrlp7et3i"
+	schemaVersion4ID := "bafyreid47ua6uiszzdhlotafzv2e32nopt2uow3fgigtt2flc2e2abcvwq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -544,11 +544,15 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						}),
 					},
 					{
-						// The original collection version is present, it has no source and is inactive.
+						// The collection version for schema version 3 is present and inactive, it has the first collection
+						// as source.
 						Name:           "Users",
-						VersionID:      schemaVersion1ID,
+						VersionID:      schemaVersion3ID,
 						IsMaterialized: true,
 						IsActive:       false,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: schemaVersion1ID,
+						}),
 					},
 					{
 						// The collection version for schema version 4 is present and is active, it also has the second collection
@@ -562,15 +566,11 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 						}),
 					},
 					{
-						// The collection version for schema version 3 is present and inactive, it has the first collection
-						// as source.
+						// The original collection version is present, it has no source and is inactive.
 						Name:           "Users",
-						VersionID:      schemaVersion3ID,
+						VersionID:      schemaVersion1ID,
 						IsMaterialized: true,
 						IsActive:       false,
-						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: schemaVersion1ID,
-						}),
 					},
 				},
 			},

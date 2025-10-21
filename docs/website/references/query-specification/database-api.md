@@ -45,20 +45,7 @@ type Delta {
 To query the latest commit of an object (with id: '123'):
 ```graphql
 query {
-    latestCommits(docid: "123") {
-        cid
-        height
-        delta {
-            payload
-        }
-    }
-}
-```
-
-To query all the commits of an object (with id: '123'):
-```graphql
-query {
-    allCommits(docid: "123") {
+    _latestCommits(docid: "123") {
         cid
         height
         delta {
@@ -98,15 +85,15 @@ query {
 }
 ```
 
-The above example shows how to query for the additional `_version` field that is generated automatically for each added schema type. The `_version` has the same execution as `latestCommits`.
+The above example shows how to query for the additional `_version` field that is generated automatically for each added schema type. The `_version` has the same execution as `_latestCommits`.
 
-Both `_version` and `latestCommits` return an array of `Commits` types because the `HEAD` of the MerkleDAG can point to more than one DAG node. This is caused by two concurrent updates to the DAG at the same height. The DAG usually has a single head. However, it can also have multiple heads.
+Both `_version` and `_latestCommits` return an array of `Commits` types because the `HEAD` of the MerkleDAG can point to more than one DAG node. This is caused by two concurrent updates to the DAG at the same height. The DAG usually has a single head. However, it can also have multiple heads.
 
 Commits queries also work with aggregates, grouping, limit, offset, order, dockey, cid, and depth
 There is __typename introspection keyword that works on all queries that does not appear to be documented anywhere, for example:
 
 ```graphql 
-commits(dockey: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
+_commits(dockey: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
     cid
     __typename
 }

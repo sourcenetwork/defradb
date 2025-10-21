@@ -50,6 +50,8 @@ const (
 	MergeCompleteName = Name("merge-complete")
 	// UpdateName is the name of the database update event.
 	UpdateName = Name("update")
+	// SEArtifactReceivedName is the name of the SE artifact received event.
+	SEArtifactReceivedName = Name("se-artifact-received")
 	// PubSubName is the name of the network pubsub event.
 	PubSubName = Name("pubsub")
 	// PeerInfoName is the name of the network peer info event.
@@ -121,6 +123,18 @@ type MergeComplete struct {
 
 	// Decrypted specifies if the merge payload was decrypted.
 	Decrypted bool
+}
+
+// SEArtifactReceived is a notification that SE artifacts have been successfully received.
+type SEArtifactReceived struct {
+	// DocID is the document ID for which SE artifacts were received.
+	DocID string
+
+	// CollectionID is the collection ID.
+	CollectionID string
+
+	// FieldNames are the fields for which artifacts were received.
+	FieldNames []string
 }
 
 // Message contains event info.

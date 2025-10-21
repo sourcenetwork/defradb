@@ -15,20 +15,34 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) getLensStore(ctx context.Context) store.Store {
+	txn, ok := datastore.CtxTryGetTxn(ctx)
+	if ok {
+		return db.lensNode.Store.WithTxn(wrappedTxn{
+			Txn:          txn,
+			ReaderWriter: db.rootstore,
+		})
+	}
+
+	return db.lensNode.Store
+}
+
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			dstFound = false
 		} else {
-			return err
+			return "", err
 		}
 	}
 
@@ -38,7 +52,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		if errors.Is(err, corekv.ErrNotFound) {
 			srcFound = false
 		} else {
-			return err
+			return "", err
 		}
 	}
 
@@ -52,7 +66,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 
 		err = description.SaveCollection(ctx, sourceCol)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -67,18 +81,23 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 	}
 
 	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
-		return NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+	}
+
+	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)
+	if err != nil {
+		return "", err
 	}
 
 	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
 		SourceCollectionID: sourceCol.VersionID,
-		Transform:          immutable.Some(cfg.Lens),
+		Transform:          immutable.Some(id.String()),
 	})
 
 	err = description.SaveCollection(ctx, dstCol)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return db.LensRegistry().SetMigration(ctx, dstCol.VersionID, cfg.Lens)
+	return id.String(), nil
 }

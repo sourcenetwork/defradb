@@ -36,12 +36,12 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [height]) {
+						_commits(groupBy: [height]) {
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"height": int64(2),
 						},
@@ -77,7 +77,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [height]) {
+						_commits(groupBy: [height]) {
 							height
 							_group {
 								cid
@@ -85,7 +85,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"height": int64(2),
 							"_group": []map[string]any{
@@ -134,7 +134,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [cid]) {
+						_commits(groupBy: [cid]) {
 							cid
 							_group {
 								height
@@ -142,7 +142,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"_group": []map[string]any{
@@ -210,12 +210,12 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [docID]) {
+						_commits(groupBy: [docID]) {
 							docID
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"docID": "bae-2bb3e007-c40c-5264-8656-45e024cc4776",
 						},
@@ -251,12 +251,12 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [fieldName]) {
+						_commits(groupBy: [fieldName]) {
 							fieldName
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 						},
@@ -295,7 +295,7 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-						commits(groupBy: [fieldName]) {
+						_commits(groupBy: [fieldName]) {
 							fieldName
 							_group {
 								height
@@ -303,7 +303,7 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 							"_group": []map[string]any{

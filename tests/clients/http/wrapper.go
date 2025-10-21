@@ -62,20 +62,20 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() client.PeerInfo {
+func (w *Wrapper) PeerInfo() ([]string, error) {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
-	return w.client.Connect(ctx, addr)
+func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+	return w.client.Connect(ctx, addresses)
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
-	return w.client.SetReplicator(ctx, info, collections...)
+func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	return w.client.SetReplicator(ctx, addresses, collections...)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
-	return w.client.DeleteReplicator(ctx, info, collections...)
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+	return w.client.DeleteReplicator(ctx, id, collections...)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
@@ -226,12 +226,8 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchO
 	return w.client.RefreshViews(ctx, opts)
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return w.client.SetMigration(ctx, config)
-}
-
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return w.client.LensRegistry()
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -247,6 +243,12 @@ func (w *Wrapper) GetCollections(
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	return w.client.GetAllIndexes(ctx)
+}
+
+func (w *Wrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	return w.client.ListAllEncryptedIndexes(ctx)
 }
 
 func (w *Wrapper) ExecRequest(

@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
@@ -77,11 +78,7 @@ func New(ctx context.Context, options ...Option) (*Node, error) {
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
-	if err != nil {
-		return err
-	}
-	lens, err := NewLens(ctx, filterOptions[LenOpt](n.options)...)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -89,9 +86,18 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
 	if err != nil {
 		return err
+	}
+
+	if isValueSizeLimited {
+		n.options = append(n.options,
+			db.WithLensOpts(
+				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
+			),
+		)
 	}
 
 	err = n.startP2P(ctx, rootstore)
@@ -99,7 +105,7 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, lens, filterOptions[db.Option](n.options)...)
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}

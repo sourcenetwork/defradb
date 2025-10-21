@@ -204,7 +204,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldName: "_C") {
+						_commits(fieldName: "_C") {
 							signature {
 								type
 								identity
@@ -212,7 +212,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeEd25519,
@@ -308,7 +308,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldName: "_C", order: {height: DESC}) {
+						_commits(fieldName: "_C", order: {height: DESC}) {
 							signature {
 								type
 								identity
@@ -316,7 +316,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"signature": map[string]any{
 								"type":     coreblock.SignatureTypeECDSA256K,

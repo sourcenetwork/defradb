@@ -31,22 +31,25 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		txns: txns,
 	}
 	return js.ValueOf(map[string]any{
-		"name":             goji.Async(c.name),
-		"versionID":        goji.Async(c.versionID),
-		"version":          goji.Async(c.version),
-		"collectionID":     goji.Async(c.collectionID),
-		"create":           goji.Async(c.create),
-		"createMany":       goji.Async(c.createMany),
-		"update":           goji.Async(c.update),
-		"delete":           goji.Async(c.delete),
-		"exists":           goji.Async(c.exists),
-		"updateWithFilter": goji.Async(c.updateWithFilter),
-		"deleteWithFilter": goji.Async(c.deleteWithFilter),
-		"get":              goji.Async(c.get),
-		"getAllDocIDs":     goji.Async(c.getAllDocIDs),
-		"createIndex":      goji.Async(c.createIndex),
-		"dropIndex":        goji.Async(c.dropIndex),
-		"getIndexes":       goji.Async(c.getIndexes),
+		"name":                 goji.Async(c.name),
+		"versionID":            goji.Async(c.versionID),
+		"version":              goji.Async(c.version),
+		"collectionID":         goji.Async(c.collectionID),
+		"create":               goji.Async(c.create),
+		"createMany":           goji.Async(c.createMany),
+		"update":               goji.Async(c.update),
+		"delete":               goji.Async(c.delete),
+		"exists":               goji.Async(c.exists),
+		"updateWithFilter":     goji.Async(c.updateWithFilter),
+		"deleteWithFilter":     goji.Async(c.deleteWithFilter),
+		"get":                  goji.Async(c.get),
+		"getAllDocIDs":         goji.Async(c.getAllDocIDs),
+		"createIndex":          goji.Async(c.createIndex),
+		"dropIndex":            goji.Async(c.dropIndex),
+		"getIndexes":           goji.Async(c.getIndexes),
+		"createEncryptedIndex": goji.Async(c.createEncryptedIndex),
+		"deleteEncryptedIndex": goji.Async(c.deleteEncryptedIndex),
+		"listEncryptedIndexes": goji.Async(c.listEncryptedIndexes),
 	})
 }
 
@@ -315,6 +318,47 @@ func (c *clientCollection) getIndexes(this js.Value, args []js.Value) (js.Value,
 		return js.Undefined(), err
 	}
 	desc, err := c.col.GetIndexes(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(desc)
+}
+
+func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
+	var request client.EncryptedIndexDescription
+	if err := structArg(args, 0, "request", &request); err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	desc, err := c.col.CreateEncryptedIndex(ctx, request)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(desc)
+}
+
+func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
+	fieldName, err := stringArg(args, 0, "fieldName")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 1, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.col.DeleteEncryptedIndex(ctx, fieldName)
+	return js.Undefined(), err
+}
+
+func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	desc, err := c.col.ListEncryptedIndexes(ctx)
 	if err != nil {
 		return js.Undefined(), err
 	}

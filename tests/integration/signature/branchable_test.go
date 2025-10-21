@@ -48,7 +48,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							fieldName
 							signature {
 								type
@@ -58,7 +58,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": nil,
 							"signature": map[string]any{

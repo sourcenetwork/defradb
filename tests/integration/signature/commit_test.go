@@ -20,7 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -35,7 +35,7 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 		panic("failed to marshal field value")
 	}
 
-	delta := &corecrdt.LWWDelta{
+	delta := &crdt.LWWDelta{
 		Data:            fieldVal,
 		DocID:           []byte(docID),
 		FieldName:       fieldName,
@@ -43,7 +43,7 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 		Priority:        1,
 	}
 
-	block := coreblock.New(delta, nil)
+	block := coreblock.New(crdt.NewCRDT(delta), nil)
 	return *block
 }
 
@@ -76,7 +76,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 							signature {
 								type
@@ -87,7 +87,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 							"signature": map[string]any{
@@ -163,7 +163,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 			testUtils.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}) {
+						_commits(order: {height: DESC}) {
 							fieldName
 							height
 							signature {
@@ -175,7 +175,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "name",
 							"height":    3,
@@ -259,7 +259,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 			testUtils.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}, fieldName: "_C") {
+						_commits(order: {height: DESC}, fieldName: "_C") {
 							fieldName
 							height
 							signature {
@@ -271,7 +271,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "_C",
 							"height":    2,
@@ -329,7 +329,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 							signature {
 								type
@@ -340,7 +340,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 							"signature": map[string]any{
@@ -413,7 +413,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldName: "_C", order: {height: DESC}) {
+						_commits(fieldName: "_C", order: {height: DESC}) {
 							height
 							signature {
 								type
@@ -423,7 +423,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"height": 3,
 							"signature": map[string]any{

@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
+	lensStore "github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -25,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -84,6 +86,12 @@ type PlanContext struct {
 	context.Context
 }
 
+// P2P defines the P2P operations needed by the planner.
+type P2P interface {
+	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
+	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []se.FieldValueQuery) ([]string, error)
+}
+
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
@@ -91,7 +99,9 @@ type Planner struct {
 	documentACP immutable.Option[dac.DocumentACP]
 	db          client.TxnStore
 
-	ctx context.Context
+	p2p       P2P
+	ctx       context.Context
+	lensStore lensStore.Store
 }
 
 func New(
@@ -99,11 +109,15 @@ func New(
 	identity immutable.Option[acpIdentity.Identity],
 	documentACP immutable.Option[dac.DocumentACP],
 	db client.TxnStore,
+	p2p P2P,
+	lensStore lensStore.Store,
 ) *Planner {
 	return &Planner{
 		identity:    identity,
 		documentACP: documentACP,
 		db:          db,
+		p2p:         p2p,
+		lensStore:   lensStore,
 		ctx:         ctx,
 	}
 }

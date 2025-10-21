@@ -13,9 +13,12 @@ package protocol
 import (
 	"sync"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
+
+var log = corelog.NewLogger("p2p")
 
 // baseProto contains the minimum fields that protocols should contain.
 type baseProto struct {

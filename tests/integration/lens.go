@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -26,11 +25,11 @@ const (
 )
 
 var (
-	lensType node.LensRuntimeType
+	lensType db.LensRuntimeType
 )
 
 func init() {
-	lensType = node.LensRuntimeType(os.Getenv(lensTypeEnvName))
+	lensType = db.LensRuntimeType(os.Getenv(lensTypeEnvName))
 }
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
@@ -58,13 +57,18 @@ func configureMigration(
 	s *state.State,
 	action ConfigureMigration,
 ) {
+	var lensID string
+
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
 		ctx := db.InitContext(s.Ctx, txn)
-		err := node.SetMigration(ctx, action.LensConfig)
+		var err error
+		lensID, err = node.SetMigration(ctx, action.LensConfig)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
+
+	s.LensIDs = append(s.LensIDs, lensID)
 }

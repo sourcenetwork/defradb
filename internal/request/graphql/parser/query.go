@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"strings"
+
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -90,11 +92,14 @@ func parseSelect(
 	parent *gql.Object,
 	field *ast.Field,
 ) (*request.Select, error) {
+	isEncrypted := strings.HasPrefix(field.Name.Value, request.EncryptedCollectionPrefix)
+
 	slct := &request.Select{
 		Field: request.Field{
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
+		IsEncrypted: isEncrypted,
 	}
 
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
@@ -261,7 +266,7 @@ func parseAggregateTarget(
 
 	for name, value := range arguments {
 		switch name {
-		case request.FieldName:
+		case request.FieldArgName:
 			if v, ok := value.(string); ok {
 				childName = v
 			}

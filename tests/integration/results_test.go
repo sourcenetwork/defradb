@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -35,6 +36,10 @@ func (m *mockTestState) GetCurrentNodeID() int {
 
 func (m *mockTestState) GetIdentity(_ state.Identity) acpIdentity.Identity {
 	return nil
+}
+
+func (m *mockTestState) GetDocID(_ int, _ int) client.DocID {
+	return client.DocID{}
 }
 
 func TestAnyOfMatcher(t *testing.T) {

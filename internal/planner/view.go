@@ -28,14 +28,9 @@ type viewNode struct {
 	p      *Planner
 	desc   client.CollectionVersion
 	source planNode
-
-	// This is cached as a boolean to save rediscovering this in the main Next/Value iteration loop
-	hasTransform bool
 }
 
 func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, error) {
-	hasTransform := col.Version().Query.Value().Transform.HasValue()
-
 	var source planNode
 	if col.Version().IsMaterialized {
 		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
@@ -51,17 +46,16 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 			return nil, err
 		}
 
-		if hasTransform {
+		if col.Version().Query.Value().Transform.HasValue() {
 			source = p.Lens(source, query.DocumentMapping, col)
 		}
 	}
 
 	viewNode := &viewNode{
-		p:            p,
-		desc:         col.Version(),
-		source:       source,
-		docMapper:    docMapper{query.DocumentMapping},
-		hasTransform: hasTransform,
+		p:         p,
+		desc:      col.Version(),
+		source:    source,
+		docMapper: docMapper{query.DocumentMapping},
 	}
 
 	return viewNode, nil

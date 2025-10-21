@@ -21,6 +21,8 @@ import (
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
@@ -34,6 +36,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
 
@@ -42,13 +45,26 @@ var (
 	tracer = telemetry.NewTracer()
 )
 
+type (
+	peerID        = string
+	collectionID  = string
+	addresses     = []string
+	peerAddresses = map[peerID]addresses
+)
+
 const networkRequestTimeout = 10 * time.Second
+
+// PushToReplicatorsHandler is called when documents are pushed to replicators.
+// Implementations can perform additional actions like generating SE artifacts.
+type PushToReplicatorsHandler interface {
+	HandlePushToReplicators(ctx context.Context, evt event.Update) error
+}
 
 // DB hold the database related methods that are required by P2P.
 type DB interface {
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	NewTxn(readOnly bool) (client.Txn, error)
-	// GetNodeIndentityToken returns an identity token for the given audience.
+	// GetNodeIdentityToken returns an identity token for the given audience.
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
@@ -61,23 +77,32 @@ type DB interface {
 	RetryIntervals() []time.Duration
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
+	// Rootstore returns the rootstore
+	Rootstore() corekv.TxnStore
 	// P2PBlockSyncTimeout is the timeout duration for syncing block links.
 	P2PBlockSyncTimeout() time.Duration
+	// SearchableEncryptionKey returns the searchable encryption key if configured.
+	SearchableEncryptionKey() []byte
+	// MaxTxnRetries returns the maximum number of transaction retries.
+	MaxTxnRetries() int
 }
 
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
-	replicatorProtocol *protocol.ReplicatorProtocol
+	replicatorProtocol protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply]
 
 	ctx  context.Context
 	db   DB
 	host client.Host
 
-	// replicators is a map from collection CollectionID => peerId
-	replicators map[string]map[string]client.PeerInfo
+	// replicators is a map from collection CollectionID => peerId => list of addresses.
+	// This is a cached in-memory copy of the persisted replicators in the database.
+	// It is used to quickly find the replicators for a given collection when sending updates.
+	// The map is protected by repMu.
+	replicators map[collectionID]peerAddresses
 	repMu       sync.Mutex
 
-	peerIdentities map[string]identity.Identity
+	peerIdentities map[peerID]identity.Identity
 	piMu           sync.RWMutex
 
 	// The intervals at which to retry replicator failures.
@@ -90,22 +115,40 @@ type P2P struct {
 
 	// timeout duration for syncing block links.
 	syncBlockLinkTimeout time.Duration
+
+	// seCoordinator manages searchable encryption artifact replication
+	seCoordinator *se.Coordinator
+
+	// pushHandlers are called when documents are pushed to replicators
+	pushHandlers []PushToReplicatorsHandler
+}
+
+// pushLogCommProcessor implements CommProcessor for push log functionality
+type pushLogCommProcessor struct {
+	p2p *P2P
+}
+
+func (proc *pushLogCommProcessor) ProcessRequest(
+	ctx context.Context,
+	req protocol.PushLogRequest,
+) (protocol.PushLogReply, error) {
+	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, true)
 }
 
 // New returns a new configured P2P instance.
-func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
+func New(ctx context.Context, db DB, host client.Host, nodeIdentity immutable.Option[identity.Identity]) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
 		db:                   db,
 		host:                 host,
 		identityProtocol:     protocol.NewIdentityProtocol(host, db.GetNodeIdentityToken),
-		replicators:          make(map[string]map[string]client.PeerInfo),
+		replicators:          make(map[string]map[string][]string),
 		peerIdentities:       make(map[string]identity.Identity),
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 	}
-	p.replicatorProtocol = protocol.NewReplicatorProtocol(host, p.processPushlogRequest, p.handleReplicatorFailure)
+	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
@@ -128,27 +171,45 @@ func New(ctx context.Context, db DB, host client.Host) (*P2P, error) {
 		return nil, err
 	}
 
+	if len(db.SearchableEncryptionKey()) > 0 {
+		coord, err := se.NewCoordinator(&p, host, db, db.SearchableEncryptionKey(), nodeIdentity)
+		if err != nil {
+			return nil, err
+		}
+		p.seCoordinator = coord
+		p.AddPushToReplicatorsHandler(coord)
+	}
+
 	return &p, nil
 }
 
-func (p *P2P) PeerInfo() client.PeerInfo {
-	return p.host.PeerInfo()
+func (p *P2P) SECoordinator() *se.Coordinator {
+	return p.seCoordinator
 }
 
-// Connect initiates a connection to the peer with the given addresp.
-func (p *P2P) Connect(ctx context.Context, id string, addresses []string) error {
-	return p.host.Connect(ctx, id, addresses)
+// AddPushToReplicatorsHandler registers a handler that will be called when documents are pushed to replicators.
+func (p *P2P) AddPushToReplicatorsHandler(handler PushToReplicatorsHandler) {
+	p.pushHandlers = append(p.pushHandlers, handler)
 }
 
-func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collectionIDs map[string]struct{}) {
+func (p *P2P) PeerInfo() ([]string, error) {
+	return p.host.Addresses()
+}
+
+// Connect initiates a connection to the peer with the given addresses.
+func (p *P2P) Connect(ctx context.Context, addresses []string) error {
+	return p.host.Connect(ctx, addresses)
+}
+
+func (p *P2P) updateReplicators(ctx context.Context, id string, addresses []string, collectionIDs map[string]struct{}) {
 	if len(collectionIDs) == 0 {
 		// remove peer from store
-		if err := p.host.Disconnect(ctx, rep.ID); err != nil {
+		if err := p.host.Disconnect(ctx, id); err != nil {
 			log.ErrorE("Failed to disconnect from replicator peer", err)
 		}
 	} else {
-		if err := p.host.Connect(ctx, rep.ID, rep.Addresses); err != nil {
-			log.ErrorE("Failed to connect to replicator peer", err)
+		if err := p.host.Connect(ctx, addresses); err != nil {
+			log.ErrorE("Failed to connect to replicator peer", err, corelog.Any("Addresses", addresses))
 		}
 	}
 
@@ -156,19 +217,19 @@ func (p *P2P) updateReplicators(ctx context.Context, rep client.PeerInfo, collec
 	p.repMu.Lock()
 	for collectionID, peers := range p.replicators {
 		if _, hasID := collectionIDs[collectionID]; hasID {
-			p.replicators[collectionID][rep.ID] = rep
+			p.replicators[collectionID][id] = addresses
 			delete(collectionIDs, collectionID)
 		} else {
-			if _, exists := peers[rep.ID]; exists {
-				delete(p.replicators[collectionID], rep.ID)
+			if _, exists := peers[id]; exists {
+				delete(p.replicators[collectionID], id)
 			}
 		}
 	}
 	for collectionID := range collectionIDs {
 		if _, exists := p.replicators[collectionID]; !exists {
-			p.replicators[collectionID] = make(map[string]client.PeerInfo)
+			p.replicators[collectionID] = make(map[string][]string)
 		}
-		p.replicators[collectionID][rep.ID] = rep
+		p.replicators[collectionID][id] = addresses
 	}
 	p.repMu.Unlock()
 }
@@ -410,7 +471,7 @@ func (p *P2P) processPushlogRequest(
 		}
 	}
 
-	err = p.syncDAG(ctx, p.host.BlockService(), block)
+	err = p.syncDAG(ctx, block)
 	if err != nil {
 		return err
 	}
@@ -524,4 +585,17 @@ func (m *processQueue) doneOnce(cid cid.Cid) func() {
 	return sync.OnceFunc(func() {
 		m.done(cid)
 	})
+}
+
+// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
+func (p *P2P) QueryDocIDsWithSETags(
+	ctx context.Context,
+	collectionID string,
+	fieldValues []se.FieldValueQuery,
+) ([]string, error) {
+	if p.seCoordinator == nil {
+		return []string{}, nil
+	}
+
+	return p.seCoordinator.QueryDocIDsByValues(ctx, collectionID, fieldValues)
 }

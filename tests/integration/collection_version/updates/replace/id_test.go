@@ -90,11 +90,11 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 						{
 							"op": "replace",
 							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
-							"value": "bafyreidfzu2x6i4akqlmt5lloaeflwep4ykq2f4unwm2utkmrkgpfyf7bi"
+							"value": "bafyreihkqi5vwtq7wh66mgjw7biyhrf7ilwzsulzfhrvmzvfppnqmpt5ne"
 						},
 						{
 							"op": "replace",
-							"path": "/bafyreidfzu2x6i4akqlmt5lloaeflwep4ykq2f4unwm2utkmrkgpfyf7bi/VersionID",
+							"path": "/bafyreihkqi5vwtq7wh66mgjw7biyhrf7ilwzsulzfhrvmzvfppnqmpt5ne/VersionID",
 							"value": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
 						}
 					]

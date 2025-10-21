@@ -29,7 +29,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "age") {
+					_latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "age") {
 						cid
 						links {
 							cid
@@ -38,7 +38,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldName(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"latestCommits": []map[string]any{
+					"_latestCommits": []map[string]any{
 						{
 							"cid":   "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"links": []map[string]any{},
@@ -63,7 +63,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "1") {
+					_latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "1") {
 						cid
 						links {
 							cid
@@ -72,7 +72,7 @@ func TestQueryLatestCommitsWithDocIDAndFieldId(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"latestCommits": []map[string]any{},
+					"_latestCommits": []map[string]any{},
 				},
 			},
 		},
@@ -94,7 +94,7 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "_C") {
+					_latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "_C") {
 						cid
 						links {
 							cid
@@ -103,7 +103,7 @@ func TestQueryLatestCommitsWithDocIDAndCompositeFieldId(t *testing.T) {
 					}
 				}`,
 				Results: map[string]any{
-					"latestCommits": []map[string]any{
+					"_latestCommits": []map[string]any{
 						{
 							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
 							"links": []map[string]any{

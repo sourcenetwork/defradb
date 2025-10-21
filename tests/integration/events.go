@@ -266,6 +266,52 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 	}
 }
 
+func waitForSESync(s *state.State, action WaitForSESync) {
+	var docIDsToWait []string
+	if len(action.DocIDs) > 0 {
+		for _, docIndex := range action.DocIDs {
+			if len(s.DocIDs[0]) <= docIndex {
+				require.Fail(s.T, "doc index %d out of range", docIndex)
+			}
+			docIDsToWait = append(docIDsToWait, s.DocIDs[0][docIndex].String())
+		}
+	} else {
+		// Wait for all documents if no specific IDs provided
+		for _, docID := range s.DocIDs[0] {
+			docIDsToWait = append(docIDsToWait, docID.String())
+		}
+	}
+
+	// SE sync events are only published on replicator nodes (nodes that receive artifacts)
+	// We wait for events from any non-source node with active replicators
+	for nodeID := 1; nodeID < len(s.Nodes); nodeID++ {
+		node := s.Nodes[nodeID]
+		if node.Closed {
+			continue // node is closed
+		}
+
+		expectedSyncs := make(map[string]struct{}, len(docIDsToWait))
+		for _, docID := range docIDsToWait {
+			expectedSyncs[docID] = struct{}{}
+		}
+
+		for len(expectedSyncs) > 0 {
+			select {
+			case msg, ok := <-node.Event.SESync.Message():
+				if !ok {
+					require.Fail(s.T, "subscription closed waiting for SE sync complete event")
+				}
+				evt := msg.Data.(event.SEArtifactReceived)
+
+				delete(expectedSyncs, evt.DocID)
+
+			case <-time.After(30 * eventTimeout):
+				require.Fail(s.T, "timeout waiting for SE sync complete event on node %d. Remaining: %v", nodeID, expectedSyncs)
+			}
+		}
+	}
+}
+
 // updateNetworkState updates the network state by checking which
 // nodes should receive the updated document in the given update event.
 func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immutable.Option[state.Identity]) {

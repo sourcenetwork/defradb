@@ -220,6 +220,23 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 					"Users": []map[string]any{},
 				},
 			},
+			// If the instance doesn't have rights to the doc, it can't do block sync
+			// and therefore doesn't have the related commit blocks.
+			testUtils.Request{
+				NodeID:   immutable.Some(1),
+				Identity: testUtils.ClientIdentity(1),
+				Request: `
+					query {
+						_commits {
+							delta
+							docID
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
 		},
 	}
 

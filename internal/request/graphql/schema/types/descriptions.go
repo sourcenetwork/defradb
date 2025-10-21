@@ -99,7 +99,7 @@ The Name of the field that this linked commit mutated.
 The CID of this linked commit.
 `
 	commitFieldsEnumDescription string = `
-These are the set of fields supported for grouping by in a commits query.
+These are the set of fields supported for grouping by in a _commits query.
 `
 	commitsQueryDescription string = `
 Returns a set of commits matching any provided criteria. If no arguments are
@@ -109,7 +109,7 @@ Returns a set of commits matching any provided criteria. If no arguments are
 Returns a set of head commits matching any provided criteria. If no arguments are
  provided all head commits in the system will be returned. If no 'field' argument
  is provided only composite commits will be returned. This is equivalent to
- a 'commits' query with Depth: 1, and a differing 'field' default value.
+ a '_commits' query with Depth: 1, and a differing 'field' default value.
 `
 	CountFieldDescription string = `
 Returns the total number of items within the specified child sets. If multiple child

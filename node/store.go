@@ -72,16 +72,24 @@ func WithStorePath(path string) StoreOpt {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, error) {
+func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, bool, error) {
 	options := DefaultStoreOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
+
+	var isValueSizeLimited bool
+	if options.badgerInMemory {
+		isValueSizeLimited = true
+	}
+
 	storeConstructor, ok := storeConstructors[options.store]
 	if ok {
-		return storeConstructor(ctx, options)
+		store, err := storeConstructor(ctx, options)
+		return store, isValueSizeLimited, err
 	}
-	return nil, NewErrStoreTypeNotSupported(options.store)
+
+	return nil, false, NewErrStoreTypeNotSupported(options.store)
 }
 
 func purgeStore(ctx context.Context, opts ...StoreOpt) error {

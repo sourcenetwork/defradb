@@ -12,6 +12,7 @@ package action
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,16 @@ const (
 	// AuthTokenExpiration is the expiration time for auth tokens.
 	AuthTokenExpiration = time.Minute * 1
 )
+
+// NodeIdentity returns a node identity at the given index.
+func NodeIdentity(indexSelector int) immutable.Option[state.Identity] {
+	return immutable.Some(
+		state.Identity{
+			Kind:     state.NodeIdentityType,
+			Selector: strconv.Itoa(indexSelector),
+		},
+	)
+}
 
 // getIdentityForRequest returns the identity for the given reference and node index.
 // It prepares the identity for a request by generating a token if needed, i.e. it will

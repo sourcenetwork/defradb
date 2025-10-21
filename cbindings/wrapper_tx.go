@@ -125,12 +125,8 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 	return txn.CWrapper.RefreshViews(ctx, options)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return txn.CWrapper.SetMigration(ctx, config)
-}
-
-func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return txn.CWrapper.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(

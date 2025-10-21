@@ -22,36 +22,44 @@ import (
 
 var _ client.P2P = (*Client)(nil)
 
-// ReplicatorParams contains the replicator fields that can be modified by the user.
-type ReplicatorParams struct {
-	// Info is the address of the peer to replicate to.
-	Info client.PeerInfo
+// SetReplicatorParams contains the replicator fields that can be modified by the user.
+type SetReplicatorParams struct {
+	// Addresses list of peer addresses.
+	Addresses []string
 	// Collections is the list of collection names to replicate.
 	Collections []string
 }
 
-func (c *Client) PeerInfo() client.PeerInfo {
+// DeleteReplicatorParams contains the params needed to delete a replicator.
+type DeleteReplicatorParams struct {
+	// ID is the ID of the replicator to delete.
+	ID string
+	// Collections is the list of collection names to replicate.
+	Collections []string
+}
+
+func (c *Client) PeerInfo() ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
 	if err != nil {
-		return client.PeerInfo{}
+		return nil, err
 	}
-	var res client.PeerInfo
+	var res []string
 	if err := c.http.requestJson(req, &res); err != nil {
-		return client.PeerInfo{}
+		return nil, err
 	}
-	return res
+	return res, nil
 }
 
-func (c *Client) Connect(ctx context.Context, info client.PeerInfo) error {
+func (c *Client) Connect(ctx context.Context, addresses []string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
 
-	body, err := json.Marshal(info)
+	body, err := json.Marshal(addresses)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -59,11 +67,11 @@ func (c *Client) Connect(ctx context.Context, info client.PeerInfo) error {
 	return err
 }
 
-func (c *Client) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (c *Client) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(ReplicatorParams{
-		Info:        info,
+	body, err := json.Marshal(SetReplicatorParams{
+		Addresses:   addresses,
 		Collections: collections,
 	})
 	if err != nil {
@@ -77,11 +85,11 @@ func (c *Client) SetReplicator(ctx context.Context, info client.PeerInfo, collec
 	return err
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (c *Client) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(ReplicatorParams{
-		Info:        info,
+	body, err := json.Marshal(DeleteReplicatorParams{
+		ID:          id,
 		Collections: collections,
 	})
 	if err != nil {

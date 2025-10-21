@@ -53,7 +53,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
 								cid
@@ -61,7 +61,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(collectionUpdateCid, uniqueCid),
 							"links": []map[string]any{

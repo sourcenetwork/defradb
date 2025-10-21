@@ -61,7 +61,7 @@ func (c *collection) checkAccessOfDocWithACP(
 	}
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		identity.FromContext(ctx),
+		ident,
 		c.db.documentACP.Value(),
 		c,
 		resourcePermission,

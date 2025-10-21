@@ -70,7 +70,7 @@ func (c *collection) get(
 ) (*client.Document, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	// create a new document fetcher
-	df := c.newFetcher()
+	df := c.newFetcher(ctx)
 	// initialize it with the primary index
 	err := df.Init(
 		ctx,

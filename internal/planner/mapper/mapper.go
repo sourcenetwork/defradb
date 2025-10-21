@@ -41,6 +41,7 @@ type SelectionType int
 const (
 	ObjectSelection SelectionType = iota
 	CommitSelection
+	EncryptedSearchSelection
 )
 
 // ToOperation converts the given [request.OperationDefinition] into an [Operation].
@@ -120,6 +121,10 @@ func toSelect(
 		// WARNING: This is a weird quirk upon which some of the mapper code is dependent upon
 		// please remove it if/when you have chance to.
 		rootSelectType = CommitSelection
+	}
+
+	if selectRequest.IsEncrypted {
+		rootSelectType = EncryptedSearchSelection
 	}
 
 	collectionName, err := getCollectionName(ctx, rootSelectType, selectRequest, parentCollectionName)
@@ -221,6 +226,7 @@ func toSelect(
 		Cid:             selectRequest.CID,
 		CollectionName:  collectionName,
 		Fields:          fields,
+		IsEncrypted:     selectRequest.IsEncrypted,
 	}, nil
 }
 
@@ -890,6 +896,8 @@ func getCollectionName(
 		return parentCollectionName, nil
 	} else if rootSelectType == CommitSelection {
 		return parentCollectionName, nil
+	} else if rootSelectType == EncryptedSearchSelection {
+		return strings.TrimPrefix(selectRequest.Name, request.EncryptedCollectionPrefix), nil
 	}
 
 	if parentCollectionName != "" {
@@ -927,6 +935,12 @@ func getTopLevelInfo(
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
+		return mapping, client.CollectionVersion{}, nil
+	}
+
+	if rootSelectType == EncryptedSearchSelection {
+		mapping.Add(core.DocIDFieldIndex, request.DocIDsFieldName)
+		mapping.SetTypeName(request.EncryptedSearchResultName)
 		return mapping, client.CollectionVersion{}, nil
 	}
 

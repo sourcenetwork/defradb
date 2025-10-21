@@ -172,6 +172,20 @@
                         "type": "string"
                     },
                     "CollectionSet": {},
+                    "EncryptedIndexes": {
+                        "items": {
+                            "properties": {
+                                "FieldName": {
+                                    "type": "string"
+                                },
+                                "Type": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": "array"
+                    },
                     "Fields": {
                         "items": {
                             "properties": {
@@ -314,6 +328,20 @@
                 },
                 "type": "object"
             },
+            "delete_replicator_params": {
+                "properties": {
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "ID": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "delete_result": {
                 "properties": {
                     "Count": {
@@ -331,6 +359,28 @@
             },
             "document": {
                 "additionalProperties": true,
+                "type": "object"
+            },
+            "encrypted_index": {
+                "properties": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "encrypted_index_create": {
+                "properties": {
+                    "FieldName": {
+                        "type": "string"
+                    },
+                    "Type": {
+                        "type": "string"
+                    }
+                },
                 "type": "object"
             },
             "error": {
@@ -395,7 +445,7 @@
                 },
                 "type": "object"
             },
-            "index_create_request": {
+            "index_create": {
                 "properties": {
                     "Fields": {
                         "items": {
@@ -449,21 +499,6 @@
                 },
                 "type": "object"
             },
-            "migrate_request": {
-                "properties": {
-                    "CollectionID": {
-                        "type": "string"
-                    },
-                    "Data": {
-                        "items": {
-                            "additionalProperties": {},
-                            "type": "object"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
             "patch_collection_request": {
                 "properties": {
                     "Migration": {},
@@ -489,25 +524,20 @@
             },
             "replicator": {
                 "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "CollectionIDs": {
                         "items": {
                             "type": "string"
                         },
                         "type": "array"
                     },
-                    "Info": {
-                        "properties": {
-                            "Addresses": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "ID": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
+                    "ID": {
+                        "type": "string"
                     },
                     "LastStatusChange": {
                         "format": "date-time",
@@ -521,58 +551,27 @@
                 },
                 "type": "object"
             },
-            "replicator_params": {
+            "set_migration": {
                 "properties": {
-                    "Collections": {
+                    "lensId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "set_replicator_params": {
+                "properties": {
+                    "Addresses": {
                         "items": {
                             "type": "string"
                         },
                         "type": "array"
                     },
-                    "Info": {
-                        "properties": {
-                            "Addresses": {
-                                "items": {
-                                    "type": "string"
-                                },
-                                "type": "array"
-                            },
-                            "ID": {
-                                "type": "string"
-                            }
+                    "Collections": {
+                        "items": {
+                            "type": "string"
                         },
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
-            "set_migration_request": {
-                "properties": {
-                    "CollectionID": {
-                        "type": "string"
-                    },
-                    "Config": {
-                        "properties": {
-                            "Lenses": {
-                                "items": {
-                                    "properties": {
-                                        "Arguments": {
-                                            "additionalProperties": {},
-                                            "type": "object"
-                                        },
-                                        "Inverse": {
-                                            "type": "boolean"
-                                        },
-                                        "Path": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                },
-                                "type": "array"
-                            }
-                        },
-                        "type": "object"
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -1382,6 +1381,133 @@
                 ]
             }
         },
+        "/collections/{name}/encrypted-indexes": {
+            "get": {
+                "description": "List encrypted indexes",
+                "operationId": "encrypted_index_list",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/encrypted_index"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "List of encrypted indexes"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            },
+            "post": {
+                "description": "Create an encrypted index",
+                "operationId": "encrypted_index_create",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/encrypted_index_create"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/encrypted_index"
+                                }
+                            }
+                        },
+                        "description": "Encrypted index description"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            }
+        },
+        "/collections/{name}/encrypted-indexes/{field}": {
+            "delete": {
+                "description": "Delete an encrypted index",
+                "operationId": "encrypted_index_delete",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Field name of the encrypted index",
+                        "in": "path",
+                        "name": "field",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            }
+        },
         "/collections/{name}/indexes": {
             "get": {
                 "description": "List secondary indexes",
@@ -1440,7 +1566,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/index_create_request"
+                                "$ref": "#/components/schemas/index_create"
                             }
                         }
                     },
@@ -1648,6 +1774,39 @@
                 ]
             }
         },
+        "/encrypted-indexes": {
+            "get": {
+                "description": "List all encrypted indexes for all collections",
+                "operationId": "encrypted_indexes_list_all",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "items": {
+                                            "$ref": "#/components/schemas/encrypted_index"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Map of collection names to their encrypted indexes"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "encrypted_index"
+                ]
+            }
+        },
         "/graphql": {
             "get": {
                 "description": "GraphQL GET endpoint",
@@ -1768,137 +1927,14 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "lens"
-                ]
-            }
-        },
-        "/lens/registry": {
-            "post": {
-                "description": "Add a new lens migration to registry",
-                "operationId": "lens_registry_set_migration",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/set_migration_request"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/set_migration"
+                                }
                             }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "lens"
-                ]
-            }
-        },
-        "/lens/registry/reload": {
-            "post": {
-                "description": "Reload lens migrations",
-                "operationId": "lens_registry_reload",
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "lens"
-                ]
-            }
-        },
-        "/lens/registry/{version}/down": {
-            "post": {
-                "description": "Migrate documents from a collection",
-                "operationId": "lens_registry_migrate_down",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "version",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/migrate_request"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "lens"
-                ]
-            }
-        },
-        "/lens/registry/{version}/up": {
-            "post": {
-                "description": "Migrate documents to a collection",
-                "operationId": "lens_registry_migrate_up",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "version",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/migrate_request"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/success"
+                        },
+                        "description": "Lens info"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2033,7 +2069,7 @@
             }
         },
         "/p2p/connect": {
-            "get": {
+            "post": {
                 "operationId": "connect",
                 "responses": {
                     "200": {
@@ -2224,7 +2260,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
+                                "$ref": "#/components/schemas/delete_replicator_params"
                             }
                         }
                     },
@@ -2280,7 +2316,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/replicator_params"
+                                "$ref": "#/components/schemas/set_replicator_params"
                             }
                         }
                     },

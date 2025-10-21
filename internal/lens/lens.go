@@ -14,8 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable/enumerable"
-
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/lens/host-go/store"
 )
 
 type schemaVersionID = string
@@ -42,7 +41,7 @@ type Lens interface {
 }
 
 type lens struct {
-	lensRegistry client.LensRegistry
+	store store.Store
 
 	ctx context.Context
 
@@ -65,7 +64,7 @@ var _ Lens = (*lens)(nil)
 
 func new(
 	ctx context.Context,
-	lensRegistry client.LensRegistry,
+	store store.Store,
 	targetSchemaVersionID schemaVersionID,
 	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink,
 ) Lens {
@@ -73,7 +72,7 @@ func new(
 	outputPipe := enumerable.Concat[LensDoc](targetSource)
 
 	return &lens{
-		lensRegistry:       lensRegistry,
+		store:              store,
 		ctx:                ctx,
 		source:             enumerable.NewQueue[lensInput](),
 		outputPipe:         outputPipe,
@@ -181,7 +180,11 @@ func (l *lens) Next() (bool, error) {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
-				pipeHead, err = l.lensRegistry.MigrateUp(l.ctx, junctionPipe, historyLocation.next.Value().collection.VersionID)
+				pipeHead, err = l.store.Transform(
+					l.ctx,
+					junctionPipe,
+					historyLocation.next.Value().collection.PreviousVersion.Value().Transform.Value(),
+				)
 				if err != nil {
 					return false, err
 				}
@@ -191,7 +194,11 @@ func (l *lens) Next() (bool, error) {
 				// Aquire a lens migration from the registery, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
-				pipeHead, err = l.lensRegistry.MigrateDown(l.ctx, junctionPipe, historyLocation.collection.VersionID)
+				pipeHead, err = l.store.Inverse(
+					l.ctx,
+					junctionPipe,
+					historyLocation.collection.PreviousVersion.Value().Transform.Value(),
+				)
 				if err != nil {
 					return false, err
 				}

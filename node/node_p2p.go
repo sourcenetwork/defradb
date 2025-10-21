@@ -18,11 +18,10 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/go-p2p"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/net"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 )
 
 func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
@@ -30,10 +29,11 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
 		return nil
 	}
 
-	peer, err := net.NewPeer(
+	n.options = append(n.options, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store)))
+
+	peer, err := p2p.NewPeer(
 		ctx,
-		datastore.P2PBlockstoreFrom(store),
-		filterOptions[netConfig.NodeOpt](n.options)...,
+		filterOptions[p2p.NodeOpt](n.options)...,
 	)
 	if err != nil {
 		return err

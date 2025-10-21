@@ -1,16 +1,20 @@
 ## defradb client p2p connect
 
-Connect to a peer
+Connect to one or more peers
 
 ### Synopsis
 
-Connect to a peer with the given ID and addresses
-Example: 
-  defradb client p2p connect '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
-  		
+Connect to one or more peers with the given addresses
+
+Example: Connect to a peer
+  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
+  
+Example: Connect to multiple peers
+  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
+		
 
 ```
-defradb client p2p connect <peerInfo> [flags]
+defradb client p2p connect <addresses...> [flags]
 ```
 
 ### Options

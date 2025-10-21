@@ -346,6 +346,65 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	execute(t, test)
 }
 
+func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User(docID: "bae-63bbf04b-a388-5b8f-86e3-9327849f46c2") {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"age":  int64(31),
+								"name": "Addo",
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"age":  int64(32),
+								"name": "Addo",
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  27,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Addo",
+					"age":  31,
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"age": 28}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        1,
+				Doc:          `{"age": 32}`,
+			},
+		},
+	}
+
+	execute(t, test)
+}
+
 func TestSubscription_WithClose_WontBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -408,6 +467,71 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"counter": 1}`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User (showDeleted: true) { 
+						name
+						_deleted
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"name":     "John",
+								"_deleted": false,
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"name":     "Johny",
+								"_deleted": false,
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"name":     "Johny",
+								"_deleted": true,
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"name": "Johny"}`,
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        0,
 			},
 		},
 	}

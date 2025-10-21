@@ -22,14 +22,17 @@ const (
 	Input              = "input"
 	CreateInput        = "create"
 	UpdateInput        = "update"
-	FieldName          = "field"
+	FieldArgName       = "field"
+	FieldNameArgName   = "fieldName"
 	FieldIDName        = "fieldId"
 	FieldNameName      = "fieldName"
 	CompositeFieldName = "_C"
 	ShowDeleted        = "showDeleted"
 
-	EncryptDocArgName    = "encrypt"
-	EncryptFieldsArgName = "encryptFields"
+	EncryptDocArgName         = "encrypt"
+	EncryptFieldsArgName      = "encryptFields"
+	EncryptedCollectionPrefix = "encrypted_"
+	EncryptedSearchResultName = "EncryptedSearchResult"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
@@ -38,7 +41,9 @@ const (
 	OrderClause   = "order"
 	DepthClause   = "depth"
 
-	DocIDArgName = "docID"
+	DocIDArgName  = "docID"
+	CidArgName    = "cid"
+	HeightArgName = "height"
 
 	AverageFieldName    = "_avg"
 	CountFieldName      = "_count"
@@ -58,8 +63,8 @@ const (
 
 	ExplainLabel = "explain"
 
-	LatestCommitsName = "latestCommits"
-	CommitsName       = "commits"
+	LatestCommitsName = "_latestCommits"
+	CommitsName       = "_commits"
 
 	CommitTypeName           = "Commit"
 	LinksFieldName           = "links"
@@ -87,6 +92,8 @@ const (
 	SignatureTypeFieldName     = "type"
 	SignatureIdentityFieldName = "identity"
 	SignatureValueFieldName    = "value"
+
+	DocIDsFieldName = "docIDs"
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")

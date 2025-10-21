@@ -141,13 +141,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 	return txn.Client.RefreshViews(ctx, options)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.SetMigration(ctx, config)
-}
-
-func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return txn.Client.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(
@@ -171,6 +167,13 @@ func (txn *Transaction) GetAllIndexes(
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.GetAllIndexes(ctx)
+}
+
+func (txn *Transaction) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.ListAllEncryptedIndexes(ctx)
 }
 
 func (txn *Transaction) ExecRequest(

@@ -28,7 +28,7 @@ type SchemaManager struct {
 
 // NewSchemaManager returns a new instance of a SchemaManager
 // with a new default type map
-func NewSchemaManager() (*SchemaManager, error) {
+func NewSchemaManager(isSearchableEncryptionEnabled bool) (*SchemaManager, error) {
 	schema, err := defaultSchema()
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func NewSchemaManager() (*SchemaManager, error) {
 	sm := &SchemaManager{
 		schema: schema,
 	}
-	sm.NewGenerator()
+	sm.NewGenerator(isSearchableEncryptionEnabled)
 	return sm, nil
 }
 

@@ -84,9 +84,9 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
 	case ast.OperationTypeSubscription:
-		parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(exe, collectedFields)
-		if err != nil {
-			return nil, []error{err}
+		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		if errs != nil {
+			return nil, errs
 		}
 
 		parsedDirectives, err := parseDirectives(astOpDef.Directives)

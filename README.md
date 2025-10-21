@@ -217,7 +217,7 @@ To get the most recent commit in the MerkleDAG for the document identified as `b
 ```shell
 defradb client query '
   query {
-    latestCommits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
+    _latestCommits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
       delta
       height
@@ -235,7 +235,7 @@ It returns a structure similar to the following, which contains the update paylo
 ```json
 {
   "data": {
-    "latestCommits": [
+    "_latestCommits": [
       {
         "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
         "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
@@ -269,7 +269,7 @@ Obtain a specific commit by its content identifier (`cid`):
 ```shell
 defradb client query '
   query {
-    commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
+    _commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
       cid
       delta
       height

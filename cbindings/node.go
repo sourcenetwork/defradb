@@ -21,8 +21,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sourcenetwork/go-p2p"
+
 	"github.com/sourcenetwork/defradb/internal/db"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -52,10 +53,10 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	opts := []node.Option{
 		node.WithStorePath(gocOptions.DbPath),
-		node.WithLensRuntime(node.Wazero),
+		db.WithLensRuntime(db.Wazero),
 	}
 	if len(listeningAddresses) > 0 {
-		opts = append(opts, netConfig.WithListenAddresses(listeningAddresses...))
+		opts = append(opts, p2p.WithListenAddresses(listeningAddresses...))
 	}
 	maxTxnRetries := gocOptions.MaxTransactionRetries
 	if maxTxnRetries > 0 {
@@ -74,7 +75,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	}
 	peers := splitCommaSeparatedString(gocOptions.Peers)
 	if len(peers) > 0 {
-		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
+		opts = append(opts, p2p.WithBootstrapPeers(peers...))
 	}
 	if gocOptions.Identity != nil {
 		opts = append(opts, db.WithNodeIdentity(gocOptions.Identity))

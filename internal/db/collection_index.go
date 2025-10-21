@@ -263,7 +263,7 @@ func (c *collection) iterateAllDocs(
 	exec func(doc *client.Document) error,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
-	df := c.newFetcher()
+	df := c.newFetcher(ctx)
 	err := df.Init(
 		ctx,
 		identity.FromContext(ctx),
@@ -321,7 +321,7 @@ func (c *collection) indexExistingDocs(
 	ctx context.Context,
 	index CollectionIndex,
 ) error {
-	fields := make([]client.CollectionFieldDescription, 0, 1)
+	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().Fields))
 	for _, field := range index.Description().Fields {
 		colField, ok := c.Version().GetFieldByName(field.Name)
 		if ok {
@@ -395,6 +395,116 @@ func (c *collection) GetIndexes(context.Context) ([]client.IndexDescription, err
 	return c.Version().Indexes, nil
 }
 
+// CreateEncryptedIndex creates a new encrypted index on the collection.
+func (c *collection) CreateEncryptedIndex(
+	ctx context.Context,
+	createRequest client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	defer txn.Discard()
+
+	index, err := c.createEncryptedIndex(ctx, createRequest)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	return index, txn.Commit()
+}
+
+func (c *collection) createEncryptedIndex(
+	ctx context.Context,
+	encryptedIndex client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
+	if encryptedIndex.Type == "" {
+		encryptedIndex.Type = client.EncryptedIndexTypeEquality
+	}
+	err := validateNewEncryptedIndex(c.Version(), encryptedIndex)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+
+	c.def.EncryptedIndexes = append(c.def.EncryptedIndexes, encryptedIndex)
+
+	err = description.SaveCollection(ctx, c.def)
+	if err != nil {
+		c.def.EncryptedIndexes = c.def.EncryptedIndexes[:len(c.def.EncryptedIndexes)-1]
+		return client.EncryptedIndexDescription{}, err
+	}
+
+	err = c.db.loadSchema(ctx)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+
+	return c.def.EncryptedIndexes[len(c.def.EncryptedIndexes)-1], nil
+}
+
+// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
+func (c *collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	return c.Version().EncryptedIndexes, nil
+}
+
+// DeleteEncryptedIndex deletes an encrypted index from the collection.
+//
+// The encrypted index will be removed from the system store.
+// All SE artifacts on remote nodes will become inaccessible for queries.
+func (c *collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	err = c.deleteEncryptedIndex(ctx, fieldName)
+	if err != nil {
+		return err
+	}
+	return txn.Commit()
+}
+
+func (c *collection) deleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	indexToRemove := -1
+	for i, encIdx := range c.Version().EncryptedIndexes {
+		if encIdx.FieldName == fieldName {
+			indexToRemove = i
+			break
+		}
+	}
+
+	if indexToRemove == -1 {
+		return NewErrEncryptedIndexDoesNotExist(fieldName)
+	}
+
+	oldEncryptedIndexes := make([]client.EncryptedIndexDescription, len(c.Version().EncryptedIndexes))
+	copy(oldEncryptedIndexes, c.Version().EncryptedIndexes)
+
+	c.def.EncryptedIndexes = append(
+		c.def.EncryptedIndexes[:indexToRemove],
+		c.def.EncryptedIndexes[indexToRemove+1:]...,
+	)
+
+	err := description.SaveCollection(ctx, c.def)
+	if err != nil {
+		c.def.EncryptedIndexes = oldEncryptedIndexes
+		return err
+	}
+
+	err = c.db.loadSchema(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // checkExistingFieldsAndAdjustRelFieldNames checks if the fields in the index description
 // exist in the collection schema.
 // If a field is a relation, it will be adjusted to relation id field name, a.k.a. `field_name + _id`.
@@ -410,6 +520,40 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 		if field.Kind.IsObject() {
 			fields[i].Name = fields[i].Name + request.RelatedObjectID
 		}
+	}
+	return nil
+}
+
+// validateNewEncryptedIndex validates, if encrypted index can be created on the given collection.
+// It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
+func validateNewEncryptedIndex(
+	definition client.CollectionVersion,
+	newEncryptedIndex client.EncryptedIndexDescription,
+) error {
+	_, found := definition.GetFieldByName(newEncryptedIndex.FieldName)
+	if !found {
+		return NewErrEncryptedIndexOnNonExistentField(newEncryptedIndex.FieldName)
+	}
+	for _, encryptedIndex := range definition.EncryptedIndexes {
+		if encryptedIndex.FieldName == newEncryptedIndex.FieldName {
+			return NewErrEncryptedIndexAlreadyExists(newEncryptedIndex.FieldName)
+		}
+	}
+	return nil
+}
+
+// validateEncryptedIndexesOnCollection validates all encrypted indexes on the collection.
+// It checks if the all indexes are set on existing distinct fields.
+func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) error {
+	encryptedFieldNames := make(map[string]struct{}, len(definition.EncryptedIndexes))
+	for _, encryptedIndex := range definition.EncryptedIndexes {
+		if _, found := definition.GetFieldByName(encryptedIndex.FieldName); !found {
+			return NewErrEncryptedIndexOnNonExistentField(encryptedIndex.FieldName)
+		}
+		if _, found := encryptedFieldNames[encryptedIndex.FieldName]; found {
+			return NewErrEncryptedIndexAlreadyExists(encryptedIndex.FieldName)
+		}
+		encryptedFieldNames[encryptedIndex.FieldName] = struct{}{}
 	}
 	return nil
 }
@@ -513,4 +657,25 @@ func generateIndexName(colName string, fields []client.IndexedFieldDescription, 
 	}
 
 	return sb.String(), nil
+}
+
+// listAllEncryptedIndexDescriptions returns all encrypted index descriptions in the database.
+func (db *DB) listAllEncryptedIndexDescriptions(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	collections, err := description.GetCollections(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	indexes := make(map[client.CollectionName][]client.EncryptedIndexDescription)
+
+	for _, col := range collections {
+		if len(col.EncryptedIndexes) > 0 {
+			indexes[col.Name] = col.EncryptedIndexes
+		}
+	}
+
+	return indexes, nil
 }

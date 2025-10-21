@@ -15,24 +15,25 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/ipfs/boxo/blockservice"
 	"github.com/ipfs/go-cid"
+
+	"github.com/sourcenetwork/corekv/blockstore"
 )
 
 // P2P is a peer connected database implementation.
 type P2P interface {
-	// PeerInfo returns the p2p host id and listening addresses.
-	PeerInfo() PeerInfo
+	// PeerInfo returns the p2p host list of addresses.
+	PeerInfo() ([]string, error)
 
 	// Connect tries to connect to the peer with the given [PeerInfo].
-	Connect(ctx context.Context, info PeerInfo) error
+	Connect(ctx context.Context, addresses []string) error
 
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
-	SetReplicator(ctx context.Context, info PeerInfo, collectionNames ...string) error
+	SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error
 	// DeleteReplicator deletes a replicator from the persisted list
 	// or specific schemas if they are specified.
-	DeleteReplicator(ctx context.Context, info PeerInfo, collectionNames ...string) error
+	DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error
 	// GetAllReplicators returns the full list of replicators with their
 	// subscribed schemas.
 	GetAllReplicators(ctx context.Context) ([]Replicator, error)
@@ -86,7 +87,7 @@ func (p PeerInfo) String() string {
 	return string(b)
 }
 
-type PubsubResponse struct {
+type PubsubResponse = struct {
 	// ID is the cid.Cid of the received message.
 	ID string
 	// From is the ID of the sender.
@@ -101,13 +102,11 @@ type Host interface {
 	// ID returns the peer ID of the host.
 	ID() string
 	// Addrs returns the host's list of addresses.
-	Addrs() []string
-	// PeerInfo returns the host's [PeerInfo].
-	PeerInfo() PeerInfo
+	Addresses() ([]string, error)
 	// Pubkey return the byte slice representation of the host's public key.
 	Pubkey() ([]byte, error)
-	// Connect tries to connect to the peer with the given peer info.
-	Connect(ctx context.Context, id string, addresses []string) error
+	// Connect tries to connect to the peer with the given addresses.
+	Connect(ctx context.Context, addresses []string) error
 	// Disconnect will try to disconnect from the peer with the given ID.
 	Disconnect(ctx context.Context, peerID string) error
 	// Send will try to send the given data to a peer.
@@ -125,14 +124,19 @@ type Host interface {
 	PublishToTopicAsync(ctx context.Context, topic string, data []byte) error
 	// PublishToTopic sends a new message on the given topic, returning a response channel.
 	// It provides the option to allow responses from multiple peers.
+	//
+	// NOTE: The returned channel type is leaking from the go-p2p package so its not ideal. We should
+	// consider finding a better solution.
 	PublishToTopic(
 		ctx context.Context,
 		topic string,
 		data []byte,
 		withMultiResponse bool,
 	) (<-chan PubsubResponse, error)
-	// BlockService returns the host's block service.
-	BlockService() blockservice.BlockService
+	// IPLDStore returns the host's IPLD store implementation.
+	IPLDStore() blockstore.IPLDStore
+	// ContextWithSession returns a new context with a session for the underlying block service..
+	ContextWithSession(ctx context.Context) context.Context
 	// SetBlockAccessFunc set the function to use to determine if a peer has access to
 	// the requested blocks on the block service.
 	SetBlockAccessFunc(accessFunc BlockAccessFunc)

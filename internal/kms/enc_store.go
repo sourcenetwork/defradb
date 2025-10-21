@@ -17,6 +17,8 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv/blockstore"
+
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -31,7 +33,7 @@ func newIPLDEncryptionStorage(encstore datastore.Blockstore) *ipldEncStorage {
 
 func (s *ipldEncStorage) get(ctx context.Context, cidBytes []byte) (*coreblock.Encryption, error) {
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetReadStorage(s.encstore.AsIPLDStorage())
+	lsys.SetReadStorage(blockstore.NewIPLDStore(s.encstore))
 
 	_, blockCid, err := cid.CidFromBytes(cidBytes)
 	if err != nil {
@@ -49,7 +51,7 @@ func (s *ipldEncStorage) get(ctx context.Context, cidBytes []byte) (*coreblock.E
 
 func (s *ipldEncStorage) put(ctx context.Context, blockBytes []byte) ([]byte, error) {
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(s.encstore.AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(s.encstore))
 
 	var encBlock coreblock.Encryption
 	err := encBlock.Unmarshal(blockBytes)

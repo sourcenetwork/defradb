@@ -24,7 +24,7 @@ packages: # Packages and their interfaces to generate mocks for.
         config:
             dir: "./client/mocks"
         interfaces:
-            TxnStore:
+            Txn:
             Collection:
 
     github.com/sourcenetwork/defradb/internal/db/fetcher:
@@ -33,3 +33,16 @@ packages: # Packages and their interfaces to generate mocks for.
         interfaces:
             Fetcher:
             EncodedDocument:
+
+    github.com/sourcenetwork/defradb/internal/se:
+        config:
+            dir: "./internal/se/mocks"
+        interfaces:
+            DB:
+            P2P:
+
+    github.com/sourcenetwork/defradb/internal/db/p2p/protocol:
+        config:
+            dir: "./internal/db/p2p/protocol/mocks"
+        interfaces:
+            CommChannel:

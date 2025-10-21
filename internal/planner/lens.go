@@ -48,9 +48,23 @@ func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client
 func (n *lensNode) Init() error {
 	n.input = enumerable.NewQueue[map[string]any]()
 
-	pipe, err := n.p.db.LensRegistry().MigrateUp(n.p.ctx, n.input, n.collection.VersionID)
-	if err != nil {
-		return err
+	var pipe enumerable.Enumerable[map[string]any]
+	if n.collection.Query.HasValue() && n.collection.Query.Value().Transform.HasValue() {
+		var err error
+		pipe, err = n.p.lensStore.Transform(n.p.ctx, n.input, n.collection.Query.Value().Transform.Value())
+		if err != nil {
+			return err
+		}
+	} else {
+		var err error
+		pipe, err = n.p.lensStore.Transform(
+			n.p.ctx,
+			n.input,
+			n.collection.PreviousVersion.Value().Transform.Value(),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	n.output = pipe

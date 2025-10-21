@@ -25,6 +25,9 @@ char* updaterStr, CollectionOptions options);
 extern Result IndexCreate(uintptr_t nodePtr, char* collectionName, char* indexName, char* fieldsStr, int isUnique);
 extern Result IndexList(uintptr_t nodePtr, char* collectionName);
 extern Result IndexDrop(uintptr_t nodePtr, char* collectionName, char* indexName);
+extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 */
 import "C"
 
@@ -579,6 +582,67 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	retRes, err := unmarshalResult[[]client.IndexDescription](res.Value)
 	if err != nil {
 		return []client.IndexDescription{}, err
+	}
+	return retRes, nil
+}
+
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	req client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
+	name := C.CString(c.def.Name)
+	fieldName := C.CString(req.FieldName)
+	defer C.free(unsafe.Pointer(name))
+	defer C.free(unsafe.Pointer(fieldName))
+
+	res := ConvertAndFreeCResult(C.EncryptedIndexCreate(
+		C.uintptr_t(c.w.handle),
+		name,
+		fieldName,
+	))
+
+	if res.Status != 0 {
+		return client.EncryptedIndexDescription{}, errors.New(res.Error)
+	}
+
+	retRes, err := unmarshalResult[client.EncryptedIndexDescription](res.Value)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	return retRes, nil
+}
+
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	name := C.CString(c.def.Name)
+	cFieldName := C.CString(fieldName)
+	defer C.free(unsafe.Pointer(name))
+	defer C.free(unsafe.Pointer(cFieldName))
+
+	res := ConvertAndFreeCResult(C.EncryptedIndexDelete(
+		C.uintptr_t(c.w.handle),
+		name,
+		cFieldName,
+	))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	name := C.CString(c.def.Name)
+	defer C.free(unsafe.Pointer(name))
+
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(C.uintptr_t(c.w.handle), name))
+
+	if res.Status != 0 {
+		return []client.EncryptedIndexDescription{}, errors.New(res.Error)
+	}
+
+	retRes, err := unmarshalResult[[]client.EncryptedIndexDescription](res.Value)
+	if err != nil {
+		return []client.EncryptedIndexDescription{}, err
 	}
 	return retRes, nil
 }

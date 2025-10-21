@@ -29,12 +29,12 @@ func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							docID
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"docID": "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
 						},

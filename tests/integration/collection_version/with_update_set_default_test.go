@@ -124,7 +124,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
+				VersionID: "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda",
 			},
 			testUtils.Request{
 				Request: `query {

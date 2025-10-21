@@ -48,7 +48,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreibvat5vc4nxjbxlewe7y2gpskfugypzqbqwal2zwaa7bnuiedyuyy",
-					DestinationSchemaVersionID: "bafyreiecoh66au3ofetd7lyetuqm7xlsj3ln777l7sw324jsutel3w6u5m",
+					DestinationSchemaVersionID: "bafyreiafmkxnf34mdekbx22ooihw7zy2iauw4xqzxbpdxa54umf7vmd2qu",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -151,7 +151,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreibvat5vc4nxjbxlewe7y2gpskfugypzqbqwal2zwaa7bnuiedyuyy",
-					DestinationSchemaVersionID: "bafyreiecoh66au3ofetd7lyetuqm7xlsj3ln777l7sw324jsutel3w6u5m",
+					DestinationSchemaVersionID: "bafyreiafmkxnf34mdekbx22ooihw7zy2iauw4xqzxbpdxa54umf7vmd2qu",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -168,8 +168,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiecoh66au3ofetd7lyetuqm7xlsj3ln777l7sw324jsutel3w6u5m",
-					DestinationSchemaVersionID: "bafyreiak72mztt2g3dbfegfutrxuchisw2qjvhxz2jbr54qebfihsbga5u",
+					SourceSchemaVersionID:      "bafyreiafmkxnf34mdekbx22ooihw7zy2iauw4xqzxbpdxa54umf7vmd2qu",
+					DestinationSchemaVersionID: "bafyreidivdcrlxg3uzdduudsgwn3hkmb244vpbu5oz5azw6ycyca4hqyuu",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -263,7 +263,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreibvat5vc4nxjbxlewe7y2gpskfugypzqbqwal2zwaa7bnuiedyuyy",
-					DestinationSchemaVersionID: "bafyreiecoh66au3ofetd7lyetuqm7xlsj3ln777l7sw324jsutel3w6u5m",
+					DestinationSchemaVersionID: "bafyreiafmkxnf34mdekbx22ooihw7zy2iauw4xqzxbpdxa54umf7vmd2qu",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -368,8 +368,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				// Register a migration from version 2 to version 3 on both nodes.
 				// There is no migration from version 1 to 2, thus node 1 has no knowledge of schema version 2.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
-					DestinationSchemaVersionID: "bafyreiccm7djewbzmay7yzincqcy5aggh33k74yh6mhm4gwbzxojxeqkve",
+					SourceSchemaVersionID:      "bafyreiav7tu2ugw7ksj7fpebd2y4onpt2w2pzg7j6aiwblo7rx56qeuovq",
+					DestinationSchemaVersionID: "bafyreid5g3tyf75aaddkgnl2yyq77lvdrx4yeascza6tk7vuqgfxqs2poy",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

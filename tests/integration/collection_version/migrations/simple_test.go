@@ -54,19 +54,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "does not exist",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": false,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID0}}"),
 						}),
 					},
 					{
@@ -104,7 +92,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+					DestinationSchemaVersionID: "bafyreiav7tu2ugw7ksj7fpebd2y4onpt2w2pzg7j6aiwblo7rx56qeuovq",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -128,39 +116,15 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "does not exist",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": false,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID0}}"),
 						}),
 					},
 					{
 						IsMaterialized: true,
-						VersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+						VersionID:      "bafyreiav7tu2ugw7ksj7fpebd2y4onpt2w2pzg7j6aiwblo7rx56qeuovq",
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": true,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID1}}"),
 						}),
 					},
 					{
@@ -231,19 +195,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "a",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "verified",
-												"value": false,
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID0}}"),
 						}),
 					},
 					{
@@ -251,19 +203,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: "a",
-							Transform: immutable.Some(
-								model.Lens{
-									Lenses: []model.LensModule{
-										{
-											Path: lenses.SetDefaultModulePath,
-											Arguments: map[string]any{
-												"dst":   "age",
-												"value": float64(123),
-											},
-										},
-									},
-								},
-							),
+							Transform:          immutable.Some("{{.LensID1}}"),
 						}),
 					},
 				},
@@ -275,7 +215,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 }
 func TestSchemaMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) {
 	version1 := "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
-	version3 := "bafyreigrzh2d7nca4bsdzlkbzqlsahhzdvkhqzj6it3seeyxwuia544vhy"
+	version3 := "bafyreiagzh4vxxqmhtja255ahnflur5l5oj5oxuztkbl4pfyvpmst25irm"
 
 	test := testUtils.TestCase{
 		Actions: []any{

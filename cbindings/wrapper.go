@@ -32,17 +32,20 @@ extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, 
 extern Result IdentityNew(char* keyType);
 extern Result NodeIdentity(uintptr_t nodePtr);
 extern Result IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
 extern Result P2PgetAllReplicators(uintptr_t nodePtr);
-extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
-extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* peerInfo);
+extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses);
+extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id);
 extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections);
 extern Result P2PcollectionRemove(uintptr_t nodePtr, char* collections);
 extern Result P2PcollectionGetAll(uintptr_t nodePtr);
-extern Result P2Pconnect(uintptr_t nodePtr, char* peerID, char* peerAddresses);
+extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses);
 extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections);
 extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections);
 extern Result P2PdocumentGetAll(uintptr_t nodePtr);
@@ -52,7 +55,7 @@ extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
 extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
-extern Result SetActiveCollection(uintptr_t nodePtr, char* version);
+extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
 extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
@@ -101,27 +104,27 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo() client.PeerInfo {
+func (w *CWrapper) PeerInfo() ([]string, error) {
 	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle)))
 
 	if res.Status != 0 {
-		return client.PeerInfo{}
+		return nil, errors.New(res.Error)
 	}
 
-	addrInfo, err := unmarshalResult[client.PeerInfo](res.Value)
+	addresses, err := unmarshalResult[[]string](res.Value)
 	if err != nil {
-		return client.PeerInfo{}
+		return nil, err
 	}
-	return addrInfo
+	return addresses, nil
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
-	peerStr := C.CString(info.String())
+func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
-	defer C.free(unsafe.Pointer(peerStr))
+	defer C.free(unsafe.Pointer(addrStr))
 	defer C.free(unsafe.Pointer(colStr))
 
-	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, peerStr))
+	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -129,13 +132,13 @@ func (w *CWrapper) SetReplicator(ctx context.Context, info client.PeerInfo, coll
 	return nil
 }
 
-func (w *CWrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
-	peerStr := C.CString(info.String())
+func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+	peerID := C.CString(id)
 	colStr := C.CString(strings.Join(collections, ","))
-	defer C.free(unsafe.Pointer(peerStr))
+	defer C.free(unsafe.Pointer(peerID))
 	defer C.free(unsafe.Pointer(colStr))
 
-	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerStr))
+	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerID))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -499,12 +502,25 @@ func (w *CWrapper) PatchCollection(
 	return nil
 }
 
-func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	cSchemaVersionID := C.CString(schemaVersionID)
-	defer C.free(unsafe.Pointer(cSchemaVersionID))
+func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	cIdentity := identityFromContext(ctx)
+	cVersion := C.CString(collectionVersionID)
+	cCollectionID := C.CString("")
+	cName := C.CString("")
+
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cName))
+
+	var opts C.CollectionOptions
+	opts.identityPtr = cIdentity
+	opts.version = cVersion
+	opts.collectionID = cCollectionID
+	opts.name = cName
+	opts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, cSchemaVersionID))
+	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, opts))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -567,12 +583,12 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	return nil
 }
 
-func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	src := C.CString(config.SourceSchemaVersionID)
 	dst := C.CString(config.DestinationSchemaVersionID)
 	lensConfig, err := json.Marshal(config.Lens)
 	if err != nil {
-		return err
+		return "", err
 	}
 	lens := C.CString(string(lensConfig))
 	defer C.free(unsafe.Pointer(src))
@@ -583,13 +599,9 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) e
 	res := ConvertAndFreeCResult(C.LensSet(callHandle, src, dst, lens))
 
 	if res.Status != 0 {
-		return errors.New(res.Error)
+		return "", errors.New(res.Error)
 	}
-	return nil
-}
-
-func (w *CWrapper) LensRegistry() client.LensRegistry {
-	return &LensRegistry{CWrapper: w}
+	return res.Value, nil
 }
 
 func (w *CWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -684,6 +696,27 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 	}
 
 	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
+	if err != nil {
+		return nil, errors.New(res.Error)
+	}
+
+	return resValue, nil
+}
+
+func (w *CWrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	colName := C.CString("")
+	defer C.free(unsafe.Pointer(colName))
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	resValue, err := unmarshalResult[map[client.CollectionName][]client.EncryptedIndexDescription](res.Value)
 	if err != nil {
 		return nil, errors.New(res.Error)
 	}
@@ -798,13 +831,11 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
-	cPeerID := C.CString(addr.ID)
-	cPeerAddresses := C.CString(strings.Join(addr.Addresses, ","))
-	defer C.free(unsafe.Pointer(cPeerID))
+func (w *CWrapper) Connect(ctx context.Context, addresses []string) error {
+	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.P2Pconnect(callHandle, cPeerID, cPeerAddresses))
+	res := ConvertAndFreeCResult(C.P2Pconnect(callHandle, cPeerAddresses))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

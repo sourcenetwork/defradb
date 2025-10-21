@@ -41,7 +41,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -287,6 +286,7 @@ func executeTestCase(
 		ctx,
 		t,
 		testCase.IdentityTypes,
+		testCase.EnableSearchableEncryption,
 		kms,
 		dbt,
 		clientType,
@@ -446,6 +446,18 @@ func performAction(
 	case GetIndexes:
 		getIndexes(s, action)
 
+	case CreateEncryptedIndex:
+		createEncryptedIndex(s, action)
+
+	case ListEncryptedIndexes:
+		listEncryptedIndexes(s, action)
+
+	case ListAllEncryptedIndexes:
+		listAllEncryptedIndexes(s, action)
+
+	case DeleteEncryptedIndex:
+		deleteEncryptedIndex(s, action)
+
 	case BackupExport:
 		backupExport(s, action)
 
@@ -472,6 +484,9 @@ func performAction(
 
 	case WaitForSync:
 		waitForSync(s, action)
+
+	case WaitForSESync:
+		waitForSESync(s, action)
 
 	case SyncDocs:
 		syncDocs(s, action)
@@ -828,11 +843,9 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		opts := []node.Option{
 			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex))),
 		}
-		for _, opt := range s.Nodes[nodeIndex].NetOpts {
-			opts = append(opts, opt)
-		}
+		opts = append(opts, s.Nodes[nodeIndex].NetOpts...)
 
-		opts = append(opts, netConfig.WithListenAddresses(s.Nodes[nodeIndex].CachedPeerInfo.Addresses...))
+		opts = withWithListenAddresses(opts, s.Nodes[nodeIndex].CachedAddresses...)
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -910,9 +923,15 @@ func refreshTokens(
 func refreshCollections(
 	s *state.State,
 ) {
-	for _, node := range s.Nodes {
+	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		// Inject node's identity into the context while refreshing so the [GetCollections] call
+		// doesn't fail due to lack of authorization(s) if NAC is enabled.
+		nodeIdentity := NodeIdentity(s.GetCurrentNodeID())
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		allCollections, err := node.GetCollections(s.Ctx, client.CollectionFetchOptions{})
+		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
+		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
@@ -957,12 +976,11 @@ func configureNode(
 	require.NoError(s.T, err)
 
 	netNodeOpts := action()
-	netNodeOpts = append(netNodeOpts, netConfig.WithPrivateKey(privateKey))
+
+	netNodeOpts = withPrivateKey(netNodeOpts, privateKey)
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
-	for _, opt := range netNodeOpts {
-		nodeOpts = append(nodeOpts, opt)
-	}
+	nodeOpts = append(nodeOpts, netNodeOpts...)
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
 	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
@@ -1020,16 +1038,16 @@ func refreshDocuments(
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
-					commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
+					_commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
 						cid
 					}
 				}`, client.WithVariables(map[string]any{
 					"docID": doc.ID().String(),
 				}))
 				if data, ok := result.GQL.Data.(map[string]any); ok {
-					if commits, ok := data["commits"].([]map[string]any); ok {
+					if commits, ok := data["_commits"].([]map[string]any); ok {
 						for _, commit := range commits {
-							cid := cid.MustParse(commit["cid"].(string))
+							cid := cid.MustParse(commit[request.CidFieldName].(string))
 							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
 								s.Nodes[firstNodesID].Composites[doc.ID().String()],
 								cid,
@@ -1142,11 +1160,15 @@ func patchCollection(
 	s *state.State,
 	action PatchCollection,
 ) {
+	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
+	// This will need to change if patches want to replace more than just lens IDs.
+	patch := replace(s, 0, action.Patch)
+
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.PatchCollection(ctx, action.Patch, action.Lens)
+		err := node.PatchCollection(ctx, patch, action.Lens)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1160,10 +1182,34 @@ func getCollections(
 	s *state.State,
 	action GetCollections,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	transformSet := []string{}
+	for _, col := range action.ExpectedResults {
+		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
+			transformSet = append(transformSet, col.PreviousVersion.Value().Transform.Value())
+		}
+	}
+
+	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
+	// This will need to change if patches want to replace more than just lens IDs.
+	transformMap := replaceMap(s, 0, transformSet)
+
+	for i, col := range action.ExpectedResults {
+		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
+			action.ExpectedResults[i].PreviousVersion = immutable.Some(
+				client.CollectionSource{
+					SourceCollectionID: action.ExpectedResults[i].PreviousVersion.Value().SourceCollectionID,
+					Transform:          immutable.Some(transformMap[col.PreviousVersion.Value().Transform.Value()]),
+				},
+			)
+		}
+	}
+
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.InitContext(s.Ctx, txn)
+		ctx = getContextWithIdentity(ctx, s, action.Identity, nodeID)
 		results, err := node.GetCollections(ctx, action.FilterOptions)
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
@@ -1183,9 +1229,11 @@ func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		err := node.SetActiveCollectionVersion(s.Ctx, action.VersionID)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+		err := node.SetActiveCollectionVersion(ctx, action.VersionID)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1706,6 +1754,140 @@ func dropIndex(
 	}
 
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+}
+
+func createEncryptedIndex(
+	s *state.State,
+	action CreateEncryptedIndex,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		if action.FieldName == "" {
+			s.T.Fatalf("fieldName is required for encrypted index")
+		}
+
+		indexDesc := client.EncryptedIndexDescription{
+			FieldName: action.FieldName,
+			Type:      client.EncryptedIndexType(action.Type),
+		}
+
+		err := withRetryOnNode(
+			node,
+			func() error {
+				_, err := collection.CreateEncryptedIndex(s.Ctx, indexDesc)
+				return err
+			},
+		)
+		if AssertError(s.T, err, action.ExpectedError) {
+			return
+		}
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+}
+
+func listEncryptedIndexes(
+	s *state.State,
+	action ListEncryptedIndexes,
+) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	var expectedErrorRaised bool
+
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	for _, nodeID := range nodeIDs {
+		collections := s.Nodes[nodeID].Collections
+		err := withRetryOnNode(
+			s.Nodes[nodeID],
+			func() error {
+				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx)
+				if err != nil {
+					return err
+				}
+
+				require.ElementsMatch(s.T, action.ExpectedIndexes, actualIndexes,
+					"Unexpected encrypted indexes")
+
+				return nil
+			},
+		)
+		expectedErrorRaised = expectedErrorRaised ||
+			AssertError(s.T, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+}
+
+func listAllEncryptedIndexes(
+	s *state.State,
+	action ListAllEncryptedIndexes,
+) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	var expectedErrorRaised bool
+
+	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	for _, nodeID := range nodeIDs {
+		err := withRetryOnNode(
+			s.Nodes[nodeID],
+			func() error {
+				allActualIndexes, err := s.Nodes[nodeID].ListAllEncryptedIndexes(s.Ctx)
+				if err != nil {
+					return err
+				}
+
+				for collectionName, expectedIndexes := range action.ExpectedIndexes {
+					actualIndexes, exists := allActualIndexes[collectionName]
+					require.True(s.T, exists, "Collection %s should exist in actual indexes", collectionName)
+					require.ElementsMatch(s.T, expectedIndexes, actualIndexes,
+						"Unexpected encrypted indexes for collection %s", collectionName)
+					delete(allActualIndexes, collectionName)
+				}
+
+				if len(allActualIndexes) > 0 {
+					require.Fail(s.T, "Some collection have unexpected indexes", allActualIndexes)
+				}
+
+				return nil
+			},
+		)
+		expectedErrorRaised = expectedErrorRaised ||
+			AssertError(s.T, err, action.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+}
+
+func deleteEncryptedIndex(
+	s *state.State,
+	action DeleteEncryptedIndex,
+) {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+		if action.FieldName == "" {
+			s.T.Fatalf("fieldName is required for deleting encrypted index")
+		}
+
+		err := withRetryOnNode(
+			node,
+			func() error {
+				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName)
+			},
+		)
+		if AssertError(s.T, err, action.ExpectedError) {
+			return
+		}
+	}
+
+	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
 }
 
 // backupExport generates a backup using the db api.
@@ -2522,17 +2704,44 @@ func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *s
 		return
 	}
 
+	var elements []any
+	var matchersList []gomega.OmegaMatcher
+
 	switch exp := exp.(type) {
 	case *matchers.AndMatcher:
-		for _, m := range exp.Matchers {
-			traverseGomegaMatchers(m, s, f)
-		}
+		matchersList = exp.Matchers
 	case *matchers.OrMatcher:
-		for _, m := range exp.Matchers {
+		matchersList = exp.Matchers
+	case *matchers.NotMatcher:
+		matchersList = []gomega.OmegaMatcher{exp.Matcher}
+	case *matchers.ConsistOfMatcher:
+		elements = exp.Elements
+	case *matchers.ContainElementMatcher:
+		elements = []any{exp.Element}
+	case *matchers.BeElementOfMatcher:
+		elements = exp.Elements
+	case *matchers.HaveExactElementsMatcher:
+		elements = exp.Elements
+	case *matchers.ContainElementsMatcher:
+		elements = exp.Elements
+	case *matchers.HaveEachMatcher:
+		elements = []any{exp.Element}
+	case *matchers.WithTransformMatcher:
+		matchersList = []gomega.OmegaMatcher{exp.Matcher}
+	}
+
+	if len(matchersList) > 0 {
+		for _, m := range matchersList {
 			traverseGomegaMatchers(m, s, f)
 		}
-	case *matchers.NotMatcher:
-		traverseGomegaMatchers(exp.Matcher, s, f)
+	}
+
+	if len(elements) > 0 {
+		for _, el := range elements {
+			if m, ok := el.(gomega.OmegaMatcher); ok {
+				traverseGomegaMatchers(m, s, f)
+			}
+		}
 	}
 }
 

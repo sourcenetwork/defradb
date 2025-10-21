@@ -36,7 +36,7 @@ func TestQueryCommitsBranchables_WithFieldName(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(
+						_commits(
 							fieldName: null
 						) {
 							schemaVersionId
@@ -45,7 +45,7 @@ func TestQueryCommitsBranchables_WithFieldName(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							// Extra params are used to verify this is a collection level cid
 							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",

@@ -29,12 +29,12 @@ func TestQueryCommitsWithUnknownDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "unknown document ID") {
+						_commits(docID: "unknown document ID") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},
@@ -56,12 +56,12 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 						},
@@ -93,7 +93,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 							cid
 							links {
 								cid
@@ -102,7 +102,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":   "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
 							"links": []map[string]any{},
@@ -153,13 +153,13 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid":    "bafyreic5mqzoba47yzm5pugx5b35visawxi2al2tq7p7x2b6yayklwomga",
 							"height": int64(2),
@@ -212,7 +212,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
 							cid
 							links {
 								cid
@@ -221,7 +221,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": "bafyreic5mqzoba47yzm5pugx5b35visawxi2al2tq7p7x2b6yayklwomga",
 							"links": []map[string]any{

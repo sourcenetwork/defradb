@@ -174,6 +174,8 @@ func (c *collection) makeSelectionPlan(
 		identity.FromContext(ctx),
 		c.db.documentACP,
 		c.db,
+		c.db.p2p,
+		c.db.getLensStore(ctx),
 	)
 
 	return planner.MakeSelectionPlan(slct)

@@ -99,7 +99,7 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: CountFieldDescription,
 				Type:        gql.Int,
 				Args: gql.FieldConfigArgument{
-					request.FieldName: &gql.ArgumentConfig{
+					request.FieldArgName: &gql.ArgumentConfig{
 						Type: gql.NewEnum(gql.EnumConfig{
 							Name:        "commitCountFieldArg",
 							Description: CountFieldDescription,
@@ -124,11 +124,11 @@ func CommitLinkObject() *gql.Object {
 		Name:        "CommitLink",
 		Description: commitLinksDescription,
 		Fields: gql.Fields{
-			"name": &gql.Field{
+			request.LinksNameFieldName: &gql.Field{
 				Description: commitLinkNameFieldDescription,
 				Type:        gql.String,
 			},
-			"cid": &gql.Field{
+			request.CidFieldName: &gql.Field{
 				Description: commitLinkCIDFieldDescription,
 				Type:        gql.String,
 			},
@@ -142,11 +142,11 @@ func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 			Name:        "commitsOrderArg",
 			Description: OrderArgDescription,
 			Fields: gql.InputObjectConfigFieldMap{
-				"height": &gql.InputObjectFieldConfig{
+				request.HeightArgName: &gql.InputObjectFieldConfig{
 					Description: commitHeightFieldDescription,
 					Type:        orderEnum,
 				},
-				"cid": &gql.InputObjectFieldConfig{
+				request.CidArgName: &gql.InputObjectFieldConfig{
 					Description: commitCIDFieldDescription,
 					Type:        orderEnum,
 				},
@@ -161,14 +161,14 @@ func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 
 func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Field {
 	return &gql.Field{
-		Name:        "commits",
+		Name:        request.CommitsName,
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
 			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
 			"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-			"cid":                 NewArgConfig(gql.ID, commitCIDArgDescription),
+			request.CidArgName:    NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
@@ -177,20 +177,20 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 								Name:        "commitFields",
 								Description: commitFieldsEnumDescription,
 								Values: gql.EnumValueConfigMap{
-									"height": &gql.EnumValueConfig{
-										Value:       "height",
+									request.HeightArgName: &gql.EnumValueConfig{
+										Value:       request.HeightArgName,
 										Description: commitHeightFieldDescription,
 									},
-									"cid": &gql.EnumValueConfig{
-										Value:       "cid",
+									request.CidArgName: &gql.EnumValueConfig{
+										Value:       request.CidArgName,
 										Description: commitCIDFieldDescription,
 									},
 									request.DocIDArgName: &gql.EnumValueConfig{
 										Value:       request.DocIDArgName,
 										Description: commitDocIDFieldDescription,
 									},
-									"fieldName": &gql.EnumValueConfig{
-										Value:       "fieldName",
+									request.FieldNameArgName: &gql.EnumValueConfig{
+										Value:       request.FieldNameArgName,
 										Description: commitFieldNameFieldDescription,
 									},
 								},
@@ -209,7 +209,7 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 
 func QueryLatestCommits(commitObject *gql.Object) *gql.Field {
 	return &gql.Field{
-		Name:        "latestCommits",
+		Name:        request.LatestCommitsName,
 		Description: latestCommitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{

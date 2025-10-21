@@ -25,6 +25,9 @@ func defaultSchema() (gql.Schema, error) {
 	commitLinkObject := types.CommitLinkObject()
 	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
+
+	encryptedSearchResult := types.EncryptedSearchResultObject()
+
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
 	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
@@ -39,6 +42,7 @@ func defaultSchema() (gql.Schema, error) {
 			crdtEnum,
 			explainEnum,
 			indexFieldInput,
+			encryptedSearchResult,
 		),
 		Query:        defaultQueryType(queryCommits, queryLatestCommits),
 		Mutation:     defaultMutationType(),
@@ -100,6 +104,7 @@ func defaultDirectivesType(
 		types.BranchableDirective(),
 		types.VectorEmbeddingDirective(),
 		types.ConstraintsDirective(),
+		types.EncryptedIndexDirective(),
 	}
 }
 
@@ -127,6 +132,7 @@ func defaultTypes(
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	encryptedSearchResult *gql.Object,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -204,5 +210,6 @@ func defaultTypes(
 		explainEnum,
 
 		indexFieldInput,
+		encryptedSearchResult,
 	}
 }

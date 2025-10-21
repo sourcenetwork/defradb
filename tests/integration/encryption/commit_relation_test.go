@@ -56,7 +56,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 							fieldName
@@ -64,7 +64,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
 							"docID":     deviceDocID,

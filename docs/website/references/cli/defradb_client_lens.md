@@ -37,9 +37,5 @@ Make set or look for existing schema migrations on a DefraDB node.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client lens down](defradb_client_lens_down.md)	 - Reverses the migration to the specified collection version.
-* [defradb client lens reload](defradb_client_lens_reload.md)	 - Reload the schema migrations within DefraDB
 * [defradb client lens set](defradb_client_lens_set.md)	 - Set a schema migration within DefraDB
-* [defradb client lens set-registry](defradb_client_lens_set-registry.md)	 - Set a schema migration within the DefraDB LensRegistry
-* [defradb client lens up](defradb_client_lens_up.md)	 - Applies the migration to the specified collection version.
 

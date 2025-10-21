@@ -76,7 +76,7 @@ func (db *DB) newCollection(desc client.CollectionVersion) (*collection, error) 
 // If a fetcherFactory is set, it will be used to create the fetcher.
 // It's a very simple factory, but it allows us to inject a mock fetcher
 // for testing.
-func (c *collection) newFetcher() fetcher.Fetcher {
+func (c *collection) newFetcher(ctx context.Context) fetcher.Fetcher {
 	var innerFetcher fetcher.Fetcher
 	if c.fetcherFactory != nil {
 		innerFetcher = c.fetcherFactory()
@@ -84,7 +84,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
-	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
+	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx))
 }
 
 // getCollectionByName returns an existing collection within the database.

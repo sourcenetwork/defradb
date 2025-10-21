@@ -213,7 +213,7 @@ func (p *P2P) syncDocumentAndMerge(
 
 // syncDocumentDAG synchronizes the DAG for a specific document CID.
 func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
-	linkSys := makeLinkSystem(p.host.BlockService())
+	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: docCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
@@ -225,7 +225,7 @@ func (p *P2P) syncDocumentDAG(ctx context.Context, docCid cid.Cid) error {
 		return err
 	}
 
-	return p.syncDAG(ctx, p.host.BlockService(), linkBlock)
+	return p.syncDAG(ctx, linkBlock)
 }
 
 // docSyncMessageHandler handles incoming document sync requests from the pubsub network.

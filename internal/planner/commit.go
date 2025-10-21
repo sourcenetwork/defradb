@@ -266,7 +266,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	// if this is a time travel query or a latestCommits
+	// if this is a time travel query or a _latestCommits
 	// (cid + undefined depth + docId) then we need to make sure the
 	// target block actually belongs to the doc, since we are
 	// bypassing the HeadFetcher for the first cid

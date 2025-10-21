@@ -47,15 +47,15 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() client.PeerInfo {
-	return client.PeerInfo{}
+func (w *Wrapper) PeerInfo() ([]string, error) {
+	return nil, nil
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, info client.PeerInfo, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	panic("not implemented")
 }
 
@@ -269,23 +269,16 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchO
 	return err
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	configVal, err := goji.MarshalJS(config)
 	if err != nil {
-		return err
+		return "", err
 	}
-	_, err = execute(ctx, w.value, "setMigration", configVal)
-	return err
-}
-
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	res, err := execute(context.Background(), w.value, "lensRegistry")
+	res, err := execute(ctx, w.value, "setMigration", configVal)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return &LensRegistry{
-		client: res[0],
-	}
+	return res[0].String(), err
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -426,8 +419,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr client.PeerInfo) error {
-	return w.node.DB.Connect(ctx, addr)
+func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+	return w.node.DB.Connect(ctx, addresses)
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -445,4 +438,10 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
 	_, err := execute(ctx, w.value, "verifySignature", pubKey.String(), string(pubKey.Type()), blockCid)
 	return err
+}
+
+func (w *Wrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	return w.node.DB.ListAllEncryptedIndexes(ctx)
 }
