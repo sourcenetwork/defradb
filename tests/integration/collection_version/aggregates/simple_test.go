@@ -702,42 +702,22 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 				`,
 				ContainsData: map[string]any{
 					"__type": map[string]any{
+						"name": "Users",
 						"fields": []any{
 							map[string]any{
+								"name": "_avg",
 								"args": []any{
-									map[string]any{
-										"name": "_count",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_deleted",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_docID",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
+											"name": "Users__NumericSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "field",
 													"type": map[string]any{
-														"kind": "NON_NULL",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersNumericFieldsArg",
-														},
+														"kind":   "NON_NULL",
+														"name":   any(nil),
+														"ofType": map[string]any{"name": "UsersNumericFieldsArg"},
 													},
 												},
 												map[string]any{
@@ -767,32 +747,23 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 												map[string]any{
 													"name": "order",
 													"type": map[string]any{
-														"kind": "LIST",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersOrderArg",
-														},
+														"kind":   "LIST",
+														"name":   any(nil),
+														"ofType": map[string]any{"name": "UsersOrderArg"},
 													},
 												},
 											},
-											"name": "Users__NumericSelector",
-										},
-									},
-									map[string]any{
-										"name": "_sum",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
 										},
 									},
 								},
-								"name": "_avg",
 							},
 							map[string]any{
+								"name": "_count",
 								"args": []any{
 									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
+											"name": "Users__CountSelector",
 											"inputFields": []any{
 												map[string]any{
 													"name": "filter",
@@ -819,188 +790,13 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 													},
 												},
 											},
-											"name": "Users__CountSelector",
 										},
 									},
 									map[string]any{
 										"name": "_version",
 										"type": map[string]any{
-											"inputFields": []any{
-												map[string]any{
-													"name": "limit",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "Int",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "offset",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "Int",
-														"ofType": any(nil),
-													},
-												},
-											},
 											"name": "Users___version__CountSelector",
-										},
-									},
-								},
-								"name": "_count",
-							},
-							map[string]any{
-								"args": []any{},
-								"name": "_deleted",
-							},
-							map[string]any{
-								"args": []any{},
-								"name": "_docID",
-							},
-							map[string]any{
-								"args": []any{
-									map[string]any{
-										"name": "docID",
-										"type": map[string]any{
-											"inputFields": any(nil),
-											"name":        any(nil),
-										},
-									},
-									map[string]any{
-										"name": "filter",
-										"type": map[string]any{
 											"inputFields": []any{
-												map[string]any{
-													"name": "_alias",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "JSON",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "_and",
-													"type": map[string]any{
-														"kind": "LIST",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": any(nil),
-														},
-													},
-												},
-												map[string]any{
-													"name": "_docID",
-													"type": map[string]any{
-														"kind":   "INPUT_OBJECT",
-														"name":   "IDOperatorBlock",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "_not",
-													"type": map[string]any{
-														"kind":   "INPUT_OBJECT",
-														"name":   "UsersFilterArg",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "_or",
-													"type": map[string]any{
-														"kind": "LIST",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": any(nil),
-														},
-													},
-												},
-											},
-											"name": "UsersFilterArg",
-										},
-									},
-									map[string]any{
-										"name": "groupBy",
-										"type": map[string]any{
-											"inputFields": any(nil),
-											"name":        any(nil),
-										},
-									},
-									map[string]any{
-										"name": "limit",
-										"type": map[string]any{
-											"inputFields": any(nil),
-											"name":        "Int",
-										},
-									},
-									map[string]any{
-										"name": "offset",
-										"type": map[string]any{
-											"inputFields": any(nil),
-											"name":        "Int",
-										},
-									},
-									map[string]any{
-										"name": "order",
-										"type": map[string]any{
-											"inputFields": any(nil),
-											"name":        any(nil),
-										},
-									},
-								},
-								"name": "_group",
-							},
-							map[string]any{
-								"args": []any{
-									map[string]any{
-										"name": "_avg",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_count",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_deleted",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_docID",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_group",
-										"type": map[string]any{
-											"inputFields": []any{
-												map[string]any{
-													"name": "field",
-													"type": map[string]any{
-														"kind": "NON_NULL",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersNumericFieldsArg",
-														},
-													},
-												},
-												map[string]any{
-													"name": "filter",
-													"type": map[string]any{
-														"kind":   "INPUT_OBJECT",
-														"name":   "UsersFilterArg",
-														"ofType": any(nil),
-													},
-												},
 												map[string]any{
 													"name": "limit",
 													"type": map[string]any{
@@ -1017,217 +813,14 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 														"ofType": any(nil),
 													},
 												},
-												map[string]any{
-													"name": "order",
-													"type": map[string]any{
-														"kind": "LIST",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersOrderArg",
-														},
-													},
-												},
 											},
-											"name": "Users__NumericSelector",
-										},
-									},
-									map[string]any{
-										"name": "_sum",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
 										},
 									},
 								},
-								"name": "_max",
 							},
-							map[string]any{
-								"args": []any{
-									map[string]any{
-										"name": "_avg",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_count",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_deleted",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_docID",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_group",
-										"type": map[string]any{
-											"inputFields": []any{
-												map[string]any{
-													"name": "field",
-													"type": map[string]any{
-														"kind": "NON_NULL",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersNumericFieldsArg",
-														},
-													},
-												},
-												map[string]any{
-													"name": "filter",
-													"type": map[string]any{
-														"kind":   "INPUT_OBJECT",
-														"name":   "UsersFilterArg",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "limit",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "Int",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "offset",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "Int",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "order",
-													"type": map[string]any{
-														"kind": "LIST",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersOrderArg",
-														},
-													},
-												},
-											},
-											"name": "Users__NumericSelector",
-										},
-									},
-									map[string]any{
-										"name": "_max",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_sum",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-								},
-								"name": "_min",
-							},
-							map[string]any{
-								"args": []any{},
-								"name": "_similarity",
-							},
-							map[string]any{
-								"args": []any{
-									map[string]any{
-										"name": "_count",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_deleted",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_docID",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_group",
-										"type": map[string]any{
-											"inputFields": []any{
-												map[string]any{
-													"name": "field",
-													"type": map[string]any{
-														"kind": "NON_NULL",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersNumericFieldsArg",
-														},
-													},
-												},
-												map[string]any{
-													"name": "filter",
-													"type": map[string]any{
-														"kind":   "INPUT_OBJECT",
-														"name":   "UsersFilterArg",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "limit",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "Int",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "offset",
-													"type": map[string]any{
-														"kind":   "SCALAR",
-														"name":   "Int",
-														"ofType": any(nil),
-													},
-												},
-												map[string]any{
-													"name": "order",
-													"type": map[string]any{
-														"kind": "LIST",
-														"name": any(nil),
-														"ofType": map[string]any{
-															"name": "UsersOrderArg",
-														},
-													},
-												},
-											},
-											"name": "Users__NumericSelector",
-										},
-									},
-								},
-								"name": "_sum",
-							},
-							map[string]any{
-								"args": []any{},
-								"name": "_version",
-							},
+							map[string]any{"name": "_deleted", "args": []any{}},
+							map[string]any{"name": "_docID", "args": []any{}},
 						},
-						"name": "Users",
 					},
 				},
 			},
