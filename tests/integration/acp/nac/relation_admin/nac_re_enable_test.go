@@ -27,7 +27,7 @@ func TestNAC_AdminRelation_CanReEnableNAC(t *testing.T) {
 				EnableNAC: true,
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will loose setup state when the restart happens (i.e. the restart that started nac).
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
 			testUtils.DisableNAC{Identity: testUtils.ClientIdentity(1)},
 
 			// This user, can not perform this gated operation yet.

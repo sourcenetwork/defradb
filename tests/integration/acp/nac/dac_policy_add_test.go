@@ -13,11 +13,10 @@ package test_acp_nac
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_GatesCollectionPatch_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesAddingDACPolicy_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -26,23 +25,11 @@ func TestNAC_GatesCollectionPatch_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
-				Identity: testUtils.ClientIdentity(1),
-				Schema: `
-					type Users {}
-				`,
-			},
 
 			// This should work as the identity is authorized.
-			testUtils.PatchCollection{
+			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
+				Policy:   examplePolicy,
 			},
 		},
 	}
@@ -50,7 +37,7 @@ func TestNAC_GatesCollectionPatch_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesAddingDACPolicy_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -59,23 +46,11 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
-				Identity: testUtils.ClientIdentity(1),
-				Schema: `
-					type Users {}
-				`,
-			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.PatchCollection{
-				Identity: testUtils.NoIdentity(),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
+			testUtils.AddDACPolicy{
+				Identity:      testUtils.NoIdentity(),
+				Policy:        examplePolicy,
 				ExpectedError: "not authorized to perform operation",
 			},
 		},
@@ -84,7 +59,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesAddingDACPolicy_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -93,23 +68,11 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T)
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
-				Identity: testUtils.ClientIdentity(1),
-				Schema: `
-					type Users {}
-				`,
-			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.PatchCollection{
-				Identity: testUtils.ClientIdentity(2),
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
-					]
-				`,
+			testUtils.AddDACPolicy{
+				Identity:      testUtils.ClientIdentity(2),
+				Policy:        examplePolicy,
 				ExpectedError: "not authorized to perform operation",
 			},
 		},

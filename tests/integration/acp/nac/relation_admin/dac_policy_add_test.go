@@ -13,10 +13,11 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
+func TestNAC_AdminRelation_CanAddDACPolicy(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -27,20 +28,18 @@ func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
 			},
 			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
 			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			testUtils.AddNACActorRelationship{
-				RequestorIdentity: testUtils.ClientIdentity(1),
-				TargetIdentity:    testUtils.ClientIdentity(3), // Try deleting relationship for this actor.
-				Relation:          "admin",
-				ExpectedExistence: false,
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema: `
+					type Users {}
+				`,
 			},
-			// Note: Setup to test relationship deletion with is now done.
 
 			// This user, can not perform this gated operation yet.
-			testUtils.DeleteNACActorRelationship{
-				RequestorIdentity: testUtils.ClientIdentity(2),
-				TargetIdentity:    testUtils.ClientIdentity(3),
-				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+			testUtils.AddDACPolicy{
+				Identity:      testUtils.ClientIdentity(2),
+				Policy:        examplePolicy,
+				ExpectedError: "not authorized to perform operation",
 			},
 
 			// Grant access to user.
@@ -51,11 +50,10 @@ func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
 				ExpectedExistence: false,
 			},
 
-			testUtils.DeleteNACActorRelationship{
-				RequestorIdentity:   testUtils.ClientIdentity(2),
-				TargetIdentity:      testUtils.ClientIdentity(3),
-				Relation:            "admin",
-				ExpectedRecordFound: true,
+			// This user, can now perform this gated operation.
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(2),
+				Policy:   examplePolicy,
 			},
 		},
 	}
