@@ -53,7 +53,7 @@ With a Register identified by ```myregister```:
 /myregister:p => Priorty
 ```
 
-### GCounter - Increment-Only Counter
+### PCounter - Increment-Only Counter
 Counters allow for an integer (or float) to be updated over time via basic ```increment``` methods. They can be used for a number of scenarios, like view counter, user followers, etc. An Increment-Only counter means you can only ever increase the stored value, not decrease, see **PNCounter** to include decrement operations.
 
 
@@ -67,17 +67,17 @@ Counters allow for an integer (or float) to be updated over time via basic ```in
 ```
 
 #### Semantics
-New increment operations are resolved using a ```Max()``` function on conflicting deltas (those with equal priority values). *Common implementations of the GCounter use a map of Counter ReplicaIds to store multiple counters in a single GCounter, Defra does not use this method, instead only storing a single counter in a single GCounter*.
+New increment operations are resolved using a ```Max()``` function on conflicting deltas (those with equal priority values). *Common implementations of the PCounter use a map of Counter ReplicaIds to store multiple counters in a single PCounter, Defra does not use this method, instead only storing a single counter in a single PCounter*.
 
 #### Key-Value Layout
-With a GCounter identified by ```mygcounter```
+With a PCounter identified by ```mypcounter```
 ```
-/mygcounter:v => Value
-/mygcounter:p => Priority
+/mypcounter:v => Value
+/mypcounter:p => Priority
 ```
 
 ### PNCounter - Increment/Decrement Counter
-A PNCounter is equivalent to the GCounter, with the notable exception it can be incremented and decremented. This is achieved by composing a PNCounter from two individual GCounters, one to track increment ops, the other to track decrement ops. `PNCounter := GCounter + GCounter.`
+A PNCounter is equivalent to the PCounter, with the notable exception it can be incremented and decremented. This is achieved by composing a PNCounter from two individual PCounters, one to track increment ops, the other to track decrement ops. `PNCounter := PCounter + PCounter.`
 
 #### Methods
 ```
@@ -91,7 +91,7 @@ A PNCounter is equivalent to the GCounter, with the notable exception it can be 
 ```
 
 #### Semantics
-Internally, the PNCounter uses two GCounters, so all the same semantics are carried over. See [GCounter Semantics](#GCounter)
+Internally, the PNCounter uses two PCounters, so all the same semantics are carried over. See [PCounter Semantics](#PCounter)
 
 #### Key-Value Layout
 With a PNCounter identified by ```mypncounter```
@@ -100,7 +100,7 @@ With a PNCounter identified by ```mypncounter```
 /mypncounter/dec:v => Value
 /mypncounter:p => Priority
 ```
-You'll notice that despite the PNCounter constructed from two GCounter, they use a shared ```Priority``` Key-Value pair, this isn't required, but it reduces redundancy. It also shares a single ```Head``` value for its associated MerkleClock, which is covered in the [Merkle CRDT]() section.
+You'll notice that despite the PNCounter constructed from two PCounter, they use a shared ```Priority``` Key-Value pair, this isn't required, but it reduces redundancy. It also shares a single ```Head``` value for its associated MerkleClock, which is covered in the [Merkle CRDT]() section.
 
 ### EW-Flag - Enable-Wins Flag
 
