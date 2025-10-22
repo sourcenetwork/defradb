@@ -88,22 +88,22 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreigyslrbac5tgyapdtdo5jrqwon4hewndxjztlbenx632zgmqsma2y",
+							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 						},
 						{
-							"cid": "bafyreiemjaudcun4zej2bampuglyp5ad7d7a3imdizf7ko7stccafyvj44",
+							"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 						},
 						{
-							"cid": "bafyreigosblls6ehat2x5tbwbkkqds5yfog6zkwuq7655pljftuy5vj5ke",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 						},
 						{
-							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid": "bafyreid5ve64mkobcop4bhx6e5pzcyfiysxbvut2hbr7r7udrrgn3tsute",
 						},
 						{
-							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+							"cid": "bafyreihgwlmva5z7odxvnb6dxomrji7gnbomtcoqpnl7qmcl5zg5wdy3mi",
 						},
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreicefeu4dm3hk5qw2oqwu4x3dpogw7ffxy7fbpy5ggsr7l7ozopvhm",
 						},
 					},
 				},
@@ -135,16 +135,16 @@ func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":             "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
-							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
+							"cid":             "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
+							"schemaVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":             "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
-							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
+							"cid":             "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
+							"schemaVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":             "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
-							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
+							"cid":             "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
+							"schemaVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
 				},
@@ -289,7 +289,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(ageUpdateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(22),
-							"docID":     "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "age",
 							"height":    int64(2),
 							"links": []map[string]any{
@@ -303,7 +303,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(ageCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(21),
-							"docID":     "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -312,7 +312,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(nameCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue("John"),
-							"docID":     "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -321,7 +321,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(updateCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "_C",
 							"height":    int64(2),
 							"links": []map[string]any{
@@ -339,7 +339,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(createCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
@@ -383,13 +383,13 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"history": []map[string]any{
 						{
-							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 						},
 						{
-							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+							"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 						},
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 						},
 					},
 				},

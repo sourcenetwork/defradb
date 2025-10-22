@@ -32,7 +32,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"_docID": "bae-374c6a78-6081-5a3c-a62e-6a3fef63f0cc",
+								"_docID": "bae-9591c619-4bca-58eb-8820-28028736ef0c",
 								"age":    int64(27),
 								"name":   "John",
 							},
@@ -41,7 +41,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"_docID": "bae-7867e222-16fd-580c-9d30-aa9f5b406d69",
+								"_docID": "bae-45e90427-d499-598b-902a-6a3c65d0b504",
 								"age":    int64(31),
 								"name":   "Addo",
 							},

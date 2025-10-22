@@ -47,7 +47,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":       "bafyreia37txi77ajmma3t3o4hlnkx7qdbzymioplbuscla576i52rr5hri",
+							"cid":       "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":     john21DocID,
 							"fieldName": "age",
@@ -55,7 +55,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreiajo5esphlst5bi2qjudn7uutk5layfa3edxb55rett54qj7gznai",
+							"cid":       "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
 							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":     john21DocID,
 							"fieldName": "name",
@@ -63,18 +63,18 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreicmnl5hzhq4q533a47igftavebkqjhxl22t3hag6yods5j6iydji4",
+							"cid":       "bafyreif4w2sctatv6q4juyytwfge2z4e5fe5z27xtz6q5qm4h542vqdgtm",
 							"delta":     nil,
 							"docID":     john21DocID,
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreia37txi77ajmma3t3o4hlnkx7qdbzymioplbuscla576i52rr5hri",
+									"cid":  "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreiajo5esphlst5bi2qjudn7uutk5layfa3edxb55rett54qj7gznai",
+									"cid":  "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
 									"name": "name",
 								},
 							},
@@ -186,7 +186,7 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 }
 
 func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncrypted(t *testing.T) {
-	const docID = "bae-b0875c46-79f8-568f-9cc9-13eab3e2b8b1"
+	const docID = "bae-c60ff298-7222-528f-920f-783ca0caeae1"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -229,7 +229,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldStoreCommitsDeltaEncryp
 }
 
 func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *testing.T) {
-	const docID = "bae-b0875c46-79f8-568f-9cc9-13eab3e2b8b1"
+	const docID = "bae-c60ff298-7222-528f-920f-783ca0caeae1"
 
 	test := testUtils.TestCase{
 		Actions: []any{

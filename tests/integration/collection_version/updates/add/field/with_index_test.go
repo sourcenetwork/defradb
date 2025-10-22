@@ -60,7 +60,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 						IsMaterialized: true,
 						IsActive:       true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+							SourceCollectionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 						}),
 						Indexes: []client.IndexDescription{
 							{
@@ -161,7 +161,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 						IsMaterialized: true,
 						IsActive:       true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+							SourceCollectionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 						}),
 						Indexes: []client.IndexDescription{
 							{

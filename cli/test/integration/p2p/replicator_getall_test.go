@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	userCollectionID  = "bafyreihqyb4kk7mqcaryvtkd5w5xbo376yecggfx7zyhtgouevlrgakdoq"
-	orderCollectionID = "bafyreiah44u6djjkdgz6viuwlinivs33xyv7ifynf7zol3ovza7b57otmq"
+	userCollectionID  = "bafyreideggss3a43nnydp35fume5nyzlcrqkpo2d7lbvzkdhdeax5gc4cq"
+	orderCollectionID = "bafyreihjlbxdbishu6kjbm6ohldh5ypktazuyx66fqy6nldwisud5fthfm"
 )
 
 func TestReplicatorGetAll_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testing.T) {

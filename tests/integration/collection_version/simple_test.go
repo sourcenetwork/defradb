@@ -35,7 +35,7 @@ func TestColVersionSimpleCreatesColGivenEmptyType(t *testing.T) {
 							{
 								Name:    request.DocIDFieldName,
 								Kind:    client.FieldKind_DocID,
-								FieldID: "bafyreie6fnppc6bkpo5tifamx3rotptp6mveyz5mvkqldkrojpu5ayds74",
+								FieldID: "bafyreihqzhiz3iwro4jozp6kphq4sosg6ccoqcbiaf7rg5dmvea7aux55a",
 							},
 						},
 					},

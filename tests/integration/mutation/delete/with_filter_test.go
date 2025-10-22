@@ -29,7 +29,7 @@ func TestMutationDeletion_WithFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Shahzad"
+					"name": "John"
 				}`,
 			},
 			testUtils.Request{
@@ -77,7 +77,7 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "John",
+					"name": "Shahzad",
 					"age": 3
 				}`,
 			},
@@ -116,7 +116,7 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Shahzad"
+					"name": "John"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -126,7 +126,7 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "John"
+					"name": "Shahzad"
 				}`,
 			},
 			testUtils.Request{

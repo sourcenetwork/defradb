@@ -112,7 +112,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name:    "_docID",
-								FieldID: "bafyreie6fnppc6bkpo5tifamx3rotptp6mveyz5mvkqldkrojpu5ayds74",
+								FieldID: "bafyreihqzhiz3iwro4jozp6kphq4sosg6ccoqcbiaf7rg5dmvea7aux55a",
 								Kind:    client.FieldKind_DocID,
 							},
 							{
@@ -123,7 +123,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 							},
 							{
 								Name:         "a_id",
-								FieldID:      "bafyreibctyal4hy7fiupjmfy5rx5y75fuvuvjebx2itn54g2nwbktcbzne",
+								FieldID:      "bafyreieroxmzvqikc6mclepkm5tunroq6yuamr76f2tzu4nkwfy5au6lvi",
 								Kind:         client.FieldKind_DocID,
 								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
