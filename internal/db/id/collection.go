@@ -12,8 +12,10 @@ package id
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -53,50 +55,43 @@ func GetShortCollectionID(
 func SetShortCollectionID(
 	ctx context.Context,
 	collectionID string,
-) error {
-	cache := getCollectionShortIDCache(ctx)
-	_, ok := cache[collectionID]
-	if ok {
-		return nil
+) (uint32, error) {
+	shortID, err := GetShortCollectionID(ctx, collectionID)
+	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+		return 0, err
 	}
-
-	txn := datastore.CtxMustGetTxn(ctx)
-	key := keys.NewCollectionID(collectionID)
-
-	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
-	if err != nil {
-		return err
-	}
-	if hasShortID {
-		return nil
+	if shortID != 0 {
+		return shortID, nil
 	}
 
 	colSeq, err := sequence.Get(ctx, keys.CollectionIDSequenceKey{})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	sID, err := colSeq.Next(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	shortID := uint32(sID)
+	shortID = uint32(sID)
 
-	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
+	txn := datastore.CtxMustGetTxn(ctx)
+	err = txn.Systemstore().Set(ctx, keys.NewCollectionID(collectionID).Bytes(), []byte(strconv.Itoa(int(shortID))))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
+	cache := getCollectionShortIDCache(ctx)
 	cache[collectionID] = shortID
 
-	return nil
+	return shortID, nil
 }
 
 type collectionShortIDCacheKey struct{}
 
 type collectionShortIDCache map[string]uint32
 
-// InitCollectionShortIDCache initialializes the context with a none-nil collection
+// InitCollectionShortIDCache initializes the context with a none-nil collection
 // short-id cache.
 //
 // It is done to avoid an extra check to see if the cache exists or not when fetching

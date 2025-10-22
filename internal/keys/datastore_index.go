@@ -30,6 +30,8 @@ type IndexedField struct {
 type IndexDataStoreKey struct {
 	// CollectionShortID is the id of the collection
 	CollectionShortID uint32
+	// VersionShortID is the version of the collection
+	VersionShortID uint32
 	// IndexID is the id of the index
 	IndexID uint32
 	// Fields is the values of the fields in the index
@@ -38,11 +40,12 @@ type IndexDataStoreKey struct {
 
 var _ Key = (*IndexDataStoreKey)(nil)
 
-// NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
+// NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, version ID, index ID and fields.
 // It also validates values of the fields.
-func NewIndexDataStoreKey(collectionShortID, indexID uint32, fields []IndexedField) IndexDataStoreKey {
+func NewIndexDataStoreKey(collectionShortID, versionShortID, indexID uint32, fields ...IndexedField) IndexDataStoreKey {
 	return IndexDataStoreKey{
 		CollectionShortID: collectionShortID,
+		VersionShortID:    versionShortID,
 		IndexID:           indexID,
 		Fields:            fields,
 	}
@@ -69,7 +72,8 @@ func (k *IndexDataStoreKey) ToString() string {
 
 // Equal returns true if the two keys are equal
 func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
-	if k.CollectionShortID != other.CollectionShortID || k.IndexID != other.IndexID {
+	if k.CollectionShortID != other.CollectionShortID || k.VersionShortID != other.VersionShortID ||
+		k.IndexID != other.IndexID {
 		return false
 	}
 
@@ -115,6 +119,22 @@ func DecodeIndexDataStoreKey(
 	}
 
 	key := IndexDataStoreKey{CollectionShortID: uint32(colID)}
+
+	if len(data) == 0 {
+		return key, nil
+	}
+
+	if data[0] != '/' {
+		return IndexDataStoreKey{}, ErrInvalidKey
+	}
+	data = data[1:]
+
+	data, verID, err := encoding.DecodeUvarintAscending(data)
+	if err != nil {
+		return IndexDataStoreKey{}, err
+	}
+
+	key.VersionShortID = uint32(verID)
 
 	if len(data) == 0 {
 		return key, nil
@@ -179,6 +199,13 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 	}
 
 	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionShortID))
+
+	if key.VersionShortID == 0 {
+		return b
+	}
+
+	b = append(b, '/')
+	b = encoding.EncodeUvarintAscending(b, uint64(key.VersionShortID))
 
 	if key.IndexID == 0 {
 		return b

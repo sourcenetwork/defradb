@@ -207,12 +207,18 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	ver := index.collection.Version()
+	collectionShortID, err := id.GetShortCollectionID(ctx, ver.CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
+	versionShortID, err := id.GetShortVersionID(ctx, ver.CollectionID, ver.VersionID)
+	if err != nil {
+		return keys.IndexDataStoreKey{}, err
+	}
+
+	return keys.NewIndexDataStoreKey(collectionShortID, versionShortID, index.desc.ID, fields...), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
@@ -234,14 +240,18 @@ func (index *collectionBaseIndex) deleteIndexKey(
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
 // field values for all documents.
 func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	ver := index.collection.Version()
+	colShortID, err := id.GetShortCollectionID(ctx, ver.CollectionID)
 	if err != nil {
 		return err
 	}
 
-	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionShortID = shortID
-	prefixKey.IndexID = index.desc.ID
+	verShortID, err := id.GetShortVersionID(ctx, ver.CollectionID, ver.VersionID)
+	if err != nil {
+		return err
+	}
+
+	prefixKey := keys.NewIndexDataStoreKey(colShortID, verShortID, index.desc.ID)
 
 	txn := datastore.CtxMustGetTxn(ctx)
 	ds := txn.Datastore()

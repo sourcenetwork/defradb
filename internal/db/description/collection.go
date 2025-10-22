@@ -32,7 +32,7 @@ func SaveCollection(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	err := id.SetShortCollectionID(ctx, desc.CollectionID)
+	_, err := id.SetShortCollectionID(ctx, desc.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -78,14 +78,9 @@ func SaveCollection(
 		}
 	}
 
-	isNew := desc.CollectionID == desc.VersionID
-	if !isNew {
-		// We don't need to index the version by collection id, if the version id is the collection id
-		collectionVersionKey := keys.NewCollectionVersionKey(desc.CollectionID, desc.VersionID)
-		err = txn.Systemstore().Set(ctx, collectionVersionKey.Bytes(), []byte{})
-		if err != nil {
-			return err
-		}
+	_, err = id.SetShortVersionID(ctx, desc.CollectionID, desc.VersionID)
+	if err != nil {
+		return err
 	}
 
 	cache := getCollectionCache(ctx)

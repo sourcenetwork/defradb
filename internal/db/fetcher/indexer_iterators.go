@@ -336,7 +336,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 		keyFieldValues[i] = fieldConditions[i].val
 	}
 
-	key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+	key, err := f.newIndexDataStoreKey(keyFieldValues...)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +426,7 @@ func (f *indexFetcher) newPrefixBasedMatchIteratorFromConditions(
 		matchers[0] = &anyMatcher{}
 	}
 
-	key, err := f.newIndexDataStoreKeyWithValues(keyFieldValues)
+	key, err := f.newIndexDataStoreKey(keyFieldValues...)
 	if err != nil {
 		return nil, err
 	}
@@ -473,28 +473,24 @@ func (f *indexFetcher) newInIndexIterator(
 	return inIter, nil
 }
 
-func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
-	if err != nil {
-		return keys.IndexDataStoreKey{}, err
-	}
-
-	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID}, nil
-}
-
-func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
+func (f *indexFetcher) newIndexDataStoreKey(values ...client.NormalValue) (keys.IndexDataStoreKey, error) {
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	colShortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
+	verShortID, err := id.GetShortVersionID(f.ctx, f.col.Version().CollectionID, f.col.Version().VersionID)
+	if err != nil {
+		return keys.IndexDataStoreKey{}, err
+	}
+
+	return keys.NewIndexDataStoreKey(colShortID, verShortID, f.indexDesc.ID, fields...), nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.
@@ -518,7 +514,7 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 	if len(cond.jsonPath) > 0 {
 		jsonVal, _ := cond.val.JSON()
 		jsonPathVal := client.NewNormalJSON(client.MakeVoidJSON(jsonVal.GetPath()))
-		baseKey, err = f.newIndexDataStoreKeyWithValues([]client.NormalValue{jsonPathVal})
+		baseKey, err = f.newIndexDataStoreKey(jsonPathVal)
 	} else {
 		baseKey, err = f.newIndexDataStoreKey()
 	}
