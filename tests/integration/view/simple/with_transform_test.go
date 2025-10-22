@@ -320,6 +320,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

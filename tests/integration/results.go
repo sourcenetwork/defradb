@@ -273,6 +273,21 @@ func assertResultsEqual(t testing.TB, client state.ClientType, expected any, act
 	}
 }
 
+// isResultsEqual checks that actual result is equal to the expected result and returns true if they are.
+//
+// The comparison is relaxed when using client types other than goClientType.
+func isResultsEqual(client state.ClientType, expected any, actual any) bool {
+	switch client {
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+		if !areResultsEqual(expected, actual) {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		return true
+	default:
+		return assert.ObjectsAreEqualValues(expected, actual)
+	}
+}
+
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.
