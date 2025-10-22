@@ -249,6 +249,12 @@ type State struct {
 	// even when they are renamed.
 	CollectionIndexesByCollectionID map[string]int
 
+	// The VersionIDs of all collection versions created so far by the test.
+	//
+	// WARNING: This does not actually include patch versions yet.  Please add that when
+	// the need arrises.
+	CollectionVersions []string
+
 	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple

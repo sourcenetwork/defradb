@@ -71,3 +71,13 @@ func refreshCollections(
 		}
 	}
 }
+
+func appendCollectionVersion(s *state.State, versionID string) {
+	for _, existingVersion := range s.CollectionVersions {
+		if existingVersion == versionID {
+			return
+		}
+	}
+
+	s.CollectionVersions = append(s.CollectionVersions, versionID)
+}

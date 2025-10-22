@@ -36,12 +36,17 @@ var _ Action = (*SyncCollection)(nil)
 var _ Stateful = (*SyncCollection)(nil)
 
 func (a *SyncCollection) Execute() {
-	node := a.s.Nodes[a.NodeID]
+	replacedVersionIDs := replaceMap(a.s, 0, a.VersionIDs)
+	versionIDs := make([]string, len(a.VersionIDs))
+	for i, originalID := range a.VersionIDs {
+		versionIDs[i] = replacedVersionIDs[originalID]
+	}
 
 	ctx, cancel := context.WithTimeout(a.s.Ctx, time.Second)
 	defer cancel()
 
-	err := node.SyncCollections(ctx, a.VersionIDs...)
+	node := a.s.Nodes[a.NodeID]
+	err := node.SyncCollections(ctx, versionIDs...)
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

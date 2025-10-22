@@ -1230,11 +1230,14 @@ func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
 ) {
+	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
+	versionID := replacedIDs[action.VersionID]
+
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.SetActiveCollectionVersion(ctx, action.VersionID)
+		err := node.SetActiveCollectionVersion(ctx, versionID)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1262,11 +1265,26 @@ func createView(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
-		_, err := node.AddView(s.Ctx, action.Query, action.SDL, action.Transform)
+		results, err := node.AddView(s.Ctx, action.Query, action.SDL, action.Transform)
+
+		for _, result := range results {
+			appendCollectionVersion(s, result.VersionID)
+		}
+
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
+}
+
+func appendCollectionVersion(s *state.State, versionID string) {
+	for _, existingVersion := range s.CollectionVersions {
+		if existingVersion == versionID {
+			return
+		}
+	}
+
+	s.CollectionVersions = append(s.CollectionVersions, versionID)
 }
 
 func refreshViews(

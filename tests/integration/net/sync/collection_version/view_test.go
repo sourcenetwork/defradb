@@ -68,7 +68,7 @@ func TestColSync_WithView(t *testing.T) {
 			},
 			&action.SyncCollection{
 				NodeID:     1,
-				VersionIDs: []string{"bafyreiftfipfaesdfi2r4z23tkwr5kx7fencc7h22g4uyvbi6w5o4lb4i4"},
+				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
 			testUtils.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
@@ -162,11 +162,11 @@ func TestColSync_WithView_CanBeActivatedAndQueried(t *testing.T) {
 			},
 			&action.SyncCollection{
 				NodeID:     1,
-				VersionIDs: []string{"bafyreiftfipfaesdfi2r4z23tkwr5kx7fencc7h22g4uyvbi6w5o4lb4i4"},
+				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
 			testUtils.SetActiveCollectionVersion{
 				NodeID:    immutable.Some(1),
-				VersionID: "bafyreiftfipfaesdfi2r4z23tkwr5kx7fencc7h22g4uyvbi6w5o4lb4i4",
+				VersionID: "{{.CollectionVersionID1}}",
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{

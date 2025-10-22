@@ -29,6 +29,10 @@ import (
 // sets.
 var templateDataGenerators = map[string]func(*state.State, int) map[string]string{
 	"Policy": func(s *state.State, nodeID int) map[string]string {
+		if nodeID >= len(s.PolicyIDs) {
+			return map[string]string{}
+		}
+
 		nodesPolicyIDs := s.PolicyIDs[nodeID]
 
 		res := map[string]string{}
@@ -36,6 +40,13 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 			res["Policy"+strconv.Itoa(i)] = policyID
 		}
 
+		return res
+	},
+	"CollectionVersionID": func(s *state.State, nodeID int) map[string]string {
+		res := map[string]string{}
+		for i, versionID := range s.CollectionVersions {
+			res["CollectionVersionID"+strconv.Itoa(i)] = versionID
+		}
 		return res
 	},
 }
@@ -63,4 +74,31 @@ func replace(s *state.State, nodeId int, input string) string {
 	}
 
 	return buf.String()
+}
+
+func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string {
+	templateData := map[string]string{}
+	for _, datasetGenerator := range templateDataGenerators {
+		// Having to regenerate the full dataset for every node-action is horribly inefficient, but
+		// it is tolerable for now.
+		maps.Copy(templateData, datasetGenerator(s, nodeId))
+	}
+
+	result := make(map[string]string, len(inputSet))
+	for _, input := range inputSet {
+		// WARNING - This does not respect the full Go-replace syntax, at the momement it is a
+		// very simple/lightweight key-lookup.  We may want to change this in the future.
+
+		inputID := strings.TrimPrefix(input, "{{.")
+		inputID = strings.TrimSuffix(inputID, "}}")
+
+		replacement, ok := templateData[inputID]
+		if ok {
+			result[input] = replacement
+		} else {
+			result[input] = input
+		}
+	}
+
+	return result
 }

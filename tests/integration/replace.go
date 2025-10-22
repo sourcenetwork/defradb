@@ -60,6 +60,13 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 		}
 		return res
 	},
+	"CollectionVersionID": func(s *state.State, nodeID int) map[string]string {
+		res := map[string]string{}
+		for i, versionID := range s.CollectionVersions {
+			res["CollectionVersionID"+strconv.Itoa(i)] = versionID
+		}
+		return res
+	},
 }
 
 // replace returns a new string with any templating placholders (see "text/template") with data drawn
