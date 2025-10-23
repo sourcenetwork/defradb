@@ -186,19 +186,6 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					{
 						Name:           "Users",
 						CollectionID:   usersSchemaVersion1ID,
-						VersionID:      usersSchemaVersion1ID,
-						IsActive:       true,
-						IsMaterialized: true,
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:           "Users",
-						CollectionID:   usersSchemaVersion1ID,
 						VersionID:      usersSchemaVersion2ID,
 						IsActive:       false,
 						IsMaterialized: true,
@@ -215,6 +202,19 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					{
+						Name:           "Users",
+						CollectionID:   usersSchemaVersion1ID,
+						VersionID:      usersSchemaVersion1ID,
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},
