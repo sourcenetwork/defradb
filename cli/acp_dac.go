@@ -22,7 +22,7 @@ func MakeDocumentACPCommand(ctx context.Context) *cobra.Command {
 		Short: "Interact with the document access control system of a DefraDB node",
 		Long: `Interact with the document access control system of a DefraDB node
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 		`,
 	}

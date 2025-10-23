@@ -34,9 +34,7 @@ If the --collection flag is provided, only the data for that collection will be 
 Otherwise, all collections in the database will be exported.
 
 If the --pretty flag is provided, the JSON will be pretty printed.
-
-Example: export data for the 'Users' collection:
-  defradb client export --collection Users user_data.json`,
+`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -60,6 +58,10 @@ Example: export data for the 'Users' collection:
 			return cliClient.BasicExport(cmd.Context(), &data)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Export data for the 'Users' collection",
+		`defradb client backup export --collections Users user_data.json`)
+
 	cmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Set the output JSON to be pretty printed")
 	cmd.Flags().StringVarP(&format, "format", "f", jsonFileType,
 		"Define the output format. Supported formats: [json]")
