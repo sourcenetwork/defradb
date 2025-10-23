@@ -234,7 +234,7 @@ func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string
 	}
 	cmd.Example += exampleString
 
-	exampleName := cmd.Name() + "." + name
+	exampleName := cmd.Short + "/" + name
 	registerCLIExample(ctx, exampleName, usage)
 }
 
@@ -276,7 +276,10 @@ func validateCLIArgs(cmd *cobra.Command, args []string) error {
 	}
 
 	flags := cmd.Flags()
-	flags.Parse(args)
+	err = flags.Parse(args)
+	if err != nil {
+		return err
+	}
 
 	remainingArgs := flags.Args()
 
