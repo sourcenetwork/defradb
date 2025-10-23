@@ -210,15 +210,21 @@ func writeJSON(cmd *cobra.Command, out any) error {
 	return enc.Encode(out)
 }
 
-// WithExampleRegistry injects an ExampleRegitry into the context.
+// withExampleRegistry injects an ExampleRegitry into the context.
 // This is primarily only needed by the tests but needs to exist
 // in the main CLI package
-func WithExampleRegistry(ctx context.Context, registry *ExampleRegistry) context.Context {
+func withExampleRegistry(ctx context.Context, registry *exampleRegistry) context.Context {
 	return context.WithValue(ctx, exampleRegistryCtxKey{}, registry)
 }
 
-type ExampleRegistry struct {
+type exampleRegistry struct {
 	examples map[string]string
+}
+
+func newExampleRegistry() *exampleRegistry {
+	return &exampleRegistry{
+		examples: make(map[string]string),
+	}
 }
 
 func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string) {
@@ -242,7 +248,7 @@ func cliExampleToString(name, usage string) string {
 }
 
 func registerCLIExample(ctx context.Context, name, usage string) {
-	registry, ok := ctx.Value(exampleRegistryCtxKey{}).(*ExampleRegistry)
+	registry, ok := ctx.Value(exampleRegistryCtxKey{}).(*exampleRegistry)
 	if !ok {
 		return
 	}
@@ -251,5 +257,38 @@ func registerCLIExample(ctx context.Context, name, usage string) {
 	if exists {
 		panic("CLI example with the same name already exists: " + name)
 	}
-	registry.examples[name] = strings.ReplaceAll(usage, "\n", "")
+
+	if strings.Contains(usage, " | ") {
+		usageParts := strings.Split(usage, "|")
+		usage = usageParts[1]
+	}
+	registry.examples[name] = strings.ReplaceAll(usage, "\\\n", "")
+}
+
+func validateCLIArgs(cmd *cobra.Command, args []string) error {
+	cmd, args, err := cmd.Find(args)
+	if err != nil {
+		return err
+	}
+
+	if !cmd.Runnable() {
+		return fmt.Errorf("command isn't runnable: %s", cmd.Name())
+	}
+
+	flags := cmd.Flags()
+	flags.Parse(args)
+
+	remainingArgs := flags.Args()
+
+	if cmd.Args != nil {
+		if err := cmd.Args(cmd, remainingArgs); err != nil {
+			return err
+		}
+	}
+
+	if err := cmd.ValidateRequiredFlags(); err != nil {
+		return err
+	}
+
+	return nil
 }
