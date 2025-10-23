@@ -24,10 +24,7 @@ func MakeKeyringListCommand(ctx context.Context) *cobra.Command {
 		Long: `List all keys in the keyring.
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.
-
-Example:
-  defradb keyring list`,
+defined with the --secret-file flag.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyring, err := openKeyring(cmd)
@@ -52,5 +49,9 @@ Example:
 			return nil
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "List all keys",
+		`defradb keyring list`)
+
 	return cmd
 }

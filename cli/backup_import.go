@@ -29,7 +29,7 @@ func MakeBackupImportCommand(ctx context.Context) *cobra.Command {
 	}
 
 	EmbedCLIExample(ctx, cmd, "Import data to the database",
-		`defradb client import user_data.json`)
+		`defradb client backup import user_data.json`)
 
 	return cmd
 }

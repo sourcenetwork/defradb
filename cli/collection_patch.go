@@ -34,15 +34,6 @@ func MakeCollectionPatchCommand(ctx context.Context) *cobra.Command {
 
 Uses JSON Patch to modify collection versions.
 
-Example: patch from an argument string:
-  defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'
-
-Example: patch from file:
-  defradb client collection patch -p patch.json
-
-Example: patch from stdin:
-  cat patch.json | defradb client collection patch -
-
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.`,
 		Args: cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -95,6 +86,16 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 			return cliClient.PatchCollection(cmd.Context(), patch, migration)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "patch from an argument string",
+		`defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'`)
+
+	EmbedCLIExample(ctx, cmd, "patch from file",
+		`defradb client collection patch -p patch.json`)
+
+	EmbedCLIExample(ctx, cmd, "patch from stdin",
+		`cat patch.json | defradb client collection patch -`)
+
 	cmd.Flags().StringVarP(&patchFile, "patch-file", "p", "", "File to load a patch from")
 	cmd.Flags().StringVarP(&lensFile, "lens-file", "t", "", "File to load a lens config from")
 	return cmd

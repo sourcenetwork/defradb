@@ -30,9 +30,6 @@ func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 		Short: "Add new view",
 		Long: `Add new database view.
 
-Example: add from an argument string:
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'
-
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 4),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -78,6 +75,10 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			return writeJSON(cmd, defs)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "add from an argument string",
+		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'`)
+
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
 	return cmd
 }

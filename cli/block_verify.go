@@ -28,9 +28,6 @@ func MakeBlockVerifySignatureCommand(ctx context.Context) *cobra.Command {
 		
 Notes:
   - If 'type' is not provided, secp256k1 is assumed.
-
-Example to verify the signature of a block:
-  defradb client block verify-signature --type <type> <public-key> <cid> 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -52,6 +49,10 @@ Example to verify the signature of a block:
 			return err
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "verify the signature of a block",
+		`defradb client block verify-signature --type <type> <public-key> <cid>`)
+
 	cmd.Flags().StringVarP(&typeStr, "type", "t", "", "Type of the identity's public key")
 	return cmd
 }

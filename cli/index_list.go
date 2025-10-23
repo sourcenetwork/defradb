@@ -22,12 +22,9 @@ func MakeIndexListCommand(ctx context.Context) *cobra.Command {
 		Use:   "list [-c --collection <collection>]",
 		Short: "Shows the list indexes in the database or for a specific collection",
 		Long: `Shows the list indexes in the database or for a specific collection.
-		
-If the --collection flag is provided, only the indexes for that collection will be shown.
-Otherwise, all indexes in the database will be shown.
 
-Example: show all index for 'Users' collection:
-  defradb client index list --collection Users`,
+If the --collection flag is provided, only the indexes for that collection will be shown.
+Otherwise, all indexes in the database will be shown.`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -52,6 +49,10 @@ Example: show all index for 'Users' collection:
 			}
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "show all index for 'Users' collection",
+		`defradb client index list --collection Users`)
+
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 
 	return cmd

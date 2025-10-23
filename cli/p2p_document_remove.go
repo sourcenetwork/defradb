@@ -22,14 +22,7 @@ func MakeP2PDocumentRemoveCommand(ctx context.Context) *cobra.Command {
 		Use:   "remove [docIDs]",
 		Short: "Remove P2P documents",
 		Long: `Remove P2P documents from the followed pubsub topics.
-The removed documents will no longer be synchronized between nodes.
-
-Example: remove single document
-  defradb client p2p document remove bae123
-
-Example: remove multiple documents
-  defradb client p2p document remove bae123,bae456
-		`,
+The removed documents will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -46,5 +39,12 @@ Example: remove multiple documents
 			return cliClient.RemoveP2PDocuments(cmd.Context(), collectionIDs...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "remove single document",
+		`defradb client p2p document remove bae123`)
+
+	EmbedCLIExample(ctx, cmd, "remove multiple documents",
+		`defradb client p2p document remove bae123,bae456`)
+
 	return cmd
 }

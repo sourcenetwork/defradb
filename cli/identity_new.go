@@ -30,15 +30,7 @@ func MakeIdentityNewCommand(ctx context.Context) *cobra.Command {
 The generated identity contains:
 - A private key (secp256k1 or ed25519, based on --type flag)
 - A corresponding public key
-- A "did:key" generated from the public key.
-
-Example: generate a new identity with secp256k1 key (default):
-  defradb identity new
-
-Example: generate a new identity with ed25519 key:
-  defradb identity new --type ed25519
-
-`,
+- A "did:key" generated from the public key.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			newIdentity, err := identity.Generate(crypto.KeyType(keyType))
 			if err != nil {
@@ -50,6 +42,12 @@ Example: generate a new identity with ed25519 key:
 			return writeJSON(cmd, rawIdentity)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "generate a new identity with secp256k1 key (default)",
+		`defradb identity new`)
+
+	EmbedCLIExample(ctx, cmd, "generate a new identity with ed25519 key",
+		`defradb identity new --type ed25519`)
 
 	cmd.Flags().StringVar(&keyType, "type", "secp256k1", "Key type (secp256k1 or ed25519)")
 
