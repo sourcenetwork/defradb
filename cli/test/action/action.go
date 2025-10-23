@@ -110,7 +110,7 @@ func execute(ctx context.Context, args []string) error {
 }
 
 func executeSimple(ctx context.Context, args []string) error {
-	cmd := cli.NewDefraCommand()
+	cmd := cli.NewDefraCommand(ctx)
 	cmd.SetArgs(args)
 
 	return cmd.ExecuteContext(ctx)
@@ -129,7 +129,7 @@ func executeStream(ctx context.Context, args []string) (io.ReadCloser, io.ReadCl
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	cmd := cli.NewDefraCommand()
+	cmd := cli.NewDefraCommand(ctx)
 	cmd.SetOut(stdOutWrite)
 	cmd.SetErr(stdErrWrite)
 	cmd.SetArgs(args)

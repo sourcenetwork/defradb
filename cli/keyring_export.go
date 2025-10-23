@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeKeyringExportCommand() *cobra.Command {
+func MakeKeyringExportCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "export <name>",
 		Short: "Export a private key",

@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeRootCommand() *cobra.Command {
+func MakeRootCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		SilenceUsage: true,
 		Use:          "defradb",

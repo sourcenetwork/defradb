@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionUpdateCommand() *cobra.Command {
+func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var updater string

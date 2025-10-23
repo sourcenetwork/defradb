@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorDeleteCommand() *cobra.Command {
+func MakeP2PReplicatorDeleteCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
 		Use:   "delete [-c, --collection] <peerID>",

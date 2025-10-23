@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeEncryptedIndexCreateCommand() *cobra.Command {
+func MakeEncryptedIndexCreateCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var fieldArg string
 	var typeArg string

@@ -11,13 +11,15 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func MakeIdentityNewCommand() *cobra.Command {
+func MakeIdentityNewCommand(ctx context.Context) *cobra.Command {
 	var keyType string
 
 	var cmd = &cobra.Command{

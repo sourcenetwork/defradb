@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeCollectionListDocIDsCommand() *cobra.Command {
+func MakeCollectionListDocIDsCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "docIDs [-i --identity]",
 		Short: "List all document IDs (docIDs).",

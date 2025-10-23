@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -23,7 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeLensSetCommand() *cobra.Command {
+func MakeLensSetCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "set [src] [dst] [cfg]",

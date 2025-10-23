@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -22,7 +23,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
-func MakeViewAddCommand() *cobra.Command {
+func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "add [query] [sdl] [transform]",

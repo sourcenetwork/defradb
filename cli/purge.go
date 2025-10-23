@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakePurgeCommand() *cobra.Command {
+func MakePurgeCommand(ctx context.Context) *cobra.Command {
 	var force bool
 	var cmd = &cobra.Command{
 		Use:   "purge",

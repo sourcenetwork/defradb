@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeACPRelationshipDeleteCommand() *cobra.Command {
+func MakeNodeACPRelationshipDeleteCommand(ctx context.Context) *cobra.Command {
 	var (
 		relationArg    string
 		targetActorArg string

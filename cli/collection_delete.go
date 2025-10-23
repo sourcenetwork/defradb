@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionDeleteCommand() *cobra.Command {
+func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var cmd = &cobra.Command{

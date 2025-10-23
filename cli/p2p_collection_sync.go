@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionSyncCommand() *cobra.Command {
+func MakeP2PCollectionSyncCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "sync [versionID...]",
 		Short: "Synchronize specific collection versions from the network",

@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeDocumentACPRelationshipAddCommand() *cobra.Command {
+func MakeDocumentACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	var (
 		collectionArg  string
 		relationArg    string

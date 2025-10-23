@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func MakeKeyringGenerateCommand() *cobra.Command {
+func MakeKeyringGenerateCommand(ctx context.Context) *cobra.Command {
 	var noEncryptionKey bool
 	var noPeerKey bool
 	var cmd = &cobra.Command{

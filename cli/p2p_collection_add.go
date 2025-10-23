@@ -11,12 +11,13 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionAddCommand() *cobra.Command {
+func MakeP2PCollectionAddCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [collectionNames]",
 		Short: "Add P2P collections",

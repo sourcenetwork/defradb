@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,7 +24,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
-func MakeCollectionPatchCommand() *cobra.Command {
+func MakeCollectionPatchCommand(ctx context.Context) *cobra.Command {
 	var patchFile string
 	var lensFile string
 	var cmd = &cobra.Command{

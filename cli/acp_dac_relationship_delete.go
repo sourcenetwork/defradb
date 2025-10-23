@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeDocumentACPRelationshipDeleteCommand() *cobra.Command {
+func MakeDocumentACPRelationshipDeleteCommand(ctx context.Context) *cobra.Command {
 	var (
 		collectionArg  string
 		relationArg    string

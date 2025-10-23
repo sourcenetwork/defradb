@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeEncryptedIndexDeleteCommand() *cobra.Command {
+func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var fieldArg string
 	var cmd = &cobra.Command{

@@ -11,13 +11,14 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeDocumentACPPolicyAddCommand() *cobra.Command {
+func MakeDocumentACPPolicyAddCommand(ctx context.Context) *cobra.Command {
 	var policyFile string
 
 	var cmd = &cobra.Command{

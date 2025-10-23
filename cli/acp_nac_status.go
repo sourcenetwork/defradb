@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeACPStatusCommand() *cobra.Command {
+func MakeNodeACPStatusCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "status [-i --identity]",
 		Short: "Check the node access control status",

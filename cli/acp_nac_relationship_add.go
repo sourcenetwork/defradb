@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeACPRelationshipAddCommand() *cobra.Command {
+func MakeNodeACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	var (
 		relationArg    string
 		targetActorArg string

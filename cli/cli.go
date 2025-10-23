@@ -32,142 +32,142 @@ type CLI interface {
 }
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
-func NewDefraCommand() *cobra.Command {
-	p2p_collection := MakeP2PCollectionCommand()
+func NewDefraCommand(ctx context.Context) *cobra.Command {
+	p2p_collection := MakeP2PCollectionCommand(ctx)
 	p2p_collection.AddCommand(
-		MakeP2PCollectionAddCommand(),
-		MakeP2PCollectionRemoveCommand(),
-		MakeP2PCollectionGetAllCommand(),
-		MakeP2PCollectionSyncCommand(),
+		MakeP2PCollectionAddCommand(ctx),
+		MakeP2PCollectionRemoveCommand(ctx),
+		MakeP2PCollectionGetAllCommand(ctx),
+		MakeP2PCollectionSyncCommand(ctx),
 	)
 
-	p2p_document := MakeP2PDocumentCommand()
+	p2p_document := MakeP2PDocumentCommand(ctx)
 	p2p_document.AddCommand(
-		MakeP2PDocumentAddCommand(),
-		MakeP2PDocumentRemoveCommand(),
-		MakeP2PDocumentGetAllCommand(),
-		MakeP2PDocumentSyncCommand(),
+		MakeP2PDocumentAddCommand(ctx),
+		MakeP2PDocumentRemoveCommand(ctx),
+		MakeP2PDocumentGetAllCommand(ctx),
+		MakeP2PDocumentSyncCommand(ctx),
 	)
 
-	p2p_replicator := MakeP2PReplicatorCommand()
+	p2p_replicator := MakeP2PReplicatorCommand(ctx)
 	p2p_replicator.AddCommand(
-		MakeP2PReplicatorGetAllCommand(),
-		MakeP2PReplicatorSetCommand(),
-		MakeP2PReplicatorDeleteCommand(),
+		MakeP2PReplicatorGetAllCommand(ctx),
+		MakeP2PReplicatorSetCommand(ctx),
+		MakeP2PReplicatorDeleteCommand(ctx),
 	)
 
-	p2p := MakeP2PCommand()
+	p2p := MakeP2PCommand(ctx)
 	p2p.AddCommand(
 		p2p_replicator,
 		p2p_collection,
 		p2p_document,
-		MakeP2PInfoCommand(),
-		MakeP2PConnectCommand(),
+		MakeP2PInfoCommand(ctx),
+		MakeP2PConnectCommand(ctx),
 	)
 
-	lens := MakeLensCommand()
+	lens := MakeLensCommand(ctx)
 	lens.AddCommand(
-		MakeLensSetCommand(),
+		MakeLensSetCommand(ctx),
 	)
 
-	schema := MakeSchemaCommand()
+	schema := MakeSchemaCommand(ctx)
 	schema.AddCommand(
-		MakeSchemaAddCommand(),
+		MakeSchemaAddCommand(ctx),
 	)
 
-	acp_node_relationship := MakeNodeACPRelationshipCommand()
+	acp_node_relationship := MakeNodeACPRelationshipCommand(ctx)
 	acp_node_relationship.AddCommand(
-		MakeNodeACPRelationshipAddCommand(),
-		MakeNodeACPRelationshipDeleteCommand(),
+		MakeNodeACPRelationshipAddCommand(ctx),
+		MakeNodeACPRelationshipDeleteCommand(ctx),
 	)
 
-	nac := MakeNodeACPCommand()
+	nac := MakeNodeACPCommand(ctx)
 	nac.AddCommand(
 		acp_node_relationship,
-		MakeNodeACPReEnableCommand(),
-		MakeNodeACPDisableCommand(),
-		MakeNodeACPStatusCommand(),
+		MakeNodeACPReEnableCommand(ctx),
+		MakeNodeACPDisableCommand(ctx),
+		MakeNodeACPStatusCommand(ctx),
 	)
 
-	acp_document_policy := MakeDocumentACPPolicyCommand()
+	acp_document_policy := MakeDocumentACPPolicyCommand(ctx)
 	acp_document_policy.AddCommand(
-		MakeDocumentACPPolicyAddCommand(),
+		MakeDocumentACPPolicyAddCommand(ctx),
 	)
 
-	acp_document_relationship := MakeDocumentACPRelationshipCommand()
+	acp_document_relationship := MakeDocumentACPRelationshipCommand(ctx)
 	acp_document_relationship.AddCommand(
-		MakeDocumentACPRelationshipAddCommand(),
-		MakeDocumentACPRelationshipDeleteCommand(),
+		MakeDocumentACPRelationshipAddCommand(ctx),
+		MakeDocumentACPRelationshipDeleteCommand(ctx),
 	)
 
-	dac := MakeDocumentACPCommand()
+	dac := MakeDocumentACPCommand(ctx)
 	dac.AddCommand(
 		acp_document_policy,
 		acp_document_relationship,
 	)
 
-	acp := MakeACPCommand()
+	acp := MakeACPCommand(ctx)
 	acp.AddCommand(
 		nac,
 		dac,
 	)
 
-	view := MakeViewCommand()
+	view := MakeViewCommand(ctx)
 	view.AddCommand(
-		MakeViewAddCommand(),
-		MakeViewRefreshCommand(),
+		MakeViewAddCommand(ctx),
+		MakeViewRefreshCommand(ctx),
 	)
 
-	index := MakeIndexCommand()
+	index := MakeIndexCommand(ctx)
 	index.AddCommand(
-		MakeIndexCreateCommand(),
-		MakeIndexDropCommand(),
-		MakeIndexListCommand(),
+		MakeIndexCreateCommand(ctx),
+		MakeIndexDropCommand(ctx),
+		MakeIndexListCommand(ctx),
 	)
 
-	encrypted_index := MakeEncryptedIndexCommand()
+	encrypted_index := MakeEncryptedIndexCommand(ctx)
 	encrypted_index.AddCommand(
-		MakeEncryptedIndexCreateCommand(),
-		MakeEncryptedIndexDeleteCommand(),
-		MakeEncryptedIndexListCommand(),
+		MakeEncryptedIndexCreateCommand(ctx),
+		MakeEncryptedIndexDeleteCommand(ctx),
+		MakeEncryptedIndexListCommand(ctx),
 	)
 
-	backup := MakeBackupCommand()
+	backup := MakeBackupCommand(ctx)
 	backup.AddCommand(
-		MakeBackupExportCommand(),
-		MakeBackupImportCommand(),
+		MakeBackupExportCommand(ctx),
+		MakeBackupImportCommand(ctx),
 	)
 
-	tx := MakeTxCommand()
+	tx := MakeTxCommand(ctx)
 	tx.AddCommand(
-		MakeTxCreateCommand(),
-		MakeTxCommitCommand(),
-		MakeTxDiscardCommand(),
+		MakeTxCreateCommand(ctx),
+		MakeTxCommitCommand(ctx),
+		MakeTxDiscardCommand(ctx),
 	)
 
-	collection := MakeCollectionCommand()
+	collection := MakeCollectionCommand(ctx)
 	collection.AddCommand(
-		MakeCollectionGetCommand(),
-		MakeCollectionListDocIDsCommand(),
-		MakeCollectionDeleteCommand(),
-		MakeCollectionUpdateCommand(),
-		MakeCollectionCreateCommand(),
-		MakeCollectionDescribeCommand(),
-		MakeCollectionPatchCommand(),
-		MakeCollectionSetActiveCommand(),
+		MakeCollectionGetCommand(ctx),
+		MakeCollectionListDocIDsCommand(ctx),
+		MakeCollectionDeleteCommand(ctx),
+		MakeCollectionUpdateCommand(ctx),
+		MakeCollectionCreateCommand(ctx),
+		MakeCollectionDescribeCommand(ctx),
+		MakeCollectionPatchCommand(ctx),
+		MakeCollectionSetActiveCommand(ctx),
 	)
 
-	block := MakeBlockCommand()
+	block := MakeBlockCommand(ctx)
 	block.AddCommand(
-		MakeBlockVerifySignatureCommand(),
+		MakeBlockVerifySignatureCommand(ctx),
 	)
 
-	client := MakeClientCommand()
+	client := MakeClientCommand(ctx)
 	client.AddCommand(
-		MakePurgeCommand(),
-		MakeDumpCommand(),
-		MakeRequestCommand(),
-		MakeNodeIdentityCommand(),
+		MakePurgeCommand(ctx),
+		MakeDumpCommand(ctx),
+		MakeRequestCommand(ctx),
+		MakeNodeIdentityCommand(ctx),
 		schema,
 		acp,
 		view,
@@ -181,27 +181,27 @@ func NewDefraCommand() *cobra.Command {
 		block,
 	)
 
-	keyring := MakeKeyringCommand()
+	keyring := MakeKeyringCommand(ctx)
 	keyring.AddCommand(
-		MakeKeyringGenerateCommand(),
-		MakeKeyringImportCommand(),
-		MakeKeyringExportCommand(),
-		MakeKeyringListCommand(),
+		MakeKeyringGenerateCommand(ctx),
+		MakeKeyringImportCommand(ctx),
+		MakeKeyringExportCommand(ctx),
+		MakeKeyringListCommand(ctx),
 	)
 
-	identity := MakeIdentityCommand()
+	identity := MakeIdentityCommand(ctx)
 	identity.AddCommand(
-		MakeIdentityNewCommand(),
+		MakeIdentityNewCommand(ctx),
 	)
 
-	root := MakeRootCommand()
+	root := MakeRootCommand(ctx)
 	root.AddCommand(
 		client,
 		keyring,
 		identity,
-		MakeStartCommand(),
+		MakeStartCommand(ctx),
 		MakeServerDumpCmd(),
-		MakeVersionCommand(),
+		MakeVersionCommand(ctx),
 	)
 
 	return root

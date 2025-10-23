@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PConnectCommand() *cobra.Command {
+func MakeP2PConnectCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "connect <addresses...>",
 		Short: "Connect to one or more peers",

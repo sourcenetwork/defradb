@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionGetCommand() *cobra.Command {
+func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
 	var showDeleted bool
 	var cmd = &cobra.Command{
 		Use:   "get [-i --identity] [--show-deleted] <docID> ",

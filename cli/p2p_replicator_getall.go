@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorGetAllCommand() *cobra.Command {
+func MakeP2PReplicatorGetAllCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all replicators",

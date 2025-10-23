@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeNodeACPDisableCommand() *cobra.Command {
+func MakeNodeACPDisableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "disable [-i --identity]",
 		Short: "Disable the node access control",

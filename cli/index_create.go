@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeIndexCreateCommand() *cobra.Command {
+func MakeIndexCreateCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var fieldsArg []string

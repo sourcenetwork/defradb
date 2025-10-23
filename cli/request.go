@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -26,7 +27,7 @@ const (
 	SUB_RESULTS_HEADER = "------ Subscription Results ------\n"
 )
 
-func MakeRequestCommand() *cobra.Command {
+func MakeRequestCommand(ctx context.Context) *cobra.Command {
 	var filePath string
 	var operationName string
 	var variablesJSON string

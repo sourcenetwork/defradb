@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeKeyringCommand() *cobra.Command {
+func MakeKeyringCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "keyring",
 		Short: "Manage DefraDB private keys",

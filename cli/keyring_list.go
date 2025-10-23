@@ -11,11 +11,13 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
 // MakeKeyringListCommand creates a new command to list all keys in the keyring.
-func MakeKeyringListCommand() *cobra.Command {
+func MakeKeyringListCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "list",
 		Short: "List all keys in the keyring",

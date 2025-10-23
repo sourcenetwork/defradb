@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentGetAllCommand() *cobra.Command {
+func MakeP2PDocumentGetAllCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all P2P documents",

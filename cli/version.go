@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/version"
 )
 
-func MakeVersionCommand() *cobra.Command {
+func MakeVersionCommand(ctx context.Context) *cobra.Command {
 	var format string
 	var full bool
 	var cmd = &cobra.Command{

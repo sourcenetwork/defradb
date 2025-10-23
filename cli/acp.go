@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeACPCommand() *cobra.Command {
+func MakeACPCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "acp",
 		Short: "Interact with the access control system(s) of a DefraDB node",

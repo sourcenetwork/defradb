@@ -11,12 +11,13 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionRemoveCommand() *cobra.Command {
+func MakeP2PCollectionRemoveCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "remove [collectionNames]",
 		Short: "Remove P2P collections",

@@ -11,12 +11,13 @@
 package cli
 
 import (
+	"context"
 	"encoding/hex"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeKeyringImportCommand() *cobra.Command {
+func MakeKeyringImportCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "import <name> <private-key-hex>",
 		Short: "Import a private key",

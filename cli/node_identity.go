@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeIdentityCommand() *cobra.Command {
+func MakeNodeIdentityCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "node-identity",
 		Short: "Get the public information about the node's identity",

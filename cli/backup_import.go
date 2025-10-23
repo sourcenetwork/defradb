@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeBackupImportCommand() *cobra.Command {
+func MakeBackupImportCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "import <input_path>",
 		Short: "Import a JSON data file to the database",

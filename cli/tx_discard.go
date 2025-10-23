@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeTxDiscardCommand() *cobra.Command {
+func MakeTxDiscardCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "discard [id]",
 		Short: "Discard a DefraDB transaction.",

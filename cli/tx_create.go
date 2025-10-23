@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeTxCreateCommand() *cobra.Command {
+func MakeTxCreateCommand(ctx context.Context) *cobra.Command {
 	var concurrent bool
 	var readOnly bool
 	var cmd = &cobra.Command{

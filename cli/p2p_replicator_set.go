@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorSetCommand() *cobra.Command {
+func MakeP2PReplicatorSetCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
 		Use:   "set [-c, --collection] <addresses...>",

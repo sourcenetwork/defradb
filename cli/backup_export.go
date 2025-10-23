@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ import (
 
 const jsonFileType = "json"
 
-func MakeBackupExportCommand() *cobra.Command {
+func MakeBackupExportCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var pretty bool
 	var format string

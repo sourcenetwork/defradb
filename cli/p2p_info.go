@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PInfoCommand() *cobra.Command {
+func MakeP2PInfoCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "info",
 		Short: "Get peer info from a DefraDB node",

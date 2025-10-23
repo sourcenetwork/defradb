@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
-func MakeBlockVerifySignatureCommand() *cobra.Command {
+func MakeBlockVerifySignatureCommand(ctx context.Context) *cobra.Command {
 	var typeStr string
 	var cmd = &cobra.Command{
 		Args:  cobra.ExactArgs(2),

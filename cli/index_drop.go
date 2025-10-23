@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeIndexDropCommand() *cobra.Command {
+func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{

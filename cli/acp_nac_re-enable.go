@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeNodeACPReEnableCommand() *cobra.Command {
+func MakeNodeACPReEnableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "re-enable [-i --identity]",
 		Short: "Re-enable the node access control",

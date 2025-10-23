@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeBlockCommand() *cobra.Command {
+func MakeBlockCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "block",
 		Short: "Manage blocks of a running DefraDB instance",

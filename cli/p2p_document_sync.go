@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentSyncCommand() *cobra.Command {
+func MakeP2PDocumentSyncCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "sync [collection-name] [docID...]",
 		Short: "Synchronize specific documents from the network",

@@ -11,12 +11,13 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentRemoveCommand() *cobra.Command {
+func MakeP2PDocumentRemoveCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "remove [docIDs]",
 		Short: "Remove P2P documents",

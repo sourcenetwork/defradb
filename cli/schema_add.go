@@ -11,13 +11,14 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaAddCommand() *cobra.Command {
+func MakeSchemaAddCommand(ctx context.Context) *cobra.Command {
 	var schemaFiles []string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",

@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/immutable"
@@ -18,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionDescribeCommand() *cobra.Command {
+func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 	var name string
 	var collectionID string
 	var versionID string
