@@ -227,6 +227,23 @@ func newExampleRegistry() *exampleRegistry {
 	}
 }
 
+// EmbedCLIExample will embed the given CLI usage example into the provided cobra command `Example` field.
+// Most notably, it will also register the example with a `exampleRegistry` if it exists in the provided
+// context. This enables the `exampleRegistry` to expose the examples in a programatic way that can be
+// accessed by the test suite.
+//
+// This means we can maintain correctness between our CLI examples, and docs, while also programatically
+// validating the examples, so they can't drift from the implementation.
+//
+// It *must* be called *after* the `cmd` object has been defined. Beyond that, it doesn't matter if
+// its before or after the flag definitions. It is reccomended to immedietly follow the command definition
+// for clarity/consistency.
+//
+// You may use any "name", such as a short title or even a somewhat longer description. It is used for
+// uniqueness and for error reporting if an example fails. The actual name used on the registry is
+// combined with the cmd.Short (if it exists).
+//
+// Check out `cli/cli_test.go:TestCLIExamples()` for the test consuming side of the example registry.
 func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string) {
 	exampleString := cliExampleToString(name, usage)
 	if cmd.Example != "" {
@@ -234,7 +251,11 @@ func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string
 	}
 	cmd.Example += exampleString
 
-	exampleName := cmd.Short + "/" + name
+	cmdName := cmd.Short
+	if cmdName == "" {
+		cmdName = cmd.Name()
+	}
+	exampleName := cmdName + "/" + name
 	registerCLIExample(ctx, exampleName, usage)
 }
 

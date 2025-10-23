@@ -22,6 +22,4 @@ func TestCLIExamples(t *testing.T) {
 			require.NoError(t, err, "%s: `%s`", name, usage)
 		})
 	}
-
-	// t.Fail()
 }
