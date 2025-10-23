@@ -15,10 +15,22 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_AdminRelation_CanIndexDrop(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
+				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
+				// We have to fix the c-binding identity passing issue to support c-client.
+				// state.CClientType,
+			},
+		),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
