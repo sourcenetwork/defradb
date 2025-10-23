@@ -233,7 +233,8 @@ func newExampleRegistry() *exampleRegistry {
 // accessed by the test suite.
 //
 // This means we can maintain correctness between our CLI examples, and docs, while also programatically
-// validating the examples, so they can't drift from the implementation.
+// validating the examples, so they can't drift from the implementation. Note, this is *only* validating
+// the commands, flags, and arguments. Its not actually running the full command execution.
 //
 // It *must* be called *after* the `cmd` object has been defined. Beyond that, it doesn't matter if
 // its before or after the flag definitions. It is reccomended to immedietly follow the command definition

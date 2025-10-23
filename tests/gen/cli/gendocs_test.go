@@ -27,7 +27,8 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 	defra, close := startTestNode(t)
 	defer close()
 
-	defra.db.AddSchema(context.Background(), `
+	ctx := context.Background()
+	defra.db.AddSchema(ctx, `
 	type User { 
 		name: String 
 		devices: [Device]
@@ -37,7 +38,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 		owner: User
 	}`)
 
-	genDocsCmd := MakeGenDocCommand()
+	genDocsCmd := MakeGenDocCommand(ctx)
 	outputBuf := bytes.NewBufferString("")
 	genDocsCmd.SetOut(outputBuf)
 
@@ -66,12 +67,13 @@ func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
 	defra, close := startTestNode(t)
 	defer close()
 
-	defra.db.AddSchema(context.Background(), `
+	ctx := context.Background()
+	defra.db.AddSchema(ctx, `
         type User { 
             name: String 
         }`)
 
-	genDocsCmd := MakeGenDocCommand()
+	genDocsCmd := MakeGenDocCommand(ctx)
 	genDocsCmd.SetArgs([]string{
 		"--demand", `{"User": invalid}`,
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
@@ -85,12 +87,13 @@ func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
 	defra, close := startTestNode(t)
 	defer close()
 
-	defra.db.AddSchema(context.Background(), `
+	ctx := context.Background()
+	defra.db.AddSchema(ctx, `
         type User { 
             name: String 
         }`)
 
-	genDocsCmd := MakeGenDocCommand()
+	genDocsCmd := MakeGenDocCommand(ctx)
 	genDocsCmd.SetArgs([]string{
 		"--demand", `{"Unknown": 3}`,
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
