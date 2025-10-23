@@ -20,9 +20,9 @@ func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{
-		Use:   "drop -c --collection <collection> -n --name <name>",
-		Short: "Drop a collection's secondary index",
-		Long:  `Drop a collection's secondary index.`,
+		Use:       "drop -c --collection <collection> -n --name <name>",
+		Short:     "Drop a collection's secondary index",
+		Long:      `Drop a collection's secondary index.`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)

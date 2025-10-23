@@ -20,9 +20,9 @@ func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var fieldArg string
 	var cmd = &cobra.Command{
-		Use:   "delete -c --collection <collection> --field <field>",
-		Short: "Delete an encrypted index from a collection's field",
-		Long:  `Delete an encrypted index from a collection's field.`,
+		Use:       "delete -c --collection <collection> --field <field>",
+		Short:     "Delete an encrypted index from a collection's field",
+		Long:      `Delete an encrypted index from a collection's field.`,
 		ValidArgs: []string{"collection", "field"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
