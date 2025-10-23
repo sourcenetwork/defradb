@@ -276,6 +276,19 @@ func (db *DB) patchCollection(
 			return err
 		}
 
+		if len(col.Indexes) > 0 {
+			collection, err := db.newCollection(col)
+			if err != nil {
+				return err
+			}
+			for _, colIndex := range collection.indexes {
+				err = collection.indexExistingDocs(ctx, colIndex)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		if ok {
 			if existingCol.IsMaterialized && !col.IsMaterialized {
 				// If the collection is being de-materialized - delete any cached values.
