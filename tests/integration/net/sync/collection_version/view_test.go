@@ -107,7 +107,7 @@ func TestColSync_WithView(t *testing.T) {
 									},
 								},
 							},
-							Transform: immutable.Some("bafyreiga4mdru4o5dniqufau7gbf7yswurwduyyt5veyelzt4tvhe5jflu"),
+							Transform: immutable.Some("bafyreieqlg5ubzscocd6toe6dyxuadh2us342wnsyitmqxszexh7vajqga"),
 						}),
 					},
 				},

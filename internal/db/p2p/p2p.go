@@ -278,7 +278,8 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid key: \"modules\" is not a field in type Block") ||
 			strings.Contains(err.Error(), "invalid key: \"lens\" is not a field in type Block") ||
-			strings.Contains(err.Error(), "invalid key: \"wasmBytes\" is not a field in type Block") {
+			strings.Contains(err.Error(), "invalid key: \"wasmBytes\" is not a field in type Block") ||
+			strings.Contains(err.Error(), "invalid key: \"chunks\" is not a field in type Block") {
 			// There are currently 3 kinds of Lens blocks that may be synced, these three error checks
 			// are for those blocks.  If the block is a Lens block, we can safely send it to the
 			// requesting peer.
