@@ -6,11 +6,15 @@ Import a JSON data file to the database
 
 Import a JSON data file to the database.
 
-Example: import data to the database:
-  defradb client import user_data.json
-
 ```
 defradb client backup import <input_path> [flags]
+```
+
+### Examples
+
+```
+Import data to the database:  
+  defradb client backup import user_data.json
 ```
 
 ### Options

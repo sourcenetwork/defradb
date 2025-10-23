@@ -6,13 +6,17 @@ Add new view
 
 Add new database view.
 
-Example: add from an argument string:
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'
-
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
 defradb client view add [query] [sdl] [transform] [flags]
+```
+
+### Examples
+
+```
+add from an argument string:  
+  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'
 ```
 
 ### Options

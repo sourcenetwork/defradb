@@ -12,10 +12,6 @@ A public identity contains:
 - A compressed 33-byte secp256k1 public key in HEX format.
 - A "did:key" generated from the public key.
 
-Example to get the identity of the node:
-  defradb client node-identity 
-
-
 
 ```
 defradb client node-identity [flags]

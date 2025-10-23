@@ -9,12 +9,16 @@ Verify the signature of a block by providing the type and public key of the iden
 Notes:
   - If 'type' is not provided, secp256k1 is assumed.
 
-Example to verify the signature of a block:
-  defradb client block verify-signature --type <type> <public-key> <cid> 
-
 
 ```
 defradb client block verify-signature [flags]
+```
+
+### Examples
+
+```
+verify the signature of a block:  
+  defradb client block verify-signature --type <type> <public-key> <cid>
 ```
 
 ### Options

@@ -7,15 +7,18 @@ Remove P2P documents
 Remove P2P documents from the followed pubsub topics.
 The removed documents will no longer be synchronized between nodes.
 
-Example: remove single document
-  defradb client p2p document remove bae123
-
-Example: remove multiple documents
-  defradb client p2p document remove bae123,bae456
-		
-
 ```
 defradb client p2p document remove [docIDs] [flags]
+```
+
+### Examples
+
+```
+remove single document:  
+  defradb client p2p document remove bae123
+
+remove multiple documents:  
+  defradb client p2p document remove bae123,bae456
 ```
 
 ### Options

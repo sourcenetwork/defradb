@@ -6,13 +6,16 @@ Delete replicator(s) and stop synchronization
 
 Delete replicator(s) and stop synchronization.
 A replicator synchronizes one or all collection(s) from this instance to another.
-		
-Example:		
-  defradb client p2p replicator delete -c Users 12D3...
-		
 
 ```
 defradb client p2p replicator delete [-c, --collection] <peerID> [flags]
+```
+
+### Examples
+
+```
+Delete replicator:  
+  defradb client p2p replicator delete -c Users 12D3...
 ```
 
 ### Options
