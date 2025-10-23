@@ -14,8 +14,10 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -206,4 +208,48 @@ func writeJSON(cmd *cobra.Command, out any) error {
 	enc := json.NewEncoder(cmd.OutOrStdout())
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
+}
+
+// WithExampleRegistry injects an ExampleRegitry into the context.
+// This is primarily only needed by the tests but needs to exist
+// in the main CLI package
+func WithExampleRegistry(ctx context.Context, registry *ExampleRegistry) context.Context {
+	return context.WithValue(ctx, exampleRegistryCtxKey{}, registry)
+}
+
+type ExampleRegistry struct {
+	examples map[string]string
+}
+
+func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string) {
+	exampleString := cliExampleToString(name, usage)
+	if cmd.Example != "" {
+		cmd.Example += "\n\n"
+	}
+	cmd.Example += exampleString
+
+	exampleName := cmd.Name() + "." + name
+	registerCLIExample(ctx, exampleName, usage)
+}
+
+type exampleRegistryCtxKey struct{}
+
+func cliExampleToString(name, usage string) string {
+	// this is intentionally formatted this way, including
+	// the 2 white spaces at the start/end of the lines
+	return fmt.Sprintf(`%s:  
+  %s`, name, usage)
+}
+
+func registerCLIExample(ctx context.Context, name, usage string) {
+	registry, ok := ctx.Value(exampleRegistryCtxKey{}).(*ExampleRegistry)
+	if !ok {
+		return
+	}
+
+	_, exists := registry.examples[name]
+	if exists {
+		panic("CLI example with the same name already exists: " + name)
+	}
+	registry.examples[name] = strings.ReplaceAll(usage, "\n", "")
 }
