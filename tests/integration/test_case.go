@@ -289,6 +289,8 @@ type CreateDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
 	// Specifies whether the document should be encrypted.
@@ -361,6 +363,8 @@ type DeleteDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document should be deleted.
@@ -394,6 +398,8 @@ type UpdateDoc struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document exists.
@@ -437,6 +443,8 @@ type UpdateWithFilter struct {
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document exists.
