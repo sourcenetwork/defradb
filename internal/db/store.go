@@ -98,6 +98,10 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err

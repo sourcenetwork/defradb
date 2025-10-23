@@ -477,6 +477,11 @@ type CreateIndex struct {
 	// If a value is not provided the index will be created in all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The collection for which this index should be created.
 	CollectionID int
 
@@ -507,6 +512,11 @@ type DropIndex struct {
 	// If a value is not provided the index will be deleted from all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The collection from which the index should be deleted.
 	CollectionID int
 
@@ -528,6 +538,11 @@ type GetIndexes struct {
 	//
 	// If a value is not provided the indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection for which this indexes should be retrieved.
 	CollectionID int
