@@ -90,6 +90,12 @@ const (
 	NodeNACRelationDeletePerm
 	NodeCollectionPatchPerm
 	NodeCollectionGetPerm
+	NodeDocumentReadPerm
+	NodeDocumentUpdatePerm
+	NodeDocumentDeletePerm
+	NodeIndexListPerm
+	NodeIndexCreatePerm
+	NodeIndexDropPerm
 	NodeSignatureVerifyPerm
 )
 
@@ -113,6 +119,12 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-relation-delete",
 	"collection-patch",
 	"collection-get",
+	"document-read",
+	"document-update",
+	"document-delete",
+	"index-list",
+	"index-create",
+	"index-drop",
 	"signature-verify",
 }
 
@@ -161,6 +173,18 @@ resources:
       collection-patch:
         expr: owner + admin
       collection-get:
+        expr: owner + admin
+      document-read:
+        expr: owner + admin
+      document-update:
+        expr: owner + admin
+      document-delete:
+        expr: owner + admin
+      index-list:
+        expr: owner + admin
+      index-create:
+        expr: owner + admin
+      index-drop:
         expr: owner + admin
       signature-verify:
         expr: owner + admin

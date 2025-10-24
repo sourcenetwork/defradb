@@ -1076,10 +1076,11 @@ func getIndexes(
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].GetIndexes(s.Ctx)
+				actualIndexes, err := collections[action.CollectionID].GetIndexes(ctx)
 				if err != nil {
 					return err
 				}
@@ -1717,10 +1718,11 @@ func createIndex(
 		}
 
 		indexDesc.Unique = action.Unique
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.CreateIndex(s.Ctx, indexDesc)
+				_, err := collection.CreateIndex(ctx, indexDesc)
 				return err
 			},
 		)
@@ -1744,10 +1746,11 @@ func dropIndex(
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
+		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DropIndex(s.Ctx, action.IndexName)
+				return collection.DropIndex(ctx, action.IndexName)
 			},
 		)
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
