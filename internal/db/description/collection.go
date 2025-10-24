@@ -367,7 +367,9 @@ func GetCollectionVersionIDs(
 
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	collectionIDs := []string{}
+	// Add the collection id as the first version here.
+	// It is not present in the history prefix.
+	collectionIDs := []string{collectionID}
 
 	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewCollectionVersionKey(collectionID, "").Bytes(),
