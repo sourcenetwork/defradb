@@ -9,15 +9,19 @@ Synchronize specific collection versions from the network.
 This command allows you to sync collection versions across the network.
 Older versions of a requested collection will also be synced.
 
-Example: sync single collection versions
-  defradb client p2p collection sync bafy123
-
-Example: sync multiple collection versions
-  defradb client p2p collection sync bafy123 bafy456
-  
 
 ```
 defradb client p2p collection sync [versionID...] [flags]
+```
+
+### Examples
+
+```
+sync single collection versions:  
+  defradb client p2p collection sync bafy123
+
+sync multiple collection versions:  
+  defradb client p2p collection sync bafy123 bafy456
 ```
 
 ### Options
