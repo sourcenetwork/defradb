@@ -464,7 +464,8 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 
 	sigDoc := sigMapping.NewDoc()
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)
-	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, sigBlock.Header.Identity)
+	// Converting to a string from bytes[] results in it being presented as hex instead of base64
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, string(sigBlock.Header.Identity))
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureValueFieldName, sigBlock.Value)
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
