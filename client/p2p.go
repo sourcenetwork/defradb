@@ -74,7 +74,7 @@ type P2P interface {
 
 	// SyncCollections syncs the given collection versions to the local node.
 	//
-	// It will not complete until a version is not found, so it is strongly recommended
+	// It will not complete until a version is found, so it is strongly recommended
 	// to set a timeout using `context.WithTimeout`.
 	SyncCollections(ctx context.Context, versionIDs ...string) error
 }
