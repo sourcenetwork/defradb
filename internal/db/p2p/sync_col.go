@@ -182,12 +182,12 @@ func (p *P2P) syncCollection(
 
 		var transform immutable.Option[string]
 		if linkBlock.Delta.CollectionDefinitionDelta.QueryTransform != nil {
-			err = p.lens.P2P.Value().SyncLens(ctx, *linkBlock.Delta.CollectionDefinitionDelta.QueryTransform)
+			err = p.lens.P2P.Value().SyncLens(ctx, linkBlock.Delta.CollectionDefinitionDelta.QueryTransform.String())
 			if err != nil {
 				return client.CollectionVersion{}, err
 			}
 
-			transform = immutable.Some(*linkBlock.Delta.CollectionDefinitionDelta.QueryTransform)
+			transform = immutable.Some(linkBlock.Delta.CollectionDefinitionDelta.QueryTransform.String())
 		}
 
 		query = immutable.Some(client.QuerySource{

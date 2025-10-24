@@ -15,6 +15,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/ipfs/go-cid"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -24,7 +27,7 @@ type CollectionDefinitionDelta struct {
 
 	Name           *string
 	QuerySelect    []byte
-	QueryTransform *string
+	QueryTransform *cidlink.Link
 }
 
 var _ Delta = (*CollectionDefinitionDelta)(nil)
@@ -35,7 +38,7 @@ func (d *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 		priority  		Int
 		name optional String
 		querySelect optional Bytes
-		queryTransform optional String
+		queryTransform optional Link
 	}`)
 }
 
@@ -99,20 +102,24 @@ func (c *CollectionDefinition) Delta(
 		}
 	}
 
-	var transformDelta *string
+	var transformDelta *cidlink.Link
 	if new.Query.HasValue() && new.Query.Value().Transform.HasValue() {
 		newLensID := new.Query.Value().Transform.Value()
+		lensCID, err := cid.Parse(newLensID)
+		if err != nil {
+			return &CollectionDefinitionDelta{}, false, err
+		}
+		link := cidlink.Link{Cid: lensCID}
 
 		if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
 			if new.Query.Value().Transform.Value() != old.Query.Value().Transform.Value() {
-				transformDelta = &newLensID
+				transformDelta = &link
 			}
 		} else {
-			transformDelta = &newLensID
+			transformDelta = &link
 		}
 	} else if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
-		newLensID := ""
-		transformDelta = &newLensID
+		transformDelta = &cidlink.Link{Cid: cid.Undef}
 	}
 
 	if name == nil && queryDelta == nil && transformDelta == nil {
