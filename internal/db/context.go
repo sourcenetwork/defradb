@@ -28,7 +28,6 @@ import (
 func InitContext(ctx context.Context, txn client.Txn) context.Context {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	ctx = id.InitCollectionShortIDCache(ctx)
-	ctx = id.InitVersionShortIDCache(ctx)
 	ctx = id.InitFieldShortIDCache(ctx)
 	ctx = description.InitCollectionCache(ctx)
 

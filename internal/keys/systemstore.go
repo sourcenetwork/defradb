@@ -21,7 +21,6 @@ const (
 	P2P_COLLECTION      = "/p2p/collection"
 	P2P_DOCUMENT        = "/p2p/document"
 	COLLECTION_SEQ      = "/seq/collection"
-	VERSION_SEQ         = "/seq/version"
 	INDEX_ID_SEQ        = "/seq/index"
 	FIELD_ID_SEQ        = "/seq/field"
 )

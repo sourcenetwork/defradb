@@ -108,8 +108,7 @@ func TestIndexDataStoreKey_PrefixEnd_Ordering(t *testing.T) {
 			name: "single field prefix",
 			prefixKey: IndexDataStoreKey{
 				CollectionShortID: 1,
-				VersionShortID:    2,
-				IndexID:           3,
+				IndexID:           2,
 				Fields: []IndexedField{
 					{Value: client.NewNormalInt(25), Descending: false},
 				},
@@ -117,8 +116,7 @@ func TestIndexDataStoreKey_PrefixEnd_Ordering(t *testing.T) {
 			testKeys: []IndexDataStoreKey{
 				{
 					CollectionShortID: 1,
-					VersionShortID:    2,
-					IndexID:           3,
+					IndexID:           2,
 					Fields: []IndexedField{
 						{Value: client.NewNormalInt(25), Descending: false},
 						{Value: client.NewNormalString("Alice"), Descending: false},
@@ -126,8 +124,7 @@ func TestIndexDataStoreKey_PrefixEnd_Ordering(t *testing.T) {
 				},
 				{
 					CollectionShortID: 1,
-					VersionShortID:    2,
-					IndexID:           3,
+					IndexID:           2,
 					Fields: []IndexedField{
 						{Value: client.NewNormalInt(25), Descending: false},
 						{Value: client.NewNormalString("Bob"), Descending: false},
@@ -135,8 +132,7 @@ func TestIndexDataStoreKey_PrefixEnd_Ordering(t *testing.T) {
 				},
 				{
 					CollectionShortID: 1,
-					VersionShortID:    2,
-					IndexID:           3,
+					IndexID:           2,
 					Fields: []IndexedField{
 						{Value: client.NewNormalInt(26), Descending: false},
 					},
@@ -152,17 +148,14 @@ func TestIndexDataStoreKey_PrefixEnd_Ordering(t *testing.T) {
 			testKeys: []IndexDataStoreKey{
 				{
 					CollectionShortID: 10,
-					VersionShortID:    1,
 					IndexID:           1,
 				},
 				{
 					CollectionShortID: 10,
-					VersionShortID:    2,
 					IndexID:           2,
 				},
 				{
 					CollectionShortID: 11,
-					VersionShortID:    1,
 					IndexID:           1,
 				},
 			},
@@ -197,11 +190,10 @@ func TestNewIndexDataStoreKey(t *testing.T) {
 		{Value: client.NewNormalInt(42), Descending: true},
 	}
 
-	key := NewIndexDataStoreKey(123, 456, 789, fields...)
+	key := NewIndexDataStoreKey(123, 456, fields)
 
 	assert.Equal(t, uint32(123), key.CollectionShortID)
-	assert.Equal(t, uint32(456), key.VersionShortID)
-	assert.Equal(t, uint32(789), key.IndexID)
+	assert.Equal(t, uint32(456), key.IndexID)
 	assert.Equal(t, 2, len(key.Fields))
 	assert.True(t, key.Fields[0].Value.Equal(client.NewNormalString("test")))
 	assert.False(t, key.Fields[0].Descending)
@@ -464,26 +456,17 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 			},
 		},
 		{
-			name: "collection and version",
+			name: "collection and index",
 			key: IndexDataStoreKey{
 				CollectionShortID: 123,
-				VersionShortID:    456,
-			},
-		},
-		{
-			name: "collection, version and index",
-			key: IndexDataStoreKey{
-				CollectionShortID: 123,
-				VersionShortID:    456,
-				IndexID:           789,
+				IndexID:           456,
 			},
 		},
 		{
 			name: "with single field",
 			key: IndexDataStoreKey{
 				CollectionShortID: 123,
-				VersionShortID:    456,
-				IndexID:           789,
+				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: client.NewNormalString("test"), Descending: false},
 				},
@@ -493,8 +476,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 			name: "with multiple fields",
 			key: IndexDataStoreKey{
 				CollectionShortID: 123,
-				VersionShortID:    456,
-				IndexID:           789,
+				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: client.NewNormalString("test"), Descending: false},
 					{Value: client.NewNormalInt(42), Descending: true},
@@ -505,8 +487,7 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 			name: "with nil value",
 			key: IndexDataStoreKey{
 				CollectionShortID: 123,
-				VersionShortID:    456,
-				IndexID:           789,
+				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: func() client.NormalValue {
 						v, _ := client.NewNormalNil(client.FieldKind_NILLABLE_STRING)
@@ -536,7 +517,6 @@ func TestIndexDataStoreKey_EncodeDecode(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.key.CollectionShortID, decoded.CollectionShortID)
-			assert.Equal(t, tt.key.VersionShortID, decoded.VersionShortID)
 			assert.Equal(t, tt.key.IndexID, decoded.IndexID)
 			assert.Equal(t, len(tt.key.Fields), len(decoded.Fields))
 
@@ -585,8 +565,7 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 			name: "valid with doc ID field",
 			data: EncodeIndexDataStoreKey(&IndexDataStoreKey{
 				CollectionShortID: 123,
-				VersionShortID:    456,
-				IndexID:           789,
+				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: client.NewNormalString("test"), Descending: false},
 					{Value: client.NewNormalString("docID"), Descending: false},
@@ -598,8 +577,7 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 			name: "too many fields",
 			data: EncodeIndexDataStoreKey(&IndexDataStoreKey{
 				CollectionShortID: 123,
-				VersionShortID:    456,
-				IndexID:           789,
+				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: client.NewNormalString("test"), Descending: false},
 					{Value: client.NewNormalString("docID"), Descending: false},
