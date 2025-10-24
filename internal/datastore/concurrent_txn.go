@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 )
 
 type concurrentTxn struct {
@@ -29,10 +30,15 @@ type concurrentTxn struct {
 }
 
 // newConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
-func NewConcurrentTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool) *BasicTxn {
+func NewConcurrentTxnFrom(
+	rootstore corekv.TxnStore,
+	id uint64,
+	readonly bool,
+	chunkSize immutable.Option[int],
+) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
-	multistore := NewMultistore(rootTxn)
+	multistore := NewMultistore(rootTxn, chunkSize)
 
 	return &BasicTxn{
 		Multistore: multistore,

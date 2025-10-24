@@ -95,6 +95,13 @@ func (w *Wrapper) SyncDocuments(
 	panic("not implemented")
 }
 
+func (w *Wrapper) SyncCollections(
+	ctx context.Context,
+	versionIDs ...string,
+) error {
+	panic("not implemented")
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }

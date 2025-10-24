@@ -16,7 +16,9 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/chunk"
 	"github.com/sourcenetwork/corekv/namespace"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -41,9 +43,9 @@ type Multistore struct {
 	system corekv.ReaderWriter
 }
 
-func NewMultistore(rootstore corekv.ReaderWriter) *Multistore {
+func NewMultistore(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) *Multistore {
 	return &Multistore{
-		block:  newBlockstore(namespace.Wrap(rootstore, []byte{blockStoreKey})),
+		block:  BlockstoreFrom(rootstore, chunkSize),
 		data:   namespace.Wrap(rootstore, []byte{dataStoreKey}),
 		enc:    newBlockstore(namespace.Wrap(rootstore, []byte{encStoreKey})),
 		head:   namespace.Wrap(rootstore, []byte{headStoreKey}),
@@ -85,6 +87,10 @@ func DatastoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return namespace.Wrap(rootstore, []byte{dataStoreKey})
 }
 
+// The key used to calculate keyLen is descriptive only, they are all the same length, and there
+// is nothing special about this one.
+var chunkKeyLen int = len([]byte("bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy"))
+
 func EncstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
 	return newBlockstore(namespace.Wrap(rootstore, []byte{encStoreKey}))
 }
@@ -93,22 +99,28 @@ func HeadstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return namespace.Wrap(rootstore, []byte{headStoreKey})
 }
 
-func BlockstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
-	return newBlockstore(namespace.Wrap(rootstore, []byte{blockStoreKey}))
+func BlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) Blockstore {
+	return blockstoreFrom(rootstore, chunkSize)
 }
 
-func P2PBlockstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
+func blockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) *bstore {
+	var store corekv.ReaderWriter = namespace.Wrap(rootstore, []byte{blockStoreKey})
+
+	if chunkSize.HasValue() {
+		store = chunk.NewSized(store, chunkSize.Value(), chunkKeyLen)
+	}
+
+	return newBlockstore(store)
+}
+
+func P2PBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) Blockstore {
 	return &p2pBlockStore{
-		bstore: newBlockstore(namespace.Wrap(rootstore, []byte{blockStoreKey})),
+		bstore: blockstoreFrom(rootstore, chunkSize),
 	}
 }
 
 func SystemstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return namespace.Wrap(rootstore, []byte{systemStoreKey})
-}
-
-func PeerstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
-	return namespace.Wrap(rootstore, []byte{peerStoreKey})
 }
 
 // HumanReadableKey converts a raw byte and representation of a key into a human redable format.

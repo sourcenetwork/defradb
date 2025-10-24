@@ -323,3 +323,8 @@ func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs
 	ctx = InitContext(ctx, txn)
 	return txn.db.SyncDocuments(ctx, collectionName, docIDs)
 }
+
+func (txn *Txn) SyncCollections(ctx context.Context, versionIDs ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SyncCollections(ctx, versionIDs...)
+}

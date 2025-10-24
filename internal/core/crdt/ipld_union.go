@@ -221,3 +221,8 @@ func (c CRDT) IsCollection() bool {
 func (c CRDT) IsField() bool {
 	return !c.IsComposite() && !c.IsCollection()
 }
+
+// IsDefinition returns true if the CRDT is a collection, or collection field, version CRDT.
+func (c CRDT) IsDefinition() bool {
+	return c.CollectionDefinitionDelta != nil || c.FieldDefinitionDelta != nil
+}

@@ -35,6 +35,14 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
+const (
+	// 1 MB, this matches the maximum badger-in-memory value size.
+	//
+	// Nearly at least, badger panics if this is set to it's max for reasons not yet
+	// looked into.  Going one byte smaller does not have this issue.
+	chunkSize = (1 << 20) - 1
+)
+
 var (
 	// interface check
 	_ Fetcher = (*VersionedFetcher)(nil)
@@ -159,6 +167,9 @@ func (vf *VersionedFetcher) Init(
 		// We can take the parent txn id here
 		txn.ID(),
 		false,
+		// Chunk by default, it is a pain to figure out if it is necessary or not here, so
+		// we chose to take the performance hit and chunk.
+		immutable.Some(chunkSize),
 	) // were going to discard and nuke this later
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index

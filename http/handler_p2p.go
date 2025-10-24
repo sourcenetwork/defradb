@@ -210,6 +210,40 @@ func (h *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (h *p2pHandler) SyncCollections(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var reqBody struct {
+		VersionIDs []string `json:"versionIDs"`
+		Timeout    string   `json:"timeout"`
+	}
+
+	if err := requestJSON(req, &reqBody); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	ctx := req.Context()
+	if reqBody.Timeout != "" {
+		timeout, err := time.ParseDuration(reqBody.Timeout)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	err := db.SyncCollections(ctx, reqBody.VersionIDs...)
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *p2pHandler) bindRoutes(router *Router) {
 	successResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/success",
@@ -394,6 +428,29 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncDocuments.Responses.Set("400", errorResponse)
 	syncDocuments.Responses.Set("500", errorResponse)
 
+	syncCollectionsRequestSchema := openapi3.NewObjectSchema().
+		WithProperty("versionIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
+		WithProperty("timeout", openapi3.NewStringSchema())
+
+	syncCollectionsRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(syncCollectionsRequestSchema))
+
+	syncCollectionsResponse := openapi3.NewResponse().
+		WithDescription("Document sync completed successfully")
+
+	syncCollections := openapi3.NewOperation()
+	syncCollections.Description = "Synchronize collection versions from the network"
+	syncCollections.OperationID = "peer_sync_collections"
+	syncCollections.Tags = []string{"p2p"}
+	syncCollections.RequestBody = &openapi3.RequestBodyRef{
+		Value: syncCollectionsRequest,
+	}
+	syncCollections.Responses = openapi3.NewResponses()
+	syncCollections.Responses.Set("200", &openapi3.ResponseRef{Value: syncCollectionsResponse})
+	syncCollections.Responses.Set("400", errorResponse)
+	syncCollections.Responses.Set("500", errorResponse)
+
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
 	router.AddRoute("/p2p/connect", http.MethodPost, connect, h.Connect)
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
@@ -402,6 +459,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollections)
+	router.AddRoute("/p2p/collections/sync", http.MethodPost, syncCollections, h.SyncCollections)
 	router.AddRoute("/p2p/documents", http.MethodGet, getPeerDocuments, h.GetAllP2PDocuments)
 	router.AddRoute("/p2p/documents", http.MethodPost, addPeerDocuments, h.AddP2PDocuments)
 	router.AddRoute("/p2p/documents", http.MethodDelete, removePeerDocuments, h.RemoveP2PDocuments)

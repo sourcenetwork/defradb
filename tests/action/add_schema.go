@@ -63,6 +63,11 @@ func (a *AddSchema) Execute() {
 		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		results, err := node.AddSchema(a.s.Ctx, schema)
 		resetStateContext(a.s)
+
+		for _, result := range results {
+			appendCollectionVersion(a.s, result.VersionID)
+		}
+
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

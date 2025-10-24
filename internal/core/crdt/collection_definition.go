@@ -13,8 +13,10 @@ package crdt
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 
-	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -25,7 +27,7 @@ type CollectionDefinitionDelta struct {
 
 	Name           *string
 	QuerySelect    []byte
-	QueryTransform *string
+	QueryTransform *cidlink.Link
 }
 
 var _ Delta = (*CollectionDefinitionDelta)(nil)
@@ -36,7 +38,7 @@ func (d *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 		priority  		Int
 		name optional String
 		querySelect optional Bytes
-		queryTransform optional String
+		queryTransform optional Link
 	}`)
 }
 
@@ -81,13 +83,13 @@ func (c *CollectionDefinition) Delta(
 
 	var queryDelta []byte
 	if new.Query.HasValue() {
-		newQuery, err := cbor.Marshal(new.Query.Value().Query)
+		newQuery, err := json.Marshal(new.Query.Value().Query)
 		if err != nil {
 			return &CollectionDefinitionDelta{}, false, err
 		}
 
 		if old.Query.HasValue() {
-			oldQuery, err := cbor.Marshal(old.Query.Value().Query)
+			oldQuery, err := json.Marshal(old.Query.Value().Query)
 			if err != nil {
 				return &CollectionDefinitionDelta{}, false, err
 			}
@@ -95,23 +97,29 @@ func (c *CollectionDefinition) Delta(
 			if !bytes.Equal(newQuery, oldQuery) {
 				queryDelta = newQuery
 			}
+		} else {
+			queryDelta = newQuery
 		}
 	}
 
-	var transformDelta *string
+	var transformDelta *cidlink.Link
 	if new.Query.HasValue() && new.Query.Value().Transform.HasValue() {
 		newLensID := new.Query.Value().Transform.Value()
+		lensCID, err := cid.Parse(newLensID)
+		if err != nil {
+			return &CollectionDefinitionDelta{}, false, err
+		}
+		link := cidlink.Link{Cid: lensCID}
 
 		if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
 			if new.Query.Value().Transform.Value() != old.Query.Value().Transform.Value() {
-				transformDelta = &newLensID
+				transformDelta = &link
 			}
 		} else {
-			transformDelta = &newLensID
+			transformDelta = &link
 		}
 	} else if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
-		newLensID := ""
-		transformDelta = &newLensID
+		transformDelta = &cidlink.Link{Cid: cid.Undef}
 	}
 
 	if name == nil && queryDelta == nil && transformDelta == nil {

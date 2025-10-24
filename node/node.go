@@ -92,15 +92,21 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
+	var chunkSize immutable.Option[int]
 	if isValueSizeLimited {
+		chunkSize = immutable.Some(defaultChunkSize)
+
 		n.options = append(n.options,
 			db.WithLensOpts(
 				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
 			),
 		)
+		n.options = append(n.options,
+			db.WithBlockStoreChunkSize(defaultChunkSize),
+		)
 	}
 
-	err = n.startP2P(ctx, rootstore)
+	err = n.startP2P(ctx, rootstore, chunkSize)
 	if err != nil {
 		return err
 	}

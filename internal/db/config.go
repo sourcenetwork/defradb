@@ -37,6 +37,7 @@ type dbOptions struct {
 	p2pBlockSyncTimeout time.Duration
 	LensRuntimeType     LensRuntimeType
 	LensOptions         []lens.Option
+	ChunkSize           immutable.Option[int]
 }
 
 func defaultDBOptions() *dbOptions {
@@ -113,6 +114,16 @@ func WithP2PBlockSyncTimeout(timeout time.Duration) Option {
 func WithLensOpts(opts ...lens.Option) Option {
 	return func(dbOpt *dbOptions) {
 		dbOpt.LensOptions = append(dbOpt.LensOptions, opts...)
+	}
+}
+
+// WithBlockstoreChunkSize will wrap the blockstore in a chunkstore with the given chunksize.
+//
+// This allows the store to hold values of indefinite size, even if the underlying
+// corekv store does not support it (such as badger in-memory store).
+func WithBlockStoreChunkSize(chunkSize int) Option {
+	return func(opts *dbOptions) {
+		opts.ChunkSize = immutable.Some(chunkSize)
 	}
 }
 

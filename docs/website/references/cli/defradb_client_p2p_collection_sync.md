@@ -1,16 +1,30 @@
-## defradb client p2p collection
+## defradb client p2p collection sync
 
-Configure the P2P collection system
+Synchronize specific collection versions from the network
 
 ### Synopsis
 
-Add, delete, or get the list of P2P collections.
-The selected collections synchronize their events on the pubsub network.
+Synchronize specific collection versions from the network.
+
+This command allows you to sync collection versions across the network.
+Older versions of a requested collection will also be synced.
+
+Example: sync single collection versions
+  defradb client p2p collection sync bafy123
+
+Example: sync multiple collection versions
+  defradb client p2p collection sync bafy123 bafy456
+  
+
+```
+defradb client p2p collection sync [versionID...] [flags]
+```
 
 ### Options
 
 ```
-  -h, --help   help for collection
+  -h, --help               help for sync
+      --timeout duration   Timeout for sync operations
 ```
 
 ### Options inherited from parent commands
@@ -37,9 +51,5 @@ The selected collections synchronize their events on the pubsub network.
 
 ### SEE ALSO
 
-* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client p2p collection add](defradb_client_p2p_collection_add.md)	 - Add P2P collections
-* [defradb client p2p collection getall](defradb_client_p2p_collection_getall.md)	 - Get all P2P collections
-* [defradb client p2p collection remove](defradb_client_p2p_collection_remove.md)	 - Remove P2P collections
-* [defradb client p2p collection sync](defradb_client_p2p_collection_sync.md)	 - Synchronize specific collection versions from the network
+* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 

@@ -207,6 +207,38 @@ func P2PdocumentSync(nodePtr C.uintptr_t, collection *C.char, docIDs *C.char, ti
 	return returnC(returnGoC(0, "", ""))
 }
 
+//export P2PcollectionSync
+func P2PcollectionSync(nodePtr C.uintptr_t, versionIDs *C.char, timeoutStr *C.char) C.Result {
+	ctx := context.Background()
+	versionArgs := splitCommaSeparatedString(C.GoString(versionIDs))
+	timeoutDuration := time.Duration(0)
+
+	timeout := C.GoString(timeoutStr)
+	if timeout != "" {
+		timeoutDurationParsed, err := time.ParseDuration(timeout)
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		timeoutDuration = timeoutDurationParsed
+	}
+
+	if timeoutDuration > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeoutDuration)
+		defer cancel()
+	}
+
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.SyncCollections(ctx, versionArgs...)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", ""))
+}
+
 //export P2Pconnect
 func P2Pconnect(nodePtr C.uintptr_t, peerAddresses *C.char) C.Result {
 	ctx := context.Background()

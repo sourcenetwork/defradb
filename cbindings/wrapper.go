@@ -50,6 +50,7 @@ extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections);
 extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections);
 extern Result P2PdocumentGetAll(uintptr_t nodePtr);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr);
+extern Result P2PcollectionSync(uintptr_t nodePtr, char* versionIDs, char* timeoutStr);
 extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
@@ -255,6 +256,26 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cCollectionName))
 
 	res := ConvertAndFreeCResult(C.P2PdocumentSync(C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
+	versions := C.CString(strings.Join(versionIDs, ","))
+	defer C.free(unsafe.Pointer(versions))
+
+	deadline, hasDeadline := ctx.Deadline()
+	timerStr := ""
+	if hasDeadline {
+		timerStr = time.Until(deadline).String()
+	}
+	cTimerStr := C.CString(timerStr)
+	defer C.free(unsafe.Pointer(cTimerStr))
+
+	res := ConvertAndFreeCResult(C.P2PcollectionSync(C.uintptr_t(w.handle), versions, cTimerStr))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

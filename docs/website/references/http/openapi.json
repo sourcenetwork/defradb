@@ -2068,6 +2068,50 @@
                 ]
             }
         },
+        "/p2p/collections/sync": {
+            "post": {
+                "description": "Synchronize collection versions from the network",
+                "operationId": "peer_sync_collections",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "timeout": {
+                                        "type": "string"
+                                    },
+                                    "versionIDs": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document sync completed successfully"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
         "/p2p/connect": {
             "post": {
                 "operationId": "connect",
