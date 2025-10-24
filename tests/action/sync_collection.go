@@ -42,7 +42,7 @@ func (a *SyncCollection) Execute() {
 		versionIDs[i] = replacedVersionIDs[originalID]
 	}
 
-	ctx, cancel := context.WithTimeout(a.s.Ctx, time.Second)
+	ctx, cancel := context.WithTimeout(a.s.Ctx, 5*time.Second)
 	defer cancel()
 
 	node := a.s.Nodes[a.NodeID]
