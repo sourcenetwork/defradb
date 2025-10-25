@@ -17,6 +17,11 @@ on:
         description: 'New tag name'
         required: true
 
+# Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   packages: write
