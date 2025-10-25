@@ -24,6 +24,7 @@ on:
       - develop
 
 # Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
+
 concurrency:
   group: ${{ github.workflow }}-\
     ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
