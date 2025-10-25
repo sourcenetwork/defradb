@@ -1,4 +1,4 @@
-# Copyright 2024 Democratized Data Foundation
+# Copyright 2025 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -25,7 +25,8 @@ on:
 
 # Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-\
+    ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -33,7 +34,7 @@ jobs:
     name: Check data format changes job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     steps:
       - name: Enable RunsOn action

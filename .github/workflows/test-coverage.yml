@@ -1,4 +1,4 @@
-# Copyright 2024 Democratized Data Foundation
+# Copyright 2025 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -25,7 +25,8 @@ on:
 
 # Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-\
+    ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 # Default environment configuration settings.
@@ -70,7 +71,7 @@ jobs:
         mutation-type: [gql, collection-named, collection-save]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
@@ -155,7 +156,7 @@ jobs:
         document-acp-type: [source-hub]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
@@ -208,7 +209,7 @@ jobs:
         lens-type: [wazero, wasmer]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
@@ -237,7 +238,7 @@ jobs:
     name: Test view job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_VIEW_TYPE: materialized
@@ -266,7 +267,7 @@ jobs:
     name: Test encryption job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_BADGER_ENCRYPTION: true
@@ -294,7 +295,7 @@ jobs:
     name: Test telemetry job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       GOFLAGS: -tags=telemetry
@@ -322,7 +323,7 @@ jobs:
     name: Test JS job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       CGO_ENABLED: 0
