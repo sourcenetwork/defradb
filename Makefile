@@ -65,7 +65,7 @@ ifdef BUILD_TAGS
 BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
-TEST_FLAGS=-race -shuffle=on -timeout 10m
+TEST_FLAGS=-race -shuffle=on -timeout 2m
 
 JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
