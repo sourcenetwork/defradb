@@ -156,8 +156,14 @@ jobs:
 
   docker-build-push:
     name: Build and push Docker image
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
         with:

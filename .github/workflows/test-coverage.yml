@@ -65,7 +65,8 @@ jobs:
         database-type: [file, memory]
         mutation-type: [gql, collection-named, collection-save]
 
-    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
@@ -79,9 +80,11 @@ jobs:
       DEFRA_VECTOR_EMBEDDING: true
 
     steps:
-      - uses: runs-on/action@v2
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -104,7 +107,7 @@ jobs:
             _${{ matrix.client-type }}\
             _${{ matrix.database-type }}\
             _${{ matrix.mutation-type }}\
-          "
+            "
           coverage-path: coverage.txt
 
 
@@ -147,7 +150,8 @@ jobs:
         client-type: [go, http, cli, c]
         document-acp-type: [source-hub]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     env:
       DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
@@ -157,6 +161,11 @@ jobs:
       DEFRA_CLIENT_C: ${{ matrix.client-type == 'c' }}
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -181,7 +190,7 @@ jobs:
           coverage-artifact-name: "coverage_document_acp\
             _${{ matrix.document-acp-type }}\
             _${{ matrix.client-type }}\
-          "
+            "
           coverage-path: coverage.txt
 
 
@@ -194,12 +203,18 @@ jobs:
       matrix:
         lens-type: [wazero, wasmer]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     env:
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -217,12 +232,18 @@ jobs:
   test-view:
     name: Test view job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     env:
       DEFRA_VIEW_TYPE: materialized
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -240,12 +261,18 @@ jobs:
   test-encryption:
     name: Test encryption job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     env:
       DEFRA_BADGER_ENCRYPTION: true
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -262,12 +289,18 @@ jobs:
   test-telemetry:
     name: Test telemetry job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     env:
       GOFLAGS: -tags=telemetry
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -284,12 +317,18 @@ jobs:
   test-js:
     name: Test JS job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=m7*+c7*/extras=s3-cache
 
     env:
       CGO_ENABLED: 0
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
