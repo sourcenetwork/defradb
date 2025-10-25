@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -36,6 +36,11 @@ type SubscribeToCollection struct {
 	// them to this node.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
 	//
 	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
@@ -53,6 +58,11 @@ type SubscribeToCollection struct {
 type UnsubscribeToCollection struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
 	//
@@ -72,8 +82,19 @@ type GetAllP2PCollections struct {
 	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
 	ExpectedCollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // subscribeToCollection sets up a collection subscription on the given node/collection.
@@ -83,7 +104,7 @@ func subscribeToCollection(
 	s *state.State,
 	action SubscribeToCollection,
 ) {
-	n := s.Nodes[action.NodeID]
+	node := s.Nodes[action.NodeID]
 
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
@@ -96,7 +117,8 @@ func subscribeToCollection(
 		collectionNames = append(collectionNames, col.Name())
 	}
 
-	err := n.AddP2PCollections(s.Ctx, collectionNames...)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	err := node.AddP2PCollections(ctx, collectionNames...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -117,7 +139,7 @@ func unsubscribeToCollection(
 	s *state.State,
 	action UnsubscribeToCollection,
 ) {
-	n := s.Nodes[action.NodeID]
+	node := s.Nodes[action.NodeID]
 
 	collectionNames := []string{}
 	for _, collectionIndex := range action.CollectionIDs {
@@ -130,7 +152,8 @@ func unsubscribeToCollection(
 		collectionNames = append(collectionNames, col.Name())
 	}
 
-	err := n.RemoveP2PCollections(s.Ctx, collectionNames...)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	err := node.RemoveP2PCollections(ctx, collectionNames...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
@@ -158,9 +181,14 @@ func getAllP2PCollections(
 		expectedCollections = append(expectedCollections, col.Name())
 	}
 
-	n := s.Nodes[action.NodeID]
-	cols, err := n.GetAllP2PCollections(s.Ctx)
-	require.NoError(s.T, err)
+	node := s.Nodes[action.NodeID]
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	cols, err := node.GetAllP2PCollections(ctx)
 
-	assert.Equal(s.T, expectedCollections, cols)
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		assert.Equal(s.T, expectedCollections, cols)
+	}
 }

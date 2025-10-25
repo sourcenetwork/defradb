@@ -928,7 +928,7 @@ func refreshCollections(
 		nodeID := nodeIDs[index]
 		// Inject node's identity into the context while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
-		nodeIdentity := NodeIdentity(s.GetCurrentNodeID())
+		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
 		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})

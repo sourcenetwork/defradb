@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -30,13 +31,28 @@ type ConnectPeers struct {
 	//
 	// Is completely interchangeable with TargetNodeID and which way round
 	// these properties are specified is purely cosmetic.
+	//
+	// Note: The request will use identity (if specified) of the Source Node.
 	SourceNodeID int
 
 	// TargetNodeID is the node ID (index) of the second node to connect.
 	//
 	// Is completely interchangeable with SourceNodeID and which way round
 	// these properties are specified is purely cosmetic.
+	//
+	// Note: The request will use identity (if specified) of the Source Node.
 	TargetNodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
@@ -76,8 +92,10 @@ func connectPeers(
 		corelog.Any("Source", sourceAddresses),
 		corelog.Any("Target", targetAddresses))
 
-	err = sourceNode.Connect(s.Ctx, targetAddresses)
-	require.NoError(s.T, err)
+	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.Connect(ctx, targetAddresses)
+	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
 
 	s.Nodes[cfg.SourceNodeID].P2P.Connections[cfg.TargetNodeID] = struct{}{}
 	s.Nodes[cfg.TargetNodeID].P2P.Connections[cfg.SourceNodeID] = struct{}{}
@@ -90,21 +108,27 @@ func connectPeers(
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
 func reconnectPeers(s *state.State) {
-	for i, n := range s.Nodes {
-		for j := range n.P2P.Connections {
-			sourceNode := s.Nodes[i]
-			targetNode := s.Nodes[j]
+	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		// Inject every source node's identity into the context while refreshing so the
+		// [Connect] call doesn't fail due to lack of authorization(s) if NAC is enabled.
+		nodeIdentity := NodeIdentity(nodeID)
+		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
+		for targetIndex := range node.P2P.Connections {
+			sourceNode := s.Nodes[index]
+			targetNode := s.Nodes[targetIndex]
 
 			sourceAddresses, err := sourceNode.PeerInfo()
 			require.NoError(s.T, err)
 			targetAddresses, err := targetNode.PeerInfo()
 			require.NoError(s.T, err)
 
-			log.InfoContext(s.Ctx, "Connect peers",
+			log.InfoContext(ctx, "Connect peers",
 				corelog.Any("Source", sourceAddresses),
 				corelog.Any("Target", targetAddresses))
 
-			err = sourceNode.Connect(s.Ctx, targetAddresses)
+			err = sourceNode.Connect(ctx, targetAddresses)
 			require.NoError(s.T, err)
 		}
 	}

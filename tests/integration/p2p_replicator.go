@@ -12,8 +12,10 @@ package tests
 
 import (
 	"github.com/multiformats/go-multiaddr"
-	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // ConfigureReplicator configures a directional replicator relationship between
@@ -25,10 +27,19 @@ import (
 // be synced back to the source node.
 type ConfigureReplicator struct {
 	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
+	//
+	// Note: The request will use identity (if specified) of the Source Node.
 	SourceNodeID int
 
 	// TargetNodeID is the node ID (index) of the node to which data should be replicated.
+	//
+	// Note: The request will use identity (if specified) of the Source Node.
 	TargetNodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// Any error expected from the action. Optional.
 	//
@@ -40,20 +51,48 @@ type ConfigureReplicator struct {
 // DeleteReplicator deletes a directional replicator relationship between two nodes.
 type DeleteReplicator struct {
 	// SourceNodeID is the node ID (index) of the node from which the replicator should be deleted.
+	//
+	// Note: The request will use identity (if specified) of the Source Node.
 	SourceNodeID int
 
 	// TargetNodeID is the node ID (index) of the node to which the replicator should be deleted.
+	//
+	// Note: The request will use identity (if specified) of the Source Node.
 	TargetNodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
-// GetAllReplicators gets the configured replicators for the given node and compares them against the
+// ListReplicators gets the configured replicators for the given node and compares them against the
 // expected results.
-type GetAllReplicators struct {
-	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+// TODO: Test ListReplicators with and without NAC.
+// https://github.com/sourcenetwork/defradb/issues/4109
+type ListReplicators struct {
+	// NodeID is the node ID (index) of the node in which to get the replicators for.
 	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
 	ExpectedTargetNodeIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // configureReplicator configures a replicator relationship between two existing, started, nodes.
@@ -70,7 +109,9 @@ func configureReplicator(
 
 	targetAddresses, err := targetNode.PeerInfo()
 	require.NoError(s.T, err)
-	err = sourceNode.SetReplicator(s.Ctx, targetAddresses)
+
+	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.SetReplicator(ctx, targetAddresses)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -90,11 +131,19 @@ func deleteReplicator(
 	targetAddresses, err := targetNode.PeerInfo()
 	require.NoError(s.T, err)
 	require.NotZero(s.T, len(targetAddresses))
+
 	maddr, err := multiaddr.NewMultiaddr(targetAddresses[0])
 	require.NoError(s.T, err)
 	id, err := maddr.ValueForProtocol(multiaddr.P_P2P)
 	require.NoError(s.T, err)
-	err = sourceNode.DeleteReplicator(s.Ctx, id)
-	require.NoError(s.T, err)
-	waitForReplicatorDeleteEvent(s, cfg)
+
+	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.DeleteReplicator(ctx, id)
+
+	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
+
+	if err == nil {
+		waitForReplicatorDeleteEvent(s, cfg)
+	}
 }

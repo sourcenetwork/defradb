@@ -13,9 +13,10 @@ package tests
 import (
 	"time"
 
-	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 const (
@@ -36,6 +37,11 @@ type SubscribeToDocument struct {
 	// them to this node.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// DocIDs are the docIDs (indexes) of the documents to subscribe to.
 	//
 	// A [NonExistentDocID] may be provided to test non-existent  docIDs.
@@ -53,6 +59,11 @@ type SubscribeToDocument struct {
 type UnsubscribeToDocument struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// DocIDs are the docIDs (indexes) of the documents to unsubscribe from.
 	//
@@ -72,8 +83,19 @@ type GetAllP2PDocuments struct {
 	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// ExpectedDocIDs are the docIDs (indexes) of the documents expected.
 	ExpectedDocIDs []state.ColDocIndex
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 // subscribeToDocument sets up a collection subscription on the given node/collection.
@@ -83,7 +105,7 @@ func subscribeToDocument(
 	s *state.State,
 	action SubscribeToDocument,
 ) {
-	n := s.Nodes[action.NodeID]
+	node := s.Nodes[action.NodeID]
 
 	docIDs := []string{}
 	for _, colDocIndex := range action.DocIDs {
@@ -96,7 +118,8 @@ func subscribeToDocument(
 		docIDs = append(docIDs, docID.String())
 	}
 
-	err := n.AddP2PDocuments(s.Ctx, docIDs...)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	err := node.AddP2PDocuments(ctx, docIDs...)
 	if err == nil {
 		waitForSubscribeToDocumentEvent(s, action)
 	}
@@ -117,7 +140,7 @@ func unsubscribeToDocument(
 	s *state.State,
 	action UnsubscribeToDocument,
 ) {
-	n := s.Nodes[action.NodeID]
+	node := s.Nodes[action.NodeID]
 
 	docIDs := []string{}
 	for _, colDocIndex := range action.DocIDs {
@@ -130,7 +153,8 @@ func unsubscribeToDocument(
 		docIDs = append(docIDs, docID.String())
 	}
 
-	err := n.RemoveP2PDocuments(s.Ctx, docIDs...)
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	err := node.RemoveP2PDocuments(ctx, docIDs...)
 	if err == nil {
 		waitForUnsubscribeToDocumentEvent(s, action)
 	}
@@ -158,9 +182,14 @@ func getAllP2PDocuments(
 		expectedDocuments = append(expectedDocuments, docID.String())
 	}
 
-	n := s.Nodes[action.NodeID]
-	cols, err := n.GetAllP2PDocuments(s.Ctx)
-	require.NoError(s.T, err)
+	node := s.Nodes[action.NodeID]
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	cols, err := node.GetAllP2PDocuments(ctx)
 
-	assert.Equal(s.T, expectedDocuments, cols)
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		assert.Equal(s.T, expectedDocuments, cols)
+	}
 }
