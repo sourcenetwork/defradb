@@ -54,7 +54,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreialhfulxmzcbgrqkuw76icaxb25yplnse2qb5vhufbiyuge3ifvuu",
+					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -101,7 +101,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 
 func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
 	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
-	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+	const newSchemaVersion = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -191,7 +191,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 
 func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
 	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
-	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+	const newSchemaVersion = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -284,7 +284,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 
 func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLatestVersion(t *testing.T) {
 	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
-	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+	const newSchemaVersion = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -377,7 +377,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 
 func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexDocsOnActiveVersion(t *testing.T) {
 	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
-	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+	const newSchemaVersion = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
 
 	test := testUtils.TestCase{
 		Actions: []any{

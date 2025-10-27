@@ -48,7 +48,7 @@ func TestSchemaMigrationQueryIncrementField(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreialhfulxmzcbgrqkuw76icaxb25yplnse2qb5vhufbiyuge3ifvuu",
+					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -111,7 +111,7 @@ func TestSchemaMigrationQueryIncrementFieldWithNegativeValue(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreialhfulxmzcbgrqkuw76icaxb25yplnse2qb5vhufbiyuge3ifvuu",
+					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -186,7 +186,7 @@ func TestSchemaMigrationQueryIncrementFieldMultipleDocs(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreialhfulxmzcbgrqkuw76icaxb25yplnse2qb5vhufbiyuge3ifvuu",
+					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -257,7 +257,7 @@ func TestSchemaMigrationQueryIncrementWithZeroValue(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreialhfulxmzcbgrqkuw76icaxb25yplnse2qb5vhufbiyuge3ifvuu",
+					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -320,7 +320,7 @@ func TestSchemaMigrationQueryIncrementCombinedWithSetDefault(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreiaoeeun5qqzzg7j56luojyiqmwcjpgkmbh4bsjfe7phelmel2hn6q",
+					DestinationSchemaVersionID: "bafyreifg372zhpyywhjlktbd3lhlnuwumvanrv3xp4at7c5pjfog43rq6y",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
