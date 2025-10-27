@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryIncrementField(t *testing.T) {
+func TestSchemaMigrationIncrement_WithPositiveValueMigration_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -84,7 +84,7 @@ func TestSchemaMigrationQueryIncrementField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryIncrementFieldWithNegativeValue(t *testing.T) {
+func TestSchemaMigrationIncrement_WithNegativeValueMigration_ShouldDecrement(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -147,7 +147,7 @@ func TestSchemaMigrationQueryIncrementFieldWithNegativeValue(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryIncrementFieldMultipleDocs(t *testing.T) {
+func TestSchemaMigrationIncrement_WithMultipleDocs_ShouldIncrementAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -230,7 +230,7 @@ func TestSchemaMigrationQueryIncrementFieldMultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryIncrementWithZeroValue(t *testing.T) {
+func TestSchemaMigrationIncrement_WithZeroValue_ShouldNotChange(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -293,7 +293,7 @@ func TestSchemaMigrationQueryIncrementWithZeroValue(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQueryIncrementCombinedWithSetDefault(t *testing.T) {
+func TestSchemaMigrationIncrement_WithCombinedSetDefault_ShouldApplyBoth(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
