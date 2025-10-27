@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestSchemaMigrationQueryWithIndexOnMigratedDocs(t *testing.T) {
+func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -99,94 +99,10 @@ func TestSchemaMigrationQueryWithIndexOnMigratedDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: after migration
-func TestSchemaMigrationQueryWithIndexCreatedBeforeMigration(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type Users {
-						username: String @index
-						score: Int
-					}
-				`,
-			},
-			// Create documents before migration
-			testUtils.CreateDoc{
-				Doc: `{
-					"username": "player1",
-					"score": 500
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"username": "player2",
-					"score": 750
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"username": "player3",
-					"score": 300
-				}`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }
-					]
-				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreigb4bsjwp5wp4pylyigecdqu3vvgqu7t7iwx754fvnma4jqrkdn4q",
-					DestinationSchemaVersionID: "bafyreigzrsd7x5h4eqxwvzbacgzlnhrwqw5yqfuf2sfxh6rrvjmsl4vlcu",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "score",
-									"value": 100,
-								},
-							},
-						},
-					},
-				},
-			},
-			testUtils.Request{
-				Request: `query @explain(type: execute) {
-					Users(filter: {username: {_eq: "player2"}}) {
-						username
-						score
-					}
-				}`,
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(1).WithIndexFetches(1),
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {username: {_eq: "player2"}}) {
-						username
-						score
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"username": "player2",
-							"score":    int64(850),
-						},
-					},
-				},
-			},
-		},
-	}
+func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
+	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
+	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
 
-	testUtils.ExecuteTestCase(t, test)
-}
-
-// TODO: temp tests, revisit
-func TestSchemaMigrationQueryWithIndexOnNonMigratedField2(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -196,6 +112,12 @@ func TestSchemaMigrationQueryWithIndexOnNonMigratedField2(t *testing.T) {
 						age: Int @index
 					}
 				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
@@ -211,7 +133,7 @@ func TestSchemaMigrationQueryWithIndexOnNonMigratedField2(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"name": "Bob",
+					"name": "Islam",
 					"age":  32,
 				},
 			},
@@ -224,8 +146,8 @@ func TestSchemaMigrationQueryWithIndexOnNonMigratedField2(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
-					DestinationSchemaVersionID: "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq",
+					SourceSchemaVersionID:      oldSchemaVersion,
+					DestinationSchemaVersionID: newSchemaVersion,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -255,7 +177,289 @@ func TestSchemaMigrationQueryWithIndexOnNonMigratedField2(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query @explain(type: execute) {
-					Users(filter: {age: {_eq: 35}}) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
+	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
+	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  25,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"age":  32,
+				},
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      oldSchemaVersion,
+					DestinationSchemaVersionID: newSchemaVersion,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.IncrementModulePath,
+								Arguments: map[string]any{
+									"field": "age",
+									"value": 5,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: oldSchemaVersion,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLatestVersion(t *testing.T) {
+	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
+	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int 
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  25,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"age":  32,
+				},
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      oldSchemaVersion,
+					DestinationSchemaVersionID: newSchemaVersion,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.IncrementModulePath,
+								Arguments: map[string]any{
+									"field": "age",
+									"value": 5,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateIndex{
+				FieldName: "age",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexDocsOnActiveVersion(t *testing.T) {
+	const oldSchemaVersion = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
+	const newSchemaVersion = "bafyreihqxgaliyhnybhzu6373x3rrfqj2n63ipykol3x2qdi6djvigftdq"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int 
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  25,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"age":  32,
+				},
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      oldSchemaVersion,
+					DestinationSchemaVersionID: newSchemaVersion,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.IncrementModulePath,
+								Arguments: map[string]any{
+									"field": "age",
+									"value": 5,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: oldSchemaVersion,
+			},
+			testUtils.CreateIndex{
+				FieldName: "age",
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
 						name
 					}
 				}`,

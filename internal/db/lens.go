@@ -99,5 +99,10 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		return "", err
 	}
 
+	err = db.reindexNewActiveVersion(ctx, dstCol)
+	if err != nil {
+		return "", err
+	}
+
 	return id.String(), nil
 }

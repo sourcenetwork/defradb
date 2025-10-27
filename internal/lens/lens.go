@@ -69,7 +69,7 @@ func new(
 	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink,
 ) Lens {
 	targetSource := enumerable.NewQueue[LensDoc]()
-	outputPipe := enumerable.Concat[LensDoc](targetSource)
+	outputPipe := enumerable.Concat(targetSource)
 
 	return &lens{
 		store:              store,
@@ -108,7 +108,7 @@ func (l *lens) Put(schemaVersionID schemaVersionID, value LensDoc) error {
 // are constructed as new marble types are discovered.
 //
 //   - Each version can have one or none migrations.
-//   - Each migration in the document's path to the target version is guaranteed to recieve the document
+//   - Each migration in the document's path to the target version is guaranteed to receive the document
 //     exactly once.
 //   - Schema history is assumed to be a single straight line with no branching, this will be fixed with
 //     https://github.com/sourcenetwork/defradb/issues/1598
@@ -137,7 +137,7 @@ func (l *lens) Next() (bool, error) {
 	} else {
 		historyLocation, ok := l.collectionHistory[doc.SchemaVersionID]
 		if !ok {
-			// We may recieve documents of unknown schema versions, they should
+			// We may receive documents of unknown schema versions, they should
 			// still be fed through the pipe system in order to preserve order.
 			err = l.unknownVersionPipe.Put(doc.Doc)
 			if err != nil {
@@ -160,7 +160,7 @@ func (l *lens) Next() (bool, error) {
 				}
 				// It is a source of the schemaVersion junction pipe, other schema versions
 				// may also join as sources to this junction pipe
-				junctionPipe = enumerable.Concat[LensDoc](versionInputPipe)
+				junctionPipe = enumerable.Concat(versionInputPipe)
 				l.lensPipesBySchemaVersionIDs[historyLocation.collection.VersionID] = junctionPipe
 			}
 
@@ -177,7 +177,7 @@ func (l *lens) Next() (bool, error) {
 			}
 
 			if historyLocation.next.HasValue() {
-				// Aquire a lens migration from the registery, using the junctionPipe as its source.
+				// Acquire a lens migration from the registry, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
 				pipeHead, err = l.store.Transform(
@@ -191,7 +191,7 @@ func (l *lens) Next() (bool, error) {
 
 				historyLocation = historyLocation.next.Value()
 			} else if historyLocation.previous.HasValue() {
-				// Aquire a lens migration from the registery, using the junctionPipe as its source.
+				// Acquire a lens migration from the registry, using the junctionPipe as its source.
 				// The new pipeHead will then be connected as a source to the next migration-stage on
 				// the next loop.
 				pipeHead, err = l.store.Inverse(
