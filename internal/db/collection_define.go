@@ -478,7 +478,10 @@ func (db *DB) setActiveCollectionVersion(
 		return err
 	}
 
+	// The optional collection is used to track if there was a switch to another version.
 	newActiveCol := immutable.None[client.CollectionVersion]()
+	prevActiveCol := immutable.None[client.CollectionVersion]()
+
 	for _, col := range colsWithRoot {
 		if col.VersionID == versionID {
 			if col.IsActive {
@@ -505,9 +508,13 @@ func (db *DB) setActiveCollectionVersion(
 		if err != nil {
 			return err
 		}
+
+		prevActiveCol = immutable.Some(col)
 	}
 
-	if newActiveCol.HasValue() {
+	if newActiveCol.HasValue() && prevActiveCol.HasValue() &&
+		hasMigrationBetweenVersions(newActiveCol.Value(), prevActiveCol.Value(), colsWithRoot) {
+		// we need to reindex the new active version because between 2 versions there is a migration
 		err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
 		if err != nil {
 			return err
@@ -516,4 +523,56 @@ func (db *DB) setActiveCollectionVersion(
 
 	// Load the schema into the clients (e.g. GQL)
 	return db.loadSchema(ctx)
+}
+
+func hasMigrationBetweenVersions(
+	activatedVersion, deactivatedVersion client.CollectionVersion,
+	colsWithRoot []client.CollectionVersion,
+) bool {
+	versionsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
+	for _, col := range colsWithRoot {
+		versionsByID[col.VersionID] = col
+	}
+
+	// We don't know which version is newer, so we need to check both directions
+	// Check from activatedVersion backwards toward deactivatedVersion
+	if hasMigrationInChain(activatedVersion, deactivatedVersion, versionsByID) {
+		return true
+	}
+
+	// Check from deactivatedVersion backwards toward activatedVersion
+	return hasMigrationInChain(deactivatedVersion, activatedVersion, versionsByID)
+}
+
+// hasMigrationInChain walks backwards from startVersion through PreviousVersion links
+// looking for a lens migration (Transform) until it reaches targetVersion.
+func hasMigrationInChain(
+	startVersion, targetVersion client.CollectionVersion,
+	versionsByID map[string]client.CollectionVersion,
+) bool {
+	current := startVersion
+
+	for {
+		if !current.PreviousVersion.HasValue() {
+			return false
+		}
+
+		prevSource := current.PreviousVersion.Value()
+
+		if prevSource.Transform.HasValue() {
+			return true
+		}
+
+		prevVersion, exists := versionsByID[prevSource.SourceCollectionID]
+		if !exists {
+			return false
+		}
+
+		if prevVersion.VersionID == targetVersion.VersionID {
+			// Reached the target, no migration found in the chain
+			return false
+		}
+
+		current = prevVersion
+	}
 }
