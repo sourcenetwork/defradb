@@ -100,11 +100,11 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 }
 
 const (
-	indexedSchemaV1 = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
-	indexedSchemaV2 = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
-	indexedSchemaV3 = "bafyreibz2wolrhx2vnrvyh7vg5rlehyekhnivthqom5zft5ku4mhpzi2fa"
-	indexedSchemaV4 = "bafyreigpp4pjidheelridixgeppcki44t33dugru5b4hqnicyue5jqtudq"
-	indexedSchemaV5 = "bafyreiclhvinnlruvathdewsz3inr55kh4koogikxds3akm23vzzv5vffa"
+	schemaV1 = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
+	schemaV2 = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
+	schemaV3 = "bafyreibz2wolrhx2vnrvyh7vg5rlehyekhnivthqom5zft5ku4mhpzi2fa"
+	schemaV4 = "bafyreigpp4pjidheelridixgeppcki44t33dugru5b4hqnicyue5jqtudq"
+	schemaV5 = "bafyreiclhvinnlruvathdewsz3inr55kh4koogikxds3akm23vzzv5vffa"
 )
 
 func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
@@ -151,8 +151,8 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      indexedSchemaV1,
-					DestinationSchemaVersionID: indexedSchemaV2,
+					SourceSchemaVersionID:      schemaV1,
+					DestinationSchemaVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -238,8 +238,8 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      indexedSchemaV1,
-					DestinationSchemaVersionID: indexedSchemaV2,
+					SourceSchemaVersionID:      schemaV1,
+					DestinationSchemaVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -254,7 +254,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 				},
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV1,
+				VersionID: schemaV1,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -328,8 +328,8 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      indexedSchemaV1,
-					DestinationSchemaVersionID: indexedSchemaV2,
+					SourceSchemaVersionID:      schemaV1,
+					DestinationSchemaVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -418,8 +418,8 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      indexedSchemaV1,
-					DestinationSchemaVersionID: indexedSchemaV2,
+					SourceSchemaVersionID:      schemaV1,
+					DestinationSchemaVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -434,7 +434,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 				},
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV1,
+				VersionID: schemaV1,
 			},
 			testUtils.CreateIndex{
 				FieldName: "age",
@@ -537,30 +537,31 @@ func setupDistantVersions() []any {
 // addMigrationBetweenV3AndV4 adds a lens migration between v3 and v4 that increments age by 5.
 func addMigrationBetweenV3AndV4() any {
 	return testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-			SourceSchemaVersionID:      indexedSchemaV3,
-			DestinationSchemaVersionID: indexedSchemaV4,
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "age",
-									"value": 5,
-								},
-							},
+		LensConfig: client.LensConfig{
+			SourceSchemaVersionID:      schemaV3,
+			DestinationSchemaVersionID: schemaV4,
+			Lens: model.Lens{
+				Lenses: []model.LensModule{
+					{
+						Path: lenses.IncrementModulePath,
+						Arguments: map[string]any{
+							"field": "age",
+							"value": 5,
 						},
 					},
 				},
+			},
+		},
 	}
 }
 
-func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldUseOldIndexValues(t *testing.T) {
+// We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
+func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV1,
+				VersionID: schemaV1,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -590,15 +591,16 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldUs
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldUseOldIndexValues(t *testing.T) {
+// We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
+func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV1,
+				VersionID: schemaV1,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV5,
+				VersionID: schemaV5,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -634,7 +636,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_Sh
 			setupDistantVersions(),
 			addMigrationBetweenV3AndV4(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV1,
+				VersionID: schemaV1,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -668,12 +670,12 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			setupDistantVersions(),
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
 			addMigrationBetweenV3AndV4(),
 			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV1,
-			},
-			testUtils.SetActiveCollectionVersion{
-				VersionID: indexedSchemaV5,
+				VersionID: schemaV5,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -685,6 +687,84 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_Sh
 					"Users": []map[string]any{
 						{
 							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			setupDistantVersions(),
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV5,
+			},
+			addMigrationBetweenV3AndV4(),
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							// TODO: This test should return "Fred" but reindexing is not correct here
+							// because of this bug https://github.com/sourcenetwork/defradb/issues/4119
+							// "name": "Fred",
+							"name": "John",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReindex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			setupDistantVersions(),
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			addMigrationBetweenV3AndV4(),
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
 						},
 					},
 				},
