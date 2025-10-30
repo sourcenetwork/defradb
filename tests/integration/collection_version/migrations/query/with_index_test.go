@@ -780,3 +780,92 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReind
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_ShouldReindex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  25,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"age":  32,
+				},
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      schemaV1,
+					DestinationSchemaVersionID: schemaV2,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.IncrementModulePath,
+								Arguments: map[string]any{
+									"field": "age",
+									"value": 5,
+								},
+							},
+						},
+					},
+				},
+			},
+			// Now patch to actually create v2 - this should trigger reindexing
+			// even though the patch itself doesn't touch indexes
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

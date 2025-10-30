@@ -239,6 +239,9 @@ func (db *DB) patchCollection(
 		}
 	}
 
+	// Track collections that were upgraded from placeholders and may need reindexing
+	var placeholderReplacers []client.CollectionVersion
+
 	for i := 0; i < len(newCollections); i++ {
 		placeholder := newCollections[i]
 		if placeholder.IsPlaceholder {
@@ -246,6 +249,10 @@ func (db *DB) patchCollection(
 			for j, col := range newCollections {
 				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
 					newCollections[j].PreviousVersion = placeholder.PreviousVersion
+					// Track this collection as it may have a migration that needs to be applied
+					if col.IsActive {
+						placeholderReplacers = append(placeholderReplacers, newCollections[j])
+					}
 					isFound = true
 					break
 				}
@@ -294,6 +301,16 @@ func (db *DB) patchCollection(
 				DestinationSchemaVersionID: col.VersionID,
 				Lens:                       migration.Value(),
 			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Reindex any collections that were upgraded from placeholders with migrations
+	for _, col := range placeholderReplacers {
+		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
+			err = db.reindexNewActiveVersion(ctx, col)
 			if err != nil {
 				return err
 			}
