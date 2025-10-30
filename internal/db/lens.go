@@ -99,10 +99,82 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		return "", err
 	}
 
-	err = db.reindexNewActiveVersion(ctx, dstCol)
+	shouldReindex, activeCol, err := db.shouldReindexAfterMigration(ctx, dstCol)
 	if err != nil {
 		return "", err
 	}
 
+	if shouldReindex {
+		err = db.reindexNewActiveVersion(ctx, activeCol)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	return id.String(), nil
+}
+
+// shouldReindexAfterMigration determines if reindexing is needed after adding a migration.
+// Reindexing is needed if:
+// 1. The destination collection is currently active, OR
+// 2. The destination collection is in the history chain of any currently active collection
+// Returns: (shouldReindex bool, activeCollection, error)
+func (db *DB) shouldReindexAfterMigration(
+	ctx context.Context,
+	dstCol client.CollectionVersion,
+) (bool, client.CollectionVersion, error) {
+	if dstCol.IsActive {
+		return true, dstCol, nil
+	}
+
+	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			// No active collection, no reindexing needed
+			return false, client.CollectionVersion{}, nil
+		}
+		return false, client.CollectionVersion{}, err
+	}
+
+	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, dstCol.CollectionID)
+	if err != nil {
+		return false, client.CollectionVersion{}, err
+	}
+
+	isInChain := isMigrationInActiveChain(dstCol, activeCol, colsWithRoot)
+	return isInChain, activeCol, nil
+}
+
+// isMigrationInActiveChain checks if dstCol (where migration was just added) is in the
+// history chain of the activeCol. This means the migration affects the active version.
+func isMigrationInActiveChain(
+	dstCol, activeCol client.CollectionVersion,
+	colsWithRoot []client.CollectionVersion,
+) bool {
+	versionsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
+	for _, col := range colsWithRoot {
+		versionsByID[col.VersionID] = col
+	}
+
+	current := activeCol
+
+	for {
+		if current.VersionID == dstCol.VersionID {
+			return true
+		}
+
+		if !current.PreviousVersion.HasValue() {
+			// Reached the end of the chain without finding dstCol
+			return false
+		}
+
+		prevSource := current.PreviousVersion.Value()
+		prevVersion, exists := versionsByID[prevSource.SourceCollectionID]
+		if !exists {
+			// Previous version not found in the chain
+			return false
+		}
+
+		current = prevVersion
+	}
 }

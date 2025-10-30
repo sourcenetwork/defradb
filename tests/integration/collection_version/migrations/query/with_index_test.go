@@ -725,10 +725,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							// TODO: This test should return "Fred" but reindexing is not correct here
-							// because of this bug https://github.com/sourcenetwork/defradb/issues/4119
-							// "name": "Fred",
-							"name": "John",
+							"name": "Fred",
 						},
 					},
 				},
@@ -747,6 +744,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// We don't have a way to test if reindexing really happened, but we can check if system behaves as expected.
 func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReindex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
