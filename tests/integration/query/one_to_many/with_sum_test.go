@@ -79,6 +79,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

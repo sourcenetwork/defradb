@@ -434,7 +434,7 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`{"Address":[{"_docID":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","_docIDNew":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":40,"name":"Bob"},{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]}`),
+		[]byte(`{"Address":[{"_docID":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","_docIDNew":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":40,"name":"Bob"},{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`),
 		0664,
 	)
 	require.NoError(t, err)
@@ -570,7 +570,7 @@ func TestBasicImport_WithJSONArray_ReturnError(t *testing.T) {
 
 	err = os.WriteFile(
 		filepath,
-		[]byte(`["Address":[{"_docID":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","_docIDNew":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":40,"name":"Bob"},{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","age":30,"name":"John"}]]`),
+		[]byte(`["Address":[{"_docID":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","_docIDNew":"bae-efd872f4-3fa4-5d0c-8a51-6339e099e9aa","city":"Toronto","street":"101 Maple St"}],"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":40,"name":"Bob"},{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]]`),
 		0664,
 	)
 	require.NoError(t, err)

@@ -25,7 +25,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -33,7 +33,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -41,7 +41,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-f62bb529-3508-529d-8098-f97f9b67824c"
+					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -79,6 +79,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -94,7 +95,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -102,14 +103,14 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -117,7 +118,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-f62bb529-3508-529d-8098-f97f9b67824c"
+					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -171,6 +172,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

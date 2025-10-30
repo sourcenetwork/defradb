@@ -68,7 +68,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+								"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -88,7 +88,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "bafyreie4vkuhynhehdka7bqs3zkzdwkklk2sfwocnn5awoehp25tl5vmza",
+										"collectionID":   "bafyreih7hbb4bi6nlnamq3aqqcqffwqkyawh6slhy7hilwnagorygkmpi4",
 										"collectionName": "AuthorContact",
 										"prefixes": []string{
 											"/4",
@@ -170,7 +170,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+								"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -200,7 +200,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "bafyreie4vkuhynhehdka7bqs3zkzdwkklk2sfwocnn5awoehp25tl5vmza",
+								"collectionID":   "bafyreih7hbb4bi6nlnamq3aqqcqffwqkyawh6slhy7hilwnagorygkmpi4",
 								"collectionName": "AuthorContact",
 								"prefixes": []string{
 									"/4",
@@ -219,7 +219,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "bafyreic5br7lhefizrowsog5cf5m27rhstf66puzdclvrfgqepgojh3or4",
+										"collectionID":   "bafyreiatnwrljteqnieatpmki2m2d5jjr33np4cumtbzzl2ywfs34yeg3i",
 										"collectionName": "ContactAddress",
 										"prefixes": []string{
 											"/5",

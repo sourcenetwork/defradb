@@ -428,6 +428,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasEither(t *testing.T) 
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

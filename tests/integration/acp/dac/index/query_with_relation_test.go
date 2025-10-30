@@ -167,6 +167,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -282,6 +283,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

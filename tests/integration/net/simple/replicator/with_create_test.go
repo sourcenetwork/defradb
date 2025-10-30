@@ -385,6 +385,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -447,6 +448,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

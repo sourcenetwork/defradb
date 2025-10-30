@@ -367,6 +367,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

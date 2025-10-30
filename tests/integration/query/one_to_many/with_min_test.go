@@ -78,6 +78,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

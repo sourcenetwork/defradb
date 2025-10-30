@@ -132,6 +132,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -258,6 +259,7 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -420,6 +422,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -582,6 +585,7 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

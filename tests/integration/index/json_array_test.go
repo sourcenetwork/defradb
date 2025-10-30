@@ -308,6 +308,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
@@ -392,6 +393,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),

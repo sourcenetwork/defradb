@@ -22,7 +22,7 @@ import (
 )
 
 func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
-	schemaVersion1ID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
 		Actions: []any{

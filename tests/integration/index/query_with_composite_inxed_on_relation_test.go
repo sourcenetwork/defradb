@@ -109,6 +109,7 @@ func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_Should
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

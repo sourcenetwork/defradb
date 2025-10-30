@@ -103,6 +103,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeed
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

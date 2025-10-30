@@ -67,7 +67,7 @@ func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+								"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -87,7 +87,7 @@ func TestDefaultExplainRequestWithAOneToManyJoin(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "bafyreiheklxptjrfaful2lx3rvn35urxgiroucfyusl63cylscjfyxp4p4",
+										"collectionID":   "bafyreiboye46wpmcj5zscmsgysiguun5goojvqpo2gtp7q6xzedg5osveu",
 										"collectionName": "Article",
 										"prefixes": []string{
 											"/1",

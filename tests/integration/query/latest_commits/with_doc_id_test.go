@@ -27,7 +27,7 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					_latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+					_latestCommits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 						cid
 						links {
 							cid
@@ -38,20 +38,21 @@ func TestQueryLatestCommitsWithDocID(t *testing.T) {
 				Results: map[string]any{
 					"_latestCommits": []map[string]any{
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+									"cid":  "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+									"cid":  "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 									"name": "name",
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -70,7 +71,7 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					_latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+					_latestCommits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 						cid
 						schemaVersionId
 					}
@@ -78,8 +79,8 @@ func TestQueryLatestCommitsWithDocIDWithSchemaVersionIDField(t *testing.T) {
 				Results: map[string]any{
 					"_latestCommits": []map[string]any{
 						{
-							"cid":             "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
-							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
+							"cid":             "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
+							"schemaVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
 				},
@@ -101,7 +102,7 @@ func TestQueryLatestCommits_WithDocIDAndAliased_Succeeds(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					history: _latestCommits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+					history: _latestCommits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 						cid
 						links {
 							cid
@@ -112,20 +113,21 @@ func TestQueryLatestCommits_WithDocIDAndAliased_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"history": []map[string]any{
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+									"cid":  "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 									"name": "age",
 								},
 								{
-									"cid":  "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+									"cid":  "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 									"name": "name",
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

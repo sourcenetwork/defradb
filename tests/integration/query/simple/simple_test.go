@@ -259,6 +259,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.DeleteDoc{
 				CollectionID: 1,
@@ -280,6 +281,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

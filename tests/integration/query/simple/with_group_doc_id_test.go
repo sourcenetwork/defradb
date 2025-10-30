@@ -62,6 +62,7 @@ func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

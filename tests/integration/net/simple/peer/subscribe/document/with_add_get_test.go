@@ -100,8 +100,8 @@ func TestP2PDocumentAddGetMultiple(t *testing.T) {
 			testUtils.GetAllP2PDocuments{
 				NodeID: 1,
 				ExpectedDocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
 					state.NewColDocIndex(0, 1),
+					state.NewColDocIndex(0, 0),
 				},
 			},
 		},

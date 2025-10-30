@@ -39,20 +39,21 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-9287a692-50a2-5724-98ae-c1a944e29ef1", "bae-0879efe9-8717-5e4c-a77f-c81a453dc952"]) {
+					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9", "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"]) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-0879efe9-8717-5e4c-a77f-c81a453dc952",
+							"_docID": "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd",
 						},
 						{
-							"_docID": "bae-9287a692-50a2-5724-98ae-c1a944e29ef1",
+							"_docID": "bae-390b4419-fe1c-506b-98bd-20847cdab2d9",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -107,6 +108,7 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -183,14 +185,14 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-9287a692-50a2-5724-98ae-c1a944e29ef1", "bae-0879efe9-8717-5e4c-a77f-c81a453dc952"]) {
+					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9", "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"]) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-9287a692-50a2-5724-98ae-c1a944e29ef1",
+							"_docID": "bae-390b4419-fe1c-506b-98bd-20847cdab2d9",
 						},
 					},
 				},

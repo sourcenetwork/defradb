@@ -47,8 +47,8 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 			testUtils.ConfigureMigration{
 				// Register the migration on both nodes.
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreibvat5vc4nxjbxlewe7y2gpskfugypzqbqwal2zwaa7bnuiedyuyy",
-					DestinationSchemaVersionID: "bafyreiafmkxnf34mdekbx22ooihw7zy2iauw4xqzxbpdxa54umf7vmd2qu",
+					SourceSchemaVersionID:      "bafyreiabmrtgxy5dgotuc53gfaamuqhlzugyeetzbuv7s3x6ufmlr5ylga",
+					DestinationSchemaVersionID: "bafyreidwvvr7kp5rqt7dbgzw55vuueovkjz6b2mlvz3rq2pxf22fqenzdm",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -111,6 +111,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				// Node 1 should yield results migrated down to schema version 1, then up to schema version 3.
@@ -135,6 +136,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

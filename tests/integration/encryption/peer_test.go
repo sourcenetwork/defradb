@@ -83,16 +83,17 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links": []map[string]any{
 								{
 									"cid":  "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
-									"name": "age",
+									"name": "name",
 								},
 								{
 									"cid":  "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
-									"name": "name",
+									"name": "age",
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -29,7 +29,7 @@ func TestMutationUpdate_WithId(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-348f8357-9ad0-5ab0-9bf6-2985d123370d
+				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1
@@ -43,7 +43,7 @@ func TestMutationUpdate_WithId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-					update_Users(docID: "bae-348f8357-9ad0-5ab0-9bf6-2985d123370d", input: {points: 59}) {
+					update_Users(docID: "bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202", input: {points: 59}) {
 						name
 						points
 					}
@@ -75,7 +75,7 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 				`,
 			},
 			testUtils.CreateDoc{
-				// bae-348f8357-9ad0-5ab0-9bf6-2985d123370d
+				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1

@@ -29,7 +29,7 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "not a field") {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", fieldName: "not a field") {
 							cid
 						}
 					}`,
@@ -56,7 +56,7 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "999999") {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", fieldName: "999999") {
 							cid
 						}
 					}`,
@@ -83,14 +83,14 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "age") {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", fieldName: "age") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 						},
 					},
 				},
@@ -114,14 +114,14 @@ func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", fieldName: "_C") {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", fieldName: "_C") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 						},
 					},
 				},

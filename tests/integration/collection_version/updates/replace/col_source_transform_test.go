@@ -29,8 +29,8 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 			// the test.  The ID is passed into the next PatchCollection action.
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreih7useaapqn4pf6k5rxb2oufmsjb3e7xnccmbjr2njva3bgpdwyzu",
-					DestinationSchemaVersionID: "bafyreiehn7n6uox2x4rjkiunezy2q3deom4keocn7riqpa5xa64c7gqx7u",
+					SourceSchemaVersionID:      "bafyreigbatez5rnojqa4ccfqsbguh4ckquxr76elgqij7ckftbxpwqniv4",
+					DestinationSchemaVersionID: "bafyreihiiez4vcgh4rys2zfs74macgwyybchutjslyw2oin747enuywn54",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

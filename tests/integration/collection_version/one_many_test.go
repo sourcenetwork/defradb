@@ -47,7 +47,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name:         "dogs",
-								Kind:         client.NewCollectionKind("bafyreig2a26vnof4pt7mnxjfi2eweca6stcpeahbh6jri76ukkff5udnva", true),
+								Kind:         client.NewCollectionKind("bafyreih2kr3b6xijzkyv7yvjsg32selni5qehaejehf5vig7hpynjnbl5q", true),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{
@@ -73,7 +73,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name:         "owner",
-								Kind:         client.NewCollectionKind("bafyreiezxal4wrjp2fn6x5pf3kecliun72ky5tvb4deql2j376bmdknuh4", false),
+								Kind:         client.NewCollectionKind("bafyreibhpgygzsmki22sql5ejzcojrrxbc5iuhpydhdzxul5w2znc7zrgu", false),
 								RelationName: immutable.Some("dog_user"),
 								IsPrimary:    true,
 							},

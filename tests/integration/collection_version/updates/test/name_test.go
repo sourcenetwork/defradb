@@ -30,7 +30,7 @@ func TestColVersionUpdateTestNameByVersionID(t *testing.T) {
 					[
 						{
 							"op": "test",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Name",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/Name",
 							"value": "Users"
 						}
 					]
@@ -55,12 +55,12 @@ func TestColVersionUpdateTestNameByVersionID_Fails(t *testing.T) {
 					[
 						{
 							"op": "test",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Name",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/Name",
 							"value": "Dogs"
 						}
 					]
 				`,
-				ExpectedError: "testing value /bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Name failed: test failed",
+				ExpectedError: "testing value /bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/Name failed: test failed",
 			},
 		},
 	}

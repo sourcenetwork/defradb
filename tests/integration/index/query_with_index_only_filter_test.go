@@ -695,8 +695,8 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "John"},
 						{"name": "Islam"},
+						{"name": "John"},
 					},
 				},
 			},

@@ -184,7 +184,7 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "name", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+						_commits (fieldName: "name", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
 							cid
 						}
 					}`,
@@ -211,7 +211,7 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "NOT_A_FIELD", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+						_commits (fieldName: "NOT_A_FIELD", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
 							cid
 						}
 					}`,

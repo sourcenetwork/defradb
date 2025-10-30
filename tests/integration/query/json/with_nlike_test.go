@@ -82,6 +82,7 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

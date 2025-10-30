@@ -35,7 +35,7 @@ func TestMutationDeletion_WithDeletedField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_User(docID: "bae-0879efe9-8717-5e4c-a77f-c81a453dc952") {
+						delete_User(docID: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd") {
 							_deleted
 							_docID
 						}
@@ -44,7 +44,7 @@ func TestMutationDeletion_WithDeletedField(t *testing.T) {
 					"delete_User": []map[string]any{
 						{
 							"_deleted": true,
-							"_docID":   "bae-0879efe9-8717-5e4c-a77f-c81a453dc952",
+							"_docID":   "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd",
 						},
 					},
 				},

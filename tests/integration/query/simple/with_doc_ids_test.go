@@ -133,7 +133,7 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-29b5683d-cf46-5de2-94c3-bcdb726432f4"]) {
+						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-0000ef46-9bf6-5a83-9bbf-da288687c830"]) {
 							Name
 							Age
 						}
@@ -150,6 +150,7 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

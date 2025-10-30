@@ -50,7 +50,7 @@ func TestQueryWithUniqueCompositeIndex_WithFilterOnIndexedRelation_ShouldFilter(
 				Request: `query {
 					User {
 						name
-						devices(filter: {owner_id: {_eq: "bae-0879efe9-8717-5e4c-a77f-c81a453dc952"}}) {
+						devices(filter: {owner_id: {_eq: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"}}) {
 							manufacturer
 						}
 					}

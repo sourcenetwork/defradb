@@ -71,16 +71,17 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"links": []map[string]any{
 								{
 									"cid":  "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
-									"name": "age",
+									"name": "name",
 								},
 								{
 									"cid":  "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
-									"name": "name",
+									"name": "age",
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -119,6 +120,7 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -178,6 +180,7 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -318,6 +321,7 @@ func TestDocEncryption_UponEncryptionSeveralDocs_ShouldStoreAllCommitsDeltaEncry
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

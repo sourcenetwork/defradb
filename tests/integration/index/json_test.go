@@ -76,6 +76,7 @@ func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						{"name": "John"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
@@ -740,6 +741,7 @@ func TestJSONIndex_WithEqFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
@@ -812,6 +814,7 @@ func TestJSONIndex_WithNeFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),

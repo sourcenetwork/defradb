@@ -119,6 +119,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

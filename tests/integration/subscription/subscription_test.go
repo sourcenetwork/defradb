@@ -306,8 +306,8 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"age":    int64(31),
-								"name":   "Addo",
+								"age":    int64(27),
+								"name":   "John",
 								"points": float64(55),
 							},
 						},
@@ -315,8 +315,8 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"age":    int64(27),
-								"name":   "John",
+								"age":    int64(31),
+								"name":   "Addo",
 								"points": float64(55),
 							},
 						},
@@ -332,10 +332,10 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"name": "Addo",
+							"name": "John",
 						},
 						{
-							"name": "John",
+							"name": "Addo",
 						},
 					},
 				},
@@ -351,7 +351,7 @@ func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testin
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					User(docID: "bae-63bbf04b-a388-5b8f-86e3-9327849f46c2") {
+					User(docID: "bae-a160ba13-dbf9-50da-a598-018bffa10569") {
 						name
 						age
 					}

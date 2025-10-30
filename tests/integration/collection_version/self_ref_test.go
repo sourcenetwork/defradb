@@ -485,7 +485,7 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 							},
 							{
 								Name:         "toleratedBy",
-								Kind:         client.NewCollectionKind("bafyreienyzedhnqtmvtn2nv2e2dl2vquxyiwc2c45faflmlg27yg4amqc4", false),
+								Kind:         client.NewCollectionKind("bafyreidwzjgomb4yvwmcaf2isbty4pjt3wu5heelxszwzp5msqfluxcosm", false),
 								RelationName: immutable.Some("tolerates"),
 							},
 							{
@@ -515,8 +515,8 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 						}),
 						// Dog and User share the same base ID, but with a different index suffixed on
 						// the end.  This base must be different to the Cat/Mouse base ID.
-						CollectionID:   "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
-						VersionID:      "bafyreifb5zdzhynbrczhatx4tywarypl2v6mmo6cub74wimmxcf3xv7y24",
+						CollectionID:   "bafyreieowx33bl3ohstvi47fzbapjfelznes7etf4gufktwcjfdcybwasi",
+						VersionID:      "bafyreieowx33bl3ohstvi47fzbapjfelznes7etf4gufktwcjfdcybwasi",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -554,13 +554,13 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 					{
 						Name: "Cat",
 						CollectionSet: immutable.Some(client.CollectionSetDescription{
-							CollectionSetID: "bafyreicksowygm76pakx5vjlljodjwwltdzayrwj6qie554j3ygweqwqn4",
+							CollectionSetID: "bafyreicz7y35n5vshwq33atlstpiriqlwqlcs6vou2s6izwmlmgjbu26zi",
 							RelativeID:      0,
 						}),
 						// Cat and Mouse share the same base ID, but with a different index suffixed on
 						// the end.  This base must be different to the Dog/User base ID.
-						CollectionID:   "bafyreienyzedhnqtmvtn2nv2e2dl2vquxyiwc2c45faflmlg27yg4amqc4",
-						VersionID:      "bafyreienyzedhnqtmvtn2nv2e2dl2vquxyiwc2c45faflmlg27yg4amqc4",
+						CollectionID:   "bafyreidwzjgomb4yvwmcaf2isbty4pjt3wu5heelxszwzp5msqfluxcosm",
+						VersionID:      "bafyreidwzjgomb4yvwmcaf2isbty4pjt3wu5heelxszwzp5msqfluxcosm",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -597,7 +597,7 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 								Name: "tolerates",
 								// This relationship reaches out of the Cat/Dog circle, and thus must be of type SchemaKind,
 								// specified with the full User ID (including the `-1` index suffixed).
-								Kind:         client.NewCollectionKind("bafyreibzwsd2nl3dq473lx3knf4g7yusnd5qktuxfg6kqcdnr3svrbjkb4", false),
+								Kind:         client.NewCollectionKind("bafyreidtucrm7u3cyj5qyrlvimyet3mptezoycw6fqeuy6rg7nsi5u2un4", false),
 								RelationName: immutable.Some("tolerates"),
 								IsPrimary:    true,
 							},
@@ -613,13 +613,13 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypes_SchemasHaveDifferentComplexSchema
 					{
 						Name: "Mouse",
 						CollectionSet: immutable.Some(client.CollectionSetDescription{
-							CollectionSetID: "bafyreicksowygm76pakx5vjlljodjwwltdzayrwj6qie554j3ygweqwqn4",
+							CollectionSetID: "bafyreicz7y35n5vshwq33atlstpiriqlwqlcs6vou2s6izwmlmgjbu26zi",
 							RelativeID:      1,
 						}),
 						// Cat and Mouse share the same base ID, but with a different index suffixed on
 						// the end.  This base must be different to the Dog/User base ID.
-						CollectionID:   "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
-						VersionID:      "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						CollectionID:   "bafyreibsop5phevv44lproydoa2l3cdfw5j4ru74ivgvm4tq4cojerv4xa",
+						VersionID:      "bafyreibsop5phevv44lproydoa2l3cdfw5j4ru74ivgvm4tq4cojerv4xa",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -809,8 +809,8 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHave
 							CollectionSetID: "bafyreia3etvw4bglyoyazyifh3bcbcanx5xvztgmpsvx4dprxnrg27syn4",
 							RelativeID:      0,
 						}),
-						CollectionID:   "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
-						VersionID:      "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
+						CollectionID:   "bafyreig3evelvkwlz7m3skb3vo3chiwf3navwnz4rcmuhxevq3j2hkjd6q",
+						VersionID:      "bafyreig3evelvkwlz7m3skb3vo3chiwf3navwnz4rcmuhxevq3j2hkjd6q",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -872,11 +872,11 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_SchemasAllHave
 					{
 						Name: "Mouse",
 						CollectionSet: immutable.Some(client.CollectionSetDescription{
-							CollectionSetID: "bafyreih6p2qt3p3kcehh34uao5y5safkhskdfbshlaje63er66gryj65uq",
+							CollectionSetID: "bafyreia3etvw4bglyoyazyifh3bcbcanx5xvztgmpsvx4dprxnrg27syn4",
 							RelativeID:      2,
 						}),
-						CollectionID:   "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
-						VersionID:      "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						CollectionID:   "bafyreibsop5phevv44lproydoa2l3cdfw5j4ru74ivgvm4tq4cojerv4xa",
+						VersionID:      "bafyreibsop5phevv44lproydoa2l3cdfw5j4ru74ivgvm4tq4cojerv4xa",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -1066,8 +1066,8 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_Schem
 							CollectionSetID: "bafyreidqk2lsb2v2ky2rz2k2tmqqs7btrhlktoscbsaez34qzo6azldk64",
 							RelativeID:      0,
 						}),
-						CollectionID:   "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
-						VersionID:      "bafyreig2bcrptryofxluqc4sfynbdao3jggtocgi3wmxav6ixb3xydqbxy",
+						CollectionID:   "bafyreig3evelvkwlz7m3skb3vo3chiwf3navwnz4rcmuhxevq3j2hkjd6q",
+						VersionID:      "bafyreig3evelvkwlz7m3skb3vo3chiwf3navwnz4rcmuhxevq3j2hkjd6q",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{
@@ -1118,11 +1118,11 @@ func TestSchemaSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcrossAll_Schem
 					{
 						Name: "Mouse",
 						CollectionSet: immutable.Some(client.CollectionSetDescription{
-							CollectionSetID: "bafyreidcymuojy4qpyjuzbjdjekn3jea4fu776zflycowgnbqo3wp2jrom",
+							CollectionSetID: "bafyreidqk2lsb2v2ky2rz2k2tmqqs7btrhlktoscbsaez34qzo6azldk64",
 							RelativeID:      2,
 						}),
-						CollectionID:   "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
-						VersionID:      "bafyreic5bld2kagpt7o7qc2olgxoovppry3xn4tbjnnwoeci532hax5vji",
+						CollectionID:   "bafyreibsop5phevv44lproydoa2l3cdfw5j4ru74ivgvm4tq4cojerv4xa",
+						VersionID:      "bafyreibsop5phevv44lproydoa2l3cdfw5j4ru74ivgvm4tq4cojerv4xa",
 						IsActive:       true,
 						IsMaterialized: true,
 						Fields: []client.CollectionFieldDescription{

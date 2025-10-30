@@ -152,6 +152,7 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -231,6 +232,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -318,6 +320,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -414,6 +417,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			// The target node currently won't receive the pre-connection updates from the source.
 			// We should look into adding a head exchange mechanic on connect.
@@ -440,6 +444,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

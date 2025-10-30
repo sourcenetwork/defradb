@@ -808,8 +808,8 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Keenan"},
 					{"name": "Addo"},
+					{"name": "Keenan"},
 				},
 			},
 			indexFetches: 2,
@@ -826,8 +826,8 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 			}`,
 			result: map[string]any{
 				"User": []map[string]any{
-					{"name": "Keenan"},
 					{"name": "Addo"},
+					{"name": "Keenan"},
 				},
 			},
 			indexFetches: 2,

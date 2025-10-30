@@ -29,7 +29,7 @@ func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7") {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 							cid
 							__typename
 						}
@@ -37,19 +37,20 @@ func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":        "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid":        "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 							"__typename": "Commit",
 						},
 						{
-							"cid":        "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+							"cid":        "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 							"__typename": "Commit",
 						},
 						{
-							"cid":        "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid":        "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"__typename": "Commit",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
