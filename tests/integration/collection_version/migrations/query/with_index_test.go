@@ -13,6 +13,7 @@ package query
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -841,6 +842,87 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 					]
 				`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  25,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"age":  32,
+				},
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "age",
+								"value": 5,
+							},
+						},
+					},
+				}),
 			},
 			testUtils.Request{
 				Request: `query {
