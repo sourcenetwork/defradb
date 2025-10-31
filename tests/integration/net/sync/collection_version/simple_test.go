@@ -39,7 +39,7 @@ func TestColSync_WithInitialColVersion(t *testing.T) {
 			},
 			&action.SyncCollection{
 				NodeID:     1,
-				VersionIDs: []string{"bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"},
+				VersionIDs: []string{"bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"},
 			},
 			testUtils.WaitForSync{},
 			testUtils.GetCollections{
