@@ -2434,7 +2434,6 @@ func assertRequestResultDoc(
 					return false
 				}
 			}
-
 		}
 		stack.pop()
 	}

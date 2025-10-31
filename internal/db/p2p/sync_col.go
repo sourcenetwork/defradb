@@ -152,7 +152,7 @@ func (p *P2P) syncCollection(
 		// above.
 		//
 		// https://github.com/sourcenetwork/defradb/issues/4087
-		kind := client.IntToFieldKind(uint8(*fieldDelta.ScalarKind))
+		kind := client.IntToFieldKind(*fieldDelta.ScalarKind)
 
 		field := client.CollectionFieldDescription{
 			Name: *fieldDelta.Name,

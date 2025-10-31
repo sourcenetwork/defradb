@@ -83,29 +83,29 @@ func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	require.Contains(t, fileMap, "User")
 	require.Contains(t, fileMap, "Address")
 
-	users := fileMap["User"].([]any)
+	users, _ := fileMap["User"].([]any)
 	require.Len(t, users, 2)
 
-	addresses := fileMap["Address"].([]any)
+	addresses, _ := fileMap["Address"].([]any)
 	require.Len(t, addresses, 1)
 
 	// Verify User documents contain expected data (order may vary)
 	userNames := make([]string, 2)
 	userAges := make([]float64, 2)
 	for i, u := range users {
-		user := u.(map[string]any)
+		user, _ := u.(map[string]any)
 		require.Contains(t, user, "_docID")
 		require.Contains(t, user, "_docIDNew")
 		require.Contains(t, user, "name")
 		require.Contains(t, user, "age")
-		userNames[i] = user["name"].(string)
-		userAges[i] = user["age"].(float64)
+		userNames[i], _ = user["name"].(string)
+		userAges[i], _ = user["age"].(float64)
 	}
 	require.ElementsMatch(t, []string{"John", "Bob"}, userNames)
 	require.ElementsMatch(t, []float64{30, 40}, userAges)
 
 	// Verify Address document
-	address := addresses[0].(map[string]any)
+	address, _ := addresses[0].(map[string]any)
 	require.Contains(t, address, "_docID")
 	require.Contains(t, address, "_docIDNew")
 	require.Equal(t, "Toronto", address["city"])
@@ -174,29 +174,29 @@ func TestBasicExport_WithPrettyFormatting_NoError(t *testing.T) {
 	require.Contains(t, fileMap, "User")
 	require.Contains(t, fileMap, "Address")
 
-	users := fileMap["User"].([]any)
+	users, _ := fileMap["User"].([]any)
 	require.Len(t, users, 2)
 
-	addresses := fileMap["Address"].([]any)
+	addresses, _ := fileMap["Address"].([]any)
 	require.Len(t, addresses, 1)
 
 	// Verify User documents contain expected data (order may vary)
 	userNames := make([]string, 2)
 	userAges := make([]float64, 2)
 	for i, u := range users {
-		user := u.(map[string]any)
+		user, _ := u.(map[string]any)
 		require.Contains(t, user, "_docID")
 		require.Contains(t, user, "_docIDNew")
 		require.Contains(t, user, "name")
 		require.Contains(t, user, "age")
-		userNames[i] = user["name"].(string)
-		userAges[i] = user["age"].(float64)
+		userNames[i], _ = user["name"].(string)
+		userAges[i], _ = user["age"].(float64)
 	}
 	require.ElementsMatch(t, []string{"John", "Bob"}, userNames)
 	require.ElementsMatch(t, []float64{30, 40}, userAges)
 
 	// Verify Address document
-	address := addresses[0].(map[string]any)
+	address, _ := addresses[0].(map[string]any)
 	require.Contains(t, address, "_docID")
 	require.Contains(t, address, "_docIDNew")
 	require.Equal(t, "Toronto", address["city"])
@@ -265,11 +265,11 @@ func TestBasicExport_WithSingleCollection_NoError(t *testing.T) {
 	require.Contains(t, fileMap, "Address")
 	require.NotContains(t, fileMap, "User") // Should only have Address collection
 
-	addresses := fileMap["Address"].([]any)
+	addresses, _ := fileMap["Address"].([]any)
 	require.Len(t, addresses, 1)
 
 	// Verify Address document
-	address := addresses[0].(map[string]any)
+	address, _ := addresses[0].(map[string]any)
 	require.Contains(t, address, "_docID")
 	require.Contains(t, address, "_docIDNew")
 	require.Equal(t, "Toronto", address["city"])
@@ -352,20 +352,20 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	require.Contains(t, fileMap, "User")
 	require.Contains(t, fileMap, "Book")
 
-	users := fileMap["User"].([]any)
+	users, _ := fileMap["User"].([]any)
 	require.Len(t, users, 2)
 
-	books := fileMap["Book"].([]any)
+	books, _ := fileMap["Book"].([]any)
 	require.Len(t, books, 2)
 
 	// Get the new docID for John after update
 	var johnNewDocID string
 	for _, u := range users {
-		user := u.(map[string]any)
+		user, _ := u.(map[string]any)
 		switch user["name"] {
 		case "John":
 			require.Equal(t, float64(31), user["age"])
-			johnNewDocID = user["_docIDNew"].(string)
+			johnNewDocID, _ = user["_docIDNew"].(string)
 		case "Bob":
 			require.Equal(t, float64(31), user["age"])
 		}
@@ -374,10 +374,10 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	// Verify both books reference the correct author
 	bookNames := make([]string, 2)
 	for i, b := range books {
-		book := b.(map[string]any)
+		book, _ := b.(map[string]any)
 		require.Contains(t, book, "author_id")
 		require.Equal(t, johnNewDocID, book["author_id"])
-		bookNames[i] = book["name"].(string)
+		bookNames[i], _ = book["name"].(string)
 	}
 	require.ElementsMatch(t, []string{"John and the sourcerers' stone", "Game of chains"}, bookNames)
 }
@@ -452,11 +452,11 @@ func TestBasicExport_EnsureFileOverwrite_NoError(t *testing.T) {
 	require.Contains(t, fileMap, "Address")
 	require.NotContains(t, fileMap, "User") // Should only have Address collection after overwrite
 
-	addresses := fileMap["Address"].([]any)
+	addresses, _ := fileMap["Address"].([]any)
 	require.Len(t, addresses, 1)
 
 	// Verify Address document
-	address := addresses[0].(map[string]any)
+	address, _ := addresses[0].(map[string]any)
 	require.Contains(t, address, "_docID")
 	require.Contains(t, address, "_docIDNew")
 	require.Equal(t, "Toronto", address["city"])
