@@ -653,6 +653,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

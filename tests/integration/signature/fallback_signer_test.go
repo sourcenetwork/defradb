@@ -56,7 +56,7 @@ func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T)
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreidazqqhrmdd6wnx33obcnd67vce33qbbmdbmzkofpfu77qach36sq",
+				Cid:            "bafyreiemskbirmphqngy3kivou4e4phcuiffcdql4mvqp3twmiipwt3pta",
 			},
 		},
 	}

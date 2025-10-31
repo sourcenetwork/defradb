@@ -62,7 +62,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -78,7 +78,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 			},
 		},
 	}
@@ -125,7 +125,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -141,7 +141,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "could not find",
 			},
 		},
