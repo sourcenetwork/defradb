@@ -13,9 +13,9 @@ package query
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
@@ -44,23 +44,17 @@ func TestSchemaMigrationIncrement_WithPositiveValueMigration_ShouldIncrement(t *
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 					]
 				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "points",
-									"value": 10,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "points",
+								"value": 10,
 							},
 						},
 					},
-				},
+				}),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -107,23 +101,17 @@ func TestSchemaMigrationIncrement_WithNegativeValueMigration_ShouldDecrement(t *
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 					]
 				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "points",
-									"value": -50,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "points",
+								"value": -50,
 							},
 						},
 					},
-				},
+				}),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -182,23 +170,17 @@ func TestSchemaMigrationIncrement_WithMultipleDocs_ShouldIncrementAll(t *testing
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 					]
 				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "points",
-									"value": 25,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "points",
+								"value": 25,
 							},
 						},
 					},
-				},
+				}),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -253,23 +235,17 @@ func TestSchemaMigrationIncrement_WithZeroValue_ShouldNotChange(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 					]
 				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "points",
-									"value": 0,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "points",
+								"value": 0,
 							},
 						},
 					},
-				},
+				}),
 			},
 			testUtils.Request{
 				Request: `query {
@@ -316,30 +292,24 @@ func TestSchemaMigrationIncrement_WithCombinedSetDefault_ShouldApplyBoth(t *test
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreifg372zhpyywhjlktbd3lhlnuwumvanrv3xp4at7c5pjfog43rq6y",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.IncrementModulePath,
-								Arguments: map[string]any{
-									"field": "points",
-									"value": 50,
-								},
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "points",
+								"value": 50,
 							},
-							{
-								Path: lenses.SetDefaultModulePath,
-								Arguments: map[string]any{
-									"dst":   "verified",
-									"value": true,
-								},
+						},
+						{
+							Path: lenses.SetDefaultModulePath,
+							Arguments: map[string]any{
+								"dst":   "verified",
+								"value": true,
 							},
 						},
 					},
-				},
+				}),
 			},
 			testUtils.Request{
 				Request: `query {
