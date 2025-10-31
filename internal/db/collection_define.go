@@ -586,7 +586,6 @@ func hasMigrationInChain(
 		}
 
 		if prevVersion.VersionID == targetVersion.VersionID {
-			// Reached the target, no migration found in the chain
 			return false
 		}
 
