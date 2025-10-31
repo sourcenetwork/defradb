@@ -2283,10 +2283,12 @@ func assertRequestResultDocs(
 	ordered bool,
 ) bool {
 	// compare results
-	require.Equal(s.T, len(expectedResults), len(actualResults), "number of results don't match for %s", stack)
-
 	if !ordered {
+		if len(expectedResults) != len(actualResults) {
+			return false
+		}
 		matchedExpectedDocs := make(map[int]struct{}, len(actualResults))
+	actualLoop:
 		for _, actualDoc := range actualResults {
 			found := false
 			for expectedDocIndex, expectedDoc := range expectedResults {
@@ -2301,6 +2303,7 @@ func assertRequestResultDocs(
 				if isEqual {
 					found = true
 					matchedExpectedDocs[expectedDocIndex] = struct{}{}
+					continue actualLoop
 				}
 			}
 			if !found {
@@ -2310,6 +2313,8 @@ func assertRequestResultDocs(
 
 		return true
 	}
+
+	require.Equal(s.T, len(expectedResults), len(actualResults), "number of results don't match for %s", stack)
 
 	for actualDocIndex, actualDoc := range actualResults {
 		stack.pushArray(actualDocIndex)
@@ -2397,7 +2402,12 @@ func assertRequestResultDoc(
 
 		case map[string]any:
 			actualMap, ok := actualValue.(map[string]any)
-			require.True(s.T, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			if ordered {
+				require.True(s.T, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			} else if !ok {
+				return false
+			}
+
 			ok = assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack, ordered)
 			if !ok && !ordered {
 				stack.pop()
