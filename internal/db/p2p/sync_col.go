@@ -141,7 +141,7 @@ func (p *P2P) syncCollection(
 				Array: false,
 			}
 		} else {
-			kind = client.IntToFieldKind(uint8(*fieldDelta.ScalarKind))
+			kind = client.IntToFieldKind(*fieldDelta.ScalarKind)
 		}
 
 		field := client.CollectionFieldDescription{
