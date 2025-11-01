@@ -8,9 +8,9 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build playground && !windows
+//go:build playground
 
-//go:generate ../tools/scripts/download_playground.sh
+//go:generate powershell -ExecutionPolicy Bypass -File ../tools/scripts/download_playground.ps1
 
 package playground
 
