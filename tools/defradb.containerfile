@@ -4,7 +4,7 @@
 
 # Stage: build
 # Several steps are involved to enable caching and because of the behavior of COPY regarding directories.
-FROM docker.io/golang:1.24 AS build
+FROM docker.io/golang:1.24-bookworm AS build
 WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
