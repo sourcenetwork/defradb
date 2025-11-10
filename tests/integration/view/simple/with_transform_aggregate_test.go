@@ -78,15 +78,8 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 				`,
 				Results: map[string]any{
 					"UserStdDev": []map[string]any{
-						// This is unwanted behaviour, we want a single, non-zero result
 						{
-							"stddev": float64(0),
-						},
-						{
-							"stddev": float64(0),
-						},
-						{
-							"stddev": float64(0),
+							"stddev": float64(3.265986323710904),
 						},
 					},
 				},
