@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use std::sync::RwLock;
 use std::error::Error;
 use serde::Deserialize;
+use serde_json::{Value, Map};
 use lens_sdk::StreamOption;
 use lens_sdk::error::LensError;
 
@@ -16,8 +16,8 @@ pub struct Parameters {
 static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
 
 fn try_transform(
-    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<HashMap<String, serde_json::Value>>>>,
-) -> Result<StreamOption<HashMap<String, serde_json::Value>>, Box<dyn Error>> {
+    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<Value>>>,
+) -> Result<StreamOption<Value>, Box<dyn Error>> {
     let params = PARAMETERS.read()?
         .clone()
         .ok_or(LensError::ParametersNotSetError)?;
@@ -58,10 +58,10 @@ fn try_transform(
     let variance = sum_dev / count;
     let std_dev = variance.sqrt();
 
-    let mut result = HashMap::<String, serde_json::Value>::new();
-    result.insert(params.dst, std_dev.into());
+    let mut result = Map::new();
+    result.insert(params.dst, Value::from(std_dev));
 
-    Ok(StreamOption::Some(result))
+    Ok(StreamOption::Some(Value::Object(result)))
 }
 
 #[cfg(test)]
@@ -78,20 +78,20 @@ mod tests {
         });
         drop(ptr);
 
-        let mut input_doc_1 = HashMap::<String, serde_json::Value>::new();
-        input_doc_1.insert(src_f.clone(), 10.into());
-        let mut input_doc_2 = HashMap::<String, serde_json::Value>::new();
-        input_doc_2.insert(src_f.clone(), 14.into());
+        let mut input_doc_1 = Map::new();
+        input_doc_1.insert(src_f.clone(), Value::Number(10));
+        let mut input_doc_2 = Map::new();
+        input_doc_2.insert(src_f.clone(), Value::Number(14));
 
         let input = [
             Ok(
                 Some(
-                    input_doc_1,
+                    Value::Object(input_doc_1),
                 ),
             ),
             Ok(
                 Some(
-                    input_doc_2,
+                    Value::Object(input_doc_2),
                 ),
             ),
         ];
@@ -100,12 +100,12 @@ mod tests {
 
         let result = try_transform(&mut it).unwrap();
 
-        let mut expected_result = HashMap::<String, serde_json::Value>::new();
-        expected_result.insert("DST".to_string(), 2f64.into());
+        let mut expected_result = Map::new();
+        expected_result.insert("DST".to_string(), Value::from(2f64));
 
         assert_eq!(
             result,
-            StreamOption::Some(expected_result.clone()),
+            StreamOption::Some(Value::Object(expected_result.clone())),
         );
 
         let result_2 = try_transform(&mut it).unwrap();
