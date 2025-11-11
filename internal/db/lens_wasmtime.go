@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !js && !android && !windows
+//go:build !js && !android
 
 package db
 
