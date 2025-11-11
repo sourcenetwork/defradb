@@ -26,12 +26,14 @@ char* relation, char* actor);
 extern Result ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
 char* relation, char* actor);
 extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
-extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid);
+extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid,
+CollectionOptions options);
 extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
 extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
 extern Result IdentityNew(char* keyType);
+extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
-extern Result IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result IndexList(uintptr_t nodePtr, CollectionOptions options);
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
@@ -293,6 +295,7 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 	cSchema := C.CString(schema)
 	defer C.free(unsafe.Pointer(cSchema))
 
@@ -315,6 +318,7 @@ func (w *CWrapper) AddDACPolicy(
 	policy string,
 ) (client.AddPolicyResult, error) {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 	cPolicy := C.CString(policy)
 	defer C.free(unsafe.Pointer(cPolicy))
 
@@ -348,6 +352,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	defer C.free(unsafe.Pointer(cDocID))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPAddDACActorRelationship(
@@ -387,6 +392,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	defer C.free(unsafe.Pointer(cDocID))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDeleteDACActorRelationship(
@@ -411,6 +417,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 
 func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPGetNACStatus(callHandle, cIdentity))
@@ -423,6 +430,7 @@ func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, er
 
 func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPReEnableNAC(callHandle, cIdentity))
@@ -435,6 +443,7 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
 
 func (w *CWrapper) DisableNAC(ctx context.Context) error {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDisableNAC(callHandle, cIdentity))
@@ -455,6 +464,7 @@ func (w *CWrapper) AddNACActorRelationship(
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPAddNACActorRelationship(callHandle, cIdentity, cRelation, cTargetActor))
@@ -476,6 +486,7 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDeleteNACActorRelationship(callHandle, cIdentity, cRelation, cTargetActor))
@@ -499,6 +510,7 @@ func (w *CWrapper) PatchCollection(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.identityPtr = cIdentity
@@ -532,6 +544,7 @@ func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVer
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.identityPtr = cIdentity
@@ -678,6 +691,7 @@ func (w *CWrapper) GetCollections(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.version = cVersion
@@ -706,11 +720,25 @@ func (w *CWrapper) GetCollections(
 }
 
 func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	colName := C.CString("")
-	defer C.free(unsafe.Pointer(colName))
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cName := C.CString("")
+	cIdentity := identityFromContext(ctx)
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
+	defer C.IdentityFree(cIdentity)
+
+	var opts C.CollectionOptions
+	opts.version = cVersion
+	opts.collectionID = cCollectionID
+	opts.name = cName
+	opts.identityPtr = cIdentity
+	opts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexList(callHandle, colName))
+	res := ConvertAndFreeCResult(C.IndexList(callHandle, opts))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -766,6 +794,7 @@ func (w *CWrapper) ExecRequest(
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cOperation))
 	defer C.free(unsafe.Pointer(cVariables))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	result := C.ExecuteQuery(callHandle, cQuery, cIdentity, cOperation, cVariables)
@@ -887,11 +916,28 @@ func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey 
 	cPubKey := C.CString(pubKey.String())
 	cKeyType := C.CString(string(pubKey.Type()))
 	cBlockCid := C.CString(blockCid)
+
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cName := C.CString("")
+	cIdentity := identityFromContext(ctx)
+
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cPubKey))
 	defer C.free(unsafe.Pointer(cKeyType))
 	defer C.free(unsafe.Pointer(cBlockCid))
+	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid))
+	var opts C.CollectionOptions
+	opts.version = cVersion
+	opts.collectionID = cCollectionID
+	opts.name = cName
+	opts.identityPtr = cIdentity
+	opts.getInactive = 0
+
+	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, opts))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

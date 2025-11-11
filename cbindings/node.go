@@ -18,6 +18,7 @@ import "C"
 
 import (
 	"context"
+	"runtime/cgo"
 	"strconv"
 	"time"
 
@@ -124,5 +125,6 @@ func NodeClose(nodePtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(GoCResult{1, err.Error(), ""})
 	}
+	cgo.Handle(nodePtr).Delete()
 	return returnC(GoCResult{0, "", ""})
 }

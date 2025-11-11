@@ -29,9 +29,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				// when providing an identity, it includes the private key.
 				state.HTTPClientType,
 				state.CLIClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -79,6 +77,7 @@ func TestNAC_GatesVerifySignature_GoClient_AllowAccess(t *testing.T) {
 				// Creating of signed documents over HTTP is not supported yet, because signing
 				// requires a private key which we do not pass over HTTP.
 				state.GoClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
